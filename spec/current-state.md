@@ -1,7 +1,7 @@
 # Текущее состояние
 
-**Веха:** M0 Bootstrap  
-**Статус реализации:** реализован минимальный HTTP Control Service на Go.
+**Веха:** M1 Workspace CRUD
+**Статус реализации:** Control Service предоставляет in-memory CRUD API для Workspace.
 
 ## Что существует
 
@@ -20,10 +20,16 @@
 - Структурированное логирование с настраиваемым уровнем через `slog`
 - HTTP timeout и graceful shutdown по `os.Interrupt` и `SIGTERM`
 - Тесты загрузки Configuration и endpoint `GET /health`
+- Доменная сущность Workspace с полями ID, Name, Description, CreatedAt и UpdatedAt
+- Потокобезопасный in-memory Workspace repository с последовательными ID
+- Service-слой с доменной валидацией Workspace и управлением временными метками
+- HTTP CRUD API `/api/v1/workspaces` с единым форматом ошибок и строгой обработкой JSON
+- Unit-тесты repository, service и HTTP handler Workspace
 
 ## Чего не существует
 
-- Полноценного Control API
+- Персистентного хранения Workspace
+- Других доменных ресурсов Control API
 - Управления WebSocket-серверами
 - Поведения Runtime для WebSocket-серверов
 - Инфраструктуры развертывания

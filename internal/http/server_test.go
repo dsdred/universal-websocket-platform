@@ -8,7 +8,7 @@ import (
 )
 
 func TestHealth(t *testing.T) {
-	server := New("127.0.0.1:8080")
+	server := New("127.0.0.1:8080", nil)
 	request := httptest.NewRequest(stdhttp.MethodGet, "/health", nil)
 	response := httptest.NewRecorder()
 
@@ -26,7 +26,7 @@ func TestHealth(t *testing.T) {
 }
 
 func TestServerTimeouts(t *testing.T) {
-	server := New("127.0.0.1:8080")
+	server := New("127.0.0.1:8080", nil)
 
 	if server.ReadHeaderTimeout != readHeaderTimeout {
 		t.Errorf("ReadHeaderTimeout = %s, want %s", server.ReadHeaderTimeout, readHeaderTimeout)

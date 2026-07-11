@@ -16,6 +16,7 @@ import (
 	"github.com/dsdred/universal-websocket-platform/internal/config"
 	httpserver "github.com/dsdred/universal-websocket-platform/internal/http"
 	applog "github.com/dsdred/universal-websocket-platform/internal/log"
+	"github.com/dsdred/universal-websocket-platform/internal/workspace"
 )
 
 const shutdownTimeout = 10 * time.Second
@@ -33,7 +34,10 @@ func run() int {
 
 	logger := applog.New(os.Stdout, cfg.Log.Level)
 	address := net.JoinHostPort(cfg.HTTP.Host, strconv.Itoa(cfg.HTTP.Port))
-	server := httpserver.New(address)
+	workspaceRepository := workspace.NewMemoryWorkspaceRepository()
+	workspaceService := workspace.NewWorkspaceService(workspaceRepository, time.Now)
+	workspaceHandler := workspace.NewHandler(workspaceService)
+	server := httpserver.New(address, workspaceHandler.RegisterRoutes)
 	logLevel := strings.ToLower(cfg.Log.Level.String())
 
 	logger.Info(
