@@ -15,11 +15,13 @@ const (
 )
 
 // New creates the Control Service HTTP server.
-func New(address string, registerRoutes func(chi.Router)) *stdhttp.Server {
+func New(address string, routeRegistrars ...func(chi.Router)) *stdhttp.Server {
 	router := chi.NewRouter()
 	router.Get("/health", health)
-	if registerRoutes != nil {
-		registerRoutes(router)
+	for _, registerRoutes := range routeRegistrars {
+		if registerRoutes != nil {
+			registerRoutes(router)
+		}
 	}
 
 	return &stdhttp.Server{

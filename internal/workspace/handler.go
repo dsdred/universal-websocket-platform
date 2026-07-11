@@ -116,7 +116,7 @@ func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.service.Delete(id); err != nil {
+	if err := h.service.Delete(r.Context(), id); err != nil {
 		writeServiceError(w, err)
 		return
 	}
@@ -160,6 +160,8 @@ func writeServiceError(w http.ResponseWriter, err error) {
 		writeAPIError(w, http.StatusBadRequest, "validation_failed", validationError.Error())
 	case errors.Is(err, ErrWorkspaceNotFound):
 		writeAPIError(w, http.StatusNotFound, "workspace_not_found", "Workspace not found")
+	case errors.Is(err, ErrWorkspaceNotEmpty):
+		writeAPIError(w, http.StatusConflict, "workspace_not_empty", "Workspace contains configurations")
 	default:
 		writeAPIError(w, http.StatusInternalServerError, "internal_error", "Internal server error")
 	}

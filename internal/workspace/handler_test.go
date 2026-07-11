@@ -111,7 +111,7 @@ func TestHandlerInvalidWorkspaceID(t *testing.T) {
 func newTestRouter() http.Handler {
 	repository := NewMemoryWorkspaceRepository()
 	nextTime := time.Date(2026, 7, 12, 12, 0, 0, 0, time.UTC)
-	service := NewWorkspaceService(repository, func() time.Time {
+	service := NewWorkspaceService(repository, nil, func() time.Time {
 		current := nextTime
 		nextTime = nextTime.Add(time.Minute)
 		return current

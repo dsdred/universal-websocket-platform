@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"context"
 	"errors"
 	"sync"
 	"testing"
@@ -73,6 +74,23 @@ func TestMemoryWorkspaceRepositoryNotFound(t *testing.T) {
 	}
 	if err := repository.Delete(42); !errors.Is(err, ErrWorkspaceNotFound) {
 		t.Errorf("Delete() error = %v, want ErrWorkspaceNotFound", err)
+	}
+}
+
+func TestMemoryWorkspaceRepositoryExists(t *testing.T) {
+	repository := NewMemoryWorkspaceRepository()
+	created, err := repository.Create(Workspace{Name: "Existing"})
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+
+	exists, err := repository.Exists(context.Background(), created.ID)
+	if err != nil || !exists {
+		t.Errorf("Exists(%d) = %t, %v; want true, nil", created.ID, exists, err)
+	}
+	exists, err = repository.Exists(context.Background(), 42)
+	if err != nil || exists {
+		t.Errorf("Exists(42) = %t, %v; want false, nil", exists, err)
 	}
 }
 

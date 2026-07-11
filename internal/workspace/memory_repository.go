@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"context"
 	"sort"
 	"sync"
 )
@@ -10,6 +11,15 @@ type MemoryWorkspaceRepository struct {
 	mu         sync.RWMutex
 	workspaces map[uint64]Workspace
 	nextID     uint64
+}
+
+// Exists reports whether a Workspace exists.
+func (r *MemoryWorkspaceRepository) Exists(_ context.Context, id uint64) (bool, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	_, exists := r.workspaces[id]
+	return exists, nil
 }
 
 // NewMemoryWorkspaceRepository creates an empty in-memory repository.

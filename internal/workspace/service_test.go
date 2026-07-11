@@ -1,15 +1,25 @@
 package workspace
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"testing"
 	"time"
 )
 
+type configurationCheckerStub struct {
+	exists bool
+	err    error
+}
+
+func (s configurationCheckerStub) ExistsByWorkspace(context.Context, uint64) (bool, error) {
+	return s.exists, s.err
+}
+
 func TestWorkspaceServiceCreate(t *testing.T) {
 	now := time.Date(2026, 7, 12, 12, 0, 0, 0, time.UTC)
-	service := NewWorkspaceService(NewMemoryWorkspaceRepository(), func() time.Time { return now })
+	service := NewWorkspaceService(NewMemoryWorkspaceRepository(), nil, func() time.Time { return now })
 
 	workspace, err := service.Create(CreateWorkspace{Name: "  Main Workspace  ", Description: "Primary"})
 	if err != nil {
@@ -24,7 +34,7 @@ func TestWorkspaceServiceCreate(t *testing.T) {
 }
 
 func TestWorkspaceServiceValidation(t *testing.T) {
-	service := NewWorkspaceService(NewMemoryWorkspaceRepository(), time.Now)
+	service := NewWorkspaceService(NewMemoryWorkspaceRepository(), nil, time.Now)
 	tests := []struct {
 		name        string
 		input       CreateWorkspace
@@ -55,7 +65,7 @@ func TestWorkspaceServiceUpdatePreservesImmutableFields(t *testing.T) {
 	createdAt := time.Date(2026, 7, 12, 12, 0, 0, 0, time.UTC)
 	updatedAt := createdAt.Add(time.Minute)
 	times := []time.Time{createdAt, updatedAt}
-	service := NewWorkspaceService(NewMemoryWorkspaceRepository(), func() time.Time {
+	service := NewWorkspaceService(NewMemoryWorkspaceRepository(), nil, func() time.Time {
 		now := times[0]
 		times = times[1:]
 		return now
@@ -82,7 +92,7 @@ func TestWorkspaceServiceUpdatePreservesImmutableFields(t *testing.T) {
 }
 
 func TestWorkspaceServiceNotFound(t *testing.T) {
-	service := NewWorkspaceService(NewMemoryWorkspaceRepository(), time.Now)
+	service := NewWorkspaceService(NewMemoryWorkspaceRepository(), nil, time.Now)
 
 	if _, err := service.Get(42); !errors.Is(err, ErrWorkspaceNotFound) {
 		t.Errorf("Get() error = %v, want ErrWorkspaceNotFound", err)
@@ -90,7 +100,23 @@ func TestWorkspaceServiceNotFound(t *testing.T) {
 	if _, err := service.Update(42, UpdateWorkspace{Name: "Valid"}); !errors.Is(err, ErrWorkspaceNotFound) {
 		t.Errorf("Update() error = %v, want ErrWorkspaceNotFound", err)
 	}
-	if err := service.Delete(42); !errors.Is(err, ErrWorkspaceNotFound) {
+	if err := service.Delete(context.Background(), 42); !errors.Is(err, ErrWorkspaceNotFound) {
 		t.Errorf("Delete() error = %v, want ErrWorkspaceNotFound", err)
+	}
+}
+
+func TestWorkspaceServiceDeleteNonEmpty(t *testing.T) {
+	repository := NewMemoryWorkspaceRepository()
+	service := NewWorkspaceService(repository, configurationCheckerStub{exists: true}, time.Now)
+	created, err := service.Create(CreateWorkspace{Name: "Non-empty"})
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+
+	if err := service.Delete(context.Background(), created.ID); !errors.Is(err, ErrWorkspaceNotEmpty) {
+		t.Errorf("Delete() error = %v, want ErrWorkspaceNotEmpty", err)
+	}
+	if _, err := service.Get(created.ID); err != nil {
+		t.Errorf("Get() after blocked Delete error = %v", err)
 	}
 }

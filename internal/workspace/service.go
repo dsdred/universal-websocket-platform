@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -24,13 +25,14 @@ func (e *ValidationError) Error() string {
 
 // WorkspaceService applies Workspace business rules.
 type WorkspaceService struct {
-	repository WorkspaceRepository
-	now        func() time.Time
+	repository           WorkspaceRepository
+	configurationChecker ConfigurationExistenceChecker
+	now                  func() time.Time
 }
 
 // NewWorkspaceService creates a Workspace service.
-func NewWorkspaceService(repository WorkspaceRepository, now func() time.Time) *WorkspaceService {
-	return &WorkspaceService{repository: repository, now: now}
+func NewWorkspaceService(repository WorkspaceRepository, configurationChecker ConfigurationExistenceChecker, now func() time.Time) *WorkspaceService {
+	return &WorkspaceService{repository: repository, configurationChecker: configurationChecker, now: now}
 }
 
 // Create validates and creates a Workspace.
@@ -79,7 +81,21 @@ func (s *WorkspaceService) Update(id uint64, input UpdateWorkspace) (Workspace, 
 }
 
 // Delete removes a Workspace by ID.
-func (s *WorkspaceService) Delete(id uint64) error {
+func (s *WorkspaceService) Delete(ctx context.Context, id uint64) error {
+	if _, err := s.repository.Get(id); err != nil {
+		return err
+	}
+
+	if s.configurationChecker != nil {
+		exists, err := s.configurationChecker.ExistsByWorkspace(ctx, id)
+		if err != nil {
+			return err
+		}
+		if exists {
+			return ErrWorkspaceNotEmpty
+		}
+	}
+
 	return s.repository.Delete(id)
 }
 

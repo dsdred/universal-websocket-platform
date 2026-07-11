@@ -1,7 +1,7 @@
 # Текущее состояние
 
-**Веха:** M1 Workspace CRUD
-**Статус реализации:** Control Service предоставляет in-memory CRUD API для Workspace.
+**Веха:** M2 Configuration CRUD
+**Статус реализации:** Control Service предоставляет in-memory CRUD API для Workspace и метаданных Configuration.
 
 ## Что существует
 
@@ -25,11 +25,19 @@
 - Service-слой с доменной валидацией Workspace и управлением временными метками
 - HTTP CRUD API `/api/v1/workspaces` с единым форматом ошибок и строгой обработкой JSON
 - Unit-тесты repository, service и HTTP handler Workspace
+- Доменная сущность Configuration с обязательной принадлежностью существующему Workspace
+- Потокобезопасный in-memory Configuration repository с последовательными ID
+- Service-слой с Unicode-валидацией, UTC-временем и проверкой существования Workspace
+- Вложенный HTTP CRUD API `/api/v1/workspaces/{workspaceID}/configurations`
+- Запрет удаления Workspace, содержащего Configuration
+- Unit-тесты repository, service и HTTP handler Configuration
 
 ## Чего не существует
 
 - Персистентного хранения Workspace
-- Других доменных ресурсов Control API
+- Персистентного хранения Configuration
+- Configuration Version
+- PostgreSQL
 - Управления WebSocket-серверами
 - Поведения Runtime для WebSocket-серверов
 - Инфраструктуры развертывания
