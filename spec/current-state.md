@@ -14,8 +14,12 @@
 - Go module для Go 1.25
 - Исполняемый Control Service
 - HTTP Server на Chi Router с endpoint `GET /health`
-- Configuration порта через переменную окружения `PORT` со значением `8080` по умолчанию
-- Структурированное логирование через `slog`
+- Configuration адреса и уровня журнала через `UWP_HTTP_HOST`, `UWP_HTTP_PORT` и `UWP_LOG_LEVEL`
+- Безопасные значения по умолчанию: `127.0.0.1:8080` и уровень журнала `info`
+- Валидация Configuration до запуска сервиса
+- Структурированное логирование с настраиваемым уровнем через `slog`
+- HTTP timeout и graceful shutdown по `os.Interrupt` и `SIGTERM`
+- Тесты загрузки Configuration и endpoint `GET /health`
 
 ## Чего не существует
 

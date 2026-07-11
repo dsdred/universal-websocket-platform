@@ -7,6 +7,13 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+const (
+	readHeaderTimeout = 5 * time.Second
+	readTimeout       = 10 * time.Second
+	writeTimeout      = 10 * time.Second
+	idleTimeout       = 60 * time.Second
+)
+
 // New creates the Control Service HTTP server.
 func New(address string) *stdhttp.Server {
 	router := chi.NewRouter()
@@ -15,7 +22,10 @@ func New(address string) *stdhttp.Server {
 	return &stdhttp.Server{
 		Addr:              address,
 		Handler:           router,
-		ReadHeaderTimeout: 5 * time.Second,
+		ReadHeaderTimeout: readHeaderTimeout,
+		ReadTimeout:       readTimeout,
+		WriteTimeout:      writeTimeout,
+		IdleTimeout:       idleTimeout,
 	}
 }
 
