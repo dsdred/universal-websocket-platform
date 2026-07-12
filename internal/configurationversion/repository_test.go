@@ -89,6 +89,39 @@ func TestMemoryRepositoryNotFound(t *testing.T) {
 	}
 }
 
+func TestMemoryRepositoryUpdateBatchIsAtomic(t *testing.T) {
+	repository := NewMemoryConfigurationVersionRepository()
+	first, err := repository.Create(ConfigurationVersion{ConfigurationID: 1, Number: 1, State: Draft})
+	if err != nil {
+		t.Fatalf("Create(first) error = %v", err)
+	}
+	second, err := repository.Create(ConfigurationVersion{ConfigurationID: 1, Number: 2, State: Draft})
+	if err != nil {
+		t.Fatalf("Create(second) error = %v", err)
+	}
+
+	first.State = Archived
+	second.State = Published
+	if err := repository.UpdateBatch([]ConfigurationVersion{first, second}); err != nil {
+		t.Fatalf("UpdateBatch() error = %v", err)
+	}
+	updatedFirst, _ := repository.Get(first.ID)
+	updatedSecond, _ := repository.Get(second.ID)
+	if updatedFirst.State != Archived || updatedSecond.State != Published {
+		t.Errorf("states after UpdateBatch = [%s %s]", updatedFirst.State, updatedSecond.State)
+	}
+
+	updatedFirst.State = Published
+	missing := ConfigurationVersion{ID: 999, State: Archived}
+	if err := repository.UpdateBatch([]ConfigurationVersion{updatedFirst, missing}); !errors.Is(err, ErrConfigurationVersionNotFound) {
+		t.Fatalf("UpdateBatch(with missing) error = %v, want ErrConfigurationVersionNotFound", err)
+	}
+	unchangedFirst, _ := repository.Get(first.ID)
+	if unchangedFirst.State != Archived {
+		t.Errorf("failed UpdateBatch changed first State to %s, want Archived", unchangedFirst.State)
+	}
+}
+
 func TestMemoryRepositoryConcurrentAccess(t *testing.T) {
 	repository := NewMemoryConfigurationVersionRepository()
 	const count = 100

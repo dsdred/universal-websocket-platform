@@ -36,12 +36,15 @@
 - Создание Draft Version и получение списка через вложенный API `/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions`
 - Проверка существования Configuration перед созданием и чтением Version
 - Unit-тесты repository, service и HTTP handler ConfigurationVersion
+- Публикация Draft Version через endpoint `/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/publish`
+- Атомарное архивирование предыдущей Published Version при публикации новой
+- Инвариант единственной Published Version внутри Configuration
 
 ## Чего не существует
 
 - Персистентного хранения Workspace
 - Персистентного хранения Configuration
-- Publish, Validation, Rollback и Snapshot для Configuration Version
+- Validation, Rollback и Snapshot для Configuration Version
 - PostgreSQL
 - Управления WebSocket-серверами
 - Поведения Runtime для WebSocket-серверов

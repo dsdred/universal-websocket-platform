@@ -2,6 +2,7 @@ package configurationversion
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 )
@@ -11,7 +12,7 @@ type Service struct {
 	repository           ConfigurationVersionRepository
 	configurationChecker ConfigurationExistenceChecker
 	now                  func() time.Time
-	numberMu             sync.Mutex
+	lifecycleMu          sync.Mutex
 }
 
 // NewService creates a Configuration Version service.
@@ -25,8 +26,8 @@ func (s *Service) Create(ctx context.Context, workspaceID, configurationID uint6
 		return ConfigurationVersion{}, err
 	}
 
-	s.numberMu.Lock()
-	defer s.numberMu.Unlock()
+	s.lifecycleMu.Lock()
+	defer s.lifecycleMu.Unlock()
 
 	versions, err := s.repository.ListByConfiguration(configurationID)
 	if err != nil {
@@ -48,6 +49,48 @@ func (s *Service) Create(ctx context.Context, workspaceID, configurationID uint6
 		CreatedAt:       now,
 		UpdatedAt:       now,
 	})
+}
+
+// Publish transitions a Draft Version to Published and archives the previous Published Version.
+func (s *Service) Publish(ctx context.Context, workspaceID, configurationID, versionID uint64) (ConfigurationVersion, error) {
+	if err := s.requireConfiguration(ctx, workspaceID, configurationID); err != nil {
+		return ConfigurationVersion{}, err
+	}
+
+	s.lifecycleMu.Lock()
+	defer s.lifecycleMu.Unlock()
+
+	target, err := s.repository.Get(versionID)
+	if err != nil || target.ConfigurationID != configurationID {
+		if err == nil || errors.Is(err, ErrConfigurationVersionNotFound) {
+			return ConfigurationVersion{}, ErrConfigurationVersionNotFound
+		}
+		return ConfigurationVersion{}, err
+	}
+	if target.State != Draft {
+		return ConfigurationVersion{}, ErrVersionNotPublishable
+	}
+
+	now := s.now().UTC()
+	updates := make([]ConfigurationVersion, 0, 2)
+	current, err := s.repository.GetPublished(configurationID)
+	switch {
+	case err == nil:
+		current.State = Archived
+		current.UpdatedAt = now
+		updates = append(updates, current)
+	case !errors.Is(err, ErrConfigurationVersionNotFound):
+		return ConfigurationVersion{}, err
+	}
+
+	target.State = Published
+	target.UpdatedAt = now
+	updates = append(updates, target)
+	if err := s.repository.UpdateBatch(updates); err != nil {
+		return ConfigurationVersion{}, err
+	}
+
+	return target, nil
 }
 
 // List returns all Versions for an existing Configuration.

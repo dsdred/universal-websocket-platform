@@ -73,6 +73,22 @@ func (r *MemoryConfigurationVersionRepository) Update(version ConfigurationVersi
 	return version, nil
 }
 
+// UpdateBatch atomically replaces existing Configuration Versions.
+func (r *MemoryConfigurationVersionRepository) UpdateBatch(versions []ConfigurationVersion) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for _, version := range versions {
+		if _, exists := r.versions[version.ID]; !exists {
+			return ErrConfigurationVersionNotFound
+		}
+	}
+	for _, version := range versions {
+		r.versions[version.ID] = version
+	}
+	return nil
+}
+
 // Delete removes a Configuration Version by ID.
 func (r *MemoryConfigurationVersionRepository) Delete(id uint64) error {
 	r.mu.Lock()

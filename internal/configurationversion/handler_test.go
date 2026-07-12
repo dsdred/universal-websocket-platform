@@ -66,6 +66,45 @@ func TestHandlerConfigurationNotFound(t *testing.T) {
 	}
 }
 
+func TestHandlerPublish(t *testing.T) {
+	router := newTestRouter(t, true)
+	versionsPath := "/api/v1/workspaces/1/configurations/1/versions"
+	first := decodeVersion(t, performRequest(router, http.MethodPost, versionsPath))
+	second := decodeVersion(t, performRequest(router, http.MethodPost, versionsPath))
+
+	publishFirst := performRequest(router, http.MethodPost, versionsPath+"/1/publish")
+	assertStatus(t, publishFirst, http.StatusOK)
+	assertContentType(t, publishFirst)
+	if published := decodeVersion(t, publishFirst); published.ID != first.ID || published.State != Published {
+		t.Errorf("published first = %#v", published)
+	}
+
+	repeat := performRequest(router, http.MethodPost, versionsPath+"/1/publish")
+	assertStatus(t, repeat, http.StatusConflict)
+	assertErrorCode(t, repeat, "version_not_publishable")
+
+	publishSecond := performRequest(router, http.MethodPost, versionsPath+"/2/publish")
+	assertStatus(t, publishSecond, http.StatusOK)
+	if published := decodeVersion(t, publishSecond); published.ID != second.ID || published.State != Published {
+		t.Errorf("published second = %#v", published)
+	}
+
+	list := performRequest(router, http.MethodGet, versionsPath)
+	var versions []ConfigurationVersion
+	decodeResponse(t, list, &versions)
+	if len(versions) != 2 || versions[0].State != Archived || versions[1].State != Published {
+		t.Errorf("versions after second publish = %#v, want Archived then Published", versions)
+	}
+
+	archived := performRequest(router, http.MethodPost, versionsPath+"/1/publish")
+	assertStatus(t, archived, http.StatusConflict)
+	assertErrorCode(t, archived, "version_not_publishable")
+
+	notFound := performRequest(router, http.MethodPost, versionsPath+"/999/publish")
+	assertStatus(t, notFound, http.StatusNotFound)
+	assertErrorCode(t, notFound, "version_not_found")
+}
+
 func newTestRouter(t *testing.T, configurationExists bool) http.Handler {
 	t.Helper()
 	configurationRepository := configuration.NewMemoryConfigurationRepository()
@@ -117,5 +156,15 @@ func assertContentType(t *testing.T, response *httptest.ResponseRecorder) {
 	t.Helper()
 	if contentType := response.Header().Get("Content-Type"); !strings.Contains(contentType, "application/json") {
 		t.Errorf("Content-Type = %q, want application/json", contentType)
+	}
+}
+
+func assertErrorCode(t *testing.T, response *httptest.ResponseRecorder, want string) {
+	t.Helper()
+	assertContentType(t, response)
+	var body httpapi.ErrorResponse
+	decodeResponse(t, response, &body)
+	if body.Error.Code != want {
+		t.Errorf("error code = %q, want %q", body.Error.Code, want)
 	}
 }

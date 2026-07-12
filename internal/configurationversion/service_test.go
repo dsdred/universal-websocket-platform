@@ -116,3 +116,82 @@ func TestServiceAssignsUniqueNumbersConcurrently(t *testing.T) {
 		}
 	}
 }
+
+func TestServicePublishLifecycle(t *testing.T) {
+	createdAt := time.Date(2026, 7, 12, 12, 0, 0, 0, time.UTC)
+	publishedAt := createdAt.Add(time.Minute)
+	secondCreatedAt := publishedAt.Add(time.Minute)
+	secondPublishedAt := secondCreatedAt.Add(time.Minute)
+	times := []time.Time{createdAt, publishedAt, secondCreatedAt, secondPublishedAt}
+	repository := NewMemoryConfigurationVersionRepository()
+	service := NewService(repository, configurationCheckerStub{exists: true}, func() time.Time {
+		now := times[0]
+		times = times[1:]
+		return now
+	})
+
+	first, err := service.Create(context.Background(), 1, 1)
+	if err != nil {
+		t.Fatalf("Create(first) error = %v", err)
+	}
+	first, err = service.Publish(context.Background(), 1, 1, first.ID)
+	if err != nil {
+		t.Fatalf("Publish(first) error = %v", err)
+	}
+	if first.State != Published || !first.UpdatedAt.Equal(publishedAt) {
+		t.Errorf("published first = %#v", first)
+	}
+
+	if _, err := service.Publish(context.Background(), 1, 1, first.ID); !errors.Is(err, ErrVersionNotPublishable) {
+		t.Errorf("Publish(already Published) error = %v, want ErrVersionNotPublishable", err)
+	}
+
+	second, err := service.Create(context.Background(), 1, 1)
+	if err != nil {
+		t.Fatalf("Create(second) error = %v", err)
+	}
+	second, err = service.Publish(context.Background(), 1, 1, second.ID)
+	if err != nil {
+		t.Fatalf("Publish(second) error = %v", err)
+	}
+	if second.State != Published || !second.UpdatedAt.Equal(secondPublishedAt) {
+		t.Errorf("published second = %#v", second)
+	}
+
+	archivedFirst, err := repository.Get(first.ID)
+	if err != nil {
+		t.Fatalf("Get(first) error = %v", err)
+	}
+	if archivedFirst.State != Archived || !archivedFirst.UpdatedAt.Equal(secondPublishedAt) {
+		t.Errorf("archived first = %#v", archivedFirst)
+	}
+	if _, err := service.Publish(context.Background(), 1, 1, archivedFirst.ID); !errors.Is(err, ErrVersionNotPublishable) {
+		t.Errorf("Publish(Archived) error = %v, want ErrVersionNotPublishable", err)
+	}
+
+	published, err := repository.GetPublished(1)
+	if err != nil {
+		t.Fatalf("GetPublished() error = %v", err)
+	}
+	if published.ID != second.ID {
+		t.Errorf("GetPublished() ID = %d, want %d", published.ID, second.ID)
+	}
+	versions, _ := repository.ListByConfiguration(1)
+	publishedCount := 0
+	for _, version := range versions {
+		if version.State == Published {
+			publishedCount++
+		}
+	}
+	if publishedCount != 1 {
+		t.Errorf("Published count = %d, want 1", publishedCount)
+	}
+}
+
+func TestServicePublishNotFound(t *testing.T) {
+	service := NewService(NewMemoryConfigurationVersionRepository(), configurationCheckerStub{exists: true}, time.Now)
+
+	if _, err := service.Publish(context.Background(), 1, 1, 42); !errors.Is(err, ErrConfigurationVersionNotFound) {
+		t.Errorf("Publish() error = %v, want ErrConfigurationVersionNotFound", err)
+	}
+}
