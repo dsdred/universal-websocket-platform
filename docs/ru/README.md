@@ -10,6 +10,9 @@
 
 Предлагаемые решения, которые еще не стали принятыми архитектурными решениями, находятся в каталоге [`proposals/`](proposals/).
 
+- [DP-001: Authentication](proposals/DP-001-authentication.md)
+- [DP-002: Secret References](proposals/DP-002-secret-references.md)
+
 ## Заметки к релизам
 
 Описание отдельных релизов находится в каталоге [`releases/`](releases/).

@@ -69,6 +69,12 @@
 - Валидация уникальности Name и Priority Provider при допустимом повторении Type
 - Реальная Authentication и выполнение Provider не реализованы
 
+## Secret References
+
+- Принято направление Secret References: ConfigurationVersion хранит только ссылки на секреты, а не секретные значения
+- Существующие CertificateRef и PrivateKeyRef соответствуют этому направлению
+- Secret Storage и Secret Resolver еще не реализованы
+
 ## Чего не существует
 
 - Персистентного хранения Workspace
@@ -82,6 +88,7 @@
 - Применение Listener TimeoutSettings в Runtime
 - Реальная Authentication, проверка JWT, API Key и Basic credentials
 - AuthenticationService, AuthenticationRequest, Principal и выполнение Provider
+- Secret Storage и Secret Resolver еще не реализованы
 - Инфраструктуры развертывания
 - Инфраструктуры хранения данных
 - Admin UI

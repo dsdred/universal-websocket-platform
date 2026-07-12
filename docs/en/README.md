@@ -10,6 +10,9 @@ Accepted architecture decisions and ADR conventions are available in [`adr/`](ad
 
 Proposed designs that have not become accepted architecture decisions are available in [`proposals/`](proposals/).
 
+- [DP-001: Authentication](proposals/DP-001-authentication.md)
+- [DP-002: Secret References](proposals/DP-002-secret-references.md)
+
 ## Release Notes
 
 Release-specific summaries are available in [`releases/`](releases/).
