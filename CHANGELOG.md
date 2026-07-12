@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - ListenerSettings metadata with validated Host and Port for Draft ConfigurationVersion entities.
+- TLSSettings metadata with certificate references and minimum TLS version for Draft ConfigurationVersion entities.
 
 ## [0.1.0-alpha] - 2026-07-12
 

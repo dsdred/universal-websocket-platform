@@ -53,6 +53,10 @@
 - Значения ListenerSettings по умолчанию `127.0.0.1:8080`
 - Редактирование ListenerSettings только для Draft Version
 - Валидация IP-адреса или hostname без DNS lookup и диапазона Port `1..65535`
+- TLSSettings с Enabled, CertificateRef, PrivateKeyRef и MinVersion для ConfigurationVersion
+- Редактирование TLSSettings только для Draft Version
+- Ссылки на сертификат и закрытый ключ без хранения PEM или чтения файлов
+- Поддержка минимальных версий TLS `1.2` и `1.3`
 
 ## Чего не существует
 
@@ -63,7 +67,7 @@
 - Управления WebSocket-серверами
 - Поведения Runtime для WebSocket-серверов
 - WebSocket listener и запуск TCP listener
-- TLS и другие сетевые параметры Listener
+- Реальный TLS listener и другие сетевые параметры Listener
 - Инфраструктуры развертывания
 - Инфраструктуры хранения данных
 - Admin UI

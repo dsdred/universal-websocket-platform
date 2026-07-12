@@ -14,7 +14,9 @@ import (
 const (
 	defaultListenerHost   = "127.0.0.1"
 	defaultListenerPort   = 8080
+	defaultTLSMinVersion  = "1.2"
 	maxListenerHostLength = 255
+	maxTLSReferenceLength = 255
 )
 
 // ValidationError describes invalid Configuration Version settings.
@@ -69,10 +71,48 @@ func (s *Service) Create(ctx context.Context, workspaceID, configurationID uint6
 		Listener: ListenerSettings{
 			Host: defaultListenerHost,
 			Port: defaultListenerPort,
+			TLS: TLSSettings{
+				Enabled:    false,
+				MinVersion: defaultTLSMinVersion,
+			},
 		},
 		CreatedAt: now,
 		UpdatedAt: now,
 	})
+}
+
+// UpdateTLS validates and updates TLS settings for a Draft Version.
+func (s *Service) UpdateTLS(
+	ctx context.Context,
+	workspaceID, configurationID, versionID uint64,
+	tls TLSSettings,
+) (ConfigurationVersion, error) {
+	if err := s.requireConfiguration(ctx, workspaceID, configurationID); err != nil {
+		return ConfigurationVersion{}, err
+	}
+
+	s.lifecycleMu.Lock()
+	defer s.lifecycleMu.Unlock()
+
+	version, err := s.repository.Get(versionID)
+	if err != nil || version.ConfigurationID != configurationID {
+		if err == nil || errors.Is(err, ErrConfigurationVersionNotFound) {
+			return ConfigurationVersion{}, ErrConfigurationVersionNotFound
+		}
+		return ConfigurationVersion{}, err
+	}
+	if version.State != Draft {
+		return ConfigurationVersion{}, ErrVersionNotEditable
+	}
+
+	normalized, err := validateTLS(tls)
+	if err != nil {
+		return ConfigurationVersion{}, err
+	}
+
+	version.Listener.TLS = normalized
+	version.UpdatedAt = s.now().UTC()
+	return s.repository.Update(version)
 }
 
 // UpdateListener validates and updates Listener settings for a Draft Version.
@@ -104,7 +144,8 @@ func (s *Service) UpdateListener(
 		return ConfigurationVersion{}, err
 	}
 
-	version.Listener = normalized
+	version.Listener.Host = normalized.Host
+	version.Listener.Port = normalized.Port
 	version.UpdatedAt = s.now().UTC()
 	return s.repository.Update(version)
 }
@@ -237,6 +278,49 @@ func validHostname(host string) bool {
 				(character >= '0' && character <= '9') || character == '-') {
 				return false
 			}
+		}
+	}
+	return true
+}
+
+func validateTLS(tls TLSSettings) (TLSSettings, error) {
+	tls.CertificateRef = strings.TrimSpace(tls.CertificateRef)
+	tls.PrivateKeyRef = strings.TrimSpace(tls.PrivateKeyRef)
+	tls.MinVersion = strings.TrimSpace(tls.MinVersion)
+
+	if tls.MinVersion != "1.2" && tls.MinVersion != "1.3" {
+		return TLSSettings{}, &ValidationError{Field: "minVersion", Message: "must be one of 1.2 or 1.3"}
+	}
+	if tls.Enabled && tls.CertificateRef == "" {
+		return TLSSettings{}, &ValidationError{Field: "certificateRef", Message: "must not be empty when TLS is enabled"}
+	}
+	if tls.Enabled && tls.PrivateKeyRef == "" {
+		return TLSSettings{}, &ValidationError{Field: "privateKeyRef", Message: "must not be empty when TLS is enabled"}
+	}
+	if tls.CertificateRef != "" && !validTLSReference(tls.CertificateRef) {
+		return TLSSettings{}, &ValidationError{Field: "certificateRef", Message: "must be a valid certificate reference"}
+	}
+	if tls.PrivateKeyRef != "" && !validTLSReference(tls.PrivateKeyRef) {
+		return TLSSettings{}, &ValidationError{Field: "privateKeyRef", Message: "must be a valid private key reference"}
+	}
+
+	return tls, nil
+}
+
+func validTLSReference(reference string) bool {
+	if utf8.RuneCountInString(reference) > maxTLSReferenceLength ||
+		strings.HasPrefix(reference, "/") || strings.HasSuffix(reference, "/") ||
+		strings.Contains(reference, "//") || strings.Contains(reference, "://") ||
+		strings.Contains(reference, "-----BEGIN") {
+		return false
+	}
+
+	for _, character := range reference {
+		if !((character >= 'a' && character <= 'z') ||
+			(character >= 'A' && character <= 'Z') ||
+			(character >= '0' && character <= '9') ||
+			character == '/' || character == '-' || character == '_' || character == '.') {
+			return false
 		}
 	}
 	return true

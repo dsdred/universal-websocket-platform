@@ -27,6 +27,32 @@ func (h *Handler) RegisterRoutes(router chi.Router) {
 	router.Post("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/publish", h.publish)
 	router.Post("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/archive", h.archive)
 	router.Put("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/listener", h.updateListener)
+	router.Put("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/listener/tls", h.updateTLS)
+}
+
+func (h *Handler) updateTLS(w http.ResponseWriter, r *http.Request) {
+	workspaceID, configurationID, ok := requestIDs(w, r)
+	if !ok {
+		return
+	}
+	versionID, ok := pathID(w, r, "versionID", "Invalid version ID")
+	if !ok {
+		return
+	}
+
+	var tls TLSSettings
+	if err := httpapi.DecodeJSON(r, &tls); err != nil {
+		httpapi.WriteError(w, http.StatusBadRequest, "invalid_request", "Invalid request body")
+		return
+	}
+
+	version, err := h.service.UpdateTLS(r.Context(), workspaceID, configurationID, versionID, tls)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	httpapi.WriteJSON(w, http.StatusOK, version)
 }
 
 func (h *Handler) updateListener(w http.ResponseWriter, r *http.Request) {

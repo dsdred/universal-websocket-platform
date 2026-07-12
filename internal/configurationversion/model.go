@@ -14,8 +14,17 @@ const (
 
 // ListenerSettings describes where a future WebSocket Listener will accept connections.
 type ListenerSettings struct {
-	Host string `json:"host"`
-	Port uint16 `json:"port"`
+	Host string      `json:"host"`
+	Port uint16      `json:"port"`
+	TLS  TLSSettings `json:"tls"`
+}
+
+// TLSSettings describes TLS metadata for a future secure WebSocket Listener.
+type TLSSettings struct {
+	Enabled        bool   `json:"enabled"`
+	CertificateRef string `json:"certificateRef"`
+	PrivateKeyRef  string `json:"privateKeyRef"`
+	MinVersion     string `json:"minVersion"`
 }
 
 // ConfigurationVersion contains metadata for a Configuration Version.

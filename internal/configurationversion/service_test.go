@@ -48,6 +48,9 @@ func TestServiceCreatesDraftVersionsWithAutomaticNumbers(t *testing.T) {
 	if first.Listener.Host != "127.0.0.1" || first.Listener.Port != 8080 {
 		t.Errorf("default Listener = %#v, want 127.0.0.1:8080", first.Listener)
 	}
+	if first.Listener.TLS != (TLSSettings{Enabled: false, CertificateRef: "", PrivateKeyRef: "", MinVersion: "1.2"}) {
+		t.Errorf("default TLS = %#v", first.Listener.TLS)
+	}
 	if first.ConfigurationID != 1 || first.CreatedAt.Location() != time.UTC || !first.CreatedAt.Equal(firstTime) {
 		t.Errorf("first Version = %#v", first)
 	}
@@ -211,9 +214,18 @@ func TestServiceArchiveAllowedStates(t *testing.T) {
 				ConfigurationID: 1,
 				Number:          7,
 				State:           state,
-				Listener:        ListenerSettings{Host: "ws.internal.local", Port: 9000},
-				CreatedAt:       createdAt,
-				UpdatedAt:       createdAt,
+				Listener: ListenerSettings{
+					Host: "ws.internal.local",
+					Port: 9000,
+					TLS: TLSSettings{
+						Enabled:        true,
+						CertificateRef: "certificates/archive",
+						PrivateKeyRef:  "secrets/archive-key",
+						MinVersion:     "1.3",
+					},
+				},
+				CreatedAt: createdAt,
+				UpdatedAt: createdAt,
 			})
 			if err != nil {
 				t.Fatalf("Create() error = %v", err)
@@ -285,7 +297,7 @@ func TestServiceUpdateListener(t *testing.T) {
 	if err != nil {
 		t.Fatalf("UpdateListener() error = %v", err)
 	}
-	if updated.Listener != (ListenerSettings{Host: "0.0.0.0", Port: 9000}) {
+	if updated.Listener.Host != "0.0.0.0" || updated.Listener.Port != 9000 || updated.Listener.TLS.MinVersion != "1.2" {
 		t.Errorf("Listener = %#v", updated.Listener)
 	}
 	if updated.ID != created.ID || updated.ConfigurationID != created.ConfigurationID || updated.Number != created.Number || updated.State != created.State || !updated.CreatedAt.Equal(created.CreatedAt) {
@@ -385,7 +397,7 @@ func TestListenerLifecycleRegression(t *testing.T) {
 	first, _ := service.Create(context.Background(), 1, 1)
 	first, _ = service.UpdateListener(context.Background(), 1, 1, first.ID, ListenerSettings{Host: "0.0.0.0", Port: 9000})
 	first, _ = service.Publish(context.Background(), 1, 1, first.ID)
-	if first.Listener != (ListenerSettings{Host: "0.0.0.0", Port: 9000}) {
+	if first.Listener.Host != "0.0.0.0" || first.Listener.Port != 9000 {
 		t.Errorf("Publish changed first Listener: %#v", first.Listener)
 	}
 
@@ -393,10 +405,159 @@ func TestListenerLifecycleRegression(t *testing.T) {
 	second, _ = service.UpdateListener(context.Background(), 1, 1, second.ID, ListenerSettings{Host: "localhost", Port: 9001})
 	second, _ = service.Publish(context.Background(), 1, 1, second.ID)
 	archivedFirst, _ := repository.Get(first.ID)
-	if archivedFirst.State != Archived || archivedFirst.Listener != (ListenerSettings{Host: "0.0.0.0", Port: 9000}) {
+	if archivedFirst.State != Archived || archivedFirst.Listener.Host != "0.0.0.0" || archivedFirst.Listener.Port != 9000 {
 		t.Errorf("auto-archive changed first Version: %#v", archivedFirst)
 	}
-	if second.Listener != (ListenerSettings{Host: "localhost", Port: 9001}) {
+	if second.Listener.Host != "localhost" || second.Listener.Port != 9001 {
 		t.Errorf("Publish changed second Listener: %#v", second.Listener)
+	}
+}
+
+func TestServiceUpdateTLS(t *testing.T) {
+	createdAt := time.Date(2026, 7, 13, 12, 0, 0, 0, time.UTC)
+	updatedAt := createdAt.Add(time.Minute)
+	repository := NewMemoryConfigurationVersionRepository()
+	original, err := repository.Create(ConfigurationVersion{
+		ConfigurationID: 1,
+		Number:          7,
+		State:           Draft,
+		Listener: ListenerSettings{
+			Host: "0.0.0.0",
+			Port: 9443,
+			TLS:  TLSSettings{MinVersion: "1.2"},
+		},
+		CreatedAt: createdAt,
+		UpdatedAt: createdAt,
+	})
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	service := NewService(repository, configurationCheckerStub{exists: true}, func() time.Time { return updatedAt })
+
+	updated, err := service.UpdateTLS(context.Background(), 1, 1, original.ID, TLSSettings{
+		Enabled:        true,
+		CertificateRef: "  certificates/main  ",
+		PrivateKeyRef:  "  secrets/tls-key  ",
+		MinVersion:     " 1.3 ",
+	})
+	if err != nil {
+		t.Fatalf("UpdateTLS() error = %v", err)
+	}
+	wantTLS := TLSSettings{Enabled: true, CertificateRef: "certificates/main", PrivateKeyRef: "secrets/tls-key", MinVersion: "1.3"}
+	if updated.Listener.TLS != wantTLS {
+		t.Errorf("TLS = %#v, want %#v", updated.Listener.TLS, wantTLS)
+	}
+	if updated.Listener.Host != original.Listener.Host || updated.Listener.Port != original.Listener.Port {
+		t.Errorf("UpdateTLS() changed Host/Port: %#v", updated.Listener)
+	}
+	if updated.ID != original.ID || updated.ConfigurationID != original.ConfigurationID || updated.Number != original.Number || updated.State != original.State || !updated.CreatedAt.Equal(original.CreatedAt) {
+		t.Errorf("UpdateTLS() changed immutable fields: %#v", updated)
+	}
+	if !updated.UpdatedAt.Equal(updatedAt) || updated.UpdatedAt.Equal(original.UpdatedAt) || updated.UpdatedAt.Location() != time.UTC {
+		t.Errorf("UpdatedAt = %s, want %s UTC", updated.UpdatedAt, updatedAt)
+	}
+
+	disabled, err := service.UpdateTLS(context.Background(), 1, 1, original.ID, TLSSettings{Enabled: false, MinVersion: "1.2"})
+	if err != nil {
+		t.Fatalf("UpdateTLS(disable) error = %v", err)
+	}
+	if disabled.Listener.TLS != (TLSSettings{Enabled: false, MinVersion: "1.2"}) {
+		t.Errorf("disabled TLS = %#v", disabled.Listener.TLS)
+	}
+}
+
+func TestServiceUpdateTLSValidation(t *testing.T) {
+	validCertificate := "certificates/main"
+	validKey := "secrets/tls-key"
+	tests := []struct {
+		name  string
+		tls   TLSSettings
+		field string
+	}{
+		{name: "missing certificate", tls: TLSSettings{Enabled: true, PrivateKeyRef: validKey, MinVersion: "1.2"}, field: "certificateRef"},
+		{name: "missing private key", tls: TLSSettings{Enabled: true, CertificateRef: validCertificate, MinVersion: "1.2"}, field: "privateKeyRef"},
+		{name: "unknown minimum version", tls: TLSSettings{MinVersion: "1.1"}, field: "minVersion"},
+		{name: "empty minimum version", tls: TLSSettings{}, field: "minVersion"},
+		{name: "PEM certificate", tls: TLSSettings{Enabled: true, CertificateRef: "-----BEGIN CERTIFICATE-----", PrivateKeyRef: validKey, MinVersion: "1.2"}, field: "certificateRef"},
+		{name: "Windows path", tls: TLSSettings{Enabled: true, CertificateRef: `C:\certs\server.crt`, PrivateKeyRef: validKey, MinVersion: "1.2"}, field: "certificateRef"},
+		{name: "Unix path", tls: TLSSettings{Enabled: true, CertificateRef: "/tmp/server.crt", PrivateKeyRef: validKey, MinVersion: "1.2"}, field: "certificateRef"},
+		{name: "URL", tls: TLSSettings{Enabled: true, CertificateRef: "https://example.com/cert.pem", PrivateKeyRef: validKey, MinVersion: "1.2"}, field: "certificateRef"},
+		{name: "double slash", tls: TLSSettings{Enabled: true, CertificateRef: "certificates//main", PrivateKeyRef: validKey, MinVersion: "1.2"}, field: "certificateRef"},
+		{name: "spaces", tls: TLSSettings{Enabled: true, CertificateRef: "certificates/main cert", PrivateKeyRef: validKey, MinVersion: "1.2"}, field: "certificateRef"},
+		{name: "long reference", tls: TLSSettings{Enabled: true, CertificateRef: strings.Repeat("a", 256), PrivateKeyRef: validKey, MinVersion: "1.2"}, field: "certificateRef"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := NewService(NewMemoryConfigurationVersionRepository(), configurationCheckerStub{exists: true}, time.Now)
+			created, err := service.Create(context.Background(), 1, 1)
+			if err != nil {
+				t.Fatalf("Create() error = %v", err)
+			}
+			_, err = service.UpdateTLS(context.Background(), 1, 1, created.ID, tt.tls)
+			var validationError *ValidationError
+			if !errors.As(err, &validationError) || validationError.Field != tt.field {
+				t.Errorf("UpdateTLS() error = %v, want ValidationError for %s", err, tt.field)
+			}
+		})
+	}
+}
+
+func TestServiceUpdateTLSVersions(t *testing.T) {
+	for _, minVersion := range []string{"1.2", "1.3"} {
+		t.Run(minVersion, func(t *testing.T) {
+			service := NewService(NewMemoryConfigurationVersionRepository(), configurationCheckerStub{exists: true}, time.Now)
+			created, _ := service.Create(context.Background(), 1, 1)
+			if _, err := service.UpdateTLS(context.Background(), 1, 1, created.ID, TLSSettings{MinVersion: minVersion}); err != nil {
+				t.Errorf("UpdateTLS(%s) error = %v", minVersion, err)
+			}
+		})
+	}
+}
+
+func TestServiceUpdateTLSStateAndScope(t *testing.T) {
+	for _, state := range []VersionState{Published, Archived, Validated} {
+		t.Run(string(state), func(t *testing.T) {
+			repository := NewMemoryConfigurationVersionRepository()
+			version, _ := repository.Create(ConfigurationVersion{ConfigurationID: 1, Number: 1, State: state})
+			service := NewService(repository, configurationCheckerStub{exists: true}, time.Now)
+			_, err := service.UpdateTLS(context.Background(), 1, 1, version.ID, TLSSettings{MinVersion: "1.2"})
+			if !errors.Is(err, ErrVersionNotEditable) {
+				t.Errorf("UpdateTLS(%s) error = %v, want ErrVersionNotEditable", state, err)
+			}
+		})
+	}
+
+	repository := NewMemoryConfigurationVersionRepository()
+	version, _ := repository.Create(ConfigurationVersion{ConfigurationID: 1, Number: 1, State: Draft})
+	service := NewService(repository, configurationCheckerStub{exists: true}, time.Now)
+	if _, err := service.UpdateTLS(context.Background(), 1, 2, version.ID, TLSSettings{MinVersion: "1.2"}); !errors.Is(err, ErrConfigurationVersionNotFound) {
+		t.Errorf("UpdateTLS(other Configuration) error = %v", err)
+	}
+}
+
+func TestTLSLifecycleRegression(t *testing.T) {
+	repository := NewMemoryConfigurationVersionRepository()
+	service := NewService(repository, configurationCheckerStub{exists: true}, time.Now)
+	firstTLS := TLSSettings{Enabled: true, CertificateRef: "certificates/main", PrivateKeyRef: "secrets/tls-key", MinVersion: "1.3"}
+	secondTLS := TLSSettings{Enabled: true, CertificateRef: "certificates/next", PrivateKeyRef: "secrets/next-key", MinVersion: "1.2"}
+
+	first, _ := service.Create(context.Background(), 1, 1)
+	first, _ = service.UpdateListener(context.Background(), 1, 1, first.ID, ListenerSettings{Host: "0.0.0.0", Port: 9443})
+	first, _ = service.UpdateTLS(context.Background(), 1, 1, first.ID, firstTLS)
+	first, _ = service.Publish(context.Background(), 1, 1, first.ID)
+	if first.Listener.Host != "0.0.0.0" || first.Listener.Port != 9443 || first.Listener.TLS != firstTLS {
+		t.Errorf("Publish changed first Listener/TLS: %#v", first.Listener)
+	}
+
+	second, _ := service.Create(context.Background(), 1, 1)
+	second, _ = service.UpdateTLS(context.Background(), 1, 1, second.ID, secondTLS)
+	second, _ = service.Publish(context.Background(), 1, 1, second.ID)
+	archivedFirst, _ := repository.Get(first.ID)
+	if archivedFirst.State != Archived || archivedFirst.Listener.TLS != firstTLS {
+		t.Errorf("auto-archive changed first TLS: %#v", archivedFirst)
+	}
+	if second.Listener.TLS != secondTLS {
+		t.Errorf("Publish changed second TLS: %#v", second.Listener.TLS)
 	}
 }
