@@ -33,6 +33,13 @@ type AuthenticationProvider struct {
 	Type     AuthenticationProviderType `json:"type"`
 	Enabled  bool                       `json:"enabled"`
 	Priority uint32                     `json:"priority"`
+	APIKey   *APIKeySettings            `json:"apiKey,omitempty"`
+}
+
+// APIKeySettings describes API Key Provider metadata.
+type APIKeySettings struct {
+	Header    string `json:"header"`
+	SecretRef string `json:"secretRef"`
 }
 
 // ListenerSettings describes where a future WebSocket Listener will accept connections.

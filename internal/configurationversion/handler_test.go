@@ -436,6 +436,74 @@ func TestHandlerUpdateAuthentication(t *testing.T) {
 	}
 }
 
+func TestHandlerUpdateAPIKeyProvider(t *testing.T) {
+	router := newTestRouter(t, true)
+	versionsPath := "/api/v1/workspaces/1/configurations/1/versions"
+	performRequest(router, http.MethodPost, versionsPath)
+	authenticationPath := versionsPath + "/1/authentication"
+
+	response := performRequestWithBody(router, http.MethodPut, authenticationPath, `{"enabled":true,"providers":[{"name":"internal-key","type":"api-key","enabled":true,"priority":10,"apiKey":{"secretRef":"secrets/api-keys/internal"}},{"name":"jwt","type":"jwt","enabled":true,"priority":20}]}`)
+	assertStatus(t, response, http.StatusOK)
+	assertContentType(t, response)
+	updated := decodeVersion(t, response)
+	apiKey := updated.Authentication.Providers[0].APIKey
+	if apiKey == nil || apiKey.Header != "X-API-Key" || apiKey.SecretRef != "secrets/api-keys/internal" {
+		t.Errorf("default APIKey = %#v", apiKey)
+	}
+	if updated.Authentication.Providers[1].APIKey != nil {
+		t.Errorf("JWT apiKey = %#v, want omitted", updated.Authentication.Providers[1].APIKey)
+	}
+	if strings.Contains(response.Body.String(), `"apiKey":null`) {
+		t.Errorf("response contains apiKey for JWT Provider: %s", response.Body.String())
+	}
+}
+
+func TestHandlerUpdateAPIKeyProviderValidation(t *testing.T) {
+	tests := []struct {
+		name string
+		body string
+	}{
+		{name: "JWT with apiKey", body: `{"enabled":true,"providers":[{"name":"jwt","type":"jwt","enabled":true,"priority":10,"apiKey":{"header":"X-API-Key","secretRef":"secrets/jwt/main"}}]}`},
+		{name: "empty Header", body: `{"enabled":true,"providers":[{"name":"key","type":"api-key","enabled":true,"priority":10,"apiKey":{"header":"","secretRef":"secrets/api-keys/internal"}}]}`},
+		{name: "invalid Header", body: `{"enabled":true,"providers":[{"name":"key","type":"api-key","enabled":true,"priority":10,"apiKey":{"header":"X API Key","secretRef":"secrets/api-keys/internal"}}]}`},
+		{name: "empty SecretRef", body: `{"enabled":true,"providers":[{"name":"key","type":"api-key","enabled":true,"priority":10,"apiKey":{"header":"X-API-Key","secretRef":""}}]}`},
+		{name: "invalid SecretRef", body: `{"enabled":true,"providers":[{"name":"key","type":"api-key","enabled":true,"priority":10,"apiKey":{"header":"X-API-Key","secretRef":"https://example.com/secret"}}]}`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			router := newTestRouter(t, true)
+			performRequest(router, http.MethodPost, "/api/v1/workspaces/1/configurations/1/versions")
+			response := performRequestWithBody(router, http.MethodPut, "/api/v1/workspaces/1/configurations/1/versions/1/authentication", tt.body)
+			assertStatus(t, response, http.StatusBadRequest)
+			assertErrorCode(t, response, "validation_failed")
+		})
+	}
+
+	t.Run("unknown apiKey field", func(t *testing.T) {
+		router := newTestRouter(t, true)
+		performRequest(router, http.MethodPost, "/api/v1/workspaces/1/configurations/1/versions")
+		response := performRequestWithBody(router, http.MethodPut, "/api/v1/workspaces/1/configurations/1/versions/1/authentication", `{"enabled":true,"providers":[{"name":"key","type":"api-key","enabled":true,"priority":10,"apiKey":{"header":"X-API-Key","secretRef":"secrets/api-keys/internal","value":"secret"}}]}`)
+		assertStatus(t, response, http.StatusBadRequest)
+		assertErrorCode(t, response, "invalid_request")
+	})
+}
+
+func TestHandlerUpdateAPIKeyProviderLifecycleRestriction(t *testing.T) {
+	body := `{"enabled":true,"providers":[{"name":"key","type":"api-key","enabled":true,"priority":10,"apiKey":{"header":"X-API-Key","secretRef":"secrets/api-keys/internal"}}]}`
+	for _, endpoint := range []string{"publish", "archive"} {
+		t.Run(endpoint, func(t *testing.T) {
+			router := newTestRouter(t, true)
+			versionsPath := "/api/v1/workspaces/1/configurations/1/versions"
+			performRequest(router, http.MethodPost, versionsPath)
+			performRequest(router, http.MethodPost, versionsPath+"/1/"+endpoint)
+			response := performRequestWithBody(router, http.MethodPut, versionsPath+"/1/authentication", body)
+			assertStatus(t, response, http.StatusConflict)
+			assertErrorCode(t, response, "version_not_editable")
+		})
+	}
+}
+
 func TestHandlerUpdateAuthenticationInvalidRequest(t *testing.T) {
 	tests := []struct {
 		name     string

@@ -114,6 +114,66 @@ func TestServiceUpdateAuthentication(t *testing.T) {
 	}
 }
 
+func TestServiceUpdateAPIKeyProvider(t *testing.T) {
+	service := NewService(NewMemoryConfigurationVersionRepository(), configurationCheckerStub{exists: true}, time.Now)
+	created, err := service.Create(context.Background(), 1, 1)
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+
+	updated, err := service.UpdateAuthentication(context.Background(), 1, 1, created.ID, AuthenticationSettings{
+		Enabled: true,
+		Providers: []AuthenticationProvider{{
+			Name:     "internal-api-key",
+			Type:     AuthenticationProviderAPIKey,
+			Enabled:  true,
+			Priority: 10,
+			APIKey:   &APIKeySettings{Header: "  X-Internal-Key  ", SecretRef: "  secrets/api-keys/internal  "},
+		}},
+	})
+	if err != nil {
+		t.Fatalf("UpdateAuthentication() error = %v", err)
+	}
+	want := APIKeySettings{Header: "X-Internal-Key", SecretRef: "secrets/api-keys/internal"}
+	if updated.Authentication.Providers[0].APIKey == nil || *updated.Authentication.Providers[0].APIKey != want {
+		t.Errorf("APIKey = %#v, want %#v", updated.Authentication.Providers[0].APIKey, want)
+	}
+}
+
+func TestServiceUpdateAPIKeyProviderValidation(t *testing.T) {
+	valid := &APIKeySettings{Header: "X-API-Key", SecretRef: "secrets/api-keys/internal"}
+	tests := []struct {
+		name     string
+		provider AuthenticationProvider
+		field    string
+	}{
+		{name: "api-key settings missing", provider: AuthenticationProvider{Name: "key", Type: AuthenticationProviderAPIKey}, field: "providers.apiKey"},
+		{name: "JWT with apiKey", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, APIKey: valid}, field: "providers.apiKey"},
+		{name: "empty Header", provider: AuthenticationProvider{Name: "key", Type: AuthenticationProviderAPIKey, APIKey: &APIKeySettings{SecretRef: valid.SecretRef}}, field: "providers.apiKey.header"},
+		{name: "Header with spaces", provider: AuthenticationProvider{Name: "key", Type: AuthenticationProviderAPIKey, APIKey: &APIKeySettings{Header: "X API Key", SecretRef: valid.SecretRef}}, field: "providers.apiKey.header"},
+		{name: "invalid Header", provider: AuthenticationProvider{Name: "key", Type: AuthenticationProviderAPIKey, APIKey: &APIKeySettings{Header: "X-Key@", SecretRef: valid.SecretRef}}, field: "providers.apiKey.header"},
+		{name: "empty SecretRef", provider: AuthenticationProvider{Name: "key", Type: AuthenticationProviderAPIKey, APIKey: &APIKeySettings{Header: valid.Header}}, field: "providers.apiKey.secretRef"},
+		{name: "URL SecretRef", provider: AuthenticationProvider{Name: "key", Type: AuthenticationProviderAPIKey, APIKey: &APIKeySettings{Header: valid.Header, SecretRef: "https://example.com/secret"}}, field: "providers.apiKey.secretRef"},
+		{name: "Windows path SecretRef", provider: AuthenticationProvider{Name: "key", Type: AuthenticationProviderAPIKey, APIKey: &APIKeySettings{Header: valid.Header, SecretRef: `C:\secrets\api-key`}}, field: "providers.apiKey.secretRef"},
+		{name: "PEM SecretRef", provider: AuthenticationProvider{Name: "key", Type: AuthenticationProviderAPIKey, APIKey: &APIKeySettings{Header: valid.Header, SecretRef: "-----BEGIN PRIVATE KEY-----"}}, field: "providers.apiKey.secretRef"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := NewService(NewMemoryConfigurationVersionRepository(), configurationCheckerStub{exists: true}, time.Now)
+			created, err := service.Create(context.Background(), 1, 1)
+			if err != nil {
+				t.Fatalf("Create() error = %v", err)
+			}
+			_, err = service.UpdateAuthentication(context.Background(), 1, 1, created.ID, AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{tt.provider}})
+			var validationError *ValidationError
+			if !errors.As(err, &validationError) || validationError.Field != tt.field {
+				t.Errorf("UpdateAuthentication() error = %v, want ValidationError for %s", err, tt.field)
+			}
+		})
+	}
+}
+
 func TestServiceUpdateAuthenticationValidation(t *testing.T) {
 	tests := []struct {
 		name     string

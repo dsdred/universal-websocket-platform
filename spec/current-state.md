@@ -67,6 +67,9 @@
 - Настройки Authentication с флагом Enabled и упорядочиваемыми по Priority Provider типа `jwt`, `api-key` и `basic`
 - Полная замена AuthenticationSettings только для Draft Version через endpoint `/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/authentication`
 - Валидация уникальности Name и Priority Provider при допустимом повторении Type
+- API Key Provider metadata с Header и SecretRef внутри AuthenticationSettings
+- Default Header `X-API-Key` и строгая валидация HTTP header field name
+- Проверка формата SecretRef без разрешения ссылки и проверки существования Secret
 - Реальная Authentication и выполнение Provider не реализованы
 
 ## Secret References

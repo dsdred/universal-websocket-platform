@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 	"unicode/utf8"
+
+	"golang.org/x/net/http/httpguts"
 )
 
 const (
@@ -22,6 +24,8 @@ const (
 	maxListenerHostLength               = 255
 	maxTLSReferenceLength               = 255
 	maxAuthenticationProviderNameLength = 255
+	maxAPIKeyHeaderLength               = 255
+	maxSecretReferenceLength            = 255
 )
 
 // ValidationError describes invalid Configuration Version settings.
@@ -445,7 +449,19 @@ func validateAuthentication(authentication AuthenticationSettings) (Authenticati
 		names[provider.Name] = struct{}{}
 
 		switch provider.Type {
-		case AuthenticationProviderJWT, AuthenticationProviderAPIKey, AuthenticationProviderBasic:
+		case AuthenticationProviderAPIKey:
+			if provider.APIKey == nil {
+				return AuthenticationSettings{}, &ValidationError{Field: "providers.apiKey", Message: "must be provided for api-key Provider"}
+			}
+			normalized, err := validateAPIKey(*provider.APIKey)
+			if err != nil {
+				return AuthenticationSettings{}, err
+			}
+			provider.APIKey = &normalized
+		case AuthenticationProviderJWT, AuthenticationProviderBasic:
+			if provider.APIKey != nil {
+				return AuthenticationSettings{}, &ValidationError{Field: "providers.apiKey", Message: "must be omitted for non-api-key Provider"}
+			}
 		default:
 			return AuthenticationSettings{}, &ValidationError{Field: "providers.type", Message: "must be one of jwt, api-key, or basic"}
 		}
@@ -457,4 +473,27 @@ func validateAuthentication(authentication AuthenticationSettings) (Authenticati
 	}
 
 	return AuthenticationSettings{Enabled: authentication.Enabled, Providers: providers}, nil
+}
+
+func validateAPIKey(apiKey APIKeySettings) (APIKeySettings, error) {
+	apiKey.Header = strings.TrimSpace(apiKey.Header)
+	if apiKey.Header == "" {
+		return APIKeySettings{}, &ValidationError{Field: "providers.apiKey.header", Message: "must not be empty"}
+	}
+	if utf8.RuneCountInString(apiKey.Header) > maxAPIKeyHeaderLength {
+		return APIKeySettings{}, &ValidationError{Field: "providers.apiKey.header", Message: "must not exceed 255 characters"}
+	}
+	if !httpguts.ValidHeaderFieldName(apiKey.Header) {
+		return APIKeySettings{}, &ValidationError{Field: "providers.apiKey.header", Message: "must be a valid HTTP header field name"}
+	}
+
+	apiKey.SecretRef = strings.TrimSpace(apiKey.SecretRef)
+	if apiKey.SecretRef == "" {
+		return APIKeySettings{}, &ValidationError{Field: "providers.apiKey.secretRef", Message: "must not be empty"}
+	}
+	if utf8.RuneCountInString(apiKey.SecretRef) > maxSecretReferenceLength || !validTLSReference(apiKey.SecretRef) {
+		return APIKeySettings{}, &ValidationError{Field: "providers.apiKey.secretRef", Message: "must be a valid Secret Reference"}
+	}
+
+	return apiKey, nil
 }

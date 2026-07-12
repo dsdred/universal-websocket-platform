@@ -22,6 +22,26 @@ type timeoutSettingsRequest struct {
 	IdleSeconds      *uint32 `json:"idleSeconds"`
 }
 
+const defaultAPIKeyHeader = "X-API-Key"
+
+type authenticationSettingsRequest struct {
+	Enabled   bool                            `json:"enabled"`
+	Providers []authenticationProviderRequest `json:"providers"`
+}
+
+type authenticationProviderRequest struct {
+	Name     string                     `json:"name"`
+	Type     AuthenticationProviderType `json:"type"`
+	Enabled  bool                       `json:"enabled"`
+	Priority uint32                     `json:"priority"`
+	APIKey   *apiKeySettingsRequest     `json:"apiKey,omitempty"`
+}
+
+type apiKeySettingsRequest struct {
+	Header    *string `json:"header"`
+	SecretRef string  `json:"secretRef"`
+}
+
 // NewHandler creates a Configuration Version HTTP handler.
 func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
@@ -49,19 +69,40 @@ func (h *Handler) updateAuthentication(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var authentication AuthenticationSettings
-	if err := httpapi.DecodeJSON(r, &authentication); err != nil {
+	var request authenticationSettingsRequest
+	if err := httpapi.DecodeJSON(r, &request); err != nil {
 		httpapi.WriteError(w, http.StatusBadRequest, "invalid_request", "Invalid request body")
 		return
 	}
 
-	version, err := h.service.UpdateAuthentication(r.Context(), workspaceID, configurationID, versionID, authentication)
+	version, err := h.service.UpdateAuthentication(r.Context(), workspaceID, configurationID, versionID, request.settings())
 	if err != nil {
 		writeServiceError(w, err)
 		return
 	}
 
 	httpapi.WriteJSON(w, http.StatusOK, version)
+}
+
+func (r authenticationSettingsRequest) settings() AuthenticationSettings {
+	providers := make([]AuthenticationProvider, len(r.Providers))
+	for index, requestProvider := range r.Providers {
+		provider := AuthenticationProvider{
+			Name:     requestProvider.Name,
+			Type:     requestProvider.Type,
+			Enabled:  requestProvider.Enabled,
+			Priority: requestProvider.Priority,
+		}
+		if requestProvider.APIKey != nil {
+			header := defaultAPIKeyHeader
+			if requestProvider.APIKey.Header != nil {
+				header = *requestProvider.APIKey.Header
+			}
+			provider.APIKey = &APIKeySettings{Header: header, SecretRef: requestProvider.APIKey.SecretRef}
+		}
+		providers[index] = provider
+	}
+	return AuthenticationSettings{Enabled: r.Enabled, Providers: providers}
 }
 
 func (h *Handler) updateTimeouts(w http.ResponseWriter, r *http.Request) {
