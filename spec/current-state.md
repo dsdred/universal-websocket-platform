@@ -2,6 +2,15 @@
 
 **Веха:** M2 Configuration Version
 **Статус реализации:** Control Service предоставляет in-memory API для Workspace, Configuration и метаданных Configuration Version.
+**Release:** v0.1.0-alpha
+**Architecture Review:** AR-001 — PASS
+**Следующая веха:** M3 Listener Settings
+
+## Состояние релиза
+
+- Workspace CRUD завершен.
+- Configuration CRUD завершен.
+- ConfigurationVersion create, publish и archive завершены.
 
 ## Что существует
 
@@ -52,6 +61,6 @@
 - Поведения Runtime для WebSocket-серверов
 - Инфраструктуры развертывания
 - Инфраструктуры хранения данных
-- Пользовательского интерфейса
+- Admin UI
 
 Этот файл описывает реализованное состояние репозитория, а не запланированные возможности продукта. Обновляйте его только при существенном изменении этого состояния.

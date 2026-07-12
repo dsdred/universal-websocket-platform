@@ -4,7 +4,15 @@ Universal WebSocket Platform is an open-source platform for creating, configurin
 
 ## Status
 
-The project is in **M0 Bootstrap**. The repository contains the engineering and specification foundation and a minimal Go Control Service with a health endpoint.
+The project is in early alpha. The repository contains the engineering foundation, Control Service, and initial in-memory domain APIs.
+
+## Current release
+
+**Version:** `v0.1.0-alpha`
+
+**Status:** early alpha
+
+This release includes the Control Service and the basic lifecycle for Workspace, Configuration, and ConfigurationVersion. See the [`CHANGELOG.md`](CHANGELOG.md) for details.
 
 ## Project principles
 
