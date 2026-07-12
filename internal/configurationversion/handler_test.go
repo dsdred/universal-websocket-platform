@@ -411,6 +411,72 @@ func TestHandlerUpdateTimeoutsNotFoundAndState(t *testing.T) {
 	assertErrorCode(t, conflict, "version_not_editable")
 }
 
+func TestHandlerUpdateAuthentication(t *testing.T) {
+	router := newTestRouter(t, true)
+	versionsPath := "/api/v1/workspaces/1/configurations/1/versions"
+	created := decodeVersion(t, performRequest(router, http.MethodPost, versionsPath))
+	if created.Authentication.Enabled || created.Authentication.Providers == nil || len(created.Authentication.Providers) != 0 {
+		t.Errorf("default Authentication = %#v", created.Authentication)
+	}
+
+	authenticationPath := versionsPath + "/1/authentication"
+	body := `{"enabled":true,"providers":[{"name":"internal-jwt","type":"jwt","enabled":true,"priority":10},{"name":"partners-jwt","type":"jwt","enabled":true,"priority":20}]}`
+	response := performRequestWithBody(router, http.MethodPut, authenticationPath, body)
+	assertStatus(t, response, http.StatusOK)
+	assertContentType(t, response)
+	updated := decodeVersion(t, response)
+	if !updated.Authentication.Enabled || len(updated.Authentication.Providers) != 2 || updated.Authentication.Providers[1].Type != AuthenticationProviderJWT {
+		t.Errorf("updated Authentication = %#v", updated.Authentication)
+	}
+
+	disabled := performRequestWithBody(router, http.MethodPut, authenticationPath, `{"enabled":false,"providers":[]}`)
+	assertStatus(t, disabled, http.StatusOK)
+	if value := decodeVersion(t, disabled); value.Authentication.Enabled || len(value.Authentication.Providers) != 0 {
+		t.Errorf("disabled Authentication = %#v", value.Authentication)
+	}
+}
+
+func TestHandlerUpdateAuthenticationInvalidRequest(t *testing.T) {
+	tests := []struct {
+		name     string
+		body     string
+		wantCode string
+	}{
+		{name: "enabled without Provider", body: `{"enabled":true,"providers":[]}`, wantCode: "validation_failed"},
+		{name: "duplicate Name", body: `{"enabled":true,"providers":[{"name":"same","type":"jwt","enabled":true,"priority":10},{"name":"same","type":"basic","enabled":true,"priority":20}]}`, wantCode: "validation_failed"},
+		{name: "duplicate Priority", body: `{"enabled":true,"providers":[{"name":"jwt","type":"jwt","enabled":true,"priority":10},{"name":"basic","type":"basic","enabled":true,"priority":10}]}`, wantCode: "validation_failed"},
+		{name: "invalid Type", body: `{"enabled":true,"providers":[{"name":"custom","type":"custom","enabled":true,"priority":10}]}`, wantCode: "validation_failed"},
+		{name: "unknown field", body: `{"enabled":false,"providers":[],"runtime":true}`, wantCode: "invalid_request"},
+		{name: "unknown Provider field", body: `{"enabled":true,"providers":[{"name":"jwt","type":"jwt","enabled":true,"priority":10,"issuer":"example"}]}`, wantCode: "invalid_request"},
+		{name: "malformed JSON", body: `{"enabled":`, wantCode: "invalid_request"},
+		{name: "empty body", body: "", wantCode: "invalid_request"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			router := newTestRouter(t, true)
+			performRequest(router, http.MethodPost, "/api/v1/workspaces/1/configurations/1/versions")
+			response := performRequestWithBody(router, http.MethodPut, "/api/v1/workspaces/1/configurations/1/versions/1/authentication", tt.body)
+			assertStatus(t, response, http.StatusBadRequest)
+			assertErrorCode(t, response, tt.wantCode)
+		})
+	}
+}
+
+func TestHandlerUpdateAuthenticationLifecycleRestriction(t *testing.T) {
+	for _, endpoint := range []string{"publish", "archive"} {
+		t.Run(endpoint, func(t *testing.T) {
+			router := newTestRouter(t, true)
+			versionsPath := "/api/v1/workspaces/1/configurations/1/versions"
+			performRequest(router, http.MethodPost, versionsPath)
+			performRequest(router, http.MethodPost, versionsPath+"/1/"+endpoint)
+			response := performRequestWithBody(router, http.MethodPut, versionsPath+"/1/authentication", `{"enabled":false,"providers":[]}`)
+			assertStatus(t, response, http.StatusConflict)
+			assertErrorCode(t, response, "version_not_editable")
+		})
+	}
+}
+
 func newTestRouter(t *testing.T, configurationExists bool) http.Handler {
 	t.Helper()
 	configurationRepository := configuration.NewMemoryConfigurationRepository()

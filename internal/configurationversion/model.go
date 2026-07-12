@@ -12,6 +12,29 @@ const (
 	Archived  VersionState = "Archived"
 )
 
+// AuthenticationProviderType identifies the configured Authentication mechanism.
+type AuthenticationProviderType string
+
+const (
+	AuthenticationProviderJWT    AuthenticationProviderType = "jwt"
+	AuthenticationProviderAPIKey AuthenticationProviderType = "api-key"
+	AuthenticationProviderBasic  AuthenticationProviderType = "basic"
+)
+
+// AuthenticationSettings describes Authentication metadata for a Configuration Version.
+type AuthenticationSettings struct {
+	Enabled   bool                     `json:"enabled"`
+	Providers []AuthenticationProvider `json:"providers"`
+}
+
+// AuthenticationProvider describes one configured Authentication Provider.
+type AuthenticationProvider struct {
+	Name     string                     `json:"name"`
+	Type     AuthenticationProviderType `json:"type"`
+	Enabled  bool                       `json:"enabled"`
+	Priority uint32                     `json:"priority"`
+}
+
 // ListenerSettings describes where a future WebSocket Listener will accept connections.
 type ListenerSettings struct {
 	Host     string          `json:"host"`
@@ -38,11 +61,12 @@ type TLSSettings struct {
 
 // ConfigurationVersion contains metadata for a Configuration Version.
 type ConfigurationVersion struct {
-	ID              uint64           `json:"id"`
-	ConfigurationID uint64           `json:"configurationId"`
-	Number          uint32           `json:"number"`
-	State           VersionState     `json:"state"`
-	Listener        ListenerSettings `json:"listener"`
-	CreatedAt       time.Time        `json:"createdAt"`
-	UpdatedAt       time.Time        `json:"updatedAt"`
+	ID              uint64                 `json:"id"`
+	ConfigurationID uint64                 `json:"configurationId"`
+	Number          uint32                 `json:"number"`
+	State           VersionState           `json:"state"`
+	Listener        ListenerSettings       `json:"listener"`
+	Authentication  AuthenticationSettings `json:"authentication"`
+	CreatedAt       time.Time              `json:"createdAt"`
+	UpdatedAt       time.Time              `json:"updatedAt"`
 }

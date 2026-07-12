@@ -61,6 +61,14 @@
 - Значения timeout задаются в секундах и редактируются только для Draft Version
 - Значение `0` отключает только read и idle timeout; handshake и write требуют положительного значения
 
+## Authentication Domain Model
+
+- AuthenticationSettings как отдельная metadata-секция ConfigurationVersion
+- Настройки Authentication с флагом Enabled и упорядочиваемыми по Priority Provider типа `jwt`, `api-key` и `basic`
+- Полная замена AuthenticationSettings только для Draft Version через endpoint `/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/authentication`
+- Валидация уникальности Name и Priority Provider при допустимом повторении Type
+- Реальная Authentication и выполнение Provider не реализованы
+
 ## Чего не существует
 
 - Персистентного хранения Workspace
@@ -72,6 +80,8 @@
 - WebSocket listener и запуск TCP listener
 - Реальный TLS listener и другие сетевые параметры Listener
 - Применение Listener TimeoutSettings в Runtime
+- Реальная Authentication, проверка JWT, API Key и Basic credentials
+- AuthenticationService, AuthenticationRequest, Principal и выполнение Provider
 - Инфраструктуры развертывания
 - Инфраструктуры хранения данных
 - Admin UI

@@ -36,6 +36,32 @@ func (h *Handler) RegisterRoutes(router chi.Router) {
 	router.Put("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/listener", h.updateListener)
 	router.Put("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/listener/tls", h.updateTLS)
 	router.Put("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/listener/timeouts", h.updateTimeouts)
+	router.Put("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/authentication", h.updateAuthentication)
+}
+
+func (h *Handler) updateAuthentication(w http.ResponseWriter, r *http.Request) {
+	workspaceID, configurationID, ok := requestIDs(w, r)
+	if !ok {
+		return
+	}
+	versionID, ok := pathID(w, r, "versionID", "Invalid version ID")
+	if !ok {
+		return
+	}
+
+	var authentication AuthenticationSettings
+	if err := httpapi.DecodeJSON(r, &authentication); err != nil {
+		httpapi.WriteError(w, http.StatusBadRequest, "invalid_request", "Invalid request body")
+		return
+	}
+
+	version, err := h.service.UpdateAuthentication(r.Context(), workspaceID, configurationID, versionID, authentication)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	httpapi.WriteJSON(w, http.StatusOK, version)
 }
 
 func (h *Handler) updateTimeouts(w http.ResponseWriter, r *http.Request) {

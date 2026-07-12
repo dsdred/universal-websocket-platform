@@ -2,6 +2,7 @@ package configurationversion
 
 import (
 	"errors"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -31,7 +32,7 @@ func TestMemoryRepositoryCRUD(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get() error = %v", err)
 	}
-	if got != first {
+	if !reflect.DeepEqual(got, first) {
 		t.Errorf("Get() = %#v, want %#v", got, first)
 	}
 

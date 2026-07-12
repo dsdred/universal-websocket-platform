@@ -12,15 +12,16 @@ import (
 )
 
 const (
-	defaultListenerHost     = "127.0.0.1"
-	defaultListenerPort     = 8080
-	defaultTLSMinVersion    = "1.2"
-	defaultHandshakeSeconds = 10
-	defaultReadSeconds      = 0
-	defaultWriteSeconds     = 10
-	defaultIdleSeconds      = 60
-	maxListenerHostLength   = 255
-	maxTLSReferenceLength   = 255
+	defaultListenerHost                 = "127.0.0.1"
+	defaultListenerPort                 = 8080
+	defaultTLSMinVersion                = "1.2"
+	defaultHandshakeSeconds             = 10
+	defaultReadSeconds                  = 0
+	defaultWriteSeconds                 = 10
+	defaultIdleSeconds                  = 60
+	maxListenerHostLength               = 255
+	maxTLSReferenceLength               = 255
+	maxAuthenticationProviderNameLength = 255
 )
 
 // ValidationError describes invalid Configuration Version settings.
@@ -86,9 +87,47 @@ func (s *Service) Create(ctx context.Context, workspaceID, configurationID uint6
 				IdleSeconds:      defaultIdleSeconds,
 			},
 		},
+		Authentication: AuthenticationSettings{
+			Enabled:   false,
+			Providers: make([]AuthenticationProvider, 0),
+		},
 		CreatedAt: now,
 		UpdatedAt: now,
 	})
+}
+
+// UpdateAuthentication validates and replaces Authentication settings for a Draft Version.
+func (s *Service) UpdateAuthentication(
+	ctx context.Context,
+	workspaceID, configurationID, versionID uint64,
+	authentication AuthenticationSettings,
+) (ConfigurationVersion, error) {
+	if err := s.requireConfiguration(ctx, workspaceID, configurationID); err != nil {
+		return ConfigurationVersion{}, err
+	}
+
+	s.lifecycleMu.Lock()
+	defer s.lifecycleMu.Unlock()
+
+	version, err := s.repository.Get(versionID)
+	if err != nil || version.ConfigurationID != configurationID {
+		if err == nil || errors.Is(err, ErrConfigurationVersionNotFound) {
+			return ConfigurationVersion{}, ErrConfigurationVersionNotFound
+		}
+		return ConfigurationVersion{}, err
+	}
+	if version.State != Draft {
+		return ConfigurationVersion{}, ErrVersionNotEditable
+	}
+
+	normalized, err := validateAuthentication(authentication)
+	if err != nil {
+		return ConfigurationVersion{}, err
+	}
+
+	version.Authentication = normalized
+	version.UpdatedAt = s.now().UTC()
+	return s.repository.Update(version)
 }
 
 // UpdateTimeouts validates and updates timeout settings for a Draft Version.
@@ -382,4 +421,40 @@ func validateTimeouts(timeouts TimeoutSettings) error {
 		return &ValidationError{Field: "idleSeconds", Message: "must be between 0 and 86400"}
 	}
 	return nil
+}
+
+func validateAuthentication(authentication AuthenticationSettings) (AuthenticationSettings, error) {
+	if authentication.Enabled && len(authentication.Providers) == 0 {
+		return AuthenticationSettings{}, &ValidationError{Field: "providers", Message: "must contain at least one provider when Authentication is enabled"}
+	}
+
+	providers := make([]AuthenticationProvider, len(authentication.Providers))
+	names := make(map[string]struct{}, len(authentication.Providers))
+	priorities := make(map[uint32]struct{}, len(authentication.Providers))
+	for index, provider := range authentication.Providers {
+		provider.Name = strings.TrimSpace(provider.Name)
+		if provider.Name == "" {
+			return AuthenticationSettings{}, &ValidationError{Field: "providers.name", Message: "must not be empty"}
+		}
+		if utf8.RuneCountInString(provider.Name) > maxAuthenticationProviderNameLength {
+			return AuthenticationSettings{}, &ValidationError{Field: "providers.name", Message: "must not exceed 255 characters"}
+		}
+		if _, exists := names[provider.Name]; exists {
+			return AuthenticationSettings{}, &ValidationError{Field: "providers.name", Message: "must be unique"}
+		}
+		names[provider.Name] = struct{}{}
+
+		switch provider.Type {
+		case AuthenticationProviderJWT, AuthenticationProviderAPIKey, AuthenticationProviderBasic:
+		default:
+			return AuthenticationSettings{}, &ValidationError{Field: "providers.type", Message: "must be one of jwt, api-key, or basic"}
+		}
+		if _, exists := priorities[provider.Priority]; exists {
+			return AuthenticationSettings{}, &ValidationError{Field: "providers.priority", Message: "must be unique"}
+		}
+		priorities[provider.Priority] = struct{}{}
+		providers[index] = provider
+	}
+
+	return AuthenticationSettings{Enabled: authentication.Enabled, Providers: providers}, nil
 }

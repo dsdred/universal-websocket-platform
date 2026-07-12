@@ -54,6 +54,9 @@ func TestServiceCreatesDraftVersionsWithAutomaticNumbers(t *testing.T) {
 	if first.Listener.Timeouts != (TimeoutSettings{HandshakeSeconds: 10, ReadSeconds: 0, WriteSeconds: 10, IdleSeconds: 60}) {
 		t.Errorf("default Timeouts = %#v", first.Listener.Timeouts)
 	}
+	if first.Authentication.Enabled || first.Authentication.Providers == nil || len(first.Authentication.Providers) != 0 {
+		t.Errorf("default Authentication = %#v, want disabled with empty providers", first.Authentication)
+	}
 	if first.ConfigurationID != 1 || first.CreatedAt.Location() != time.UTC || !first.CreatedAt.Equal(firstTime) {
 		t.Errorf("first Version = %#v", first)
 	}
@@ -67,6 +70,94 @@ func TestServiceCreatesDraftVersionsWithAutomaticNumbers(t *testing.T) {
 	}
 	if len(versions) != 2 || versions[0].Number != 1 || versions[1].Number != 2 {
 		t.Errorf("List() numbers = %v, want [1 2]", versionNumbers(versions))
+	}
+}
+
+func TestServiceUpdateAuthentication(t *testing.T) {
+	createdAt := time.Date(2026, 7, 13, 12, 0, 0, 0, time.UTC)
+	updatedAt := createdAt.Add(time.Minute)
+	times := []time.Time{createdAt, updatedAt, updatedAt.Add(time.Minute)}
+	service := NewService(NewMemoryConfigurationVersionRepository(), configurationCheckerStub{exists: true}, func() time.Time {
+		now := times[0]
+		times = times[1:]
+		return now
+	})
+
+	created, err := service.Create(context.Background(), 1, 1)
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	settings := AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{
+		{Name: "  internal-jwt  ", Type: AuthenticationProviderJWT, Enabled: true, Priority: 10},
+		{Name: "partners-jwt", Type: AuthenticationProviderJWT, Enabled: true, Priority: 20},
+	}}
+	updated, err := service.UpdateAuthentication(context.Background(), 1, 1, created.ID, settings)
+	if err != nil {
+		t.Fatalf("UpdateAuthentication() error = %v", err)
+	}
+	if !updated.Authentication.Enabled || len(updated.Authentication.Providers) != 2 {
+		t.Fatalf("Authentication = %#v", updated.Authentication)
+	}
+	if updated.Authentication.Providers[0].Name != "internal-jwt" || updated.Authentication.Providers[1].Type != AuthenticationProviderJWT {
+		t.Errorf("normalized Providers = %#v", updated.Authentication.Providers)
+	}
+	if !updated.UpdatedAt.Equal(updatedAt) || updated.UpdatedAt.Location() != time.UTC {
+		t.Errorf("UpdatedAt = %s, want %s UTC", updated.UpdatedAt, updatedAt)
+	}
+
+	disabled, err := service.UpdateAuthentication(context.Background(), 1, 1, created.ID, AuthenticationSettings{Enabled: false})
+	if err != nil {
+		t.Fatalf("UpdateAuthentication(disabled) error = %v", err)
+	}
+	if disabled.Authentication.Enabled || disabled.Authentication.Providers == nil || len(disabled.Authentication.Providers) != 0 {
+		t.Errorf("disabled Authentication = %#v", disabled.Authentication)
+	}
+}
+
+func TestServiceUpdateAuthenticationValidation(t *testing.T) {
+	tests := []struct {
+		name     string
+		settings AuthenticationSettings
+		field    string
+	}{
+		{name: "enabled without Provider", settings: AuthenticationSettings{Enabled: true}, field: "providers"},
+		{name: "empty Name", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Type: AuthenticationProviderJWT}}}, field: "providers.name"},
+		{name: "long Unicode Name", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Name: strings.Repeat("я", 256), Type: AuthenticationProviderJWT}}}, field: "providers.name"},
+		{name: "duplicate trimmed Name", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Name: "jwt", Type: AuthenticationProviderJWT, Priority: 10}, {Name: " jwt ", Type: AuthenticationProviderBasic, Priority: 20}}}, field: "providers.name"},
+		{name: "duplicate Priority", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Name: "jwt", Type: AuthenticationProviderJWT, Priority: 10}, {Name: "basic", Type: AuthenticationProviderBasic, Priority: 10}}}, field: "providers.priority"},
+		{name: "invalid Type", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Name: "custom", Type: "custom"}}}, field: "providers.type"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := NewService(NewMemoryConfigurationVersionRepository(), configurationCheckerStub{exists: true}, time.Now)
+			created, err := service.Create(context.Background(), 1, 1)
+			if err != nil {
+				t.Fatalf("Create() error = %v", err)
+			}
+			_, err = service.UpdateAuthentication(context.Background(), 1, 1, created.ID, tt.settings)
+			var validationError *ValidationError
+			if !errors.As(err, &validationError) || validationError.Field != tt.field {
+				t.Errorf("UpdateAuthentication() error = %v, want ValidationError for %s", err, tt.field)
+			}
+		})
+	}
+}
+
+func TestServiceUpdateAuthenticationLifecycleRestriction(t *testing.T) {
+	for _, state := range []VersionState{Published, Archived} {
+		t.Run(string(state), func(t *testing.T) {
+			repository := NewMemoryConfigurationVersionRepository()
+			version, err := repository.Create(ConfigurationVersion{ConfigurationID: 1, Number: 1, State: state})
+			if err != nil {
+				t.Fatalf("Create() error = %v", err)
+			}
+			service := NewService(repository, configurationCheckerStub{exists: true}, time.Now)
+			_, err = service.UpdateAuthentication(context.Background(), 1, 1, version.ID, AuthenticationSettings{})
+			if !errors.Is(err, ErrVersionNotEditable) {
+				t.Errorf("UpdateAuthentication(%s) error = %v, want ErrVersionNotEditable", state, err)
+			}
+		})
 	}
 }
 
