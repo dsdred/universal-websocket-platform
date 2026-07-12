@@ -3,6 +3,7 @@ package configurationversion
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -43,6 +44,9 @@ func TestServiceCreatesDraftVersionsWithAutomaticNumbers(t *testing.T) {
 	}
 	if first.State != Draft || second.State != Draft {
 		t.Errorf("States = [%q %q], want Draft", first.State, second.State)
+	}
+	if first.Listener.Host != "127.0.0.1" || first.Listener.Port != 8080 {
+		t.Errorf("default Listener = %#v, want 127.0.0.1:8080", first.Listener)
 	}
 	if first.ConfigurationID != 1 || first.CreatedAt.Location() != time.UTC || !first.CreatedAt.Equal(firstTime) {
 		t.Errorf("first Version = %#v", first)
@@ -207,6 +211,7 @@ func TestServiceArchiveAllowedStates(t *testing.T) {
 				ConfigurationID: 1,
 				Number:          7,
 				State:           state,
+				Listener:        ListenerSettings{Host: "ws.internal.local", Port: 9000},
 				CreatedAt:       createdAt,
 				UpdatedAt:       createdAt,
 			})
@@ -224,6 +229,9 @@ func TestServiceArchiveAllowedStates(t *testing.T) {
 			}
 			if archived.ID != original.ID || archived.ConfigurationID != original.ConfigurationID || archived.Number != original.Number || !archived.CreatedAt.Equal(original.CreatedAt) {
 				t.Errorf("Archive() changed immutable fields: %#v", archived)
+			}
+			if archived.Listener != original.Listener {
+				t.Errorf("Archive() changed Listener from %#v to %#v", original.Listener, archived.Listener)
 			}
 
 			if _, err := service.Archive(context.Background(), 1, 1, original.ID); !errors.Is(err, ErrVersionNotArchivable) {
@@ -256,5 +264,139 @@ func TestServiceArchiveNotFound(t *testing.T) {
 	missingConfigurationService := NewService(repository, configurationCheckerStub{exists: false}, time.Now)
 	if _, err := missingConfigurationService.Archive(context.Background(), 1, 1, version.ID); !errors.Is(err, ErrConfigurationNotFound) {
 		t.Errorf("Archive(missing Configuration) error = %v, want ErrConfigurationNotFound", err)
+	}
+}
+
+func TestServiceUpdateListener(t *testing.T) {
+	createdAt := time.Date(2026, 7, 12, 12, 0, 0, 0, time.UTC)
+	updatedAt := createdAt.Add(time.Minute)
+	times := []time.Time{createdAt, updatedAt}
+	service := NewService(NewMemoryConfigurationVersionRepository(), configurationCheckerStub{exists: true}, func() time.Time {
+		now := times[0]
+		times = times[1:]
+		return now
+	})
+
+	created, err := service.Create(context.Background(), 1, 1)
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	updated, err := service.UpdateListener(context.Background(), 1, 1, created.ID, ListenerSettings{Host: "  0.0.0.0  ", Port: 9000})
+	if err != nil {
+		t.Fatalf("UpdateListener() error = %v", err)
+	}
+	if updated.Listener != (ListenerSettings{Host: "0.0.0.0", Port: 9000}) {
+		t.Errorf("Listener = %#v", updated.Listener)
+	}
+	if updated.ID != created.ID || updated.ConfigurationID != created.ConfigurationID || updated.Number != created.Number || updated.State != created.State || !updated.CreatedAt.Equal(created.CreatedAt) {
+		t.Errorf("UpdateListener() changed immutable fields: %#v", updated)
+	}
+	if !updated.UpdatedAt.Equal(updatedAt) || updated.UpdatedAt.Equal(created.UpdatedAt) || updated.UpdatedAt.Location() != time.UTC {
+		t.Errorf("UpdatedAt = %s, want %s UTC", updated.UpdatedAt, updatedAt)
+	}
+}
+
+func TestServiceUpdateListenerValidBoundaries(t *testing.T) {
+	tests := []struct {
+		name     string
+		listener ListenerSettings
+	}{
+		{name: "IPv4 minimum port", listener: ListenerSettings{Host: "127.0.0.1", Port: 1}},
+		{name: "IPv4 wildcard", listener: ListenerSettings{Host: "0.0.0.0", Port: 9000}},
+		{name: "IPv6 maximum port", listener: ListenerSettings{Host: "::1", Port: 65535}},
+		{name: "localhost", listener: ListenerSettings{Host: "localhost", Port: 8080}},
+		{name: "hostname", listener: ListenerSettings{Host: "ws.internal.local", Port: 8080}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := NewService(NewMemoryConfigurationVersionRepository(), configurationCheckerStub{exists: true}, time.Now)
+			created, err := service.Create(context.Background(), 1, 1)
+			if err != nil {
+				t.Fatalf("Create() error = %v", err)
+			}
+			if _, err := service.UpdateListener(context.Background(), 1, 1, created.ID, tt.listener); err != nil {
+				t.Errorf("UpdateListener() error = %v", err)
+			}
+		})
+	}
+}
+
+func TestServiceUpdateListenerValidation(t *testing.T) {
+	tests := []struct {
+		name     string
+		listener ListenerSettings
+		field    string
+	}{
+		{name: "empty host", listener: ListenerSettings{Host: "", Port: 8080}, field: "host"},
+		{name: "whitespace host", listener: ListenerSettings{Host: "  ", Port: 8080}, field: "host"},
+		{name: "URL scheme", listener: ListenerSettings{Host: "http://localhost", Port: 8080}, field: "host"},
+		{name: "host with port", listener: ListenerSettings{Host: "localhost:8080", Port: 8080}, field: "host"},
+		{name: "WebSocket URL", listener: ListenerSettings{Host: "ws://127.0.0.1", Port: 8080}, field: "host"},
+		{name: "spaces", listener: ListenerSettings{Host: "name with spaces", Port: 8080}, field: "host"},
+		{name: "long host", listener: ListenerSettings{Host: strings.Repeat("a", 256), Port: 8080}, field: "host"},
+		{name: "zero port", listener: ListenerSettings{Host: "localhost", Port: 0}, field: "port"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := NewService(NewMemoryConfigurationVersionRepository(), configurationCheckerStub{exists: true}, time.Now)
+			created, err := service.Create(context.Background(), 1, 1)
+			if err != nil {
+				t.Fatalf("Create() error = %v", err)
+			}
+			_, err = service.UpdateListener(context.Background(), 1, 1, created.ID, tt.listener)
+			var validationError *ValidationError
+			if !errors.As(err, &validationError) || validationError.Field != tt.field {
+				t.Errorf("UpdateListener() error = %v, want ValidationError for %s", err, tt.field)
+			}
+		})
+	}
+}
+
+func TestServiceUpdateListenerStateAndScope(t *testing.T) {
+	for _, state := range []VersionState{Published, Archived, Validated} {
+		t.Run(string(state), func(t *testing.T) {
+			repository := NewMemoryConfigurationVersionRepository()
+			version, err := repository.Create(ConfigurationVersion{ConfigurationID: 1, Number: 1, State: state})
+			if err != nil {
+				t.Fatalf("Create() error = %v", err)
+			}
+			service := NewService(repository, configurationCheckerStub{exists: true}, time.Now)
+			_, err = service.UpdateListener(context.Background(), 1, 1, version.ID, ListenerSettings{Host: "localhost", Port: 8080})
+			if !errors.Is(err, ErrVersionNotEditable) {
+				t.Errorf("UpdateListener(%s) error = %v, want ErrVersionNotEditable", state, err)
+			}
+		})
+	}
+
+	repository := NewMemoryConfigurationVersionRepository()
+	version, _ := repository.Create(ConfigurationVersion{ConfigurationID: 1, Number: 1, State: Draft})
+	service := NewService(repository, configurationCheckerStub{exists: true}, time.Now)
+	if _, err := service.UpdateListener(context.Background(), 1, 2, version.ID, ListenerSettings{Host: "localhost", Port: 8080}); !errors.Is(err, ErrConfigurationVersionNotFound) {
+		t.Errorf("UpdateListener(other Configuration) error = %v", err)
+	}
+}
+
+func TestListenerLifecycleRegression(t *testing.T) {
+	repository := NewMemoryConfigurationVersionRepository()
+	service := NewService(repository, configurationCheckerStub{exists: true}, time.Now)
+
+	first, _ := service.Create(context.Background(), 1, 1)
+	first, _ = service.UpdateListener(context.Background(), 1, 1, first.ID, ListenerSettings{Host: "0.0.0.0", Port: 9000})
+	first, _ = service.Publish(context.Background(), 1, 1, first.ID)
+	if first.Listener != (ListenerSettings{Host: "0.0.0.0", Port: 9000}) {
+		t.Errorf("Publish changed first Listener: %#v", first.Listener)
+	}
+
+	second, _ := service.Create(context.Background(), 1, 1)
+	second, _ = service.UpdateListener(context.Background(), 1, 1, second.ID, ListenerSettings{Host: "localhost", Port: 9001})
+	second, _ = service.Publish(context.Background(), 1, 1, second.ID)
+	archivedFirst, _ := repository.Get(first.ID)
+	if archivedFirst.State != Archived || archivedFirst.Listener != (ListenerSettings{Host: "0.0.0.0", Port: 9000}) {
+		t.Errorf("auto-archive changed first Version: %#v", archivedFirst)
+	}
+	if second.Listener != (ListenerSettings{Host: "localhost", Port: 9001}) {
+		t.Errorf("Publish changed second Listener: %#v", second.Listener)
 	}
 }

@@ -17,6 +17,9 @@ var ErrVersionNotPublishable = errors.New("configuration version is not publisha
 // ErrVersionNotArchivable indicates that a Version cannot transition to Archived.
 var ErrVersionNotArchivable = errors.New("configuration version is not archivable")
 
+// ErrVersionNotEditable indicates that a Version cannot be edited in its current state.
+var ErrVersionNotEditable = errors.New("configuration version is not editable")
+
 // ConfigurationExistenceChecker checks whether a Configuration exists in a Workspace.
 type ConfigurationExistenceChecker interface {
 	Exists(context.Context, uint64, uint64) (bool, error)

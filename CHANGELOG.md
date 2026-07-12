@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- ListenerSettings metadata with validated Host and Port for Draft ConfigurationVersion entities.
+
 ## [0.1.0-alpha] - 2026-07-12
 
 ### Added
@@ -33,4 +39,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Validation, Rollback, and Snapshot are not implemented yet.
 - The race detector was not run in the current Windows environment without CGO.
 
+[Unreleased]: https://github.com/dsdred/universal-websocket-platform/compare/v0.1.0-alpha...HEAD
 [0.1.0-alpha]: https://github.com/dsdred/universal-websocket-platform/releases/tag/v0.1.0-alpha

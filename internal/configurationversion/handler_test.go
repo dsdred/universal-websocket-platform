@@ -2,6 +2,7 @@ package configurationversion
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -159,6 +160,88 @@ func TestHandlerArchiveNotFound(t *testing.T) {
 	assertErrorCode(t, missingVersion, "version_not_found")
 }
 
+func TestHandlerUpdateListener(t *testing.T) {
+	router := newTestRouter(t, true)
+	versionsPath := "/api/v1/workspaces/1/configurations/1/versions"
+	created := decodeVersion(t, performRequest(router, http.MethodPost, versionsPath))
+	listenerPath := versionsPath + "/1/listener"
+
+	response := performRequestWithBody(router, http.MethodPut, listenerPath, `{"host":"0.0.0.0","port":9000}`)
+	assertStatus(t, response, http.StatusOK)
+	assertContentType(t, response)
+	updated := decodeVersion(t, response)
+	if updated.ID != created.ID || updated.State != Draft || updated.Listener != (ListenerSettings{Host: "0.0.0.0", Port: 9000}) {
+		t.Errorf("updated Version = %#v", updated)
+	}
+
+	publish := performRequest(router, http.MethodPost, versionsPath+"/1/publish")
+	assertStatus(t, publish, http.StatusOK)
+	published := decodeVersion(t, publish)
+	if published.Listener != updated.Listener {
+		t.Errorf("Publish changed Listener from %#v to %#v", updated.Listener, published.Listener)
+	}
+
+	conflict := performRequestWithBody(router, http.MethodPut, listenerPath, `{"host":"localhost","port":8080}`)
+	assertStatus(t, conflict, http.StatusConflict)
+	assertErrorCode(t, conflict, "version_not_editable")
+}
+
+func TestHandlerUpdateListenerInvalidRequest(t *testing.T) {
+	tests := []struct {
+		name     string
+		body     string
+		wantCode string
+	}{
+		{name: "validation failed", body: `{"host":"","port":8080}`, wantCode: "validation_failed"},
+		{name: "zero port", body: `{"host":"localhost","port":0}`, wantCode: "validation_failed"},
+		{name: "malformed JSON", body: `{"host":`, wantCode: "invalid_request"},
+		{name: "unknown field", body: `{"host":"localhost","port":8080,"tls":true}`, wantCode: "invalid_request"},
+		{name: "empty body", body: "", wantCode: "invalid_request"},
+		{name: "additional JSON", body: `{"host":"localhost","port":8080}{}`, wantCode: "invalid_request"},
+		{name: "string port", body: `{"host":"localhost","port":"8080"}`, wantCode: "invalid_request"},
+		{name: "fractional port", body: `{"host":"localhost","port":1.5}`, wantCode: "invalid_request"},
+		{name: "negative port", body: `{"host":"localhost","port":-1}`, wantCode: "invalid_request"},
+		{name: "port above range", body: `{"host":"localhost","port":65536}`, wantCode: "invalid_request"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			router := newTestRouter(t, true)
+			performRequest(router, http.MethodPost, "/api/v1/workspaces/1/configurations/1/versions")
+			response := performRequestWithBody(
+				router,
+				http.MethodPut,
+				"/api/v1/workspaces/1/configurations/1/versions/1/listener",
+				tt.body,
+			)
+			assertStatus(t, response, http.StatusBadRequest)
+			assertContentType(t, response)
+			assertErrorCode(t, response, tt.wantCode)
+		})
+	}
+}
+
+func TestHandlerUpdateListenerNotFound(t *testing.T) {
+	missingConfiguration := performRequestWithBody(
+		newTestRouter(t, false),
+		http.MethodPut,
+		"/api/v1/workspaces/1/configurations/42/versions/1/listener",
+		`{"host":"localhost","port":8080}`,
+	)
+	assertStatus(t, missingConfiguration, http.StatusNotFound)
+	assertErrorCode(t, missingConfiguration, "configuration_not_found")
+
+	router := newTestRouter(t, true)
+	missingVersion := performRequestWithBody(
+		router,
+		http.MethodPut,
+		"/api/v1/workspaces/1/configurations/1/versions/42/listener",
+		`{"host":"localhost","port":8080}`,
+	)
+	assertStatus(t, missingVersion, http.StatusNotFound)
+	assertErrorCode(t, missingVersion, "version_not_found")
+}
+
 func newTestRouter(t *testing.T, configurationExists bool) http.Handler {
 	t.Helper()
 	configurationRepository := configuration.NewMemoryConfigurationRepository()
@@ -179,7 +262,15 @@ func newTestRouter(t *testing.T, configurationExists bool) http.Handler {
 }
 
 func performRequest(handler http.Handler, method, path string) *httptest.ResponseRecorder {
-	request := httptest.NewRequest(method, path, nil)
+	return performRequestWithBody(handler, method, path, "")
+}
+
+func performRequestWithBody(handler http.Handler, method, path, body string) *httptest.ResponseRecorder {
+	var reader io.Reader
+	if body != "" {
+		reader = strings.NewReader(body)
+	}
+	request := httptest.NewRequest(method, path, reader)
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 	return response

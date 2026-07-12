@@ -26,6 +26,32 @@ func (h *Handler) RegisterRoutes(router chi.Router) {
 	router.Get("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions", h.list)
 	router.Post("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/publish", h.publish)
 	router.Post("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/archive", h.archive)
+	router.Put("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/listener", h.updateListener)
+}
+
+func (h *Handler) updateListener(w http.ResponseWriter, r *http.Request) {
+	workspaceID, configurationID, ok := requestIDs(w, r)
+	if !ok {
+		return
+	}
+	versionID, ok := pathID(w, r, "versionID", "Invalid version ID")
+	if !ok {
+		return
+	}
+
+	var listener ListenerSettings
+	if err := httpapi.DecodeJSON(r, &listener); err != nil {
+		httpapi.WriteError(w, http.StatusBadRequest, "invalid_request", "Invalid request body")
+		return
+	}
+
+	version, err := h.service.UpdateListener(r.Context(), workspaceID, configurationID, versionID, listener)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	httpapi.WriteJSON(w, http.StatusOK, version)
 }
 
 func (h *Handler) archive(w http.ResponseWriter, r *http.Request) {
@@ -118,7 +144,11 @@ func pathID(w http.ResponseWriter, r *http.Request, parameter, message string) (
 }
 
 func writeServiceError(w http.ResponseWriter, err error) {
+	var validationError *ValidationError
+
 	switch {
+	case errors.As(err, &validationError):
+		httpapi.WriteError(w, http.StatusBadRequest, "validation_failed", validationError.Error())
 	case errors.Is(err, ErrConfigurationNotFound):
 		httpapi.WriteError(w, http.StatusNotFound, "configuration_not_found", "Configuration not found")
 	case errors.Is(err, ErrConfigurationVersionNotFound):
@@ -127,6 +157,8 @@ func writeServiceError(w http.ResponseWriter, err error) {
 		httpapi.WriteError(w, http.StatusConflict, "version_not_publishable", "Configuration version cannot be published")
 	case errors.Is(err, ErrVersionNotArchivable):
 		httpapi.WriteError(w, http.StatusConflict, "version_not_archivable", "Configuration version cannot be archived")
+	case errors.Is(err, ErrVersionNotEditable):
+		httpapi.WriteError(w, http.StatusConflict, "version_not_editable", "Configuration version cannot be edited")
 	default:
 		httpapi.WriteError(w, http.StatusInternalServerError, "internal_error", "Internal server error")
 	}

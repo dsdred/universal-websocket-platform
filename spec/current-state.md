@@ -1,10 +1,9 @@
 # Текущее состояние
 
-**Веха:** M2 Configuration Version
-**Статус реализации:** Control Service предоставляет in-memory API для Workspace, Configuration и метаданных Configuration Version.
+**Веха:** M3 Listener Settings
+**Статус реализации:** Control Service предоставляет in-memory API для Workspace, Configuration, Configuration Version и ListenerSettings.
 **Release:** v0.1.0-alpha
 **Architecture Review:** AR-001 — PASS
-**Следующая веха:** M3 Listener Settings
 
 ## Состояние релиза
 
@@ -50,6 +49,10 @@
 - Инвариант единственной Published Version внутри Configuration
 - Ручное архивирование Draft, Validated и Published Version через endpoint `/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/archive`
 - Архивирование Published Version без автоматической публикации замены
+- ListenerSettings с Host и Port для ConfigurationVersion
+- Значения ListenerSettings по умолчанию `127.0.0.1:8080`
+- Редактирование ListenerSettings только для Draft Version
+- Валидация IP-адреса или hostname без DNS lookup и диапазона Port `1..65535`
 
 ## Чего не существует
 
@@ -59,6 +62,8 @@
 - PostgreSQL
 - Управления WebSocket-серверами
 - Поведения Runtime для WebSocket-серверов
+- WebSocket listener и запуск TCP listener
+- TLS и другие сетевые параметры Listener
 - Инфраструктуры развертывания
 - Инфраструктуры хранения данных
 - Admin UI

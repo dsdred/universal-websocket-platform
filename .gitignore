@@ -30,3 +30,6 @@ bin/
 dist/
 build/
 .cache/
+
+# Obsidian
+.obsidian/
