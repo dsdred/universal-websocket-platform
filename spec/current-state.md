@@ -1,7 +1,7 @@
 # Текущее состояние
 
-**Веха:** M2 Configuration CRUD
-**Статус реализации:** Control Service предоставляет in-memory CRUD API для Workspace и метаданных Configuration.
+**Веха:** M2 Configuration Version
+**Статус реализации:** Control Service предоставляет in-memory API для Workspace, Configuration и метаданных Configuration Version.
 
 ## Что существует
 
@@ -31,12 +31,17 @@
 - Вложенный HTTP CRUD API `/api/v1/workspaces/{workspaceID}/configurations`
 - Запрет удаления Workspace, содержащего Configuration
 - Unit-тесты repository, service и HTTP handler Configuration
+- Доменная сущность ConfigurationVersion с последовательной нумерацией внутри Configuration
+- Потокобезопасный in-memory ConfigurationVersion repository
+- Создание Draft Version и получение списка через вложенный API `/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions`
+- Проверка существования Configuration перед созданием и чтением Version
+- Unit-тесты repository, service и HTTP handler ConfigurationVersion
 
 ## Чего не существует
 
 - Персистентного хранения Workspace
 - Персистентного хранения Configuration
-- Configuration Version
+- Publish, Validation, Rollback и Snapshot для Configuration Version
 - PostgreSQL
 - Управления WebSocket-серверами
 - Поведения Runtime для WebSocket-серверов

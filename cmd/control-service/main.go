@@ -15,6 +15,7 @@ import (
 
 	"github.com/dsdred/universal-websocket-platform/internal/config"
 	"github.com/dsdred/universal-websocket-platform/internal/configuration"
+	"github.com/dsdred/universal-websocket-platform/internal/configurationversion"
 	httpserver "github.com/dsdred/universal-websocket-platform/internal/http"
 	applog "github.com/dsdred/universal-websocket-platform/internal/log"
 	"github.com/dsdred/universal-websocket-platform/internal/workspace"
@@ -37,11 +38,19 @@ func run() int {
 	address := net.JoinHostPort(cfg.HTTP.Host, strconv.Itoa(cfg.HTTP.Port))
 	workspaceRepository := workspace.NewMemoryWorkspaceRepository()
 	configurationRepository := configuration.NewMemoryConfigurationRepository()
+	configurationVersionRepository := configurationversion.NewMemoryConfigurationVersionRepository()
 	workspaceService := workspace.NewWorkspaceService(workspaceRepository, configurationRepository, time.Now)
 	workspaceHandler := workspace.NewHandler(workspaceService)
 	configurationService := configuration.NewService(configurationRepository, workspaceRepository, time.Now)
 	configurationHandler := configuration.NewHandler(configurationService)
-	server := httpserver.New(address, workspaceHandler.RegisterRoutes, configurationHandler.RegisterRoutes)
+	configurationVersionService := configurationversion.NewService(configurationVersionRepository, configurationRepository, time.Now)
+	configurationVersionHandler := configurationversion.NewHandler(configurationVersionService)
+	server := httpserver.New(
+		address,
+		workspaceHandler.RegisterRoutes,
+		configurationHandler.RegisterRoutes,
+		configurationVersionHandler.RegisterRoutes,
+	)
 	logLevel := strings.ToLower(cfg.Log.Level.String())
 
 	logger.Info(

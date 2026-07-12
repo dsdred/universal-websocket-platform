@@ -1,0 +1,87 @@
+package configurationversion
+
+import (
+	"errors"
+	"net/http"
+	"strconv"
+
+	"github.com/go-chi/chi/v5"
+
+	httpapi "github.com/dsdred/universal-websocket-platform/internal/http"
+)
+
+// Handler exposes Configuration Version operations over HTTP.
+type Handler struct {
+	service *Service
+}
+
+// NewHandler creates a Configuration Version HTTP handler.
+func NewHandler(service *Service) *Handler {
+	return &Handler{service: service}
+}
+
+// RegisterRoutes registers nested Configuration Version API routes.
+func (h *Handler) RegisterRoutes(router chi.Router) {
+	router.Post("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions", h.create)
+	router.Get("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions", h.list)
+}
+
+func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
+	workspaceID, configurationID, ok := requestIDs(w, r)
+	if !ok {
+		return
+	}
+
+	version, err := h.service.Create(r.Context(), workspaceID, configurationID)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	httpapi.WriteJSON(w, http.StatusCreated, version)
+}
+
+func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
+	workspaceID, configurationID, ok := requestIDs(w, r)
+	if !ok {
+		return
+	}
+
+	versions, err := h.service.List(r.Context(), workspaceID, configurationID)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	httpapi.WriteJSON(w, http.StatusOK, versions)
+}
+
+func requestIDs(w http.ResponseWriter, r *http.Request) (uint64, uint64, bool) {
+	workspaceID, ok := pathID(w, r, "workspaceID", "Invalid workspace ID")
+	if !ok {
+		return 0, 0, false
+	}
+	configurationID, ok := pathID(w, r, "configurationID", "Invalid configuration ID")
+	if !ok {
+		return 0, 0, false
+	}
+	return workspaceID, configurationID, true
+}
+
+func pathID(w http.ResponseWriter, r *http.Request, parameter, message string) (uint64, bool) {
+	id, err := strconv.ParseUint(chi.URLParam(r, parameter), 10, 64)
+	if err != nil {
+		httpapi.WriteError(w, http.StatusBadRequest, "invalid_request", message)
+		return 0, false
+	}
+	return id, true
+}
+
+func writeServiceError(w http.ResponseWriter, err error) {
+	switch {
+	case errors.Is(err, ErrConfigurationNotFound):
+		httpapi.WriteError(w, http.StatusNotFound, "configuration_not_found", "Configuration not found")
+	default:
+		httpapi.WriteError(w, http.StatusInternalServerError, "internal_error", "Internal server error")
+	}
+}

@@ -103,3 +103,12 @@ func (r *MemoryConfigurationRepository) ExistsByWorkspace(_ context.Context, wor
 
 	return false, nil
 }
+
+// Exists reports whether a Configuration exists in a Workspace.
+func (r *MemoryConfigurationRepository) Exists(_ context.Context, workspaceID, configurationID uint64) (bool, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	configuration, exists := r.configurations[configurationID]
+	return exists && configuration.WorkspaceID == workspaceID, nil
+}
