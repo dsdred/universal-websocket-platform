@@ -105,6 +105,60 @@ func TestHandlerPublish(t *testing.T) {
 	assertErrorCode(t, notFound, "version_not_found")
 }
 
+func TestHandlerArchive(t *testing.T) {
+	t.Run("Draft", func(t *testing.T) {
+		router := newTestRouter(t, true)
+		versionsPath := "/api/v1/workspaces/1/configurations/1/versions"
+		created := decodeVersion(t, performRequest(router, http.MethodPost, versionsPath))
+
+		archivedResponse := performRequest(router, http.MethodPost, versionsPath+"/1/archive")
+		assertStatus(t, archivedResponse, http.StatusOK)
+		assertContentType(t, archivedResponse)
+		archived := decodeVersion(t, archivedResponse)
+		if archived.ID != created.ID || archived.State != Archived {
+			t.Errorf("archived Draft = %#v", archived)
+		}
+
+		repeat := performRequest(router, http.MethodPost, versionsPath+"/1/archive")
+		assertStatus(t, repeat, http.StatusConflict)
+		assertErrorCode(t, repeat, "version_not_archivable")
+	})
+
+	t.Run("Published", func(t *testing.T) {
+		router := newTestRouter(t, true)
+		versionsPath := "/api/v1/workspaces/1/configurations/1/versions"
+		performRequest(router, http.MethodPost, versionsPath)
+		publish := performRequest(router, http.MethodPost, versionsPath+"/1/publish")
+		assertStatus(t, publish, http.StatusOK)
+
+		archive := performRequest(router, http.MethodPost, versionsPath+"/1/archive")
+		assertStatus(t, archive, http.StatusOK)
+		assertContentType(t, archive)
+		if archived := decodeVersion(t, archive); archived.State != Archived {
+			t.Errorf("archived Published = %#v", archived)
+		}
+	})
+}
+
+func TestHandlerArchiveNotFound(t *testing.T) {
+	missingConfiguration := performRequest(
+		newTestRouter(t, false),
+		http.MethodPost,
+		"/api/v1/workspaces/1/configurations/42/versions/1/archive",
+	)
+	assertStatus(t, missingConfiguration, http.StatusNotFound)
+	assertErrorCode(t, missingConfiguration, "configuration_not_found")
+
+	router := newTestRouter(t, true)
+	missingVersion := performRequest(
+		router,
+		http.MethodPost,
+		"/api/v1/workspaces/1/configurations/1/versions/42/archive",
+	)
+	assertStatus(t, missingVersion, http.StatusNotFound)
+	assertErrorCode(t, missingVersion, "version_not_found")
+}
+
 func newTestRouter(t *testing.T, configurationExists bool) http.Handler {
 	t.Helper()
 	configurationRepository := configuration.NewMemoryConfigurationRepository()

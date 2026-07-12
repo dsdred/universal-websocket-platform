@@ -25,6 +25,26 @@ func (h *Handler) RegisterRoutes(router chi.Router) {
 	router.Post("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions", h.create)
 	router.Get("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions", h.list)
 	router.Post("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/publish", h.publish)
+	router.Post("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/archive", h.archive)
+}
+
+func (h *Handler) archive(w http.ResponseWriter, r *http.Request) {
+	workspaceID, configurationID, ok := requestIDs(w, r)
+	if !ok {
+		return
+	}
+	versionID, ok := pathID(w, r, "versionID", "Invalid version ID")
+	if !ok {
+		return
+	}
+
+	version, err := h.service.Archive(r.Context(), workspaceID, configurationID, versionID)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	httpapi.WriteJSON(w, http.StatusOK, version)
 }
 
 func (h *Handler) publish(w http.ResponseWriter, r *http.Request) {
@@ -105,6 +125,8 @@ func writeServiceError(w http.ResponseWriter, err error) {
 		httpapi.WriteError(w, http.StatusNotFound, "version_not_found", "Configuration version not found")
 	case errors.Is(err, ErrVersionNotPublishable):
 		httpapi.WriteError(w, http.StatusConflict, "version_not_publishable", "Configuration version cannot be published")
+	case errors.Is(err, ErrVersionNotArchivable):
+		httpapi.WriteError(w, http.StatusConflict, "version_not_archivable", "Configuration version cannot be archived")
 	default:
 		httpapi.WriteError(w, http.StatusInternalServerError, "internal_error", "Internal server error")
 	}

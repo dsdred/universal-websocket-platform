@@ -195,3 +195,66 @@ func TestServicePublishNotFound(t *testing.T) {
 		t.Errorf("Publish() error = %v, want ErrConfigurationVersionNotFound", err)
 	}
 }
+
+func TestServiceArchiveAllowedStates(t *testing.T) {
+	states := []VersionState{Draft, Validated, Published}
+	for _, state := range states {
+		t.Run(string(state), func(t *testing.T) {
+			createdAt := time.Date(2026, 7, 12, 12, 0, 0, 0, time.UTC)
+			updatedAt := createdAt.Add(time.Hour)
+			repository := NewMemoryConfigurationVersionRepository()
+			original, err := repository.Create(ConfigurationVersion{
+				ConfigurationID: 1,
+				Number:          7,
+				State:           state,
+				CreatedAt:       createdAt,
+				UpdatedAt:       createdAt,
+			})
+			if err != nil {
+				t.Fatalf("Create() error = %v", err)
+			}
+			service := NewService(repository, configurationCheckerStub{exists: true}, func() time.Time { return updatedAt })
+
+			archived, err := service.Archive(context.Background(), 1, 1, original.ID)
+			if err != nil {
+				t.Fatalf("Archive() error = %v", err)
+			}
+			if archived.State != Archived || !archived.UpdatedAt.Equal(updatedAt) || archived.UpdatedAt.Location() != time.UTC {
+				t.Errorf("Archive() = %#v", archived)
+			}
+			if archived.ID != original.ID || archived.ConfigurationID != original.ConfigurationID || archived.Number != original.Number || !archived.CreatedAt.Equal(original.CreatedAt) {
+				t.Errorf("Archive() changed immutable fields: %#v", archived)
+			}
+
+			if _, err := service.Archive(context.Background(), 1, 1, original.ID); !errors.Is(err, ErrVersionNotArchivable) {
+				t.Errorf("Archive(Archived) error = %v, want ErrVersionNotArchivable", err)
+			}
+			if state == Published {
+				if _, err := repository.GetPublished(1); !errors.Is(err, ErrConfigurationVersionNotFound) {
+					t.Errorf("GetPublished() after Archive error = %v, want ErrConfigurationVersionNotFound", err)
+				}
+			}
+		})
+	}
+}
+
+func TestServiceArchiveNotFound(t *testing.T) {
+	repository := NewMemoryConfigurationVersionRepository()
+	version, err := repository.Create(ConfigurationVersion{ConfigurationID: 1, Number: 1, State: Draft})
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	service := NewService(repository, configurationCheckerStub{exists: true}, time.Now)
+
+	if _, err := service.Archive(context.Background(), 1, 2, version.ID); !errors.Is(err, ErrConfigurationVersionNotFound) {
+		t.Errorf("Archive(other Configuration) error = %v, want ErrConfigurationVersionNotFound", err)
+	}
+	if _, err := service.Archive(context.Background(), 1, 1, 42); !errors.Is(err, ErrConfigurationVersionNotFound) {
+		t.Errorf("Archive(missing Version) error = %v, want ErrConfigurationVersionNotFound", err)
+	}
+
+	missingConfigurationService := NewService(repository, configurationCheckerStub{exists: false}, time.Now)
+	if _, err := missingConfigurationService.Archive(context.Background(), 1, 1, version.ID); !errors.Is(err, ErrConfigurationNotFound) {
+		t.Errorf("Archive(missing Configuration) error = %v, want ErrConfigurationNotFound", err)
+	}
+}

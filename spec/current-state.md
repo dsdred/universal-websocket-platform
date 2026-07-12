@@ -39,6 +39,8 @@
 - Публикация Draft Version через endpoint `/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/publish`
 - Атомарное архивирование предыдущей Published Version при публикации новой
 - Инвариант единственной Published Version внутри Configuration
+- Ручное архивирование Draft, Validated и Published Version через endpoint `/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/archive`
+- Архивирование Published Version без автоматической публикации замены
 
 ## Чего не существует
 

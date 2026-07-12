@@ -93,6 +93,36 @@ func (s *Service) Publish(ctx context.Context, workspaceID, configurationID, ver
 	return target, nil
 }
 
+// Archive transitions a non-Archived Version to Archived.
+func (s *Service) Archive(ctx context.Context, workspaceID, configurationID, versionID uint64) (ConfigurationVersion, error) {
+	if err := s.requireConfiguration(ctx, workspaceID, configurationID); err != nil {
+		return ConfigurationVersion{}, err
+	}
+
+	s.lifecycleMu.Lock()
+	defer s.lifecycleMu.Unlock()
+
+	version, err := s.repository.Get(versionID)
+	if err != nil || version.ConfigurationID != configurationID {
+		if err == nil || errors.Is(err, ErrConfigurationVersionNotFound) {
+			return ConfigurationVersion{}, ErrConfigurationVersionNotFound
+		}
+		return ConfigurationVersion{}, err
+	}
+
+	switch version.State {
+	case Draft, Validated, Published:
+	case Archived:
+		return ConfigurationVersion{}, ErrVersionNotArchivable
+	default:
+		return ConfigurationVersion{}, ErrVersionNotArchivable
+	}
+
+	version.State = Archived
+	version.UpdatedAt = s.now().UTC()
+	return s.repository.Update(version)
+}
+
 // List returns all Versions for an existing Configuration.
 func (s *Service) List(ctx context.Context, workspaceID, configurationID uint64) ([]ConfigurationVersion, error) {
 	if err := s.requireConfiguration(ctx, workspaceID, configurationID); err != nil {
