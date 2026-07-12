@@ -78,6 +78,12 @@
 - Существующие CertificateRef и PrivateKeyRef соответствуют этому направлению
 - Secret Storage и Secret Resolver еще не реализованы
 
+## JWT Provider Design
+
+- DP-003 предлагает Configuration-модель JWT Provider с несколькими Signing Keys, algorithms, issuers, audiences и Required Claims
+- Signing Keys представлены только Secret References без хранения PEM, JWK или HMAC secret в ConfigurationVersion
+- JWT Provider metadata, проверка token и Runtime pipeline еще не реализованы
+
 ## Чего не существует
 
 - Персистентного хранения Workspace

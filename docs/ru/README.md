@@ -12,6 +12,7 @@
 
 - [DP-001: Authentication](proposals/DP-001-authentication.md)
 - [DP-002: Secret References](proposals/DP-002-secret-references.md)
+- [DP-003: JWT Provider](proposals/DP-003-jwt-provider.md)
 
 ## Заметки к релизам
 
