@@ -1,5 +1,7 @@
 # Universal WebSocket Platform
 
+[Russian version](README.ru.md)
+
 Universal WebSocket Platform is an open-source platform for creating, configuring, deploying, and operating independent WebSocket servers without writing infrastructure code.
 
 ## Status
@@ -12,7 +14,7 @@ The project is in early alpha. The repository contains the engineering foundatio
 
 **Status:** early alpha
 
-This release includes the Control Service and the basic lifecycle for Workspace, Configuration, and ConfigurationVersion. See the [`CHANGELOG.md`](CHANGELOG.md) for details.
+This release includes the Control Service and the basic lifecycle for Workspace, Configuration, and ConfigurationVersion. See the [release notes](docs/en/releases/v0.1.0-alpha.md) and [`CHANGELOG.md`](CHANGELOG.md) for details.
 
 ## Project principles
 
@@ -25,16 +27,16 @@ This release includes the Control Service and the basic lifecycle for Workspace,
 - Predictability
 - Keep MVP Simple
 
-## Repository map
+## Documentation
 
-- [`spec/`](spec/) — product, architecture, decisions, and current-state specifications.
-- [`.ai/PROJECT_CONTEXT.md`](.ai/PROJECT_CONTEXT.md) — compact context for AI-assisted work.
-- [`AGENTS.md`](AGENTS.md) — contribution instructions for automated coding agents.
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) — contributor workflow and expectations.
+- [Documentation home](docs/en/README.md)
+- [Architecture Decision Records](docs/en/adr/)
+- [Design Proposals](docs/en/proposals/)
+- [Release Notes](docs/en/releases/)
 
 ## Contributing
 
-The project is at an early stage. Read [`CONTRIBUTING.md`](CONTRIBUTING.md) and the specifications before proposing changes. Architecture choices should be recorded before they become implementation constraints.
+The project is at an early stage. Read the English documentation before proposing changes. Architecture choices should be recorded before they become implementation constraints.
 
 ## License
 

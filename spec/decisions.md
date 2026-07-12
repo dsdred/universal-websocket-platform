@@ -4,7 +4,7 @@
 
 ## Принятые решения
 
-- [`ADR 0001: Базовая реализация Control Service`](adr/0001-bootstrap-control-service.md)
+- [`ADR 0001: Базовая реализация Control Service`](../docs/ru/adr/0001-bootstrap-control-service.md)
 
 ## Установленные ограничения проекта
 
