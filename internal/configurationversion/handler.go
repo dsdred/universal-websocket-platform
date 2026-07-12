@@ -15,6 +15,13 @@ type Handler struct {
 	service *Service
 }
 
+type timeoutSettingsRequest struct {
+	HandshakeSeconds *uint32 `json:"handshakeSeconds"`
+	ReadSeconds      *uint32 `json:"readSeconds"`
+	WriteSeconds     *uint32 `json:"writeSeconds"`
+	IdleSeconds      *uint32 `json:"idleSeconds"`
+}
+
 // NewHandler creates a Configuration Version HTTP handler.
 func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
@@ -28,6 +35,41 @@ func (h *Handler) RegisterRoutes(router chi.Router) {
 	router.Post("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/archive", h.archive)
 	router.Put("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/listener", h.updateListener)
 	router.Put("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/listener/tls", h.updateTLS)
+	router.Put("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/listener/timeouts", h.updateTimeouts)
+}
+
+func (h *Handler) updateTimeouts(w http.ResponseWriter, r *http.Request) {
+	workspaceID, configurationID, ok := requestIDs(w, r)
+	if !ok {
+		return
+	}
+	versionID, ok := pathID(w, r, "versionID", "Invalid version ID")
+	if !ok {
+		return
+	}
+
+	var request timeoutSettingsRequest
+	if err := httpapi.DecodeJSON(r, &request); err != nil || request.missingValue() {
+		httpapi.WriteError(w, http.StatusBadRequest, "invalid_request", "Invalid request body")
+		return
+	}
+
+	version, err := h.service.UpdateTimeouts(r.Context(), workspaceID, configurationID, versionID, TimeoutSettings{
+		HandshakeSeconds: *request.HandshakeSeconds,
+		ReadSeconds:      *request.ReadSeconds,
+		WriteSeconds:     *request.WriteSeconds,
+		IdleSeconds:      *request.IdleSeconds,
+	})
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	httpapi.WriteJSON(w, http.StatusOK, version)
+}
+
+func (r timeoutSettingsRequest) missingValue() bool {
+	return r.HandshakeSeconds == nil || r.ReadSeconds == nil || r.WriteSeconds == nil || r.IdleSeconds == nil
 }
 
 func (h *Handler) updateTLS(w http.ResponseWriter, r *http.Request) {

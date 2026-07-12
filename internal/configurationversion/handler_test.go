@@ -325,6 +325,92 @@ func TestHandlerUpdateTLSNotFoundAndState(t *testing.T) {
 	assertErrorCode(t, conflict, "version_not_editable")
 }
 
+func TestHandlerUpdateTimeouts(t *testing.T) {
+	router := newTestRouter(t, true)
+	versionsPath := "/api/v1/workspaces/1/configurations/1/versions"
+	created := decodeVersion(t, performRequest(router, http.MethodPost, versionsPath))
+	timeoutsPath := versionsPath + "/1/listener/timeouts"
+	body := `{"handshakeSeconds":15,"readSeconds":0,"writeSeconds":20,"idleSeconds":120}`
+
+	response := performRequestWithBody(router, http.MethodPut, timeoutsPath, body)
+	assertStatus(t, response, http.StatusOK)
+	assertContentType(t, response)
+	updated := decodeVersion(t, response)
+	want := TimeoutSettings{HandshakeSeconds: 15, ReadSeconds: 0, WriteSeconds: 20, IdleSeconds: 120}
+	if updated.ID != created.ID || updated.State != Draft || updated.Listener.Timeouts != want {
+		t.Errorf("updated Version = %#v", updated)
+	}
+	if updated.Listener.Host != "127.0.0.1" || updated.Listener.Port != 8080 || updated.Listener.TLS.MinVersion != "1.2" {
+		t.Errorf("UpdateTimeouts changed Listener/TLS: %#v", updated.Listener)
+	}
+}
+
+func TestHandlerUpdateTimeoutsInvalidRequest(t *testing.T) {
+	tests := []struct {
+		name     string
+		body     string
+		wantCode string
+	}{
+		{name: "validation failed", body: `{"handshakeSeconds":0,"readSeconds":0,"writeSeconds":10,"idleSeconds":60}`, wantCode: "validation_failed"},
+		{name: "range exceeded", body: `{"handshakeSeconds":301,"readSeconds":0,"writeSeconds":10,"idleSeconds":60}`, wantCode: "validation_failed"},
+		{name: "malformed JSON", body: `{"handshakeSeconds":`, wantCode: "invalid_request"},
+		{name: "unknown field", body: `{"handshakeSeconds":10,"readSeconds":0,"writeSeconds":10,"idleSeconds":60,"pingSeconds":5}`, wantCode: "invalid_request"},
+		{name: "empty body", body: "", wantCode: "invalid_request"},
+		{name: "additional JSON", body: `{"handshakeSeconds":10,"readSeconds":0,"writeSeconds":10,"idleSeconds":60}{}`, wantCode: "invalid_request"},
+		{name: "negative", body: `{"handshakeSeconds":-1,"readSeconds":0,"writeSeconds":10,"idleSeconds":60}`, wantCode: "invalid_request"},
+		{name: "fractional", body: `{"handshakeSeconds":1.5,"readSeconds":0,"writeSeconds":10,"idleSeconds":60}`, wantCode: "invalid_request"},
+		{name: "string", body: `{"handshakeSeconds":"10","readSeconds":0,"writeSeconds":10,"idleSeconds":60}`, wantCode: "invalid_request"},
+		{name: "above uint32", body: `{"handshakeSeconds":4294967296,"readSeconds":0,"writeSeconds":10,"idleSeconds":60}`, wantCode: "invalid_request"},
+		{name: "null", body: `{"handshakeSeconds":null,"readSeconds":0,"writeSeconds":10,"idleSeconds":60}`, wantCode: "invalid_request"},
+		{name: "missing field", body: `{"handshakeSeconds":10,"readSeconds":0,"writeSeconds":10}`, wantCode: "invalid_request"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			router := newTestRouter(t, true)
+			performRequest(router, http.MethodPost, "/api/v1/workspaces/1/configurations/1/versions")
+			response := performRequestWithBody(
+				router,
+				http.MethodPut,
+				"/api/v1/workspaces/1/configurations/1/versions/1/listener/timeouts",
+				tt.body,
+			)
+			assertStatus(t, response, http.StatusBadRequest)
+			assertContentType(t, response)
+			assertErrorCode(t, response, tt.wantCode)
+		})
+	}
+}
+
+func TestHandlerUpdateTimeoutsNotFoundAndState(t *testing.T) {
+	validBody := `{"handshakeSeconds":10,"readSeconds":0,"writeSeconds":10,"idleSeconds":60}`
+	missingConfiguration := performRequestWithBody(
+		newTestRouter(t, false),
+		http.MethodPut,
+		"/api/v1/workspaces/1/configurations/42/versions/1/listener/timeouts",
+		validBody,
+	)
+	assertStatus(t, missingConfiguration, http.StatusNotFound)
+	assertErrorCode(t, missingConfiguration, "configuration_not_found")
+
+	router := newTestRouter(t, true)
+	missingVersion := performRequestWithBody(
+		router,
+		http.MethodPut,
+		"/api/v1/workspaces/1/configurations/1/versions/42/listener/timeouts",
+		validBody,
+	)
+	assertStatus(t, missingVersion, http.StatusNotFound)
+	assertErrorCode(t, missingVersion, "version_not_found")
+
+	versionsPath := "/api/v1/workspaces/1/configurations/1/versions"
+	performRequest(router, http.MethodPost, versionsPath)
+	performRequest(router, http.MethodPost, versionsPath+"/1/publish")
+	conflict := performRequestWithBody(router, http.MethodPut, versionsPath+"/1/listener/timeouts", validBody)
+	assertStatus(t, conflict, http.StatusConflict)
+	assertErrorCode(t, conflict, "version_not_editable")
+}
+
 func newTestRouter(t *testing.T, configurationExists bool) http.Handler {
 	t.Helper()
 	configurationRepository := configuration.NewMemoryConfigurationRepository()

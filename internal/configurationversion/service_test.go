@@ -51,6 +51,9 @@ func TestServiceCreatesDraftVersionsWithAutomaticNumbers(t *testing.T) {
 	if first.Listener.TLS != (TLSSettings{Enabled: false, CertificateRef: "", PrivateKeyRef: "", MinVersion: "1.2"}) {
 		t.Errorf("default TLS = %#v", first.Listener.TLS)
 	}
+	if first.Listener.Timeouts != (TimeoutSettings{HandshakeSeconds: 10, ReadSeconds: 0, WriteSeconds: 10, IdleSeconds: 60}) {
+		t.Errorf("default Timeouts = %#v", first.Listener.Timeouts)
+	}
 	if first.ConfigurationID != 1 || first.CreatedAt.Location() != time.UTC || !first.CreatedAt.Equal(firstTime) {
 		t.Errorf("first Version = %#v", first)
 	}
@@ -223,6 +226,7 @@ func TestServiceArchiveAllowedStates(t *testing.T) {
 						PrivateKeyRef:  "secrets/archive-key",
 						MinVersion:     "1.3",
 					},
+					Timeouts: TimeoutSettings{HandshakeSeconds: 15, ReadSeconds: 0, WriteSeconds: 20, IdleSeconds: 120},
 				},
 				CreatedAt: createdAt,
 				UpdatedAt: createdAt,
@@ -541,23 +545,135 @@ func TestTLSLifecycleRegression(t *testing.T) {
 	service := NewService(repository, configurationCheckerStub{exists: true}, time.Now)
 	firstTLS := TLSSettings{Enabled: true, CertificateRef: "certificates/main", PrivateKeyRef: "secrets/tls-key", MinVersion: "1.3"}
 	secondTLS := TLSSettings{Enabled: true, CertificateRef: "certificates/next", PrivateKeyRef: "secrets/next-key", MinVersion: "1.2"}
+	firstTimeouts := TimeoutSettings{HandshakeSeconds: 15, ReadSeconds: 0, WriteSeconds: 20, IdleSeconds: 120}
+	secondTimeouts := TimeoutSettings{HandshakeSeconds: 20, ReadSeconds: 30, WriteSeconds: 25, IdleSeconds: 180}
 
 	first, _ := service.Create(context.Background(), 1, 1)
 	first, _ = service.UpdateListener(context.Background(), 1, 1, first.ID, ListenerSettings{Host: "0.0.0.0", Port: 9443})
 	first, _ = service.UpdateTLS(context.Background(), 1, 1, first.ID, firstTLS)
+	first, _ = service.UpdateTimeouts(context.Background(), 1, 1, first.ID, firstTimeouts)
 	first, _ = service.Publish(context.Background(), 1, 1, first.ID)
-	if first.Listener.Host != "0.0.0.0" || first.Listener.Port != 9443 || first.Listener.TLS != firstTLS {
+	if first.Listener.Host != "0.0.0.0" || first.Listener.Port != 9443 || first.Listener.TLS != firstTLS || first.Listener.Timeouts != firstTimeouts {
 		t.Errorf("Publish changed first Listener/TLS: %#v", first.Listener)
 	}
 
 	second, _ := service.Create(context.Background(), 1, 1)
 	second, _ = service.UpdateTLS(context.Background(), 1, 1, second.ID, secondTLS)
+	second, _ = service.UpdateTimeouts(context.Background(), 1, 1, second.ID, secondTimeouts)
 	second, _ = service.Publish(context.Background(), 1, 1, second.ID)
 	archivedFirst, _ := repository.Get(first.ID)
-	if archivedFirst.State != Archived || archivedFirst.Listener.TLS != firstTLS {
+	if archivedFirst.State != Archived || archivedFirst.Listener.TLS != firstTLS || archivedFirst.Listener.Timeouts != firstTimeouts {
 		t.Errorf("auto-archive changed first TLS: %#v", archivedFirst)
 	}
-	if second.Listener.TLS != secondTLS {
+	if second.Listener.TLS != secondTLS || second.Listener.Timeouts != secondTimeouts {
 		t.Errorf("Publish changed second TLS: %#v", second.Listener.TLS)
+	}
+}
+
+func TestServiceUpdateTimeouts(t *testing.T) {
+	createdAt := time.Date(2026, 7, 13, 12, 0, 0, 0, time.UTC)
+	updatedAt := createdAt.Add(time.Minute)
+	originalTLS := TLSSettings{Enabled: true, CertificateRef: "certificates/main", PrivateKeyRef: "secrets/key", MinVersion: "1.3"}
+	repository := NewMemoryConfigurationVersionRepository()
+	original, err := repository.Create(ConfigurationVersion{
+		ConfigurationID: 1,
+		Number:          7,
+		State:           Draft,
+		Listener: ListenerSettings{
+			Host:     "0.0.0.0",
+			Port:     9443,
+			TLS:      originalTLS,
+			Timeouts: TimeoutSettings{HandshakeSeconds: 10, ReadSeconds: 0, WriteSeconds: 10, IdleSeconds: 60},
+		},
+		CreatedAt: createdAt,
+		UpdatedAt: createdAt,
+	})
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	service := NewService(repository, configurationCheckerStub{exists: true}, func() time.Time { return updatedAt })
+	want := TimeoutSettings{HandshakeSeconds: 15, ReadSeconds: 0, WriteSeconds: 20, IdleSeconds: 120}
+
+	updated, err := service.UpdateTimeouts(context.Background(), 1, 1, original.ID, want)
+	if err != nil {
+		t.Fatalf("UpdateTimeouts() error = %v", err)
+	}
+	if updated.Listener.Timeouts != want {
+		t.Errorf("Timeouts = %#v, want %#v", updated.Listener.Timeouts, want)
+	}
+	if updated.Listener.Host != original.Listener.Host || updated.Listener.Port != original.Listener.Port || updated.Listener.TLS != originalTLS {
+		t.Errorf("UpdateTimeouts() changed Listener/TLS: %#v", updated.Listener)
+	}
+	if updated.ID != original.ID || updated.ConfigurationID != original.ConfigurationID || updated.Number != original.Number || updated.State != original.State || !updated.CreatedAt.Equal(original.CreatedAt) {
+		t.Errorf("UpdateTimeouts() changed immutable fields: %#v", updated)
+	}
+	if !updated.UpdatedAt.Equal(updatedAt) || updated.UpdatedAt.Equal(original.UpdatedAt) || updated.UpdatedAt.Location() != time.UTC {
+		t.Errorf("UpdatedAt = %s, want %s UTC", updated.UpdatedAt, updatedAt)
+	}
+}
+
+func TestServiceUpdateTimeoutsBoundaries(t *testing.T) {
+	tests := []struct {
+		name     string
+		timeouts TimeoutSettings
+		valid    bool
+		field    string
+	}{
+		{name: "handshake zero", timeouts: TimeoutSettings{HandshakeSeconds: 0, WriteSeconds: 10}, field: "handshakeSeconds"},
+		{name: "handshake one", timeouts: TimeoutSettings{HandshakeSeconds: 1, WriteSeconds: 10}, valid: true},
+		{name: "handshake 300", timeouts: TimeoutSettings{HandshakeSeconds: 300, WriteSeconds: 10}, valid: true},
+		{name: "handshake above", timeouts: TimeoutSettings{HandshakeSeconds: 301, WriteSeconds: 10}, field: "handshakeSeconds"},
+		{name: "read zero", timeouts: TimeoutSettings{HandshakeSeconds: 10, ReadSeconds: 0, WriteSeconds: 10}, valid: true},
+		{name: "read 86400", timeouts: TimeoutSettings{HandshakeSeconds: 10, ReadSeconds: 86400, WriteSeconds: 10}, valid: true},
+		{name: "read above", timeouts: TimeoutSettings{HandshakeSeconds: 10, ReadSeconds: 86401, WriteSeconds: 10}, field: "readSeconds"},
+		{name: "write zero", timeouts: TimeoutSettings{HandshakeSeconds: 10, WriteSeconds: 0}, field: "writeSeconds"},
+		{name: "write one", timeouts: TimeoutSettings{HandshakeSeconds: 10, WriteSeconds: 1}, valid: true},
+		{name: "write 300", timeouts: TimeoutSettings{HandshakeSeconds: 10, WriteSeconds: 300}, valid: true},
+		{name: "write above", timeouts: TimeoutSettings{HandshakeSeconds: 10, WriteSeconds: 301}, field: "writeSeconds"},
+		{name: "idle zero", timeouts: TimeoutSettings{HandshakeSeconds: 10, WriteSeconds: 10, IdleSeconds: 0}, valid: true},
+		{name: "idle 86400", timeouts: TimeoutSettings{HandshakeSeconds: 10, WriteSeconds: 10, IdleSeconds: 86400}, valid: true},
+		{name: "idle above", timeouts: TimeoutSettings{HandshakeSeconds: 10, WriteSeconds: 10, IdleSeconds: 86401}, field: "idleSeconds"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := NewService(NewMemoryConfigurationVersionRepository(), configurationCheckerStub{exists: true}, time.Now)
+			created, err := service.Create(context.Background(), 1, 1)
+			if err != nil {
+				t.Fatalf("Create() error = %v", err)
+			}
+			_, err = service.UpdateTimeouts(context.Background(), 1, 1, created.ID, tt.timeouts)
+			if tt.valid {
+				if err != nil {
+					t.Errorf("UpdateTimeouts() error = %v", err)
+				}
+				return
+			}
+			var validationError *ValidationError
+			if !errors.As(err, &validationError) || validationError.Field != tt.field {
+				t.Errorf("UpdateTimeouts() error = %v, want ValidationError for %s", err, tt.field)
+			}
+		})
+	}
+}
+
+func TestServiceUpdateTimeoutsStateAndScope(t *testing.T) {
+	valid := TimeoutSettings{HandshakeSeconds: 10, WriteSeconds: 10, IdleSeconds: 60}
+	for _, state := range []VersionState{Published, Archived, Validated} {
+		t.Run(string(state), func(t *testing.T) {
+			repository := NewMemoryConfigurationVersionRepository()
+			version, _ := repository.Create(ConfigurationVersion{ConfigurationID: 1, Number: 1, State: state})
+			service := NewService(repository, configurationCheckerStub{exists: true}, time.Now)
+			if _, err := service.UpdateTimeouts(context.Background(), 1, 1, version.ID, valid); !errors.Is(err, ErrVersionNotEditable) {
+				t.Errorf("UpdateTimeouts(%s) error = %v", state, err)
+			}
+		})
+	}
+
+	repository := NewMemoryConfigurationVersionRepository()
+	version, _ := repository.Create(ConfigurationVersion{ConfigurationID: 1, Number: 1, State: Draft})
+	service := NewService(repository, configurationCheckerStub{exists: true}, time.Now)
+	if _, err := service.UpdateTimeouts(context.Background(), 1, 2, version.ID, valid); !errors.Is(err, ErrConfigurationVersionNotFound) {
+		t.Errorf("UpdateTimeouts(other Configuration) error = %v", err)
 	}
 }

@@ -12,11 +12,15 @@ import (
 )
 
 const (
-	defaultListenerHost   = "127.0.0.1"
-	defaultListenerPort   = 8080
-	defaultTLSMinVersion  = "1.2"
-	maxListenerHostLength = 255
-	maxTLSReferenceLength = 255
+	defaultListenerHost     = "127.0.0.1"
+	defaultListenerPort     = 8080
+	defaultTLSMinVersion    = "1.2"
+	defaultHandshakeSeconds = 10
+	defaultReadSeconds      = 0
+	defaultWriteSeconds     = 10
+	defaultIdleSeconds      = 60
+	maxListenerHostLength   = 255
+	maxTLSReferenceLength   = 255
 )
 
 // ValidationError describes invalid Configuration Version settings.
@@ -75,10 +79,48 @@ func (s *Service) Create(ctx context.Context, workspaceID, configurationID uint6
 				Enabled:    false,
 				MinVersion: defaultTLSMinVersion,
 			},
+			Timeouts: TimeoutSettings{
+				HandshakeSeconds: defaultHandshakeSeconds,
+				ReadSeconds:      defaultReadSeconds,
+				WriteSeconds:     defaultWriteSeconds,
+				IdleSeconds:      defaultIdleSeconds,
+			},
 		},
 		CreatedAt: now,
 		UpdatedAt: now,
 	})
+}
+
+// UpdateTimeouts validates and updates timeout settings for a Draft Version.
+func (s *Service) UpdateTimeouts(
+	ctx context.Context,
+	workspaceID, configurationID, versionID uint64,
+	timeouts TimeoutSettings,
+) (ConfigurationVersion, error) {
+	if err := s.requireConfiguration(ctx, workspaceID, configurationID); err != nil {
+		return ConfigurationVersion{}, err
+	}
+
+	s.lifecycleMu.Lock()
+	defer s.lifecycleMu.Unlock()
+
+	version, err := s.repository.Get(versionID)
+	if err != nil || version.ConfigurationID != configurationID {
+		if err == nil || errors.Is(err, ErrConfigurationVersionNotFound) {
+			return ConfigurationVersion{}, ErrConfigurationVersionNotFound
+		}
+		return ConfigurationVersion{}, err
+	}
+	if version.State != Draft {
+		return ConfigurationVersion{}, ErrVersionNotEditable
+	}
+	if err := validateTimeouts(timeouts); err != nil {
+		return ConfigurationVersion{}, err
+	}
+
+	version.Listener.Timeouts = timeouts
+	version.UpdatedAt = s.now().UTC()
+	return s.repository.Update(version)
 }
 
 // UpdateTLS validates and updates TLS settings for a Draft Version.
@@ -324,4 +366,20 @@ func validTLSReference(reference string) bool {
 		}
 	}
 	return true
+}
+
+func validateTimeouts(timeouts TimeoutSettings) error {
+	if timeouts.HandshakeSeconds < 1 || timeouts.HandshakeSeconds > 300 {
+		return &ValidationError{Field: "handshakeSeconds", Message: "must be between 1 and 300"}
+	}
+	if timeouts.ReadSeconds > 86400 {
+		return &ValidationError{Field: "readSeconds", Message: "must be between 0 and 86400"}
+	}
+	if timeouts.WriteSeconds < 1 || timeouts.WriteSeconds > 300 {
+		return &ValidationError{Field: "writeSeconds", Message: "must be between 1 and 300"}
+	}
+	if timeouts.IdleSeconds > 86400 {
+		return &ValidationError{Field: "idleSeconds", Message: "must be between 0 and 86400"}
+	}
+	return nil
 }

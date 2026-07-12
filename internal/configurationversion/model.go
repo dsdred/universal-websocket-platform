@@ -14,9 +14,18 @@ const (
 
 // ListenerSettings describes where a future WebSocket Listener will accept connections.
 type ListenerSettings struct {
-	Host string      `json:"host"`
-	Port uint16      `json:"port"`
-	TLS  TLSSettings `json:"tls"`
+	Host     string          `json:"host"`
+	Port     uint16          `json:"port"`
+	TLS      TLSSettings     `json:"tls"`
+	Timeouts TimeoutSettings `json:"timeouts"`
+}
+
+// TimeoutSettings describes timeout metadata in seconds for a future Listener.
+type TimeoutSettings struct {
+	HandshakeSeconds uint32 `json:"handshakeSeconds"`
+	ReadSeconds      uint32 `json:"readSeconds"`
+	WriteSeconds     uint32 `json:"writeSeconds"`
+	IdleSeconds      uint32 `json:"idleSeconds"`
 }
 
 // TLSSettings describes TLS metadata for a future secure WebSocket Listener.

@@ -57,6 +57,9 @@
 - Редактирование TLSSettings только для Draft Version
 - Ссылки на сертификат и закрытый ключ без хранения PEM или чтения файлов
 - Поддержка минимальных версий TLS `1.2` и `1.3`
+- TimeoutSettings с handshake, read, write и idle timeout для ConfigurationVersion
+- Значения timeout задаются в секундах и редактируются только для Draft Version
+- Значение `0` отключает только read и idle timeout; handshake и write требуют положительного значения
 
 ## Чего не существует
 
@@ -68,6 +71,7 @@
 - Поведения Runtime для WebSocket-серверов
 - WebSocket listener и запуск TCP listener
 - Реальный TLS listener и другие сетевые параметры Listener
+- Применение Listener TimeoutSettings в Runtime
 - Инфраструктуры развертывания
 - Инфраструктуры хранения данных
 - Admin UI
