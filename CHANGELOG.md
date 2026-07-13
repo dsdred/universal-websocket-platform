@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Sequential Authentication Service that evaluates Providers in order and stops after the first successful result.
 - Authentication Bootstrap that assembles an ordered Service from Authentication Snapshot, Provider Registry, and Secret Resolver.
 - Production API Key Factory that converts Authentication Provider Snapshot metadata into Provider-local runtime configuration.
+- Runtime JWT Authentication Provider with HS256, HS384, and HS512 verification, declarative Claim policy, and per-request Secret resolution.
 
 ## [0.1.0-alpha] - 2026-07-12
 

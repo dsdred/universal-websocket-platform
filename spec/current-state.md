@@ -96,13 +96,13 @@
 - Создан storage-neutral интерфейс Secret Resolver с общей валидацией и нормализацией Secret Reference
 - Добавлена потокобезопасная in-memory реализация для тестирования и будущей локальной разработки
 - Реальные Secret Storage backend еще не реализованы
-- Resolver используется API Key Provider, но пока не подключен к Runtime Container или Authentication Pipeline
+- Resolver используется API Key и JWT Provider, но пока не подключен к Runtime Container или Authentication Pipeline
 
 ## JWT Provider Design
 
 - DP-003 предлагает Configuration-модель JWT Provider с несколькими Signing Keys, algorithms, issuers, audiences и Required Claims
 - Signing Keys представлены только Secret References без хранения PEM, JWK или HMAC secret в ConfigurationVersion
-- JWT Provider metadata реализована; проверка token и Runtime pipeline отсутствуют
+- JWT Provider metadata и Runtime Provider реализованы; Runtime поддерживает только HS256, HS384 и HS512, а полный pipeline отсутствует
 
 ## Authentication Runtime Contracts Design
 
@@ -119,7 +119,9 @@
 - Реализован Authentication Service, последовательно вызывающий Provider в заданном порядке и завершающийся после первого успешного результата
 - Реализован Authentication Bootstrap, собирающий Service из Authentication Snapshot через Provider Registry и Secret Resolver
 - Реализован production API Key Factory, изолирующий преобразование AuthenticationProviderSnapshot в локальную runtime-конфигурацию API Key Provider
-- Интеграция Authentication Bootstrap в Runtime, JWT Provider и Basic Provider по-прежнему не реализованы
+- Реализован Runtime JWT Provider с проверкой signature, exp, nbf, issuer, audience и Required Claims
+- JWT Provider разрешает Signing Key через Secret Resolver при каждом Authenticate и поддерживает rotation без хранения Secret
+- JWT Factory, интеграция Authentication Bootstrap в Runtime и Basic Provider по-прежнему не реализованы
 
 ## Runtime Architecture
 
@@ -146,7 +148,8 @@
 - Реальный TLS listener и другие сетевые параметры Listener
 - Применение Listener TimeoutSettings в Runtime
 - Интеграция Authentication Bootstrap в Runtime и полный Authentication Pipeline
-- Проверка JWT и Basic credentials
+- JWT Factory и проверка Basic credentials
+- Асимметричные JWT algorithms, JWKS, OIDC и token revocation
 - Реальные Secret Storage backend и подключение Resolver к Runtime Container еще не реализованы
 - Инфраструктуры развертывания
 - Инфраструктуры хранения данных
