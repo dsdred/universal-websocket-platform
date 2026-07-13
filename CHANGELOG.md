@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Immutable Runtime Configuration Snapshot model and Builder for Published ConfigurationVersion entities.
 - Runtime dependency Container that owns and exposes independent Configuration Snapshot copies.
 - Storage-neutral Secret Resolver contract and thread-safe in-memory implementation for tests and local development.
+- Extensible runtime Authentication Provider and Factory contracts with transport-neutral request, result, and Principal models.
 
 ## [0.1.0-alpha] - 2026-07-12
 

@@ -110,7 +110,9 @@
 - Предлагаемые контракты отделяют AuthenticationService и Provider от transport, Repository, Storage и внутреннего устройства ConfigurationVersion
 - Модель ошибок различает rejected credentials, Provider error, Configuration error и Internal error
 - Principal после успешной Authentication предлагается сделать immutable перед передачей в Authorization
-- Контракты имеют статус Proposed; AuthenticationService, Provider execution и Runtime по-прежнему не реализованы
+- Созданы минимальные transport-neutral модели AuthenticationRequest, AuthenticationResult и Principal
+- Созданы расширяемые интерфейсы Authentication Provider и Factory, принимающие AuthenticationProviderSnapshot и Secret Resolver
+- Конкретные JWT, API Key и Basic Provider, Factory Registry и Runtime Authentication по-прежнему не реализованы
 
 ## Runtime Architecture
 
