@@ -145,7 +145,10 @@
 - Listener выполняет RFC 6455 WebSocket Upgrade через endpoint `GET /ws` и передает соединение Connection Dispatcher
 - Immutable ConnectionContext содержит только context.Context, WebSocket connection и исходный HTTP request
 - DefaultDispatcher сразу завершает переданное WebSocket-соединение с normal closure; Bootstrap позволяет внедрить другую реализацию Dispatcher
-- Authentication, Session, Echo и Routing для WebSocket-соединений пока отсутствуют
+- Authentication подключена к WebSocket connection pipeline через AuthenticationDispatcher без зависимости Listener от пакета Authentication
+- AuthenticationDispatcher преобразует HTTP handshake metadata в transport-neutral AuthenticationRequest и передает успешное соединение следующему AuthenticatedDispatcher вместе с immutable Principal context
+- Отказ Authentication пока происходит после WebSocket Upgrade через close frame `PolicyViolation`, а системные ошибки используют `InternalError`
+- Session, Echo и Routing для WebSocket-соединений пока отсутствуют
 - Архитектура Runtime принята в ADR-003, но Loader, подключение Resolver к Runtime Container и остальные компоненты pipeline еще не реализованы
 
 ## Чего не существует
