@@ -420,7 +420,7 @@ func TestHandlerUpdateAuthentication(t *testing.T) {
 	}
 
 	authenticationPath := versionsPath + "/1/authentication"
-	body := `{"enabled":true,"providers":[{"name":"internal-jwt","type":"jwt","enabled":true,"priority":10},{"name":"partners-jwt","type":"jwt","enabled":true,"priority":20}]}`
+	body := `{"enabled":true,"providers":[{"name":"internal-jwt","type":"jwt","enabled":true,"priority":10,"jwt":{"signingKeys":[{"name":"main","secretRef":"secrets/jwt/main"}],"allowedAlgorithms":["HS256"]}},{"name":"partners-jwt","type":"jwt","enabled":true,"priority":20,"jwt":{"signingKeys":[{"name":"main","secretRef":"secrets/jwt/partners"}],"allowedAlgorithms":["RS256"]}}]}`
 	response := performRequestWithBody(router, http.MethodPut, authenticationPath, body)
 	assertStatus(t, response, http.StatusOK)
 	assertContentType(t, response)
@@ -442,7 +442,7 @@ func TestHandlerUpdateAPIKeyProvider(t *testing.T) {
 	performRequest(router, http.MethodPost, versionsPath)
 	authenticationPath := versionsPath + "/1/authentication"
 
-	response := performRequestWithBody(router, http.MethodPut, authenticationPath, `{"enabled":true,"providers":[{"name":"internal-key","type":"api-key","enabled":true,"priority":10,"apiKey":{"secretRef":"secrets/api-keys/internal"}},{"name":"jwt","type":"jwt","enabled":true,"priority":20}]}`)
+	response := performRequestWithBody(router, http.MethodPut, authenticationPath, `{"enabled":true,"providers":[{"name":"internal-key","type":"api-key","enabled":true,"priority":10,"apiKey":{"secretRef":"secrets/api-keys/internal"}}]}`)
 	assertStatus(t, response, http.StatusOK)
 	assertContentType(t, response)
 	updated := decodeVersion(t, response)
@@ -450,8 +450,8 @@ func TestHandlerUpdateAPIKeyProvider(t *testing.T) {
 	if apiKey == nil || apiKey.Header != "X-API-Key" || apiKey.SecretRef != "secrets/api-keys/internal" {
 		t.Errorf("default APIKey = %#v", apiKey)
 	}
-	if updated.Authentication.Providers[1].APIKey != nil {
-		t.Errorf("JWT apiKey = %#v, want omitted", updated.Authentication.Providers[1].APIKey)
+	if updated.Authentication.Providers[0].JWT != nil {
+		t.Errorf("API Key jwt = %#v, want omitted", updated.Authentication.Providers[0].JWT)
 	}
 	if strings.Contains(response.Body.String(), `"apiKey":null`) {
 		t.Errorf("response contains apiKey for JWT Provider: %s", response.Body.String())
@@ -491,6 +491,89 @@ func TestHandlerUpdateAPIKeyProviderValidation(t *testing.T) {
 
 func TestHandlerUpdateAPIKeyProviderLifecycleRestriction(t *testing.T) {
 	body := `{"enabled":true,"providers":[{"name":"key","type":"api-key","enabled":true,"priority":10,"apiKey":{"header":"X-API-Key","secretRef":"secrets/api-keys/internal"}}]}`
+	for _, endpoint := range []string{"publish", "archive"} {
+		t.Run(endpoint, func(t *testing.T) {
+			router := newTestRouter(t, true)
+			versionsPath := "/api/v1/workspaces/1/configurations/1/versions"
+			performRequest(router, http.MethodPost, versionsPath)
+			performRequest(router, http.MethodPost, versionsPath+"/1/"+endpoint)
+			response := performRequestWithBody(router, http.MethodPut, versionsPath+"/1/authentication", body)
+			assertStatus(t, response, http.StatusConflict)
+			assertErrorCode(t, response, "version_not_editable")
+		})
+	}
+}
+
+func TestAuthenticationRequestJWTDefaults(t *testing.T) {
+	settings := (authenticationSettingsRequest{Providers: []authenticationProviderRequest{{JWT: &jwtSettingsRequest{}}}}).settings()
+	jwt := settings.Providers[0].JWT
+	if jwt == nil {
+		t.Fatal("JWT = nil")
+	}
+	if jwt.SigningKeys == nil || jwt.AllowedAlgorithms == nil || jwt.AllowedIssuers == nil || jwt.AllowedAudiences == nil || jwt.RequiredClaims == nil {
+		t.Errorf("JWT collections must default to empty slices: %#v", jwt)
+	}
+	if jwt.ClockSkewSeconds != 60 {
+		t.Errorf("ClockSkewSeconds = %d, want 60", jwt.ClockSkewSeconds)
+	}
+}
+
+func TestHandlerUpdateJWTProvider(t *testing.T) {
+	router := newTestRouter(t, true)
+	versionsPath := "/api/v1/workspaces/1/configurations/1/versions"
+	performRequest(router, http.MethodPost, versionsPath)
+	body := `{"enabled":true,"providers":[{"name":"jwt","type":"jwt","enabled":true,"priority":10,"jwt":{"signingKeys":[{"name":"main","secretRef":"secrets/jwt/main"}],"allowedAlgorithms":["HS256","RS256"],"allowedIssuers":["issuer-a"],"allowedAudiences":["audience-a"],"requiredClaims":[{"name":"tenant","value":"internal"}]}}]}`
+
+	response := performRequestWithBody(router, http.MethodPut, versionsPath+"/1/authentication", body)
+	assertStatus(t, response, http.StatusOK)
+	assertContentType(t, response)
+	updated := decodeVersion(t, response)
+	jwt := updated.Authentication.Providers[0].JWT
+	if jwt == nil || jwt.ClockSkewSeconds != 60 || len(jwt.SigningKeys) != 1 || len(jwt.AllowedAlgorithms) != 2 {
+		t.Fatalf("JWT = %#v", jwt)
+	}
+	if updated.Authentication.Providers[0].APIKey != nil {
+		t.Errorf("JWT apiKey = %#v, want omitted", updated.Authentication.Providers[0].APIKey)
+	}
+}
+
+func TestHandlerUpdateJWTProviderValidation(t *testing.T) {
+	tests := []struct {
+		name string
+		body string
+	}{
+		{name: "api-key with jwt", body: `{"enabled":true,"providers":[{"name":"key","type":"api-key","enabled":true,"priority":10,"apiKey":{"header":"X-API-Key","secretRef":"secrets/api-keys/main"},"jwt":{"signingKeys":[{"name":"main","secretRef":"secrets/jwt/main"}],"allowedAlgorithms":["HS256"]}}]}`},
+		{name: "duplicate signing key", body: `{"enabled":true,"providers":[{"name":"jwt","type":"jwt","enabled":true,"priority":10,"jwt":{"signingKeys":[{"name":"main","secretRef":"secrets/jwt/main"},{"name":"main","secretRef":"secrets/jwt/next"}],"allowedAlgorithms":["HS256"]}}]}`},
+		{name: "invalid algorithm", body: `{"enabled":true,"providers":[{"name":"jwt","type":"jwt","enabled":true,"priority":10,"jwt":{"signingKeys":[{"name":"main","secretRef":"secrets/jwt/main"}],"allowedAlgorithms":["none"]}}]}`},
+		{name: "duplicate algorithm", body: `{"enabled":true,"providers":[{"name":"jwt","type":"jwt","enabled":true,"priority":10,"jwt":{"signingKeys":[{"name":"main","secretRef":"secrets/jwt/main"}],"allowedAlgorithms":["HS256","HS256"]}}]}`},
+		{name: "duplicate issuer", body: `{"enabled":true,"providers":[{"name":"jwt","type":"jwt","enabled":true,"priority":10,"jwt":{"signingKeys":[{"name":"main","secretRef":"secrets/jwt/main"}],"allowedAlgorithms":["HS256"],"allowedIssuers":["issuer","issuer"]}}]}`},
+		{name: "duplicate audience", body: `{"enabled":true,"providers":[{"name":"jwt","type":"jwt","enabled":true,"priority":10,"jwt":{"signingKeys":[{"name":"main","secretRef":"secrets/jwt/main"}],"allowedAlgorithms":["HS256"],"allowedAudiences":["audience","audience"]}}]}`},
+		{name: "duplicate required claim", body: `{"enabled":true,"providers":[{"name":"jwt","type":"jwt","enabled":true,"priority":10,"jwt":{"signingKeys":[{"name":"main","secretRef":"secrets/jwt/main"}],"allowedAlgorithms":["HS256"],"requiredClaims":[{"name":"tenant","value":"a"},{"name":"tenant","value":"b"}]}}]}`},
+		{name: "invalid SecretRef", body: `{"enabled":true,"providers":[{"name":"jwt","type":"jwt","enabled":true,"priority":10,"jwt":{"signingKeys":[{"name":"main","secretRef":"https://example.com/key"}],"allowedAlgorithms":["HS256"]}}]}`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			router := newTestRouter(t, true)
+			performRequest(router, http.MethodPost, "/api/v1/workspaces/1/configurations/1/versions")
+			response := performRequestWithBody(router, http.MethodPut, "/api/v1/workspaces/1/configurations/1/versions/1/authentication", tt.body)
+			assertStatus(t, response, http.StatusBadRequest)
+			assertErrorCode(t, response, "validation_failed")
+		})
+	}
+
+	t.Run("strict JSON", func(t *testing.T) {
+		router := newTestRouter(t, true)
+		performRequest(router, http.MethodPost, "/api/v1/workspaces/1/configurations/1/versions")
+		body := `{"enabled":true,"providers":[{"name":"jwt","type":"jwt","enabled":true,"priority":10,"jwt":{"signingKeys":[{"name":"main","secretRef":"secrets/jwt/main","pem":"secret"}],"allowedAlgorithms":["HS256"]}}]}`
+		response := performRequestWithBody(router, http.MethodPut, "/api/v1/workspaces/1/configurations/1/versions/1/authentication", body)
+		assertStatus(t, response, http.StatusBadRequest)
+		assertErrorCode(t, response, "invalid_request")
+	})
+}
+
+func TestHandlerUpdateJWTProviderLifecycleRestriction(t *testing.T) {
+	body := `{"enabled":true,"providers":[{"name":"jwt","type":"jwt","enabled":true,"priority":10,"jwt":{"signingKeys":[{"name":"main","secretRef":"secrets/jwt/main"}],"allowedAlgorithms":["HS256"]}}]}`
 	for _, endpoint := range []string{"publish", "archive"} {
 		t.Run(endpoint, func(t *testing.T) {
 			router := newTestRouter(t, true)

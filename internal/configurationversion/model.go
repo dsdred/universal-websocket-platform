@@ -12,6 +12,24 @@ const (
 	Archived  VersionState = "Archived"
 )
 
+// JWTAlgorithm identifies a permitted JWT signing algorithm.
+type JWTAlgorithm string
+
+const (
+	HS256 JWTAlgorithm = "HS256"
+	HS384 JWTAlgorithm = "HS384"
+	HS512 JWTAlgorithm = "HS512"
+	RS256 JWTAlgorithm = "RS256"
+	RS384 JWTAlgorithm = "RS384"
+	RS512 JWTAlgorithm = "RS512"
+	ES256 JWTAlgorithm = "ES256"
+	ES384 JWTAlgorithm = "ES384"
+	ES512 JWTAlgorithm = "ES512"
+	PS256 JWTAlgorithm = "PS256"
+	PS384 JWTAlgorithm = "PS384"
+	PS512 JWTAlgorithm = "PS512"
+)
+
 // AuthenticationProviderType identifies the configured Authentication mechanism.
 type AuthenticationProviderType string
 
@@ -34,12 +52,35 @@ type AuthenticationProvider struct {
 	Enabled  bool                       `json:"enabled"`
 	Priority uint32                     `json:"priority"`
 	APIKey   *APIKeySettings            `json:"apiKey,omitempty"`
+	JWT      *JWTSettings               `json:"jwt,omitempty"`
 }
 
 // APIKeySettings describes API Key Provider metadata.
 type APIKeySettings struct {
 	Header    string `json:"header"`
 	SecretRef string `json:"secretRef"`
+}
+
+// JWTSettings describes JWT Provider verification-policy metadata.
+type JWTSettings struct {
+	SigningKeys       []JWTSigningKey    `json:"signingKeys"`
+	AllowedAlgorithms []JWTAlgorithm     `json:"allowedAlgorithms"`
+	AllowedIssuers    []string           `json:"allowedIssuers"`
+	AllowedAudiences  []string           `json:"allowedAudiences"`
+	RequiredClaims    []JWTRequiredClaim `json:"requiredClaims"`
+	ClockSkewSeconds  uint32             `json:"clockSkewSeconds"`
+}
+
+// JWTSigningKey identifies one signing key by Secret Reference.
+type JWTSigningKey struct {
+	Name      string `json:"name"`
+	SecretRef string `json:"secretRef"`
+}
+
+// JWTRequiredClaim declares a required JWT Claim and value.
+type JWTRequiredClaim struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 // ListenerSettings describes where a future WebSocket Listener will accept connections.

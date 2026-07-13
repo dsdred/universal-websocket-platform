@@ -70,6 +70,9 @@
 - API Key Provider metadata с Header и SecretRef внутри AuthenticationSettings
 - Default Header `X-API-Key` и строгая валидация HTTP header field name
 - Проверка формата SecretRef без разрешения ссылки и проверки существования Secret
+- JWT Provider metadata с SigningKeys, AllowedAlgorithms, AllowedIssuers, AllowedAudiences, RequiredClaims и ClockSkewSeconds
+- Signing Keys представлены SecretRef; поддерживаются algorithms HS, RS, ES и PS семейств с размерами 256, 384 и 512
+- Default ClockSkewSeconds равен `60`; JWT metadata редактируется через общую секцию Authentication только для Draft Version
 - Реальная Authentication и выполнение Provider не реализованы
 
 ## Secret References
@@ -82,7 +85,7 @@
 
 - DP-003 предлагает Configuration-модель JWT Provider с несколькими Signing Keys, algorithms, issuers, audiences и Required Claims
 - Signing Keys представлены только Secret References без хранения PEM, JWK или HMAC secret в ConfigurationVersion
-- JWT Provider metadata, проверка token и Runtime pipeline еще не реализованы
+- JWT Provider metadata реализована; проверка token и Runtime pipeline отсутствуют
 
 ## Чего не существует
 

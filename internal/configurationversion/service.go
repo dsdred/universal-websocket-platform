@@ -450,6 +450,9 @@ func validateAuthentication(authentication AuthenticationSettings) (Authenticati
 
 		switch provider.Type {
 		case AuthenticationProviderAPIKey:
+			if provider.JWT != nil {
+				return AuthenticationSettings{}, &ValidationError{Field: "providers.jwt", Message: "must be omitted for non-jwt Provider"}
+			}
 			if provider.APIKey == nil {
 				return AuthenticationSettings{}, &ValidationError{Field: "providers.apiKey", Message: "must be provided for api-key Provider"}
 			}
@@ -458,9 +461,24 @@ func validateAuthentication(authentication AuthenticationSettings) (Authenticati
 				return AuthenticationSettings{}, err
 			}
 			provider.APIKey = &normalized
-		case AuthenticationProviderJWT, AuthenticationProviderBasic:
+		case AuthenticationProviderJWT:
 			if provider.APIKey != nil {
 				return AuthenticationSettings{}, &ValidationError{Field: "providers.apiKey", Message: "must be omitted for non-api-key Provider"}
+			}
+			if provider.JWT == nil {
+				return AuthenticationSettings{}, &ValidationError{Field: "providers.jwt", Message: "must be provided for jwt Provider"}
+			}
+			normalized, err := validateJWT(*provider.JWT)
+			if err != nil {
+				return AuthenticationSettings{}, err
+			}
+			provider.JWT = &normalized
+		case AuthenticationProviderBasic:
+			if provider.APIKey != nil {
+				return AuthenticationSettings{}, &ValidationError{Field: "providers.apiKey", Message: "must be omitted for non-api-key Provider"}
+			}
+			if provider.JWT != nil {
+				return AuthenticationSettings{}, &ValidationError{Field: "providers.jwt", Message: "must be omitted for non-jwt Provider"}
 			}
 		default:
 			return AuthenticationSettings{}, &ValidationError{Field: "providers.type", Message: "must be one of jwt, api-key, or basic"}
@@ -496,4 +514,112 @@ func validateAPIKey(apiKey APIKeySettings) (APIKeySettings, error) {
 	}
 
 	return apiKey, nil
+}
+
+func validateJWT(jwt JWTSettings) (JWTSettings, error) {
+	if len(jwt.SigningKeys) == 0 {
+		return JWTSettings{}, &ValidationError{Field: "providers.jwt.signingKeys", Message: "must contain at least one signing key"}
+	}
+	signingKeys := make([]JWTSigningKey, len(jwt.SigningKeys))
+	keyNames := make(map[string]struct{}, len(jwt.SigningKeys))
+	for index, key := range jwt.SigningKeys {
+		key.Name = strings.TrimSpace(key.Name)
+		if key.Name == "" {
+			return JWTSettings{}, &ValidationError{Field: "providers.jwt.signingKeys.name", Message: "must not be empty"}
+		}
+		if _, exists := keyNames[key.Name]; exists {
+			return JWTSettings{}, &ValidationError{Field: "providers.jwt.signingKeys.name", Message: "must be unique"}
+		}
+		keyNames[key.Name] = struct{}{}
+		key.SecretRef = strings.TrimSpace(key.SecretRef)
+		if key.SecretRef == "" {
+			return JWTSettings{}, &ValidationError{Field: "providers.jwt.signingKeys.secretRef", Message: "must not be empty"}
+		}
+		if utf8.RuneCountInString(key.SecretRef) > maxSecretReferenceLength || !validTLSReference(key.SecretRef) {
+			return JWTSettings{}, &ValidationError{Field: "providers.jwt.signingKeys.secretRef", Message: "must be a valid Secret Reference"}
+		}
+		signingKeys[index] = key
+	}
+
+	if len(jwt.AllowedAlgorithms) == 0 {
+		return JWTSettings{}, &ValidationError{Field: "providers.jwt.allowedAlgorithms", Message: "must contain at least one algorithm"}
+	}
+	algorithms := make([]JWTAlgorithm, len(jwt.AllowedAlgorithms))
+	seenAlgorithms := make(map[JWTAlgorithm]struct{}, len(jwt.AllowedAlgorithms))
+	for index, algorithm := range jwt.AllowedAlgorithms {
+		if !validJWTAlgorithm(algorithm) {
+			return JWTSettings{}, &ValidationError{Field: "providers.jwt.allowedAlgorithms", Message: "contains an unsupported algorithm"}
+		}
+		if _, exists := seenAlgorithms[algorithm]; exists {
+			return JWTSettings{}, &ValidationError{Field: "providers.jwt.allowedAlgorithms", Message: "must not contain duplicates"}
+		}
+		seenAlgorithms[algorithm] = struct{}{}
+		algorithms[index] = algorithm
+	}
+
+	issuers, err := normalizeUniqueStrings(jwt.AllowedIssuers, "providers.jwt.allowedIssuers")
+	if err != nil {
+		return JWTSettings{}, err
+	}
+	audiences, err := normalizeUniqueStrings(jwt.AllowedAudiences, "providers.jwt.allowedAudiences")
+	if err != nil {
+		return JWTSettings{}, err
+	}
+
+	requiredClaims := make([]JWTRequiredClaim, len(jwt.RequiredClaims))
+	claimNames := make(map[string]struct{}, len(jwt.RequiredClaims))
+	for index, claim := range jwt.RequiredClaims {
+		claim.Name = strings.TrimSpace(claim.Name)
+		claim.Value = strings.TrimSpace(claim.Value)
+		if claim.Name == "" {
+			return JWTSettings{}, &ValidationError{Field: "providers.jwt.requiredClaims.name", Message: "must not be empty"}
+		}
+		if claim.Value == "" {
+			return JWTSettings{}, &ValidationError{Field: "providers.jwt.requiredClaims.value", Message: "must not be empty"}
+		}
+		if _, exists := claimNames[claim.Name]; exists {
+			return JWTSettings{}, &ValidationError{Field: "providers.jwt.requiredClaims.name", Message: "must be unique"}
+		}
+		claimNames[claim.Name] = struct{}{}
+		requiredClaims[index] = claim
+	}
+
+	if jwt.ClockSkewSeconds > 300 {
+		return JWTSettings{}, &ValidationError{Field: "providers.jwt.clockSkewSeconds", Message: "must be between 0 and 300"}
+	}
+
+	return JWTSettings{
+		SigningKeys:       signingKeys,
+		AllowedAlgorithms: algorithms,
+		AllowedIssuers:    issuers,
+		AllowedAudiences:  audiences,
+		RequiredClaims:    requiredClaims,
+		ClockSkewSeconds:  jwt.ClockSkewSeconds,
+	}, nil
+}
+
+func validJWTAlgorithm(algorithm JWTAlgorithm) bool {
+	switch algorithm {
+	case HS256, HS384, HS512, RS256, RS384, RS512, ES256, ES384, ES512, PS256, PS384, PS512:
+		return true
+	default:
+		return false
+	}
+}
+
+func normalizeUniqueStrings(values []string, field string) ([]string, error) {
+	normalized := make([]string, len(values))
+	seen := make(map[string]struct{}, len(values))
+	for index, value := range values {
+		value = strings.TrimSpace(value)
+		if value == "" {
+			return nil, &ValidationError{Field: field, Message: "must not contain empty values"}
+		}
+		if _, exists := seen[value]; exists {
+			return nil, &ValidationError{Field: field, Message: "must not contain duplicates"}
+		}
+		seen[value] = struct{}{}
+		normalized[index] = value
+	}
+	return normalized, nil
 }

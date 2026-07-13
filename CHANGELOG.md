@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Listener TimeoutSettings metadata for handshake, read, write, and idle limits in seconds.
 - Authentication Domain Model metadata with configurable JWT, API Key, and Basic Provider entries for Draft ConfigurationVersion entities.
 - API Key Provider metadata with validated HTTP header names and Secret References.
+- JWT Provider metadata with Signing Keys, allowed algorithms, issuers, audiences, required Claims, and clock skew policy.
 
 ## [0.1.0-alpha] - 2026-07-12
 

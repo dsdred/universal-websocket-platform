@@ -88,8 +88,8 @@ func TestServiceUpdateAuthentication(t *testing.T) {
 		t.Fatalf("Create() error = %v", err)
 	}
 	settings := AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{
-		{Name: "  internal-jwt  ", Type: AuthenticationProviderJWT, Enabled: true, Priority: 10},
-		{Name: "partners-jwt", Type: AuthenticationProviderJWT, Enabled: true, Priority: 20},
+		{Name: "  internal-jwt  ", Type: AuthenticationProviderJWT, Enabled: true, Priority: 10, JWT: validJWTSettings()},
+		{Name: "partners-jwt", Type: AuthenticationProviderJWT, Enabled: true, Priority: 20, JWT: validJWTSettings()},
 	}}
 	updated, err := service.UpdateAuthentication(context.Background(), 1, 1, created.ID, settings)
 	if err != nil {
@@ -111,6 +111,78 @@ func TestServiceUpdateAuthentication(t *testing.T) {
 	}
 	if disabled.Authentication.Enabled || disabled.Authentication.Providers == nil || len(disabled.Authentication.Providers) != 0 {
 		t.Errorf("disabled Authentication = %#v", disabled.Authentication)
+	}
+}
+
+func validJWTSettings() *JWTSettings {
+	return &JWTSettings{
+		SigningKeys:       []JWTSigningKey{{Name: "main", SecretRef: "secrets/jwt/main"}},
+		AllowedAlgorithms: []JWTAlgorithm{HS256},
+		AllowedIssuers:    []string{"issuer"},
+		AllowedAudiences:  []string{"audience"},
+		RequiredClaims:    []JWTRequiredClaim{{Name: "tenant", Value: "internal"}},
+		ClockSkewSeconds:  60,
+	}
+}
+
+func TestServiceUpdateJWTProvider(t *testing.T) {
+	service := NewService(NewMemoryConfigurationVersionRepository(), configurationCheckerStub{exists: true}, time.Now)
+	created, err := service.Create(context.Background(), 1, 1)
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	settings := validJWTSettings()
+	settings.SigningKeys[0] = JWTSigningKey{Name: "  primary  ", SecretRef: "  secrets/jwt/main  "}
+	settings.AllowedIssuers = []string{"  issuer-a  ", "issuer-b"}
+	settings.AllowedAudiences = []string{" audience-a ", "audience-b"}
+	settings.RequiredClaims[0] = JWTRequiredClaim{Name: " tenant ", Value: " internal "}
+
+	updated, err := service.UpdateAuthentication(context.Background(), 1, 1, created.ID, AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Name: "jwt", Type: AuthenticationProviderJWT, JWT: settings}}})
+	if err != nil {
+		t.Fatalf("UpdateAuthentication() error = %v", err)
+	}
+	jwt := updated.Authentication.Providers[0].JWT
+	if jwt == nil || jwt.SigningKeys[0].Name != "primary" || jwt.SigningKeys[0].SecretRef != "secrets/jwt/main" {
+		t.Fatalf("JWT = %#v", jwt)
+	}
+	if jwt.AllowedIssuers[0] != "issuer-a" || jwt.AllowedAudiences[0] != "audience-a" || jwt.RequiredClaims[0] != (JWTRequiredClaim{Name: "tenant", Value: "internal"}) {
+		t.Errorf("normalized JWT = %#v", jwt)
+	}
+}
+
+func TestServiceUpdateJWTProviderValidation(t *testing.T) {
+	tests := []struct {
+		name     string
+		provider AuthenticationProvider
+		field    string
+	}{
+		{name: "JWT settings missing", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT}, field: "providers.jwt"},
+		{name: "api-key with JWT", provider: AuthenticationProvider{Name: "key", Type: AuthenticationProviderAPIKey, APIKey: &APIKeySettings{Header: "X-API-Key", SecretRef: "secrets/api-keys/main"}, JWT: validJWTSettings()}, field: "providers.jwt"},
+		{name: "no signing keys", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, JWT: &JWTSettings{AllowedAlgorithms: []JWTAlgorithm{HS256}}}, field: "providers.jwt.signingKeys"},
+		{name: "duplicate signing key", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, JWT: &JWTSettings{SigningKeys: []JWTSigningKey{{Name: "main", SecretRef: "secrets/jwt/main"}, {Name: " main ", SecretRef: "secrets/jwt/next"}}, AllowedAlgorithms: []JWTAlgorithm{HS256}}}, field: "providers.jwt.signingKeys.name"},
+		{name: "invalid SecretRef", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, JWT: &JWTSettings{SigningKeys: []JWTSigningKey{{Name: "main", SecretRef: "https://example.com/key"}}, AllowedAlgorithms: []JWTAlgorithm{HS256}}}, field: "providers.jwt.signingKeys.secretRef"},
+		{name: "no algorithms", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, JWT: &JWTSettings{SigningKeys: []JWTSigningKey{{Name: "main", SecretRef: "secrets/jwt/main"}}}}, field: "providers.jwt.allowedAlgorithms"},
+		{name: "invalid algorithm", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, JWT: &JWTSettings{SigningKeys: []JWTSigningKey{{Name: "main", SecretRef: "secrets/jwt/main"}}, AllowedAlgorithms: []JWTAlgorithm{"none"}}}, field: "providers.jwt.allowedAlgorithms"},
+		{name: "duplicate algorithm", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, JWT: &JWTSettings{SigningKeys: []JWTSigningKey{{Name: "main", SecretRef: "secrets/jwt/main"}}, AllowedAlgorithms: []JWTAlgorithm{HS256, HS256}}}, field: "providers.jwt.allowedAlgorithms"},
+		{name: "duplicate issuer", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, JWT: &JWTSettings{SigningKeys: []JWTSigningKey{{Name: "main", SecretRef: "secrets/jwt/main"}}, AllowedAlgorithms: []JWTAlgorithm{HS256}, AllowedIssuers: []string{"issuer", " issuer "}}}, field: "providers.jwt.allowedIssuers"},
+		{name: "duplicate audience", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, JWT: &JWTSettings{SigningKeys: []JWTSigningKey{{Name: "main", SecretRef: "secrets/jwt/main"}}, AllowedAlgorithms: []JWTAlgorithm{HS256}, AllowedAudiences: []string{"audience", " audience "}}}, field: "providers.jwt.allowedAudiences"},
+		{name: "duplicate required claim", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, JWT: &JWTSettings{SigningKeys: []JWTSigningKey{{Name: "main", SecretRef: "secrets/jwt/main"}}, AllowedAlgorithms: []JWTAlgorithm{HS256}, RequiredClaims: []JWTRequiredClaim{{Name: "tenant", Value: "a"}, {Name: " tenant ", Value: "b"}}}}, field: "providers.jwt.requiredClaims.name"},
+		{name: "clock skew too large", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, JWT: &JWTSettings{SigningKeys: []JWTSigningKey{{Name: "main", SecretRef: "secrets/jwt/main"}}, AllowedAlgorithms: []JWTAlgorithm{HS256}, ClockSkewSeconds: 301}}, field: "providers.jwt.clockSkewSeconds"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := NewService(NewMemoryConfigurationVersionRepository(), configurationCheckerStub{exists: true}, time.Now)
+			created, err := service.Create(context.Background(), 1, 1)
+			if err != nil {
+				t.Fatalf("Create() error = %v", err)
+			}
+			_, err = service.UpdateAuthentication(context.Background(), 1, 1, created.ID, AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{tt.provider}})
+			var validationError *ValidationError
+			if !errors.As(err, &validationError) || validationError.Field != tt.field {
+				t.Errorf("UpdateAuthentication() error = %v, want ValidationError for %s", err, tt.field)
+			}
+		})
 	}
 }
 
@@ -183,8 +255,8 @@ func TestServiceUpdateAuthenticationValidation(t *testing.T) {
 		{name: "enabled without Provider", settings: AuthenticationSettings{Enabled: true}, field: "providers"},
 		{name: "empty Name", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Type: AuthenticationProviderJWT}}}, field: "providers.name"},
 		{name: "long Unicode Name", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Name: strings.Repeat("я", 256), Type: AuthenticationProviderJWT}}}, field: "providers.name"},
-		{name: "duplicate trimmed Name", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Name: "jwt", Type: AuthenticationProviderJWT, Priority: 10}, {Name: " jwt ", Type: AuthenticationProviderBasic, Priority: 20}}}, field: "providers.name"},
-		{name: "duplicate Priority", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Name: "jwt", Type: AuthenticationProviderJWT, Priority: 10}, {Name: "basic", Type: AuthenticationProviderBasic, Priority: 10}}}, field: "providers.priority"},
+		{name: "duplicate trimmed Name", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Name: "jwt", Type: AuthenticationProviderJWT, Priority: 10, JWT: validJWTSettings()}, {Name: " jwt ", Type: AuthenticationProviderBasic, Priority: 20}}}, field: "providers.name"},
+		{name: "duplicate Priority", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Name: "jwt", Type: AuthenticationProviderJWT, Priority: 10, JWT: validJWTSettings()}, {Name: "basic", Type: AuthenticationProviderBasic, Priority: 10}}}, field: "providers.priority"},
 		{name: "invalid Type", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Name: "custom", Type: "custom"}}}, field: "providers.type"},
 	}
 

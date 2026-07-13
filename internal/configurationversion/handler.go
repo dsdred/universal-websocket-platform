@@ -22,7 +22,10 @@ type timeoutSettingsRequest struct {
 	IdleSeconds      *uint32 `json:"idleSeconds"`
 }
 
-const defaultAPIKeyHeader = "X-API-Key"
+const (
+	defaultAPIKeyHeader        = "X-API-Key"
+	defaultJWTClockSkewSeconds = 60
+)
 
 type authenticationSettingsRequest struct {
 	Enabled   bool                            `json:"enabled"`
@@ -35,11 +38,21 @@ type authenticationProviderRequest struct {
 	Enabled  bool                       `json:"enabled"`
 	Priority uint32                     `json:"priority"`
 	APIKey   *apiKeySettingsRequest     `json:"apiKey,omitempty"`
+	JWT      *jwtSettingsRequest        `json:"jwt,omitempty"`
 }
 
 type apiKeySettingsRequest struct {
 	Header    *string `json:"header"`
 	SecretRef string  `json:"secretRef"`
+}
+
+type jwtSettingsRequest struct {
+	SigningKeys       []JWTSigningKey    `json:"signingKeys"`
+	AllowedAlgorithms []JWTAlgorithm     `json:"allowedAlgorithms"`
+	AllowedIssuers    []string           `json:"allowedIssuers"`
+	AllowedAudiences  []string           `json:"allowedAudiences"`
+	RequiredClaims    []JWTRequiredClaim `json:"requiredClaims"`
+	ClockSkewSeconds  *uint32            `json:"clockSkewSeconds"`
 }
 
 // NewHandler creates a Configuration Version HTTP handler.
@@ -99,6 +112,20 @@ func (r authenticationSettingsRequest) settings() AuthenticationSettings {
 				header = *requestProvider.APIKey.Header
 			}
 			provider.APIKey = &APIKeySettings{Header: header, SecretRef: requestProvider.APIKey.SecretRef}
+		}
+		if requestProvider.JWT != nil {
+			clockSkewSeconds := uint32(defaultJWTClockSkewSeconds)
+			if requestProvider.JWT.ClockSkewSeconds != nil {
+				clockSkewSeconds = *requestProvider.JWT.ClockSkewSeconds
+			}
+			provider.JWT = &JWTSettings{
+				SigningKeys:       append(make([]JWTSigningKey, 0, len(requestProvider.JWT.SigningKeys)), requestProvider.JWT.SigningKeys...),
+				AllowedAlgorithms: append(make([]JWTAlgorithm, 0, len(requestProvider.JWT.AllowedAlgorithms)), requestProvider.JWT.AllowedAlgorithms...),
+				AllowedIssuers:    append(make([]string, 0, len(requestProvider.JWT.AllowedIssuers)), requestProvider.JWT.AllowedIssuers...),
+				AllowedAudiences:  append(make([]string, 0, len(requestProvider.JWT.AllowedAudiences)), requestProvider.JWT.AllowedAudiences...),
+				RequiredClaims:    append(make([]JWTRequiredClaim, 0, len(requestProvider.JWT.RequiredClaims)), requestProvider.JWT.RequiredClaims...),
+				ClockSkewSeconds:  clockSkewSeconds,
+			}
 		}
 		providers[index] = provider
 	}
