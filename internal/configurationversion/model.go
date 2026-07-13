@@ -53,11 +53,18 @@ type AuthenticationProvider struct {
 	Priority uint32                     `json:"priority"`
 	APIKey   *APIKeySettings            `json:"apiKey,omitempty"`
 	JWT      *JWTSettings               `json:"jwt,omitempty"`
+	Basic    *BasicSettings             `json:"basic,omitempty"`
 }
 
 // APIKeySettings describes API Key Provider metadata.
 type APIKeySettings struct {
 	Header    string `json:"header"`
+	SecretRef string `json:"secretRef"`
+}
+
+// BasicSettings describes Basic Authentication Provider metadata.
+type BasicSettings struct {
+	Realm     string `json:"realm"`
 	SecretRef string `json:"secretRef"`
 }
 

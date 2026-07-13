@@ -212,6 +212,58 @@ func TestServiceUpdateAPIKeyProvider(t *testing.T) {
 	}
 }
 
+func TestServiceUpdateBasicProvider(t *testing.T) {
+	service := NewService(NewMemoryConfigurationVersionRepository(), configurationCheckerStub{exists: true}, time.Now)
+	created, err := service.Create(context.Background(), 1, 1)
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	updated, err := service.UpdateAuthentication(context.Background(), 1, 1, created.ID, AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{
+		Name: "basic", Type: AuthenticationProviderBasic, Enabled: true, Basic: &BasicSettings{Realm: "  Internal Users  ", SecretRef: "  secrets/basic/internal  "},
+	}}})
+	if err != nil {
+		t.Fatalf("UpdateAuthentication() error = %v", err)
+	}
+	want := BasicSettings{Realm: "Internal Users", SecretRef: "secrets/basic/internal"}
+	if updated.Authentication.Providers[0].Basic == nil || *updated.Authentication.Providers[0].Basic != want {
+		t.Errorf("Basic = %#v, want %#v", updated.Authentication.Providers[0].Basic, want)
+	}
+}
+
+func TestServiceUpdateBasicProviderValidation(t *testing.T) {
+	validBasic := &BasicSettings{Realm: "Universal WebSocket Platform", SecretRef: "secrets/basic/main"}
+	tests := []struct {
+		name     string
+		provider AuthenticationProvider
+		field    string
+	}{
+		{name: "Basic settings missing", provider: AuthenticationProvider{Name: "basic", Type: AuthenticationProviderBasic}, field: "providers.basic"},
+		{name: "JWT with Basic", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, JWT: validJWTSettings(), Basic: validBasic}, field: "providers.basic"},
+		{name: "API Key with Basic", provider: AuthenticationProvider{Name: "key", Type: AuthenticationProviderAPIKey, APIKey: &APIKeySettings{Header: "X-API-Key", SecretRef: "secrets/api-keys/main"}, Basic: validBasic}, field: "providers.basic"},
+		{name: "empty Realm", provider: AuthenticationProvider{Name: "basic", Type: AuthenticationProviderBasic, Basic: &BasicSettings{Realm: "  ", SecretRef: validBasic.SecretRef}}, field: "providers.basic.realm"},
+		{name: "long Realm", provider: AuthenticationProvider{Name: "basic", Type: AuthenticationProviderBasic, Basic: &BasicSettings{Realm: strings.Repeat("я", 256), SecretRef: validBasic.SecretRef}}, field: "providers.basic.realm"},
+		{name: "empty SecretRef", provider: AuthenticationProvider{Name: "basic", Type: AuthenticationProviderBasic, Basic: &BasicSettings{Realm: validBasic.Realm}}, field: "providers.basic.secretRef"},
+		{name: "URL SecretRef", provider: AuthenticationProvider{Name: "basic", Type: AuthenticationProviderBasic, Basic: &BasicSettings{Realm: validBasic.Realm, SecretRef: "https://example.com/secret"}}, field: "providers.basic.secretRef"},
+		{name: "Windows path SecretRef", provider: AuthenticationProvider{Name: "basic", Type: AuthenticationProviderBasic, Basic: &BasicSettings{Realm: validBasic.Realm, SecretRef: `C:\secrets\basic`}}, field: "providers.basic.secretRef"},
+		{name: "PEM SecretRef", provider: AuthenticationProvider{Name: "basic", Type: AuthenticationProviderBasic, Basic: &BasicSettings{Realm: validBasic.Realm, SecretRef: "-----BEGIN PRIVATE KEY-----"}}, field: "providers.basic.secretRef"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := NewService(NewMemoryConfigurationVersionRepository(), configurationCheckerStub{exists: true}, time.Now)
+			created, err := service.Create(context.Background(), 1, 1)
+			if err != nil {
+				t.Fatalf("Create() error = %v", err)
+			}
+			_, err = service.UpdateAuthentication(context.Background(), 1, 1, created.ID, AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{tt.provider}})
+			var validationError *ValidationError
+			if !errors.As(err, &validationError) || validationError.Field != tt.field {
+				t.Errorf("UpdateAuthentication() error = %v, want ValidationError for %s", err, tt.field)
+			}
+		})
+	}
+}
+
 func TestServiceUpdateAPIKeyProviderValidation(t *testing.T) {
 	valid := &APIKeySettings{Header: "X-API-Key", SecretRef: "secrets/api-keys/internal"}
 	tests := []struct {
@@ -256,7 +308,7 @@ func TestServiceUpdateAuthenticationValidation(t *testing.T) {
 		{name: "empty Name", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Type: AuthenticationProviderJWT}}}, field: "providers.name"},
 		{name: "long Unicode Name", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Name: strings.Repeat("я", 256), Type: AuthenticationProviderJWT}}}, field: "providers.name"},
 		{name: "duplicate trimmed Name", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Name: "jwt", Type: AuthenticationProviderJWT, Priority: 10, JWT: validJWTSettings()}, {Name: " jwt ", Type: AuthenticationProviderBasic, Priority: 20}}}, field: "providers.name"},
-		{name: "duplicate Priority", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Name: "jwt", Type: AuthenticationProviderJWT, Priority: 10, JWT: validJWTSettings()}, {Name: "basic", Type: AuthenticationProviderBasic, Priority: 10}}}, field: "providers.priority"},
+		{name: "duplicate Priority", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Name: "jwt", Type: AuthenticationProviderJWT, Priority: 10, JWT: validJWTSettings()}, {Name: "basic", Type: AuthenticationProviderBasic, Priority: 10, Basic: &BasicSettings{Realm: "Realm", SecretRef: "secrets/basic/main"}}}}, field: "providers.priority"},
 		{name: "invalid Type", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Name: "custom", Type: "custom"}}}, field: "providers.type"},
 	}
 

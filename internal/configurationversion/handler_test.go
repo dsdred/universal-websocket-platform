@@ -587,6 +587,83 @@ func TestHandlerUpdateJWTProviderLifecycleRestriction(t *testing.T) {
 	}
 }
 
+func TestAuthenticationRequestBasicDefaults(t *testing.T) {
+	settings := (authenticationSettingsRequest{Providers: []authenticationProviderRequest{{Basic: &basicSettingsRequest{}}}}).settings()
+	basic := settings.Providers[0].Basic
+	if basic == nil {
+		t.Fatal("Basic = nil")
+	}
+	if basic.Realm != "Universal WebSocket Platform" || basic.SecretRef != "" {
+		t.Errorf("Basic defaults = %#v", basic)
+	}
+}
+
+func TestHandlerUpdateBasicProvider(t *testing.T) {
+	router := newTestRouter(t, true)
+	versionsPath := "/api/v1/workspaces/1/configurations/1/versions"
+	performRequest(router, http.MethodPost, versionsPath)
+	body := `{"enabled":true,"providers":[{"name":"basic","type":"basic","enabled":true,"priority":10,"basic":{"secretRef":"secrets/basic/internal"}},{"name":"jwt","type":"jwt","enabled":true,"priority":20,"jwt":{"signingKeys":[{"name":"main","secretRef":"secrets/jwt/main"}],"allowedAlgorithms":["HS256"]}}]}`
+
+	response := performRequestWithBody(router, http.MethodPut, versionsPath+"/1/authentication", body)
+	assertStatus(t, response, http.StatusOK)
+	assertContentType(t, response)
+	updated := decodeVersion(t, response)
+	basic := updated.Authentication.Providers[0].Basic
+	if basic == nil || basic.Realm != "Universal WebSocket Platform" || basic.SecretRef != "secrets/basic/internal" {
+		t.Fatalf("Basic = %#v", basic)
+	}
+	if updated.Authentication.Providers[1].Basic != nil {
+		t.Errorf("JWT basic = %#v, want omitted", updated.Authentication.Providers[1].Basic)
+	}
+}
+
+func TestHandlerUpdateBasicProviderValidation(t *testing.T) {
+	tests := []struct {
+		name string
+		body string
+	}{
+		{name: "JWT with Basic", body: `{"enabled":true,"providers":[{"name":"jwt","type":"jwt","enabled":true,"priority":10,"jwt":{"signingKeys":[{"name":"main","secretRef":"secrets/jwt/main"}],"allowedAlgorithms":["HS256"]},"basic":{"realm":"Realm","secretRef":"secrets/basic/main"}}]}`},
+		{name: "API Key with Basic", body: `{"enabled":true,"providers":[{"name":"key","type":"api-key","enabled":true,"priority":10,"apiKey":{"header":"X-API-Key","secretRef":"secrets/api-keys/main"},"basic":{"realm":"Realm","secretRef":"secrets/basic/main"}}]}`},
+		{name: "empty Realm", body: `{"enabled":true,"providers":[{"name":"basic","type":"basic","enabled":true,"priority":10,"basic":{"realm":"","secretRef":"secrets/basic/main"}}]}`},
+		{name: "invalid SecretRef", body: `{"enabled":true,"providers":[{"name":"basic","type":"basic","enabled":true,"priority":10,"basic":{"realm":"Realm","secretRef":"https://example.com/secret"}}]}`},
+		{name: "duplicate Provider names", body: `{"enabled":true,"providers":[{"name":"same","type":"basic","enabled":true,"priority":10,"basic":{"realm":"Realm","secretRef":"secrets/basic/main"}},{"name":"same","type":"jwt","enabled":true,"priority":20,"jwt":{"signingKeys":[{"name":"main","secretRef":"secrets/jwt/main"}],"allowedAlgorithms":["HS256"]}}]}`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			router := newTestRouter(t, true)
+			performRequest(router, http.MethodPost, "/api/v1/workspaces/1/configurations/1/versions")
+			response := performRequestWithBody(router, http.MethodPut, "/api/v1/workspaces/1/configurations/1/versions/1/authentication", tt.body)
+			assertStatus(t, response, http.StatusBadRequest)
+			assertErrorCode(t, response, "validation_failed")
+		})
+	}
+
+	t.Run("strict JSON", func(t *testing.T) {
+		router := newTestRouter(t, true)
+		performRequest(router, http.MethodPost, "/api/v1/workspaces/1/configurations/1/versions")
+		body := `{"enabled":true,"providers":[{"name":"basic","type":"basic","enabled":true,"priority":10,"basic":{"realm":"Realm","secretRef":"secrets/basic/main","password":"secret"}}]}`
+		response := performRequestWithBody(router, http.MethodPut, "/api/v1/workspaces/1/configurations/1/versions/1/authentication", body)
+		assertStatus(t, response, http.StatusBadRequest)
+		assertErrorCode(t, response, "invalid_request")
+	})
+}
+
+func TestHandlerUpdateBasicProviderLifecycleRestriction(t *testing.T) {
+	body := `{"enabled":true,"providers":[{"name":"basic","type":"basic","enabled":true,"priority":10,"basic":{"realm":"Realm","secretRef":"secrets/basic/main"}}]}`
+	for _, endpoint := range []string{"publish", "archive"} {
+		t.Run(endpoint, func(t *testing.T) {
+			router := newTestRouter(t, true)
+			versionsPath := "/api/v1/workspaces/1/configurations/1/versions"
+			performRequest(router, http.MethodPost, versionsPath)
+			performRequest(router, http.MethodPost, versionsPath+"/1/"+endpoint)
+			response := performRequestWithBody(router, http.MethodPut, versionsPath+"/1/authentication", body)
+			assertStatus(t, response, http.StatusConflict)
+			assertErrorCode(t, response, "version_not_editable")
+		})
+	}
+}
+
 func TestHandlerUpdateAuthenticationInvalidRequest(t *testing.T) {
 	tests := []struct {
 		name     string

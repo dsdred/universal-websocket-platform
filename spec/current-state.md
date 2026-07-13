@@ -73,6 +73,8 @@
 - JWT Provider metadata с SigningKeys, AllowedAlgorithms, AllowedIssuers, AllowedAudiences, RequiredClaims и ClockSkewSeconds
 - Signing Keys представлены SecretRef; поддерживаются algorithms HS, RS, ES и PS семейств с размерами 256, 384 и 512
 - Default ClockSkewSeconds равен `60`; JWT metadata редактируется через общую секцию Authentication только для Draft Version
+- Basic Authentication Provider metadata с Realm и SecretRef
+- Default Realm `Universal WebSocket Platform`; SecretRef хранит только ссылку на будущие credentials
 - Реальная Authentication и выполнение Provider не реализованы
 
 ## Secret References

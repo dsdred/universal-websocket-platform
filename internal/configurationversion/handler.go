@@ -25,6 +25,7 @@ type timeoutSettingsRequest struct {
 const (
 	defaultAPIKeyHeader        = "X-API-Key"
 	defaultJWTClockSkewSeconds = 60
+	defaultBasicRealm          = "Universal WebSocket Platform"
 )
 
 type authenticationSettingsRequest struct {
@@ -39,10 +40,16 @@ type authenticationProviderRequest struct {
 	Priority uint32                     `json:"priority"`
 	APIKey   *apiKeySettingsRequest     `json:"apiKey,omitempty"`
 	JWT      *jwtSettingsRequest        `json:"jwt,omitempty"`
+	Basic    *basicSettingsRequest      `json:"basic,omitempty"`
 }
 
 type apiKeySettingsRequest struct {
 	Header    *string `json:"header"`
+	SecretRef string  `json:"secretRef"`
+}
+
+type basicSettingsRequest struct {
+	Realm     *string `json:"realm"`
 	SecretRef string  `json:"secretRef"`
 }
 
@@ -126,6 +133,13 @@ func (r authenticationSettingsRequest) settings() AuthenticationSettings {
 				RequiredClaims:    append(make([]JWTRequiredClaim, 0, len(requestProvider.JWT.RequiredClaims)), requestProvider.JWT.RequiredClaims...),
 				ClockSkewSeconds:  clockSkewSeconds,
 			}
+		}
+		if requestProvider.Basic != nil {
+			realm := defaultBasicRealm
+			if requestProvider.Basic.Realm != nil {
+				realm = *requestProvider.Basic.Realm
+			}
+			provider.Basic = &BasicSettings{Realm: realm, SecretRef: requestProvider.Basic.SecretRef}
 		}
 		providers[index] = provider
 	}

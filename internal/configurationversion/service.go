@@ -450,6 +450,9 @@ func validateAuthentication(authentication AuthenticationSettings) (Authenticati
 
 		switch provider.Type {
 		case AuthenticationProviderAPIKey:
+			if provider.Basic != nil {
+				return AuthenticationSettings{}, &ValidationError{Field: "providers.basic", Message: "must be omitted for non-basic Provider"}
+			}
 			if provider.JWT != nil {
 				return AuthenticationSettings{}, &ValidationError{Field: "providers.jwt", Message: "must be omitted for non-jwt Provider"}
 			}
@@ -462,6 +465,9 @@ func validateAuthentication(authentication AuthenticationSettings) (Authenticati
 			}
 			provider.APIKey = &normalized
 		case AuthenticationProviderJWT:
+			if provider.Basic != nil {
+				return AuthenticationSettings{}, &ValidationError{Field: "providers.basic", Message: "must be omitted for non-basic Provider"}
+			}
 			if provider.APIKey != nil {
 				return AuthenticationSettings{}, &ValidationError{Field: "providers.apiKey", Message: "must be omitted for non-api-key Provider"}
 			}
@@ -480,6 +486,14 @@ func validateAuthentication(authentication AuthenticationSettings) (Authenticati
 			if provider.JWT != nil {
 				return AuthenticationSettings{}, &ValidationError{Field: "providers.jwt", Message: "must be omitted for non-jwt Provider"}
 			}
+			if provider.Basic == nil {
+				return AuthenticationSettings{}, &ValidationError{Field: "providers.basic", Message: "must be provided for basic Provider"}
+			}
+			normalized, err := validateBasic(*provider.Basic)
+			if err != nil {
+				return AuthenticationSettings{}, err
+			}
+			provider.Basic = &normalized
 		default:
 			return AuthenticationSettings{}, &ValidationError{Field: "providers.type", Message: "must be one of jwt, api-key, or basic"}
 		}
@@ -514,6 +528,26 @@ func validateAPIKey(apiKey APIKeySettings) (APIKeySettings, error) {
 	}
 
 	return apiKey, nil
+}
+
+func validateBasic(basic BasicSettings) (BasicSettings, error) {
+	basic.Realm = strings.TrimSpace(basic.Realm)
+	if basic.Realm == "" {
+		return BasicSettings{}, &ValidationError{Field: "providers.basic.realm", Message: "must not be empty"}
+	}
+	if utf8.RuneCountInString(basic.Realm) > 255 {
+		return BasicSettings{}, &ValidationError{Field: "providers.basic.realm", Message: "must not exceed 255 characters"}
+	}
+
+	basic.SecretRef = strings.TrimSpace(basic.SecretRef)
+	if basic.SecretRef == "" {
+		return BasicSettings{}, &ValidationError{Field: "providers.basic.secretRef", Message: "must not be empty"}
+	}
+	if utf8.RuneCountInString(basic.SecretRef) > maxSecretReferenceLength || !validTLSReference(basic.SecretRef) {
+		return BasicSettings{}, &ValidationError{Field: "providers.basic.secretRef", Message: "must be a valid Secret Reference"}
+	}
+
+	return basic, nil
 }
 
 func validateJWT(jwt JWTSettings) (JWTSettings, error) {
