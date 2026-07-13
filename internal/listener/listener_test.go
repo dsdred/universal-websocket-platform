@@ -3,9 +3,11 @@ package listener
 import (
 	"context"
 	"errors"
+	"net"
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 )
 
 func TestListenerStartAndStop(t *testing.T) {
@@ -112,7 +114,16 @@ func TestListenerConcurrentStop(t *testing.T) {
 			}
 		}()
 	}
-	waitGroup.Wait()
+	done := make(chan struct{})
+	go func() {
+		waitGroup.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("concurrent Stop() calls did not complete")
+	}
 	close(errorsChannel)
 	for err := range errorsChannel {
 		t.Errorf("Stop() error = %v", err)
@@ -139,9 +150,29 @@ func TestListenerSmokeScenario(t *testing.T) {
 
 func mustListener(t *testing.T) Listener {
 	t.Helper()
-	listener, err := (DefaultBootstrap{}).Build(validListenerSnapshot())
+	snapshot := validListenerSnapshot()
+	snapshot.Port = availableTCPPort(t)
+	listener, err := (DefaultBootstrap{}).Build(snapshot)
 	if err != nil {
 		t.Fatalf("Build() error = %v", err)
 	}
+	t.Cleanup(func() {
+		if err := listener.Stop(context.Background()); err != nil {
+			t.Errorf("cleanup Stop() error = %v", err)
+		}
+	})
 	return listener
+}
+
+func availableTCPPort(t *testing.T) uint16 {
+	t.Helper()
+	tcpListener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("reserve TCP port: %v", err)
+	}
+	port := tcpListener.Addr().(*net.TCPAddr).Port
+	if err := tcpListener.Close(); err != nil {
+		t.Fatalf("release reserved TCP port: %v", err)
+	}
+	return uint16(port)
 }

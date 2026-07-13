@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Immutable Runtime Configuration Snapshot model and Builder for Published ConfigurationVersion entities.
 - Runtime dependency Container that owns and exposes independent Configuration Snapshot copies.
 - Thread-safe Runtime Host composition root with immutable Snapshot ownership and Created, Running, and Stopped lifecycle states.
-- Metadata-only Listener Bootstrap with immutable TLS configuration and thread-safe lifecycle management without opening network sockets.
+- Listener Bootstrap with immutable TLS configuration, a thread-safe lifecycle, and a TCP accept loop that immediately closes accepted connections.
 - Storage-neutral Secret Resolver contract and thread-safe in-memory implementation for tests and local development.
 - Extensible runtime Authentication Provider and Factory contracts with transport-neutral request, result, and Principal models.
 - Thread-safe Authentication Provider Registry with Factory registration and delegated Provider creation.

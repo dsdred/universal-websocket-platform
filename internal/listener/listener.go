@@ -26,6 +26,7 @@ type listenerState uint8
 const (
 	listenerCreated listenerState = iota
 	listenerRunning
+	listenerStopping
 	listenerStopped
 )
 
@@ -38,11 +39,13 @@ type tlsConfiguration struct {
 
 // DefaultListener stores effective Listener metadata and coordinates its lifecycle.
 type DefaultListener struct {
-	mu    sync.RWMutex
-	host  string
-	port  uint16
-	tls   tlsConfiguration
-	state listenerState
+	mu       sync.RWMutex
+	host     string
+	port     uint16
+	tls      tlsConfiguration
+	state    listenerState
+	listener net.Listener
+	wg       sync.WaitGroup
 }
 
 // Address returns the configured host and port without opening a socket.
@@ -59,23 +62,58 @@ func (listener *DefaultListener) Running() bool {
 	return listener.state == listenerRunning
 }
 
-// Start moves a newly created Listener to Running without opening a socket.
+// Start opens the configured TCP address and starts accepting connections.
 func (listener *DefaultListener) Start(context.Context) error {
 	listener.mu.Lock()
 	defer listener.mu.Unlock()
 	if listener.state != listenerCreated {
 		return ErrListenerAlreadyRunning
 	}
+
+	tcpListener, err := net.Listen("tcp", net.JoinHostPort(listener.host, strconv.Itoa(int(listener.port))))
+	if err != nil {
+		return err
+	}
+
+	listener.listener = tcpListener
 	listener.state = listenerRunning
+	listener.wg.Add(1)
+	go listener.acceptLoop(tcpListener)
 	return nil
 }
 
-// Stop moves a Running Listener to Stopped and is otherwise a no-op.
+// Stop closes the TCP Listener, waits for the accept loop, and is idempotent.
 func (listener *DefaultListener) Stop(context.Context) error {
 	listener.mu.Lock()
-	defer listener.mu.Unlock()
-	if listener.state == listenerRunning {
-		listener.state = listenerStopped
+	if listener.state != listenerRunning {
+		listener.mu.Unlock()
+		return nil
+	}
+	tcpListener := listener.listener
+	listener.state = listenerStopping
+	listener.mu.Unlock()
+
+	err := tcpListener.Close()
+	listener.wg.Wait()
+
+	listener.mu.Lock()
+	listener.listener = nil
+	listener.state = listenerStopped
+	listener.mu.Unlock()
+
+	if err != nil && !errors.Is(err, net.ErrClosed) {
+		return err
 	}
 	return nil
+}
+
+func (listener *DefaultListener) acceptLoop(tcpListener net.Listener) {
+	defer listener.wg.Done()
+	for {
+		connection, err := tcpListener.Accept()
+		if err != nil {
+			return
+		}
+		_ = connection.Close()
+	}
 }
