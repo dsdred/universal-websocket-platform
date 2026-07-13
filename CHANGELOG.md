@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - API Key Provider metadata with validated HTTP header names and Secret References.
 - JWT Provider metadata with Signing Keys, allowed algorithms, issuers, audiences, required Claims, and clock skew policy.
 - Basic Authentication Provider metadata with Realm and Secret Reference.
+- Dedicated AuthenticationValidator component for Authentication metadata business validation.
 
 ## [0.1.0-alpha] - 2026-07-12
 

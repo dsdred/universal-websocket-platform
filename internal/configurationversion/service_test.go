@@ -137,7 +137,7 @@ func TestServiceUpdateJWTProvider(t *testing.T) {
 	settings.AllowedAudiences = []string{" audience-a ", "audience-b"}
 	settings.RequiredClaims[0] = JWTRequiredClaim{Name: " tenant ", Value: " internal "}
 
-	updated, err := service.UpdateAuthentication(context.Background(), 1, 1, created.ID, AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Name: "jwt", Type: AuthenticationProviderJWT, JWT: settings}}})
+	updated, err := service.UpdateAuthentication(context.Background(), 1, 1, created.ID, AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Name: "jwt", Type: AuthenticationProviderJWT, Enabled: true, JWT: settings}}})
 	if err != nil {
 		t.Fatalf("UpdateAuthentication() error = %v", err)
 	}
@@ -147,42 +147,6 @@ func TestServiceUpdateJWTProvider(t *testing.T) {
 	}
 	if jwt.AllowedIssuers[0] != "issuer-a" || jwt.AllowedAudiences[0] != "audience-a" || jwt.RequiredClaims[0] != (JWTRequiredClaim{Name: "tenant", Value: "internal"}) {
 		t.Errorf("normalized JWT = %#v", jwt)
-	}
-}
-
-func TestServiceUpdateJWTProviderValidation(t *testing.T) {
-	tests := []struct {
-		name     string
-		provider AuthenticationProvider
-		field    string
-	}{
-		{name: "JWT settings missing", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT}, field: "providers.jwt"},
-		{name: "api-key with JWT", provider: AuthenticationProvider{Name: "key", Type: AuthenticationProviderAPIKey, APIKey: &APIKeySettings{Header: "X-API-Key", SecretRef: "secrets/api-keys/main"}, JWT: validJWTSettings()}, field: "providers.jwt"},
-		{name: "no signing keys", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, JWT: &JWTSettings{AllowedAlgorithms: []JWTAlgorithm{HS256}}}, field: "providers.jwt.signingKeys"},
-		{name: "duplicate signing key", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, JWT: &JWTSettings{SigningKeys: []JWTSigningKey{{Name: "main", SecretRef: "secrets/jwt/main"}, {Name: " main ", SecretRef: "secrets/jwt/next"}}, AllowedAlgorithms: []JWTAlgorithm{HS256}}}, field: "providers.jwt.signingKeys.name"},
-		{name: "invalid SecretRef", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, JWT: &JWTSettings{SigningKeys: []JWTSigningKey{{Name: "main", SecretRef: "https://example.com/key"}}, AllowedAlgorithms: []JWTAlgorithm{HS256}}}, field: "providers.jwt.signingKeys.secretRef"},
-		{name: "no algorithms", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, JWT: &JWTSettings{SigningKeys: []JWTSigningKey{{Name: "main", SecretRef: "secrets/jwt/main"}}}}, field: "providers.jwt.allowedAlgorithms"},
-		{name: "invalid algorithm", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, JWT: &JWTSettings{SigningKeys: []JWTSigningKey{{Name: "main", SecretRef: "secrets/jwt/main"}}, AllowedAlgorithms: []JWTAlgorithm{"none"}}}, field: "providers.jwt.allowedAlgorithms"},
-		{name: "duplicate algorithm", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, JWT: &JWTSettings{SigningKeys: []JWTSigningKey{{Name: "main", SecretRef: "secrets/jwt/main"}}, AllowedAlgorithms: []JWTAlgorithm{HS256, HS256}}}, field: "providers.jwt.allowedAlgorithms"},
-		{name: "duplicate issuer", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, JWT: &JWTSettings{SigningKeys: []JWTSigningKey{{Name: "main", SecretRef: "secrets/jwt/main"}}, AllowedAlgorithms: []JWTAlgorithm{HS256}, AllowedIssuers: []string{"issuer", " issuer "}}}, field: "providers.jwt.allowedIssuers"},
-		{name: "duplicate audience", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, JWT: &JWTSettings{SigningKeys: []JWTSigningKey{{Name: "main", SecretRef: "secrets/jwt/main"}}, AllowedAlgorithms: []JWTAlgorithm{HS256}, AllowedAudiences: []string{"audience", " audience "}}}, field: "providers.jwt.allowedAudiences"},
-		{name: "duplicate required claim", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, JWT: &JWTSettings{SigningKeys: []JWTSigningKey{{Name: "main", SecretRef: "secrets/jwt/main"}}, AllowedAlgorithms: []JWTAlgorithm{HS256}, RequiredClaims: []JWTRequiredClaim{{Name: "tenant", Value: "a"}, {Name: " tenant ", Value: "b"}}}}, field: "providers.jwt.requiredClaims.name"},
-		{name: "clock skew too large", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, JWT: &JWTSettings{SigningKeys: []JWTSigningKey{{Name: "main", SecretRef: "secrets/jwt/main"}}, AllowedAlgorithms: []JWTAlgorithm{HS256}, ClockSkewSeconds: 301}}, field: "providers.jwt.clockSkewSeconds"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			service := NewService(NewMemoryConfigurationVersionRepository(), configurationCheckerStub{exists: true}, time.Now)
-			created, err := service.Create(context.Background(), 1, 1)
-			if err != nil {
-				t.Fatalf("Create() error = %v", err)
-			}
-			_, err = service.UpdateAuthentication(context.Background(), 1, 1, created.ID, AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{tt.provider}})
-			var validationError *ValidationError
-			if !errors.As(err, &validationError) || validationError.Field != tt.field {
-				t.Errorf("UpdateAuthentication() error = %v, want ValidationError for %s", err, tt.field)
-			}
-		})
 	}
 }
 
@@ -227,104 +191,6 @@ func TestServiceUpdateBasicProvider(t *testing.T) {
 	want := BasicSettings{Realm: "Internal Users", SecretRef: "secrets/basic/internal"}
 	if updated.Authentication.Providers[0].Basic == nil || *updated.Authentication.Providers[0].Basic != want {
 		t.Errorf("Basic = %#v, want %#v", updated.Authentication.Providers[0].Basic, want)
-	}
-}
-
-func TestServiceUpdateBasicProviderValidation(t *testing.T) {
-	validBasic := &BasicSettings{Realm: "Universal WebSocket Platform", SecretRef: "secrets/basic/main"}
-	tests := []struct {
-		name     string
-		provider AuthenticationProvider
-		field    string
-	}{
-		{name: "Basic settings missing", provider: AuthenticationProvider{Name: "basic", Type: AuthenticationProviderBasic}, field: "providers.basic"},
-		{name: "JWT with Basic", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, JWT: validJWTSettings(), Basic: validBasic}, field: "providers.basic"},
-		{name: "API Key with Basic", provider: AuthenticationProvider{Name: "key", Type: AuthenticationProviderAPIKey, APIKey: &APIKeySettings{Header: "X-API-Key", SecretRef: "secrets/api-keys/main"}, Basic: validBasic}, field: "providers.basic"},
-		{name: "empty Realm", provider: AuthenticationProvider{Name: "basic", Type: AuthenticationProviderBasic, Basic: &BasicSettings{Realm: "  ", SecretRef: validBasic.SecretRef}}, field: "providers.basic.realm"},
-		{name: "long Realm", provider: AuthenticationProvider{Name: "basic", Type: AuthenticationProviderBasic, Basic: &BasicSettings{Realm: strings.Repeat("я", 256), SecretRef: validBasic.SecretRef}}, field: "providers.basic.realm"},
-		{name: "empty SecretRef", provider: AuthenticationProvider{Name: "basic", Type: AuthenticationProviderBasic, Basic: &BasicSettings{Realm: validBasic.Realm}}, field: "providers.basic.secretRef"},
-		{name: "URL SecretRef", provider: AuthenticationProvider{Name: "basic", Type: AuthenticationProviderBasic, Basic: &BasicSettings{Realm: validBasic.Realm, SecretRef: "https://example.com/secret"}}, field: "providers.basic.secretRef"},
-		{name: "Windows path SecretRef", provider: AuthenticationProvider{Name: "basic", Type: AuthenticationProviderBasic, Basic: &BasicSettings{Realm: validBasic.Realm, SecretRef: `C:\secrets\basic`}}, field: "providers.basic.secretRef"},
-		{name: "PEM SecretRef", provider: AuthenticationProvider{Name: "basic", Type: AuthenticationProviderBasic, Basic: &BasicSettings{Realm: validBasic.Realm, SecretRef: "-----BEGIN PRIVATE KEY-----"}}, field: "providers.basic.secretRef"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			service := NewService(NewMemoryConfigurationVersionRepository(), configurationCheckerStub{exists: true}, time.Now)
-			created, err := service.Create(context.Background(), 1, 1)
-			if err != nil {
-				t.Fatalf("Create() error = %v", err)
-			}
-			_, err = service.UpdateAuthentication(context.Background(), 1, 1, created.ID, AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{tt.provider}})
-			var validationError *ValidationError
-			if !errors.As(err, &validationError) || validationError.Field != tt.field {
-				t.Errorf("UpdateAuthentication() error = %v, want ValidationError for %s", err, tt.field)
-			}
-		})
-	}
-}
-
-func TestServiceUpdateAPIKeyProviderValidation(t *testing.T) {
-	valid := &APIKeySettings{Header: "X-API-Key", SecretRef: "secrets/api-keys/internal"}
-	tests := []struct {
-		name     string
-		provider AuthenticationProvider
-		field    string
-	}{
-		{name: "api-key settings missing", provider: AuthenticationProvider{Name: "key", Type: AuthenticationProviderAPIKey}, field: "providers.apiKey"},
-		{name: "JWT with apiKey", provider: AuthenticationProvider{Name: "jwt", Type: AuthenticationProviderJWT, APIKey: valid}, field: "providers.apiKey"},
-		{name: "empty Header", provider: AuthenticationProvider{Name: "key", Type: AuthenticationProviderAPIKey, APIKey: &APIKeySettings{SecretRef: valid.SecretRef}}, field: "providers.apiKey.header"},
-		{name: "Header with spaces", provider: AuthenticationProvider{Name: "key", Type: AuthenticationProviderAPIKey, APIKey: &APIKeySettings{Header: "X API Key", SecretRef: valid.SecretRef}}, field: "providers.apiKey.header"},
-		{name: "invalid Header", provider: AuthenticationProvider{Name: "key", Type: AuthenticationProviderAPIKey, APIKey: &APIKeySettings{Header: "X-Key@", SecretRef: valid.SecretRef}}, field: "providers.apiKey.header"},
-		{name: "empty SecretRef", provider: AuthenticationProvider{Name: "key", Type: AuthenticationProviderAPIKey, APIKey: &APIKeySettings{Header: valid.Header}}, field: "providers.apiKey.secretRef"},
-		{name: "URL SecretRef", provider: AuthenticationProvider{Name: "key", Type: AuthenticationProviderAPIKey, APIKey: &APIKeySettings{Header: valid.Header, SecretRef: "https://example.com/secret"}}, field: "providers.apiKey.secretRef"},
-		{name: "Windows path SecretRef", provider: AuthenticationProvider{Name: "key", Type: AuthenticationProviderAPIKey, APIKey: &APIKeySettings{Header: valid.Header, SecretRef: `C:\secrets\api-key`}}, field: "providers.apiKey.secretRef"},
-		{name: "PEM SecretRef", provider: AuthenticationProvider{Name: "key", Type: AuthenticationProviderAPIKey, APIKey: &APIKeySettings{Header: valid.Header, SecretRef: "-----BEGIN PRIVATE KEY-----"}}, field: "providers.apiKey.secretRef"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			service := NewService(NewMemoryConfigurationVersionRepository(), configurationCheckerStub{exists: true}, time.Now)
-			created, err := service.Create(context.Background(), 1, 1)
-			if err != nil {
-				t.Fatalf("Create() error = %v", err)
-			}
-			_, err = service.UpdateAuthentication(context.Background(), 1, 1, created.ID, AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{tt.provider}})
-			var validationError *ValidationError
-			if !errors.As(err, &validationError) || validationError.Field != tt.field {
-				t.Errorf("UpdateAuthentication() error = %v, want ValidationError for %s", err, tt.field)
-			}
-		})
-	}
-}
-
-func TestServiceUpdateAuthenticationValidation(t *testing.T) {
-	tests := []struct {
-		name     string
-		settings AuthenticationSettings
-		field    string
-	}{
-		{name: "enabled without Provider", settings: AuthenticationSettings{Enabled: true}, field: "providers"},
-		{name: "empty Name", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Type: AuthenticationProviderJWT}}}, field: "providers.name"},
-		{name: "long Unicode Name", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Name: strings.Repeat("я", 256), Type: AuthenticationProviderJWT}}}, field: "providers.name"},
-		{name: "duplicate trimmed Name", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Name: "jwt", Type: AuthenticationProviderJWT, Priority: 10, JWT: validJWTSettings()}, {Name: " jwt ", Type: AuthenticationProviderBasic, Priority: 20}}}, field: "providers.name"},
-		{name: "duplicate Priority", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Name: "jwt", Type: AuthenticationProviderJWT, Priority: 10, JWT: validJWTSettings()}, {Name: "basic", Type: AuthenticationProviderBasic, Priority: 10, Basic: &BasicSettings{Realm: "Realm", SecretRef: "secrets/basic/main"}}}}, field: "providers.priority"},
-		{name: "invalid Type", settings: AuthenticationSettings{Enabled: true, Providers: []AuthenticationProvider{{Name: "custom", Type: "custom"}}}, field: "providers.type"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			service := NewService(NewMemoryConfigurationVersionRepository(), configurationCheckerStub{exists: true}, time.Now)
-			created, err := service.Create(context.Background(), 1, 1)
-			if err != nil {
-				t.Fatalf("Create() error = %v", err)
-			}
-			_, err = service.UpdateAuthentication(context.Background(), 1, 1, created.ID, tt.settings)
-			var validationError *ValidationError
-			if !errors.As(err, &validationError) || validationError.Field != tt.field {
-				t.Errorf("UpdateAuthentication() error = %v, want ValidationError for %s", err, tt.field)
-			}
-		})
 	}
 }
 

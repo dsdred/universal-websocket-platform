@@ -9,23 +9,18 @@ import (
 	"sync"
 	"time"
 	"unicode/utf8"
-
-	"golang.org/x/net/http/httpguts"
 )
 
 const (
-	defaultListenerHost                 = "127.0.0.1"
-	defaultListenerPort                 = 8080
-	defaultTLSMinVersion                = "1.2"
-	defaultHandshakeSeconds             = 10
-	defaultReadSeconds                  = 0
-	defaultWriteSeconds                 = 10
-	defaultIdleSeconds                  = 60
-	maxListenerHostLength               = 255
-	maxTLSReferenceLength               = 255
-	maxAuthenticationProviderNameLength = 255
-	maxAPIKeyHeaderLength               = 255
-	maxSecretReferenceLength            = 255
+	defaultListenerHost     = "127.0.0.1"
+	defaultListenerPort     = 8080
+	defaultTLSMinVersion    = "1.2"
+	defaultHandshakeSeconds = 10
+	defaultReadSeconds      = 0
+	defaultWriteSeconds     = 10
+	defaultIdleSeconds      = 60
+	maxListenerHostLength   = 255
+	maxTLSReferenceLength   = 255
 )
 
 // ValidationError describes invalid Configuration Version settings.
@@ -40,15 +35,21 @@ func (e *ValidationError) Error() string {
 
 // Service applies Configuration Version business rules.
 type Service struct {
-	repository           ConfigurationVersionRepository
-	configurationChecker ConfigurationExistenceChecker
-	now                  func() time.Time
-	lifecycleMu          sync.Mutex
+	repository              ConfigurationVersionRepository
+	configurationChecker    ConfigurationExistenceChecker
+	now                     func() time.Time
+	authenticationValidator AuthenticationValidator
+	lifecycleMu             sync.Mutex
 }
 
 // NewService creates a Configuration Version service.
 func NewService(repository ConfigurationVersionRepository, configurationChecker ConfigurationExistenceChecker, now func() time.Time) *Service {
-	return &Service{repository: repository, configurationChecker: configurationChecker, now: now}
+	return &Service{
+		repository:              repository,
+		configurationChecker:    configurationChecker,
+		now:                     now,
+		authenticationValidator: DefaultAuthenticationValidator{},
+	}
 }
 
 // Create creates the next Draft Version for an existing Configuration.
@@ -124,12 +125,12 @@ func (s *Service) UpdateAuthentication(
 		return ConfigurationVersion{}, ErrVersionNotEditable
 	}
 
-	normalized, err := validateAuthentication(authentication)
-	if err != nil {
+	authentication = cloneAuthenticationSettings(authentication)
+	if err := s.authenticationValidator.Validate(authentication); err != nil {
 		return ConfigurationVersion{}, err
 	}
 
-	version.Authentication = normalized
+	version.Authentication = authentication
 	version.UpdatedAt = s.now().UTC()
 	return s.repository.Update(version)
 }
@@ -425,235 +426,4 @@ func validateTimeouts(timeouts TimeoutSettings) error {
 		return &ValidationError{Field: "idleSeconds", Message: "must be between 0 and 86400"}
 	}
 	return nil
-}
-
-func validateAuthentication(authentication AuthenticationSettings) (AuthenticationSettings, error) {
-	if authentication.Enabled && len(authentication.Providers) == 0 {
-		return AuthenticationSettings{}, &ValidationError{Field: "providers", Message: "must contain at least one provider when Authentication is enabled"}
-	}
-
-	providers := make([]AuthenticationProvider, len(authentication.Providers))
-	names := make(map[string]struct{}, len(authentication.Providers))
-	priorities := make(map[uint32]struct{}, len(authentication.Providers))
-	for index, provider := range authentication.Providers {
-		provider.Name = strings.TrimSpace(provider.Name)
-		if provider.Name == "" {
-			return AuthenticationSettings{}, &ValidationError{Field: "providers.name", Message: "must not be empty"}
-		}
-		if utf8.RuneCountInString(provider.Name) > maxAuthenticationProviderNameLength {
-			return AuthenticationSettings{}, &ValidationError{Field: "providers.name", Message: "must not exceed 255 characters"}
-		}
-		if _, exists := names[provider.Name]; exists {
-			return AuthenticationSettings{}, &ValidationError{Field: "providers.name", Message: "must be unique"}
-		}
-		names[provider.Name] = struct{}{}
-
-		switch provider.Type {
-		case AuthenticationProviderAPIKey:
-			if provider.Basic != nil {
-				return AuthenticationSettings{}, &ValidationError{Field: "providers.basic", Message: "must be omitted for non-basic Provider"}
-			}
-			if provider.JWT != nil {
-				return AuthenticationSettings{}, &ValidationError{Field: "providers.jwt", Message: "must be omitted for non-jwt Provider"}
-			}
-			if provider.APIKey == nil {
-				return AuthenticationSettings{}, &ValidationError{Field: "providers.apiKey", Message: "must be provided for api-key Provider"}
-			}
-			normalized, err := validateAPIKey(*provider.APIKey)
-			if err != nil {
-				return AuthenticationSettings{}, err
-			}
-			provider.APIKey = &normalized
-		case AuthenticationProviderJWT:
-			if provider.Basic != nil {
-				return AuthenticationSettings{}, &ValidationError{Field: "providers.basic", Message: "must be omitted for non-basic Provider"}
-			}
-			if provider.APIKey != nil {
-				return AuthenticationSettings{}, &ValidationError{Field: "providers.apiKey", Message: "must be omitted for non-api-key Provider"}
-			}
-			if provider.JWT == nil {
-				return AuthenticationSettings{}, &ValidationError{Field: "providers.jwt", Message: "must be provided for jwt Provider"}
-			}
-			normalized, err := validateJWT(*provider.JWT)
-			if err != nil {
-				return AuthenticationSettings{}, err
-			}
-			provider.JWT = &normalized
-		case AuthenticationProviderBasic:
-			if provider.APIKey != nil {
-				return AuthenticationSettings{}, &ValidationError{Field: "providers.apiKey", Message: "must be omitted for non-api-key Provider"}
-			}
-			if provider.JWT != nil {
-				return AuthenticationSettings{}, &ValidationError{Field: "providers.jwt", Message: "must be omitted for non-jwt Provider"}
-			}
-			if provider.Basic == nil {
-				return AuthenticationSettings{}, &ValidationError{Field: "providers.basic", Message: "must be provided for basic Provider"}
-			}
-			normalized, err := validateBasic(*provider.Basic)
-			if err != nil {
-				return AuthenticationSettings{}, err
-			}
-			provider.Basic = &normalized
-		default:
-			return AuthenticationSettings{}, &ValidationError{Field: "providers.type", Message: "must be one of jwt, api-key, or basic"}
-		}
-		if _, exists := priorities[provider.Priority]; exists {
-			return AuthenticationSettings{}, &ValidationError{Field: "providers.priority", Message: "must be unique"}
-		}
-		priorities[provider.Priority] = struct{}{}
-		providers[index] = provider
-	}
-
-	return AuthenticationSettings{Enabled: authentication.Enabled, Providers: providers}, nil
-}
-
-func validateAPIKey(apiKey APIKeySettings) (APIKeySettings, error) {
-	apiKey.Header = strings.TrimSpace(apiKey.Header)
-	if apiKey.Header == "" {
-		return APIKeySettings{}, &ValidationError{Field: "providers.apiKey.header", Message: "must not be empty"}
-	}
-	if utf8.RuneCountInString(apiKey.Header) > maxAPIKeyHeaderLength {
-		return APIKeySettings{}, &ValidationError{Field: "providers.apiKey.header", Message: "must not exceed 255 characters"}
-	}
-	if !httpguts.ValidHeaderFieldName(apiKey.Header) {
-		return APIKeySettings{}, &ValidationError{Field: "providers.apiKey.header", Message: "must be a valid HTTP header field name"}
-	}
-
-	apiKey.SecretRef = strings.TrimSpace(apiKey.SecretRef)
-	if apiKey.SecretRef == "" {
-		return APIKeySettings{}, &ValidationError{Field: "providers.apiKey.secretRef", Message: "must not be empty"}
-	}
-	if utf8.RuneCountInString(apiKey.SecretRef) > maxSecretReferenceLength || !validTLSReference(apiKey.SecretRef) {
-		return APIKeySettings{}, &ValidationError{Field: "providers.apiKey.secretRef", Message: "must be a valid Secret Reference"}
-	}
-
-	return apiKey, nil
-}
-
-func validateBasic(basic BasicSettings) (BasicSettings, error) {
-	basic.Realm = strings.TrimSpace(basic.Realm)
-	if basic.Realm == "" {
-		return BasicSettings{}, &ValidationError{Field: "providers.basic.realm", Message: "must not be empty"}
-	}
-	if utf8.RuneCountInString(basic.Realm) > 255 {
-		return BasicSettings{}, &ValidationError{Field: "providers.basic.realm", Message: "must not exceed 255 characters"}
-	}
-
-	basic.SecretRef = strings.TrimSpace(basic.SecretRef)
-	if basic.SecretRef == "" {
-		return BasicSettings{}, &ValidationError{Field: "providers.basic.secretRef", Message: "must not be empty"}
-	}
-	if utf8.RuneCountInString(basic.SecretRef) > maxSecretReferenceLength || !validTLSReference(basic.SecretRef) {
-		return BasicSettings{}, &ValidationError{Field: "providers.basic.secretRef", Message: "must be a valid Secret Reference"}
-	}
-
-	return basic, nil
-}
-
-func validateJWT(jwt JWTSettings) (JWTSettings, error) {
-	if len(jwt.SigningKeys) == 0 {
-		return JWTSettings{}, &ValidationError{Field: "providers.jwt.signingKeys", Message: "must contain at least one signing key"}
-	}
-	signingKeys := make([]JWTSigningKey, len(jwt.SigningKeys))
-	keyNames := make(map[string]struct{}, len(jwt.SigningKeys))
-	for index, key := range jwt.SigningKeys {
-		key.Name = strings.TrimSpace(key.Name)
-		if key.Name == "" {
-			return JWTSettings{}, &ValidationError{Field: "providers.jwt.signingKeys.name", Message: "must not be empty"}
-		}
-		if _, exists := keyNames[key.Name]; exists {
-			return JWTSettings{}, &ValidationError{Field: "providers.jwt.signingKeys.name", Message: "must be unique"}
-		}
-		keyNames[key.Name] = struct{}{}
-		key.SecretRef = strings.TrimSpace(key.SecretRef)
-		if key.SecretRef == "" {
-			return JWTSettings{}, &ValidationError{Field: "providers.jwt.signingKeys.secretRef", Message: "must not be empty"}
-		}
-		if utf8.RuneCountInString(key.SecretRef) > maxSecretReferenceLength || !validTLSReference(key.SecretRef) {
-			return JWTSettings{}, &ValidationError{Field: "providers.jwt.signingKeys.secretRef", Message: "must be a valid Secret Reference"}
-		}
-		signingKeys[index] = key
-	}
-
-	if len(jwt.AllowedAlgorithms) == 0 {
-		return JWTSettings{}, &ValidationError{Field: "providers.jwt.allowedAlgorithms", Message: "must contain at least one algorithm"}
-	}
-	algorithms := make([]JWTAlgorithm, len(jwt.AllowedAlgorithms))
-	seenAlgorithms := make(map[JWTAlgorithm]struct{}, len(jwt.AllowedAlgorithms))
-	for index, algorithm := range jwt.AllowedAlgorithms {
-		if !validJWTAlgorithm(algorithm) {
-			return JWTSettings{}, &ValidationError{Field: "providers.jwt.allowedAlgorithms", Message: "contains an unsupported algorithm"}
-		}
-		if _, exists := seenAlgorithms[algorithm]; exists {
-			return JWTSettings{}, &ValidationError{Field: "providers.jwt.allowedAlgorithms", Message: "must not contain duplicates"}
-		}
-		seenAlgorithms[algorithm] = struct{}{}
-		algorithms[index] = algorithm
-	}
-
-	issuers, err := normalizeUniqueStrings(jwt.AllowedIssuers, "providers.jwt.allowedIssuers")
-	if err != nil {
-		return JWTSettings{}, err
-	}
-	audiences, err := normalizeUniqueStrings(jwt.AllowedAudiences, "providers.jwt.allowedAudiences")
-	if err != nil {
-		return JWTSettings{}, err
-	}
-
-	requiredClaims := make([]JWTRequiredClaim, len(jwt.RequiredClaims))
-	claimNames := make(map[string]struct{}, len(jwt.RequiredClaims))
-	for index, claim := range jwt.RequiredClaims {
-		claim.Name = strings.TrimSpace(claim.Name)
-		claim.Value = strings.TrimSpace(claim.Value)
-		if claim.Name == "" {
-			return JWTSettings{}, &ValidationError{Field: "providers.jwt.requiredClaims.name", Message: "must not be empty"}
-		}
-		if claim.Value == "" {
-			return JWTSettings{}, &ValidationError{Field: "providers.jwt.requiredClaims.value", Message: "must not be empty"}
-		}
-		if _, exists := claimNames[claim.Name]; exists {
-			return JWTSettings{}, &ValidationError{Field: "providers.jwt.requiredClaims.name", Message: "must be unique"}
-		}
-		claimNames[claim.Name] = struct{}{}
-		requiredClaims[index] = claim
-	}
-
-	if jwt.ClockSkewSeconds > 300 {
-		return JWTSettings{}, &ValidationError{Field: "providers.jwt.clockSkewSeconds", Message: "must be between 0 and 300"}
-	}
-
-	return JWTSettings{
-		SigningKeys:       signingKeys,
-		AllowedAlgorithms: algorithms,
-		AllowedIssuers:    issuers,
-		AllowedAudiences:  audiences,
-		RequiredClaims:    requiredClaims,
-		ClockSkewSeconds:  jwt.ClockSkewSeconds,
-	}, nil
-}
-
-func validJWTAlgorithm(algorithm JWTAlgorithm) bool {
-	switch algorithm {
-	case HS256, HS384, HS512, RS256, RS384, RS512, ES256, ES384, ES512, PS256, PS384, PS512:
-		return true
-	default:
-		return false
-	}
-}
-
-func normalizeUniqueStrings(values []string, field string) ([]string, error) {
-	normalized := make([]string, len(values))
-	seen := make(map[string]struct{}, len(values))
-	for index, value := range values {
-		value = strings.TrimSpace(value)
-		if value == "" {
-			return nil, &ValidationError{Field: field, Message: "must not contain empty values"}
-		}
-		if _, exists := seen[value]; exists {
-			return nil, &ValidationError{Field: field, Message: "must not contain duplicates"}
-		}
-		seen[value] = struct{}{}
-		normalized[index] = value
-	}
-	return normalized, nil
 }

@@ -82,6 +82,9 @@
 - Default ClockSkewSeconds равен `60`; JWT metadata редактируется через общую секцию Authentication только для Draft Version
 - Basic Authentication Provider metadata с Realm и SecretRef
 - Default Realm `Universal WebSocket Platform`; SecretRef хранит только ссылку на будущие credentials
+- AuthenticationValidator отделяет cross-provider и provider-specific business validation от ConfigurationVersion Service
+- DefaultAuthenticationValidator не зависит от Repository, HTTP, Runtime или Persistence
+- При включенной Authentication требуется минимум один enabled Provider; при выключенной Authentication настроенные Providers сохраняются и могут быть проигнорированы будущим Runtime
 - Реальная Authentication и выполнение Provider не реализованы
 
 ## Secret References
