@@ -138,6 +138,9 @@
 - Реализован потокобезопасный Runtime Host, владеющий независимой копией Snapshot и Container
 - Host поддерживает однократный lifecycle `Created -> Running -> Stopped`; Restart и Reload отсутствуют
 - Host пока не запускает Listener, Authentication или другие Runtime components
+- Реализован Listener Bootstrap, создающий потокобезопасный metadata-only Listener из ListenerSnapshot
+- Listener хранит локальную копию Host, Port и TLS configuration и поддерживает lifecycle `Created -> Running -> Stopped`
+- Listener пока не открывает TCP socket, не запускает HTTP Server и не выполняет WebSocket Upgrade
 - Архитектура Runtime принята в ADR-003, но Loader, подключение Resolver к Runtime Container и остальные компоненты pipeline еще не реализованы
 
 ## Чего не существует
