@@ -115,13 +115,16 @@
 - Secret Resolver разрешает Secret References только при запуске Runtime; значения Secret остаются только в памяти процесса
 - Authentication Provider Registry отделяет Runtime и Authentication Service от конкретных реализаций Provider
 - Authentication использует transport-neutral контракты DP-004 и не зависит от WebSocket
-- Архитектура Runtime принята в ADR-003, но ее компоненты и pipeline еще не реализованы
+- Реализована immutable Runtime Configuration Snapshot-модель для Listener и Authentication
+- Builder принимает только Published ConfigurationVersion и глубоко копирует все Provider и JWT collections
+- Snapshot не зависит от HTTP API, Repository или исходного ConfigurationVersion после создания
+- Архитектура Runtime принята в ADR-003, но Loader, Secret Resolver и остальные компоненты pipeline еще не реализованы
 
 ## Чего не существует
 
 - Персистентного хранения Workspace
 - Персистентного хранения Configuration
-- Validation, Rollback и Snapshot для Configuration Version
+- Validation, Rollback и lifecycle Snapshot для Configuration Version
 - PostgreSQL
 - Управления WebSocket-серверами
 - Поведения Runtime для WebSocket-серверов
