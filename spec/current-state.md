@@ -93,7 +93,10 @@
 
 - Принято направление Secret References: ConfigurationVersion хранит только ссылки на секреты, а не секретные значения
 - Существующие CertificateRef и PrivateKeyRef соответствуют этому направлению
-- Secret Storage и Secret Resolver еще не реализованы
+- Создан storage-neutral интерфейс Secret Resolver с общей валидацией и нормализацией Secret Reference
+- Добавлена потокобезопасная in-memory реализация для тестирования и будущей локальной разработки
+- Реальные Secret Storage backend еще не реализованы
+- Resolver пока не подключен к Runtime Container и Authentication Providers
 
 ## JWT Provider Design
 
@@ -120,7 +123,7 @@
 - Snapshot не зависит от HTTP API, Repository или исходного ConfigurationVersion после создания
 - Runtime Container хранит собственную глубокую копию Snapshot и возвращает новую копию через единственный метод `Snapshot()`
 - Container пока не содержит других зависимостей и не управляет запуском, остановкой или reload Runtime
-- Архитектура Runtime принята в ADR-003, но Loader, Secret Resolver и остальные компоненты pipeline еще не реализованы
+- Архитектура Runtime принята в ADR-003, но Loader, интеграция Secret Resolver и остальные компоненты pipeline еще не реализованы
 
 ## Чего не существует
 
@@ -135,7 +138,7 @@
 - Применение Listener TimeoutSettings в Runtime
 - Реальная Authentication, проверка JWT, API Key и Basic credentials
 - AuthenticationService, AuthenticationRequest, Principal и выполнение Provider
-- Secret Storage и Secret Resolver еще не реализованы
+- Реальные Secret Storage backend и интеграция Resolver еще не реализованы
 - Инфраструктуры развертывания
 - Инфраструктуры хранения данных
 - Admin UI

@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Dedicated AuthenticationValidator component for Authentication metadata business validation.
 - Immutable Runtime Configuration Snapshot model and Builder for Published ConfigurationVersion entities.
 - Runtime dependency Container that owns and exposes independent Configuration Snapshot copies.
+- Storage-neutral Secret Resolver contract and thread-safe in-memory implementation for tests and local development.
 
 ## [0.1.0-alpha] - 2026-07-12
 
