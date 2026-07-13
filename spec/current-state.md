@@ -121,7 +121,8 @@
 - Реализован production API Key Factory, изолирующий преобразование AuthenticationProviderSnapshot в локальную runtime-конфигурацию API Key Provider
 - Реализован Runtime JWT Provider с проверкой signature, exp, nbf, issuer, audience и Required Claims
 - JWT Provider разрешает Signing Key через Secret Resolver при каждом Authenticate и поддерживает rotation без хранения Secret
-- JWT Factory, интеграция Authentication Bootstrap в Runtime и Basic Provider по-прежнему не реализованы
+- Реализован production JWT Factory, глубоко копирующий JWT metadata из AuthenticationProviderSnapshot в локальную runtime-конфигурацию Provider
+- Интеграция Authentication Bootstrap в Runtime и Basic Provider по-прежнему не реализованы
 
 ## Runtime Architecture
 
@@ -148,7 +149,7 @@
 - Реальный TLS listener и другие сетевые параметры Listener
 - Применение Listener TimeoutSettings в Runtime
 - Интеграция Authentication Bootstrap в Runtime и полный Authentication Pipeline
-- JWT Factory и проверка Basic credentials
+- Проверка Basic credentials
 - Асимметричные JWT algorithms, JWKS, OIDC и token revocation
 - Реальные Secret Storage backend и подключение Resolver к Runtime Container еще не реализованы
 - Инфраструктуры развертывания
