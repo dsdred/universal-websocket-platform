@@ -4,31 +4,34 @@ import (
 	"net/http"
 
 	"github.com/coder/websocket"
+	"github.com/dsdred/universal-websocket-platform/internal/connection"
 )
 
 const websocketPath = "/ws"
 
-type websocketHandler struct{}
+type websocketHandler struct {
+	dispatcher connection.Dispatcher
+}
 
-func newHTTPHandler() http.Handler {
+func newHTTPHandler(dispatcher connection.Dispatcher) http.Handler {
 	mux := http.NewServeMux()
-	mux.Handle(websocketPath, websocketHandler{})
+	mux.Handle(websocketPath, websocketHandler{dispatcher: dispatcher})
 	mux.HandleFunc("/", notImplementedHandler)
 	return mux
 }
 
-func (websocketHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+func (handler websocketHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 	if request.Method != http.MethodGet {
 		response.Header().Set("Allow", http.MethodGet)
 		http.Error(response, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
 
-	connection, err := websocket.Accept(response, request, nil)
+	websocketConnection, err := websocket.Accept(response, request, nil)
 	if err != nil {
 		return
 	}
-	defer connection.CloseNow()
 
-	_ = connection.Close(websocket.StatusNormalClosure, "")
+	connectionContext := connection.NewContext(request.Context(), websocketConnection, request)
+	_ = handler.dispatcher.Dispatch(connectionContext)
 }

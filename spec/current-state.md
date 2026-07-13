@@ -142,7 +142,9 @@
 - Listener хранит локальную копию Host, Port и TLS configuration и поддерживает lifecycle `Created -> Running -> Stopped`
 - Listener открывает TCP socket и запускает HTTP Server с единым ответом `501 Not Implemented` для любого запроса
 - Listener корректно завершает HTTP Server, accept loop и связанные goroutine через graceful shutdown
-- Listener выполняет RFC 6455 WebSocket Upgrade через endpoint `GET /ws` и сразу завершает соединение с normal closure
+- Listener выполняет RFC 6455 WebSocket Upgrade через endpoint `GET /ws` и передает соединение Connection Dispatcher
+- Immutable ConnectionContext содержит только context.Context, WebSocket connection и исходный HTTP request
+- DefaultDispatcher сразу завершает переданное WebSocket-соединение с normal closure; Bootstrap позволяет внедрить другую реализацию Dispatcher
 - Authentication, Session, Echo и Routing для WebSocket-соединений пока отсутствуют
 - Архитектура Runtime принята в ADR-003, но Loader, подключение Resolver к Runtime Container и остальные компоненты pipeline еще не реализованы
 

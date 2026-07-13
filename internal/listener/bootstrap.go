@@ -3,6 +3,7 @@ package listener
 import (
 	"strings"
 
+	"github.com/dsdred/universal-websocket-platform/internal/connection"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
 )
 
@@ -11,11 +12,18 @@ type Bootstrap interface {
 	Build(runtimeconfig.ListenerSnapshot) (Listener, error)
 }
 
-// DefaultBootstrap builds the default Runtime Listener.
-type DefaultBootstrap struct{}
+// DefaultBootstrap builds the default Runtime Listener with an injectable Dispatcher.
+type DefaultBootstrap struct {
+	dispatcher connection.Dispatcher
+}
+
+// NewBootstrap creates a Listener Bootstrap with the supplied Connection Dispatcher.
+func NewBootstrap(dispatcher connection.Dispatcher) DefaultBootstrap {
+	return DefaultBootstrap{dispatcher: dispatcher}
+}
 
 // Build validates and copies Listener Snapshot metadata without opening a socket.
-func (DefaultBootstrap) Build(snapshot runtimeconfig.ListenerSnapshot) (Listener, error) {
+func (bootstrap DefaultBootstrap) Build(snapshot runtimeconfig.ListenerSnapshot) (Listener, error) {
 	host := strings.TrimSpace(snapshot.Host)
 	certificateRef := strings.TrimSpace(snapshot.TLS.CertificateRef)
 	privateKeyRef := strings.TrimSpace(snapshot.TLS.PrivateKeyRef)
@@ -30,6 +38,11 @@ func (DefaultBootstrap) Build(snapshot runtimeconfig.ListenerSnapshot) (Listener
 		return nil, ErrInvalidListenerConfiguration
 	}
 
+	dispatcher := bootstrap.dispatcher
+	if dispatcher == nil {
+		dispatcher = connection.DefaultDispatcher{}
+	}
+
 	return &DefaultListener{
 		host: host,
 		port: snapshot.Port,
@@ -39,6 +52,7 @@ func (DefaultBootstrap) Build(snapshot runtimeconfig.ListenerSnapshot) (Listener
 			privateKeyRef:  privateKeyRef,
 			minVersion:     minVersion,
 		},
-		state: listenerCreated,
+		state:      listenerCreated,
+		dispatcher: dispatcher,
 	}, nil
 }

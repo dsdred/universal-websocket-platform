@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+
+	"github.com/dsdred/universal-websocket-platform/internal/connection"
 )
 
 var (
@@ -40,14 +42,15 @@ type tlsConfiguration struct {
 
 // DefaultListener stores effective Listener metadata and coordinates its lifecycle.
 type DefaultListener struct {
-	mu       sync.RWMutex
-	host     string
-	port     uint16
-	tls      tlsConfiguration
-	state    listenerState
-	listener net.Listener
-	server   *http.Server
-	wg       sync.WaitGroup
+	mu         sync.RWMutex
+	host       string
+	port       uint16
+	tls        tlsConfiguration
+	state      listenerState
+	listener   net.Listener
+	server     *http.Server
+	dispatcher connection.Dispatcher
+	wg         sync.WaitGroup
 }
 
 // Address returns the configured host and port without opening a socket.
@@ -77,7 +80,7 @@ func (listener *DefaultListener) Start(context.Context) error {
 		return err
 	}
 	httpServer := &http.Server{
-		Handler: newHTTPHandler(),
+		Handler: newHTTPHandler(listener.dispatcher),
 	}
 
 	listener.listener = tcpListener
