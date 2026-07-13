@@ -14,3 +14,4 @@
 ## Решения
 
 - [`0001-bootstrap-control-service.md`](0001-bootstrap-control-service.md) — базовая реализация Control Service.
+- [`0002-configuration-dsl.md`](0002-configuration-dsl.md) — ConfigurationVersion как декларативный Configuration DSL, исполняемый Runtime.

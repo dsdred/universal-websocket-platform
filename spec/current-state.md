@@ -5,6 +5,13 @@
 **Release:** v0.1.0-alpha
 **Architecture Review:** AR-001 — PASS
 
+## Архитектурные решения
+
+- ADR-001 закрепляет базовую реализацию Control Service.
+- ADR-002 закрепляет ConfigurationVersion как декларативный Configuration DSL и единственный источник истины для будущего Runtime.
+- Published ConfigurationVersion является immutable; Runtime исполняет ее без скрытой или альтернативной Configuration.
+- Публичная схема Configuration DSL развивается обратно совместимо; несовместимые изменения требуют нового ADR.
+
 ## Состояние релиза
 
 - Workspace CRUD завершен.
