@@ -116,7 +116,8 @@
 - Registry делегирует создание Provider соответствующей Factory и не выполняет Authentication
 - Реализован первый Runtime Authentication Provider для API Key с case-insensitive поиском Header
 - API Key Provider разрешает Secret Reference при каждом Authenticate и сравнивает credentials через constant-time operation
-- Authentication Pipeline, JWT Provider и Basic Provider по-прежнему не реализованы
+- Реализован Authentication Service, последовательно вызывающий Provider в заданном порядке и завершающийся после первого успешного результата
+- Интеграция Authentication Service в Runtime, JWT Provider и Basic Provider по-прежнему не реализованы
 
 ## Runtime Architecture
 
@@ -142,8 +143,8 @@
 - WebSocket listener и запуск TCP listener
 - Реальный TLS listener и другие сетевые параметры Listener
 - Применение Listener TimeoutSettings в Runtime
-- Authentication Pipeline, проверка JWT и Basic credentials
-- AuthenticationService и оркестрация выполнения Provider
+- Интеграция Authentication Service в Runtime и полный Authentication Pipeline
+- Проверка JWT и Basic credentials
 - Реальные Secret Storage backend и подключение Resolver к Runtime Container еще не реализованы
 - Инфраструктуры развертывания
 - Инфраструктуры хранения данных
