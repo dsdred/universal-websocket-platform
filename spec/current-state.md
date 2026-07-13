@@ -134,7 +134,10 @@
 - Builder принимает только Published ConfigurationVersion и глубоко копирует все Provider и JWT collections
 - Snapshot не зависит от HTTP API, Repository или исходного ConfigurationVersion после создания
 - Runtime Container хранит собственную глубокую копию Snapshot и возвращает новую копию через единственный метод `Snapshot()`
-- Container пока не содержит других зависимостей и не управляет запуском, остановкой или reload Runtime
+- Container пока не содержит других зависимостей и самостоятельно не управляет запуском, остановкой или reload Runtime
+- Реализован потокобезопасный Runtime Host, владеющий независимой копией Snapshot и Container
+- Host поддерживает однократный lifecycle `Created -> Running -> Stopped`; Restart и Reload отсутствуют
+- Host пока не запускает Listener, Authentication или другие Runtime components
 - Архитектура Runtime принята в ADR-003, но Loader, подключение Resolver к Runtime Container и остальные компоненты pipeline еще не реализованы
 
 ## Чего не существует
