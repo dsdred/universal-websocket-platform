@@ -11,6 +11,8 @@
 - ADR-002 закрепляет ConfigurationVersion как декларативный Configuration DSL и единственный источник истины для будущего Runtime.
 - Published ConfigurationVersion является immutable; Runtime исполняет ее без скрытой или альтернативной Configuration.
 - Публичная схема Configuration DSL развивается обратно совместимо; несовместимые изменения требуют нового ADR.
+- ADR-003 закрепляет компонентную архитектуру будущего Runtime, dependency injection и независимость от HTTP API и Repository.
+- Runtime использует только immutable Configuration Snapshot, созданный из Published ConfigurationVersion.
 
 ## Состояние релиза
 
@@ -106,6 +108,14 @@
 - Модель ошибок различает rejected credentials, Provider error, Configuration error и Internal error
 - Principal после успешной Authentication предлагается сделать immutable перед передачей в Authorization
 - Контракты имеют статус Proposed; AuthenticationService, Provider execution и Runtime по-прежнему не реализованы
+
+## Runtime Architecture
+
+- Принята последовательность компонентов от Configuration Loader и Configuration Snapshot до Monitoring
+- Secret Resolver разрешает Secret References только при запуске Runtime; значения Secret остаются только в памяти процесса
+- Authentication Provider Registry отделяет Runtime и Authentication Service от конкретных реализаций Provider
+- Authentication использует transport-neutral контракты DP-004 и не зависит от WebSocket
+- Архитектура Runtime принята в ADR-003, но ее компоненты и pipeline еще не реализованы
 
 ## Чего не существует
 

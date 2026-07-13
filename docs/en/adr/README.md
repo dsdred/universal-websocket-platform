@@ -15,3 +15,4 @@ Accepted ADRs are immutable historical records. If a decision changes, add a new
 
 - [`0001-bootstrap-control-service.md`](0001-bootstrap-control-service.md) — bootstrap implementation of Control Service.
 - [`0002-configuration-dsl.md`](0002-configuration-dsl.md) — ConfigurationVersion as the declarative Configuration DSL executed by Runtime.
+- [`0003-runtime-architecture.md`](0003-runtime-architecture.md) — component-based Runtime architecture for executing immutable Configuration Snapshots.
