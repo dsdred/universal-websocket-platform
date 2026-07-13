@@ -117,7 +117,8 @@
 - Реализован первый Runtime Authentication Provider для API Key с case-insensitive поиском Header
 - API Key Provider разрешает Secret Reference при каждом Authenticate и сравнивает credentials через constant-time operation
 - Реализован Authentication Service, последовательно вызывающий Provider в заданном порядке и завершающийся после первого успешного результата
-- Интеграция Authentication Service в Runtime, JWT Provider и Basic Provider по-прежнему не реализованы
+- Реализован Authentication Bootstrap, собирающий Service из Authentication Snapshot через Provider Registry и Secret Resolver
+- Интеграция Authentication Bootstrap в Runtime, JWT Provider и Basic Provider по-прежнему не реализованы
 
 ## Runtime Architecture
 
@@ -143,7 +144,7 @@
 - WebSocket listener и запуск TCP listener
 - Реальный TLS listener и другие сетевые параметры Listener
 - Применение Listener TimeoutSettings в Runtime
-- Интеграция Authentication Service в Runtime и полный Authentication Pipeline
+- Интеграция Authentication Bootstrap в Runtime и полный Authentication Pipeline
 - Проверка JWT и Basic credentials
 - Реальные Secret Storage backend и подключение Resolver к Runtime Container еще не реализованы
 - Инфраструктуры развертывания

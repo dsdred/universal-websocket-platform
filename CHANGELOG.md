@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Thread-safe Authentication Provider Registry with Factory registration and delegated Provider creation.
 - Runtime API Key Authentication Provider with case-insensitive header lookup and constant-time credential comparison.
 - Sequential Authentication Service that evaluates Providers in order and stops after the first successful result.
+- Authentication Bootstrap that assembles an ordered Service from Authentication Snapshot, Provider Registry, and Secret Resolver.
 
 ## [0.1.0-alpha] - 2026-07-12
 
