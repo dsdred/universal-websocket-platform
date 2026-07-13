@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func TestListenerServesNotImplementedForEveryRequest(t *testing.T) {
+func TestListenerServesNotImplementedForNonWebSocketPaths(t *testing.T) {
 	listener := mustListener(t)
 	if err := listener.Start(context.Background()); err != nil {
 		t.Fatalf("Start() error = %v", err)
@@ -43,6 +43,11 @@ func TestListenerStopReleasesTCPPort(t *testing.T) {
 		t.Fatalf("Stop() error = %v", err)
 	}
 
+	assertTCPPortAvailable(t, address)
+}
+
+func assertTCPPortAvailable(t *testing.T, address string) {
+	t.Helper()
 	replacement, err := net.Listen("tcp", address)
 	if err != nil {
 		t.Fatalf("port was not released: %v", err)

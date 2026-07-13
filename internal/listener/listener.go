@@ -77,7 +77,7 @@ func (listener *DefaultListener) Start(context.Context) error {
 		return err
 	}
 	httpServer := &http.Server{
-		Handler: http.HandlerFunc(notImplementedHandler),
+		Handler: newHTTPHandler(),
 	}
 
 	listener.listener = tcpListener

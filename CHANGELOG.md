@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Runtime dependency Container that owns and exposes independent Configuration Snapshot copies.
 - Thread-safe Runtime Host composition root with immutable Snapshot ownership and Created, Running, and Stopped lifecycle states.
 - Listener Bootstrap with immutable TLS configuration, a thread-safe lifecycle, and an HTTP layer that returns `501 Not Implemented` for every request.
+- RFC 6455 WebSocket Upgrade endpoint at `GET /ws` with an immediate normal closure after a successful handshake.
 - Storage-neutral Secret Resolver contract and thread-safe in-memory implementation for tests and local development.
 - Extensible runtime Authentication Provider and Factory contracts with transport-neutral request, result, and Principal models.
 - Thread-safe Authentication Provider Registry with Factory registration and delegated Provider creation.
