@@ -2,32 +2,34 @@ package listener
 
 import (
 	"context"
-	"errors"
-	"io"
 	"net"
+	"net/http"
 	"testing"
 	"time"
 )
 
-func TestListenerStartOpensTCPPortAndClosesAcceptedConnection(t *testing.T) {
+func TestListenerServesNotImplementedForEveryRequest(t *testing.T) {
 	listener := mustListener(t)
 	if err := listener.Start(context.Background()); err != nil {
 		t.Fatalf("Start() error = %v", err)
 	}
 
-	connection, err := net.DialTimeout("tcp", listener.Address(), time.Second)
+	response, err := testHTTPClient().Get("http://" + listener.Address() + "/")
 	if err != nil {
-		t.Fatalf("Dial() error = %v", err)
+		t.Fatalf("GET / error = %v", err)
 	}
-	defer connection.Close()
-	if err := connection.SetReadDeadline(time.Now().Add(time.Second)); err != nil {
-		t.Fatalf("SetReadDeadline() error = %v", err)
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusNotImplemented {
+		t.Fatalf("GET / status = %d, want %d", response.StatusCode, http.StatusNotImplemented)
 	}
 
-	buffer := make([]byte, 1)
-	_, err = connection.Read(buffer)
-	if !errors.Is(err, io.EOF) && !errors.Is(err, net.ErrClosed) {
-		t.Fatalf("Read() error = %v, want closed connection", err)
+	otherResponse, err := testHTTPClient().Get("http://" + listener.Address() + "/anything")
+	if err != nil {
+		t.Fatalf("GET /anything error = %v", err)
+	}
+	defer otherResponse.Body.Close()
+	if otherResponse.StatusCode != http.StatusNotImplemented {
+		t.Fatalf("GET /anything status = %d, want %d", otherResponse.StatusCode, http.StatusNotImplemented)
 	}
 }
 
@@ -50,30 +52,54 @@ func TestListenerStopReleasesTCPPort(t *testing.T) {
 	}
 }
 
-func TestListenerTCPSmokeScenario(t *testing.T) {
+func TestListenerShutdownStopsHTTPServer(t *testing.T) {
 	listener := mustListener(t)
 	if err := listener.Start(context.Background()); err != nil {
 		t.Fatalf("Start() error = %v", err)
 	}
 
-	connection, err := net.DialTimeout("tcp", listener.Address(), time.Second)
+	response, err := testHTTPClient().Get("http://" + listener.Address() + "/")
 	if err != nil {
-		t.Fatalf("Dial() error = %v", err)
+		t.Fatalf("GET / error = %v", err)
 	}
-	if err := connection.SetReadDeadline(time.Now().Add(time.Second)); err != nil {
-		t.Fatalf("SetReadDeadline() error = %v", err)
+	if err := response.Body.Close(); err != nil {
+		t.Fatalf("response Body.Close() error = %v", err)
 	}
-	_, readErr := connection.Read(make([]byte, 1))
-	_ = connection.Close()
-	if !errors.Is(readErr, io.EOF) && !errors.Is(readErr, net.ErrClosed) {
-		t.Fatalf("accepted connection was not closed: %v", readErr)
+
+	shutdownContext, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	if err := listener.Stop(shutdownContext); err != nil {
+		t.Fatalf("Stop() error = %v", err)
+	}
+
+	if _, err := testHTTPClient().Get("http://" + listener.Address() + "/"); err == nil {
+		t.Fatal("GET / after Stop succeeded, want connection error")
+	}
+}
+
+func TestListenerHTTPSmokeScenario(t *testing.T) {
+	listener := mustListener(t)
+	if err := listener.Start(context.Background()); err != nil {
+		t.Fatalf("Start() error = %v", err)
+	}
+
+	response, err := testHTTPClient().Get("http://" + listener.Address() + "/")
+	if err != nil {
+		t.Fatalf("GET / error = %v", err)
+	}
+	if err := response.Body.Close(); err != nil {
+		t.Fatalf("response Body.Close() error = %v", err)
+	}
+	if response.StatusCode != http.StatusNotImplemented {
+		t.Fatalf("GET / status = %d, want %d", response.StatusCode, http.StatusNotImplemented)
 	}
 
 	if err := listener.Stop(context.Background()); err != nil {
 		t.Fatalf("Stop() error = %v", err)
 	}
-	if listener.Running() {
-		t.Fatal("Running() = true after Stop")
-	}
-	t.Log("Listener -> Start -> net.Dial -> accepted -> closed -> Stop")
+	t.Log("Listener -> HTTP GET / -> 501 Not Implemented -> Stop")
+}
+
+func testHTTPClient() *http.Client {
+	return &http.Client{Timeout: time.Second}
 }

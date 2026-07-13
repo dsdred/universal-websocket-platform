@@ -11,7 +11,7 @@ type Bootstrap interface {
 	Build(runtimeconfig.ListenerSnapshot) (Listener, error)
 }
 
-// DefaultBootstrap builds the default metadata-only Runtime Listener.
+// DefaultBootstrap builds the default Runtime Listener.
 type DefaultBootstrap struct{}
 
 // Build validates and copies Listener Snapshot metadata without opening a socket.

@@ -140,8 +140,9 @@
 - Host пока не запускает Listener, Authentication или другие Runtime components
 - Реализован Listener Bootstrap, создающий потокобезопасный Listener из ListenerSnapshot
 - Listener хранит локальную копию Host, Port и TLS configuration и поддерживает lifecycle `Created -> Running -> Stopped`
-- Listener открывает TCP socket, принимает соединения в отдельном accept loop и немедленно закрывает их без дальнейшей обработки
-- Listener пока не запускает HTTP Server и не выполняет WebSocket Upgrade
+- Listener открывает TCP socket и запускает HTTP Server с единым ответом `501 Not Implemented` для любого запроса
+- Listener корректно завершает HTTP Server, accept loop и связанные goroutine через graceful shutdown
+- Listener пока не выполняет WebSocket Upgrade
 - Архитектура Runtime принята в ADR-003, но Loader, подключение Resolver к Runtime Container и остальные компоненты pipeline еще не реализованы
 
 ## Чего не существует

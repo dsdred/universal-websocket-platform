@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net"
+	"net/http"
 	"strconv"
 	"sync"
 )
@@ -45,6 +46,7 @@ type DefaultListener struct {
 	tls      tlsConfiguration
 	state    listenerState
 	listener net.Listener
+	server   *http.Server
 	wg       sync.WaitGroup
 }
 
@@ -74,46 +76,54 @@ func (listener *DefaultListener) Start(context.Context) error {
 	if err != nil {
 		return err
 	}
+	httpServer := &http.Server{
+		Handler: http.HandlerFunc(notImplementedHandler),
+	}
 
 	listener.listener = tcpListener
+	listener.server = httpServer
 	listener.state = listenerRunning
 	listener.wg.Add(1)
-	go listener.acceptLoop(tcpListener)
+	go listener.serve(httpServer, tcpListener)
 	return nil
 }
 
-// Stop closes the TCP Listener, waits for the accept loop, and is idempotent.
-func (listener *DefaultListener) Stop(context.Context) error {
+// Stop gracefully shuts down the HTTP Server and waits for its accept loop.
+func (listener *DefaultListener) Stop(ctx context.Context) error {
 	listener.mu.Lock()
 	if listener.state != listenerRunning {
 		listener.mu.Unlock()
 		return nil
 	}
 	tcpListener := listener.listener
+	httpServer := listener.server
 	listener.state = listenerStopping
 	listener.mu.Unlock()
 
-	err := tcpListener.Close()
+	shutdownErr := httpServer.Shutdown(ctx)
+	closeErr := tcpListener.Close()
 	listener.wg.Wait()
 
 	listener.mu.Lock()
 	listener.listener = nil
+	listener.server = nil
 	listener.state = listenerStopped
 	listener.mu.Unlock()
 
-	if err != nil && !errors.Is(err, net.ErrClosed) {
-		return err
+	if shutdownErr != nil {
+		return shutdownErr
+	}
+	if closeErr != nil && !errors.Is(closeErr, net.ErrClosed) {
+		return closeErr
 	}
 	return nil
 }
 
-func (listener *DefaultListener) acceptLoop(tcpListener net.Listener) {
+func (listener *DefaultListener) serve(httpServer *http.Server, tcpListener net.Listener) {
 	defer listener.wg.Done()
-	for {
-		connection, err := tcpListener.Accept()
-		if err != nil {
-			return
-		}
-		_ = connection.Close()
-	}
+	_ = httpServer.Serve(tcpListener)
+}
+
+func notImplementedHandler(response http.ResponseWriter, _ *http.Request) {
+	response.WriteHeader(http.StatusNotImplemented)
 }
