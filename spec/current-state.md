@@ -112,7 +112,9 @@
 - Principal после успешной Authentication предлагается сделать immutable перед передачей в Authorization
 - Созданы минимальные transport-neutral модели AuthenticationRequest, AuthenticationResult и Principal
 - Созданы расширяемые интерфейсы Authentication Provider и Factory, принимающие AuthenticationProviderSnapshot и Secret Resolver
-- Конкретные JWT, API Key и Basic Provider, Factory Registry и Runtime Authentication по-прежнему не реализованы
+- Создан потокобезопасный Authentication Provider Registry с регистрацией Factory по Provider Type
+- Registry делегирует создание Provider соответствующей Factory и не выполняет Authentication
+- Конкретные JWT, API Key и Basic Provider и Runtime Authentication по-прежнему не реализованы
 
 ## Runtime Architecture
 
