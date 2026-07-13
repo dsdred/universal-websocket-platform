@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Basic Authentication Provider metadata with Realm and Secret Reference.
 - Dedicated AuthenticationValidator component for Authentication metadata business validation.
 - Immutable Runtime Configuration Snapshot model and Builder for Published ConfigurationVersion entities.
+- Runtime dependency Container that owns and exposes independent Configuration Snapshot copies.
 
 ## [0.1.0-alpha] - 2026-07-12
 

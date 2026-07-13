@@ -118,6 +118,8 @@
 - Реализована immutable Runtime Configuration Snapshot-модель для Listener и Authentication
 - Builder принимает только Published ConfigurationVersion и глубоко копирует все Provider и JWT collections
 - Snapshot не зависит от HTTP API, Repository или исходного ConfigurationVersion после создания
+- Runtime Container хранит собственную глубокую копию Snapshot и возвращает новую копию через единственный метод `Snapshot()`
+- Container пока не содержит других зависимостей и не управляет запуском, остановкой или reload Runtime
 - Архитектура Runtime принята в ADR-003, но Loader, Secret Resolver и остальные компоненты pipeline еще не реализованы
 
 ## Чего не существует
