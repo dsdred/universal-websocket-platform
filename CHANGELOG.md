@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - RFC 6455 WebSocket Upgrade endpoint at `GET /ws` with an immediate normal closure after a successful handshake.
 - Transport-only ConnectionContext and injectable Connection Dispatcher between WebSocket Upgrade and future Runtime components.
 - Authentication Dispatcher that converts handshake metadata into transport-neutral Authentication requests and forwards successful connections with an immutable Principal context.
+- Minimal WebSocket Session and Session Dispatcher with cryptographically random identifiers, safe transport metadata, immutable Principal copies, and explicit connection ownership after Authentication.
 - Storage-neutral Secret Resolver contract and thread-safe in-memory implementation for tests and local development.
 - Extensible runtime Authentication Provider and Factory contracts with transport-neutral request, result, and Principal models.
 - Thread-safe Authentication Provider Registry with Factory registration and delegated Provider creation.

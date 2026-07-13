@@ -148,7 +148,10 @@
 - Authentication подключена к WebSocket connection pipeline через AuthenticationDispatcher без зависимости Listener от пакета Authentication
 - AuthenticationDispatcher преобразует HTTP handshake metadata в transport-neutral AuthenticationRequest и передает успешное соединение следующему AuthenticatedDispatcher вместе с immutable Principal context
 - Отказ Authentication пока происходит после WebSocket Upgrade через close frame `PolicyViolation`, а системные ошибки используют `InternalError`
-- Session, Echo и Routing для WebSocket-соединений пока отсутствуют
+- Реализована минимальная WebSocket Session, которая после Authentication владеет соединением, хранит криптографически случайный ID, глубокую копию Principal, RemoteAddress и время создания
+- Session Dispatcher создает Session из AuthenticatedContext, запускает ее и в текущей минимальной реализации сразу завершает соединение с normal closure
+- Session не хранит исходный HTTP Request, Headers, Query, credentials, AuthenticationRequest или transport context wrappers
+- Read/write loops, Echo, Session Manager и Routing для WebSocket-соединений пока отсутствуют
 - Архитектура Runtime принята в ADR-003, но Loader, подключение Resolver к Runtime Container и остальные компоненты pipeline еще не реализованы
 
 ## Чего не существует
