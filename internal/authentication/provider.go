@@ -2,6 +2,7 @@ package authentication
 
 import (
 	"context"
+	"strings"
 
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
 )
@@ -17,17 +18,32 @@ type AuthenticationRequest struct {
 	Body          []byte
 }
 
+// Header returns the first value for name using a case-insensitive lookup.
+func (request AuthenticationRequest) Header(name string) (string, bool) {
+	if values, exists := request.Headers[name]; exists && len(values) > 0 {
+		return values[0], true
+	}
+	for headerName, values := range request.Headers {
+		if strings.EqualFold(headerName, name) && len(values) > 0 {
+			return values[0], true
+		}
+	}
+	return "", false
+}
+
 // Principal represents an authenticated or explicitly anonymous identity.
 type Principal struct {
-	ID                 string
-	Name               string
-	AuthenticationType runtimeconfig.AuthenticationProviderType
-	Claims             map[string]string
-	Roles              []string
-	Attributes         map[string]string
-	Anonymous          bool
-	Authenticated      bool
-	Metadata           map[string]string
+	ID                     string
+	Name                   string
+	AuthenticationType     runtimeconfig.AuthenticationProviderType
+	AuthenticationProvider string
+	AuthenticationMethod   runtimeconfig.AuthenticationProviderType
+	Claims                 map[string]string
+	Roles                  []string
+	Attributes             map[string]string
+	Anonymous              bool
+	Authenticated          bool
+	Metadata               map[string]string
 }
 
 // AuthenticationResult contains the transport-neutral outcome of Authentication.

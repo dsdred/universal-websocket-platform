@@ -87,7 +87,7 @@
 - AuthenticationValidator отделяет cross-provider и provider-specific business validation от ConfigurationVersion Service
 - DefaultAuthenticationValidator не зависит от Repository, HTTP, Runtime или Persistence
 - При включенной Authentication требуется минимум один enabled Provider; при выключенной Authentication настроенные Providers сохраняются и могут быть проигнорированы будущим Runtime
-- Реальная Authentication и выполнение Provider не реализованы
+- Configuration domain не выполняет Authentication; Runtime API Key Provider описан ниже
 
 ## Secret References
 
@@ -96,7 +96,7 @@
 - Создан storage-neutral интерфейс Secret Resolver с общей валидацией и нормализацией Secret Reference
 - Добавлена потокобезопасная in-memory реализация для тестирования и будущей локальной разработки
 - Реальные Secret Storage backend еще не реализованы
-- Resolver пока не подключен к Runtime Container и Authentication Providers
+- Resolver используется API Key Provider, но пока не подключен к Runtime Container или Authentication Pipeline
 
 ## JWT Provider Design
 
@@ -114,7 +114,9 @@
 - Созданы расширяемые интерфейсы Authentication Provider и Factory, принимающие AuthenticationProviderSnapshot и Secret Resolver
 - Создан потокобезопасный Authentication Provider Registry с регистрацией Factory по Provider Type
 - Registry делегирует создание Provider соответствующей Factory и не выполняет Authentication
-- Конкретные JWT, API Key и Basic Provider и Runtime Authentication по-прежнему не реализованы
+- Реализован первый Runtime Authentication Provider для API Key с case-insensitive поиском Header
+- API Key Provider разрешает Secret Reference при каждом Authenticate и сравнивает credentials через constant-time operation
+- Authentication Pipeline, JWT Provider и Basic Provider по-прежнему не реализованы
 
 ## Runtime Architecture
 
@@ -127,7 +129,7 @@
 - Snapshot не зависит от HTTP API, Repository или исходного ConfigurationVersion после создания
 - Runtime Container хранит собственную глубокую копию Snapshot и возвращает новую копию через единственный метод `Snapshot()`
 - Container пока не содержит других зависимостей и не управляет запуском, остановкой или reload Runtime
-- Архитектура Runtime принята в ADR-003, но Loader, интеграция Secret Resolver и остальные компоненты pipeline еще не реализованы
+- Архитектура Runtime принята в ADR-003, но Loader, подключение Resolver к Runtime Container и остальные компоненты pipeline еще не реализованы
 
 ## Чего не существует
 
@@ -140,9 +142,9 @@
 - WebSocket listener и запуск TCP listener
 - Реальный TLS listener и другие сетевые параметры Listener
 - Применение Listener TimeoutSettings в Runtime
-- Реальная Authentication, проверка JWT, API Key и Basic credentials
-- AuthenticationService, AuthenticationRequest, Principal и выполнение Provider
-- Реальные Secret Storage backend и интеграция Resolver еще не реализованы
+- Authentication Pipeline, проверка JWT и Basic credentials
+- AuthenticationService и оркестрация выполнения Provider
+- Реальные Secret Storage backend и подключение Resolver к Runtime Container еще не реализованы
 - Инфраструктуры развертывания
 - Инфраструктуры хранения данных
 - Admin UI
