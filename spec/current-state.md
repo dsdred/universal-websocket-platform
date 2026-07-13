@@ -99,6 +99,14 @@
 - Signing Keys представлены только Secret References без хранения PEM, JWK или HMAC secret в ConfigurationVersion
 - JWT Provider metadata реализована; проверка token и Runtime pipeline отсутствуют
 
+## Authentication Runtime Contracts Design
+
+- DP-004 предлагает transport-neutral контракты AuthenticationRequest, Principal, AuthenticationResult и AuthenticationProvider
+- Предлагаемые контракты отделяют AuthenticationService и Provider от transport, Repository, Storage и внутреннего устройства ConfigurationVersion
+- Модель ошибок различает rejected credentials, Provider error, Configuration error и Internal error
+- Principal после успешной Authentication предлагается сделать immutable перед передачей в Authorization
+- Контракты имеют статус Proposed; AuthenticationService, Provider execution и Runtime по-прежнему не реализованы
+
 ## Чего не существует
 
 - Персистентного хранения Workspace
