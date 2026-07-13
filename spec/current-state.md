@@ -118,6 +118,7 @@
 - API Key Provider разрешает Secret Reference при каждом Authenticate и сравнивает credentials через constant-time operation
 - Реализован Authentication Service, последовательно вызывающий Provider в заданном порядке и завершающийся после первого успешного результата
 - Реализован Authentication Bootstrap, собирающий Service из Authentication Snapshot через Provider Registry и Secret Resolver
+- Реализован production API Key Factory, изолирующий преобразование AuthenticationProviderSnapshot в локальную runtime-конфигурацию API Key Provider
 - Интеграция Authentication Bootstrap в Runtime, JWT Provider и Basic Provider по-прежнему не реализованы
 
 ## Runtime Architecture

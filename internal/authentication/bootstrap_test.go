@@ -243,16 +243,7 @@ func TestBootstrapAPIKeySmokeScenario(t *testing.T) {
 		t.Fatalf("NewMemory() error = %v", err)
 	}
 	registry := NewRegistry()
-	if err := registry.Register(bootstrapFactory{
-		providerType: runtimeconfig.AuthenticationProviderAPIKey,
-		create: func(snapshot runtimeconfig.AuthenticationProviderSnapshot, resolver secretresolver.Resolver) (Provider, error) {
-			return NewAPIKeyProvider(APIKeyProviderConfig{
-				Name:      snapshot.Name,
-				Header:    snapshot.APIKey.Header,
-				SecretRef: snapshot.APIKey.SecretRef,
-			}, resolver)
-		},
-	}); err != nil {
+	if err := registry.Register(APIKeyFactory{}); err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
 	bootstrap := mustBootstrap(t, registry, resolver)
