@@ -8,6 +8,12 @@ Active architecture-wide patterns are available in [`architecture/`](architectur
 
 - [ARCH-001: Runtime Architectural Pattern](architecture/ARCH-001-runtime-architectural-pattern.md)
 
+## Engineering Roadmap
+
+Living engineering maturity plans are available in [`roadmap/`](roadmap/).
+
+- [Master Engineering Plan](roadmap/MASTER_PLAN.md)
+
 ## Architecture Decision Records
 
 Accepted architecture decisions and ADR conventions are available in [`adr/`](adr/).

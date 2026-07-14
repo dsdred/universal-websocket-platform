@@ -194,3 +194,11 @@
 - ARCH-001 обобщает подтвержденный Alpha-вертикалью паттерн `Context -> Evaluation -> Decision -> Execution` без создания универсального Policy Engine или новых обязательных Go-контрактов.
 - Зафиксированы Configuration First, проверяемые границы зависимостей, явная передача владения mutable resources, lifecycle и concurrency requirements, а также принцип Boring Core.
 - Handshake Pipeline, Router, Delivery, Persistence и Plugin ABI остаются предметом будущих DP и при необходимости ADR; ARCH-001 не определяет их API.
+
+## Master Engineering Plan
+
+- Создан двуязычный живой инженерный [MASTER_PLAN](../docs/ru/roadmap/MASTER_PLAN.md) ([English version](../docs/en/roadmap/MASTER_PLAN.md)).
+- План разделяет стадии зрелости Alpha, Beta, RC, 1.0 и 2.0+ без календарных сроков, performance promises или проектирования API будущих подсистем.
+- Для Beta выделены эпики Handshake, Runtime Host, lifecycle hardening, Configuration validation, Router, Session Manager, Delivery, Persistence, TLS, Metrics, operational diagnostics и Plugin contracts.
+- Обязательные свойства 1.0 отделены от возможностей 1.x и отложенных distributed-возможностей 2.0+.
+- MASTER_PLAN не является release schedule, backlog или заменой DP, ADR, current state и архитектурных reviews.

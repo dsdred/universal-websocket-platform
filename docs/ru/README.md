@@ -8,6 +8,12 @@
 
 - [ARCH-001: Runtime Architectural Pattern](architecture/ARCH-001-runtime-architectural-pattern.md)
 
+## Инженерный план развития
+
+Живые планы инженерной зрелости находятся в каталоге [`roadmap/`](roadmap/).
+
+- [Master Engineering Plan](roadmap/MASTER_PLAN.md)
+
 ## Архитектурные решения
 
 Принятые архитектурные решения и правила оформления ADR находятся в каталоге [`adr/`](adr/).
