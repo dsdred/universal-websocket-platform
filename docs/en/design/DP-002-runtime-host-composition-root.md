@@ -65,6 +65,7 @@ Runtime Host is responsible for:
 - invoking subsystem Bootstrap in dependency order;
 - wiring Message Handler, Session handoff, Handshake, Authentication, and Listener boundaries;
 - creating and canceling the root Runtime context;
+- owning the Admission Gate and stable Runtime context holder while exposing only read-only capabilities to Handshake;
 - starting externally visible components only after internal construction succeeds;
 - rolling back partially initialized or started components;
 - marking Runtime Ready only after every mandatory component is operational;
@@ -79,12 +80,18 @@ Host is not a general-purpose dependency container. Its fields and construction 
 ### Construction Graph
 
 ```text
+Host
+    -> read-only Runtime capabilities
+    -> Handshake
+    -> Listener
+
 Published ConfigurationVersion
     -> runtimeconfig.Builder
     -> immutable Snapshot
     -> Runtime Host
          |
-         +-> Runtime root context and lifecycle state
+         +-> lifecycle state, Admission Gate, and inactive Runtime context holder
+         |      +-> read-only Runtime capabilities
          |
          +-> concrete Secret Resolver
          |
@@ -99,7 +106,8 @@ Published ConfigurationVersion
          |
          +-> Message Handler
          +-> Session handoff/Dispatcher
-         +-> Handshake executor and admission gate
+         +-> Handshake executor
+         |      +-> read-only Runtime capabilities
          |      +-> Authentication Service
          |      +-> Session handoff
          |
@@ -108,13 +116,14 @@ Published ConfigurationVersion
                        +-> Handshake executor
 ```
 
-The graph describes explicit production composition, not a package mandate or a generic construction API. Existing Authentication Factory and Registry contracts remain subsystem-specific; Host does not introduce a universal Factory or Registry.
+The graph describes explicit production composition, not a package mandate or a generic construction API. The composition bridge supplies Handshake with live, read-only admission permission and Runtime context access while preserving Host ownership. Existing Authentication Factory and Registry contracts remain subsystem-specific; Host does not introduce a universal Factory or Registry.
 
 ### Runtime Call Direction
 
 ```text
 Listener
     -> Handshake executor
+         -> read-only Runtime capabilities
          -> Authentication Service
               -> Provider
                    -> Secret Resolver
@@ -126,6 +135,7 @@ Listener
 Reverse dependencies are prohibited:
 
 - Listener does not know Host, concrete Providers, Session internals, Router, or Persistence.
+- Handshake does not know Host, lifecycle mutation, Admission Gate implementation, or Runtime context cancellation.
 - Authentication does not know Host, Listener, HTTP, WebSocket, Session, or repositories.
 - Session does not know Host, Listener, Snapshot, Control Plane, or repositories.
 - Secret Resolver does not know Host, Authentication behavior, or ConfigurationVersion.
@@ -141,31 +151,30 @@ Startup is one ordered transaction:
 ```text
 Immutable Snapshot
     -> compatibility and effective-setting validation
-    -> root Runtime context creation
     -> Secret Resolver construction and readiness
     -> required startup Secret resolution
     -> Authentication Registry and Factory registration
     -> Authentication Service construction
     -> Message Handler and Session handoff construction
-    -> Handshake executor and admission gate construction
+    -> Handshake executor construction with stable read-only Runtime capabilities
     -> Listener construction without opening the socket
     -> Listener Start
-    -> admission gate open
+    -> startup commit: publish active Runtime context and open admission gate
     -> Runtime Ready
 ```
 
 The details are:
 
 1. Host copies and validates Snapshot identity, Listener metadata, timeouts, TLS support, Authentication metadata, and every active setting it claims to execute.
-2. Host creates its Runtime-owned root context. The caller's startup context limits startup but does not become the lifetime of a successfully running Runtime.
+2. The stable Runtime context holder and read-only capabilities already exist with Host but remain inactive. The caller's startup context limits startup and does not become the lifetime of a successfully running Runtime.
 3. Host constructs the selected Secret Resolver explicitly and verifies its startup readiness.
 4. Secret material required to start a component, such as future TLS key material, is resolved before Listener Start and transferred only to that owner. Authentication Providers that intentionally resolve credentials per request retain that contract; Host validates their references and construction but does not eagerly store their secret values.
 5. Host creates Authentication Registry and registers only production Factories explicitly supported by this build.
 6. Authentication Bootstrap constructs the ordered Service and Providers from Authentication Snapshot and Resolver.
-7. Host creates the selected Message Handler, Session handoff, and the DP-001 Handshake executor with its admission gate.
+7. Host creates the selected Message Handler, Session handoff, and the DP-001 Handshake executor with the stable read-only Runtime capabilities. Admission Gate ownership remains with Host.
 8. Listener Bootstrap validates Listener Snapshot and constructs Listener without network side effects.
 9. Listener starts last. No network traffic is accepted before all mandatory downstream components exist.
-10. Host opens the admission gate and enters `Running`. Successful Start means Runtime is Ready.
+10. As one successful startup commit, Host creates and publishes the active Runtime context, opens the admission gate, and enters `Running`. Successful Start means Runtime is Ready.
 
 Construction is deterministic. Map iteration, reflection, package discovery, dynamic registration order, and generic component factories do not determine behavior.
 
@@ -207,13 +216,14 @@ No component is allowed to detach cleanup work without a Runtime owner.
 |---|---|---|---|
 | Published ConfigurationVersion | Control Plane/Loader boundary | Outside Runtime | Not retained by Runtime services |
 | Immutable Snapshot copy | Builder, then copied by Host | Host | Value lifetime; never mutated |
-| Host state and root Runtime context | Host | Host | Cancel on shutdown, rollback, or terminal failure |
+| Host state, Admission Gate, Runtime context holder, and root Runtime context | Host | Host | Close Gate and cancel context on shutdown, rollback, or terminal failure |
 | Secret Resolver | Host through an explicit concrete constructor or explicit owned dependency | Host | Close/release if its contract has lifecycle |
 | Startup-resolved secret material | Resolver, transferred to the consuming component | Consuming component | Clear/release according to component and Resolver contracts |
 | Authentication Registry | Host | Host | Value cleanup; no dynamic production mutation after initialization |
 | Authentication Providers and Service | Authentication Bootstrap under Host composition | Host for component lifecycle; Provider owns per-call secret copies | Release component resources; clear per-call secrets close to use |
 | Message Handler | Host through an explicit subsystem constructor | Host or its future subsystem owner | Stop only if its focused contract defines lifecycle |
-| Handshake executor and admission gate | Host | Host | Gate closure, context cancellation, terminal Handshake tracking |
+| Read-only Runtime capabilities | Host/composition bridge | Host | Expose live admission permission and active Runtime context without mutation or cancellation |
+| Handshake executor | Host | Host | Terminal Handshake tracking; consumes only read-only Runtime capabilities |
 | Listener | Listener Bootstrap under Host composition | Host coordinates; Listener owns socket/server | Host calls Listener Stop; Listener closes and waits for its resources |
 | Upgraded WebSocket before handoff | Upgrade boundary defined by DP-001 | Upgrade boundary | Close on pre-handoff failure |
 | Session after ownership acceptance | Session | Session; Runtime tracks shutdown completion | Session closes WebSocket; Host never double-closes it |
@@ -286,7 +296,7 @@ Runtime is Ready only when all of these conditions hold:
 - Snapshot and all active settings passed support validation;
 - required startup Secrets were resolved and transferred to their owners;
 - Authentication Service and all enabled Providers were constructed;
-- Handshake executor and admission gate are operational;
+- Handshake executor, Host-owned admission gate, and read-only Runtime capabilities are operational;
 - Listener successfully started and is accepting traffic;
 - root Runtime context is active;
 - every required lifecycle component is supervised by Host.
@@ -302,15 +312,15 @@ Readiness becomes false atomically when shutdown or terminal failure begins. Rea
 
 ## 13. Runtime Context
 
-Host creates and owns one root Runtime context during initialization/startup. It is separate from the context passed by the caller to Start:
+Host creates the stable Runtime context holder together with Host. The holder remains inactive through construction and startup and publishes an active root Runtime context only as part of successful startup commit. Host owns that context, which is separate from the context passed by the caller to Start:
 
 - startup context controls how long the caller waits for startup;
 - root Runtime context controls the lifetime of the running instance;
 - Host cancellation ends Runtime-owned work during rollback, Stop, or terminal failure.
 
-Components receive the root context or narrowly derived child contexts through explicit construction or lifecycle calls. Context values do not carry services or configuration.
+Components receive the root context or narrowly derived child contexts through explicit construction or lifecycle calls. Handshake receives only the live, read-only Runtime context capability from the composition bridge; it cannot publish, replace, or cancel the root context. Context values do not carry services or configuration.
 
-DP-001 Handshake context observes request cancellation, configured Handshake timeout, and Runtime shutdown. After successful admission, Session receives a separate Runtime-owned connection context derived from Runtime lifecycle, not from `http.Request.Context()`. Host shutdown cancellation reaches that connection context, while Session remains the owner of the WebSocket after handoff.
+DP-001 Handshake context observes request cancellation, configured Handshake timeout, and Runtime shutdown through the read-only capabilities. After successful admission, Session receives a separate Runtime-owned connection context derived through the Runtime context capability, not from `http.Request.Context()`. Host shutdown cancellation reaches that connection context, while Session remains the owner of the WebSocket after handoff.
 
 Closing the admission gate precedes root cancellation so an Evaluation completing during shutdown cannot begin a new Upgrade commit.
 
@@ -333,10 +343,10 @@ Migration proceeds in small, verifiable steps:
 1. Preserve characterization tests for current Host, Bootstrap, Listener, Authentication, Session, and Echo vertical.
 2. Introduce the richer Host lifecycle and readiness semantics without starting network components.
 3. Move Snapshot support validation and effective-setting rejection into the pre-start composition phase.
-4. Give Host an owned Runtime context and deterministic rollback ledger for explicitly acquired components.
+4. Give Host an owned Runtime context, stable inactive context holder, Host-owned Admission Gate, read-only capability bridge, and deterministic rollback ledger for explicitly acquired components.
 5. Create Resolver, Registry, and production Authentication Factories through explicit wiring; build Authentication Service through existing Bootstrap.
 6. Compose the Message Handler and Session handoff through existing narrow contracts.
-7. Compose the DP-001 Handshake executor and admission gate when that boundary is implemented.
+7. Compose the DP-001 Handshake executor with the Host-owned Gate and Runtime context exposed only through stable read-only capabilities when that boundary is implemented.
 8. Build Listener last and make it the only externally visible component started by Host.
 9. Add failure-injection tests for every initialization/start boundary and reverse cleanup step.
 10. Replace manual production assembly with Host while retaining direct component construction in unit and focused integration tests.
@@ -356,12 +366,13 @@ The [Master Engineering Plan](../roadmap/MASTER_PLAN.md) identifies production R
 
 ### DP-001
 
-[DP-001: Runtime Handshake Pipeline](DP-001-runtime-handshake-pipeline.md) defines pre-Upgrade Authentication, the admission gate, Runtime-owned Session context, and shutdown handoff requirements. Host creates and owns the dependencies needed to enforce those invariants but does not implement Handshake decisions.
+[DP-001: Runtime Handshake Pipeline](DP-001-runtime-handshake-pipeline.md) defines pre-Upgrade Authentication, two admission checks, Runtime-owned Session context, and shutdown handoff requirements. Host owns the Admission Gate and Runtime context holder, while the composition bridge gives Handshake only live read-only capabilities. Host does not implement Handshake decisions.
 
 ### Accepted ADRs
 
 - [ADR-0002](../adr/0002-configuration-dsl.md) makes Published ConfigurationVersion the source of truth and requires unsupported behavior to fail explicitly.
 - [ADR-0003](../adr/0003-runtime-architecture.md) requires independent components, explicit dependency injection, immutable Snapshot, and a production composition root without selecting a DI framework.
+- [ADR-0004](../adr/0004-handshake-runtime-dependencies.md) fixes the read-only capability boundary between Host-owned lifecycle state and Handshake.
 
 ## 17. Open Questions
 
@@ -379,6 +390,6 @@ Reload, restart, Router behavior, Delivery semantics, Plugin ABI, and service-di
 
 Runtime Host is the only production composition root for one Runtime instance.
 
-It receives one immutable Snapshot and explicit operational inputs, constructs the supported component graph through ordinary constructors and existing subsystem Bootstrap, validates readiness before opening traffic, starts Listener last, owns the root Runtime context, and performs rollback or shutdown in reverse acquisition order.
+It receives one immutable Snapshot and explicit operational inputs, constructs the supported component graph through ordinary constructors and existing subsystem Bootstrap, validates readiness before opening traffic, starts Listener last, and owns the Admission Gate, stable Runtime context holder, and root Runtime context. The holder becomes active only at successful startup commit. Runtime composition supplies Handshake with read-only Runtime capabilities, and Host performs rollback or shutdown in reverse acquisition order.
 
 The selected design centralizes composition without centralizing business behavior. Host does not route, authenticate, store Sessions, persist data, or expose internal dependencies. It uses no service locator, DI framework, reflection, generic component factories, or Universal Component Registry. Explicit wiring is preferred because it keeps dependency direction, ownership, failure, and cleanup visible in code and review.

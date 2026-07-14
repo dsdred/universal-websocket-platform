@@ -237,6 +237,8 @@
 
 - Принят двуязычный [ADR-0004: Handshake Runtime Dependency Boundary](../docs/ru/adr/0004-handshake-runtime-dependencies.md) ([English version](../docs/en/adr/0004-handshake-runtime-dependencies.md)).
 - Host остается единственным владельцем Admission Gate и cancellation корневого Runtime context; Handshake получает только живые read-only capabilities через явную constructor injection.
+- Draft DP-001 и DP-002 синхронизированы с ADR-0004: composition bridge передает Handshake admission permission и Runtime context access без зависимости от concrete Host.
+- Handshake должен проверять admission до Authentication и повторно непосредственно перед `websocket.Accept`; Runtime context holder создается вместе с Host и активируется только при успешном startup commit.
 - Финальная проверка admission непосредственно перед `websocket.Accept` является linearization point входа в admission commit; закрытие Gate до нее запрещает Upgrade.
 - Session context должен создаваться как дочерний от активного Runtime context, а не от `http.Request.Context()`; root `CancelFunc` Handshake не раскрывается.
 - Решение не вводит concrete Go API и пока не изменяет реализацию: Authentication по-прежнему выполняется после Upgrade до отдельной задачи.

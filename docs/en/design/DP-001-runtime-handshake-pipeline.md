@@ -119,16 +119,20 @@ This alternative is selected. “Pipeline” describes the ordered lifecycle of 
 
 ```text
 Published Snapshot
-    -> Runtime bootstrap and readiness validation
-    -> composed Listener, Authentication Service, timeout, and dependencies
+    -> Runtime Host bootstrap and readiness validation
+    -> Host-owned Admission Gate and Runtime context holder
+    -> read-only Runtime capabilities
+    -> composition bridge
+    -> composed Handshake, Listener, Authentication Service, timeout, and dependencies
     -> Listener Start
 
 HTTP request
+    -> initial admission check
     -> Handshake Context
     -> pre-Upgrade Authentication
     -> one-use Decision
        -> Reject or operational failure: HTTP handling, no WebSocket
-       -> Allow: admission gate check and commit
+       -> Allow: final admission validation immediately before commit
     -> websocket.Accept
        -> Accept rejection: library may commit HTTP response
        -> success: Upgrade boundary owns WebSocket
@@ -138,7 +142,7 @@ HTTP request
     -> Session lifecycle
 ```
 
-Listener remains responsible for transport execution but contains no Provider-specific logic. Authentication remains transport-neutral. Session is admitted only with a valid Principal and never receives the original HTTP request or its context as lifecycle state.
+Runtime composition bridges Host-owned lifecycle state to Handshake through live, read-only capabilities. Handshake does not depend on Runtime Host and cannot mutate the Admission Gate or cancel the Runtime context. Listener remains responsible for transport execution but contains no Provider-specific logic. Authentication remains transport-neutral. Session is admitted only with a valid Principal and never receives the original HTTP request or its context as lifecycle state.
 
 ## 10. Context Model
 
@@ -156,7 +160,7 @@ Only required request metadata is copied into transport-neutral Authentication i
 
 ### Runtime-Owned Connection Context
 
-After successful Accept and before handoff, Runtime creates a separate connection/session context. It is not derived as a child whose lifetime depends on `http.Request.Context()`.
+After successful Accept and before handoff, the Upgrade boundary creates a separate connection/session context from the active Runtime context supplied by the read-only Runtime context capability. It is not derived as a child whose lifetime depends on `http.Request.Context()`.
 
 Runtime lifecycle owns its cancellation path. It is canceled by connection or Session termination and by Runtime shutdown. A future Session Manager may participate in that lifecycle, but its API is outside this document.
 
@@ -206,13 +210,15 @@ Upgraded
 
 ### Shutdown Transitions
 
-Listener's transport/Handshake executor owns the admission gate. The gate is open only while Listener admits new connections.
+Runtime Host owns the Admission Gate. Handshake receives only a live, read-only admission capability through the composition bridge; it cannot open or close the Gate and does not depend on Runtime Host.
 
-At shutdown start, the executor closes the gate before waiting for active work:
+Handshake checks that capability before Authentication so a request observed while admission is closed does not evaluate credentials. It checks the same capability again immediately before `websocket.Accept`; this successful final admission validation is the linearization point for entering `Committing`.
+
+At shutdown start, Host closes the Gate before waiting for active work:
 
 - `Evaluating` is canceled and ends as `Aborted`; an Evaluation returning Allow afterward cannot commit.
 - `Allowed` cannot enter `Committing` after the gate closes and becomes `Aborted`.
-- Entry into `Committing` requires an atomic successful gate check.
+- Entry into `Committing` requires an atomic successful final admission validation immediately before `websocket.Accept`.
 - Work already in `Committing` must either fail and clean up, or reach `Upgraded` and complete the controlled handoff.
 - An upgraded connection must enter the Runtime shutdown wait set before handoff completes; otherwise the Upgrade boundary closes it before shutdown completes.
 - `HandedOff` work is owned by Session lifecycle and participates in Runtime shutdown.
@@ -328,13 +334,13 @@ Before Listener Start, Runtime bootstrap validates and composes:
 - Authentication Service;
 - enabled Provider factories and Provider metadata;
 - SecretResolver and other required dependencies;
-- the admission gate and transport/Handshake executor.
+- the Host-owned Admission Gate, read-only Runtime capabilities, composition bridge, and transport/Handshake executor.
 
 Failure prevents Listener Start. Request-time configuration failure is not the normal model; if an invariant is nevertheless violated, it is an internal or invalid Runtime configuration failure and fails closed.
 
 The request path uses only already composed dependencies and effective values. It does not read Runtime Snapshot, ConfigurationVersion, management API state, or Control Plane repositories.
 
-Production Runtime Host composition remains a separate engineering epic. This DP defines the readiness boundary it must enforce but does not design Host APIs.
+The composition bridge follows [ADR-0004](../adr/0004-handshake-runtime-dependencies.md): Runtime composition supplies Handshake with live, read-only admission permission and Runtime context access. Handshake neither imports nor controls Runtime Host. This DP defines how those capabilities are consumed without designing Host APIs.
 
 ## 20. Session Manager Relationship
 
@@ -362,16 +368,16 @@ A shared policy framework is deferred until several real use cases establish com
 
 1. Preserve characterization coverage for current method handling, Upgrade, rejection, cleanup, and Listener continuation.
 2. Add startup readiness checks for timeout, Authentication, Providers, and dependencies before Listener Start.
-3. Introduce the request-scoped Handshake context and admission gate without changing Provider logic.
+3. Inject the Host-owned admission and Runtime context capabilities through the composition bridge, then introduce the request-scoped Handshake context without changing Provider logic.
 4. Execute existing Authentication before Accept and produce a one-use Decision.
 5. Implement explicit anonymous Principal behavior for disabled Authentication.
 6. Apply pre-Accept rejection exactly once and respect responses committed by Accept.
-7. Create a Runtime-owned connection context after successful Accept.
+7. Create a Runtime-owned connection context after successful Accept from the Runtime context capability.
 8. Register the prospective Session in Runtime shutdown tracking before explicit ownership acceptance.
 9. Remove the obsolete post-Upgrade Authentication path so every request is authenticated at most once.
 10. Preserve and propagate terminal Handshake and unexpected Serve errors without logging sensitive input.
 
-Each step keeps the vertical buildable and does not introduce Router, Session Manager API, Runtime Host composition, or a generic policy framework.
+Each step keeps the vertical buildable and does not introduce Router, Session Manager API, a concrete Host dependency in Handshake, or a generic policy framework.
 
 ## 23. Remaining Risks
 
@@ -399,7 +405,7 @@ Anonymous identity, total Handshake timeout, startup readiness, shutdown admissi
 | Finding | Status | Resolution |
 |---|---|---|
 | F-01 — Request context and Session lifecycle conflict | Resolved | Session uses a separate Runtime-owned context; request context ends with Handshake. |
-| F-02 — Shutdown is not atomic across admission | Resolved | Listener executor owns a gate; commits after shutdown are forbidden and in-flight commits must hand off into the wait set or clean up. |
+| F-02 — Shutdown is not atomic across admission | Resolved | Host owns the Gate; Handshake uses its read-only capability before Authentication and immediately before Accept. Commits after shutdown are forbidden, and in-flight commits must hand off into the wait set or clean up. |
 | F-03 — TCP connection has two stated owners | Resolved | Listening socket, accepted HTTP connection, Upgrade boundary, and Session ownership are separated. |
 | F-04 — Accept error classification contradicts library behavior | Resolved | Pre-Accept rejection, Accept rejection, and post-Accept failure are distinct; committed library responses are not rewritten. |
 | F-05 — Handoff point is undefined | Resolved | Ownership acceptance occurs only after construction, Runtime context creation, and shutdown registration. |
@@ -431,6 +437,7 @@ The [Master Engineering Plan](../roadmap/MASTER_PLAN.md) identifies Handshake as
 
 - [ADR-0002](../adr/0002-configuration-dsl.md) requires Configuration First and explicit rejection of unsupported effective behavior.
 - [ADR-0003](../adr/0003-runtime-architecture.md) requires component responsibility, dependency injection, and transport-neutral Authentication.
+- [ADR-0004](../adr/0004-handshake-runtime-dependencies.md) defines the read-only capability bridge from Host-owned admission and Runtime context state to Handshake.
 - [DP-001: Authentication](../proposals/DP-001-authentication.md) defines identity evaluation before admission and HTTP rejection.
 - [DP-004](../proposals/DP-004-authentication-runtime-contracts.md) defines the direction for transport-neutral Authentication contracts.
 
@@ -438,6 +445,6 @@ The [Master Engineering Plan](../roadmap/MASTER_PLAN.md) identifies Handshake as
 
 The selected direction remains **Alternative D: Dedicated Handshake Boundary**.
 
-Configured Authentication executes before WebSocket Accept. A one-use Allow Decision with a valid authenticated or explicit anonymous Principal may enter admission commit only while the Listener-owned gate is open. The library may reject and commit an HTTP response during Accept. After successful Accept, the Upgrade boundary owns the WebSocket until Session is registered for Runtime shutdown and explicitly accepts ownership. Session then uses a Runtime-owned context independent from the HTTP request.
+Handshake receives only live, read-only Runtime capabilities and has no dependency on Runtime Host. It checks the Host-owned Admission Gate before Authentication and performs the final admission validation immediately before `websocket.Accept`. Configured Authentication executes before WebSocket Accept. A one-use Allow Decision with a valid authenticated or explicit anonymous Principal may enter admission commit only after that final validation succeeds. The library may reject and commit an HTTP response during Accept. After successful Accept, the Upgrade boundary owns the WebSocket until Session is registered for Runtime shutdown and explicitly accepts ownership. Session is created with a Runtime-owned context obtained through the Runtime context capability and independent from the HTTP request.
 
 This remains a conceptual subsystem sequence, not a Universal Policy Engine, generic framework, package declaration, or fixed Go API. The first implementation supports Authentication only. Future admission behavior requires its own Configuration and focused design.
