@@ -12,6 +12,7 @@
 - Published ConfigurationVersion является immutable; Runtime исполняет ее без скрытой или альтернативной Configuration.
 - Публичная схема Configuration DSL развивается обратно совместимо; несовместимые изменения требуют нового ADR.
 - ADR-003 закрепляет компонентную архитектуру будущего Runtime, dependency injection и независимость от HTTP API и Repository.
+- ADR-004 закрепляет передачу в Handshake минимальных live read-only capabilities для Host-owned Admission Gate и Runtime context без зависимости от concrete Host.
 - Runtime использует только immutable Configuration Snapshot, созданный из Published ConfigurationVersion.
 
 ## Состояние релиза
@@ -231,3 +232,11 @@
 - Freeze фиксирует фактический lifecycle `Created -> Built -> Starting -> Running -> Stopping -> Stopped` и не объявляет реализованными предложенные в Draft DP-002 состояния `Initialized` или `Failed`.
 - Handshake, Authentication Pipeline до Upgrade, Session ownership в Runtime shutdown, Router, Delivery, Persistence, Operational Diagnostics и supervision остаются открытой архитектурой.
 - Изменение замороженных архитектурных обязанностей, ownership или lifecycle-семантики требует нового сфокусированного DP или ADR.
+
+## Handshake Runtime Dependency Boundary
+
+- Принят двуязычный [ADR-0004: Handshake Runtime Dependency Boundary](../docs/ru/adr/0004-handshake-runtime-dependencies.md) ([English version](../docs/en/adr/0004-handshake-runtime-dependencies.md)).
+- Host остается единственным владельцем Admission Gate и cancellation корневого Runtime context; Handshake получает только живые read-only capabilities через явную constructor injection.
+- Финальная проверка admission непосредственно перед `websocket.Accept` является linearization point входа в admission commit; закрытие Gate до нее запрещает Upgrade.
+- Session context должен создаваться как дочерний от активного Runtime context, а не от `http.Request.Context()`; root `CancelFunc` Handshake не раскрывается.
+- Решение не вводит concrete Go API и пока не изменяет реализацию: Authentication по-прежнему выполняется после Upgrade до отдельной задачи.

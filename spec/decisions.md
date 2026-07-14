@@ -5,6 +5,9 @@
 ## Принятые решения
 
 - [`ADR 0001: Базовая реализация Control Service`](../docs/ru/adr/0001-bootstrap-control-service.md)
+- [`ADR 0002: Configuration DSL`](../docs/ru/adr/0002-configuration-dsl.md)
+- [`ADR 0003: Runtime Architecture`](../docs/ru/adr/0003-runtime-architecture.md)
+- [`ADR 0004: Handshake Runtime Dependency Boundary`](../docs/ru/adr/0004-handshake-runtime-dependencies.md)
 
 ## Установленные ограничения проекта
 
