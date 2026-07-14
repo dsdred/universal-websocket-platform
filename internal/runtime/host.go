@@ -27,6 +27,7 @@ var (
 // Host owns an immutable Runtime Snapshot, assembles components, and coordinates their lifecycle.
 type Host interface {
 	Snapshot() runtimeconfig.Snapshot
+	RuntimeContext() context.Context
 	Build() error
 	Start(ctx context.Context) error
 	Stop(ctx context.Context) error
@@ -46,18 +47,22 @@ const (
 
 // DefaultHost is the Runtime composition root and lifecycle coordinator.
 type DefaultHost struct {
-	mu              sync.RWMutex
-	snapshot        runtimeconfig.Snapshot
-	container       Container
-	resolver        secretresolver.Resolver
-	handler         message.Handler
-	compose         runtimeComposer
-	runtimeListener listener.Listener
-	state           hostState
-	startDone       chan struct{}
-	startErr        error
-	stopDone        chan struct{}
-	stopErr         error
+	mu                sync.RWMutex
+	snapshot          runtimeconfig.Snapshot
+	container         Container
+	resolver          secretresolver.Resolver
+	handler           message.Handler
+	compose           runtimeComposer
+	newRuntimeContext runtimeContextFactory
+	stateObserver     func(hostState)
+	runtimeListener   listener.Listener
+	runtimeContext    context.Context
+	runtimeCancel     context.CancelFunc
+	state             hostState
+	startDone         chan struct{}
+	startErr          error
+	stopDone          chan struct{}
+	stopErr           error
 }
 
 // NewHost creates an unbuilt Runtime Host from explicit composition inputs.
@@ -74,6 +79,8 @@ type runtimeComposer func(
 	secretresolver.Resolver,
 	message.Handler,
 ) (listener.Listener, error)
+
+type runtimeContextFactory func() (context.Context, context.CancelFunc)
 
 func newHost(
 	snapshot runtimeconfig.Snapshot,
@@ -99,7 +106,10 @@ func newHost(
 		resolver:  resolver,
 		handler:   handler,
 		compose:   compose,
-		state:     hostCreated,
+		newRuntimeContext: func() (context.Context, context.CancelFunc) {
+			return context.WithCancel(context.Background())
+		},
+		state: hostCreated,
 	}, nil
 }
 
@@ -108,6 +118,14 @@ func (host *DefaultHost) Snapshot() runtimeconfig.Snapshot {
 	host.mu.RLock()
 	defer host.mu.RUnlock()
 	return cloneSnapshot(host.snapshot)
+}
+
+// RuntimeContext returns the Host-owned context for the running Runtime.
+// It is nil until Listener startup succeeds and does not expose cancellation.
+func (host *DefaultHost) RuntimeContext() context.Context {
+	host.mu.RLock()
+	defer host.mu.RUnlock()
+	return host.runtimeContext
 }
 
 // Build assembles the existing Runtime vertical without starting network resources.
@@ -150,6 +168,9 @@ func (host *DefaultHost) Start(ctx context.Context) error {
 
 	host.mu.Lock()
 	host.startErr = err
+	if err == nil {
+		host.runtimeContext, host.runtimeCancel = host.newRuntimeContext()
+	}
 	if host.state == hostStarting {
 		if err != nil {
 			host.state = hostBuilt
@@ -170,6 +191,7 @@ func (host *DefaultHost) Stop(ctx context.Context) error {
 		runtimeListener := host.runtimeListener
 		startDone := host.startDone
 		host.state = hostStopping
+		host.observeStateLocked(hostStopping)
 		host.stopDone = make(chan struct{})
 		host.stopErr = nil
 		stopDone := host.stopDone
@@ -179,6 +201,7 @@ func (host *DefaultHost) Stop(ctx context.Context) error {
 
 		host.mu.RLock()
 		startErr := host.startErr
+		runtimeCancel := host.runtimeCancel
 		host.mu.RUnlock()
 		if startErr != nil {
 			host.mu.Lock()
@@ -189,15 +212,19 @@ func (host *DefaultHost) Stop(ctx context.Context) error {
 			return nil
 		}
 
+		runtimeCancel()
 		return host.stopListener(ctx, runtimeListener, stopDone)
 	case hostRunning:
 		runtimeListener := host.runtimeListener
+		runtimeCancel := host.runtimeCancel
 		host.state = hostStopping
+		host.observeStateLocked(hostStopping)
 		host.stopDone = make(chan struct{})
 		host.stopErr = nil
 		stopDone := host.stopDone
 		host.mu.Unlock()
 
+		runtimeCancel()
 		return host.stopListener(ctx, runtimeListener, stopDone)
 	case hostStopping:
 		stopDone := host.stopDone
@@ -207,9 +234,19 @@ func (host *DefaultHost) Stop(ctx context.Context) error {
 		host.mu.RLock()
 		defer host.mu.RUnlock()
 		return host.stopErr
+	case hostStopped:
+		err := host.stopErr
+		host.mu.Unlock()
+		return err
 	default:
 		host.mu.Unlock()
 		return nil
+	}
+}
+
+func (host *DefaultHost) observeStateLocked(state hostState) {
+	if host.stateObserver != nil {
+		host.stateObserver(state)
 	}
 }
 

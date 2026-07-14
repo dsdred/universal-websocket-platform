@@ -7,6 +7,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
 	"github.com/dsdred/universal-websocket-platform/internal/secretresolver"
@@ -116,15 +117,35 @@ func TestHostDoubleStart(t *testing.T) {
 }
 
 func TestHostDoesNotSupportRestart(t *testing.T) {
-	host := mustHost(t)
+	runtimeListener := newControlledListener(nil, false)
+	host := newTestHost(t, fixedComposer(runtimeListener))
+	var contextCreations atomic.Int32
+	var contextCancellations atomic.Int32
+	host.newRuntimeContext = trackingRuntimeContextFactory(&contextCreations, &contextCancellations)
+	if err := host.Build(); err != nil {
+		t.Fatalf("Build() error = %v", err)
+	}
 	if err := host.Start(context.Background()); err != nil {
 		t.Fatalf("Start() error = %v", err)
 	}
+	runtimeContext := host.RuntimeContext()
 	if err := host.Stop(context.Background()); err != nil {
 		t.Fatalf("Stop() error = %v", err)
 	}
 	if err := host.Start(context.Background()); !errors.Is(err, ErrHostAlreadyRunning) {
 		t.Fatalf("Start() after Stop error = %v, want ErrHostAlreadyRunning", err)
+	}
+	if host.RuntimeContext() != runtimeContext {
+		t.Fatal("Start() after Stop replaced RuntimeContext")
+	}
+	if got := runtimeListener.startCalls.Load(); got != 1 {
+		t.Fatalf("Listener.Start calls = %d, want 1", got)
+	}
+	if got := contextCreations.Load(); got != 1 {
+		t.Fatalf("Runtime context creations = %d, want 1", got)
+	}
+	if got := contextCancellations.Load(); got != 1 {
+		t.Fatalf("Runtime context cancellations = %d, want 1", got)
 	}
 }
 
@@ -142,7 +163,14 @@ func TestHostStopWithoutStartIsNoOp(t *testing.T) {
 }
 
 func TestHostConcurrentStart(t *testing.T) {
-	host := mustHost(t)
+	runtimeListener := newControlledListener(nil, false)
+	host := newTestHost(t, fixedComposer(runtimeListener))
+	var contextCreations atomic.Int32
+	var contextCancellations atomic.Int32
+	host.newRuntimeContext = trackingRuntimeContextFactory(&contextCreations, &contextCancellations)
+	if err := host.Build(); err != nil {
+		t.Fatalf("Build() error = %v", err)
+	}
 	const goroutines = 64
 	var successes atomic.Int64
 	var alreadyRunning atomic.Int64
@@ -174,33 +202,90 @@ func TestHostConcurrentStart(t *testing.T) {
 	if !host.Running() {
 		t.Fatal("Running() = false after concurrent Start")
 	}
+	if host.RuntimeContext() == nil {
+		t.Fatal("RuntimeContext() = nil after concurrent Start")
+	}
+	if got := runtimeListener.startCalls.Load(); got != 1 {
+		t.Fatalf("Listener.Start calls = %d, want 1", got)
+	}
+	if got := contextCreations.Load(); got != 1 {
+		t.Fatalf("Runtime context creations = %d, want 1", got)
+	}
+	if err := host.Stop(context.Background()); err != nil {
+		t.Fatalf("Stop() error = %v", err)
+	}
+	if got := contextCancellations.Load(); got != 1 {
+		t.Fatalf("Runtime context cancellations = %d, want 1", got)
+	}
 }
 
 func TestHostConcurrentStop(t *testing.T) {
-	host := mustHost(t)
-	if err := host.Start(context.Background()); err != nil {
-		t.Fatalf("Start() error = %v", err)
-	}
+	const iterations = 100
+	const goroutines = 32
+	for iteration := range iterations {
+		listenerStopErr := errors.New("listener stop failed")
+		runtimeListener := newControlledListener(nil, false)
+		runtimeListener.stopEntered = make(chan struct{})
+		runtimeListener.releaseStop = make(chan struct{})
+		runtimeListener.stopErr = listenerStopErr
+		host := newTestHost(t, fixedComposer(runtimeListener))
+		var contextCreations atomic.Int32
+		var contextCancellations atomic.Int32
+		host.newRuntimeContext = trackingRuntimeContextFactory(&contextCreations, &contextCancellations)
+		if err := host.Build(); err != nil {
+			t.Fatalf("iteration %d: Build() error = %v", iteration, err)
+		}
+		if err := host.Start(context.Background()); err != nil {
+			t.Fatalf("iteration %d: Start() error = %v", iteration, err)
+		}
+		runtimeContext := host.RuntimeContext()
 
-	const goroutines = 64
-	var waitGroup sync.WaitGroup
-	errorsChannel := make(chan error, goroutines)
-	for range goroutines {
-		waitGroup.Add(1)
-		go func() {
-			defer waitGroup.Done()
-			if err := host.Stop(context.Background()); err != nil {
-				errorsChannel <- err
+		begin := make(chan struct{})
+		results := make(chan error, goroutines)
+		for range goroutines {
+			go func() {
+				<-begin
+				results <- host.Stop(context.Background())
+			}()
+		}
+		close(begin)
+		waitForSignal(t, runtimeListener.stopEntered, "Listener.Stop entry")
+		assertContextCanceled(t, runtimeContext, "Runtime context during concurrent Stop")
+
+		accessResult := make(chan context.Context, 1)
+		go func() { accessResult <- host.RuntimeContext() }()
+		select {
+		case got := <-accessResult:
+			if got != runtimeContext {
+				t.Fatalf("iteration %d: RuntimeContext changed during Listener.Stop", iteration)
 			}
-		}()
-	}
-	waitGroup.Wait()
-	close(errorsChannel)
-	for err := range errorsChannel {
-		t.Errorf("Stop() error = %v", err)
-	}
-	if host.Running() {
-		t.Fatal("Running() = true after concurrent Stop")
+		case <-time.After(time.Second):
+			t.Fatalf("iteration %d: lifecycle mutex held during Listener.Stop", iteration)
+		}
+
+		close(runtimeListener.releaseStop)
+		for call := range goroutines {
+			select {
+			case err := <-results:
+				if !errors.Is(err, listenerStopErr) {
+					t.Fatalf("iteration %d, Stop call %d: error = %v, want Listener.Stop error", iteration, call, err)
+				}
+			case <-time.After(time.Second):
+				t.Fatalf("iteration %d: concurrent Stop deadlocked", iteration)
+			}
+		}
+		if got := runtimeListener.stopCalls.Load(); got != 1 {
+			t.Fatalf("iteration %d: Listener.Stop calls = %d, want 1", iteration, got)
+		}
+		if got := contextCreations.Load(); got != 1 {
+			t.Fatalf("iteration %d: Runtime context creations = %d, want 1", iteration, got)
+		}
+		if got := contextCancellations.Load(); got != 1 {
+			t.Fatalf("iteration %d: Runtime context cancellations = %d, want 1", iteration, got)
+		}
+		if got := currentHostState(host); got != hostStopped {
+			t.Fatalf("iteration %d: state = %v, want hostStopped", iteration, got)
+		}
 	}
 }
 

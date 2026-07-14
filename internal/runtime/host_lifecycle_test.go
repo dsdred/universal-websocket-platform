@@ -52,6 +52,9 @@ func TestHostListenerStartErrorRestoresBuiltState(t *testing.T) {
 	listenerStartErr := errors.New("listener start failed")
 	runtimeListener := newControlledListener(listenerStartErr, false)
 	host := newTestHost(t, fixedComposer(runtimeListener))
+	var contextCreations atomic.Int32
+	var contextCancellations atomic.Int32
+	host.newRuntimeContext = trackingRuntimeContextFactory(&contextCreations, &contextCancellations)
 	if err := host.Build(); err != nil {
 		t.Fatalf("Build() error = %v", err)
 	}
@@ -62,6 +65,18 @@ func TestHostListenerStartErrorRestoresBuiltState(t *testing.T) {
 	}
 	if host.Running() {
 		t.Fatal("Running() = true after Listener.Start error")
+	}
+	if host.RuntimeContext() != nil {
+		t.Fatal("RuntimeContext() after Listener.Start error is not nil")
+	}
+	if host.runtimeCancel != nil {
+		t.Fatal("runtime CancelFunc after Listener.Start error is not nil")
+	}
+	if got := contextCreations.Load(); got != 0 {
+		t.Fatalf("Runtime context creations after Listener.Start error = %d, want 0", got)
+	}
+	if got := contextCancellations.Load(); got != 0 {
+		t.Fatalf("Runtime context cancellations after Listener.Start error = %d, want 0", got)
 	}
 	if got := currentHostState(host); got != hostBuilt {
 		t.Fatalf("state = %v, want hostBuilt", got)
@@ -89,6 +104,13 @@ func TestHostStopDuringStarting(t *testing.T) {
 	for iteration := range iterations {
 		runtimeListener := newControlledListener(nil, true)
 		host := newTestHost(t, fixedComposer(runtimeListener))
+		stopping := make(chan struct{})
+		var stoppingOnce sync.Once
+		host.stateObserver = func(state hostState) {
+			if state == hostStopping {
+				stoppingOnce.Do(func() { close(stopping) })
+			}
+		}
 		if err := host.Build(); err != nil {
 			t.Fatalf("iteration %d: Build() error = %v", iteration, err)
 		}
@@ -103,7 +125,7 @@ func TestHostStopDuringStarting(t *testing.T) {
 		go func() {
 			stopResult <- host.Stop(context.Background())
 		}()
-		waitForHostState(t, host, hostStopping)
+		waitForSignal(t, stopping, "Host Stopping transition")
 		if host.Running() {
 			t.Fatalf("iteration %d: Host became Running while Stop was pending", iteration)
 		}
@@ -117,6 +139,11 @@ func TestHostStopDuringStarting(t *testing.T) {
 		waitForResult(t, startResult, "Start")
 		waitForResult(t, stopResult, "Stop")
 
+		runtimeContext := host.RuntimeContext()
+		if runtimeContext == nil {
+			t.Fatalf("iteration %d: RuntimeContext() is nil after successful Listener.Start", iteration)
+		}
+		assertContextCanceled(t, runtimeContext, "Runtime context after concurrent Stop")
 		if host.Running() {
 			t.Fatalf("iteration %d: Running() = true after Stop", iteration)
 		}
@@ -130,13 +157,19 @@ func TestHostStopDuringStarting(t *testing.T) {
 }
 
 type controlledListener struct {
-	startEntered chan struct{}
-	releaseStart chan struct{}
-	startErr     error
-	startOnce    sync.Once
-	mu           sync.RWMutex
-	running      bool
-	stopCalls    atomic.Int32
+	startEntered  chan struct{}
+	releaseStart  chan struct{}
+	startErr      error
+	startOnce     sync.Once
+	startObserver func()
+	startCalls    atomic.Int32
+	stopEntered   chan struct{}
+	releaseStop   chan struct{}
+	stopErr       error
+	stopOnce      sync.Once
+	mu            sync.RWMutex
+	running       bool
+	stopCalls     atomic.Int32
 }
 
 func newControlledListener(startErr error, blockStart bool) *controlledListener {
@@ -161,6 +194,7 @@ func (runtimeListener *controlledListener) Running() bool {
 }
 
 func (runtimeListener *controlledListener) Start(ctx context.Context) error {
+	runtimeListener.startCalls.Add(1)
 	runtimeListener.startOnce.Do(func() { close(runtimeListener.startEntered) })
 	if runtimeListener.releaseStart != nil {
 		select {
@@ -175,15 +209,24 @@ func (runtimeListener *controlledListener) Start(ctx context.Context) error {
 	runtimeListener.mu.Lock()
 	runtimeListener.running = true
 	runtimeListener.mu.Unlock()
+	if runtimeListener.startObserver != nil {
+		runtimeListener.startObserver()
+	}
 	return nil
 }
 
 func (runtimeListener *controlledListener) Stop(context.Context) error {
 	runtimeListener.stopCalls.Add(1)
+	if runtimeListener.stopEntered != nil {
+		runtimeListener.stopOnce.Do(func() { close(runtimeListener.stopEntered) })
+	}
+	if runtimeListener.releaseStop != nil {
+		<-runtimeListener.releaseStop
+	}
 	runtimeListener.mu.Lock()
 	runtimeListener.running = false
 	runtimeListener.mu.Unlock()
-	return nil
+	return runtimeListener.stopErr
 }
 
 func fixedComposer(runtimeListener listener.Listener) runtimeComposer {
@@ -205,18 +248,6 @@ func currentHostState(host *DefaultHost) hostState {
 	host.mu.RLock()
 	defer host.mu.RUnlock()
 	return host.state
-}
-
-func waitForHostState(t *testing.T, host *DefaultHost, want hostState) {
-	t.Helper()
-	deadline := time.Now().Add(time.Second)
-	for time.Now().Before(deadline) {
-		if currentHostState(host) == want {
-			return
-		}
-		time.Sleep(time.Millisecond)
-	}
-	t.Fatalf("Host did not enter state %v; current state = %v", want, currentHostState(host))
 }
 
 func waitForSignal(t *testing.T, signal <-chan struct{}, operation string) {
