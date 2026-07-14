@@ -6,130 +6,69 @@
 
 **Status:** Draft
 
-This document proposes a Runtime Handshake architecture. It contains no implementation contract, Go interface, package declaration, or commitment to future policy APIs.
+This document proposes the Runtime Handshake architecture. It defines conceptual boundaries and invariants, not Go interfaces, packages, or a reusable policy framework.
 
 ## 2. Background
 
-The Alpha Runtime has a working WebSocket vertical. Listener owns the TCP listener and HTTP server, handles `GET /ws`, calls the WebSocket library to accept the Upgrade, and then transfers the upgraded connection through a Dispatcher. AuthenticationDispatcher converts selected HTTP request metadata into a transport-neutral `AuthenticationRequest`, invokes Authentication Service, and either closes the upgraded connection or transfers it with a Principal to Session Dispatcher. Session then owns the WebSocket connection and starts its read loop.
+The Alpha Runtime upgrades an HTTP request before Authentication. The resulting WebSocket then passes through Connection Dispatcher, Authentication Dispatcher, and Session Dispatcher. Rejected credentials therefore receive `101 Switching Protocols` before the server closes the connection.
 
-The current request path is:
+The [Runtime Alpha Architecture Review](../reviews/runtime-alpha-review.md) records this as High finding F-01. [DP-001: Authentication](../proposals/DP-001-authentication.md) already requires identity evaluation before a WebSocket Session is admitted.
+
+The current path is:
 
 ```text
 TCP accept
     -> HTTP request
-    -> GET /ws handler
-    -> WebSocket Upgrade (101)
-    -> ConnectionContext with WebSocket connection
-    -> AuthenticationDispatcher
-    -> Authentication Service and Providers
+    -> WebSocket Accept
+    -> Authentication
     -> reject with WebSocket close
        or
-       AuthenticatedContext
-    -> Session creation and lifecycle
+       Session
 ```
 
-This path is verified by implementation and integration tests. The [Runtime Alpha Architecture Review](../reviews/runtime-alpha-review.md) records post-Upgrade Authentication as High finding F-01. It also identifies Runtime Host composition and lifecycle hardening as related work that must not be hidden inside Handshake.
-
-[DP-001: Authentication](../proposals/DP-001-authentication.md) already states that required identity checks complete before a WebSocket Session is opened and that rejected credentials produce HTTP `401`. The implementation does not yet satisfy that design.
+This proposal changes the admission order without moving Provider logic into Listener or coupling Authentication to HTTP or WebSocket.
 
 ## 3. Problem Statement
 
-Authentication after Upgrade is an architecture problem, not merely an HTTP status limitation.
+Authentication after Upgrade crosses the transport ownership boundary before the admission decision is known. It allocates WebSocket resources for rejected clients, prevents an HTTP authentication rejection, complicates shutdown, and conflates policy rejection with post-Upgrade failures.
 
-### Ownership
-
-After `websocket.Accept` succeeds, the HTTP exchange has ended and an upgraded mutable connection exists. AuthenticationDispatcher must own and close that connection even for clients that should never have been admitted. A security decision is therefore made after transport ownership has already crossed the admission boundary.
-
-### Transport Semantics
-
-Before Upgrade, Runtime can express rejection as an HTTP response. After Upgrade, the same outcome must be encoded as a WebSocket close. Clients observe a successful `101` followed by closure rather than a rejected handshake. This makes Authentication semantics depend on when transport conversion occurred.
-
-### Lifecycle
-
-Post-Upgrade evaluation creates WebSocket resources before admission completes. Cancellation, Provider failure, downstream construction failure, and Listener shutdown must all close a connection that did not need to exist. The connection-specific lifecycle begins too early.
-
-### Observability
-
-An accepted transport followed by policy rejection is harder to classify. Upgrade success, Authentication rejection, Provider outage, and Session startup failure can be conflated unless every later close is interpreted with hidden pipeline knowledge.
-
-### Extensibility
-
-Future Origin, maintenance, rate-limit, or IP filtering decisions would face the same choice: either execute after Upgrade and allocate resources unnecessarily, or be embedded directly into Listener. Neither provides a stable admission boundary.
-
-### Future Policies
-
-Adding each policy at a different transport stage would make order, short-circuit behavior, ownership, and error mapping unpredictable. A conceptual Handshake boundary is needed, but it must not become a universal Policy Engine.
+The design must also resolve the ownership and lifecycle gaps identified by the independent Architecture Stress Review: request context must not become Session context, shutdown must close the admission gate atomically, the WebSocket handoff point must be exact, and the real behavior of `websocket.Accept` must be reflected in the error model.
 
 ## 4. Existing Architecture
 
-```text
-Listener
-  owns TCP listener and HTTP server
-        |
-        v
-HTTP /ws Handler
-  validates method
-        |
-        v
-websocket.Accept
-  commits HTTP 101 and creates WebSocket connection
-        |
-        v
-Connection Dispatcher
-  transfers upgraded transport ownership
-        |
-        v
-Authentication Dispatcher
-  copies HTTP metadata
-  invokes transport-neutral Authentication
-  closes on rejection/error
-        |
-        v
-Authenticated Dispatcher
-  transfers connection and Principal
-        |
-        v
-Session
-  owns WebSocket, read loop, and serialized writes
-```
+The current responsibilities worth preserving are:
 
-The responsibilities below should be preserved:
-
-- Listener owns network acceptance and HTTP/WebSocket execution.
-- Authentication owns credential evaluation and remains independent of `net/http` and WebSocket.
-- Connection handoff makes mutable transport ownership explicit.
-- Session is created only for an authenticated Principal and owns the accepted WebSocket thereafter.
+- Listener owns its listening socket and HTTP server lifecycle.
+- `net/http` owns accepted HTTP connections until a successful hijack or Upgrade.
+- Authentication Service and Providers operate on transport-neutral input.
 - Runtime Snapshot supplies effective Configuration without Repository access.
+- Session owns an admitted WebSocket, its read loop, and serialized writes.
 
-The ordering of Upgrade and Authentication is the boundary that must change.
+The current ordering and context transfer are not preserved. Authentication moves before Upgrade, and Session receives a Runtime-owned lifecycle context rather than `http.Request.Context()`.
 
 ## 5. Goals
 
-- Complete required Authentication before WebSocket Upgrade.
-- Preserve transport-neutral AuthenticationRequest, Authentication Service, and Providers.
-- Preserve Runtime independence from Control Plane repositories and management HTTP API.
-- Provide a clear conceptual location for future handshake-scoped Evaluation.
-- Make ownership of HTTP and WebSocket resources explicit at every outcome.
-- Keep connection and Session lifecycles predictable under rejection, cancellation, and failure.
-- Distinguish negative admission decisions from internal and dependency failures.
-- Keep Listener responsible for transport execution without containing Provider-specific logic.
-- Remain compatible with the current Snapshot, Authentication, and Session vertical.
+- Complete configured Authentication before WebSocket Upgrade.
+- Preserve transport-neutral Authentication Service and Providers.
+- Define one owner for each transport resource at every stage.
+- Define an admission state machine and its shutdown transitions.
+- Separate request-scoped Handshake context from connection-scoped Session context.
+- Distinguish rejection, cancellation, dependency, configuration, protocol, internal, and handoff failures.
+- Keep request processing independent from Snapshot reads and Control Plane repositories.
+- Keep the first implementation limited to pre-Upgrade Authentication.
 
 ## 6. Non Goals
 
 This document does not design:
 
-- Router;
-- Session Manager;
-- Middleware;
+- Router or Delivery;
+- Session Manager API;
+- Middleware or a universal Policy Engine;
 - Plugin ABI;
-- another transport or a transport abstraction;
-- QUIC;
-- HTTP/3;
-- OAuth;
-- mTLS implementation;
+- an Origin Policy beyond current library behavior;
+- rate limiting, maintenance, IP filtering, or general admission rules;
+- another transport, QUIC, or HTTP/3;
 - Provider-specific credential verification;
-- an Origin, rate-limit, maintenance, or IP filtering API;
 - Runtime Host composition details.
 
 ## 7. Constraints
@@ -138,398 +77,367 @@ The design follows [ARCH-001: Runtime Architectural Pattern](../architecture/ARC
 
 ### Configuration First
 
-Handshake behavior comes from Published Configuration through an immutable Runtime Snapshot. Unsupported active settings are rejected explicitly rather than ignored.
+Effective behavior is built from a Published Configuration Snapshot before Listener starts. Unsupported active behavior is rejected rather than ignored.
 
 ### Ownership
 
-Every mutable transport resource has one current owner. Transfer is explicit, and failure before or during transfer has a defined closer.
+Every mutable transport resource has exactly one current owner. Ownership transfer is explicit and has one conceptual acceptance point.
 
 ### Lifecycle
 
-Evaluation observes request cancellation. Long-running work and network I/O do not execute under lifecycle locks. Handshake completes before Session lifecycle begins.
+Handshake and Session have separate contexts and lifetimes. Network I/O and dependency calls do not run while a lifecycle lock is held.
 
 ### No Magic
 
-Dependencies are composed explicitly. Handshake does not discover Providers, read repositories, use global state, or use `context.Value` as a service locator.
+Dependencies are composed explicitly. The request path does not discover Providers, read repositories or Snapshot, use global state, or use `context.Value` as a service locator.
 
 ### Boring Core
 
-The design reuses existing Authentication and transport boundaries. It does not create a generic pipeline framework, universal Policy Engine, or common Decision model for unrelated subsystems.
+The first implementation performs only configured Authentication before Upgrade. The conceptual sequence is not a generic evaluator chain and does not promise future policies.
 
 ## 8. Design Alternatives
 
-### Alternative A — Keep the Current Architecture
+### Alternative A — Keep Authentication After Upgrade
 
-Authentication remains after `websocket.Accept` in AuthenticationDispatcher.
+Rejected clients continue to receive `101`, consume upgraded resources, and enter connection lifecycle before admission. This preserves the defect and is rejected.
 
-**Advantages:**
+### Alternative B — Put Provider Logic in Listener
 
-- No implementation change.
-- Current integration tests and ownership transfer remain intact.
-- Authentication has access to normalized request metadata already associated with a WebSocket connection.
+Listener could authenticate before Upgrade, but it would gain Provider, Secret, and credential-verification knowledge. This violates transport neutrality and single responsibility and is rejected.
 
-**Disadvantages:**
+### Alternative C — Authenticate in Session
 
-- Rejected credentials receive `101` before closure.
-- Unauthenticated clients consume upgraded connection resources.
-- Admission ownership begins before the admission decision.
-- Future handshake policies would also run too late or require separate placement.
-- It conflicts with the existing Authentication proposal and Alpha review finding.
+A provisional Session would exist without a valid Principal and could reject only through WebSocket closure. This violates the authenticated Session boundary and is rejected.
 
-**Reasons rejected:** The design preserves the exact security and lifecycle boundary that TASK-BETA-003 must correct.
+### Alternative D — Dedicated Handshake Boundary
 
-### Alternative B — Put Authentication Logic Inside Listener
+A conceptual Handshake boundary normalizes request metadata, performs configured Authentication, produces a one-use admission Decision, and only then permits the transport executor to commit an Upgrade.
 
-Listener directly reads Authentication Configuration, selects Providers, verifies credentials, and decides whether to call Upgrade.
-
-**Advantages:**
-
-- Authentication can happen before Upgrade.
-- HTTP rejection is straightforward.
-- Fewer visible components in the request path.
-
-**Disadvantages:**
-
-- Listener gains JWT, API Key, Basic, Registry, and Provider orchestration knowledge.
-- Authentication becomes coupled to HTTP and WebSocket transport behavior.
-- Provider extensibility requires Listener changes.
-- Unit boundaries and dependency direction from ADR-003 are lost.
-
-**Reasons rejected:** It fixes ordering by violating single responsibility, transport-neutral Authentication, and Boring Core.
-
-### Alternative C — Put Authentication Inside Session
-
-Listener upgrades the connection and creates a provisional Session that authenticates before normal message processing.
-
-**Advantages:**
-
-- Session could centralize connection lifecycle after Upgrade.
-- Authentication and later message processing would share one connection owner.
-- Listener would remain unaware of Providers.
-
-**Disadvantages:**
-
-- Authentication still occurs after Upgrade.
-- Session would exist before a valid Principal, contradicting its current invariant.
-- Session would need HTTP handshake metadata or another hidden transport bridge.
-- Rejection remains a WebSocket close and cannot be an HTTP response.
-- Session responsibility expands into admission policy.
-
-**Reasons rejected:** It moves the problem deeper into Runtime and breaks the established authenticated-Session boundary.
-
-### Alternative D — Dedicated Handshake Pipeline
-
-A conceptual Handshake boundary normalizes request metadata, performs configured Evaluation, produces an admission Decision, and only then asks the transport owner to reject or Upgrade.
-
-**Advantages:**
-
-- Authentication completes before WebSocket allocation.
-- Authentication Service and Providers remain transport-neutral.
-- Listener retains HTTP/WebSocket execution without Provider-specific logic.
-- Ownership transfer occurs only after an allow Decision.
-- Future handshake-scoped evaluations have one ordered boundary.
-- Negative decisions and operational errors can have distinct HTTP semantics.
-
-**Disadvantages:**
-
-- The request path gains an explicit orchestration stage.
-- Migration must avoid duplicate Authentication and double ownership.
-- Ordering and failure semantics for future evaluations require focused design.
-- Slow evaluations retain HTTP request resources until completion.
-
-**Reasons selected:** It corrects the security boundary while preserving the current responsibilities and extension seams. “Pipeline” is a conceptual sequence, not a generic framework or a declaration of Go interfaces.
+This alternative is selected. “Pipeline” describes the ordered lifecycle of one request. It does not define a generic pipeline API, an evaluator registry, or a universal policy model.
 
 ## 9. Proposed Architecture
 
 ```text
-Runtime Snapshot and composed dependencies
-                 |
-                 v
-Listener / HTTP transport owner
-  accepts request and owns ResponseWriter
-                 |
-                 v
-Handshake Context normalization
-  copies only required metadata
-                 |
-                 v
-Handshake Evaluation
-  required method/path checks
-  configured Authentication
-  future handshake-scoped checks
-                 |
-                 v
-Handshake Decision
-          /                 \
-         v                   v
-reject or fail              allow
-HTTP response                 |
-no WebSocket                  v
-                        WebSocket Upgrade
-                              |
-                              v
-                    authenticated handoff
-                              |
-                              v
-                           Session
-```
+Published Snapshot
+    -> Runtime bootstrap and readiness validation
+    -> composed Listener, Authentication Service, timeout, and dependencies
+    -> Listener Start
 
-The architecture is conceptual. It does not prescribe a Handshake package, interface, method, or universal list of evaluators.
-
-Listener remains the transport executor. It supplies request metadata for normalization and applies the final transport effect. Authentication remains an existing transport-neutral service. A successful result supplies Principal data to the post-Upgrade handoff. Session remains unchanged in purpose: it is created only after successful admission and owns the WebSocket connection.
-
-Future Handshake policies may be composed at the Evaluation stage only when their Configuration and focused design exist. They do not become generic Runtime policies automatically.
-
-## 10. Handshake Stages
-
-```text
-Transport
+HTTP request
     -> Handshake Context
-    -> Evaluation
-    -> Decision
-    -> Upgrade
-    -> Session
+    -> pre-Upgrade Authentication
+    -> one-use Decision
+       -> Reject or operational failure: HTTP handling, no WebSocket
+       -> Allow: admission gate check and commit
+    -> websocket.Accept
+       -> Accept rejection: library may commit HTTP response
+       -> success: Upgrade boundary owns WebSocket
+    -> Runtime-owned connection context
+    -> Session registered in Runtime shutdown wait set
+    -> explicit Session ownership acceptance
+    -> Session lifecycle
 ```
 
-### Transport
+Listener remains responsible for transport execution but contains no Provider-specific logic. Authentication remains transport-neutral. Session is admitted only with a valid Principal and never receives the original HTTP request or its context as lifecycle state.
 
-Listener and HTTP server accept the request. They own transport execution and expose only the request data required for Handshake.
+## 10. Context Model
 
 ### Handshake Context
 
-Required metadata is copied from the HTTP request into narrow evaluation input. Credential-bearing values remain request-scoped and are not stored in Session or Snapshot.
+The Handshake executor owns one request-scoped context. Its lifetime ends at `Rejected`, `Aborted`, or successful `HandedOff`.
 
-### Evaluation
+The effective deadline is the earliest of:
 
-Evaluation applies the configured admission checks. Authentication uses the existing Authentication Service and Providers. “Evaluation” is the architecture term from ARCH-001, not a mandatory framework, engine, or Go abstraction.
+- cancellation of `http.Request.Context()`;
+- Runtime or Listener shutdown cancellation;
+- the configured Handshake timeout from the effective Runtime configuration.
 
-### Decision
+Only required request metadata is copied into transport-neutral Authentication input. The HTTP request, Body, Headers, URL, ResponseWriter, and request context are not transferred to Session.
 
-The result distinguishes allow, expected reject, Configuration failure, dependency failure, cancellation, and internal failure as needed by the subsystem. This document does not define one global Decision type or its exact representation.
+### Runtime-Owned Connection Context
 
-### Upgrade
+After successful Accept and before handoff, Runtime creates a separate connection/session context. It is not derived as a child whose lifetime depends on `http.Request.Context()`.
 
-Only an allow Decision permits WebSocket Upgrade. Listener performs the transport operation. A failure during Upgrade is a transport failure, not an Authentication rejection.
+Runtime lifecycle owns its cancellation path. It is canceled by connection or Session termination and by Runtime shutdown. A future Session Manager may participate in that lifecycle, but its API is outside this document.
 
-### Session
+Once handoff succeeds, the HTTP handler may finish without canceling the Session.
 
-After successful Upgrade, the connection and copied authenticated Principal are transferred downstream. Session is then created and its connection lifecycle begins.
+## 11. Decision Invariants
 
-## 11. Ownership Model
+An admission Decision follows these invariants:
 
-### HTTP Request
+- Allow contains a valid Principal.
+- When Authentication is enabled, the Principal represents successful Authentication.
+- When Authentication is disabled, the Principal is the explicit anonymous Principal defined below.
+- Reject is an expected negative outcome, not a Go error.
+- Operational failure is distinct from Reject.
+- A Decision loses authority if its context is canceled or the admission gate closes before commit begins.
+- A Decision may be applied at most once.
+- Only Allow may attempt admission commit.
+- An execution error does not rewrite or reclassify the original Authentication result.
 
-The HTTP server owns the request lifecycle. The Handshake path borrows the request synchronously and copies only metadata needed for Evaluation. It must not retain `http.Request`, its Body, Headers, URL, or cancellation context after the handler completes. Authentication Providers continue to receive normalized data, not the request object.
+The exact Go representation remains an implementation detail.
 
-### ResponseWriter
+## 12. Admission State Machine
 
-The HTTP handler borrows ResponseWriter from the HTTP server and is the only Handshake-side component allowed to apply the HTTP Decision. Evaluation does not write responses. Before Upgrade, the handler may send one rejection or failure response. After a response is committed, Upgrade is forbidden.
-
-After successful Upgrade, HTTP response semantics are no longer available. The handler must not attempt another HTTP write.
-
-### TCP Connection
-
-Listener and HTTP server own the accepted TCP connection before Upgrade. Handshake Evaluation does not access or close the raw connection. On HTTP rejection, normal HTTP server semantics determine whether the transport can be reused or closed. On Listener shutdown, the server remains responsible for active pre-Upgrade requests.
-
-### WebSocket Connection
-
-No WebSocket connection exists during Evaluation. A successful Upgrade creates it under the transport execution boundary. That boundary temporarily owns the connection and must either:
-
-- transfer it exactly once to the authenticated downstream path; or
-- close it if handoff or Session creation fails.
-
-Authentication rejection cannot own or close a WebSocket because none has been created.
-
-### Authentication Result
-
-Authentication Service produces result data during Evaluation. The Handshake path owns that result for the request duration. Credential values and resolved Secrets are not part of the result. On success, the Principal is copied into the allow Decision or authenticated handoff so downstream mutation cannot alter the evaluated identity.
-
-The result owns no transport resource. A negative result leads to HTTP rejection without connection transfer.
-
-### Session
-
-Session does not exist before an allow Decision and successful Upgrade. Once constructed successfully, Session becomes the sole owner of the WebSocket connection, read loop, and write serialization. If Session construction fails, the pre-Session handoff owner closes the connection.
-
-Session stores the Principal and minimal connection metadata required by its contract. It does not retain the HTTP request, ResponseWriter, credential Headers, Query, or Handshake Context.
-
-### Ownership Timeline
+The conceptual states are:
 
 ```text
-HTTP server owns TCP and request
-        |
-        | Handshake borrows request/ResponseWriter
-        | Evaluation owns copied metadata and result values
-        v
-allow Decision
-        |
-        | transport boundary creates and temporarily owns WebSocket
-        v
-authenticated handoff
-        |
-        | Session construction succeeds
-        v
-Session owns WebSocket until Stop
+Evaluating
+    -> Allowed
+    -> Rejected
+    -> Aborted
+
+Allowed
+    -> Committing
+    -> Aborted
+
+Committing
+    -> Upgraded
+    -> Rejected     (Accept performs protocol or Origin rejection)
+    -> Aborted      (cancellation or transport/internal failure)
+
+Upgraded
+    -> HandedOff
+    -> Aborted
 ```
 
-Every failure path terminates before the next transfer or closes the resource owned at that point.
+`Rejected`, `Aborted`, and `HandedOff` are terminal Handshake states. This state model is conceptual and is not a required Go enum.
 
-## 12. Error Model
+### Shutdown Transitions
 
-### Before Upgrade
+Listener's transport/Handshake executor owns the admission gate. The gate is open only while Listener admits new connections.
 
-Before Upgrade, failures use HTTP semantics and do not create a WebSocket connection.
+At shutdown start, the executor closes the gate before waiting for active work:
 
-- Invalid request shape or unsupported method is an HTTP request error.
-- Rejected credentials are an expected negative Authentication decision and produce a safe authentication rejection, consistent with the existing Authentication proposal.
-- A future Origin or admission policy rejection is an expected negative decision with policy-appropriate HTTP semantics.
-- Cancellation stops Evaluation and must not be reported as successful admission.
-- Provider or dependency failure is operational, observable, and distinct from rejected credentials.
-- Internal failure returns a generic response without implementation details.
-- Configuration failure should normally prevent Listener startup. If detected per request, the system fails closed and reports it operationally.
+- `Evaluating` is canceled and ends as `Aborted`; an Evaluation returning Allow afterward cannot commit.
+- `Allowed` cannot enter `Committing` after the gate closes and becomes `Aborted`.
+- Entry into `Committing` requires an atomic successful gate check.
+- Work already in `Committing` must either fail and clean up, or reach `Upgraded` and complete the controlled handoff.
+- An upgraded connection must enter the Runtime shutdown wait set before handoff completes; otherwise the Upgrade boundary closes it before shutdown completes.
+- `HandedOff` work is owned by Session lifecycle and participates in Runtime shutdown.
 
-Exact response bodies, challenge headers, and status mapping beyond already accepted behavior require implementation-focused design. Sensitive values never appear in a response.
+Shutdown therefore cannot finish while an admitted connection exists outside both the Upgrade boundary and Runtime shutdown tracking.
 
-### During Upgrade
+## 13. Ownership Model
 
-Failure while performing Upgrade is a transport failure. It is not reclassified as Authentication rejection. Listener retains responsibility for safe diagnostics and cleanup according to the WebSocket library contract.
+### Listening Socket
 
-### After Upgrade
+Listener exclusively owns the listening socket from successful `net.Listen` until Listener Stop closes it.
 
-HTTP errors are no longer possible. Failures during authenticated handoff, Session creation, or Session execution use WebSocket close or immediate transport cleanup according to the component lifecycle. They must not be represented as pre-Upgrade policy rejection.
+### Accepted HTTP Connection
 
-### Error Separation
+The `net/http` transport owns each accepted HTTP connection before successful hijack or Upgrade. Handshake Evaluation never owns or closes the raw TCP connection. HTTP rejection leaves reuse or closure to `net/http` semantics.
 
-Expected negative Decision, Configuration failure, dependency failure, cancellation, internal failure, Upgrade failure, and Session failure remain distinguishable for observability even when client-facing details are intentionally generic.
+### HTTP Request and ResponseWriter
 
-## 13. Lifecycle
+The HTTP server owns request lifecycle. Handshake borrows the request and ResponseWriter synchronously. Evaluation never writes a response.
 
-The overall Runtime and Listener are already Running before a request enters Handshake. Handshake is a bounded per-request lifecycle within the HTTP handler:
+Before Accept, the transport/Handshake executor may apply one HTTP rejection or failure response. Once any response is committed, the upper layer must not write another response or attempt Upgrade.
 
-```text
-request accepted
-    -> context normalized
-    -> Evaluation started
-    -> Decision produced
-       -> rejected/failed: HTTP response, Handshake ends
-       -> allowed: Upgrade attempted
-          -> failed: transport cleanup, Handshake ends
-          -> succeeded: authenticated handoff
-             -> Session created and started
-             -> Handshake ownership ends
-```
+### Upgrade Boundary
 
-An HTTP rejection remains possible until a response or Upgrade is committed. Evaluation must not commit either.
+After successful `websocket.Accept`, the Upgrade boundary exclusively owns the WebSocket. It remains the owner while the Runtime connection context is created and Session is prepared for acceptance.
 
-The connection-specific Session lifecycle begins only after allow, successful Upgrade, and successful transfer. The Session read loop never runs concurrently with unresolved Handshake Evaluation for the same connection.
+### Session Ownership Acceptance
 
-Listener shutdown cancels active Handshake contexts and prevents new admissions. Evaluation must propagate cancellation to Authentication Providers. Shutdown waits and error propagation follow the lifecycle requirements in ARCH-001 and the debt identified by Alpha finding F-04.
+The conceptual handoff point occurs only after all of the following are true:
 
-## 14. Security
+1. Session construction succeeded.
+2. The Runtime-owned connection context exists.
+3. Session was entered into the Runtime shutdown wait set.
+4. Session explicitly accepted responsibility for the WebSocket and its closure.
 
-### Origin
+Before this point, any failure is closed by the Upgrade boundary. At this point ownership transfers exactly once to Session. After it, Session is the sole closer. A downstream error after acceptance is a Session failure and never causes a second Close by the upper boundary.
 
-Current WebSocket origin handling uses library defaults. A future explicit Origin Policy belongs before Upgrade in Handshake Evaluation and must be Configuration First. This document does not define its schema, proxy model, or matching rules.
+### Authentication Result and Principal
 
-### Credentials
+Authentication result data is request-scoped and owns no transport. Principal is copied across the commit boundary so downstream mutation cannot change evaluated identity. Credentials and resolved Secrets are never included.
 
-Only required credential-bearing request fields are copied into AuthenticationRequest. Providers resolve Secret References close to use. Raw credentials, tokens, API keys, passwords, and resolved Secrets are not retained after Evaluation.
+## 14. `websocket.Accept` Semantics
 
-### Logging and Observability
+`websocket.Accept` is not a passive transport conversion. The library:
 
-Logs, metrics, traces, and errors must not contain credential Headers, tokens, query credentials, Secret values, private key material, or full request dumps. Operational signals distinguish rejection from failure using safe categories and bounded labels.
+- validates WebSocket transport and protocol requirements;
+- may apply its default Origin validation;
+- may write and commit an HTTP response on rejection;
+- creates the WebSocket only after a successful handshake.
 
-### Sensitive Data Lifetime
+The executor distinguishes three phases:
 
-Handshake metadata and Authentication results are request-scoped. Secret byte ownership follows SecretResolver contracts and Provider cleanup. Session receives Principal identity data, not credential input.
+### Pre-Accept Rejection
 
-### Configuration
+Authentication Reject, cancellation, readiness invariant failure, or another pre-commit failure occurs before Accept. The executor may write one appropriate HTTP response. No WebSocket exists.
 
-Only Published Snapshot data controls Handshake. Runtime does not read Control Plane repositories. Unsupported Authentication or future admission settings fail explicitly before traffic where possible.
+### Accept Rejection
 
-## 15. Future Extension Points
+Accept rejects protocol, method, header, or default Origin conditions and may already have written the HTTP response. The executor records the terminal category and performs no second HTTP write.
 
-The proposed boundary can later host focused, configured evaluations such as:
+### Post-Accept Failure
 
-- Origin Policy;
-- maintenance admission;
-- rate limiting;
-- IP filtering;
-- enterprise-specific admission extensions.
+Accept succeeded and a WebSocket exists, but connection-context creation, shutdown registration, Session construction, or handoff fails. HTTP semantics are no longer available. The current WebSocket owner closes the connection according to the ownership rules.
 
-These are future possibilities, not implemented features or API commitments. Each requires Configuration metadata, validation, explicit ordering and failure semantics, and focused design. They must not be folded into a Universal Policy Engine.
+Origin remains a transport/library concern in the first implementation. Moving an explicit configurable Origin Policy before Accept requires a separate focused DP.
 
-Extensions receive only the minimum Handshake Context required by their responsibility. They do not receive arbitrary Runtime state, raw transport ownership, Repository access, or permission to perform Upgrade themselves.
+## 15. Disabled Authentication
 
-## 16. Migration Strategy
+Disabled Authentication produces an explicit anonymous Principal. Principal remains mandatory for every Allow Decision and every Session.
 
-Migration should proceed through small, testable steps:
+The anonymous Principal is clearly marked anonymous and unauthenticated and contains no fabricated credentials, roles, or claims. This preserves the Configuration intent that `authentication.enabled: false` admits clients while giving downstream components one stable identity shape. It also avoids optional identity checks throughout Session, Router, and future delivery code.
 
-1. Add characterization tests for current HTTP method handling, successful Upgrade, post-Upgrade Authentication rejection, connection cleanup, and Listener continuation.
-2. Introduce a pre-Upgrade orchestration seam in the HTTP request path without changing Authentication Service, Providers, Session, or Snapshot.
-3. Normalize the existing AuthenticationRequest from HTTP metadata before `websocket.Accept` and verify copying, cancellation, and sensitive-data handling.
-4. Invoke the existing Authentication Service before Upgrade and map expected rejection to safe HTTP rejection.
-5. Carry a copied successful Principal across Upgrade into the existing authenticated Session handoff.
-6. Make the Upgrade boundary close the connection when post-Upgrade handoff fails.
-7. Remove the obsolete post-Upgrade Authentication path so each request is evaluated exactly once.
-8. Add integration tests for rejection without `101`, Provider failure, cancellation, successful Upgrade, Session start, concurrent requests, and Listener shutdown.
-9. Add safe operational reporting for Handshake stages without logging credentials.
-10. Consider additional admission evaluations only in separate tasks after the Authentication path is stable.
+The current Session implementation may require internal adaptation to accept this explicit anonymous identity; no public API is defined here.
 
-Each step keeps the existing vertical buildable and avoids simultaneous redesign of Router, Session Manager, Runtime Host, or Provider contracts.
+## 16. Timeout and Cancellation
 
-## 17. Risks
+Handshake has a bounded lifecycle. The configured `HandshakeSeconds` value supplies its maximum duration, while request cancellation or Runtime shutdown may end it earlier.
 
-- HTTP response may be committed before all required Evaluation completes, making the Decision impossible to apply correctly.
-- Migration may accidentally authenticate twice or leave both old and new paths active.
-- Principal or request metadata may alias mutable input across the Upgrade boundary.
-- Ownership ambiguity may cause connection leaks or double close during failed handoff.
-- Slow or unavailable Providers may retain HTTP request resources until timeout or cancellation.
-- Proxy and trusted-address assumptions may make Origin or IP evaluation incorrect.
-- Error mapping may expose sensitive Provider details or hide operational failure as credential rejection.
-- Listener shutdown may race with Evaluation or Upgrade unless cancellation and transfer are explicit.
-- Future checks may be added without deterministic ordering, recreating hidden policy behavior.
-- Disabled Authentication semantics may remain inconsistent with the proposed anonymous Principal model.
+Runtime readiness validation rejects a missing, zero, unsupported, or out-of-range effective Handshake timeout before Listener Start. There is no unbounded fallback and request processing does not invent a default.
 
-## 18. Open Questions
+Cancellation must be propagated to Authentication Service, Providers, and their dependencies. A dependency that ignores context cannot be forcibly stopped by Go context cancellation. Its operation may outlive the caller; Runtime must not classify that limitation as successful admission, and shutdown boundedness cannot be guaranteed for such a dependency without a dependency-specific isolation mechanism outside this DP.
 
-- What exact Principal is produced when Authentication is disabled?
-- Which HTTP status, body, and challenge behavior are required for each rejection category?
-- What timeout and cancellation policy applies to individual Providers and total Handshake Evaluation?
+## 17. Error Model
+
+The following minimal categories must remain distinguishable internally:
+
+- **rejection** — expected negative Authentication result; not an operational error;
+- **cancellation or deadline** — request, configured Handshake timeout, or Runtime shutdown ended Evaluation;
+- **dependency unavailable** — Provider dependency could not serve the request;
+- **invalid Runtime configuration** — a readiness invariant was violated;
+- **protocol or Upgrade rejection** — Accept rejected the HTTP/WebSocket handshake;
+- **internal failure** — an unexpected Handshake or transport executor defect;
+- **handoff or Session failure** — failure after successful Accept while preparing or operating Session.
+
+This document does not prescribe Go error types or exact client response bodies. Client-facing responses remain generic and never contain credentials or internal details.
+
+Execution preserves the original Authentication outcome. For example, a transport failure after Allow does not become credential rejection, and an Accept Origin rejection does not become dependency failure.
+
+## 18. Operational Error Ownership
+
+The transport/Handshake executor is the single owner of the terminal outcome for one Handshake. It receives or observes the final Evaluation, response, Accept, and pre-handoff execution result and reports one safe terminal category.
+
+After Session ownership acceptance, Session lifecycle owns later failures. Listener lifecycle owns terminal HTTP server `Serve` failures that are not normal shutdown.
+
+A diagnostics sink, event schema, metrics, and logging integration require separate design. Until then, terminal Dispatcher, Handshake, and unexpected `Serve` errors must not be silently ignored. Components may wrap or propagate errors, but must not independently emit duplicate terminal reports for the same Handshake.
+
+## 19. Configuration and Readiness
+
+Before Listener Start, Runtime bootstrap validates and composes:
+
+- Published Snapshot compatibility;
+- configured Handshake timeout;
+- Authentication Service;
+- enabled Provider factories and Provider metadata;
+- SecretResolver and other required dependencies;
+- the admission gate and transport/Handshake executor.
+
+Failure prevents Listener Start. Request-time configuration failure is not the normal model; if an invariant is nevertheless violated, it is an internal or invalid Runtime configuration failure and fails closed.
+
+The request path uses only already composed dependencies and effective values. It does not read Runtime Snapshot, ConfigurationVersion, management API state, or Control Plane repositories.
+
+Production Runtime Host composition remains a separate engineering epic. This DP defines the readiness boundary it must enforce but does not design Host APIs.
+
+## 20. Session Manager Relationship
+
+The future Session Manager does not participate in Authentication Evaluation. Its relevant architectural obligation is at handoff: the new Session must enter the Runtime shutdown wait set before Session ownership acceptance completes.
+
+After acceptance, Session lifecycle, including shutdown cancellation and completion, is independent from the HTTP request. This document does not define Session Manager interfaces, storage, lookup, grouping, or routing behavior.
+
+## 21. Scope of the First Implementation
+
+The first implementation contains only:
+
+- request metadata normalization required by existing Authentication;
+- bounded pre-Upgrade Authentication;
+- one-use allow, reject, or operational outcome;
+- admission gate and shutdown coordination;
+- controlled Accept and ownership handoff;
+- explicit anonymous Principal when Authentication is disabled;
+- safe terminal error propagation.
+
+It does not add a general evaluator list. Origin remains controlled by the WebSocket library. Rate Limit, Maintenance, IP rules, and other admission checks are not guaranteed extension points of the current contract.
+
+A shared policy framework is deferred until several real use cases establish common ordering, data, ownership, and failure semantics. Each future behavior remains Configuration First and requires focused design.
+
+## 22. Migration Strategy
+
+1. Preserve characterization coverage for current method handling, Upgrade, rejection, cleanup, and Listener continuation.
+2. Add startup readiness checks for timeout, Authentication, Providers, and dependencies before Listener Start.
+3. Introduce the request-scoped Handshake context and admission gate without changing Provider logic.
+4. Execute existing Authentication before Accept and produce a one-use Decision.
+5. Implement explicit anonymous Principal behavior for disabled Authentication.
+6. Apply pre-Accept rejection exactly once and respect responses committed by Accept.
+7. Create a Runtime-owned connection context after successful Accept.
+8. Register the prospective Session in Runtime shutdown tracking before explicit ownership acceptance.
+9. Remove the obsolete post-Upgrade Authentication path so every request is authenticated at most once.
+10. Preserve and propagate terminal Handshake and unexpected Serve errors without logging sensitive input.
+
+Each step keeps the vertical buildable and does not introduce Router, Session Manager API, Runtime Host composition, or a generic policy framework.
+
+## 23. Remaining Risks
+
+- Dependencies that ignore context can outlive the bounded Handshake caller.
+- Proxy and trusted-address assumptions remain undefined.
+- Incorrect response-commit tracking can still cause a second response attempt.
+- Incorrect implementation of the admission gate can admit work during shutdown.
+- Session shutdown tracking remains dependent on the separate Runtime Host and Session Manager epics.
+- Operational diagnostics remain incomplete until a focused diagnostics design is accepted.
+
+## 24. Open Questions
+
+- Which exact HTTP statuses, bodies, and challenge headers apply to each authentication rejection?
 - How are trusted proxy data, remote address, TLS state, and forwarded headers normalized?
-- What Configuration model and matching semantics define Origin Policy?
-- In what order would maintenance, rate limiting, IP filtering, Origin, and Authentication execute?
-- May an expected Provider “not applicable” result continue to another Provider, and how is it distinguished from rejection?
-- Which Handshake events and metrics are required, and which fields are safe?
-- At which startup stage are unavailable Providers and unsupported admission settings rejected?
-- What HTTP connection reuse behavior is expected after each pre-Upgrade rejection?
+- What Configuration and matching semantics will a future explicit Origin Policy use?
+- Does a Provider need a distinct “not applicable” result in addition to rejection?
+- Which bounded Handshake events and metrics are required, and which fields are safe?
+- What diagnostics sink receives terminal Runtime errors?
+- What HTTP connection reuse behavior is expected after each pre-Accept rejection?
 
-These questions are intentionally deferred to implementation tasks or focused DPs. They do not block selection of the pre-Upgrade architecture boundary.
+Anonymous identity, total Handshake timeout, startup readiness, shutdown admission, and ownership transfer are no longer open questions in this DP.
 
-## 19. Relationship
+## 25. Findings Traceability
+
+| Finding | Status | Resolution |
+|---|---|---|
+| F-01 — Request context and Session lifecycle conflict | Resolved | Session uses a separate Runtime-owned context; request context ends with Handshake. |
+| F-02 — Shutdown is not atomic across admission | Resolved | Listener executor owns a gate; commits after shutdown are forbidden and in-flight commits must hand off into the wait set or clean up. |
+| F-03 — TCP connection has two stated owners | Resolved | Listening socket, accepted HTTP connection, Upgrade boundary, and Session ownership are separated. |
+| F-04 — Accept error classification contradicts library behavior | Resolved | Pre-Accept rejection, Accept rejection, and post-Accept failure are distinct; committed library responses are not rewritten. |
+| F-05 — Handoff point is undefined | Resolved | Ownership acceptance occurs only after construction, Runtime context creation, and shutdown registration. |
+| F-06 — Disabled Authentication cannot produce a Session | Resolved | Disabled Authentication produces an explicit anonymous Principal. |
+| F-07 — Handshake timeout is undefined | Resolved | Effective Handshake timeout is mandatory, validated before start, and combined with request and shutdown cancellation. |
+| F-08 — Decision invariants are incomplete | Resolved | Allow, Reject, operational failure, cancellation validity, and one-use semantics are explicit. |
+| F-09 — Error categories are not guaranteed | Clarified | Minimal categories must remain distinguishable without prescribing Go error types. |
+| F-10 — Terminal operational error has no owner | Clarified | Handshake executor owns the terminal Handshake outcome; Listener and Session own errors after their boundaries. |
+| F-11 — Future extensibility is unproven | Deferred | First scope is Authentication only; Origin and other policies require focused DPs and are not promised extension points. |
+| F-12 — Configuration validation owner is ambiguous | Resolved | Runtime bootstrap readiness precedes Listener Start; request path reads neither Snapshot nor Control Plane. |
+| F-13 — Session Manager depends on an undefined handoff | Clarified | Session enters the Runtime shutdown wait set before ownership acceptance; no Session Manager API is designed. |
+| F-14 — Pipeline may become a premature policy framework | Deferred | No evaluator framework is introduced; common policy machinery waits for multiple demonstrated use cases. |
+
+## 26. Relationship
 
 ### ARCH-001
 
-The design applies [ARCH-001](../architecture/ARCH-001-runtime-architectural-pattern.md): HTTP metadata forms Context, configured admission checks perform Evaluation, allow/reject is Decision, and Listener executes HTTP rejection or Upgrade as the transport owner. Ownership and lifecycle remain explicit. The pattern does not become a generic framework.
+The design applies [ARCH-001](../architecture/ARCH-001-runtime-architectural-pattern.md): request metadata forms Context, Authentication performs Evaluation, admission produces Decision, and the transport/Handshake executor performs the effect. Ownership, cancellation, and lifecycle are explicit.
 
 ### Runtime Alpha Review
 
-The design directly addresses [High finding F-01](../reviews/runtime-alpha-review.md). It preserves the stable decisions identified by the review and does not claim to resolve F-02 Runtime Host composition or F-04 lifecycle hardening by documentation alone.
+The design resolves the pre-Upgrade Authentication boundary identified by [Runtime Alpha Architecture Review](../reviews/runtime-alpha-review.md). Runtime Host composition and broader lifecycle hardening remain separate work.
 
 ### MASTER_PLAN
 
-The [Master Engineering Plan](../roadmap/MASTER_PLAN.md) identifies Handshake as the first Beta foundation gate before Router. This DP supplies the architectural direction for that epic without changing milestone criteria or becoming an implementation backlog.
+The [Master Engineering Plan](../roadmap/MASTER_PLAN.md) identifies Handshake as the first Beta foundation gate before Router. This DP defines that gate without becoming an implementation backlog.
 
 ### Existing Decisions and Proposals
 
 - [ADR-0002](../adr/0002-configuration-dsl.md) requires Configuration First and explicit rejection of unsupported effective behavior.
 - [ADR-0003](../adr/0003-runtime-architecture.md) requires component responsibility, dependency injection, and transport-neutral Authentication.
-- [DP-001: Authentication](../proposals/DP-001-authentication.md) establishes pre-connection identity evaluation and HTTP rejection intent.
-- [DP-004](../proposals/DP-004-authentication-runtime-contracts.md) defines the transport-neutral Authentication contract direction preserved here.
+- [DP-001: Authentication](../proposals/DP-001-authentication.md) defines identity evaluation before admission and HTTP rejection.
+- [DP-004](../proposals/DP-004-authentication-runtime-contracts.md) defines the direction for transport-neutral Authentication contracts.
 
-## 20. Decision
+## 27. Decision
 
-The selected direction is **Alternative D: Dedicated Handshake Pipeline**.
+The selected direction remains **Alternative D: Dedicated Handshake Boundary**.
 
-Required configured Authentication is evaluated before WebSocket Upgrade. Listener remains responsible for HTTP and WebSocket transport effects but does not implement Provider logic. Authentication remains transport-neutral. An allow Decision carries copied identity data across Upgrade, after which the existing authenticated handoff creates Session and transfers WebSocket ownership.
+Configured Authentication executes before WebSocket Accept. A one-use Allow Decision with a valid authenticated or explicit anonymous Principal may enter admission commit only while the Listener-owned gate is open. The library may reject and commit an HTTP response during Accept. After successful Accept, the Upgrade boundary owns the WebSocket until Session is registered for Runtime shutdown and explicitly accepts ownership. Session then uses a Runtime-owned context independent from the HTTP request.
 
-The Handshake Pipeline is a conceptual subsystem sequence based on ARCH-001. It is not a Universal Policy Engine, generic framework, new package declaration, or fixed set of Go interfaces. Future admission checks require their own Configuration and design. Implementation details remain a separate task.
+This remains a conceptual subsystem sequence, not a Universal Policy Engine, generic framework, package declaration, or fixed Go API. The first implementation supports Authentication only. Future admission behavior requires its own Configuration and focused design.
