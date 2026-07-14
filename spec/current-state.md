@@ -179,3 +179,11 @@
 - Admin UI
 
 Этот файл описывает реализованное состояние репозитория, а не запланированные возможности продукта. Обновляйте его только при существенном изменении этого состояния.
+
+## Runtime Alpha Architecture Review
+
+- 2026-07-14 выполнено двуязычное [Runtime Alpha Architecture Review](../docs/ru/reviews/runtime-alpha-review.md) ([English version](../docs/en/reviews/runtime-alpha-review.md)).
+- Итоговая оценка: `Ready with findings`.
+- Подтверждены immutable Snapshot, явный dependency injection, отсутствие import cycles и зависимости Runtime от Control Plane Repository, transport-neutral границы Authentication и Message, а также явная передача владения WebSocket-соединением.
+- До начала Router необходимо устранить Authentication после WebSocket Upgrade, отсутствие production composition в Runtime Host и неполную ограниченность lifecycle shutdown по context.
+- Проект остается alpha foundation и не заявляется как production-ready.

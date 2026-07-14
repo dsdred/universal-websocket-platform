@@ -19,6 +19,12 @@ Proposed designs that have not become accepted architecture decisions are availa
 
 Release-specific summaries are available in [`releases/`](releases/).
 
+## Architecture Reviews
+
+Evidence-based implementation reviews are available in [`reviews/`](reviews/).
+
+- [Runtime Alpha Architecture Review](reviews/runtime-alpha-review.md)
+
 ## Internal Specifications
 
 The team's working specifications are maintained in [`spec/`](../../spec/). They are internal documents, currently written predominantly in Russian, and may describe work in progress rather than stable public contracts.
