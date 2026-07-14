@@ -81,6 +81,9 @@ func TestHostListenerStartErrorRestoresBuiltState(t *testing.T) {
 	if host.Ready() {
 		t.Fatal("Ready() = true after Listener.Start error")
 	}
+	if host.CanAccept() {
+		t.Fatal("CanAccept() = true after Listener.Start error")
+	}
 	if host.RuntimeContext() != nil {
 		t.Fatal("RuntimeContext() after Listener.Start error is not nil")
 	}
@@ -138,6 +141,9 @@ func TestHostStopDuringStarting(t *testing.T) {
 		if host.Ready() {
 			t.Fatalf("iteration %d: Ready() = true during Starting", iteration)
 		}
+		if host.CanAccept() {
+			t.Fatalf("iteration %d: CanAccept() = true during Starting", iteration)
+		}
 
 		stopResult := make(chan error, 1)
 		go func() {
@@ -149,6 +155,9 @@ func TestHostStopDuringStarting(t *testing.T) {
 		}
 		if host.Ready() {
 			t.Fatalf("iteration %d: Ready() = true after Stop began", iteration)
+		}
+		if host.CanAccept() {
+			t.Fatalf("iteration %d: CanAccept() = true after Stop began", iteration)
 		}
 		select {
 		case err := <-stopResult:
@@ -171,6 +180,9 @@ func TestHostStopDuringStarting(t *testing.T) {
 		if host.Ready() {
 			t.Fatalf("iteration %d: Ready() = true after Stop", iteration)
 		}
+		if host.CanAccept() {
+			t.Fatalf("iteration %d: CanAccept() = true after Stop", iteration)
+		}
 		if got := currentHostState(host); got != hostStopped {
 			t.Fatalf("iteration %d: state = %v, want hostStopped", iteration, got)
 		}
@@ -191,6 +203,7 @@ type controlledListener struct {
 	releaseStop   chan struct{}
 	stopErr       error
 	stopOnce      sync.Once
+	stopObserver  func()
 	mu            sync.RWMutex
 	running       bool
 	stopCalls     atomic.Int32
@@ -241,6 +254,9 @@ func (runtimeListener *controlledListener) Start(ctx context.Context) error {
 
 func (runtimeListener *controlledListener) Stop(context.Context) error {
 	runtimeListener.stopCalls.Add(1)
+	if runtimeListener.stopObserver != nil {
+		runtimeListener.stopObserver()
+	}
 	if runtimeListener.stopEntered != nil {
 		runtimeListener.stopOnce.Do(func() { close(runtimeListener.stopEntered) })
 	}

@@ -88,6 +88,9 @@ func TestHostDependencyAcquisitionErrorRestoresBuiltState(t *testing.T) {
 	if host.Ready() {
 		t.Fatal("Ready() = true after dependency acquisition error")
 	}
+	if host.CanAccept() {
+		t.Fatal("CanAccept() = true after dependency acquisition error")
+	}
 	if contextCreations.Load() != 0 || contextCancellations.Load() != 0 {
 		t.Fatal("failed dependency acquisition created Runtime Context")
 	}
@@ -122,6 +125,9 @@ func TestHostRollbackErrorPreservesStartupError(t *testing.T) {
 	if host.Ready() {
 		t.Fatal("Ready() = true after rollback error")
 	}
+	if host.CanAccept() {
+		t.Fatal("CanAccept() = true after rollback error")
+	}
 }
 
 func TestHostStopDuringRollback(t *testing.T) {
@@ -149,12 +155,18 @@ func TestHostStopDuringRollback(t *testing.T) {
 		if host.Ready() {
 			t.Fatalf("iteration %d: Ready() = true during rollback", iteration)
 		}
+		if host.CanAccept() {
+			t.Fatalf("iteration %d: CanAccept() = true during rollback", iteration)
+		}
 
 		stopResult := make(chan error, 1)
 		go func() { stopResult <- host.Stop(context.Background()) }()
 		waitForSignal(t, stopping, "Host Stopping transition")
 		if host.Ready() {
 			t.Fatalf("iteration %d: Stop made Runtime Ready during rollback", iteration)
+		}
+		if host.CanAccept() {
+			t.Fatalf("iteration %d: CanAccept() = true after Stop began during rollback", iteration)
 		}
 		close(runtimeListener.releaseStop)
 
@@ -175,6 +187,9 @@ func TestHostStopDuringRollback(t *testing.T) {
 		}
 		if host.Ready() {
 			t.Fatalf("iteration %d: Ready() = true after rollback", iteration)
+		}
+		if host.CanAccept() {
+			t.Fatalf("iteration %d: CanAccept() = true after rollback", iteration)
 		}
 		if got := runtimeListener.stopCalls.Load(); got != 1 {
 			t.Fatalf("iteration %d: rollback calls = %d, want 1", iteration, got)
@@ -213,10 +228,13 @@ func TestHostCanStartAfterRollback(t *testing.T) {
 	if host.Ready() {
 		t.Fatal("Ready() = true before retry")
 	}
+	if host.CanAccept() {
+		t.Fatal("CanAccept() = true before retry")
+	}
 	if err := host.Start(context.Background()); err != nil {
 		t.Fatalf("second Start() error = %v", err)
 	}
-	if !host.Running() || !host.Ready() || host.RuntimeContext() == nil {
+	if !host.Running() || !host.Ready() || !host.CanAccept() || host.RuntimeContext() == nil {
 		t.Fatal("Host is not fully Running after retry")
 	}
 	if got := contextCreations.Load(); got != 1 {
@@ -227,6 +245,9 @@ func TestHostCanStartAfterRollback(t *testing.T) {
 	}
 	if err := host.Stop(context.Background()); err != nil {
 		t.Fatalf("Stop() error = %v", err)
+	}
+	if host.CanAccept() {
+		t.Fatal("CanAccept() = true after retry was stopped")
 	}
 	if got := contextCancellations.Load(); got != 1 {
 		t.Fatalf("Runtime context cancellations = %d, want 1", got)

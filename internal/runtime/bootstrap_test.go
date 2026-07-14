@@ -47,6 +47,9 @@ func TestBootstrapBuildUsesRuntimeHost(t *testing.T) {
 	if built.Ready() {
 		t.Fatal("Build() returned Ready Host")
 	}
+	if built.CanAccept() {
+		t.Fatal("Build() returned Host accepting connections")
+	}
 }
 
 func TestBootstrapHostStartPreservesAuthenticationBuildErrors(t *testing.T) {
@@ -85,6 +88,9 @@ func TestBootstrapHostStartPreservesAuthenticationBuildErrors(t *testing.T) {
 	if built.Ready() {
 		t.Fatal("dependency acquisition error left Host Ready")
 	}
+	if built.CanAccept() {
+		t.Fatal("dependency acquisition error left admission open")
+	}
 }
 
 func TestBootstrapHostPreservesRuntimeVertical(t *testing.T) {
@@ -102,6 +108,9 @@ func TestBootstrapHostPreservesRuntimeVertical(t *testing.T) {
 	}
 	if !built.Ready() {
 		t.Fatal("Host Ready() = false after successful Start")
+	}
+	if !built.CanAccept() {
+		t.Fatal("Host CanAccept() = false after successful Start")
 	}
 	t.Cleanup(func() {
 		if err := built.Stop(context.Background()); err != nil {
@@ -146,6 +155,9 @@ func TestBootstrapHostPreservesRuntimeVertical(t *testing.T) {
 	}
 	if built.Ready() {
 		t.Fatal("Host Ready() = true after Stop")
+	}
+	if built.CanAccept() {
+		t.Fatal("Host CanAccept() = true after Stop")
 	}
 }
 

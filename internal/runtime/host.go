@@ -34,6 +34,7 @@ type Host interface {
 	Stop(ctx context.Context) error
 	Running() bool
 	Ready() bool
+	CanAccept() bool
 }
 
 type hostState uint8
@@ -57,6 +58,7 @@ type DefaultHost struct {
 	compose           runtimeComposer
 	newRuntimeContext runtimeContextFactory
 	stateObserver     func(hostState)
+	admission         admissionGate
 	runtimeListener   listener.Listener
 	runtimeContext    context.Context
 	runtimeCancel     context.CancelFunc
@@ -153,6 +155,7 @@ func (host *DefaultHost) Start(ctx context.Context) error {
 		return ErrHostAlreadyRunning
 	}
 	host.state = hostStarting
+	host.admission.close()
 	host.startDone = make(chan struct{})
 	host.startErr = nil
 	startDone := host.startDone
@@ -175,6 +178,7 @@ func (host *DefaultHost) Start(ctx context.Context) error {
 			host.state = hostBuilt
 		} else {
 			host.state = hostRunning
+			host.admission.allow()
 		}
 	}
 	close(startDone)
@@ -218,6 +222,7 @@ func (host *DefaultHost) Stop(ctx context.Context) error {
 	switch host.state {
 	case hostStarting:
 		startDone := host.startDone
+		host.admission.close()
 		host.state = hostStopping
 		host.observeStateLocked(hostStopping)
 		host.stopDone = make(chan struct{})
@@ -246,6 +251,7 @@ func (host *DefaultHost) Stop(ctx context.Context) error {
 	case hostRunning:
 		runtimeListener := host.runtimeListener
 		runtimeCancel := host.runtimeCancel
+		host.admission.close()
 		host.state = hostStopping
 		host.observeStateLocked(hostStopping)
 		host.stopDone = make(chan struct{})
@@ -306,6 +312,13 @@ func (host *DefaultHost) Ready() bool {
 	host.mu.RLock()
 	defer host.mu.RUnlock()
 	return host.state == hostRunning
+}
+
+// CanAccept reports whether Runtime lifecycle currently permits new connections.
+func (host *DefaultHost) CanAccept() bool {
+	host.mu.RLock()
+	defer host.mu.RUnlock()
+	return host.state == hostRunning && host.admission.canAccept()
 }
 
 func isZeroSnapshot(snapshot runtimeconfig.Snapshot) bool {
