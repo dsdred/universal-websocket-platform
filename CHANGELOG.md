@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Minimal WebSocket Session and Session Dispatcher with cryptographically random identifiers, safe transport metadata, immutable Principal copies, and explicit connection ownership after Authentication.
 - Transport-neutral immutable Runtime Message model and blocking Session read loop for text and binary WebSocket application messages.
 - Thread-safe Session outbound writer that accepts only Runtime Message values and serializes text and binary WebSocket writes.
+- Transport-neutral Runtime Message Handler contract and Echo Handler that returns incoming text and binary messages through Session Send.
 - Storage-neutral Secret Resolver contract and thread-safe in-memory implementation for tests and local development.
 - Extensible runtime Authentication Provider and Factory contracts with transport-neutral request, result, and Principal models.
 - Thread-safe Authentication Provider Registry with Factory registration and delegated Provider creation.

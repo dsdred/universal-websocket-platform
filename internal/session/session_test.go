@@ -329,6 +329,119 @@ func TestSessionRunReadsTextBinaryAndMultipleMessages(t *testing.T) {
 	}
 }
 
+func TestSessionRunWithNilHandlerKeepsDiscardBehavior(t *testing.T) {
+	serverConnection, clientConnection := testWebSocketPair(t)
+	received := make(chan message.Message, 1)
+	session, err := newWithObserver(serverConnection, validPrincipal(), "", func(runtimeMessage message.Message) {
+		received <- runtimeMessage
+	})
+	if err != nil {
+		t.Fatalf("newWithObserver() error = %v", err)
+	}
+	if session.handler != nil {
+		t.Fatal("Handler is not nil")
+	}
+	if err := session.Start(context.Background()); err != nil {
+		t.Fatalf("Start() error = %v", err)
+	}
+	runResult := make(chan error, 1)
+	go func() { runResult <- session.Run(context.Background()) }()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	if err := clientConnection.Write(ctx, websocket.MessageText, []byte("discarded")); err != nil {
+		cancel()
+		t.Fatalf("client Write() error = %v", err)
+	}
+	cancel()
+	select {
+	case runtimeMessage := <-received:
+		if string(runtimeMessage.Data()) != "discarded" {
+			t.Fatalf("observed payload = %q", runtimeMessage.Data())
+		}
+	case <-time.After(time.Second):
+		t.Fatal("nil-handler read loop did not consume Message")
+	}
+	closeClientAndWaitForRun(t, clientConnection, websocket.StatusNormalClosure, runResult)
+	if err := session.Stop(context.Background()); err != nil {
+		t.Fatalf("Stop() error = %v", err)
+	}
+}
+
+func TestSessionRunWithEchoHandlerContinuesAcrossMessages(t *testing.T) {
+	serverConnection, clientConnection := testWebSocketPair(t)
+	session, err := NewWithHandler(serverConnection, validPrincipal(), "", message.NewEchoHandler())
+	if err != nil {
+		t.Fatalf("NewWithHandler() error = %v", err)
+	}
+	if err := session.Start(context.Background()); err != nil {
+		t.Fatalf("Start() error = %v", err)
+	}
+	runResult := make(chan error, 1)
+	go func() { runResult <- session.Run(context.Background()) }()
+	waitForReadLoop(t, session, true)
+
+	for _, expected := range []struct {
+		messageType websocket.MessageType
+		payload     []byte
+	}{
+		{messageType: websocket.MessageText, payload: []byte("echo text")},
+		{messageType: websocket.MessageBinary, payload: []byte{0x00, 0x01}},
+		{messageType: websocket.MessageText, payload: []byte("echo continues")},
+	} {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		if err := clientConnection.Write(ctx, expected.messageType, expected.payload); err != nil {
+			cancel()
+			t.Fatalf("client Write() error = %v", err)
+		}
+		cancel()
+		actualType, actualPayload := readClientMessage(t, clientConnection)
+		if actualType != expected.messageType || !bytes.Equal(actualPayload, expected.payload) {
+			t.Fatalf("echo = (%d, %v), want (%d, %v)", actualType, actualPayload, expected.messageType, expected.payload)
+		}
+	}
+	closeClientAndWaitForRun(t, clientConnection, websocket.StatusNormalClosure, runResult)
+	if err := session.Stop(context.Background()); err != nil {
+		t.Fatalf("Stop() error = %v", err)
+	}
+}
+
+func TestSessionRunReturnsHandlerError(t *testing.T) {
+	wantErr := errors.New("handler failed")
+	serverConnection, clientConnection := testWebSocketPair(t)
+	var receivedSender message.Sender
+	handler := messageHandlerFunc(func(_ context.Context, sender message.Sender, _ message.Message) error {
+		receivedSender = sender
+		return wantErr
+	})
+	session, err := NewWithHandler(serverConnection, validPrincipal(), "", handler)
+	if err != nil {
+		t.Fatalf("NewWithHandler() error = %v", err)
+	}
+	if err := session.Start(context.Background()); err != nil {
+		t.Fatalf("Start() error = %v", err)
+	}
+	runResult := make(chan error, 1)
+	go func() { runResult <- session.Run(context.Background()) }()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	if err := clientConnection.Write(ctx, websocket.MessageText, []byte("fail")); err != nil {
+		cancel()
+		t.Fatalf("client Write() error = %v", err)
+	}
+	cancel()
+	select {
+	case err := <-runResult:
+		if !errors.Is(err, wantErr) {
+			t.Fatalf("Run() error = %v, want Handler error", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("Run() did not return Handler error")
+	}
+	if receivedSender != session {
+		t.Fatal("Handler did not receive current Session Sender")
+	}
+	clientConnection.CloseNow()
+	_ = session.Stop(context.Background())
+}
+
 func TestSessionDoesNotStoreMessagePayload(t *testing.T) {
 	sessionType := reflect.TypeOf(DefaultSession{})
 	bytesType := reflect.TypeOf([]byte(nil))
@@ -740,6 +853,16 @@ func readClientMessage(t *testing.T, connection *websocket.Conn) (websocket.Mess
 		t.Fatalf("client Read() error = %v", err)
 	}
 	return messageType, payload
+}
+
+type messageHandlerFunc func(context.Context, message.Sender, message.Message) error
+
+func (handler messageHandlerFunc) Handle(
+	ctx context.Context,
+	sender message.Sender,
+	runtimeMessage message.Message,
+) error {
+	return handler(ctx, sender, runtimeMessage)
 }
 
 func newTestSession(t *testing.T) *DefaultSession {

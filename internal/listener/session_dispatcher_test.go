@@ -15,7 +15,7 @@ import (
 
 func TestSessionDispatcherListenerProductionPipeline(t *testing.T) {
 	service := listenerAPIKeyService(t, listenerMemoryResolver(t, "correct-key"))
-	listener := startedListenerWithAuthentication(t, service, platformsession.NewDispatcher())
+	listener := startedListenerWithAuthentication(t, service, platformsession.NewDispatcher(nil))
 	address := listener.Address()
 
 	websocketConnection, response := dialWebSocketWithHeader(t, listener, "X-API-Key", "correct-key")
@@ -35,7 +35,7 @@ func TestSessionDispatcherListenerProductionPipeline(t *testing.T) {
 
 func TestSessionDispatcherListenerRejectsMissingCredentialsAndContinues(t *testing.T) {
 	service := listenerAPIKeyService(t, listenerMemoryResolver(t, "correct-key"))
-	listener := startedListenerWithAuthentication(t, service, platformsession.NewDispatcher())
+	listener := startedListenerWithAuthentication(t, service, platformsession.NewDispatcher(nil))
 
 	rejectedConnection, _ := dialWebSocketWithHeader(t, listener, "X-API-Key", "")
 	defer rejectedConnection.CloseNow()
@@ -52,7 +52,7 @@ func TestSessionDispatcherListenerRejectsMissingCredentialsAndContinues(t *testi
 
 func TestSessionDispatcherListenerConcurrentConnections(t *testing.T) {
 	service := listenerAPIKeyService(t, listenerMemoryResolver(t, "correct-key"))
-	listener := startedListenerWithAuthentication(t, service, platformsession.NewDispatcher())
+	listener := startedListenerWithAuthentication(t, service, platformsession.NewDispatcher(nil))
 	const connections = 16
 
 	var waitGroup sync.WaitGroup
@@ -89,7 +89,7 @@ func TestSessionDispatcherListenerConcurrentConnections(t *testing.T) {
 
 func TestSessionDispatcherListenerSmokeScenario(t *testing.T) {
 	service := listenerAPIKeyService(t, listenerMemoryResolver(t, "correct-key"))
-	listener := startedListenerWithAuthentication(t, service, platformsession.NewDispatcher())
+	listener := startedListenerWithAuthentication(t, service, platformsession.NewDispatcher(nil))
 	address := listener.Address()
 
 	websocketConnection, response := dialWebSocketWithHeader(t, listener, "X-API-Key", "correct-key")

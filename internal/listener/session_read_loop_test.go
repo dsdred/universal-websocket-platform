@@ -15,7 +15,7 @@ import (
 
 func TestSessionReadLoopProductionPipeline(t *testing.T) {
 	service := listenerAPIKeyService(t, listenerMemoryResolver(t, "correct-key"))
-	listener := startedListenerWithAuthentication(t, service, platformsession.NewDispatcher())
+	listener := startedListenerWithAuthentication(t, service, platformsession.NewDispatcher(nil))
 	address := listener.Address()
 
 	websocketConnection, response := dialWebSocketWithHeader(t, listener, "X-API-Key", "correct-key")
@@ -37,7 +37,7 @@ func TestSessionReadLoopProductionPipeline(t *testing.T) {
 
 func TestSessionReadLoopMissingCredentialsDoesNotCreateSessionOrStopListener(t *testing.T) {
 	service := listenerAPIKeyService(t, listenerMemoryResolver(t, "correct-key"))
-	listener := startedListenerWithAuthentication(t, service, platformsession.NewDispatcher())
+	listener := startedListenerWithAuthentication(t, service, platformsession.NewDispatcher(nil))
 
 	rejectedConnection, _ := dialWebSocketWithHeader(t, listener, "X-API-Key", "")
 	if status := readWebSocketClose(t, rejectedConnection); status != websocket.StatusPolicyViolation {
@@ -54,7 +54,7 @@ func TestSessionReadLoopMissingCredentialsDoesNotCreateSessionOrStopListener(t *
 
 func TestSessionReadLoopConcurrentClients(t *testing.T) {
 	service := listenerAPIKeyService(t, listenerMemoryResolver(t, "correct-key"))
-	listener := startedListenerWithAuthentication(t, service, platformsession.NewDispatcher())
+	listener := startedListenerWithAuthentication(t, service, platformsession.NewDispatcher(nil))
 	const clients = 16
 
 	errorsChannel := make(chan error, clients)
@@ -99,7 +99,7 @@ func TestSessionReadLoopConcurrentClients(t *testing.T) {
 
 func TestListenerStopTerminatesActiveSessionReadLoop(t *testing.T) {
 	service := listenerAPIKeyService(t, listenerMemoryResolver(t, "correct-key"))
-	listener := startedListenerWithAuthentication(t, service, platformsession.NewDispatcher())
+	listener := startedListenerWithAuthentication(t, service, platformsession.NewDispatcher(nil))
 	address := listener.Address()
 	websocketConnection, _ := dialWebSocketWithHeader(t, listener, "X-API-Key", "correct-key")
 	defer websocketConnection.CloseNow()
@@ -118,7 +118,7 @@ func TestListenerStopTerminatesActiveSessionReadLoop(t *testing.T) {
 
 func TestSessionReadLoopSmokeScenario(t *testing.T) {
 	service := listenerAPIKeyService(t, listenerMemoryResolver(t, "correct-key"))
-	listener := startedListenerWithAuthentication(t, service, platformsession.NewDispatcher())
+	listener := startedListenerWithAuthentication(t, service, platformsession.NewDispatcher(nil))
 	address := listener.Address()
 	websocketConnection, response := dialWebSocketWithHeader(t, listener, "X-API-Key", "correct-key")
 	writeSessionMessage(t, websocketConnection, websocket.MessageText, []byte("text"))

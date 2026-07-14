@@ -69,6 +69,7 @@ type DefaultSession struct {
 	stopDone      chan struct{}
 	stopErr       error
 	observe       messageObserver
+	handler       message.Handler
 }
 
 // New creates a Session with a cryptographically random identifier.
@@ -77,7 +78,17 @@ func New(
 	principal authentication.Principal,
 	remoteAddress string,
 ) (*DefaultSession, error) {
-	return newWithDependencies(connection, principal, remoteAddress, generateID, nil)
+	return newWithDependencies(connection, principal, remoteAddress, generateID, nil, nil)
+}
+
+// NewWithHandler creates a Session with an explicitly injected Runtime Message Handler.
+func NewWithHandler(
+	connection *websocket.Conn,
+	principal authentication.Principal,
+	remoteAddress string,
+	handler message.Handler,
+) (*DefaultSession, error) {
+	return newWithDependencies(connection, principal, remoteAddress, generateID, nil, handler)
 }
 
 func newWithIDGenerator(
@@ -86,7 +97,7 @@ func newWithIDGenerator(
 	remoteAddress string,
 	generate idGenerator,
 ) (*DefaultSession, error) {
-	return newWithDependencies(connection, principal, remoteAddress, generate, nil)
+	return newWithDependencies(connection, principal, remoteAddress, generate, nil, nil)
 }
 
 func newWithObserver(
@@ -95,7 +106,7 @@ func newWithObserver(
 	remoteAddress string,
 	observe messageObserver,
 ) (*DefaultSession, error) {
-	return newWithDependencies(connection, principal, remoteAddress, generateID, observe)
+	return newWithDependencies(connection, principal, remoteAddress, generateID, observe, nil)
 }
 
 func newWithDependencies(
@@ -104,6 +115,7 @@ func newWithDependencies(
 	remoteAddress string,
 	generate idGenerator,
 	observe messageObserver,
+	handler message.Handler,
 ) (*DefaultSession, error) {
 	if connection == nil {
 		return nil, ErrNilConnection
@@ -124,6 +136,7 @@ func newWithDependencies(
 		createdAt:     time.Now().UTC(),
 		state:         stateCreated,
 		observe:       observe,
+		handler:       handler,
 	}, nil
 }
 
@@ -215,6 +228,11 @@ func (session *DefaultSession) Run(ctx context.Context) error {
 		}
 		if observe != nil {
 			observe(runtimeMessage)
+		}
+		if session.handler != nil {
+			if err := session.handler.Handle(ctx, session, runtimeMessage); err != nil {
+				return fmt.Errorf("handle Runtime Message: %w", err)
+			}
 		}
 	}
 }

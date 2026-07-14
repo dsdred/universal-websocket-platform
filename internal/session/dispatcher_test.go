@@ -18,7 +18,7 @@ import (
 )
 
 func TestDispatcherImplementsAuthenticatedDispatcher(t *testing.T) {
-	var _ connection.AuthenticatedDispatcher = NewDispatcher()
+	var _ connection.AuthenticatedDispatcher = NewDispatcher(nil)
 }
 
 func TestDispatcherCreatesStartsAndStopsSession(t *testing.T) {
@@ -125,7 +125,7 @@ func TestDispatcherRejectsCanceledContextBeforeCreatingSession(t *testing.T) {
 
 func TestProductionDispatcherRunsUntilClientClosesNormally(t *testing.T) {
 	serverConnection, clientConnection := testWebSocketPair(t)
-	dispatcher := NewDispatcher()
+	dispatcher := NewDispatcher(nil)
 	request := httptest.NewRequest("GET", "http://example.test/ws", nil)
 	request.RemoteAddr = "192.0.2.1:4321"
 	dispatchResult := make(chan error, 1)
