@@ -44,6 +44,9 @@ func TestBootstrapBuildUsesRuntimeHost(t *testing.T) {
 	if host.state != hostBuilt || host.runtimeListener != nil {
 		t.Fatalf("Build() Host = %#v, want Built Host without published Listener", host)
 	}
+	if built.Ready() {
+		t.Fatal("Build() returned Ready Host")
+	}
 }
 
 func TestBootstrapHostStartPreservesAuthenticationBuildErrors(t *testing.T) {
@@ -79,6 +82,9 @@ func TestBootstrapHostStartPreservesAuthenticationBuildErrors(t *testing.T) {
 	if host.RuntimeContext() != nil || host.runtimeListener != nil {
 		t.Fatal("failed dependency acquisition published Runtime resources")
 	}
+	if built.Ready() {
+		t.Fatal("dependency acquisition error left Host Ready")
+	}
 }
 
 func TestBootstrapHostPreservesRuntimeVertical(t *testing.T) {
@@ -93,6 +99,9 @@ func TestBootstrapHostPreservesRuntimeVertical(t *testing.T) {
 	}
 	if err := built.Start(context.Background()); err != nil {
 		t.Fatalf("Start() error = %v", err)
+	}
+	if !built.Ready() {
+		t.Fatal("Host Ready() = false after successful Start")
 	}
 	t.Cleanup(func() {
 		if err := built.Stop(context.Background()); err != nil {
@@ -134,6 +143,9 @@ func TestBootstrapHostPreservesRuntimeVertical(t *testing.T) {
 	}
 	if err := built.Stop(context.Background()); err != nil {
 		t.Fatalf("Stop() error = %v", err)
+	}
+	if built.Ready() {
+		t.Fatal("Host Ready() = true after Stop")
 	}
 }
 

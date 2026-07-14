@@ -33,6 +33,7 @@ type Host interface {
 	Start(ctx context.Context) error
 	Stop(ctx context.Context) error
 	Running() bool
+	Ready() bool
 }
 
 type hostState uint8
@@ -295,6 +296,13 @@ func (host *DefaultHost) stopListener(
 
 // Running reports whether the Host and its composed Listener are Running.
 func (host *DefaultHost) Running() bool {
+	host.mu.RLock()
+	defer host.mu.RUnlock()
+	return host.state == hostRunning
+}
+
+// Ready reports whether the startup transaction committed and the Host is Running.
+func (host *DefaultHost) Ready() bool {
 	host.mu.RLock()
 	defer host.mu.RUnlock()
 	return host.state == hostRunning

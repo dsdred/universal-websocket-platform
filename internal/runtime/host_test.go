@@ -31,6 +31,9 @@ func TestNewHostCreatesHostAndContainer(t *testing.T) {
 	if host.Running() {
 		t.Fatal("new Host is Running, want Created")
 	}
+	if host.Ready() {
+		t.Fatal("new Host is Ready, want false")
+	}
 	got := host.Snapshot()
 	if got.ConfigurationID != snapshot.ConfigurationID || got.VersionID != snapshot.VersionID {
 		t.Fatalf("Snapshot identifiers = (%d, %d)", got.ConfigurationID, got.VersionID)
@@ -80,6 +83,9 @@ func TestHostBuildPreparesStartup(t *testing.T) {
 	if host.state != hostBuilt {
 		t.Fatalf("Build() state = %v, want hostBuilt", host.state)
 	}
+	if host.Ready() {
+		t.Fatal("Ready() = true after Build")
+	}
 	if err := host.Build(); !errors.Is(err, ErrHostAlreadyBuilt) {
 		t.Fatalf("second Build() error = %v, want ErrHostAlreadyBuilt", err)
 	}
@@ -100,11 +106,17 @@ func TestHostStartAndStop(t *testing.T) {
 	if !host.Running() {
 		t.Fatal("Running() = false after Start")
 	}
+	if !host.Ready() {
+		t.Fatal("Ready() = false after Start")
+	}
 	if err := host.Stop(context.Background()); err != nil {
 		t.Fatalf("Stop() error = %v", err)
 	}
 	if host.Running() {
 		t.Fatal("Running() = true after Stop")
+	}
+	if host.Ready() {
+		t.Fatal("Ready() = true after Stop")
 	}
 }
 
@@ -136,6 +148,9 @@ func TestHostDoesNotSupportRestart(t *testing.T) {
 	}
 	if err := host.Start(context.Background()); !errors.Is(err, ErrHostAlreadyRunning) {
 		t.Fatalf("Start() after Stop error = %v, want ErrHostAlreadyRunning", err)
+	}
+	if host.Ready() {
+		t.Fatal("Ready() = true after rejected restart")
 	}
 	if host.RuntimeContext() != runtimeContext {
 		t.Fatal("Start() after Stop replaced RuntimeContext")
@@ -264,6 +279,10 @@ func TestHostConcurrentStop(t *testing.T) {
 		close(begin)
 		waitForSignal(t, runtimeListener.stopEntered, "Listener.Stop entry")
 		assertContextCanceled(t, runtimeContext, "Runtime context during concurrent Stop")
+		if host.Ready() {
+			t.Fatalf("iteration %d: Ready() = true while Listener.Stop is blocked", iteration)
+		}
+		assertConcurrentReadiness(t, host, false)
 
 		accessResult := make(chan context.Context, 1)
 		go func() { accessResult <- host.RuntimeContext() }()
@@ -298,6 +317,9 @@ func TestHostConcurrentStop(t *testing.T) {
 		}
 		if got := currentHostState(host); got != hostStopped {
 			t.Fatalf("iteration %d: state = %v, want hostStopped", iteration, got)
+		}
+		if host.Ready() {
+			t.Fatalf("iteration %d: Ready() = true after Stop", iteration)
 		}
 	}
 }

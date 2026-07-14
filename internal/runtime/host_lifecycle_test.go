@@ -78,6 +78,9 @@ func TestHostListenerStartErrorRestoresBuiltState(t *testing.T) {
 	if host.Running() {
 		t.Fatal("Running() = true after Listener.Start error")
 	}
+	if host.Ready() {
+		t.Fatal("Ready() = true after Listener.Start error")
+	}
 	if host.RuntimeContext() != nil {
 		t.Fatal("RuntimeContext() after Listener.Start error is not nil")
 	}
@@ -132,6 +135,9 @@ func TestHostStopDuringStarting(t *testing.T) {
 			startResult <- host.Start(context.Background())
 		}()
 		waitForSignal(t, runtimeListener.startEntered, "Listener.Start entry")
+		if host.Ready() {
+			t.Fatalf("iteration %d: Ready() = true during Starting", iteration)
+		}
 
 		stopResult := make(chan error, 1)
 		go func() {
@@ -140,6 +146,9 @@ func TestHostStopDuringStarting(t *testing.T) {
 		waitForSignal(t, stopping, "Host Stopping transition")
 		if host.Running() {
 			t.Fatalf("iteration %d: Host became Running while Stop was pending", iteration)
+		}
+		if host.Ready() {
+			t.Fatalf("iteration %d: Ready() = true after Stop began", iteration)
 		}
 		select {
 		case err := <-stopResult:
@@ -158,6 +167,9 @@ func TestHostStopDuringStarting(t *testing.T) {
 		assertContextCanceled(t, runtimeContext, "Runtime context after concurrent Stop")
 		if host.Running() {
 			t.Fatalf("iteration %d: Running() = true after Stop", iteration)
+		}
+		if host.Ready() {
+			t.Fatalf("iteration %d: Ready() = true after Stop", iteration)
 		}
 		if got := currentHostState(host); got != hostStopped {
 			t.Fatalf("iteration %d: state = %v, want hostStopped", iteration, got)

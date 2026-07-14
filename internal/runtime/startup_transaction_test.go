@@ -55,6 +55,7 @@ func TestStartupTransactionRollsBackOnlyAcquiredResourcesInReverseOrder(t *testi
 
 func TestHostDependencyAcquisitionErrorRestoresBuiltState(t *testing.T) {
 	acquisitionErr := errors.New("dependency acquisition failed")
+	uncommittedListener := newControlledListener(nil, false)
 	var acquisitions atomic.Int32
 	host := newTestHost(t, func(
 		_ runtimeconfig.Snapshot,
@@ -62,7 +63,7 @@ func TestHostDependencyAcquisitionErrorRestoresBuiltState(t *testing.T) {
 		_ message.Handler,
 	) (listener.Listener, error) {
 		acquisitions.Add(1)
-		return nil, acquisitionErr
+		return uncommittedListener, acquisitionErr
 	})
 	var contextCreations atomic.Int32
 	var contextCancellations atomic.Int32
@@ -84,8 +85,14 @@ func TestHostDependencyAcquisitionErrorRestoresBuiltState(t *testing.T) {
 	if host.RuntimeContext() != nil || host.runtimeListener != nil || host.Running() {
 		t.Fatal("failed dependency acquisition published Runtime resources")
 	}
+	if host.Ready() {
+		t.Fatal("Ready() = true after dependency acquisition error")
+	}
 	if contextCreations.Load() != 0 || contextCancellations.Load() != 0 {
 		t.Fatal("failed dependency acquisition created Runtime Context")
+	}
+	if uncommittedListener.startCalls.Load() != 0 || uncommittedListener.stopCalls.Load() != 0 {
+		t.Fatal("failed dependency acquisition started or rolled back an unacquired Listener")
 	}
 }
 
@@ -112,6 +119,9 @@ func TestHostRollbackErrorPreservesStartupError(t *testing.T) {
 	if host.RuntimeContext() != nil || host.runtimeListener != nil || host.Running() {
 		t.Fatal("failed startup transaction published Runtime resources")
 	}
+	if host.Ready() {
+		t.Fatal("Ready() = true after rollback error")
+	}
 }
 
 func TestHostStopDuringRollback(t *testing.T) {
@@ -136,10 +146,16 @@ func TestHostStopDuringRollback(t *testing.T) {
 		startResult := make(chan error, 1)
 		go func() { startResult <- host.Start(context.Background()) }()
 		waitForSignal(t, runtimeListener.stopEntered, "startup rollback entry")
+		if host.Ready() {
+			t.Fatalf("iteration %d: Ready() = true during rollback", iteration)
+		}
 
 		stopResult := make(chan error, 1)
 		go func() { stopResult <- host.Stop(context.Background()) }()
 		waitForSignal(t, stopping, "Host Stopping transition")
+		if host.Ready() {
+			t.Fatalf("iteration %d: Stop made Runtime Ready during rollback", iteration)
+		}
 		close(runtimeListener.releaseStop)
 
 		select {
@@ -156,6 +172,9 @@ func TestHostStopDuringRollback(t *testing.T) {
 		}
 		if host.RuntimeContext() != nil || host.runtimeListener != nil || host.Running() {
 			t.Fatalf("iteration %d: rollback published Runtime resources", iteration)
+		}
+		if host.Ready() {
+			t.Fatalf("iteration %d: Ready() = true after rollback", iteration)
 		}
 		if got := runtimeListener.stopCalls.Load(); got != 1 {
 			t.Fatalf("iteration %d: rollback calls = %d, want 1", iteration, got)
@@ -178,6 +197,9 @@ func TestHostCanStartAfterRollback(t *testing.T) {
 		}
 		return runningListener, nil
 	})
+	var contextCreations atomic.Int32
+	var contextCancellations atomic.Int32
+	host.newRuntimeContext = trackingRuntimeContextFactory(&contextCreations, &contextCancellations)
 	if err := host.Build(); err != nil {
 		t.Fatalf("Build() error = %v", err)
 	}
@@ -188,16 +210,25 @@ func TestHostCanStartAfterRollback(t *testing.T) {
 	if got := currentHostState(host); got != hostBuilt {
 		t.Fatalf("state after rollback = %v, want hostBuilt", got)
 	}
+	if host.Ready() {
+		t.Fatal("Ready() = true before retry")
+	}
 	if err := host.Start(context.Background()); err != nil {
 		t.Fatalf("second Start() error = %v", err)
 	}
-	if !host.Running() || host.RuntimeContext() == nil {
+	if !host.Running() || !host.Ready() || host.RuntimeContext() == nil {
 		t.Fatal("Host is not fully Running after retry")
+	}
+	if got := contextCreations.Load(); got != 1 {
+		t.Fatalf("committed Runtime context creations = %d, want 1", got)
 	}
 	if got := acquisitions.Load(); got != 2 {
 		t.Fatalf("dependency acquisitions = %d, want 2", got)
 	}
 	if err := host.Stop(context.Background()); err != nil {
 		t.Fatalf("Stop() error = %v", err)
+	}
+	if got := contextCancellations.Load(); got != 1 {
+		t.Fatalf("Runtime context cancellations = %d, want 1", got)
 	}
 }
