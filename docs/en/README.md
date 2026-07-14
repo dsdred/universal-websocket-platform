@@ -14,6 +14,12 @@ Living engineering maturity plans are available in [`roadmap/`](roadmap/).
 
 - [Master Engineering Plan](roadmap/MASTER_PLAN.md)
 
+## Runtime Design Documents
+
+Focused Runtime subsystem designs are available in [`design/`](design/).
+
+- [DP-001: Runtime Handshake Pipeline](design/DP-001-runtime-handshake-pipeline.md)
+
 ## Architecture Decision Records
 
 Accepted architecture decisions and ADR conventions are available in [`adr/`](adr/).

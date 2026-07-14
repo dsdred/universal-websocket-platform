@@ -202,3 +202,12 @@
 - Для Beta выделены эпики Handshake, Runtime Host, lifecycle hardening, Configuration validation, Router, Session Manager, Delivery, Persistence, TLS, Metrics, operational diagnostics и Plugin contracts.
 - Обязательные свойства 1.0 отделены от возможностей 1.x и отложенных distributed-возможностей 2.0+.
 - MASTER_PLAN не является release schedule, backlog или заменой DP, ADR, current state и архитектурных reviews.
+
+## Runtime Handshake Pipeline Design
+
+- Создан двуязычный Draft design [DP-001: Runtime Handshake Pipeline](../docs/ru/design/DP-001-runtime-handshake-pipeline.md) ([English version](../docs/en/design/DP-001-runtime-handshake-pipeline.md)).
+- Выбрана концептуальная последовательность `Transport -> Handshake Context -> Evaluation -> Decision -> Upgrade -> Session`.
+- Design переносит обязательную Authentication до WebSocket Upgrade, сохраняя transport-neutral Authentication Service и ownership Session после успешной передачи.
+- Listener остается владельцем HTTP/WebSocket transport effects и не получает Provider-specific logic.
+- Документ не изменяет текущую реализацию: Authentication по-прежнему выполняется после Upgrade до отдельной implementation task.
+- Origin Policy, rate limiting, maintenance, IP filtering, Router, Session Manager и Plugin ABI остаются future work без зафиксированных API.

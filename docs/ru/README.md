@@ -14,6 +14,12 @@
 
 - [Master Engineering Plan](roadmap/MASTER_PLAN.md)
 
+## Документы проектирования Runtime
+
+Сфокусированные designs подсистем Runtime находятся в каталоге [`design/`](design/).
+
+- [DP-001: Runtime Handshake Pipeline](design/DP-001-runtime-handshake-pipeline.md)
+
 ## Архитектурные решения
 
 Принятые архитектурные решения и правила оформления ADR находятся в каталоге [`adr/`](adr/).
