@@ -49,8 +49,10 @@ type DefaultListener struct {
 	state      listenerState
 	listener   net.Listener
 	server     *http.Server
+	serverStop context.CancelFunc
 	dispatcher connection.Dispatcher
 	wg         sync.WaitGroup
+	handlerWG  sync.WaitGroup
 }
 
 // Address returns the configured host and port without opening a socket.
@@ -79,12 +81,17 @@ func (listener *DefaultListener) Start(context.Context) error {
 	if err != nil {
 		return err
 	}
+	serverContext, serverStop := context.WithCancel(context.Background())
 	httpServer := &http.Server{
-		Handler: newHTTPHandler(listener.dispatcher),
+		Handler: trackedHandler(newHTTPHandler(listener.dispatcher), &listener.handlerWG),
+		BaseContext: func(net.Listener) context.Context {
+			return serverContext
+		},
 	}
 
 	listener.listener = tcpListener
 	listener.server = httpServer
+	listener.serverStop = serverStop
 	listener.state = listenerRunning
 	listener.wg.Add(1)
 	go listener.serve(httpServer, tcpListener)
@@ -100,16 +107,20 @@ func (listener *DefaultListener) Stop(ctx context.Context) error {
 	}
 	tcpListener := listener.listener
 	httpServer := listener.server
+	serverStop := listener.serverStop
 	listener.state = listenerStopping
 	listener.mu.Unlock()
 
+	serverStop()
 	shutdownErr := httpServer.Shutdown(ctx)
 	closeErr := tcpListener.Close()
 	listener.wg.Wait()
+	listener.handlerWG.Wait()
 
 	listener.mu.Lock()
 	listener.listener = nil
 	listener.server = nil
+	listener.serverStop = nil
 	listener.state = listenerStopped
 	listener.mu.Unlock()
 
@@ -120,6 +131,14 @@ func (listener *DefaultListener) Stop(ctx context.Context) error {
 		return closeErr
 	}
 	return nil
+}
+
+func trackedHandler(handler http.Handler, waitGroup *sync.WaitGroup) http.Handler {
+	return http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		waitGroup.Add(1)
+		defer waitGroup.Done()
+		handler.ServeHTTP(response, request)
+	})
 }
 
 func (listener *DefaultListener) serve(httpServer *http.Server, tcpListener net.Listener) {

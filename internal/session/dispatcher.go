@@ -59,5 +59,10 @@ func (dispatcher *Dispatcher) DispatchAuthenticated(authenticatedContext connect
 		_ = runtimeSession.Stop(context.Background())
 		return err
 	}
-	return runtimeSession.Stop(ctx)
+	runErr := runtimeSession.Run(ctx)
+	stopErr := runtimeSession.Stop(context.Background())
+	if runErr != nil {
+		return runErr
+	}
+	return stopErr
 }

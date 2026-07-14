@@ -32,8 +32,8 @@ func TestDispatcherCreatesStartsAndStopsSession(t *testing.T) {
 	if err != nil {
 		t.Fatalf("DispatchAuthenticated() error = %v", err)
 	}
-	if factory.calls.Load() != 1 || runtimeSession.startCalls.Load() != 1 || runtimeSession.stopCalls.Load() != 1 {
-		t.Fatalf("calls = (Create %d, Start %d, Stop %d)", factory.calls.Load(), runtimeSession.startCalls.Load(), runtimeSession.stopCalls.Load())
+	if factory.calls.Load() != 1 || runtimeSession.startCalls.Load() != 1 || runtimeSession.runCalls.Load() != 1 || runtimeSession.stopCalls.Load() != 1 {
+		t.Fatalf("calls = (Create %d, Start %d, Run %d, Stop %d)", factory.calls.Load(), runtimeSession.startCalls.Load(), runtimeSession.runCalls.Load(), runtimeSession.stopCalls.Load())
 	}
 	if factory.remoteAddress != "192.0.2.1:4321" {
 		t.Fatalf("remote address = %q", factory.remoteAddress)
@@ -83,6 +83,21 @@ func TestDispatcherReturnsStopError(t *testing.T) {
 	}
 }
 
+func TestDispatcherReturnsRunErrorAndStillStopsSession(t *testing.T) {
+	wantErr := errors.New("read failed")
+	runtimeSession := &sessionStub{runErr: wantErr}
+	dispatcher := newDispatcher(&sessionFactoryStub{session: runtimeSession})
+	request := httptest.NewRequest("GET", "http://example.test/ws", nil)
+
+	err := dispatchToSession(t, context.Background(), request, dispatcher, validPrincipal(), nil)
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("DispatchAuthenticated() error = %v, want Run error", err)
+	}
+	if runtimeSession.stopCalls.Load() != 1 {
+		t.Fatalf("Stop() calls = %d, want 1", runtimeSession.stopCalls.Load())
+	}
+}
+
 func TestDispatcherRejectsCanceledContextBeforeCreatingSession(t *testing.T) {
 	serverConnection, _ := testWebSocketPair(t)
 	factory := &sessionFactoryStub{session: &sessionStub{}}
@@ -107,7 +122,7 @@ func TestDispatcherRejectsCanceledContextBeforeCreatingSession(t *testing.T) {
 	}
 }
 
-func TestProductionDispatcherClosesConnectionThroughSession(t *testing.T) {
+func TestProductionDispatcherRunsUntilClientClosesNormally(t *testing.T) {
 	serverConnection, clientConnection := testWebSocketPair(t)
 	dispatcher := NewDispatcher()
 	request := httptest.NewRequest("GET", "http://example.test/ws", nil)
@@ -117,12 +132,11 @@ func TestProductionDispatcherClosesConnectionThroughSession(t *testing.T) {
 		dispatchResult <- dispatchToSession(t, request.Context(), request, dispatcher, validPrincipal(), serverConnection)
 	}()
 
+	if err := clientConnection.Close(websocket.StatusNormalClosure, ""); err != nil {
+		t.Fatalf("client Close() error = %v", err)
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	_, _, readErr := clientConnection.Read(ctx)
-	if status := websocket.CloseStatus(readErr); status != websocket.StatusNormalClosure {
-		t.Fatalf("close status = %d, want %d", status, websocket.StatusNormalClosure)
-	}
 	select {
 	case err := <-dispatchResult:
 		if err != nil {
@@ -224,8 +238,10 @@ func (factory *sessionFactoryStub) Create(
 
 type sessionStub struct {
 	startErr   error
+	runErr     error
 	stopErr    error
 	startCalls atomic.Uint64
+	runCalls   atomic.Uint64
 	stopCalls  atomic.Uint64
 }
 
@@ -237,6 +253,10 @@ func (*sessionStub) Running() bool                       { return false }
 func (session *sessionStub) Start(context.Context) error {
 	session.startCalls.Add(1)
 	return session.startErr
+}
+func (session *sessionStub) Run(context.Context) error {
+	session.runCalls.Add(1)
+	return session.runErr
 }
 func (session *sessionStub) Stop(context.Context) error {
 	session.stopCalls.Add(1)

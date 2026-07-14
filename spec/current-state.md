@@ -149,9 +149,11 @@
 - AuthenticationDispatcher преобразует HTTP handshake metadata в transport-neutral AuthenticationRequest и передает успешное соединение следующему AuthenticatedDispatcher вместе с immutable Principal context
 - Отказ Authentication пока происходит после WebSocket Upgrade через close frame `PolicyViolation`, а системные ошибки используют `InternalError`
 - Реализована минимальная WebSocket Session, которая после Authentication владеет соединением, хранит криптографически случайный ID, глубокую копию Principal, RemoteAddress и время создания
-- Session Dispatcher создает Session из AuthenticatedContext, запускает ее и в текущей минимальной реализации сразу завершает соединение с normal closure
+- Session Dispatcher создает Session из AuthenticatedContext и в текущей goroutine последовательно вызывает Start, блокирующий Run и завершающий Stop
 - Session не хранит исходный HTTP Request, Headers, Query, credentials, AuthenticationRequest или transport context wrappers
-- Read/write loops, Echo, Session Manager и Routing для WebSocket-соединений пока отсутствуют
+- Добавлена immutable transport-neutral Runtime Message модель для text и binary application messages с копированием payload и UTC-временем получения
+- Session удерживает WebSocket-соединение открытым и выполняет единственный блокирующий read loop до закрытия клиента, отмены context, Stop или ошибки чтения
+- Прочитанные сообщения пока отбрасываются; Write API, Echo, Session Manager и Routing отсутствуют
 - Архитектура Runtime принята в ADR-003, но Loader, подключение Resolver к Runtime Container и остальные компоненты pipeline еще не реализованы
 
 ## Чего не существует

@@ -6,12 +6,14 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"net"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/coder/websocket"
 	"github.com/dsdred/universal-websocket-platform/internal/authentication"
+	"github.com/dsdred/universal-websocket-platform/internal/message"
 )
 
 var (
@@ -21,6 +23,10 @@ var (
 	ErrInvalidPrincipal = errors.New("invalid Session Principal")
 	// ErrSessionAlreadyRunning indicates that a Session cannot transition to Running.
 	ErrSessionAlreadyRunning = errors.New("Session already running or stopped")
+	// ErrSessionNotRunning indicates that Run was called outside the Running state.
+	ErrSessionNotRunning = errors.New("Session is not running")
+	// ErrSessionReadLoopAlreadyRunning indicates that one Run call already owns reading.
+	ErrSessionReadLoopAlreadyRunning = errors.New("Session read loop already running")
 )
 
 // Session owns one authenticated WebSocket connection and its minimal lifecycle.
@@ -31,6 +37,7 @@ type Session interface {
 	CreatedAt() time.Time
 	Running() bool
 	Start(context.Context) error
+	Run(context.Context) error
 	Stop(context.Context) error
 }
 
@@ -44,6 +51,7 @@ const (
 )
 
 type idGenerator func() (string, error)
+type messageObserver func(message.Message)
 
 // DefaultSession is the default minimal Runtime Session.
 type DefaultSession struct {
@@ -54,8 +62,11 @@ type DefaultSession struct {
 	remoteAddress string
 	createdAt     time.Time
 	state         lifecycleState
+	readLoop      bool
+	readLoopDone  chan struct{}
 	stopDone      chan struct{}
 	stopErr       error
+	observe       messageObserver
 }
 
 // New creates a Session with a cryptographically random identifier.
@@ -64,7 +75,7 @@ func New(
 	principal authentication.Principal,
 	remoteAddress string,
 ) (*DefaultSession, error) {
-	return newWithIDGenerator(connection, principal, remoteAddress, generateID)
+	return newWithDependencies(connection, principal, remoteAddress, generateID, nil)
 }
 
 func newWithIDGenerator(
@@ -72,6 +83,25 @@ func newWithIDGenerator(
 	principal authentication.Principal,
 	remoteAddress string,
 	generate idGenerator,
+) (*DefaultSession, error) {
+	return newWithDependencies(connection, principal, remoteAddress, generate, nil)
+}
+
+func newWithObserver(
+	connection *websocket.Conn,
+	principal authentication.Principal,
+	remoteAddress string,
+	observe messageObserver,
+) (*DefaultSession, error) {
+	return newWithDependencies(connection, principal, remoteAddress, generateID, observe)
+}
+
+func newWithDependencies(
+	connection *websocket.Conn,
+	principal authentication.Principal,
+	remoteAddress string,
+	generate idGenerator,
+	observe messageObserver,
 ) (*DefaultSession, error) {
 	if connection == nil {
 		return nil, ErrNilConnection
@@ -91,6 +121,7 @@ func newWithIDGenerator(
 		remoteAddress: strings.TrimSpace(remoteAddress),
 		createdAt:     time.Now().UTC(),
 		state:         stateCreated,
+		observe:       observe,
 	}, nil
 }
 
@@ -136,6 +167,56 @@ func (session *DefaultSession) Start(ctx context.Context) error {
 	return nil
 }
 
+// Run blocks in the calling goroutine while reading application messages.
+func (session *DefaultSession) Run(ctx context.Context) error {
+	session.mu.Lock()
+	if session.state != stateRunning {
+		session.mu.Unlock()
+		return ErrSessionNotRunning
+	}
+	if session.readLoop {
+		session.mu.Unlock()
+		return ErrSessionReadLoopAlreadyRunning
+	}
+	session.readLoop = true
+	session.readLoopDone = make(chan struct{})
+	done := session.readLoopDone
+	connection := session.connection
+	observe := session.observe
+	session.mu.Unlock()
+
+	defer func() {
+		session.mu.Lock()
+		session.readLoop = false
+		close(done)
+		session.mu.Unlock()
+	}()
+
+	for {
+		websocketType, payload, err := connection.Read(ctx)
+		if err != nil {
+			return sessionReadError(ctx, err)
+		}
+
+		var messageType message.Type
+		switch websocketType {
+		case websocket.MessageText:
+			messageType = message.TypeText
+		case websocket.MessageBinary:
+			messageType = message.TypeBinary
+		default:
+			continue
+		}
+		runtimeMessage, err := message.New(messageType, payload)
+		if err != nil {
+			return fmt.Errorf("create Runtime Message: %w", err)
+		}
+		if observe != nil {
+			observe(runtimeMessage)
+		}
+	}
+}
+
 // Stop sends a normal closure without holding the lifecycle mutex and is idempotent.
 func (session *DefaultSession) Stop(ctx context.Context) error {
 	session.mu.Lock()
@@ -159,11 +240,18 @@ func (session *DefaultSession) Stop(ctx context.Context) error {
 		session.state = stateStopping
 		session.stopDone = make(chan struct{})
 		done := session.stopDone
+		readLoopDone := session.readLoopDone
 		connection := session.connection
 		session.mu.Unlock()
 
 		closeErr := connection.Close(websocket.StatusNormalClosure, "")
-		connection.CloseNow()
+		_ = connection.CloseNow()
+		if errors.Is(closeErr, net.ErrClosed) {
+			closeErr = nil
+		}
+		if readLoopDone != nil {
+			<-readLoopDone
+		}
 
 		session.mu.Lock()
 		session.state = stateStopped
@@ -175,6 +263,17 @@ func (session *DefaultSession) Stop(ctx context.Context) error {
 		session.mu.Unlock()
 		return nil
 	}
+}
+
+func sessionReadError(ctx context.Context, err error) error {
+	if contextErr := ctx.Err(); contextErr != nil {
+		return contextErr
+	}
+	status := websocket.CloseStatus(err)
+	if status == websocket.StatusNormalClosure || status == websocket.StatusGoingAway {
+		return nil
+	}
+	return fmt.Errorf("read WebSocket message: %w", err)
 }
 
 func generateID() (string, error) {
