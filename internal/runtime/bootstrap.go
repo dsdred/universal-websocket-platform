@@ -13,7 +13,7 @@ type Bootstrap interface {
 	Build(snapshot runtimeconfig.Snapshot) (Host, error)
 }
 
-// DefaultBootstrap delegates the complete Runtime composition to DefaultHost.
+// DefaultBootstrap supplies explicit production dependencies to DefaultHost.
 type DefaultBootstrap struct {
 	resolver secretresolver.Resolver
 	handler  message.Handler
@@ -30,7 +30,7 @@ func NewBootstrap(
 	return &DefaultBootstrap{resolver: resolver, handler: handler}, nil
 }
 
-// Build creates a Host and delegates component assembly to it.
+// Build creates a Built Host; component acquisition remains deferred until Start.
 func (bootstrap *DefaultBootstrap) Build(snapshot runtimeconfig.Snapshot) (Host, error) {
 	host, err := NewHost(snapshot, bootstrap.resolver, bootstrap.handler)
 	if err != nil {

@@ -21,7 +21,8 @@ var (
 	// ErrNilSnapshot indicates that NewHost received a zero Snapshot value.
 	ErrNilSnapshot = errors.New("runtime Snapshot is nil")
 	// ErrNilSecretResolver indicates that Host composition received no Secret Resolver.
-	ErrNilSecretResolver = errors.New("runtime Secret Resolver is nil")
+	ErrNilSecretResolver  = errors.New("runtime Secret Resolver is nil")
+	errNilRuntimeListener = errors.New("runtime Listener is nil")
 )
 
 // Host owns an immutable Runtime Snapshot, assembles components, and coordinates their lifecycle.
@@ -128,25 +129,18 @@ func (host *DefaultHost) RuntimeContext() context.Context {
 	return host.runtimeContext
 }
 
-// Build assembles the existing Runtime vertical without starting network resources.
+// Build prepares the Host for an atomic startup transaction.
 func (host *DefaultHost) Build() error {
 	host.mu.Lock()
 	defer host.mu.Unlock()
 	if host.state != hostCreated {
 		return ErrHostAlreadyBuilt
 	}
-
-	runtimeListener, err := host.compose(host.snapshot, host.resolver, host.handler)
-	if err != nil {
-		return err
-	}
-
-	host.runtimeListener = runtimeListener
 	host.state = hostBuilt
 	return nil
 }
 
-// Start delegates startup to the composed Listener.
+// Start atomically acquires and starts the current Runtime component graph.
 func (host *DefaultHost) Start(ctx context.Context) error {
 	host.mu.Lock()
 	if host.state == hostCreated {
@@ -157,19 +151,23 @@ func (host *DefaultHost) Start(ctx context.Context) error {
 		host.mu.Unlock()
 		return ErrHostAlreadyRunning
 	}
-	runtimeListener := host.runtimeListener
 	host.state = hostStarting
 	host.startDone = make(chan struct{})
 	host.startErr = nil
 	startDone := host.startDone
 	host.mu.Unlock()
 
-	err := runtimeListener.Start(ctx)
+	runtimeListener, err := host.startTransaction(ctx)
 
 	host.mu.Lock()
 	host.startErr = err
 	if err == nil {
+		host.runtimeListener = runtimeListener
 		host.runtimeContext, host.runtimeCancel = host.newRuntimeContext()
+	} else {
+		host.runtimeListener = nil
+		host.runtimeContext = nil
+		host.runtimeCancel = nil
 	}
 	if host.state == hostStarting {
 		if err != nil {
@@ -183,12 +181,41 @@ func (host *DefaultHost) Start(ctx context.Context) error {
 	return err
 }
 
+func (host *DefaultHost) startTransaction(ctx context.Context) (listener.Listener, error) {
+	transaction := startupTransaction{}
+	var runtimeListener listener.Listener
+
+	startupErr := transaction.acquire(func() (startupRollback, error) {
+		createdListener, err := host.compose(host.snapshot, host.resolver, host.handler)
+		if err != nil {
+			return nil, err
+		}
+		if createdListener == nil {
+			return nil, errNilRuntimeListener
+		}
+		runtimeListener = createdListener
+		return createdListener.Stop, nil
+	})
+	if startupErr == nil {
+		startupErr = runtimeListener.Start(ctx)
+	}
+	if startupErr != nil {
+		rollbackErr := transaction.rollback(context.Background())
+		if rollbackErr != nil {
+			return nil, errors.Join(startupErr, rollbackErr)
+		}
+		return nil, startupErr
+	}
+
+	transaction.commit()
+	return runtimeListener, nil
+}
+
 // Stop delegates shutdown to the composed Listener and otherwise remains a no-op.
 func (host *DefaultHost) Stop(ctx context.Context) error {
 	host.mu.Lock()
 	switch host.state {
 	case hostStarting:
-		runtimeListener := host.runtimeListener
 		startDone := host.startDone
 		host.state = hostStopping
 		host.observeStateLocked(hostStopping)
@@ -201,6 +228,7 @@ func (host *DefaultHost) Stop(ctx context.Context) error {
 
 		host.mu.RLock()
 		startErr := host.startErr
+		runtimeListener := host.runtimeListener
 		runtimeCancel := host.runtimeCancel
 		host.mu.RUnlock()
 		if startErr != nil {

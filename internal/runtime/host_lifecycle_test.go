@@ -14,7 +14,7 @@ import (
 	"github.com/dsdred/universal-websocket-platform/internal/secretresolver"
 )
 
-func TestHostSecondBuildDoesNotRecomposeDependencies(t *testing.T) {
+func TestHostBuildDoesNotAcquireDependencies(t *testing.T) {
 	runtimeListener := newControlledListener(nil, false)
 	var listenerCreations atomic.Int32
 	var factoryCreations atomic.Int32
@@ -32,19 +32,31 @@ func TestHostSecondBuildDoesNotRecomposeDependencies(t *testing.T) {
 	if err := host.Build(); err != nil {
 		t.Fatalf("first Build() error = %v", err)
 	}
-	firstListener := host.runtimeListener
 	if err := host.Build(); !errors.Is(err, ErrHostAlreadyBuilt) {
 		t.Fatalf("second Build() error = %v, want ErrHostAlreadyBuilt", err)
 	}
 
+	if got := factoryCreations.Load(); got != 0 {
+		t.Fatalf("Factory creations during Build = %d, want 0", got)
+	}
+	if got := listenerCreations.Load(); got != 0 {
+		t.Fatalf("Listener creations during Build = %d, want 0", got)
+	}
+	if host.runtimeListener != nil {
+		t.Fatal("Build() published Listener before startup transaction")
+	}
+
+	if err := host.Start(context.Background()); err != nil {
+		t.Fatalf("Start() error = %v", err)
+	}
 	if got := factoryCreations.Load(); got != 1 {
-		t.Fatalf("Factory creations = %d, want 1", got)
+		t.Fatalf("Factory creations during Start = %d, want 1", got)
 	}
 	if got := listenerCreations.Load(); got != 1 {
-		t.Fatalf("Listener creations = %d, want 1", got)
+		t.Fatalf("Listener creations during Start = %d, want 1", got)
 	}
-	if host.runtimeListener != firstListener {
-		t.Fatal("second Build() replaced the composed Listener")
+	if err := host.Stop(context.Background()); err != nil {
+		t.Fatalf("Stop() error = %v", err)
 	}
 }
 
@@ -94,8 +106,8 @@ func TestHostListenerStartErrorRestoresBuiltState(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("Stop() after Start error deadlocked")
 	}
-	if got := runtimeListener.stopCalls.Load(); got != 0 {
-		t.Fatalf("Listener.Stop calls after failed Start = %d, want 0", got)
+	if got := runtimeListener.stopCalls.Load(); got != 1 {
+		t.Fatalf("Listener rollback calls after failed Start = %d, want 1", got)
 	}
 }
 

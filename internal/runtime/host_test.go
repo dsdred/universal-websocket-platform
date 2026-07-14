@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dsdred/universal-websocket-platform/internal/listener"
+	"github.com/dsdred/universal-websocket-platform/internal/message"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
 	"github.com/dsdred/universal-websocket-platform/internal/secretresolver"
 )
@@ -67,13 +69,13 @@ func TestHostSnapshotIsDeepCopy(t *testing.T) {
 	assertOriginalSnapshot(t, host.container.Snapshot())
 }
 
-func TestHostBuildComposesRuntime(t *testing.T) {
+func TestHostBuildPreparesStartup(t *testing.T) {
 	host := newUnbuiltHost(t)
 	if err := host.Build(); err != nil {
 		t.Fatalf("Build() error = %v", err)
 	}
-	if host.runtimeListener == nil {
-		t.Fatal("Build() Listener = nil")
+	if host.runtimeListener != nil {
+		t.Fatal("Build() published Listener before Start")
 	}
 	if host.state != hostBuilt {
 		t.Fatalf("Build() state = %v, want hostBuilt", host.state)
@@ -164,7 +166,15 @@ func TestHostStopWithoutStartIsNoOp(t *testing.T) {
 
 func TestHostConcurrentStart(t *testing.T) {
 	runtimeListener := newControlledListener(nil, false)
-	host := newTestHost(t, fixedComposer(runtimeListener))
+	var acquisitions atomic.Int32
+	host := newTestHost(t, func(
+		_ runtimeconfig.Snapshot,
+		_ secretresolver.Resolver,
+		_ message.Handler,
+	) (listener.Listener, error) {
+		acquisitions.Add(1)
+		return runtimeListener, nil
+	})
 	var contextCreations atomic.Int32
 	var contextCancellations atomic.Int32
 	host.newRuntimeContext = trackingRuntimeContextFactory(&contextCreations, &contextCancellations)
@@ -207,6 +217,9 @@ func TestHostConcurrentStart(t *testing.T) {
 	}
 	if got := runtimeListener.startCalls.Load(); got != 1 {
 		t.Fatalf("Listener.Start calls = %d, want 1", got)
+	}
+	if got := acquisitions.Load(); got != 1 {
+		t.Fatalf("startup transactions = %d, want 1", got)
 	}
 	if got := contextCreations.Load(); got != 1 {
 		t.Fatalf("Runtime context creations = %d, want 1", got)

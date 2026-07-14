@@ -41,12 +41,12 @@ func TestBootstrapBuildUsesRuntimeHost(t *testing.T) {
 	if !ok {
 		t.Fatalf("Build() Host type = %T, want *DefaultHost", built)
 	}
-	if host.state != hostBuilt || host.runtimeListener == nil {
-		t.Fatalf("Build() Host = %#v, want built Host with Listener", host)
+	if host.state != hostBuilt || host.runtimeListener != nil {
+		t.Fatalf("Build() Host = %#v, want Built Host without published Listener", host)
 	}
 }
 
-func TestBootstrapPreservesAuthenticationBuildErrors(t *testing.T) {
+func TestBootstrapHostStartPreservesAuthenticationBuildErrors(t *testing.T) {
 	bootstrap, err := NewBootstrap(emptyResolver(t), nil)
 	if err != nil {
 		t.Fatalf("NewBootstrap() error = %v", err)
@@ -64,9 +64,20 @@ func TestBootstrapPreservesAuthenticationBuildErrors(t *testing.T) {
 		},
 	}
 
-	_, err = bootstrap.Build(snapshot)
+	built, err := bootstrap.Build(snapshot)
+	if err != nil {
+		t.Fatalf("Build() error = %v", err)
+	}
+	err = built.Start(context.Background())
 	if !errors.Is(err, authentication.ErrFactoryNotFound) {
-		t.Fatalf("Build() error = %v, want ErrFactoryNotFound", err)
+		t.Fatalf("Start() error = %v, want ErrFactoryNotFound", err)
+	}
+	host := built.(*DefaultHost)
+	if got := currentHostState(host); got != hostBuilt {
+		t.Fatalf("Host state = %v, want hostBuilt", got)
+	}
+	if host.RuntimeContext() != nil || host.runtimeListener != nil {
+		t.Fatal("failed dependency acquisition published Runtime resources")
 	}
 }
 
