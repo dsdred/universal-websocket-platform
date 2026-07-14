@@ -7,6 +7,7 @@
 Активные общие архитектурные паттерны находятся в каталоге [`architecture/`](architecture/).
 
 - [ARCH-001: Runtime Architectural Pattern](architecture/ARCH-001-runtime-architectural-pattern.md)
+- [ARCH-002: Runtime Foundation Freeze](architecture/ARCH-002-runtime-foundation-freeze.md)
 
 ## Инженерный план развития
 

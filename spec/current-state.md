@@ -122,7 +122,7 @@
 - Реализован Runtime JWT Provider с проверкой signature, exp, nbf, issuer, audience и Required Claims
 - JWT Provider разрешает Signing Key через Secret Resolver при каждом Authenticate и поддерживает rotation без хранения Secret
 - Реализован production JWT Factory, глубоко копирующий JWT metadata из AuthenticationProviderSnapshot в локальную runtime-конфигурацию Provider
-- Интеграция Authentication Bootstrap в Runtime и Basic Provider по-прежнему не реализованы
+- Basic Provider по-прежнему не реализован
 
 ## Runtime Architecture
 
@@ -135,9 +135,13 @@
 - Snapshot не зависит от HTTP API, Repository или исходного ConfigurationVersion после создания
 - Runtime Container хранит собственную глубокую копию Snapshot и возвращает новую копию через единственный метод `Snapshot()`
 - Container пока не содержит других зависимостей и самостоятельно не управляет запуском, остановкой или reload Runtime
-- Реализован потокобезопасный Runtime Host, владеющий независимой копией Snapshot и Container
-- Host поддерживает однократный lifecycle `Created -> Running -> Stopped`; Restart и Reload отсутствуют
-- Host пока не запускает Listener, Authentication или другие Runtime components
+- Реализован потокобезопасный Runtime Host, являющийся production composition root и владеющий независимой копией Snapshot и Container
+- Host поддерживает lifecycle `Created -> Built -> Starting -> Running -> Stopping -> Stopped`; Restart и Reload отсутствуют
+- Runtime Bootstrap создает Built Host, а Host во время Start явно собирает Authentication, connection dispatch, Session handoff, Message Handler и Listener без service locator или DI framework
+- Startup transaction публикует Listener только после успешного запуска и выполняет rollback полученного ресурса при ошибке, сохраняя исходную и rollback errors
+- Host создает независимый root Runtime context после успешного запуска Listener; startup context не становится lifecycle context запущенного Runtime
+- Runtime readiness становится true только после startup commit и сбрасывается в false в начале Stop
+- Host владеет lifecycle-only Admission Gate, который открывается только в Running и закрывается до вызова Listener Stop
 - Реализован Listener Bootstrap, создающий потокобезопасный Listener из ListenerSnapshot
 - Listener хранит локальную копию Host, Port и TLS configuration и поддерживает lifecycle `Created -> Running -> Stopped`
 - Listener открывает TCP socket и запускает HTTP Server с единым ответом `501 Not Implemented` для любого запроса
@@ -157,7 +161,7 @@
 - Добавлен transport-neutral Runtime Message Handler contract; Session передает ему каждое прочитанное Message, а при nil Handler сохраняет discard-поведение
 - Реализован EchoHandler, возвращающий неизмененные text и binary Runtime Message исключительно через Session Send без доступа к WebSocket transport
 - Router, Middleware, Message Queue, Broadcast, Session Manager и Persistence отсутствуют
-- Архитектура Runtime принята в ADR-003, но Loader, подключение Resolver к Runtime Container и остальные компоненты pipeline еще не реализованы
+- Архитектура Runtime принята в ADR-003; Configuration Loader, pre-Upgrade Handshake, Session shutdown tracking, operational diagnostics и supervision еще не реализованы
 
 ## Чего не существует
 
@@ -167,10 +171,9 @@
 - PostgreSQL
 - Управления WebSocket-серверами
 - Поведения Runtime для WebSocket-серверов
-- WebSocket listener
 - Реальный TLS listener и другие сетевые параметры Listener
 - Применение Listener TimeoutSettings в Runtime
-- Интеграция Authentication Bootstrap в Runtime и полный Authentication Pipeline
+- Pre-Upgrade Authentication и полный Handshake Pipeline
 - Проверка Basic credentials
 - Асимметричные JWT algorithms, JWKS, OIDC и token revocation
 - Реальные Secret Storage backend и подключение Resolver к Runtime Container еще не реализованы
@@ -219,4 +222,12 @@
 - Определён lifecycle `Created -> Initialized -> Starting -> Running -> Stopping -> Stopped` с terminal state `Failed` и запретом Restart и in-place Reload.
 - Host владеет root Runtime context, запускает Listener последним и закрывает admission до cancellation и cleanup в обратном порядке.
 - Container не превращается в service locator; DI framework, reflection, generic component factories и Universal Component Registry запрещены.
-- Документ не изменяет текущую реализацию: Host по-прежнему хранит только Snapshot и Container и не собирает рабочую Runtime-вертикаль.
+- После публикации DP-002 реализована его фундаментальная часть: Host стал production composition root, получил startup transaction, root Runtime context, readiness и lifecycle-only Admission Gate; `Failed`, supervision и полный shutdown wait set пока отсутствуют.
+
+## Runtime Foundation Freeze
+
+- Создан двуязычный [ARCH-002: Runtime Foundation Freeze](../docs/ru/architecture/ARCH-002-runtime-foundation-freeze.md) ([English version](../docs/en/architecture/ARCH-002-runtime-foundation-freeze.md)).
+- Архитектурно стабильными признаны реализованные Runtime Host, production composition root, lifecycle, root Runtime context, startup transaction и rollback, readiness и lifecycle-only Admission Gate.
+- Freeze фиксирует фактический lifecycle `Created -> Built -> Starting -> Running -> Stopping -> Stopped` и не объявляет реализованными предложенные в Draft DP-002 состояния `Initialized` или `Failed`.
+- Handshake, Authentication Pipeline до Upgrade, Session ownership в Runtime shutdown, Router, Delivery, Persistence, Operational Diagnostics и supervision остаются открытой архитектурой.
+- Изменение замороженных архитектурных обязанностей, ownership или lifecycle-семантики требует нового сфокусированного DP или ADR.
