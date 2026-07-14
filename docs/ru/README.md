@@ -2,6 +2,12 @@
 
 [English version](../en/README.md)
 
+## Архитектурные руководства
+
+Активные общие архитектурные паттерны находятся в каталоге [`architecture/`](architecture/).
+
+- [ARCH-001: Runtime Architectural Pattern](architecture/ARCH-001-runtime-architectural-pattern.md)
+
 ## Архитектурные решения
 
 Принятые архитектурные решения и правила оформления ADR находятся в каталоге [`adr/`](adr/).

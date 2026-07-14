@@ -187,3 +187,10 @@
 - Подтверждены immutable Snapshot, явный dependency injection, отсутствие import cycles и зависимости Runtime от Control Plane Repository, transport-neutral границы Authentication и Message, а также явная передача владения WebSocket-соединением.
 - До начала Router необходимо устранить Authentication после WebSocket Upgrade, отсутствие production composition в Runtime Host и неполную ограниченность lifecycle shutdown по context.
 - Проект остается alpha foundation и не заявляется как production-ready.
+
+## Runtime Architectural Pattern
+
+- Создано двуязычное активное архитектурное руководство [ARCH-001: Runtime Architectural Pattern](../docs/ru/architecture/ARCH-001-runtime-architectural-pattern.md) ([English version](../docs/en/architecture/ARCH-001-runtime-architectural-pattern.md)).
+- ARCH-001 обобщает подтвержденный Alpha-вертикалью паттерн `Context -> Evaluation -> Decision -> Execution` без создания универсального Policy Engine или новых обязательных Go-контрактов.
+- Зафиксированы Configuration First, проверяемые границы зависимостей, явная передача владения mutable resources, lifecycle и concurrency requirements, а также принцип Boring Core.
+- Handshake Pipeline, Router, Delivery, Persistence и Plugin ABI остаются предметом будущих DP и при необходимости ADR; ARCH-001 не определяет их API.

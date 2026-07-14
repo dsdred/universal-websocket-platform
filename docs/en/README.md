@@ -2,6 +2,12 @@
 
 [Russian version](../ru/README.md)
 
+## Architecture Guides
+
+Active architecture-wide patterns are available in [`architecture/`](architecture/).
+
+- [ARCH-001: Runtime Architectural Pattern](architecture/ARCH-001-runtime-architectural-pattern.md)
+
 ## Architecture Decision Records
 
 Accepted architecture decisions and ADR conventions are available in [`adr/`](adr/).
