@@ -153,7 +153,8 @@
 - Session не хранит исходный HTTP Request, Headers, Query, credentials, AuthenticationRequest или transport context wrappers
 - Добавлена immutable transport-neutral Runtime Message модель для text и binary application messages с копированием payload и UTC-временем получения
 - Session удерживает WebSocket-соединение открытым и выполняет единственный блокирующий read loop до закрытия клиента, отмены context, Stop или ошибки чтения
-- Прочитанные сообщения пока отбрасываются; Write API, Echo, Session Manager и Routing отсутствуют
+- Session предоставляет потокобезопасный `Send(context.Context, message.Message)` для сериализованной отправки text и binary Runtime Message без raw `[]byte` API
+- Прочитанные сообщения пока отбрасываются; Echo, Message Handler, Message Queue, Session Manager и Routing отсутствуют
 - Архитектура Runtime принята в ADR-003, но Loader, подключение Resolver к Runtime Container и остальные компоненты pipeline еще не реализованы
 
 ## Чего не существует

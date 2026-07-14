@@ -1,6 +1,7 @@
 package session
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -446,6 +447,221 @@ func TestSessionStopInterruptsReadLoopWithoutDeadlock(t *testing.T) {
 	}
 }
 
+func TestSessionSendTextAndBinaryMessages(t *testing.T) {
+	for _, test := range []struct {
+		name          string
+		messageType   message.Type
+		websocketType websocket.MessageType
+		payload       []byte
+	}{
+		{name: "text", messageType: message.TypeText, websocketType: websocket.MessageText, payload: []byte("outbound text")},
+		{name: "binary", messageType: message.TypeBinary, websocketType: websocket.MessageBinary, payload: []byte{0x00, 0x01, 0xff}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			serverConnection, clientConnection := testWebSocketPair(t)
+			session, err := New(serverConnection, validPrincipal(), "")
+			if err != nil {
+				t.Fatalf("New() error = %v", err)
+			}
+			if err := session.Start(context.Background()); err != nil {
+				t.Fatalf("Start() error = %v", err)
+			}
+			runtimeMessage, err := message.New(test.messageType, test.payload)
+			if err != nil {
+				t.Fatalf("message.New() error = %v", err)
+			}
+			if err := session.Send(context.Background(), runtimeMessage); err != nil {
+				t.Fatalf("Send() error = %v", err)
+			}
+			actualType, actualPayload := readClientMessage(t, clientConnection)
+			if actualType != test.websocketType || !bytes.Equal(actualPayload, test.payload) {
+				t.Fatalf("received = (%d, %v), want (%d, %v)", actualType, actualPayload, test.websocketType, test.payload)
+			}
+		})
+	}
+}
+
+func TestSessionSendUsesCopiedMessagePayload(t *testing.T) {
+	serverConnection, clientConnection := testWebSocketPair(t)
+	session, err := New(serverConnection, validPrincipal(), "")
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+	if err := session.Start(context.Background()); err != nil {
+		t.Fatalf("Start() error = %v", err)
+	}
+	payload := []byte("original")
+	runtimeMessage, err := message.New(message.TypeText, payload)
+	if err != nil {
+		t.Fatalf("message.New() error = %v", err)
+	}
+	payload[0] = 'X'
+	if err := session.Send(context.Background(), runtimeMessage); err != nil {
+		t.Fatalf("Send() error = %v", err)
+	}
+	_, actualPayload := readClientMessage(t, clientConnection)
+	if string(actualPayload) != "original" {
+		t.Fatalf("received payload = %q, want original", actualPayload)
+	}
+}
+
+func TestSessionConcurrentSendSerializesWrites(t *testing.T) {
+	serverConnection, clientConnection := testWebSocketPair(t)
+	session, err := New(serverConnection, validPrincipal(), "")
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+	if err := session.Start(context.Background()); err != nil {
+		t.Fatalf("Start() error = %v", err)
+	}
+	const messages = 64
+	errorsChannel := make(chan error, messages)
+	var waitGroup sync.WaitGroup
+	for index := range messages {
+		waitGroup.Add(1)
+		go func() {
+			defer waitGroup.Done()
+			runtimeMessage, messageErr := message.New(message.TypeText, []byte(fmt.Sprintf("message-%d", index)))
+			if messageErr != nil {
+				errorsChannel <- messageErr
+				return
+			}
+			if sendErr := session.Send(context.Background(), runtimeMessage); sendErr != nil {
+				errorsChannel <- sendErr
+			}
+		}()
+	}
+	received := make(map[string]struct{}, messages)
+	for range messages {
+		messageType, payload := readClientMessage(t, clientConnection)
+		if messageType != websocket.MessageText {
+			t.Fatalf("received type = %d, want text", messageType)
+		}
+		received[string(payload)] = struct{}{}
+	}
+	waitGroup.Wait()
+	close(errorsChannel)
+	for err := range errorsChannel {
+		t.Errorf("concurrent Send() error = %v", err)
+	}
+	if len(received) != messages {
+		t.Fatalf("unique received messages = %d, want %d", len(received), messages)
+	}
+}
+
+func TestSessionSendRequiresRunningLifecycle(t *testing.T) {
+	serverConnection, clientConnection := testWebSocketPair(t)
+	session, err := New(serverConnection, validPrincipal(), "")
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+	runtimeMessage, err := message.New(message.TypeText, []byte("payload"))
+	if err != nil {
+		t.Fatalf("message.New() error = %v", err)
+	}
+	if err := session.Send(context.Background(), runtimeMessage); !errors.Is(err, ErrSessionNotRunning) {
+		t.Fatalf("Send() before Start error = %v, want ErrSessionNotRunning", err)
+	}
+	if err := session.Start(context.Background()); err != nil {
+		t.Fatalf("Start() error = %v", err)
+	}
+	assertNormalSessionStop(t, session, clientConnection)
+	if err := session.Send(context.Background(), runtimeMessage); !errors.Is(err, ErrSessionNotRunning) {
+		t.Fatalf("Send() after Stop error = %v, want ErrSessionNotRunning", err)
+	}
+}
+
+func TestSessionSendDuringStopReturnsNotRunning(t *testing.T) {
+	serverConnection, clientConnection := testWebSocketPair(t)
+	session, err := New(serverConnection, validPrincipal(), "")
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+	if err := session.Start(context.Background()); err != nil {
+		t.Fatalf("Start() error = %v", err)
+	}
+	stopResult := make(chan error, 1)
+	go func() { stopResult <- session.Stop(context.Background()) }()
+	waitForSessionState(t, session, stateStopping)
+	runtimeMessage, err := message.New(message.TypeText, []byte("too late"))
+	if err != nil {
+		t.Fatalf("message.New() error = %v", err)
+	}
+	if err := session.Send(context.Background(), runtimeMessage); !errors.Is(err, ErrSessionNotRunning) {
+		t.Fatalf("Send() during Stop error = %v, want ErrSessionNotRunning", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	if _, _, err := clientConnection.Read(ctx); websocket.CloseStatus(err) != websocket.StatusNormalClosure {
+		t.Fatalf("client close error = %v", err)
+	}
+	select {
+	case err := <-stopResult:
+		if err != nil {
+			t.Fatalf("Stop() error = %v", err)
+		}
+	case <-ctx.Done():
+		t.Fatalf("Stop() did not return: %v", ctx.Err())
+	}
+}
+
+func TestSessionSendRejectsInvalidMessageType(t *testing.T) {
+	session := newTestSession(t)
+	if err := session.Start(context.Background()); err != nil {
+		t.Fatalf("Start() error = %v", err)
+	}
+	if err := session.Send(context.Background(), message.Message{}); !errors.Is(err, message.ErrInvalidMessageType) {
+		t.Fatalf("Send() error = %v, want ErrInvalidMessageType", err)
+	}
+}
+
+func TestSessionReadLoopContinuesDuringSend(t *testing.T) {
+	serverConnection, clientConnection := testWebSocketPair(t)
+	received := make(chan message.Message, 1)
+	session, err := newWithObserver(serverConnection, validPrincipal(), "", func(runtimeMessage message.Message) {
+		received <- runtimeMessage
+	})
+	if err != nil {
+		t.Fatalf("newWithObserver() error = %v", err)
+	}
+	if err := session.Start(context.Background()); err != nil {
+		t.Fatalf("Start() error = %v", err)
+	}
+	runResult := make(chan error, 1)
+	go func() { runResult <- session.Run(context.Background()) }()
+	waitForReadLoop(t, session, true)
+
+	outbound, err := message.New(message.TypeText, []byte("server message"))
+	if err != nil {
+		t.Fatalf("message.New() error = %v", err)
+	}
+	if err := session.Send(context.Background(), outbound); err != nil {
+		t.Fatalf("Send() error = %v", err)
+	}
+	messageType, payload := readClientMessage(t, clientConnection)
+	if messageType != websocket.MessageText || string(payload) != "server message" {
+		t.Fatalf("outbound = (%d, %q)", messageType, payload)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	if err := clientConnection.Write(ctx, websocket.MessageBinary, []byte("client message")); err != nil {
+		cancel()
+		t.Fatalf("client Write() error = %v", err)
+	}
+	cancel()
+	select {
+	case inbound := <-received:
+		if inbound.Type() != message.TypeBinary || string(inbound.Data()) != "client message" {
+			t.Fatalf("inbound = (%q, %q)", inbound.Type(), inbound.Data())
+		}
+	case <-time.After(time.Second):
+		t.Fatal("read loop did not continue during Send")
+	}
+	closeClientAndWaitForRun(t, clientConnection, websocket.StatusNormalClosure, runResult)
+	if err := session.Stop(context.Background()); err != nil {
+		t.Fatalf("Stop() error = %v", err)
+	}
+}
+
 func runningSessionReadLoop(
 	t *testing.T,
 	ctx context.Context,
@@ -498,6 +714,32 @@ func waitForReadLoop(t *testing.T, session *DefaultSession, active bool) {
 		time.Sleep(time.Millisecond)
 	}
 	t.Fatalf("read loop active = %t, want %t", !active, active)
+}
+
+func waitForSessionState(t *testing.T, session *DefaultSession, state lifecycleState) {
+	t.Helper()
+	deadline := time.Now().Add(time.Second)
+	for time.Now().Before(deadline) {
+		session.mu.RLock()
+		actual := session.state
+		session.mu.RUnlock()
+		if actual == state {
+			return
+		}
+		time.Sleep(time.Millisecond)
+	}
+	t.Fatalf("Session state did not become %d", state)
+}
+
+func readClientMessage(t *testing.T, connection *websocket.Conn) (websocket.MessageType, []byte) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	messageType, payload, err := connection.Read(ctx)
+	if err != nil {
+		t.Fatalf("client Read() error = %v", err)
+	}
+	return messageType, payload
 }
 
 func newTestSession(t *testing.T) *DefaultSession {

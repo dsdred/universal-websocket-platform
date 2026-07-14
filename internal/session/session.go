@@ -38,6 +38,7 @@ type Session interface {
 	Running() bool
 	Start(context.Context) error
 	Run(context.Context) error
+	Send(context.Context, message.Message) error
 	Stop(context.Context) error
 }
 
@@ -56,6 +57,7 @@ type messageObserver func(message.Message)
 // DefaultSession is the default minimal Runtime Session.
 type DefaultSession struct {
 	mu            sync.RWMutex
+	writeMu       sync.Mutex
 	id            string
 	principal     authentication.Principal
 	connection    *websocket.Conn
@@ -215,6 +217,36 @@ func (session *DefaultSession) Run(ctx context.Context) error {
 			observe(runtimeMessage)
 		}
 	}
+}
+
+// Send writes one transport-neutral Runtime Message while the Session is Running.
+func (session *DefaultSession) Send(ctx context.Context, runtimeMessage message.Message) error {
+	var websocketType websocket.MessageType
+	switch runtimeMessage.Type() {
+	case message.TypeText:
+		websocketType = websocket.MessageText
+	case message.TypeBinary:
+		websocketType = websocket.MessageBinary
+	default:
+		return message.ErrInvalidMessageType
+	}
+	payload := append([]byte(nil), runtimeMessage.Data()...)
+
+	session.writeMu.Lock()
+	defer session.writeMu.Unlock()
+
+	session.mu.RLock()
+	if session.state != stateRunning {
+		session.mu.RUnlock()
+		return ErrSessionNotRunning
+	}
+	connection := session.connection
+	writeErr := connection.Write(ctx, websocketType, payload)
+	session.mu.RUnlock()
+	if writeErr != nil {
+		return fmt.Errorf("write WebSocket message: %w", writeErr)
+	}
+	return nil
 }
 
 // Stop sends a normal closure without holding the lifecycle mutex and is idempotent.

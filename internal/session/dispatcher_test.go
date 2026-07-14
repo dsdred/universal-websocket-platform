@@ -14,6 +14,7 @@ import (
 
 	"github.com/dsdred/universal-websocket-platform/internal/authentication"
 	"github.com/dsdred/universal-websocket-platform/internal/connection"
+	"github.com/dsdred/universal-websocket-platform/internal/message"
 )
 
 func TestDispatcherImplementsAuthenticatedDispatcher(t *testing.T) {
@@ -258,6 +259,7 @@ func (session *sessionStub) Run(context.Context) error {
 	session.runCalls.Add(1)
 	return session.runErr
 }
+func (*sessionStub) Send(context.Context, message.Message) error { return nil }
 func (session *sessionStub) Stop(context.Context) error {
 	session.stopCalls.Add(1)
 	return session.stopErr
