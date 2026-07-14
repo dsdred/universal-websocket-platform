@@ -211,3 +211,12 @@
 - Listener остается владельцем HTTP/WebSocket transport effects и не получает Provider-specific logic.
 - Документ не изменяет текущую реализацию: Authentication по-прежнему выполняется после Upgrade до отдельной implementation task.
 - Origin Policy, rate limiting, maintenance, IP filtering, Router, Session Manager и Plugin ABI остаются future work без зафиксированных API.
+
+## Runtime Host Composition Root Design
+
+- Создан двуязычный Draft design [DP-002: Runtime Host Composition Root](../docs/ru/design/DP-002-runtime-host-composition-root.md) ([English version](../docs/en/design/DP-002-runtime-host-composition-root.md)).
+- Runtime Host предложен как единственная production composition root одного экземпляра Runtime с явными dependency graph, startup rollback, shutdown ordering и readiness boundary.
+- Определён lifecycle `Created -> Initialized -> Starting -> Running -> Stopping -> Stopped` с terminal state `Failed` и запретом Restart и in-place Reload.
+- Host владеет root Runtime context, запускает Listener последним и закрывает admission до cancellation и cleanup в обратном порядке.
+- Container не превращается в service locator; DI framework, reflection, generic component factories и Universal Component Registry запрещены.
+- Документ не изменяет текущую реализацию: Host по-прежнему хранит только Snapshot и Container и не собирает рабочую Runtime-вертикаль.

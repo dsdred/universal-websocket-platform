@@ -19,6 +19,7 @@
 Сфокусированные designs подсистем Runtime находятся в каталоге [`design/`](design/).
 
 - [DP-001: Runtime Handshake Pipeline](design/DP-001-runtime-handshake-pipeline.md)
+- [DP-002: Runtime Host Composition Root](design/DP-002-runtime-host-composition-root.md)
 
 ## Архитектурные решения
 
