@@ -78,7 +78,7 @@ func (manager *Manager) Reserve(sessionID SessionID) (ReservationHandle, error) 
 }
 
 // Commit atomically publishes the Reservation as one committed Registration.
-// Repeated calls after a successful Commit return the same identity.
+// Repeated calls return the same identity only while that Registration exists.
 func (handle *reservationHandle) Commit() (RegistrationID, error) {
 	return handle.manager.commit(handle.reservation)
 }
@@ -99,6 +99,14 @@ func (manager *Manager) commit(target *reservation) (RegistrationID, error) {
 
 	switch target.state {
 	case reservationCommitted:
+		registration, exists := manager.registrations[target.registrationID]
+		if !exists || registration.sessionID != target.sessionID {
+			return RegistrationID{}, ErrRegistrationRemoved
+		}
+		currentID, exists := manager.registeredSessions[target.sessionID]
+		if !exists || currentID != target.registrationID {
+			return RegistrationID{}, ErrRegistrationRemoved
+		}
 		return target.registrationID, nil
 	case reservationAborted:
 		return RegistrationID{}, ErrReservationAborted

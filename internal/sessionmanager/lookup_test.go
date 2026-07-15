@@ -17,6 +17,18 @@ func TestManagerLookupExistingCommittedRegistration(t *testing.T) {
 	assertLookupResult(t, view, found, "session-1", registrationID)
 }
 
+func TestRegistrationViewContainsRegisteredState(t *testing.T) {
+	manager := New()
+	registrationID := mustCommit(t, mustReserve(t, manager, "session-1"))
+
+	view, found := manager.Lookup("session-1")
+
+	assertLookupResult(t, view, found, "session-1", registrationID)
+	if got := view.State(); got != StateRegistered {
+		t.Fatalf("RegistrationView.State() = %v, want StateRegistered", got)
+	}
+}
+
 func TestManagerLookupUnknownSessionID(t *testing.T) {
 	manager := New()
 	mustCommit(t, mustReserve(t, manager, "session-1"))
@@ -81,6 +93,7 @@ func TestRegistrationViewIsDetachedValue(t *testing.T) {
 
 	view.sessionID = "changed"
 	view.registrationID = RegistrationID{}
+	view.state = 0
 
 	fresh, freshFound := manager.Lookup("session-1")
 	assertLookupResult(t, fresh, freshFound, "session-1", registrationID)
@@ -281,6 +294,9 @@ func assertLookupResult(
 	if got := view.RegistrationID(); got != wantRegistrationID {
 		t.Fatalf("RegistrationView.RegistrationID() = %+v, want %+v", got, wantRegistrationID)
 	}
+	if got := view.State(); got != StateRegistered {
+		t.Fatalf("RegistrationView.State() = %v, want StateRegistered", got)
+	}
 }
 
 func ExampleManager_Lookup() {
@@ -289,6 +305,6 @@ func ExampleManager_Lookup() {
 	registrationID, _ := reservation.Commit()
 
 	view, found := manager.Lookup("session-1")
-	fmt.Println(found, view.SessionID(), view.RegistrationID() == registrationID)
-	// Output: true session-1 true
+	fmt.Println(found, view.SessionID(), view.RegistrationID() == registrationID, view.State() == StateRegistered)
+	// Output: true session-1 true true
 }

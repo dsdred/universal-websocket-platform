@@ -22,5 +22,6 @@ func (manager *Manager) Lookup(sessionID SessionID) (RegistrationView, bool) {
 	return RegistrationView{
 		sessionID:      registration.sessionID,
 		registrationID: registration.registrationID,
+		state:          StateRegistered,
 	}, true
 }

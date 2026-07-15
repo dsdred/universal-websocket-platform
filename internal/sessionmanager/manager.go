@@ -20,6 +20,8 @@ var (
 	ErrRegistrationIDExhausted = errors.New("Registration ID space exhausted")
 	// ErrReservationAborted indicates that Commit was attempted after Abort won.
 	ErrReservationAborted = errors.New("Session Reservation is aborted")
+	// ErrRegistrationRemoved indicates that a committed Registration no longer exists.
+	ErrRegistrationRemoved = errors.New("Session Registration is removed")
 )
 
 // State is the read-only lifecycle state of a Manager.

@@ -39,6 +39,48 @@ func TestReservationDoubleCommitIsIdempotent(t *testing.T) {
 	assertRegistrationCount(t, manager, 1)
 }
 
+func TestReservationCommitAfterCompleteReturnsRegistrationRemoved(t *testing.T) {
+	manager := New()
+	handle := mustReserve(t, manager, "session-1")
+	registrationID := mustCommit(t, handle)
+	if completed := manager.Complete(registrationID); !completed {
+		t.Fatal("Complete() = false, want true")
+	}
+
+	retriedID, err := handle.Commit()
+
+	if retriedID != (RegistrationID{}) || !errors.Is(err, ErrRegistrationRemoved) {
+		t.Fatalf("Commit() after Complete = (%+v, %v), want zero ID and ErrRegistrationRemoved", retriedID, err)
+	}
+	assertRegistrationCount(t, manager, 0)
+	if got := manager.State(); got != StateOpen {
+		t.Fatalf("State() = %v, want StateOpen", got)
+	}
+}
+
+func TestReservationCommitAfterSessionIDReuseDoesNotDescribeNewRegistration(t *testing.T) {
+	manager := New()
+	stale := mustReserve(t, manager, "session-1")
+	staleID := mustCommit(t, stale)
+	if completed := manager.Complete(staleID); !completed {
+		t.Fatal("Complete() = false, want true")
+	}
+	fresh := mustReserve(t, manager, "session-1")
+	freshID := mustCommit(t, fresh)
+
+	retriedID, err := stale.Commit()
+
+	if retriedID != (RegistrationID{}) || !errors.Is(err, ErrRegistrationRemoved) {
+		t.Fatalf("stale Commit() = (%+v, %v), want zero ID and ErrRegistrationRemoved", retriedID, err)
+	}
+	if freshID == staleID {
+		t.Fatalf("fresh RegistrationID = stale RegistrationID %+v", staleID)
+	}
+	stale.Abort()
+	stale.AbortUnlessCommitted()
+	assertRegistration(t, manager, freshID, "session-1")
+}
+
 func TestReservationCommitAfterAbort(t *testing.T) {
 	manager := New()
 	handle := mustReserve(t, manager, "session-1")
