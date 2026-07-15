@@ -6,3 +6,4 @@
 
 - [DP-001: Runtime Handshake Pipeline](DP-001-runtime-handshake-pipeline.md)
 - [DP-002: Runtime Host Composition Root](DP-002-runtime-host-composition-root.md)
+- [DP-003: Runtime Session Manager](DP-003-runtime-session-manager.md)

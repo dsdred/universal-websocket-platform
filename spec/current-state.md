@@ -229,6 +229,14 @@
 - Container не превращается в service locator; DI framework, reflection, generic component factories и Universal Component Registry запрещены.
 - После публикации DP-002 реализована его фундаментальная часть: Host стал production composition root, получил startup transaction, root Runtime context, readiness и lifecycle-only Admission Gate; `Failed`, supervision и полный shutdown wait set пока отсутствуют.
 
+## Runtime Session Manager Design
+
+- Создан двуязычный Draft design [DP-003: Runtime Session Manager](../docs/ru/design/DP-003-runtime-session-manager.md) ([English version](../docs/en/design/DP-003-runtime-session-manager.md)).
+- Успешная регистрация предложена как единая linearization point передачи lifecycle ownership, видимости через lookup и включения Session в Runtime shutdown wait set до завершения Handshake handoff.
+- Session сохраняет единоличный ownership WebSocket, а Session Manager владеет только авторитетным множеством зарегистрированных Session, exactly-once removal, lookup по SessionID и shutdown coordination.
+- Runtime Host остается владельцем Admission Gate и корневого Runtime context; Listener, Authentication, Router, Delivery, Persistence и diagnostics не входят в ответственность Session Manager.
+- DP-003 пока не реализован: текущий Session Dispatcher по-прежнему синхронно выполняет отдельную Session без Runtime-wide registration, lookup и полного shutdown wait set.
+
 ## Runtime Foundation Freeze
 
 - Создан двуязычный [ARCH-002: Runtime Foundation Freeze](../docs/ru/architecture/ARCH-002-runtime-foundation-freeze.md) ([English version](../docs/en/architecture/ARCH-002-runtime-foundation-freeze.md)).
