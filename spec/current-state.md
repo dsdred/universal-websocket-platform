@@ -166,14 +166,14 @@
 - `Commit` является единственной linearization point появления Registration: он атомарно завершает Reservation, сохраняет тот же `RegistrationID` и публикует committed Registration ровно один раз; после успешного Commit методы `Abort` и `AbortUnlessCommitted` ничего не изменяют
 - `Complete(RegistrationID)` является единственной linearization point удаления Registration: первая валидная completion атомарно удаляет committed record и освобождает `SessionID`, а repeated, unknown и stale completion ничего не изменяют
 - Reservation и committed Registration содержат только identity metadata, не хранят Session, WebSocket, Context или Runtime-компоненты и пока не участвуют в shutdown accounting
-- Committed registrations хранятся внутри Manager, но публичные registry и lookup API отсутствуют; базовый `RegistrationView` по-прежнему не предоставляет поведения
+- Committed registrations хранятся внутри Manager; `Lookup(SessionID)` возвращает только detached immutable `RegistrationView` с `SessionID` и `RegistrationID`, не раскрывая Session или lifecycle capabilities
 - Session не хранит исходный HTTP Request, Headers, Query, credentials, AuthenticationRequest или transport context wrappers
 - Добавлена immutable transport-neutral Runtime Message модель для text и binary application messages с копированием payload и UTC-временем получения
 - Session удерживает WebSocket-соединение открытым и выполняет единственный блокирующий read loop до закрытия клиента, отмены context, Stop или ошибки чтения
 - Session предоставляет потокобезопасный `Send(context.Context, message.Message)` для сериализованной отправки text и binary Runtime Message без raw `[]byte` API
 - Добавлен transport-neutral Runtime Message Handler contract; Session передает ему каждое прочитанное Message, а при nil Handler сохраняет discard-поведение
 - Реализован EchoHandler, возвращающий неизмененные text и binary Runtime Message исключительно через Session Send без доступа к WebSocket transport
-- Router, Middleware, Message Queue, Broadcast, публичные Session Manager registry/lookup API, shutdown accounting и Persistence отсутствуют
+- Router, Middleware, Message Queue, Broadcast, публичный Session Manager Registry API, shutdown accounting и Persistence отсутствуют
 - Архитектура Runtime принята в ADR-003; pre-Upgrade Handshake реализован в объеме Authentication, а Configuration Loader, полный Session shutdown tracking, operational diagnostics и supervision еще отсутствуют
 
 ## Чего не существует
@@ -243,7 +243,7 @@
 - DP-003 разделяет ownership WebSocket, registration transaction, выполнение Session и tracking Manager; Session сохраняет единоличный ownership WebSocket после transport handoff.
 - `BeginShutdown` и `Wait` разделяют неблокирующий transition shutdown и ожидание, а атомарный `Complete` предлагается как единственная linearization point удаления будущей committed registration.
 - Runtime Host остается владельцем Admission Gate и корневого Runtime context; Listener, Authentication, Router, Delivery, Persistence и diagnostics не входят в ответственность Session Manager.
-- Реализованы lifecycle skeleton Manager и identity-safe transaction `Reserve -> Commit | Abort`, затем `Complete(RegistrationID)`: Commit атомарно публикует внутреннюю committed Registration, а первая валидная Complete атомарно удаляет ее без риска для новой Registration с повторно использованным `SessionID`. Публичные registry/lookup API, Session accounting, execution owner, Stop capabilities, интеграция с Runtime Host и полный shutdown wait set отсутствуют.
+- Реализованы lifecycle skeleton Manager и identity-safe transaction `Reserve -> Commit | Abort`, затем `Complete(RegistrationID)`: Commit атомарно публикует внутреннюю committed Registration, первая валидная Complete атомарно удаляет ее, а read-only `Lookup(SessionID)` возвращает detached identity View только для committed record. Публичный Registry API, Session accounting, execution owner, Stop capabilities, интеграция с Runtime Host и полный shutdown wait set отсутствуют.
 - Текущий Session Dispatcher по-прежнему синхронно выполняет отдельную Session без Runtime-wide registration и tracking.
 
 ## Runtime Foundation Freeze
