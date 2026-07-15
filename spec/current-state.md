@@ -161,7 +161,10 @@
 - Session Dispatcher создает Session из AuthenticatedContext и в текущей goroutine последовательно вызывает Start, блокирующий Run и завершающий Stop
 - Создан независимый пакет `internal/sessionmanager` с потокобезопасным lifecycle skeleton `Open -> Closing -> Closed`
 - Session Manager предоставляет только неблокирующий идемпотентный `BeginShutdown`, явный `Wait` и read-only наблюдение состояния; в `Open` метод `Wait` возвращает sentinel error и не начинает shutdown
-- Базовые типы `SessionID`, `RegistrationID` и `RegistrationView` не содержат Session и пока не подключены к registry или Runtime composition
+- Реализована unpublished Reservation transaction: `Reserve` создает уникальный за lifetime Manager `RegistrationID`, запрещает одновременно резервировать одинаковый `SessionID` и возвращает единственный Handle с идемпотентными `Abort` и `AbortUnlessCommitted`
+- Abort атомарно удаляет Reservation, после чего ее `SessionID` можно использовать повторно; stale и concurrent Abort не имеют повторного accounting effect
+- Reservation содержит только `RegistrationID` и `SessionID`, не хранит Session, WebSocket, Context или Runtime-компоненты и пока не участвует в shutdown accounting
+- Базовый `RegistrationView` не содержит Session и пока не подключен к registry, lookup или Runtime composition
 - Session не хранит исходный HTTP Request, Headers, Query, credentials, AuthenticationRequest или transport context wrappers
 - Добавлена immutable transport-neutral Runtime Message модель для text и binary application messages с копированием payload и UTC-временем получения
 - Session удерживает WebSocket-соединение открытым и выполняет единственный блокирующий read loop до закрытия клиента, отмены context, Stop или ошибки чтения
@@ -238,7 +241,7 @@
 - DP-003 разделяет ownership WebSocket, registration transaction, выполнение Session и tracking Manager; Session сохраняет единоличный ownership WebSocket после transport handoff.
 - `BeginShutdown` и `Wait` разделяют неблокирующий transition shutdown и ожидание, а атомарный `Complete` предлагается как единственная linearization point удаления будущей committed registration.
 - Runtime Host остается владельцем Admission Gate и корневого Runtime context; Listener, Authentication, Router, Delivery, Persistence и diagnostics не входят в ответственность Session Manager.
-- Реализован только минимальный lifecycle skeleton Manager без интеграции с Runtime Host; Reserve, Commit, Abort, Complete, registry, lookup, Session accounting, execution owner, Stop capabilities и полный shutdown wait set отсутствуют.
+- Реализованы lifecycle skeleton Manager и первая часть registration transaction — Reserve и Abort через owned Handle — без интеграции с Runtime Host; Commit, Complete, committed registry, lookup, Session accounting, execution owner, Stop capabilities и полный shutdown wait set отсутствуют.
 - Текущий Session Dispatcher по-прежнему синхронно выполняет отдельную Session без Runtime-wide registration и tracking.
 
 ## Runtime Foundation Freeze

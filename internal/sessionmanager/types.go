@@ -4,7 +4,6 @@ package sessionmanager
 type SessionID string
 
 // RegistrationID is an opaque registration identity.
-// Generation belongs to later registry work.
 type RegistrationID struct {
 	value uint64
 }

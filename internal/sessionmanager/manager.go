@@ -10,6 +10,14 @@ import (
 var (
 	// ErrShutdownNotStarted indicates that Wait was called while Manager is Open.
 	ErrShutdownNotStarted = errors.New("Session Manager shutdown has not started")
+	// ErrManagerNotOpen indicates that an operation requires an Open Manager.
+	ErrManagerNotOpen = errors.New("Session Manager is not open")
+	// ErrInvalidSessionID indicates that a Session identifier is empty or too long.
+	ErrInvalidSessionID = errors.New("invalid Session ID")
+	// ErrSessionIDReserved indicates that a Session identifier has an active Reservation.
+	ErrSessionIDReserved = errors.New("Session ID is already reserved")
+	// ErrRegistrationIDExhausted indicates that Manager cannot allocate another identity.
+	ErrRegistrationIDExhausted = errors.New("Registration ID space exhausted")
 )
 
 // State is the read-only lifecycle state of a Manager.
@@ -26,13 +34,21 @@ const (
 
 // Manager owns the minimal Runtime Session Manager lifecycle.
 type Manager struct {
-	mu    sync.RWMutex
-	state State
+	mu                 sync.RWMutex
+	state              State
+	nextRegistrationID uint64
+	reservations       map[RegistrationID]*reservation
+	reservedSessions   map[SessionID]RegistrationID
 }
 
 // New creates an Open Manager.
 func New() *Manager {
-	return &Manager{state: StateOpen}
+	return &Manager{
+		state:              StateOpen,
+		nextRegistrationID: 1,
+		reservations:       make(map[RegistrationID]*reservation),
+		reservedSessions:   make(map[SessionID]RegistrationID),
+	}
 }
 
 // BeginShutdown atomically starts the single Manager shutdown cycle.
