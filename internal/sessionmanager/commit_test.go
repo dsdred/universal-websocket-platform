@@ -1,0 +1,256 @@
+package sessionmanager
+
+import (
+	"context"
+	"errors"
+	"testing"
+)
+
+func TestReservationCommitPublishesRegistration(t *testing.T) {
+	manager := New()
+	handle := mustReserve(t, manager, "session-1")
+	reservedID := reservationFromHandle(t, handle).registrationID
+
+	committedID, err := handle.Commit()
+	if err != nil {
+		t.Fatalf("Commit() error = %v", err)
+	}
+	if committedID != reservedID {
+		t.Fatalf("Commit() RegistrationID = %+v, want %+v", committedID, reservedID)
+	}
+
+	assertReservationCount(t, manager, 0)
+	assertRegistration(t, manager, committedID, "session-1")
+}
+
+func TestReservationDoubleCommitIsIdempotent(t *testing.T) {
+	manager := New()
+	handle := mustReserve(t, manager, "session-1")
+
+	firstID, firstErr := handle.Commit()
+	secondID, secondErr := handle.Commit()
+
+	if firstErr != nil || secondErr != nil {
+		t.Fatalf("Commit() errors = (%v, %v), want nil", firstErr, secondErr)
+	}
+	if firstID != secondID {
+		t.Fatalf("Commit() IDs = (%+v, %+v), want equal", firstID, secondID)
+	}
+	assertRegistrationCount(t, manager, 1)
+}
+
+func TestReservationCommitAfterAbort(t *testing.T) {
+	manager := New()
+	handle := mustReserve(t, manager, "session-1")
+	handle.Abort()
+
+	registrationID, err := handle.Commit()
+
+	if registrationID != (RegistrationID{}) || !errors.Is(err, ErrReservationAborted) {
+		t.Fatalf("Commit() = (%+v, %v), want zero ID and ErrReservationAborted", registrationID, err)
+	}
+	assertRegistrationCount(t, manager, 0)
+}
+
+func TestReservationAbortAfterCommitIsNoOp(t *testing.T) {
+	manager := New()
+	handle := mustReserve(t, manager, "session-1")
+	registrationID, err := handle.Commit()
+	if err != nil {
+		t.Fatalf("Commit() error = %v", err)
+	}
+
+	handle.Abort()
+	handle.AbortUnlessCommitted()
+
+	assertRegistration(t, manager, registrationID, "session-1")
+}
+
+func TestReservationConcurrentCommitPublishesExactlyOnce(t *testing.T) {
+	manager := New()
+	handle := mustReserve(t, manager, "session-1")
+	start := make(chan struct{})
+	results := make(chan commitResult, concurrentCalls)
+
+	for range concurrentCalls {
+		go func() {
+			<-start
+			registrationID, err := handle.Commit()
+			results <- commitResult{registrationID: registrationID, err: err}
+		}()
+	}
+	close(start)
+
+	var committedID RegistrationID
+	for range concurrentCalls {
+		result := <-results
+		if result.err != nil {
+			t.Fatalf("concurrent Commit() error = %v", result.err)
+		}
+		if committedID == (RegistrationID{}) {
+			committedID = result.registrationID
+		} else if result.registrationID != committedID {
+			t.Fatalf("concurrent Commit() ID = %+v, want %+v", result.registrationID, committedID)
+		}
+	}
+	assertReservationCount(t, manager, 0)
+	assertRegistration(t, manager, committedID, "session-1")
+}
+
+func TestReservationConcurrentAbortAndCommitHasOneTerminalOutcome(t *testing.T) {
+	for iteration := range concurrencyIterations {
+		manager := New()
+		handle := mustReserve(t, manager, "session-1")
+		start := make(chan struct{})
+		commitResultChannel := make(chan commitResult, 1)
+		abortDone := make(chan struct{})
+
+		go func() {
+			<-start
+			registrationID, err := handle.Commit()
+			commitResultChannel <- commitResult{registrationID: registrationID, err: err}
+		}()
+		go func() {
+			<-start
+			handle.Abort()
+			close(abortDone)
+		}()
+		close(start)
+
+		result := <-commitResultChannel
+		<-abortDone
+		switch {
+		case result.err == nil:
+			assertRegistration(t, manager, result.registrationID, "session-1")
+		case errors.Is(result.err, ErrReservationAborted):
+			assertRegistrationCount(t, manager, 0)
+		default:
+			t.Fatalf("iteration %d: Commit() error = %v", iteration, result.err)
+		}
+		assertReservationCount(t, manager, 0)
+	}
+}
+
+func TestReservationCommitAndBeginShutdownShareLinearizationBoundary(t *testing.T) {
+	for iteration := range concurrencyIterations {
+		manager := New()
+		handle := mustReserve(t, manager, "session-1")
+		start := make(chan struct{})
+		commitResultChannel := make(chan commitResult, 1)
+		shutdownDone := make(chan struct{})
+
+		go func() {
+			<-start
+			registrationID, err := handle.Commit()
+			commitResultChannel <- commitResult{registrationID: registrationID, err: err}
+		}()
+		go func() {
+			<-start
+			manager.BeginShutdown()
+			close(shutdownDone)
+		}()
+		close(start)
+
+		result := <-commitResultChannel
+		<-shutdownDone
+		if result.err == nil {
+			assertReservationCount(t, manager, 0)
+			assertRegistration(t, manager, result.registrationID, "session-1")
+		} else if errors.Is(result.err, ErrManagerNotOpen) {
+			assertReservationCount(t, manager, 1)
+			assertRegistrationCount(t, manager, 0)
+			handle.AbortUnlessCommitted()
+		} else {
+			t.Fatalf("iteration %d: Commit() error = %v", iteration, result.err)
+		}
+		if got := manager.State(); got != StateClosing {
+			t.Fatalf("iteration %d: State() = %v, want StateClosing", iteration, got)
+		}
+	}
+}
+
+func TestReservationCommitAfterBeginShutdownRequiresAbort(t *testing.T) {
+	manager := New()
+	handle := mustReserve(t, manager, "session-1")
+	manager.BeginShutdown()
+
+	registrationID, err := handle.Commit()
+
+	if registrationID != (RegistrationID{}) || !errors.Is(err, ErrManagerNotOpen) {
+		t.Fatalf("Commit() = (%+v, %v), want zero ID and ErrManagerNotOpen", registrationID, err)
+	}
+	assertReservationCount(t, manager, 1)
+	assertRegistrationCount(t, manager, 0)
+
+	handle.AbortUnlessCommitted()
+	assertReservationCount(t, manager, 0)
+}
+
+func TestCommittedSessionIDCannotBeReservedAgain(t *testing.T) {
+	manager := New()
+	handle := mustReserve(t, manager, "session-1")
+	if _, err := handle.Commit(); err != nil {
+		t.Fatalf("Commit() error = %v", err)
+	}
+
+	duplicate, err := manager.Reserve("session-1")
+
+	if duplicate != nil || !errors.Is(err, ErrSessionIDReserved) {
+		t.Fatalf("Reserve() = (%v, %v), want nil and ErrSessionIDReserved", duplicate, err)
+	}
+}
+
+func TestCommittedRegistrationDoesNotChangeManagerLifecycle(t *testing.T) {
+	manager := New()
+	handle := mustReserve(t, manager, "session-1")
+	registrationID, err := handle.Commit()
+	if err != nil {
+		t.Fatalf("Commit() error = %v", err)
+	}
+
+	manager.BeginShutdown()
+	if err := manager.Wait(context.Background()); err != nil {
+		t.Fatalf("Wait() error = %v", err)
+	}
+
+	if got := manager.State(); got != StateClosed {
+		t.Fatalf("State() = %v, want StateClosed", got)
+	}
+	assertRegistration(t, manager, registrationID, "session-1")
+}
+
+type commitResult struct {
+	registrationID RegistrationID
+	err            error
+}
+
+func assertRegistration(t *testing.T, manager *Manager, registrationID RegistrationID, sessionID SessionID) {
+	t.Helper()
+	manager.mu.RLock()
+	defer manager.mu.RUnlock()
+	if len(manager.registrations) != 1 {
+		t.Fatalf("Registration count = %d, want 1", len(manager.registrations))
+	}
+	registration, exists := manager.registrations[registrationID]
+	if !exists {
+		t.Fatalf("Registration %+v is not visible", registrationID)
+	}
+	if registration.registrationID != registrationID || registration.sessionID != sessionID {
+		t.Fatalf("Registration = %+v, want ID %+v and SessionID %q", registration, registrationID, sessionID)
+	}
+	if got := manager.registeredSessions[sessionID]; got != registrationID {
+		t.Fatalf("registered SessionID maps to %+v, want %+v", got, registrationID)
+	}
+}
+
+func assertRegistrationCount(t *testing.T, manager *Manager, want int) {
+	t.Helper()
+	manager.mu.RLock()
+	defer manager.mu.RUnlock()
+	if got := len(manager.registrations); got != want {
+		t.Fatalf("Registration count = %d, want %d", got, want)
+	}
+	if got := len(manager.registeredSessions); got != want {
+		t.Fatalf("registered SessionID count = %d, want %d", got, want)
+	}
+}

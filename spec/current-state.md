@@ -161,17 +161,18 @@
 - Session Dispatcher создает Session из AuthenticatedContext и в текущей goroutine последовательно вызывает Start, блокирующий Run и завершающий Stop
 - Создан независимый пакет `internal/sessionmanager` с потокобезопасным lifecycle skeleton `Open -> Closing -> Closed`
 - Session Manager предоставляет только неблокирующий идемпотентный `BeginShutdown`, явный `Wait` и read-only наблюдение состояния; в `Open` метод `Wait` возвращает sentinel error и не начинает shutdown
-- Реализована unpublished Reservation transaction: `Reserve` создает уникальный за lifetime Manager `RegistrationID`, запрещает одновременно резервировать одинаковый `SessionID` и возвращает единственный Handle с идемпотентными `Abort` и `AbortUnlessCommitted`
+- Реализована первая полная граница Reservation transaction: `Reserve` создает уникальный за lifetime Manager `RegistrationID`, запрещает резервировать `SessionID`, уже занятый Reservation или committed Registration, и возвращает единственный Handle
 - Abort атомарно удаляет Reservation, после чего ее `SessionID` можно использовать повторно; stale и concurrent Abort не имеют повторного accounting effect
-- Reservation содержит только `RegistrationID` и `SessionID`, не хранит Session, WebSocket, Context или Runtime-компоненты и пока не участвует в shutdown accounting
-- Базовый `RegistrationView` не содержит Session и пока не подключен к registry, lookup или Runtime composition
+- `Commit` является единственной linearization point появления Registration: он атомарно завершает Reservation, сохраняет тот же `RegistrationID` и публикует committed Registration ровно один раз; после успешного Commit методы `Abort` и `AbortUnlessCommitted` ничего не изменяют
+- Reservation и committed Registration содержат только identity metadata, не хранят Session, WebSocket, Context или Runtime-компоненты и пока не участвуют в shutdown accounting
+- Committed registrations хранятся внутри Manager, но публичные registry и lookup API отсутствуют; базовый `RegistrationView` по-прежнему не предоставляет поведения
 - Session не хранит исходный HTTP Request, Headers, Query, credentials, AuthenticationRequest или transport context wrappers
 - Добавлена immutable transport-neutral Runtime Message модель для text и binary application messages с копированием payload и UTC-временем получения
 - Session удерживает WebSocket-соединение открытым и выполняет единственный блокирующий read loop до закрытия клиента, отмены context, Stop или ошибки чтения
 - Session предоставляет потокобезопасный `Send(context.Context, message.Message)` для сериализованной отправки text и binary Runtime Message без raw `[]byte` API
 - Добавлен transport-neutral Runtime Message Handler contract; Session передает ему каждое прочитанное Message, а при nil Handler сохраняет discard-поведение
 - Реализован EchoHandler, возвращающий неизмененные text и binary Runtime Message исключительно через Session Send без доступа к WebSocket transport
-- Router, Middleware, Message Queue, Broadcast, Session Manager registry/accounting и Persistence отсутствуют
+- Router, Middleware, Message Queue, Broadcast, публичные Session Manager registry/lookup API, shutdown accounting и Persistence отсутствуют
 - Архитектура Runtime принята в ADR-003; pre-Upgrade Handshake реализован в объеме Authentication, а Configuration Loader, полный Session shutdown tracking, operational diagnostics и supervision еще отсутствуют
 
 ## Чего не существует
@@ -241,7 +242,7 @@
 - DP-003 разделяет ownership WebSocket, registration transaction, выполнение Session и tracking Manager; Session сохраняет единоличный ownership WebSocket после transport handoff.
 - `BeginShutdown` и `Wait` разделяют неблокирующий transition shutdown и ожидание, а атомарный `Complete` предлагается как единственная linearization point удаления будущей committed registration.
 - Runtime Host остается владельцем Admission Gate и корневого Runtime context; Listener, Authentication, Router, Delivery, Persistence и diagnostics не входят в ответственность Session Manager.
-- Реализованы lifecycle skeleton Manager и первая часть registration transaction — Reserve и Abort через owned Handle — без интеграции с Runtime Host; Commit, Complete, committed registry, lookup, Session accounting, execution owner, Stop capabilities и полный shutdown wait set отсутствуют.
+- Реализованы lifecycle skeleton Manager и Reservation transaction `Reserve -> Commit | Abort` через owned Handle: Commit атомарно публикует внутреннюю committed Registration и сохраняет ее identity. Публичные registry/lookup API, Complete, Session accounting, execution owner, Stop capabilities, интеграция с Runtime Host и полный shutdown wait set отсутствуют.
 - Текущий Session Dispatcher по-прежнему синхронно выполняет отдельную Session без Runtime-wide registration и tracking.
 
 ## Runtime Foundation Freeze

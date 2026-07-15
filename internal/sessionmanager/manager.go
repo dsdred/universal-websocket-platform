@@ -18,6 +18,8 @@ var (
 	ErrSessionIDReserved = errors.New("Session ID is already reserved")
 	// ErrRegistrationIDExhausted indicates that Manager cannot allocate another identity.
 	ErrRegistrationIDExhausted = errors.New("Registration ID space exhausted")
+	// ErrReservationAborted indicates that Commit was attempted after Abort won.
+	ErrReservationAborted = errors.New("Session Reservation is aborted")
 )
 
 // State is the read-only lifecycle state of a Manager.
@@ -39,6 +41,8 @@ type Manager struct {
 	nextRegistrationID uint64
 	reservations       map[RegistrationID]*reservation
 	reservedSessions   map[SessionID]RegistrationID
+	registrations      map[RegistrationID]*registration
+	registeredSessions map[SessionID]RegistrationID
 }
 
 // New creates an Open Manager.
@@ -48,6 +52,8 @@ func New() *Manager {
 		nextRegistrationID: 1,
 		reservations:       make(map[RegistrationID]*reservation),
 		reservedSessions:   make(map[SessionID]RegistrationID),
+		registrations:      make(map[RegistrationID]*registration),
+		registeredSessions: make(map[SessionID]RegistrationID),
 	}
 }
 
