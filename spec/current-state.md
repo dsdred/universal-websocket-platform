@@ -159,13 +159,16 @@
 - Disabled Authentication формирует explicit anonymous Principal без запуска Provider
 - Реализована минимальная WebSocket Session, которая после Authentication владеет соединением, хранит криптографически случайный ID, глубокую копию Principal, RemoteAddress и время создания
 - Session Dispatcher создает Session из AuthenticatedContext и в текущей goroutine последовательно вызывает Start, блокирующий Run и завершающий Stop
+- Создан независимый пакет `internal/sessionmanager` с потокобезопасным lifecycle skeleton `Open -> Closing -> Closed`
+- Session Manager предоставляет только неблокирующий идемпотентный `BeginShutdown`, явный `Wait` и read-only наблюдение состояния; в `Open` метод `Wait` возвращает sentinel error и не начинает shutdown
+- Базовые типы `SessionID`, `RegistrationID` и `RegistrationView` не содержат Session и пока не подключены к registry или Runtime composition
 - Session не хранит исходный HTTP Request, Headers, Query, credentials, AuthenticationRequest или transport context wrappers
 - Добавлена immutable transport-neutral Runtime Message модель для text и binary application messages с копированием payload и UTC-временем получения
 - Session удерживает WebSocket-соединение открытым и выполняет единственный блокирующий read loop до закрытия клиента, отмены context, Stop или ошибки чтения
 - Session предоставляет потокобезопасный `Send(context.Context, message.Message)` для сериализованной отправки text и binary Runtime Message без raw `[]byte` API
 - Добавлен transport-neutral Runtime Message Handler contract; Session передает ему каждое прочитанное Message, а при nil Handler сохраняет discard-поведение
 - Реализован EchoHandler, возвращающий неизмененные text и binary Runtime Message исключительно через Session Send без доступа к WebSocket transport
-- Router, Middleware, Message Queue, Broadcast, Session Manager и Persistence отсутствуют
+- Router, Middleware, Message Queue, Broadcast, Session Manager registry/accounting и Persistence отсутствуют
 - Архитектура Runtime принята в ADR-003; pre-Upgrade Handshake реализован в объеме Authentication, а Configuration Loader, полный Session shutdown tracking, operational diagnostics и supervision еще отсутствуют
 
 ## Чего не существует
@@ -232,10 +235,11 @@
 ## Runtime Session Manager Design
 
 - Создан двуязычный Draft design [DP-003: Runtime Session Manager](../docs/ru/design/DP-003-runtime-session-manager.md) ([English version](../docs/en/design/DP-003-runtime-session-manager.md)).
-- Успешная регистрация предложена как единая linearization point передачи lifecycle ownership, видимости через lookup и включения Session в Runtime shutdown wait set до завершения Handshake handoff.
-- Session сохраняет единоличный ownership WebSocket, а Session Manager владеет только авторитетным множеством зарегистрированных Session, exactly-once removal, lookup по SessionID и shutdown coordination.
+- DP-003 разделяет ownership WebSocket, registration transaction, выполнение Session и tracking Manager; Session сохраняет единоличный ownership WebSocket после transport handoff.
+- `BeginShutdown` и `Wait` разделяют неблокирующий transition shutdown и ожидание, а атомарный `Complete` предлагается как единственная linearization point удаления будущей committed registration.
 - Runtime Host остается владельцем Admission Gate и корневого Runtime context; Listener, Authentication, Router, Delivery, Persistence и diagnostics не входят в ответственность Session Manager.
-- DP-003 пока не реализован: текущий Session Dispatcher по-прежнему синхронно выполняет отдельную Session без Runtime-wide registration, lookup и полного shutdown wait set.
+- Реализован только минимальный lifecycle skeleton Manager без интеграции с Runtime Host; Reserve, Commit, Abort, Complete, registry, lookup, Session accounting, execution owner, Stop capabilities и полный shutdown wait set отсутствуют.
+- Текущий Session Dispatcher по-прежнему синхронно выполняет отдельную Session без Runtime-wide registration и tracking.
 
 ## Runtime Foundation Freeze
 
