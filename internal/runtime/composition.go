@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/dsdred/universal-websocket-platform/internal/authentication"
-	"github.com/dsdred/universal-websocket-platform/internal/connection"
+	"github.com/dsdred/universal-websocket-platform/internal/handshake"
 	"github.com/dsdred/universal-websocket-platform/internal/listener"
 	"github.com/dsdred/universal-websocket-platform/internal/message"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
@@ -16,6 +16,8 @@ func composeRuntime(
 	snapshot runtimeconfig.Snapshot,
 	resolver secretresolver.Resolver,
 	handler message.Handler,
+	capabilities *handshakeCapabilities,
+	reportError func(error),
 ) (listener.Listener, error) {
 	registry := authentication.NewRegistry()
 	if err := registry.Register(authentication.APIKeyFactory{}); err != nil {
@@ -35,15 +37,21 @@ func composeRuntime(
 	}
 
 	sessionDispatcher := session.NewDispatcher(handler)
-	authenticationDispatcher, err := connection.NewAuthenticationDispatcher(
+	handshakeHandler, err := handshake.NewHandlerWithTerminalErrorReporter(
+		capabilities,
+		capabilities,
 		authenticationService,
 		sessionDispatcher,
+		reportError,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("create Authentication Dispatcher: %w", err)
+		return nil, fmt.Errorf("create Handshake: %w", err)
 	}
 
-	runtimeListener, err := listener.NewBootstrap(authenticationDispatcher).Build(snapshot.Listener)
+	runtimeListener, err := listener.NewBootstrapWithHandshakeAndTerminalErrorReporter(
+		handshakeHandler,
+		reportError,
+	).Build(snapshot.Listener)
 	if err != nil {
 		return nil, fmt.Errorf("build Listener: %w", err)
 	}

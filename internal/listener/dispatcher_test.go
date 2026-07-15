@@ -129,7 +129,7 @@ func startedListenerWithDispatcher(t *testing.T, dispatcher platformconnection.D
 	t.Helper()
 	snapshot := validListenerSnapshot()
 	snapshot.Port = availableTCPPort(t)
-	listener, err := NewBootstrap(dispatcher).Build(snapshot)
+	listener, err := NewBootstrapWithHandshake(testWebSocketHandler{dispatcher: dispatcher}).Build(snapshot)
 	if err != nil {
 		t.Fatalf("Build() error = %v", err)
 	}
@@ -142,4 +142,17 @@ func startedListenerWithDispatcher(t *testing.T, dispatcher platformconnection.D
 		t.Fatalf("Start() error = %v", err)
 	}
 	return listener
+}
+
+type testWebSocketHandler struct {
+	dispatcher platformconnection.Dispatcher
+}
+
+func (handler testWebSocketHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+	websocketConnection, err := websocket.Accept(response, request, nil)
+	if err != nil {
+		return
+	}
+	connectionContext := platformconnection.NewContext(request.Context(), websocketConnection, request)
+	_ = handler.dispatcher.Dispatch(connectionContext)
 }

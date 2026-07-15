@@ -2,6 +2,7 @@ package listener
 
 import (
 	"errors"
+	"net/http"
 	"testing"
 
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
@@ -12,7 +13,7 @@ func TestDefaultBootstrapImplementsBootstrap(t *testing.T) {
 }
 
 func TestBootstrapBuild(t *testing.T) {
-	created, err := (DefaultBootstrap{}).Build(validListenerSnapshot())
+	created, err := NewBootstrapWithHandshake(http.NotFoundHandler()).Build(validListenerSnapshot())
 	if err != nil {
 		t.Fatalf("Build() error = %v", err)
 	}
@@ -35,9 +36,16 @@ func TestBootstrapBuild(t *testing.T) {
 	var _ Listener = listener
 }
 
+func TestBootstrapBuildRejectsMissingHandshake(t *testing.T) {
+	created, err := (DefaultBootstrap{}).Build(validListenerSnapshot())
+	if created != nil || !errors.Is(err, ErrInvalidListenerConfiguration) {
+		t.Fatalf("Build() = (%v, %v), want nil and ErrInvalidListenerConfiguration", created, err)
+	}
+}
+
 func TestBootstrapBuildDeepCopiesSnapshot(t *testing.T) {
 	snapshot := validListenerSnapshot()
-	created, err := (DefaultBootstrap{}).Build(snapshot)
+	created, err := NewBootstrapWithHandshake(http.NotFoundHandler()).Build(snapshot)
 	if err != nil {
 		t.Fatalf("Build() error = %v", err)
 	}
@@ -81,7 +89,7 @@ func TestBootstrapBuildRejectsInvalidSnapshot(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			snapshot := validListenerSnapshot()
 			test.mutate(&snapshot)
-			created, err := (DefaultBootstrap{}).Build(snapshot)
+			created, err := NewBootstrapWithHandshake(http.NotFoundHandler()).Build(snapshot)
 			if created != nil || !errors.Is(err, ErrInvalidListenerConfiguration) {
 				t.Fatalf("Build() = (%v, %v), want nil and ErrInvalidListenerConfiguration", created, err)
 			}

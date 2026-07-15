@@ -120,7 +120,9 @@ func newWithDependencies(
 	if connection == nil {
 		return nil, ErrNilConnection
 	}
-	if !principal.Authenticated || principal.Anonymous {
+	validAuthenticated := principal.Authenticated && !principal.Anonymous
+	validAnonymous := principal.Anonymous && !principal.Authenticated && principal.ID == "anonymous"
+	if !validAuthenticated && !validAnonymous {
 		return nil, ErrInvalidPrincipal
 	}
 	id, err := generate()

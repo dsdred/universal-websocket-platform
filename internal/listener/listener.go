@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
-
-	"github.com/dsdred/universal-websocket-platform/internal/connection"
 )
 
 var (
@@ -42,17 +40,19 @@ type tlsConfiguration struct {
 
 // DefaultListener stores effective Listener metadata and coordinates its lifecycle.
 type DefaultListener struct {
-	mu         sync.RWMutex
-	host       string
-	port       uint16
-	tls        tlsConfiguration
-	state      listenerState
-	listener   net.Listener
-	server     *http.Server
-	serverStop context.CancelFunc
-	dispatcher connection.Dispatcher
-	wg         sync.WaitGroup
-	handlerWG  sync.WaitGroup
+	mu               sync.RWMutex
+	host             string
+	port             uint16
+	tls              tlsConfiguration
+	state            listenerState
+	listener         net.Listener
+	server           *http.Server
+	serverStop       context.CancelFunc
+	handshakeHandler http.Handler
+	reportError      func(error)
+	serveHTTP        func(*http.Server, net.Listener) error
+	wg               sync.WaitGroup
+	handlerWG        sync.WaitGroup
 }
 
 // Address returns the configured host and port without opening a socket.
@@ -82,8 +82,9 @@ func (listener *DefaultListener) Start(context.Context) error {
 		return err
 	}
 	serverContext, serverStop := context.WithCancel(context.Background())
+	httpHandler := newHTTPHandlerWithHandshake(listener.handshakeHandler)
 	httpServer := &http.Server{
-		Handler: trackedHandler(newHTTPHandler(listener.dispatcher), &listener.handlerWG),
+		Handler: trackedHandler(httpHandler, &listener.handlerWG),
 		BaseContext: func(net.Listener) context.Context {
 			return serverContext
 		},
@@ -143,7 +144,35 @@ func trackedHandler(handler http.Handler, waitGroup *sync.WaitGroup) http.Handle
 
 func (listener *DefaultListener) serve(httpServer *http.Server, tcpListener net.Listener) {
 	defer listener.wg.Done()
-	_ = httpServer.Serve(tcpListener)
+	err := listener.serveHTTP(httpServer, tcpListener)
+	if err != nil && !errors.Is(err, http.ErrServerClosed) && !errors.Is(err, net.ErrClosed) {
+		reportListenerTerminalError(listener.reportError, listenerServeError{cause: err})
+	}
+}
+
+type listenerServeError struct {
+	cause error
+}
+
+func (err listenerServeError) Error() string {
+	return "HTTP Server Serve failed"
+}
+
+func (err listenerServeError) Unwrap() error {
+	return err.cause
+}
+
+func reportListenerTerminalError(reporter func(error), err error) {
+	if reporter == nil || err == nil {
+		return
+	}
+	// Reporting is observer-only: a faulty consumer cannot terminate the serve owner or alter Stop.
+	func() {
+		defer func() {
+			_ = recover()
+		}()
+		reporter(err)
+	}()
 }
 
 func notImplementedHandler(response http.ResponseWriter, _ *http.Request) {

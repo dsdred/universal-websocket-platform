@@ -8,6 +8,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	platformconnection "github.com/dsdred/universal-websocket-platform/internal/connection"
 )
 
 func TestListenerStartAndStop(t *testing.T) {
@@ -152,7 +154,7 @@ func mustListener(t *testing.T) Listener {
 	t.Helper()
 	snapshot := validListenerSnapshot()
 	snapshot.Port = availableTCPPort(t)
-	listener, err := (DefaultBootstrap{}).Build(snapshot)
+	listener, err := NewBootstrapWithHandshake(testWebSocketHandler{dispatcher: platformconnection.DefaultDispatcher{}}).Build(snapshot)
 	if err != nil {
 		t.Fatalf("Build() error = %v", err)
 	}

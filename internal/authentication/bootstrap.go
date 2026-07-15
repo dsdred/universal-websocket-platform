@@ -44,7 +44,7 @@ func (bootstrap *DefaultBootstrap) Build(
 	snapshot runtimeconfig.AuthenticationSnapshot,
 ) (Service, error) {
 	if !snapshot.Enabled {
-		return NewService(nil)
+		return anonymousService{}, nil
 	}
 
 	providers := make([]Provider, 0, len(snapshot.Providers))

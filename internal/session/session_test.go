@@ -46,6 +46,18 @@ func TestNewSession(t *testing.T) {
 	}
 }
 
+func TestNewSessionAcceptsExplicitAnonymousPrincipal(t *testing.T) {
+	serverConnection, _ := testWebSocketPair(t)
+	principal := authentication.Principal{ID: "anonymous", Name: "anonymous", Anonymous: true}
+	runtimeSession, err := New(serverConnection, principal, "")
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+	if got := runtimeSession.Principal(); !got.Anonymous || got.Authenticated || got.ID != "anonymous" {
+		t.Fatalf("Principal() = %+v, want explicit anonymous Principal", got)
+	}
+}
+
 func TestNewSessionRejectsNilConnectionAndInvalidPrincipal(t *testing.T) {
 	if session, err := New(nil, validPrincipal(), ""); session != nil || !errors.Is(err, ErrNilConnection) {
 		t.Fatalf("New(nil connection) = (%v, %v)", session, err)

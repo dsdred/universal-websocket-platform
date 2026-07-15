@@ -7,9 +7,10 @@ import (
 	"github.com/coder/websocket"
 )
 
-// ConnectionContext contains immutable transport references for one upgraded connection.
+// ConnectionContext contains transport references and the derived lifecycle for one upgraded connection.
 type ConnectionContext struct {
 	ctx        context.Context
+	cancel     context.CancelFunc
 	connection *websocket.Conn
 	request    *http.Request
 }
@@ -27,9 +28,31 @@ func NewContext(
 	}
 }
 
+// NewRuntimeContext creates a connection context derived from the Host-owned Runtime context.
+func NewRuntimeContext(
+	runtimeContext context.Context,
+	websocketConnection *websocket.Conn,
+	request *http.Request,
+) ConnectionContext {
+	connectionContext, cancel := context.WithCancel(runtimeContext)
+	return ConnectionContext{
+		ctx:        connectionContext,
+		cancel:     cancel,
+		connection: websocketConnection,
+		request:    request,
+	}
+}
+
 // Context returns the lifecycle Context associated with the connection.
 func (connectionContext ConnectionContext) Context() context.Context {
 	return connectionContext.ctx
+}
+
+// Cancel ends the derived connection lifecycle when its current owner is finished.
+func (connectionContext ConnectionContext) Cancel() {
+	if connectionContext.cancel != nil {
+		connectionContext.cancel()
+	}
 }
 
 // Connection returns the upgraded WebSocket connection.

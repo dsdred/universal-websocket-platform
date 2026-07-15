@@ -49,8 +49,8 @@ func TestBootstrapBuildDisabledAuthentication(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Authenticate() error = %v", err)
 	}
-	if result.Success {
-		t.Fatal("Authenticate() Success = true, want false")
+	if !result.Success || result.Principal == nil || !result.Principal.Anonymous || result.Principal.Authenticated || result.Principal.ID != "anonymous" {
+		t.Fatalf("Authenticate() result = %+v, want explicit anonymous Principal", result)
 	}
 }
 

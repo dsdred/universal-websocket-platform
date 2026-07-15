@@ -37,10 +37,9 @@ func TestSessionDispatcherListenerRejectsMissingCredentialsAndContinues(t *testi
 	service := listenerAPIKeyService(t, listenerMemoryResolver(t, "correct-key"))
 	listener := startedListenerWithAuthentication(t, service, platformsession.NewDispatcher(nil))
 
-	rejectedConnection, _ := dialWebSocketWithHeader(t, listener, "X-API-Key", "")
-	defer rejectedConnection.CloseNow()
-	if status := readWebSocketClose(t, rejectedConnection); status != websocket.StatusPolicyViolation {
-		t.Fatalf("rejected close status = %d, want %d", status, websocket.StatusPolicyViolation)
+	rejectedResponse := rejectWebSocketWithHeader(t, listener, "X-API-Key", "")
+	if rejectedResponse.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("rejected HTTP status = %d, want %d", rejectedResponse.StatusCode, http.StatusUnauthorized)
 	}
 
 	acceptedConnection, _ := dialWebSocketWithHeader(t, listener, "X-API-Key", "correct-key")

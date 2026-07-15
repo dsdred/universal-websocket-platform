@@ -97,13 +97,13 @@
 - Создан storage-neutral интерфейс Secret Resolver с общей валидацией и нормализацией Secret Reference
 - Добавлена потокобезопасная in-memory реализация для тестирования и будущей локальной разработки
 - Реальные Secret Storage backend еще не реализованы
-- Resolver используется API Key и JWT Provider, но пока не подключен к Runtime Container или Authentication Pipeline
+- Resolver используется API Key и JWT Provider и подключен к production Authentication Pipeline через Runtime Host composition
 
 ## JWT Provider Design
 
 - DP-003 предлагает Configuration-модель JWT Provider с несколькими Signing Keys, algorithms, issuers, audiences и Required Claims
 - Signing Keys представлены только Secret References без хранения PEM, JWK или HMAC secret в ConfigurationVersion
-- JWT Provider metadata и Runtime Provider реализованы; Runtime поддерживает только HS256, HS384 и HS512, а полный pipeline отсутствует
+- JWT Provider metadata и Runtime Provider реализованы; Runtime поддерживает только HS256, HS384 и HS512 и выполняет Provider через pre-Upgrade Authentication Pipeline
 
 ## Authentication Runtime Contracts Design
 
@@ -147,12 +147,16 @@
 - Listener хранит локальную копию Host, Port и TLS configuration и поддерживает lifecycle `Created -> Running -> Stopped`
 - Listener открывает TCP socket и запускает HTTP Server с единым ответом `501 Not Implemented` для любого запроса
 - Listener корректно завершает HTTP Server, accept loop и связанные goroutine через graceful shutdown
-- Listener выполняет RFC 6455 WebSocket Upgrade через endpoint `GET /ws` и передает соединение Connection Dispatcher
-- Immutable ConnectionContext содержит только context.Context, WebSocket connection и исходный HTTP request
+- Listener передает `GET /ws` выделенному Handshake Handler; `websocket.Accept` выполняется только после начальной проверки Admission Gate, Authentication Allow Decision и финальной проверки Gate
+- Immutable ConnectionContext содержит derived Runtime context, WebSocket connection и исходный HTTP request, используемый только синхронно при handoff
 - DefaultDispatcher сразу завершает переданное WebSocket-соединение с normal closure; Bootstrap позволяет внедрить другую реализацию Dispatcher
-- Authentication подключена к WebSocket connection pipeline через AuthenticationDispatcher без зависимости Listener от пакета Authentication
-- AuthenticationDispatcher преобразует HTTP handshake metadata в transport-neutral AuthenticationRequest и передает успешное соединение следующему AuthenticatedDispatcher вместе с immutable Principal context
-- Отказ Authentication пока происходит после WebSocket Upgrade через close frame `PolicyViolation`, а системные ошибки используют `InternalError`
+- Production composition передает Handshake только read-only Admission capability и Runtime Context Provider; concrete Runtime Host в Handshake не передается
+- Handshake преобразует HTTP metadata в transport-neutral AuthenticationRequest и выполняет Authentication до `websocket.Accept`
+- Authentication Reject и operational error предотвращают Upgrade и возвращаются как HTTP rejection; Session создается только после успешного Upgrade
+- Runtime composition явно передает Handshake и Listener минимальный callback для terminal operational errors без diagnostics registry, event bus или глобального состояния
+- Handshake сохраняет через `errors.Is` причину Session handoff failure в безопасной error-категории; Listener аналогично передает unexpected `http.Server.Serve` failure
+- Штатные `http.ErrServerClosed` и `net.ErrClosed` при Listener shutdown не создают ложные terminal error reports
+- Disabled Authentication формирует explicit anonymous Principal без запуска Provider
 - Реализована минимальная WebSocket Session, которая после Authentication владеет соединением, хранит криптографически случайный ID, глубокую копию Principal, RemoteAddress и время создания
 - Session Dispatcher создает Session из AuthenticatedContext и в текущей goroutine последовательно вызывает Start, блокирующий Run и завершающий Stop
 - Session не хранит исходный HTTP Request, Headers, Query, credentials, AuthenticationRequest или transport context wrappers
@@ -162,7 +166,7 @@
 - Добавлен transport-neutral Runtime Message Handler contract; Session передает ему каждое прочитанное Message, а при nil Handler сохраняет discard-поведение
 - Реализован EchoHandler, возвращающий неизмененные text и binary Runtime Message исключительно через Session Send без доступа к WebSocket transport
 - Router, Middleware, Message Queue, Broadcast, Session Manager и Persistence отсутствуют
-- Архитектура Runtime принята в ADR-003; Configuration Loader, pre-Upgrade Handshake, Session shutdown tracking, operational diagnostics и supervision еще не реализованы
+- Архитектура Runtime принята в ADR-003; pre-Upgrade Handshake реализован в объеме Authentication, а Configuration Loader, полный Session shutdown tracking, operational diagnostics и supervision еще отсутствуют
 
 ## Чего не существует
 
@@ -174,7 +178,7 @@
 - Поведения Runtime для WebSocket-серверов
 - Реальный TLS listener и другие сетевые параметры Listener
 - Применение Listener TimeoutSettings в Runtime
-- Pre-Upgrade Authentication и полный Handshake Pipeline
+- Полный Handshake Pipeline за пределами Authentication: configured timeout enforcement, Session shutdown wait set и operational diagnostics
 - Проверка Basic credentials
 - Асимметричные JWT algorithms, JWKS, OIDC и token revocation
 - Реальные Secret Storage backend и подключение Resolver к Runtime Container еще не реализованы
@@ -189,7 +193,7 @@
 - 2026-07-14 выполнено двуязычное [Runtime Alpha Architecture Review](../docs/ru/reviews/runtime-alpha-review.md) ([English version](../docs/en/reviews/runtime-alpha-review.md)).
 - Итоговая оценка: `Ready with findings`.
 - Подтверждены immutable Snapshot, явный dependency injection, отсутствие import cycles и зависимости Runtime от Control Plane Repository, transport-neutral границы Authentication и Message, а также явная передача владения WebSocket-соединением.
-- До начала Router необходимо устранить Authentication после WebSocket Upgrade, отсутствие production composition в Runtime Host и неполную ограниченность lifecycle shutdown по context.
+- Authentication после WebSocket Upgrade и отсутствие production composition в Runtime Host устранены; неполная ограниченность lifecycle shutdown по context остается открытым finding.
 - Проект остается alpha foundation и не заявляется как production-ready.
 
 ## Runtime Architectural Pattern
@@ -213,7 +217,7 @@
 - Выбрана концептуальная последовательность `Transport -> Handshake Context -> Evaluation -> Decision -> Upgrade -> Session`.
 - Design переносит обязательную Authentication до WebSocket Upgrade, сохраняя transport-neutral Authentication Service и ownership Session после успешной передачи.
 - Listener остается владельцем HTTP/WebSocket transport effects и не получает Provider-specific logic.
-- Документ не изменяет текущую реализацию: Authentication по-прежнему выполняется после Upgrade до отдельной implementation task.
+- Реализация следует основному порядку DP-001: Admission Gate, Authentication, Allow Decision, финальная проверка Gate, Upgrade и Session handoff.
 - Origin Policy, rate limiting, maintenance, IP filtering, Router, Session Manager и Plugin ABI остаются future work без зафиксированных API.
 
 ## Runtime Host Composition Root Design
@@ -230,7 +234,7 @@
 - Создан двуязычный [ARCH-002: Runtime Foundation Freeze](../docs/ru/architecture/ARCH-002-runtime-foundation-freeze.md) ([English version](../docs/en/architecture/ARCH-002-runtime-foundation-freeze.md)).
 - Архитектурно стабильными признаны реализованные Runtime Host, production composition root, lifecycle, root Runtime context, startup transaction и rollback, readiness и lifecycle-only Admission Gate.
 - Freeze фиксирует фактический lifecycle `Created -> Built -> Starting -> Running -> Stopping -> Stopped` и не объявляет реализованными предложенные в Draft DP-002 состояния `Initialized` или `Failed`.
-- Handshake, Authentication Pipeline до Upgrade, Session ownership в Runtime shutdown, Router, Delivery, Persistence, Operational Diagnostics и supervision остаются открытой архитектурой.
+- Session ownership в полном Runtime shutdown wait set, Router, Delivery, Persistence, Operational Diagnostics и supervision остаются открытой архитектурой.
 - Изменение замороженных архитектурных обязанностей, ownership или lifecycle-семантики требует нового сфокусированного DP или ADR.
 
 ## Handshake Runtime Dependency Boundary
@@ -241,4 +245,4 @@
 - Handshake должен проверять admission до Authentication и повторно непосредственно перед `websocket.Accept`; Runtime context holder создается вместе с Host и активируется только при успешном startup commit.
 - Финальная проверка admission непосредственно перед `websocket.Accept` является linearization point входа в admission commit; закрытие Gate до нее запрещает Upgrade.
 - Session context должен создаваться как дочерний от активного Runtime context, а не от `http.Request.Context()`; root `CancelFunc` Handshake не раскрывается.
-- Решение не вводит concrete Go API и пока не изменяет реализацию: Authentication по-прежнему выполняется после Upgrade до отдельной задачи.
+- ADR-0004 реализован минимальным capability bridge: Handshake не зависит от concrete Host, а Session context создается от активного Runtime context.

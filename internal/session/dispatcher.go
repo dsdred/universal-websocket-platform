@@ -41,12 +41,11 @@ func newDispatcher(factory sessionFactory) *Dispatcher {
 }
 
 // DispatchAuthenticated transfers connection ownership to a new Session.
-func (dispatcher *Dispatcher) DispatchAuthenticated(authenticatedContext connection.AuthenticatedContext) error {
+func (dispatcher *Dispatcher) DispatchAuthenticated(authenticatedContext connection.AuthenticatedContext) (bool, error) {
 	connectionContext := authenticatedContext.ConnectionContext()
 	ctx := connectionContext.Context()
 	if err := ctx.Err(); err != nil {
-		connectionContext.Connection().CloseNow()
-		return err
+		return false, err
 	}
 
 	runtimeSession, err := dispatcher.factory.Create(
@@ -55,17 +54,16 @@ func (dispatcher *Dispatcher) DispatchAuthenticated(authenticatedContext connect
 		connectionContext.Request().RemoteAddr,
 	)
 	if err != nil {
-		connectionContext.Connection().CloseNow()
-		return err
+		return false, err
 	}
 	if err := runtimeSession.Start(ctx); err != nil {
-		_ = runtimeSession.Stop(context.Background())
-		return err
+		return false, err
 	}
+	defer connectionContext.Cancel()
 	runErr := runtimeSession.Run(ctx)
 	stopErr := runtimeSession.Stop(context.Background())
 	if runErr != nil {
-		return runErr
+		return true, runErr
 	}
-	return stopErr
+	return true, stopErr
 }

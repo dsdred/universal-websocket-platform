@@ -133,7 +133,7 @@ func newExposingSessionDispatcher() *exposingSessionDispatcher {
 	}
 }
 
-func (dispatcher *exposingSessionDispatcher) DispatchAuthenticated(authenticatedContext platformconnection.AuthenticatedContext) error {
+func (dispatcher *exposingSessionDispatcher) DispatchAuthenticated(authenticatedContext platformconnection.AuthenticatedContext) (bool, error) {
 	connectionContext := authenticatedContext.ConnectionContext()
 	runtimeSession, err := platformsession.New(
 		connectionContext.Connection(),
@@ -142,22 +142,22 @@ func (dispatcher *exposingSessionDispatcher) DispatchAuthenticated(authenticated
 	)
 	if err != nil {
 		dispatcher.done <- err
-		return err
+		return false, err
 	}
 	if err := runtimeSession.Start(connectionContext.Context()); err != nil {
 		_ = runtimeSession.Stop(context.Background())
 		dispatcher.done <- err
-		return err
+		return false, err
 	}
 	dispatcher.sessions <- runtimeSession
 	runErr := runtimeSession.Run(connectionContext.Context())
 	stopErr := runtimeSession.Stop(context.Background())
 	if runErr != nil {
 		dispatcher.done <- runErr
-		return runErr
+		return true, runErr
 	}
 	dispatcher.done <- stopErr
-	return stopErr
+	return true, stopErr
 }
 
 func (dispatcher *exposingSessionDispatcher) nextSession(t *testing.T) platformsession.Session {

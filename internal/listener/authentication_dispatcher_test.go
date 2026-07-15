@@ -14,10 +14,11 @@ import (
 
 	"github.com/dsdred/universal-websocket-platform/internal/authentication"
 	platformconnection "github.com/dsdred/universal-websocket-platform/internal/connection"
+	platformhandshake "github.com/dsdred/universal-websocket-platform/internal/handshake"
 	"github.com/dsdred/universal-websocket-platform/internal/secretresolver"
 )
 
-func TestAuthenticationDispatcherListenerIntegrationWithValidAPIKey(t *testing.T) {
+func TestPreUpgradeAuthenticationWithValidAPIKey(t *testing.T) {
 	service := listenerAPIKeyService(t, listenerMemoryResolver(t, "correct-key"))
 	next := newClosingAuthenticatedDispatcher(websocket.StatusNormalClosure, nil)
 	listener := startedListenerWithAuthentication(t, service, next)
@@ -51,7 +52,7 @@ func TestAuthenticationDispatcherListenerIntegrationWithValidAPIKey(t *testing.T
 	}
 }
 
-func TestAuthenticationDispatcherListenerRejectsCredentialsAndContinues(t *testing.T) {
+func TestPreUpgradeAuthenticationRejectsCredentialsAndContinues(t *testing.T) {
 	service := listenerAPIKeyService(t, listenerMemoryResolver(t, "correct-key"))
 	next := newClosingAuthenticatedDispatcher(websocket.StatusNormalClosure, nil)
 	listener := startedListenerWithAuthentication(t, service, next)
@@ -64,10 +65,9 @@ func TestAuthenticationDispatcherListenerRejectsCredentialsAndContinues(t *testi
 		{name: "invalid", value: "wrong-key"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			websocketConnection, _ := dialWebSocketWithHeader(t, listener, "X-API-Key", test.value)
-			defer websocketConnection.CloseNow()
-			if status := readWebSocketClose(t, websocketConnection); status != websocket.StatusPolicyViolation {
-				t.Fatalf("close status = %d, want %d", status, websocket.StatusPolicyViolation)
+			response := rejectWebSocketWithHeader(t, listener, "X-API-Key", test.value)
+			if response.StatusCode != http.StatusUnauthorized {
+				t.Fatalf("HTTP status = %d, want %d", response.StatusCode, http.StatusUnauthorized)
 			}
 		})
 	}
@@ -96,23 +96,22 @@ func TestAuthenticationDispatcherListenerRejectsCredentialsAndContinues(t *testi
 	}
 }
 
-func TestAuthenticationDispatcherListenerClosesOnResolverError(t *testing.T) {
+func TestPreUpgradeAuthenticationRejectsResolverError(t *testing.T) {
 	wantErr := errors.New("resolver unavailable")
 	service := listenerAPIKeyService(t, failingResolver{err: wantErr})
 	next := newClosingAuthenticatedDispatcher(websocket.StatusNormalClosure, nil)
 	listener := startedListenerWithAuthentication(t, service, next)
 
-	websocketConnection, _ := dialWebSocketWithHeader(t, listener, "X-API-Key", "credential")
-	defer websocketConnection.CloseNow()
-	if status := readWebSocketClose(t, websocketConnection); status != websocket.StatusInternalError {
-		t.Fatalf("close status = %d, want %d", status, websocket.StatusInternalError)
+	response := rejectWebSocketWithHeader(t, listener, "X-API-Key", "credential")
+	if response.StatusCode != http.StatusServiceUnavailable {
+		t.Fatalf("HTTP status = %d, want %d", response.StatusCode, http.StatusServiceUnavailable)
 	}
 	if next.calls.Load() != 0 {
 		t.Fatalf("next calls = %d, want 0", next.calls.Load())
 	}
 }
 
-func TestAuthenticationDispatcherDoesNotCloseAfterNextError(t *testing.T) {
+func TestPreUpgradeAuthenticationDoesNotCloseAfterAcceptedHandoffError(t *testing.T) {
 	wantErr := errors.New("downstream failed")
 	service := listenerAPIKeyService(t, listenerMemoryResolver(t, "correct-key"))
 	next := newClosingAuthenticatedDispatcher(websocket.StatusGoingAway, wantErr)
@@ -128,7 +127,7 @@ func TestAuthenticationDispatcherDoesNotCloseAfterNextError(t *testing.T) {
 	}
 }
 
-func TestAuthenticationDispatcherConcurrentAuthenticatedConnections(t *testing.T) {
+func TestPreUpgradeAuthenticationConcurrentConnections(t *testing.T) {
 	service := listenerAPIKeyService(t, listenerMemoryResolver(t, "correct-key"))
 	next := newClosingAuthenticatedDispatcher(websocket.StatusNormalClosure, nil)
 	listener := startedListenerWithAuthentication(t, service, next)
@@ -166,7 +165,7 @@ func TestAuthenticationDispatcherConcurrentAuthenticatedConnections(t *testing.T
 	}
 }
 
-func TestAuthenticationDispatcherListenerSmokeScenario(t *testing.T) {
+func TestPreUpgradeAuthenticationListenerSmokeScenario(t *testing.T) {
 	service := listenerAPIKeyService(t, listenerMemoryResolver(t, "correct-key"))
 	next := newClosingAuthenticatedDispatcher(websocket.StatusNormalClosure, nil)
 	listener := startedListenerWithAuthentication(t, service, next)
@@ -201,13 +200,13 @@ func newClosingAuthenticatedDispatcher(status websocket.StatusCode, err error) *
 
 func (dispatcher *closingAuthenticatedDispatcher) DispatchAuthenticated(
 	authenticatedContext platformconnection.AuthenticatedContext,
-) error {
+) (bool, error) {
 	dispatcher.calls.Add(1)
 	dispatcher.received <- authenticatedContext
 	websocketConnection := authenticatedContext.ConnectionContext().Connection()
 	defer websocketConnection.CloseNow()
 	_ = websocketConnection.Close(dispatcher.status, "")
-	return dispatcher.err
+	return true, dispatcher.err
 }
 
 func (dispatcher *closingAuthenticatedDispatcher) receivedContext(t *testing.T) platformconnection.AuthenticatedContext {
@@ -227,11 +226,50 @@ func startedListenerWithAuthentication(
 	next platformconnection.AuthenticatedDispatcher,
 ) Listener {
 	t.Helper()
-	dispatcher, err := platformconnection.NewAuthenticationDispatcher(service, next)
+	runtimeContext, cancelRuntime := context.WithCancel(context.Background())
+	handshakeHandler, err := platformhandshake.NewHandler(
+		alwaysOpenAdmission{},
+		staticRuntimeContext{ctx: runtimeContext},
+		service,
+		next,
+	)
 	if err != nil {
-		t.Fatalf("NewAuthenticationDispatcher() error = %v", err)
+		t.Fatalf("NewHandler() error = %v", err)
 	}
-	return startedListenerWithDispatcher(t, dispatcher)
+	snapshot := validListenerSnapshot()
+	snapshot.Port = availableTCPPort(t)
+	runtimeListener, err := NewBootstrapWithHandshake(handshakeHandler).Build(snapshot)
+	if err != nil {
+		t.Fatalf("Build() error = %v", err)
+	}
+	wrapped := &runtimeContextListener{Listener: runtimeListener, cancel: cancelRuntime}
+	t.Cleanup(func() {
+		if err := wrapped.Stop(context.Background()); err != nil {
+			t.Errorf("cleanup Stop() error = %v", err)
+		}
+	})
+	if err := runtimeListener.Start(context.Background()); err != nil {
+		t.Fatalf("Start() error = %v", err)
+	}
+	return wrapped
+}
+
+type alwaysOpenAdmission struct{}
+
+func (alwaysOpenAdmission) CanAccept() bool { return true }
+
+type staticRuntimeContext struct{ ctx context.Context }
+
+func (provider staticRuntimeContext) RuntimeContext() context.Context { return provider.ctx }
+
+type runtimeContextListener struct {
+	Listener
+	cancel context.CancelFunc
+}
+
+func (runtimeListener *runtimeContextListener) Stop(ctx context.Context) error {
+	runtimeListener.cancel()
+	return runtimeListener.Listener.Stop(ctx)
 }
 
 func listenerAPIKeyService(t *testing.T, resolver secretresolver.Resolver) authentication.Service {
@@ -288,6 +326,31 @@ func dialWebSocketWithHeader(
 		t.Fatalf("Dial() error = %v", err)
 	}
 	return websocketConnection, response
+}
+
+func rejectWebSocketWithHeader(
+	t *testing.T,
+	listener Listener,
+	headerName string,
+	headerValue string,
+) *http.Response {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	header := make(http.Header)
+	if headerValue != "" {
+		header.Set(headerName, headerValue)
+	}
+	connection, response, err := websocket.Dial(ctx, websocketURL(listener, websocketPath), &websocket.DialOptions{HTTPHeader: header})
+	if connection != nil {
+		connection.CloseNow()
+		t.Fatal("websocket.Dial() unexpectedly succeeded")
+	}
+	if err == nil || response == nil {
+		t.Fatalf("websocket.Dial() = (%v, %v), want HTTP rejection", response, err)
+	}
+	t.Cleanup(func() { response.Body.Close() })
+	return response
 }
 
 func readWebSocketClose(t *testing.T, websocketConnection *websocket.Conn) websocket.StatusCode {

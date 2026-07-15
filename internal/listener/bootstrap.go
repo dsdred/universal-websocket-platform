@@ -1,9 +1,10 @@
 package listener
 
 import (
+	"net"
+	"net/http"
 	"strings"
 
-	"github.com/dsdred/universal-websocket-platform/internal/connection"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
 )
 
@@ -12,14 +13,24 @@ type Bootstrap interface {
 	Build(runtimeconfig.ListenerSnapshot) (Listener, error)
 }
 
-// DefaultBootstrap builds the default Runtime Listener with an injectable Dispatcher.
+// DefaultBootstrap builds the default Runtime Listener with an injected Handshake boundary.
 type DefaultBootstrap struct {
-	dispatcher connection.Dispatcher
+	handshakeHandler http.Handler
+	reportError      func(error)
 }
 
-// NewBootstrap creates a Listener Bootstrap with the supplied Connection Dispatcher.
-func NewBootstrap(dispatcher connection.Dispatcher) DefaultBootstrap {
-	return DefaultBootstrap{dispatcher: dispatcher}
+// NewBootstrapWithHandshake creates a Listener Bootstrap with a pre-Upgrade Handshake handler.
+func NewBootstrapWithHandshake(handler http.Handler) DefaultBootstrap {
+	return DefaultBootstrap{handshakeHandler: handler}
+}
+
+// NewBootstrapWithHandshakeAndTerminalErrorReporter creates a Listener Bootstrap with explicit error reporting.
+// The callback is synchronous and must return promptly; a callback panic is isolated from Listener lifecycle.
+func NewBootstrapWithHandshakeAndTerminalErrorReporter(
+	handler http.Handler,
+	reportError func(error),
+) DefaultBootstrap {
+	return DefaultBootstrap{handshakeHandler: handler, reportError: reportError}
 }
 
 // Build validates and copies Listener Snapshot metadata without opening a socket.
@@ -37,10 +48,8 @@ func (bootstrap DefaultBootstrap) Build(snapshot runtimeconfig.ListenerSnapshot)
 	if snapshot.TLS.Enabled && (certificateRef == "" || privateKeyRef == "") {
 		return nil, ErrInvalidListenerConfiguration
 	}
-
-	dispatcher := bootstrap.dispatcher
-	if dispatcher == nil {
-		dispatcher = connection.DefaultDispatcher{}
+	if bootstrap.handshakeHandler == nil {
+		return nil, ErrInvalidListenerConfiguration
 	}
 
 	return &DefaultListener{
@@ -52,7 +61,11 @@ func (bootstrap DefaultBootstrap) Build(snapshot runtimeconfig.ListenerSnapshot)
 			privateKeyRef:  privateKeyRef,
 			minVersion:     minVersion,
 		},
-		state:      listenerCreated,
-		dispatcher: dispatcher,
+		state:            listenerCreated,
+		handshakeHandler: bootstrap.handshakeHandler,
+		reportError:      bootstrap.reportError,
+		serveHTTP: func(server *http.Server, listener net.Listener) error {
+			return server.Serve(listener)
+		},
 	}, nil
 }

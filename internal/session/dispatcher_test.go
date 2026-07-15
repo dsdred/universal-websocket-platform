@@ -57,7 +57,7 @@ func TestDispatcherReturnsFactoryError(t *testing.T) {
 	}
 }
 
-func TestDispatcherReturnsStartErrorAndStopsSession(t *testing.T) {
+func TestDispatcherReturnsStartErrorWithoutAcceptingOwnership(t *testing.T) {
 	wantErr := errors.New("start Session")
 	runtimeSession := &sessionStub{startErr: wantErr}
 	dispatcher := newDispatcher(&sessionFactoryStub{session: runtimeSession})
@@ -67,8 +67,8 @@ func TestDispatcherReturnsStartErrorAndStopsSession(t *testing.T) {
 	if !errors.Is(err, wantErr) {
 		t.Fatalf("DispatchAuthenticated() error = %v, want Start error", err)
 	}
-	if runtimeSession.stopCalls.Load() != 1 {
-		t.Fatalf("Stop() calls = %d, want 1", runtimeSession.stopCalls.Load())
+	if runtimeSession.stopCalls.Load() != 0 {
+		t.Fatalf("Stop() calls = %d, want 0 before ownership acceptance", runtimeSession.stopCalls.Load())
 	}
 }
 
@@ -104,17 +104,10 @@ func TestDispatcherRejectsCanceledContextBeforeCreatingSession(t *testing.T) {
 	factory := &sessionFactoryStub{session: &sessionStub{}}
 	dispatcher := newDispatcher(factory)
 	ctx, cancel := context.WithCancel(context.Background())
-	service := authenticationServiceFunc(func(context.Context, authentication.AuthenticationRequest) (authentication.AuthenticationResult, error) {
-		cancel()
-		return successfulResult(validPrincipal()), nil
-	})
-	authenticationDispatcher, err := connection.NewAuthenticationDispatcher(service, dispatcher)
-	if err != nil {
-		t.Fatalf("NewAuthenticationDispatcher() error = %v", err)
-	}
+	cancel()
 	request := httptest.NewRequest("GET", "http://example.test/ws", nil).WithContext(ctx)
 
-	err = authenticationDispatcher.Dispatch(connection.NewContext(ctx, serverConnection, request))
+	err := dispatchToSession(t, ctx, request, dispatcher, validPrincipal(), serverConnection)
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("Dispatch() error = %v, want context.Canceled", err)
 	}
@@ -183,27 +176,13 @@ func dispatchToSession(
 	websocketConnection *websocket.Conn,
 ) error {
 	t.Helper()
-	service := authenticationServiceFunc(func(context.Context, authentication.AuthenticationRequest) (authentication.AuthenticationResult, error) {
-		return successfulResult(principal), nil
-	})
-	authenticationDispatcher, err := connection.NewAuthenticationDispatcher(service, dispatcher)
-	if err != nil {
-		t.Fatalf("NewAuthenticationDispatcher() error = %v", err)
+	connectionContext := connection.NewRuntimeContext(ctx, websocketConnection, request)
+	authenticatedContext := connection.NewAuthenticatedContext(connectionContext, principal)
+	accepted, err := dispatcher.DispatchAuthenticated(authenticatedContext)
+	if !accepted {
+		connectionContext.Cancel()
 	}
-	return authenticationDispatcher.Dispatch(connection.NewContext(ctx, websocketConnection, request))
-}
-
-func successfulResult(principal authentication.Principal) authentication.AuthenticationResult {
-	return authentication.AuthenticationResult{Success: true, Principal: &principal}
-}
-
-type authenticationServiceFunc func(context.Context, authentication.AuthenticationRequest) (authentication.AuthenticationResult, error)
-
-func (function authenticationServiceFunc) Authenticate(
-	ctx context.Context,
-	request authentication.AuthenticationRequest,
-) (authentication.AuthenticationResult, error) {
-	return function(ctx, request)
+	return err
 }
 
 type sessionFactoryStub struct {

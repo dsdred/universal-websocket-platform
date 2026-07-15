@@ -58,7 +58,9 @@ type DefaultHost struct {
 	compose           runtimeComposer
 	newRuntimeContext runtimeContextFactory
 	stateObserver     func(hostState)
+	reportError       func(error)
 	admission         admissionGate
+	capabilities      *handshakeCapabilities
 	runtimeListener   listener.Listener
 	runtimeContext    context.Context
 	runtimeCancel     context.CancelFunc
@@ -75,7 +77,7 @@ func NewHost(
 	resolver secretresolver.Resolver,
 	handler message.Handler,
 ) (*DefaultHost, error) {
-	return newHost(snapshot, resolver, handler, composeRuntime)
+	return newHostWithTerminalErrorReporter(snapshot, resolver, handler, nil, nil)
 }
 
 type runtimeComposer func(
@@ -92,6 +94,16 @@ func newHost(
 	handler message.Handler,
 	compose runtimeComposer,
 ) (*DefaultHost, error) {
+	return newHostWithTerminalErrorReporter(snapshot, resolver, handler, compose, nil)
+}
+
+func newHostWithTerminalErrorReporter(
+	snapshot runtimeconfig.Snapshot,
+	resolver secretresolver.Resolver,
+	handler message.Handler,
+	compose runtimeComposer,
+	reportError func(error),
+) (*DefaultHost, error) {
 	if isZeroSnapshot(snapshot) {
 		return nil, ErrNilSnapshot
 	}
@@ -104,17 +116,33 @@ func newHost(
 		return nil, err
 	}
 
-	return &DefaultHost{
-		snapshot:  container.Snapshot(),
-		container: container,
-		resolver:  resolver,
-		handler:   handler,
-		compose:   compose,
+	host := &DefaultHost{
+		snapshot:    container.Snapshot(),
+		container:   container,
+		resolver:    resolver,
+		handler:     handler,
+		reportError: reportError,
 		newRuntimeContext: func() (context.Context, context.CancelFunc) {
 			return context.WithCancel(context.Background())
 		},
 		state: hostCreated,
-	}, nil
+	}
+	host.capabilities = &handshakeCapabilities{
+		canAccept:      host.CanAccept,
+		runtimeContext: host.RuntimeContext,
+	}
+	if compose == nil {
+		host.compose = func(
+			snapshot runtimeconfig.Snapshot,
+			resolver secretresolver.Resolver,
+			handler message.Handler,
+		) (listener.Listener, error) {
+			return composeRuntime(snapshot, resolver, handler, host.capabilities, host.reportError)
+		}
+	} else {
+		host.compose = compose
+	}
+	return host, nil
 }
 
 // Snapshot returns an independent copy of the Host Snapshot.
