@@ -164,6 +164,7 @@
 - Реализована первая полная граница Reservation transaction: `Reserve` создает уникальный за lifetime Manager `RegistrationID`, запрещает резервировать `SessionID`, уже занятый Reservation или committed Registration, и возвращает единственный Handle
 - Abort атомарно удаляет Reservation, после чего ее `SessionID` можно использовать повторно; stale и concurrent Abort не имеют повторного accounting effect
 - `Commit` является единственной linearization point появления Registration: он атомарно завершает Reservation, сохраняет тот же `RegistrationID` и публикует committed Registration ровно один раз; после успешного Commit методы `Abort` и `AbortUnlessCommitted` ничего не изменяют
+- `Complete(RegistrationID)` является единственной linearization point удаления Registration: первая валидная completion атомарно удаляет committed record и освобождает `SessionID`, а repeated, unknown и stale completion ничего не изменяют
 - Reservation и committed Registration содержат только identity metadata, не хранят Session, WebSocket, Context или Runtime-компоненты и пока не участвуют в shutdown accounting
 - Committed registrations хранятся внутри Manager, но публичные registry и lookup API отсутствуют; базовый `RegistrationView` по-прежнему не предоставляет поведения
 - Session не хранит исходный HTTP Request, Headers, Query, credentials, AuthenticationRequest или transport context wrappers
@@ -242,7 +243,7 @@
 - DP-003 разделяет ownership WebSocket, registration transaction, выполнение Session и tracking Manager; Session сохраняет единоличный ownership WebSocket после transport handoff.
 - `BeginShutdown` и `Wait` разделяют неблокирующий transition shutdown и ожидание, а атомарный `Complete` предлагается как единственная linearization point удаления будущей committed registration.
 - Runtime Host остается владельцем Admission Gate и корневого Runtime context; Listener, Authentication, Router, Delivery, Persistence и diagnostics не входят в ответственность Session Manager.
-- Реализованы lifecycle skeleton Manager и Reservation transaction `Reserve -> Commit | Abort` через owned Handle: Commit атомарно публикует внутреннюю committed Registration и сохраняет ее identity. Публичные registry/lookup API, Complete, Session accounting, execution owner, Stop capabilities, интеграция с Runtime Host и полный shutdown wait set отсутствуют.
+- Реализованы lifecycle skeleton Manager и identity-safe transaction `Reserve -> Commit | Abort`, затем `Complete(RegistrationID)`: Commit атомарно публикует внутреннюю committed Registration, а первая валидная Complete атомарно удаляет ее без риска для новой Registration с повторно использованным `SessionID`. Публичные registry/lookup API, Session accounting, execution owner, Stop capabilities, интеграция с Runtime Host и полный shutdown wait set отсутствуют.
 - Текущий Session Dispatcher по-прежнему синхронно выполняет отдельную Session без Runtime-wide registration и tracking.
 
 ## Runtime Foundation Freeze
