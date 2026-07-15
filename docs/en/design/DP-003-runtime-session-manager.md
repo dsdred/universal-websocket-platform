@@ -6,292 +6,502 @@
 
 **Status:** Draft
 
+This revision simplifies the lifecycle after the second independent architecture review. It separates shutdown transition from waiting, reduces completion to one atomic mutation, and defines continuous ownership for every registration transaction. It does not define concrete Go APIs or neighboring Runtime subsystems.
+
 ## 2. Problem Statement
 
-The Runtime can create and run a Session after a successful Handshake, but it has no component that owns the set of live Sessions. A Session is currently executed synchronously by the handoff path and is not registered in a Runtime-wide shutdown wait set. Runtime therefore has no single place to answer whether a Session is still active, prevent an admitted connection from escaping shutdown tracking, or wait for every handed-off Session to finish.
+Runtime can create and run a Session after successful Handshake, but it has no authoritative registry or complete shutdown accounting for handed-off Sessions. The current HTTP handler synchronously owns Session `Start/Run/Stop`. Runtime cannot yet prove that every successful handoff is tracked until terminal completion or that shutdown cannot miss an in-flight registration.
 
-[DP-001](DP-001-runtime-handshake-pipeline.md) requires a Session to enter the Runtime shutdown wait set before ownership handoff completes. [ARCH-002](../architecture/ARCH-002-runtime-foundation-freeze.md) deliberately leaves Session ownership in that wait set open. This proposal defines that missing boundary without changing the frozen Runtime Host, Admission Gate, Runtime context, or startup transaction.
+[DP-001](DP-001-runtime-handshake-pipeline.md) requires a Session to enter Runtime shutdown tracking before handoff completes. [ARCH-002](../architecture/ARCH-002-runtime-foundation-freeze.md) leaves Session ownership and the complete shutdown wait set open. This proposal defines only that lifecycle foundation while preserving frozen Host, Admission Gate, Runtime context, startup, rollback, and Listener lifecycle semantics.
 
 ## 3. Goals
 
-- Define one lifecycle owner for the set of Sessions in one Runtime instance.
-- Make registration the exact boundary at which a Session becomes Runtime-visible and joins the shutdown wait set.
-- Make removal deterministic and exactly once.
-- Support lookup by the minimum stable identity required by the Runtime.
-- Coordinate graceful Runtime shutdown without taking transport ownership away from Session.
-- Preserve explicit ownership, bounded lifecycle, and ordinary dependency injection.
+- Preserve one WebSocket owner through Handshake and Session handoff.
+- Define reservation and committed-registration ownership without an untracked gap.
+- Establish one linearization point for registration and one for completion.
+- Separate nonblocking shutdown transition from context-bounded waiting.
+- Make `Reserve/Register/Complete/BeginShutdown/Wait` races deterministic.
+- Provide identity-safe lookup metadata without exposing Session operations.
+- Keep Manager limited to registry and shutdown accounting.
 
 ## 4. Non Goals
 
-This document does not design:
+This document does not design Router, Delivery, Presence, Groups, Persistence, cluster ownership, Plugins, Metrics, diagnostics aggregation, Session limits policy, transport protocol, public API, Configuration fields, concrete Go interfaces, a generic Session framework, or a supervision framework.
 
-- Router or message dispatch policy;
-- Delivery, queues, retries, or backpressure;
-- Persistence or Session recovery;
-- Presence, Groups, Topics, or Broadcast;
-- cluster membership, federation, or distributed Session ownership;
-- Plugin SDK or Plugin ABI;
-- Metrics or an operational diagnostics framework;
-- public Control Plane or HTTP API;
-- concrete Go interfaces or storage structures.
+## 5. Ownership Boundaries
 
-Those systems may integrate with Session lifecycle later, but they do not belong to Session Manager.
+Four ownership concerns remain separate.
 
-## 5. Responsibilities
+### WebSocket Transport Ownership
 
-Session Manager is responsible only for:
+Upgrade boundary owns WebSocket and child connection context until Session explicitly accepts them. Before acceptance, Upgrade boundary is the sole closer. After acceptance, Session is the sole closer, including when later registration fails.
 
-- accepting lifecycle ownership of a successfully constructed Session;
-- registering and deregistering that Session;
-- maintaining the authoritative set of registered Sessions for one Runtime instance;
-- exact lookup of a registered Session by its stable SessionID;
-- coordinating Session closure and completion during Runtime shutdown;
-- enforcing the Runtime Session lifecycle invariants defined here.
+### Registration Transaction Ownership
 
-Session Manager does not authenticate clients, accept WebSockets, read messages, send messages, route traffic, persist state, evaluate policy, or own the root Runtime context.
+Successful Reserve returns one conceptual reservation handle. The calling Handshake/execution-setup control flow owns that handle until exactly one terminal operation:
 
-## 6. Ownership Model
+- `Commit`, which consumes the reservation and creates a committed record; or
+- `Abort`, which removes the reservation without registry visibility.
 
-The ownership chain is:
+The normative control-flow pattern is:
 
 ```text
-Runtime Host
-    -> Session Manager
-        -> Session
-            -> WebSocket connection
+reservation := Manager.Reserve(SessionID)
+defer reservation.AbortUnlessCommitted()
 ```
 
-The chain describes lifecycle authority, not shared transport ownership:
+This notation describes an ownership obligation, not a required Go API. Every recoverable return, rejection, error, or panic before Commit must execute Abort. Manager accounts for the reservation but does not own the goroutine responsible for Commit or Abort.
 
-- Runtime Host composes Session Manager and invokes its shutdown coordination. Host does not store or close individual Sessions.
-- Session Manager owns the authoritative membership and completion tracking of registered Sessions. It may request that a Session stop, but it does not close the WebSocket directly.
-- Session exclusively owns its WebSocket after the handoff defined by DP-001. Session performs the actual transport close and releases its per-connection resources.
+### Session Execution Ownership
 
-Before registration, the Upgrade boundary owns the candidate Session, derived connection context, and WebSocket. Successful registration is one atomic conceptual linearization point: the Session enters the Manager's registry and shutdown wait set, and Manager accepts lifecycle ownership. Only then may the Upgrade boundary report successful handoff.
+A narrow per-Session execution owner is created before registration Commit and lives at least until completion accounting finishes. It owns Session `Start/Run/Stop`, invokes Complete through a terminal defer on all recoverable paths, and exposes a stable non-owning Stop-request capability for Runtime shutdown. It is not a generic supervisor.
 
-If registration fails, ownership does not transfer and the Upgrade boundary closes the connection. After registration succeeds, an upper layer must not close the WebSocket or deregister the Session. Session completion follows the Manager-owned removal path.
+### Manager Tracking Ownership
 
-## 7. Runtime Session Lifecycle
+Manager owns only reservation accounting, committed registry membership, immutable lookup views, shutdown transition, and completion accounting. It does not own Session execution or WebSocket transport.
 
-The conceptual lifecycle is:
+## 6. Session Manager Responsibilities
+
+Manager contains only responsibilities tied by one invariant: Runtime is `Closed` only after every reserved transaction is resolved and every committed registration is completed.
+
+Manager is responsible for:
+
+- reservation accounting;
+- committed registry membership;
+- RegistrationID allocation and identity-safe completion;
+- immutable lookup by SessionID;
+- atomic `Open -> Closing` transition;
+- committed shutdown snapshot;
+- atomic completion accounting;
+- context-bounded waiting for empty accounting.
+
+Manager does not execute Session, own WebSocket, route or send messages, publish Presence events, retain terminal history, aggregate diagnostics, apply Session-limit policy, or know Router, Delivery, Presence, Persistence, and Groups.
+
+Registry may remain internal in the first version because reservation, commit, lookup, and completion share one atomic invariant. The boundary must permit later extraction without changing these semantics.
+
+## 7. Registration Transaction
+
+The normative sequence is:
 
 ```text
-Created
-    -> Registering
-    -> Registered
-    -> Running
-    -> Closing
-    -> Closed
-    -> Removed
+Reserve
+    -> create Session
+    -> create execution owner
+    -> Session accepts transport ownership
+    -> Commit registration with RegistrationID and Stop-request capability
+    -> execution owner performs Start/Run
+    -> deferred Complete
 ```
 
-These are architectural states, not a required Go enum.
+### Reserve
 
-- **Created:** the Upgrade boundary has constructed a Session candidate and still owns it.
-- **Registering:** Manager is attempting the atomic ownership and membership transition. This state is not externally visible through lookup.
-- **Registered:** ownership has transferred, the Session is visible to Runtime lookup, and it belongs to the shutdown wait set.
-- **Running:** Session executes its connection and message lifecycle. It remains registered.
-- **Closing:** Session is terminating because of peer closure, an error, its own lifecycle, or Runtime shutdown. It remains in the wait set.
-- **Closed:** Session transport and per-connection work have finished. It remains tracked only until removal completes.
-- **Removed:** Manager has removed it exactly once. It is no longer visible and no longer belongs to the wait set.
+Reserve is allowed only while Manager is `Open`. It validates SessionID and creates:
 
-A failure after successful registration does not bypass `Closing`, `Closed`, or `Removed`. A failure before registration leaves cleanup with the Upgrade boundary. Restarting or re-registering a removed Session is not supported.
+- a reservation handle with exclusive Commit-or-Abort obligation;
+- a RegistrationID unique for the lifetime of this Manager.
 
-## 8. Registration
+Reservation is counted for Manager closure but is invisible to Lookup and is not a committed Session in the shutdown registry.
 
-Registration is the single operation that makes a Session exist in the Runtime management domain. It must atomically establish all of the following:
+### Commit
 
-- SessionID is valid and not already registered;
-- Session becomes visible through lookup;
-- Session joins the Runtime shutdown wait set;
-- Session Manager accepts lifecycle ownership;
-- a concurrent shutdown will either observe the Session or reject registration.
+Commit consumes its reservation and atomically creates one committed record containing immutable identity metadata and a stable Stop-request capability. This mutation is the single registration linearization point: registry visibility and committed wait-set membership appear together.
 
-No successful handoff may refer to an unregistered Session. Registration is accepted at most once for a SessionID during the lifetime of one Manager. Registration after Manager has closed admission for shutdown is rejected; the Upgrade boundary remains responsible for cleanup.
+### Abort
 
-Registration must not start network I/O while holding Manager synchronization. The Manager must not call arbitrary Session behavior under its registry lock.
+Abort atomically removes an uncommitted reservation and wakes Wait callers when accounting may now be empty. Abort never creates lookup visibility or a committed record. Repeated Abort after Commit or Abort has no second accounting effect.
 
-## 9. Removal
+### Transport Handoff
 
-Removal occurs only after Session transport closure and Session execution have completed. Manager owns the removal transition, even when completion was caused by the peer or by a Session error.
+Session accepts transport before Commit. If any failure occurs before acceptance, Upgrade boundary closes the transport and the reservation owner aborts. If failure occurs after acceptance but before Commit, Session closes the transport through execution owner and the reservation owner aborts. There is always exactly one transport owner.
 
-Removal must:
+## 8. Reserve/Commit/BeginShutdown Linearization
 
-- happen exactly once;
-- remove all lookup visibility atomically;
-- remove the Session from the shutdown wait set;
-- wake shutdown coordination waiting for the set to become empty;
-- preserve the original Session termination result for the future diagnostics boundary without turning the registry into that boundary.
+This proposal chooses the strict shutdown model.
 
-Session must not mutate Manager storage directly. A Manager-owned execution/completion path observes terminal Session completion and performs removal. Repeated completion notifications are harmless and cannot decrement tracking twice. No tombstone is required in the first implementation; after removal, lookup reports absence.
+At one Manager synchronization boundary:
 
-## 10. Shutdown Coordination
+- a Commit completed before `BeginShutdown` becomes a committed record and belongs to the shutdown snapshot; or
+- `BeginShutdown` wins, Manager becomes `Closing`, and every uncommitted reservation loses the right to Commit.
 
-Session Manager participates in, but does not own, Runtime shutdown. The frozen Host remains the lifecycle coordinator and owns Admission Gate closure and root Runtime context cancellation.
+New Reserve is rejected after `Closing`. A pre-existing reservation whose Commit lost must execute Abort through its owner. If Session already accepted transport, execution owner requests Stop before Abort completes. Manager does not forcibly abort a handle because it does not own that control flow.
 
-The conceptual shutdown sequence is:
+There is no late Commit in `Closing` and no partially visible registration. Manager cannot become `Closed` until every invalidated reservation has reached Abort.
+
+## 9. Registration Identity
+
+Each reservation receives a RegistrationID with these normative properties:
+
+- opaque and immutable;
+- unique for the entire lifetime of one Manager;
+- never reused, including after Abort or Complete;
+- bound to exactly one reservation and at most one committed record;
+- unknown, completed, or stale RegistrationID cannot change accounting.
+
+Manager may allocate this identity without retaining removed records, provided allocation never reuses a value during its lifetime.
+
+SessionID is:
+
+- required and non-empty;
+- at most 255 bytes;
+- opaque and immutable;
+- compared byte-for-byte without normalization;
+- unique among current reservations and committed records.
+
+SessionID may be reused after Abort or Complete. The identity of one registration is the pair `(SessionID, RegistrationID)`. Manager does not automatically log raw SessionID; safe diagnostics require explicit encoding.
+
+SessionID is scoped to one Runtime instance and is not durable cross-Runtime identity.
+
+## 10. Session and Manager Record Lifecycles
+
+DP-003 does not add states to the existing Session state machine.
+
+Session remains the execution source of truth:
+
+```text
+Created -> Running -> Stopping -> Stopped
+```
+
+Manager record is only registration state:
+
+```text
+Reserved -> Registered -> Removed
+       \-> Aborted
+```
+
+- `Reserved` is invisible and carries Commit-or-Abort obligation.
+- `Registered` is visible and counted in the committed shutdown registry.
+- `Removed` follows the first valid Complete and is immediately invisible and uncounted.
+- `Aborted` never becomes visible or committed.
+
+There is no normative `Completing` state. Manager state never claims that Session is Running; Session state never claims registry membership.
+
+## 11. Execution Owner Lifetime
+
+Execution owner is created before Commit. Commit records its stable non-owning Stop-request capability. Execution owner remains alive until:
+
+- its Session execution has reached a recoverable terminal path;
+- it has attempted Complete;
+- every Stop request already issued through its stable capability has returned.
+
+Execution owner invokes `Start`, then `Run`, and invokes `Stop` according to the existing Session contract. A terminal defer attempts Complete exactly once for every recoverable return, error, or panic inside the owned execution goroutine.
+
+If BeginShutdown wins after Commit but before Start, the Stop-request capability may cancel startup or stop Session from `Created`. Start may then be skipped or fail as a normal terminal path. The defer still attempts Complete, so no committed record remains stranded.
+
+Complete does not destroy a capability while a previously issued Stop request is in progress. The shutdown snapshot owns the capability reference until that invocation returns; it does not own Session or extend registry visibility.
+
+## 12. Completion Linearization
+
+Complete identifies a committed record by RegistrationID. The first valid Complete performs one atomic mutation:
+
+```text
+Registered -> Removed
+```
+
+At that single linearization point Manager:
+
+- removes lookup visibility;
+- removes the committed record;
+- decrements committed wait-set accounting;
+- notifies Wait callers that accounting may be empty.
+
+Repeated Complete for the same RegistrationID is a no-op or one stable already-completed/unknown-registration contract result. It never decrements accounting again. Because RegistrationID is never reused, stale completion cannot affect a later registration reusing SessionID.
+
+Complete accounts for lifecycle termination only. Session and execution owner remain responsible for resource cleanup. Manager does not retain Session terminal result after Complete and does not aggregate it into Manager shutdown.
+
+## 13. Manager Lifecycle
+
+Manager lifecycle is:
+
+```text
+Open -> Closing -> Closed
+```
+
+Restart is forbidden.
+
+### Open
+
+- Reserve and Lookup are allowed.
+- Commit and Abort are allowed for owned reservations.
+- Complete is allowed for committed records.
+- BeginShutdown is allowed.
+
+### Closing
+
+- Reserve and Commit are rejected.
+- Abort and Complete remain allowed.
+- Lookup returns only current Registered views.
+- BeginShutdown is idempotent and refers to the same shutdown cycle.
+- Wait is allowed.
+- transition to `Closed` occurs automatically when reservation and committed accounting both become empty.
+
+### Closed
+
+- reservation set and committed registry are empty;
+- Reserve and Commit are rejected;
+- Lookup returns absence;
+- BeginShutdown is idempotent and exposes no active Stop capabilities;
+- Wait returns nil;
+- Abort and Complete have no accounting effect.
+
+## 14. BeginShutdown
+
+`BeginShutdown` is a conceptual nonblocking transition contract. It:
+
+- atomically changes `Open` to `Closing` once;
+- forbids new Reserve and every uncommitted Commit;
+- marks existing reservations as requiring Abort;
+- creates or exposes the stable shutdown snapshot of all records committed before the transition;
+- performs no network I/O;
+- invokes no Session operation;
+- waits for nothing;
+- is idempotent and joins the same shutdown cycle on repetition.
+
+The shutdown snapshot contains only stable non-owning Stop-request capabilities. It contains no raw Session, WebSocket, Handler, or mutable registry record.
+
+Removal by Complete does not invalidate a capability already issued for the current shutdown orchestration. Its lifetime continues until the corresponding Stop request returns. Repeated BeginShutdown does not create a new cycle or duplicate accounting.
+
+## 15. Stop-Request Capabilities
+
+A Stop-request capability represents permission to request termination from one execution owner without acquiring Session ownership.
+
+Each request must be nonblocking or bounded by its caller context and must not wait for full Session completion. Stop requests for different registrations are independent: one blocked or slow request cannot serialize requests to all other Sessions through Manager.
+
+Runtime shutdown orchestration owns invocation of the snapshot capabilities. Manager only produces the stable snapshot and later observes Complete mutations. No generic executor pool, worker framework, or Session supervisor is introduced.
+
+## 16. Wait
+
+`Wait(ctx)` observes the one Manager shutdown cycle. It does not initiate shutdown and does not perform Stop requests.
+
+Wait returns nil when both are empty:
+
+- reservation accounting;
+- committed registry accounting.
+
+The mutation that removes the final reservation or committed record automatically changes `Closing` to `Closed` and notifies all Wait callers.
+
+If caller context ends first:
+
+- Wait returns `ctx.Err()` to that caller;
+- Manager remains `Closing` while accounting is nonempty;
+- no record is falsely removed;
+- a later Wait continues observing the same cycle.
+
+Manager has no independent operational failure model in this proposal. Session errors are neither aggregated nor retained. BeginShutdown returns only contract validation results, and Wait after `Closed` returns nil rather than an undefined terminal Manager error.
+
+## 17. Runtime Shutdown Ordering
+
+The executable Runtime ordering is:
 
 ```text
 Host closes Admission Gate
-    -> no new Handshake admission commit may begin
-    -> Session Manager closes registration
-    -> in-flight registration resolves as accepted-and-tracked or rejected
-    -> Runtime context cancellation reaches Sessions
-    -> Manager requests closure of every registered Session
-    -> Manager waits until every registered Session is Removed
-    -> Runtime Stop may complete
+    -> Manager.BeginShutdown
+    -> Host cancels root Runtime context
+    -> Runtime shutdown orchestration invokes stable Stop-request capabilities independently
+    -> Host invokes existing Listener Stop
+    -> active Session executions terminate and call Complete
+    -> dependent HTTP handlers finish
+    -> Listener Stop returns
+    -> Manager.Wait
+    -> Manager Closed
+    -> remaining Runtime components stop
 ```
 
-The shutdown wait set is exactly the set of Sessions for which registration succeeded and removal has not completed. A Session enters the set at the registration linearization point, before handoff succeeds, and leaves only at removal.
+`BeginShutdown` cannot block Host before root cancellation. Manager Wait occurs after Listener Stop, while Complete happens on Session execution terminal paths before their handlers return. Therefore Listener may wait for handlers without waiting for Manager Wait, and Manager Wait observes accounting already converging independently. No lifecycle lock is held across Stop requests, Listener Stop, Session execution, or Wait.
 
-Closing Manager registration and registering a Session must be mutually ordered. A registration linearized before closure is included and awaited. A registration linearized after closure fails and remains owned by the Upgrade boundary. This rule closes the gap between the final Admission Gate check and ownership handoff without moving the Gate into Session Manager.
+This preserves [ARCH-002](../architecture/ARCH-002-runtime-foundation-freeze.md): Host closes admission and cancels root Runtime context before invoking existing Listener Stop. It adds no new Host state and does not change Listener ownership.
 
-Shutdown waiting must honor the caller's shutdown boundary when that policy is defined. This proposal does not select forced-close escalation or timeout policy. Regardless of timeout outcome, Manager must not falsely report an unremoved Session as removed.
+## 18. Panic, Failure, and Abandonment Limits
 
-## 11. Lookup
+Execution owner guarantees a deferred Complete attempt for all recoverable returns, errors, and panics inside its owned goroutine. Reservation owner guarantees deferred Abort for all recoverable exits before Commit.
 
-The mandatory first lookup key is **SessionID**. It is stable, unique within one Runtime instance, already belongs to Session metadata, and does not introduce identity or routing semantics.
+Completion is not guaranteed after:
 
-Lookup observes only registered, not-yet-removed Sessions. It must not expose Manager's mutable registry or transfer Session ownership. A caller receives only the capability needed by its future integration and remains unable to deregister or close transport behind Manager's lifecycle.
+- process termination;
+- unrecoverable runtime failure;
+- a permanently blocked goroutine;
+- violation of the reservation or execution-owner contract by an external component.
 
-The following keys are deferred:
+An abandoned reservation or execution may keep Manager in `Closing` indefinitely. This is an accepted limitation of truthful shutdown accounting: Manager does not invent completion and does not force goroutine termination.
 
-- **ConnectionID:** no separate stable Runtime meaning is currently established.
-- **Principal ID:** one Principal may own multiple Sessions and anonymous Sessions need explicit semantics.
-- **UserID:** no User domain exists in the Runtime contracts.
-- enumeration and secondary indexes: requirements depend on Delivery, Presence, and operational use cases.
+## 19. Lookup Contract
 
-These deferred lookup paths require focused design when real consumers exist.
+First-version Lookup is exact by SessionID and returns an immutable RegistrationView containing only:
 
-## 12. Runtime Context
+- SessionID;
+- RegistrationID;
+- manager-visible state, which is `Registered` for every visible record in this version.
 
-Session Manager does not create, replace, or cancel the root Runtime context. Host remains its sole owner under [ADR-0004](../adr/0004-handshake-runtime-dependencies.md).
+Lookup never returns raw Session, execution owner, Stop capability, Send operation, or mutable record.
 
-The Upgrade boundary creates a connection context derived from the active Runtime context. Before registration, its cancellation belongs to the Upgrade boundary. At successful registration and ownership handoff, per-connection cancellation becomes part of Session lifecycle. Manager tracks and coordinates that lifecycle but never receives the root cancellation function.
+Lookup semantics:
 
-Root Runtime cancellation signals every derived Session context during shutdown. Manager still waits for actual Session completion and removal; context cancellation alone is not evidence that cleanup has finished.
+- reservation is invisible;
+- Complete removes visibility at its single linearization point;
+- lookup does not extend lifetime;
+- returned view may become stale immediately;
+- `(SessionID, RegistrationID)` distinguishes reuse of SessionID;
+- during `Closing`, only records still Registered are visible;
+- after `Closed`, lookup returns absence.
 
-## 13. Architectural Invariants
+RegistrationView is not a Router, Delivery, Presence, lease, or targeting contract.
 
-- Every handed-off Session is registered in exactly one Session Manager.
-- Every registered Session belongs to the Runtime shutdown wait set.
-- Successful registration is the single lifecycle ownership transfer point.
-- Session is the sole owner and closer of its WebSocket after transfer.
-- A SessionID is registered at most once during one Manager lifetime.
-- Removal happens exactly once and only after Session completion.
-- Lookup never returns a removed or not-yet-registered Session.
-- Closing registration is ordered atomically with concurrent registration.
-- Shutdown cannot complete while the shutdown wait set is non-empty.
-- Manager does not hold registry synchronization while invoking Session network or lifecycle work.
-- Manager does not own Authentication, routing, message handling, or Runtime root context cancellation.
-- Host does not become a Session registry or close individual Session transports.
-- Failures cannot silently abandon a registered Session outside both lookup and shutdown tracking.
+## 20. Runtime Context
 
-## 14. Future Integration
+Manager does not create, own, replace, or cancel root Runtime context. Host remains its sole owner under [ADR-0004](../adr/0004-handshake-runtime-dependencies.md). Root cancellation is one shutdown signal to execution owners; only Complete changes Manager accounting.
 
-Future systems integrate at the Session Manager boundary without changing ownership:
+## 21. Architectural Invariants
 
-- **Router** may target a currently registered Session but does not own its lifecycle.
-- **Delivery** may resolve a target by a future lookup/index contract; queueing and retry semantics remain separate.
-- **Presence** may derive state from registration and removal events; Presence is not stored by Manager.
-- **Groups** may index SessionIDs without owning Sessions or transport.
-- **Persistence** may record durable metadata or events; a persisted record never becomes ownership of a live Session.
+- WebSocket always has exactly one owner.
+- Reservation handle has exactly one terminal Commit-or-Abort accounting effect.
+- Registration Commit is the sole registry-visibility linearization point.
+- BeginShutdown is the sole `Open -> Closing` linearization point.
+- No Commit succeeds after BeginShutdown.
+- Complete is one atomic `Registered -> Removed` mutation.
+- RegistrationID is never reused during Manager lifetime.
+- Stale Complete cannot affect another registration.
+- Manager becomes `Closed` only with empty reservation and committed accounting.
+- BeginShutdown performs no I/O and Wait performs no Stop requests.
+- Stop capabilities are stable for in-progress shutdown invocation and never expose raw Session.
+- Lookup returns immutable identity metadata only and never extends lifetime.
+- Manager does not execute Session, own transport, route, deliver, publish Presence, store history, aggregate diagnostics, or apply limits.
 
-This section names integration seams only. It does not design those subsystems or their APIs.
+## 22. Future Integration and Limits
 
-## 15. Alternatives
+DP-003 guarantees only ownership-safe registration and truthful shutdown tracking.
 
-### Alternative A — No Session Manager
+- Router requires a separate targeting contract.
+- Delivery requires a separate lifetime-aware capability.
+- Presence requires a separate event or snapshot contract.
+- Persistence requires Runtime instance identity.
+- Groups are outside this proposal.
 
-**Advantages:** preserves the current small handoff path and adds no component.
+Session limits remain outside DP-003. Manager lifecycle provides a possible future registration-admission observation point, but policy, configured limits, and rejection semantics require separate Configuration validation and focused design. The MASTER_PLAN Session Manager epic is therefore split conceptually into this lifecycle foundation and a future limits capability.
 
-**Disadvantages:** there is no authoritative live set, lookup, exactly-once removal, or complete shutdown wait set. DP-001 handoff requirements remain unsatisfied.
+## 23. God-Object Prevention
 
-**Decision:** rejected because Runtime cannot prove ownership or shutdown completion.
+Manager contains only reservation accounting, committed registry, identity-safe lookup views, shutdown transition, and completion accounting. These responsibilities share one atomic emptiness invariant.
 
-### Alternative B — Runtime Host Owns Sessions Directly
+Manager explicitly does not execute Session, own WebSocket, route or send messages, publish domain events, retain terminal history, aggregate diagnostics, or apply limits policy. Future systems cannot add those responsibilities merely because Manager exposes registration metadata.
 
-**Advantages:** fewer top-level components and direct access during Stop.
+## 24. Alternatives
 
-**Disadvantages:** Host becomes a mutable Session registry and gains per-connection lifecycle logic. This conflicts with its frozen composition and lifecycle-coordination role and moves it toward a god object.
+### Alternative A — One Blocking Manager Stop
 
-**Decision:** rejected. Host composes and coordinates Manager instead.
+**Advantage:** one lifecycle call.
 
-### Alternative C — Listener Owns Sessions
+**Disadvantage:** Host cannot deterministically close registration, cancel Runtime, invoke Listener Stop, and only then wait without hidden asynchronous behavior.
 
-**Advantages:** Listener is near accepted connections and transport shutdown.
+**Decision:** rejected in favor of separate BeginShutdown and Wait.
 
-**Disadvantages:** it couples HTTP/WebSocket transport to Runtime Session identity, lookup, and future consumers. It also obscures the ownership boundary between Upgrade and Session.
+### Alternative B — Allow Reserved Transactions to Commit in Closing
 
-**Decision:** rejected because Listener must remain a transport component.
+**Advantage:** fewer aborted handoffs during concurrent shutdown.
 
-### Alternative D — Distributed Session Ownership
+**Disadvantage:** shutdown snapshot remains open to late committed records and requires dynamic Stop-capability discovery.
 
-**Advantages:** could provide cross-instance lookup and coordination for a cluster.
+**Decision:** rejected for the first version. Strict BeginShutdown invalidates every uncommitted reservation.
 
-**Disadvantages:** requires membership, failure detection, consistency, remote addressing, and partition semantics before the single-instance lifecycle is settled.
+### Alternative C — Return Raw Session from Lookup
 
-**Decision:** rejected for the current Runtime. Cluster and federation are deferred beyond this proposal.
+**Advantage:** immediately useful to callers.
 
-### Alternative E — Separate Registry and Manager
+**Disadvantage:** exposes mutable lifecycle and creates stale-reference and ownership ambiguity.
 
-**Advantages:** separates indexing from lifecycle coordination and could allow specialized indexes later.
+**Decision:** rejected; Lookup returns immutable RegistrationView only.
 
-**Disadvantages:** the first implementation would split the atomic registration/removal invariant across two owners without an independent use case. It increases coordination and failure modes.
+### Alternative D — Retain Completion History
 
-**Decision:** rejected for now. Extraction may be reconsidered after multiple real lookup or indexing consumers exist.
+**Advantage:** distinguishes repeated completion from unknown identity and aids diagnostics.
 
-## 16. Explicitly Out of Scope
+**Disadvantage:** turns Manager into history storage and grows state beyond live accounting.
 
-- Router, Delivery, queues, backpressure, and persistence;
-- Presence, Groups, Topics, Broadcast, and fan-out;
-- cluster, federation, horizontal scaling, and remote lookup;
-- Plugin contracts or extension loading;
-- Metrics, tracing, logging policy, and diagnostics sinks;
-- Authentication and Authorization decisions;
-- Session transport protocol and message loop behavior;
-- public API, Configuration DSL additions, and database schema;
-- concrete concurrency primitives or Go method signatures.
+**Decision:** rejected. Unknown and already-completed RegistrationID have the same no-accounting-effect semantics.
 
-## 17. Migration Strategy
+### Alternative E — Separate Registry Component Immediately
 
-Migration is incremental and must preserve current behavior:
+**Advantage:** isolates indexing.
 
-1. Compose one Session Manager per Runtime instance through Runtime Host without changing frozen Host lifecycle states.
-2. Route successful post-Upgrade Session construction through Manager registration.
-3. Make registration success the DP-001 handoff acceptance point; retain Upgrade-boundary cleanup on failure.
-4. Run existing Session lifecycle under Manager completion tracking and exactly-once removal.
-5. Include Manager's wait set in Runtime shutdown coordination after Admission Gate closure.
-6. Add SessionID lookup only when registration, removal, and shutdown tests prove the ownership invariants.
+**Disadvantage:** splits one registration/completion invariant before independent consumers exist.
 
-No migration step changes Authentication, Listener transport behavior, Message handling, or Configuration Snapshot. Each step must retain a single closer for the WebSocket and must be independently testable under concurrent handoff and shutdown.
+**Decision:** rejected for the first version; internal boundaries must still permit later extraction.
 
-## 18. Open Questions
+## 25. Migration Strategy
 
-- What bounded escalation applies when a Session does not finish before the shutdown caller's deadline?
-- How should a Session start failure after successful registration be categorized for operational diagnostics?
-- Does a future ConnectionID have semantics distinct from SessionID?
-- Which capability shape should a lookup return without exposing lifecycle mutation?
-- When real consumers require enumeration, what consistency guarantee is necessary during concurrent removal?
-- Which later component publishes Session lifecycle events without making Manager a diagnostics framework?
+The internal lifecycle changes substantially.
 
-These questions do not block agreement on ownership, registration, removal, or the shutdown wait-set invariant. They require separate implementation design or focused proposals when their consumers are known.
+Current model:
 
-## 19. Review Readiness
+```text
+HTTP handler synchronously owns Session Start/Run/Stop
+```
 
-This Draft is ready for architecture review when reviewers can verify that:
+Proposed model:
 
-- registration is an unambiguous ownership and shutdown-tracking linearization point;
-- every successful DP-001 handoff is either tracked or cleaned up by the Upgrade boundary;
-- Session remains the sole WebSocket owner after handoff;
-- shutdown cannot miss a concurrent registration;
-- removal and lookup rules are deterministic under concurrency;
-- Manager does not absorb Host, Listener, Authentication, Router, Delivery, or diagnostics responsibilities;
-- migration can occur without changing frozen Runtime Foundation semantics.
+```text
+Handshake owns reservation
+    -> creates Session and execution owner
+    -> Session accepts transport
+    -> registration commits
+    -> execution owner runs Session and defers Complete
+```
 
-Implementation should not begin until the ownership transfer, shutdown ordering, and minimum lookup decision receive architecture approval.
+External WebSocket behavior remains unchanged, but internal concurrency, ownership, registration, and shutdown semantics change. Migration must therefore be treated as lifecycle work, not as a behavior-neutral refactor, and must be race-reviewed at every boundary.
 
-## 20. References
+## 26. Open Questions
+
+- What concrete non-owning Stop-request capability shape satisfies the bounded-return contract?
+- How will terminal Session results reach a future diagnostics boundary without Manager aggregation?
+- What future design owns configured Session limits?
+- What Runtime instance identity will future Persistence combine with SessionID?
+- What operational response is appropriate for an accepted permanently blocked reservation or execution?
+
+These questions do not change the linearization points or Manager accounting defined here.
+
+## 27. Architecture Review Traceability
+
+| Finding | Status | Resolution |
+| --- | --- | --- |
+| F-01 | Resolved | BeginShutdown performs the nonblocking transition; Wait is a separate context-bounded observation. |
+| F-02 | Resolved | Complete is one atomic `Registered -> Removed` mutation and the sole visibility/accounting linearization point. |
+| F-03 | Resolved | Reservation handle gives Handshake/execution setup continuous Commit-or-Abort ownership. |
+| F-04 | Resolved | Execution owner exists before Commit; shutdown between Commit and Start is a normal terminal path ending in Complete. |
+| F-05 | Resolved | Shutdown snapshot contains stable Stop capabilities whose invocation lifetime survives Complete. |
+| F-06 | Resolved | Stop requests are independent and nonblocking or caller-context bounded; Manager invokes none of them. |
+| F-07 | Resolved | Runtime shutdown orchestration owns Stop requests; Manager progresses through Abort/Complete mutations without a waiting caller. |
+| F-08 | Resolved | RegistrationView includes never-reused RegistrationID, distinguishing SessionID reuse. |
+| F-09 | Resolved | RegistrationID is unique for Manager lifetime and never reused. |
+| F-10 | Resolved | Undefined Manager terminal error was removed; Wait after Closed returns nil. |
+| F-11 | Clarified | Deferred completion is guaranteed only for recoverable owned-goroutine paths; nonrecoverable cases are accepted limitations. |
+| F-12 | Clarified | Lookup is intentionally metadata-only and is not an operational Session capability. |
+| F-13 | Resolved | Lookup returns immutable RegistrationView, never raw Session or mutable execution capability. |
+| F-14 | Resolved | Normative `Completing` state was removed. |
+| F-15 | Resolved | Execution owner is created before Commit and survives completion plus outstanding Stop invocations. |
+| F-16 | Clarified | SessionID is opaque, byte-for-byte, at most 255 bytes, and not automatically logged raw. |
+| F-17 | Clarified | Migration explicitly acknowledges substantial internal lifecycle and concurrency changes. |
+| F-18 | Clarified | Manager responsibilities are restricted by explicit negative invariants. |
+| F-19 | Clarified | Exactly-once describes effective accounting mutation, not notification delivery. |
+| F-20 | Accepted limitation | Permanent abandonment can retain truthful accounting and keep Manager Closing. |
+| F-21 | Deferred | Limits are split into a future focused Configuration/admission capability. |
+| F-22 | Resolved | BeginShutdown is the explicit nonblocking `Open -> Closing` contract. |
+| F-23 | Resolved | Complete atomically removes visibility and wait-set accounting. |
+| F-24 | Resolved | Reservation handle is the continuous owner before Commit or Abort. |
+| F-25 | Resolved | Shutdown snapshot retains Stop-capability lifetime independently of registry visibility. |
+| F-26 | Resolved | Manager has no terminal error aggregation; Wait returns nil or caller `ctx.Err()`. |
+| F-27 | Resolved | Immutable view carries RegistrationID, so stale and reused SessionID observations are distinguishable. |
+
+## 28. Approval Readiness
+
+Second-review Blockers F-01 through F-03 are resolved by split shutdown contracts, atomic Complete, and continuously owned reservation handles. High findings F-04 through F-10 are resolved through execution-owner lifetime, stable Stop capabilities, independent shutdown orchestration, identity-safe views, and removal of undefined Manager terminal errors.
+
+Accepted limitations are explicit: process termination, unrecoverable failure, permanently blocked goroutines, or external contract violation may prevent accounting from becoming empty. Manager remains truthfully `Closing` rather than declaring false completion.
+
+Remaining questions concern concrete capability shape, future diagnostics delivery, configured limits, durable Runtime identity, and operational handling of permanently blocked work. They do not alter the core lifecycle.
+
+**Approval decision candidate:** Approved with Findings.
+
+The document remains Draft until independent review confirms the simplified BeginShutdown/Wait ordering, atomic completion, reservation ownership, and stable capability lifetime.
+
+## 29. References
 
 - [ARCH-001: Runtime Architectural Pattern](../architecture/ARCH-001-runtime-architectural-pattern.md)
 - [ARCH-002: Runtime Foundation Freeze](../architecture/ARCH-002-runtime-foundation-freeze.md)
@@ -299,4 +509,3 @@ Implementation should not begin until the ownership transfer, shutdown ordering,
 - [DP-002: Runtime Host Composition Root](DP-002-runtime-host-composition-root.md)
 - [ADR-0004: Handshake Runtime Dependency Boundary](../adr/0004-handshake-runtime-dependencies.md)
 - [Master Engineering Plan](../roadmap/MASTER_PLAN.md)
-
