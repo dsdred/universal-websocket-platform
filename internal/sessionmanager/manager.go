@@ -46,6 +46,7 @@ type Manager struct {
 	registrations      map[RegistrationID]*registration
 	registeredSessions map[SessionID]RegistrationID
 	shutdownDone       chan struct{}
+	shutdownSnapshot   ShutdownSnapshot
 }
 
 // New creates an Open Manager.
@@ -61,15 +62,19 @@ func New() *Manager {
 	}
 }
 
-// BeginShutdown atomically starts the single Manager shutdown cycle.
+// BeginShutdown atomically starts the single Manager shutdown cycle and
+// returns its immutable committed Registration Snapshot.
 // It is nonblocking and idempotent in Closing and Closed.
-func (manager *Manager) BeginShutdown() {
+func (manager *Manager) BeginShutdown() ShutdownSnapshot {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
 
 	if manager.state == StateOpen {
+		manager.shutdownSnapshot = manager.captureShutdownSnapshotLocked()
 		manager.state = StateClosing
 	}
+
+	return manager.shutdownSnapshot.clone()
 }
 
 // Wait observes shutdown completion without changing accounting.
