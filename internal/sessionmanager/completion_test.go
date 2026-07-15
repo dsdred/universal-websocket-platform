@@ -207,8 +207,8 @@ func TestManagerConcurrentCompleteAndBeginShutdown(t *testing.T) {
 			t.Fatalf("iteration %d: Complete() = false, want true", iteration)
 		}
 		<-shutdownDone
-		if got := manager.State(); got != StateClosing {
-			t.Fatalf("iteration %d: State() = %v, want StateClosing", iteration, got)
+		if got := manager.State(); got != StateClosing && got != StateClosed {
+			t.Fatalf("iteration %d: State() = %v, want StateClosing or StateClosed", iteration, got)
 		}
 		assertRegistrationCount(t, manager, 0)
 	}
@@ -234,16 +234,16 @@ func TestManagerCompleteDoesNotChangeLifecycle(t *testing.T) {
 	}
 }
 
-func TestManagerCompleteAfterClosedDoesNotDependOnShutdownState(t *testing.T) {
+func TestManagerCompleteInClosingClosesManager(t *testing.T) {
 	manager := New()
 	registrationID := mustCommit(t, mustReserve(t, manager, "session-1"))
 	manager.BeginShutdown()
-	if err := manager.Wait(context.Background()); err != nil {
-		t.Fatalf("Wait() error = %v", err)
+	if got := manager.State(); got != StateClosing {
+		t.Fatalf("State() before Complete = %v, want StateClosing", got)
 	}
 
 	if completed := manager.Complete(registrationID); !completed {
-		t.Fatal("Complete() in Closed = false, want true")
+		t.Fatal("Complete() in Closing = false, want true")
 	}
 	if got := manager.State(); got != StateClosed {
 		t.Fatalf("State() after Complete = %v, want StateClosed", got)

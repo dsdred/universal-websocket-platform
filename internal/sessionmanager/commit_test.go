@@ -198,15 +198,18 @@ func TestReservationCommitAndBeginShutdownShareLinearizationBoundary(t *testing.
 		if result.err == nil {
 			assertReservationCount(t, manager, 0)
 			assertRegistration(t, manager, result.registrationID, "session-1")
+			if got := manager.State(); got != StateClosing {
+				t.Fatalf("iteration %d: State() = %v, want StateClosing", iteration, got)
+			}
 		} else if errors.Is(result.err, ErrManagerNotOpen) {
 			assertReservationCount(t, manager, 1)
 			assertRegistrationCount(t, manager, 0)
 			handle.AbortUnlessCommitted()
+			if got := manager.State(); got != StateClosed {
+				t.Fatalf("iteration %d: State() = %v, want StateClosed", iteration, got)
+			}
 		} else {
 			t.Fatalf("iteration %d: Commit() error = %v", iteration, result.err)
-		}
-		if got := manager.State(); got != StateClosing {
-			t.Fatalf("iteration %d: State() = %v, want StateClosing", iteration, got)
 		}
 	}
 }
@@ -226,6 +229,9 @@ func TestReservationCommitAfterBeginShutdownRequiresAbort(t *testing.T) {
 
 	handle.AbortUnlessCommitted()
 	assertReservationCount(t, manager, 0)
+	if got := manager.State(); got != StateClosed {
+		t.Fatalf("State() = %v, want StateClosed", got)
+	}
 }
 
 func TestCommittedSessionIDCannotBeReservedAgain(t *testing.T) {
@@ -242,7 +248,7 @@ func TestCommittedSessionIDCannotBeReservedAgain(t *testing.T) {
 	}
 }
 
-func TestCommittedRegistrationDoesNotChangeManagerLifecycle(t *testing.T) {
+func TestCommittedRegistrationKeepsManagerClosingUntilComplete(t *testing.T) {
 	manager := New()
 	handle := mustReserve(t, manager, "session-1")
 	registrationID, err := handle.Commit()
@@ -251,14 +257,21 @@ func TestCommittedRegistrationDoesNotChangeManagerLifecycle(t *testing.T) {
 	}
 
 	manager.BeginShutdown()
-	if err := manager.Wait(context.Background()); err != nil {
-		t.Fatalf("Wait() error = %v", err)
+	waitContext, cancelWait := context.WithCancel(context.Background())
+	cancelWait()
+	if err := manager.Wait(waitContext); !errors.Is(err, context.Canceled) {
+		t.Fatalf("Wait() error = %v, want context.Canceled", err)
 	}
-
-	if got := manager.State(); got != StateClosed {
-		t.Fatalf("State() = %v, want StateClosed", got)
+	if got := manager.State(); got != StateClosing {
+		t.Fatalf("State() = %v, want StateClosing", got)
 	}
 	assertRegistration(t, manager, registrationID, "session-1")
+	if completed := manager.Complete(registrationID); !completed {
+		t.Fatal("Complete() = false, want true")
+	}
+	if got := manager.State(); got != StateClosed {
+		t.Fatalf("State() after Complete = %v, want StateClosed", got)
+	}
 }
 
 type commitResult struct {

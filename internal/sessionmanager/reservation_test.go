@@ -192,20 +192,28 @@ func TestReservationStaleAbortDoesNotRemoveReusedSessionID(t *testing.T) {
 	assertReservationCount(t, manager, 0)
 }
 
-func TestReservationCanAbortAfterManagerClosed(t *testing.T) {
+func TestReservationAbortCompletesShutdown(t *testing.T) {
 	manager := New()
 	handle := mustReserve(t, manager, "session-1")
 	manager.BeginShutdown()
-	if err := manager.Wait(context.Background()); err != nil {
-		t.Fatalf("Wait() error = %v", err)
+	waitContext, cancelWait := context.WithCancel(context.Background())
+	cancelWait()
+	if err := manager.Wait(waitContext); !errors.Is(err, context.Canceled) {
+		t.Fatalf("Wait() error = %v, want context.Canceled", err)
 	}
 	assertReservationCount(t, manager, 1)
+	if got := manager.State(); got != StateClosing {
+		t.Fatalf("State() before Abort = %v, want StateClosing", got)
+	}
 
 	handle.Abort()
 
 	assertReservationCount(t, manager, 0)
 	if got := manager.State(); got != StateClosed {
 		t.Fatalf("State() = %v, want StateClosed", got)
+	}
+	if err := manager.Wait(context.Background()); err != nil {
+		t.Fatalf("Wait() after Abort error = %v", err)
 	}
 }
 
@@ -244,12 +252,15 @@ func TestManagerBeginShutdownReserveRace(t *testing.T) {
 		switch {
 		case result.err == nil:
 			result.handle.Abort()
+			if got := manager.State(); got != StateClosed {
+				t.Fatalf("iteration %d: State() = %v, want StateClosed", iteration, got)
+			}
 		case errors.Is(result.err, ErrManagerNotOpen):
+			if got := manager.State(); got != StateClosing {
+				t.Fatalf("iteration %d: State() = %v, want StateClosing", iteration, got)
+			}
 		default:
 			t.Fatalf("iteration %d: Reserve() error = %v", iteration, result.err)
-		}
-		if got := manager.State(); got != StateClosing {
-			t.Fatalf("iteration %d: State() = %v, want StateClosing", iteration, got)
 		}
 		assertReservationCount(t, manager, 0)
 	}

@@ -15,6 +15,7 @@ func (manager *Manager) Complete(registrationID RegistrationID) bool {
 	if currentID, exists := manager.registeredSessions[registration.sessionID]; exists && currentID == registrationID {
 		delete(manager.registeredSessions, registration.sessionID)
 	}
+	manager.closeIfAccountingEmptyLocked()
 
 	return true
 }

@@ -45,6 +45,7 @@ type Manager struct {
 	reservedSessions   map[SessionID]RegistrationID
 	registrations      map[RegistrationID]*registration
 	registeredSessions map[SessionID]RegistrationID
+	shutdownDone       chan struct{}
 }
 
 // New creates an Open Manager.
@@ -56,6 +57,7 @@ func New() *Manager {
 		reservedSessions:   make(map[SessionID]RegistrationID),
 		registrations:      make(map[RegistrationID]*registration),
 		registeredSessions: make(map[SessionID]RegistrationID),
+		shutdownDone:       make(chan struct{}),
 	}
 }
 
@@ -70,21 +72,33 @@ func (manager *Manager) BeginShutdown() {
 	}
 }
 
-// Wait observes shutdown completion.
-// With no accounting in the lifecycle skeleton, Closing completes immediately.
+// Wait observes shutdown completion without changing accounting.
 // Wait does not implicitly start shutdown while Manager is Open.
-func (manager *Manager) Wait(_ context.Context) error {
+func (manager *Manager) Wait(ctx context.Context) error {
 	manager.mu.Lock()
-	defer manager.mu.Unlock()
-
 	switch manager.state {
 	case StateOpen:
+		manager.mu.Unlock()
 		return ErrShutdownNotStarted
+	case StateClosed:
+		manager.mu.Unlock()
+		return nil
 	case StateClosing:
-		manager.state = StateClosed
+		if manager.accountingEmptyLocked() {
+			manager.closeLocked()
+			manager.mu.Unlock()
+			return nil
+		}
 	}
+	shutdownDone := manager.shutdownDone
+	manager.mu.Unlock()
 
-	return nil
+	select {
+	case <-shutdownDone:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 // State returns the current lifecycle state without exposing mutable state.
@@ -92,4 +106,19 @@ func (manager *Manager) State() State {
 	manager.mu.RLock()
 	defer manager.mu.RUnlock()
 	return manager.state
+}
+
+func (manager *Manager) accountingEmptyLocked() bool {
+	return len(manager.reservations) == 0 && len(manager.registrations) == 0
+}
+
+func (manager *Manager) closeIfAccountingEmptyLocked() {
+	if manager.state == StateClosing && manager.accountingEmptyLocked() {
+		manager.closeLocked()
+	}
+}
+
+func (manager *Manager) closeLocked() {
+	manager.state = StateClosed
+	close(manager.shutdownDone)
 }

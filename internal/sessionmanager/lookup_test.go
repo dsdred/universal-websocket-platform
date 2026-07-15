@@ -1,7 +1,6 @@
 package sessionmanager
 
 import (
-	"context"
 	"fmt"
 	"reflect"
 	"sync"
@@ -243,10 +242,10 @@ func TestManagerLookupAfterBeginShutdown(t *testing.T) {
 
 func TestManagerLookupAfterClosedReturnsAbsence(t *testing.T) {
 	manager := New()
-	mustCommit(t, mustReserve(t, manager, "session-1"))
+	registrationID := mustCommit(t, mustReserve(t, manager, "session-1"))
 	manager.BeginShutdown()
-	if err := manager.Wait(context.Background()); err != nil {
-		t.Fatalf("Wait() error = %v", err)
+	if completed := manager.Complete(registrationID); !completed {
+		t.Fatal("Complete() = false, want true")
 	}
 
 	view, found := manager.Lookup("session-1")

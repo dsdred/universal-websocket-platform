@@ -150,4 +150,5 @@ func (manager *Manager) abort(target *reservation) {
 	target.state = reservationAborted
 	delete(manager.reservations, target.registrationID)
 	delete(manager.reservedSessions, target.sessionID)
+	manager.closeIfAccountingEmptyLocked()
 }
