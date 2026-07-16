@@ -242,9 +242,10 @@
 
 - Создан двуязычный Draft design [DP-003: Runtime Session Manager](../docs/ru/design/DP-003-runtime-session-manager.md) ([English version](../docs/en/design/DP-003-runtime-session-manager.md)).
 - DP-003 разделяет ownership WebSocket, registration transaction, выполнение Session и tracking Manager; Session сохраняет единоличный ownership WebSocket после transport handoff.
+- TASK-DOC-009 нормативно закрыла blocker TASK-B4-007B: Session handoff/Dispatcher выбран единственным production creator отдельного per-Session Execution Owner; определены owned-goroutine launch, момент committed ownership, Stop-before-Start и concurrent Stop semantics, узкие completion и Stop-request capabilities, recoverable-panic cleanup и terminal completion.
 - `BeginShutdown` и `Wait` разделяют неблокирующий transition shutdown и ожидание, а атомарный `Complete` предлагается как единственная linearization point удаления будущей committed registration.
 - Runtime Host остается владельцем Admission Gate и корневого Runtime context; Listener, Authentication, Router, Delivery, Persistence и diagnostics не входят в ответственность Session Manager.
-- Реализованы lifecycle Manager, identity-safe registration transaction, read-only Lookup, shutdown accounting и immutable Shutdown Snapshot, фиксируемый на linearization point первого BeginShutdown. Конкретная Stop operation, execution owner, shutdown orchestration, публичный Registry API и интеграция с Runtime Host отсутствуют.
+- Реализованы lifecycle Manager, identity-safe registration transaction, read-only Lookup, shutdown accounting и immutable identity-only Shutdown Snapshot, фиксируемый на linearization point первого BeginShutdown. Execution Owner contract теперь определён в Draft DP-003, но сам Execution Owner, operational Stop capability, capability-bearing Snapshot, shutdown orchestration, публичный Registry API и интеграция с Runtime Host в Go-коде отсутствуют.
 - Текущий Session Dispatcher по-прежнему синхронно выполняет отдельную Session без Runtime-wide registration и tracking.
 
 ## Runtime Foundation Freeze

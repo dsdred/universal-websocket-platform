@@ -6,7 +6,7 @@
 
 **Status:** Draft
 
-This revision simplifies the lifecycle after the second independent architecture review. It separates shutdown transition from waiting, reduces completion to one atomic mutation, and defines continuous ownership for every registration transaction. It does not define concrete Go APIs or neighboring Runtime subsystems.
+This revision simplifies the lifecycle after the second independent architecture review. It separates shutdown transition from waiting, reduces completion to one atomic mutation, defines continuous ownership for every registration transaction, and specifies the conceptual Execution Owner contract required for implementation. Exact Go names remain implementation details; the production boundary, ownership, ordering, and concurrency semantics are normative.
 
 ## 2. Problem Statement
 
@@ -22,11 +22,12 @@ Runtime can create and run a Session after successful Handshake, but it has no a
 - Separate nonblocking shutdown transition from context-bounded waiting.
 - Make `Reserve/Register/Complete/BeginShutdown/Wait` races deterministic.
 - Provide identity-safe lookup metadata without exposing Session operations.
+- Define one per-Session Execution Owner, its launch and terminal-completion contract, and a stable non-owning Stop-request capability.
 - Keep Manager limited to registry and shutdown accounting.
 
 ## 4. Non Goals
 
-This document does not design Router, Delivery, Presence, Groups, Persistence, cluster ownership, Plugins, Metrics, diagnostics aggregation, Session limits policy, transport protocol, public API, Configuration fields, concrete Go interfaces, a generic Session framework, or a supervision framework.
+This document does not design Router, Delivery, Presence, Groups, Persistence, cluster ownership, Plugins, Metrics, a diagnostics framework, Session limits policy, transport protocol, public API, Configuration fields, a generic Session framework, or a supervision framework.
 
 ## 5. Ownership Boundaries
 
@@ -38,7 +39,7 @@ Upgrade boundary owns WebSocket and child connection context until Session expli
 
 ### Registration Transaction Ownership
 
-Successful Reserve returns one conceptual reservation handle. The calling Handshake/execution-setup control flow owns that handle until exactly one terminal operation:
+Successful Reserve returns one conceptual reservation handle. The Session handoff/Dispatcher control flow owns that handle until it transfers the handle to the per-Session Execution Owner. The Execution Owner then owns it until exactly one terminal operation:
 
 - `Commit`, which consumes the reservation and creates a committed record; or
 - `Abort`, which removes the reservation without registry visibility.
@@ -50,11 +51,15 @@ reservation := Manager.Reserve(SessionID)
 defer reservation.AbortUnlessCommitted()
 ```
 
-This notation describes an ownership obligation, not a required Go API. Every recoverable return, rejection, error, or panic before Commit must execute Abort. Manager accounts for the reservation but does not own the goroutine responsible for Commit or Abort.
+This notation describes an ownership obligation, not a required Go API. Every recoverable return, rejection, error, or panic before Commit must execute Abort. Manager accounts for the reservation but does not own the goroutine responsible for Commit or Abort. Handshake never owns the reservation and does not import Session Manager; it delegates post-Upgrade preparation to the Session handoff boundary.
 
 ### Session Execution Ownership
 
-A narrow per-Session execution owner is created before registration Commit and lives at least until completion accounting finishes. It owns Session `Start/Run/Stop`, invokes Complete through a terminal defer on all recoverable paths, and exposes a stable non-owning Stop-request capability for Runtime shutdown. It is not a generic supervisor.
+A narrow per-Session Execution Owner is a separate production object created by the Session handoff/Dispatcher after Session construction and successful Reserve, but before registration Commit. The Dispatcher is its only creator in the production composition path. It transfers the reservation handle, one Session, a Runtime-derived execution context, a narrow completion capability, and a narrow terminal-result observer to the owner.
+
+The owner is inactive before Commit and owns no committed accounting. It owns the reservation transaction after transfer. Successful Commit is the single point at which it acquires the committed RegistrationID and activates terminal completion. The immediately following serialized owner activation is the single execution-ownership point: it transfers Session execution and transport-cleanup responsibility before a successful handoff result is observable. The owner then owns Session `Start/Run/Stop` in one owned goroutine until terminal cleanup and completion accounting finish.
+
+The Execution Owner depends only on the Session lifecycle contract, opaque registration identity, its owned context, and the narrow completion and terminal-observer contracts. It must not import or retain concrete Manager, Runtime Host, Listener, Handshake, HTTP, WebSocket, Shutdown Snapshot, Router, Delivery, Presence, or Persistence. It uses no service locator, `context.Value` dependency injection, generic supervisor, or generic worker framework.
 
 ### Manager Tracking Ownership
 
@@ -84,13 +89,21 @@ Registry may remain internal in the first version because reservation, commit, l
 The normative sequence is:
 
 ```text
-Reserve
-    -> create Session
-    -> create execution owner
-    -> Session accepts transport ownership
-    -> Commit registration with RegistrationID and Stop-request capability
-    -> execution owner performs Start/Run
-    -> deferred Complete
+Upgrade boundary calls Session handoff/Dispatcher
+    -> create provisional Session without transferring transport ownership
+    -> Reserve SessionID
+    -> create inactive per-Session Execution Owner
+    -> transfer Reservation ownership to Execution Owner
+    -> owned goroutine installs terminal guard
+    -> Commit registration with stable Stop-request capability
+    -> acquire RegistrationID and activate completion obligation
+    -> accept Session execution and transport-cleanup ownership
+    -> report successful handoff
+    -> Start
+    -> Run
+    -> Stop
+    -> Complete
+    -> report one terminal result
 ```
 
 ### Reserve
@@ -104,7 +117,7 @@ Reservation is counted for Manager closure but is invisible to Lookup and is not
 
 ### Commit
 
-Commit consumes its reservation and atomically creates one committed record containing immutable identity metadata and a stable Stop-request capability. This mutation is the single registration linearization point: registry visibility and committed wait-set membership appear together.
+Commit consumes its reservation and atomically creates one committed record containing immutable identity metadata and a stable Stop-request capability. This mutation is the single registration linearization point: registry visibility and committed wait-set membership appear together. A successful Commit returns the opaque RegistrationID to the same owned goroutine. The owner activates its completion obligation before Start or a successful handoff result can become observable.
 
 ### Abort
 
@@ -112,7 +125,9 @@ Abort atomically removes an uncommitted reservation and wakes Wait callers when 
 
 ### Transport Handoff
 
-Session accepts transport before Commit. If any failure occurs before acceptance, Upgrade boundary closes the transport and the reservation owner aborts. If failure occurs after acceptance but before Commit, Session closes the transport through execution owner and the reservation owner aborts. There is always exactly one transport owner.
+Session construction is provisional and does not transfer transport ownership. The Upgrade boundary remains the sole transport closer through Session construction, Reserve, Execution Owner construction, and a failed Commit. On any such pre-Commit failure, the Execution Owner performs Abort, performs no Complete, and returns a failed handoff; the Upgrade boundary closes the transport.
+
+Successful Commit activates the owner's terminal completion obligation. The controlled handoff then performs one serialized owner activation that transfers Session execution and transport-cleanup ownership to the Execution Owner/Session boundary before the Dispatcher reports successful acceptance. A failure after Commit but before this activation performs Complete while the Upgrade boundary still closes the transport. From activation onward, every failure is owner-managed: the owner stops Session, performs Complete, and prevents the Upgrade boundary from closing the transport again. The state “transport accepted but Commit failed” is intentionally unreachable. There is always exactly one transport owner.
 
 ## 8. Reserve/Commit/BeginShutdown Linearization
 
@@ -123,7 +138,7 @@ At one Manager synchronization boundary:
 - a Commit completed before `BeginShutdown` becomes a committed record and belongs to the shutdown snapshot; or
 - `BeginShutdown` wins, Manager becomes `Closing`, and every uncommitted reservation loses the right to Commit.
 
-New Reserve is rejected after `Closing`. A pre-existing reservation whose Commit lost must execute Abort through its owner. If Session already accepted transport, execution owner requests Stop before Abort completes. Manager does not forcibly abort a handle because it does not own that control flow.
+New Reserve is rejected after `Closing`. A pre-existing reservation whose Commit lost must execute Abort through its Execution Owner. Transport ownership has not transferred at that point, so Complete and Session Stop are not invoked; the Upgrade boundary performs transport cleanup. Manager does not forcibly abort a handle because it does not own that control flow.
 
 There is no late Commit in `Closing` and no partially visible registration. Manager cannot become `Closed` until every invalidated reservation has reached Abort.
 
@@ -177,17 +192,45 @@ There is no normative `Completing` state. Manager state never claims that Sessio
 
 ## 11. Execution Owner Lifetime
 
-Execution owner is created before Commit. Commit records its stable non-owning Stop-request capability. Execution owner remains alive until:
+The Session handoff/Dispatcher creates exactly one Execution Owner for one provisional Session and transfers one Reservation handle to it. The owner creates exactly one owned execution goroutine. The handoff call waits only until that goroutine reports either pre-Commit failure or successful committed ownership acceptance; it does not wait for Session termination.
 
-- its Session execution has reached a recoverable terminal path;
-- it has attempted Complete;
-- every Stop request already issued through its stable capability has returned.
+Before calling Commit, the owned goroutine installs one terminal guard. Before Commit succeeds, that guard may only Abort the Reservation. The successful Commit return is the owner's pre-Commit-to-committed linearization point: it supplies RegistrationID, makes Abort a no-op obligation, and activates terminal Complete. A subsequent serialized activation is the execution-ownership linearization point. No Start or successful ownership acceptance is observable before activation.
 
-Execution owner invokes `Start`, then `Run`, and invokes `Stop` according to the existing Session contract. A terminal defer attempts Complete exactly once for every recoverable return, error, or panic inside the owned execution goroutine.
+The normal committed algorithm is normative:
 
-If BeginShutdown wins after Commit but before Start, the Stop-request capability may cancel startup or stop Session from `Created`. Start may then be skipped or fail as a normal terminal path. The defer still attempts Complete, so no committed record remains stranded.
+```text
+activate completion obligation
+    -> accept execution and transport-cleanup ownership
+    -> Start(Session, execution context)
+    -> if Start succeeds and no Stop request won, Run(Session, execution context)
+    -> attempt Stop(Session, owner-controlled cleanup context)
+    -> invoke Complete(RegistrationID) once
+    -> publish one terminal result to the injected observer
+```
 
-Complete does not destroy a capability while a previously issued Stop request is in progress. The shutdown snapshot owns the capability reference until that invocation returns; it does not own Session or extend registry visibility.
+Stop is attempted once on every committed terminal path, including Start error, Run return, Run error, cancellation, and recovered panic. A Stop error is retained in the terminal result but never suppresses Complete. Complete is attempted after the Stop attempt; a permanently blocked Stop may therefore prevent completion and remains an accepted abandonment limitation. The cleanup context is owned by the Execution Owner and is not the already-canceled execution context.
+
+The owner remains alive until its execution reached a recoverable terminal path, its single Complete invocation returned, its terminal result was offered once to the observer, and every Stop-request invocation that linearized before terminal completion returned. The terminal observer is a narrow non-owning sink supplied through Runtime composition to the Dispatcher; it does not receive Session or transport. Observer failure or panic is isolated and cannot prevent the Complete attempt. The concrete terminal-result type and diagnostics backend remain implementation details, but Start, Run, Stop, recovered-panic, and completion-anomaly categories must remain distinguishable.
+
+### Stop Before Start
+
+The stable Stop-request capability records one termination request and cancels the owner-controlled execution context. If that request linearizes before the owner marks Start as begun, Start and Run are skipped. The owned goroutine calls Session Stop from `Created`, then performs Complete. There is no alternative “Start may still run” behavior.
+
+### Concurrent Start and Stop
+
+The Execution Owner, not Session Manager, serializes its control state. The Start linearization point is the owner's transition that marks Start as begun after observing no accepted Stop request. The Stop-request linearization point is the first atomic recording of termination intent.
+
+- If Stop wins, Start and Run are forbidden.
+- If Start wins, the request cancels the execution context; after Start returns, Run begins only if no Stop request is pending and the context remains active.
+- If Run is active, cancellation causes it to return according to the Session contract; the owner then invokes Stop.
+- Repeated and concurrent Stop requests do not create additional Stop or Complete obligations.
+- No lifecycle lock is held while Start, Run, Stop, Complete, or the terminal observer executes.
+
+### RegistrationID and Completion Capability
+
+An Execution Owner may exist before it has a committed RegistrationID, but only in its inactive pre-Commit phase. The owned goroutine receives RegistrationID only from successful Commit. Failed Commit leaves the owner without an active completion obligation: it aborts the Reservation, reports failed handoff, and never calls Complete.
+
+The owner depends on a consumer-oriented completion capability with the conceptual operation `Complete(RegistrationID) bool`, not on concrete Manager. Runtime composition supplies a Manager-backed implementation to the Session handoff/Dispatcher, which injects it into each owner. The capability becomes active only after successful Commit. Each owner invokes it once. `true` means this invocation performed the effective `Registered -> Removed` mutation; `false` means no known committed record was mutated and is reported as a terminal accounting anomaly. It is never retried. Manager still guarantees at most one effective mutation for the RegistrationID.
 
 ## 12. Completion Linearization
 
@@ -256,15 +299,19 @@ Restart is forbidden.
 - waits for nothing;
 - is idempotent and joins the same shutdown cycle on repetition.
 
-The shutdown snapshot contains only stable non-owning Stop-request capabilities. It contains no raw Session, WebSocket, Handler, or mutable registry record.
+The target shutdown snapshot contains immutable Registration identity and one stable non-owning Stop-request capability for each committed record. It contains no raw Session, WebSocket, Handler, Execution Owner, or mutable registry record. The currently implemented identity-only Snapshot intentionally remains unchanged until the Execution Owner and capability integration task.
 
 Removal by Complete does not invalidate a capability already issued for the current shutdown orchestration. Its lifetime continues until the corresponding Stop request returns. Repeated BeginShutdown does not create a new cycle or duplicate accounting.
 
 ## 15. Stop-Request Capabilities
 
-A Stop-request capability represents permission to request termination from one execution owner without acquiring Session ownership.
+A Stop-request capability represents permission to request termination from one Execution Owner without acquiring Session ownership. Its conceptual operation is `RequestStop() bool`; it accepts no context because it is strictly nonblocking and performs no Session I/O in the caller.
 
-Each request must be nonblocking or bounded by its caller context and must not wait for full Session completion. Stop requests for different registrations are independent: one blocked or slow request cannot serialize requests to all other Sessions through Manager.
+The first call that linearizes before terminal completion records termination intent, cancels the owner-controlled execution context once, and returns `true`. Repeated or concurrent calls, and calls that linearize after terminal completion, are stable no-ops that return `false`. The operation does not wait for Start, Run, Stop, Complete, or full Session termination and returns no Session result.
+
+The capability never exposes Session, Send, Context cancellation, Runtime, Listener, WebSocket, callback registration, or mutable owner state. Stop requests for different registrations are independent and cannot serialize through Manager. Capability invocation does not acquire a Manager lifecycle lock.
+
+Each invocation holds the control cell alive until that invocation returns. Complete may run while a previously entered RequestStop is returning, but it cannot invalidate that invocation. At terminal completion the control cell detaches from Session execution state; later calls remain safe `false` no-ops and do not retain or reacquire Session ownership. No new Stop request is accepted after terminal completion.
 
 Runtime shutdown orchestration owns invocation of the snapshot capabilities. Manager only produces the stable snapshot and later observes Complete mutations. No generic executor pool, worker framework, or Session supervisor is introduced.
 
@@ -312,7 +359,9 @@ This preserves [ARCH-002](../architecture/ARCH-002-runtime-foundation-freeze.md)
 
 ## 18. Panic, Failure, and Abandonment Limits
 
-Execution owner guarantees a deferred Complete attempt for all recoverable returns, errors, and panics inside its owned goroutine. Reservation owner guarantees deferred Abort for all recoverable exits before Commit.
+Execution Owner recovers a panic that occurs inside its owned execution boundary. Recovery does not classify the execution as successful and does not re-panic from the owned goroutine. The terminal guard cancels the execution context, attempts Session Stop if committed ownership was activated, invokes Complete once when RegistrationID is committed, and publishes one sanitized panic-category terminal result to the injected observer. Before successful Commit, the same guard performs Abort and does not call Complete or Session Stop because transport ownership has not transferred.
+
+A panic or error from Stop or the terminal observer cannot suppress the already-established Complete attempt; each terminal step is guarded independently. The observer receives no panic payload that could expose credentials or transport metadata. This rule defines ownership cleanup only and does not create a diagnostics framework.
 
 Completion is not guaranteed after:
 
@@ -347,7 +396,7 @@ RegistrationView is not a Router, Delivery, Presence, lease, or targeting contra
 
 ## 20. Runtime Context
 
-Manager does not create, own, replace, or cancel root Runtime context. Host remains its sole owner under [ADR-0004](../adr/0004-handshake-runtime-dependencies.md). Root cancellation is one shutdown signal to execution owners; only Complete changes Manager accounting.
+Manager does not create, own, replace, or cancel root Runtime context. Host remains its sole owner under [ADR-0004](../adr/0004-handshake-runtime-dependencies.md). Session handoff derives each owner's execution context from the Runtime-owned connection context. The owner controls only its child cancellation; root cancellation and an accepted Stop request both cancel execution. Only Complete changes Manager accounting.
 
 ## 21. Architectural Invariants
 
@@ -362,6 +411,11 @@ Manager does not create, own, replace, or cancel root Runtime context. Host rema
 - Manager becomes `Closed` only with empty reservation and committed accounting.
 - BeginShutdown performs no I/O and Wait performs no Stop requests.
 - Stop capabilities are stable for in-progress shutdown invocation and never expose raw Session.
+- Session handoff/Dispatcher is the sole production creator of one Execution Owner per committed Session.
+- Successful Commit activates exactly one owner completion obligation before Start or successful handoff is observable.
+- The Execution Owner is the sole caller of Session Start, Run, and Stop after committed ownership acceptance.
+- A Stop request that wins before Start forbids Start and Run.
+- One owned goroutine performs one Stop attempt and one Complete invocation on every recoverable committed terminal path.
 - Lookup returns immutable identity metadata only and never extends lifetime.
 - Manager does not execute Session, own transport, route, deliver, publish Presence, store history, aggregate diagnostics, or apply limits.
 
@@ -438,24 +492,31 @@ HTTP handler synchronously owns Session Start/Run/Stop
 Proposed model:
 
 ```text
-Handshake owns reservation
-    -> creates Session and execution owner
-    -> Session accepts transport
-    -> registration commits
-    -> execution owner runs Session and defers Complete
+Handshake retains Upgrade ownership
+    -> Session handoff/Dispatcher creates provisional Session
+    -> Dispatcher reserves SessionID
+    -> Dispatcher creates per-Session Execution Owner
+    -> owner receives Reservation and installs terminal guard
+    -> registration commits with stable Stop-request capability
+    -> owner accepts execution and transport-cleanup ownership
+    -> Dispatcher reports successful handoff
+    -> owner goroutine performs Start/Run/Stop and Complete
 ```
+
+The current Dispatcher responsibilities change explicitly: it keeps Session construction and handoff coordination, gains Reserve and owner creation, and delegates all post-Commit Start/Run/Stop execution and terminal Complete to the per-Session owner. It no longer blocks synchronously in Session Run and no longer calls Session Stop directly after successful ownership transfer.
 
 External WebSocket behavior remains unchanged, but internal concurrency, ownership, registration, and shutdown semantics change. Migration must therefore be treated as lifecycle work, not as a behavior-neutral refactor, and must be race-reviewed at every boundary.
 
 ## 26. Open Questions
 
-- What concrete non-owning Stop-request capability shape satisfies the bounded-return contract?
-- How will terminal Session results reach a future diagnostics boundary without Manager aggregation?
+- What exact Go names and package-private interfaces represent the normative consumer-oriented capabilities?
+- What terminal-result value shape preserves phase and cleanup errors for the narrow observer?
+- What cleanup deadline policy should bound Session Stop without changing existing Session semantics?
 - What future design owns configured Session limits?
 - What Runtime instance identity will future Persistence combine with SessionID?
 - What operational response is appropriate for an accepted permanently blocked reservation or execution?
 
-These questions do not change the linearization points or Manager accounting defined here.
+The creator, ownership start, launch model, pre-Commit cleanup, Stop-before-Start behavior, concurrent Start/Stop ordering, completion dependency, panic cleanup, Stop-request operation, and owner lifetime are no longer open questions. Remaining questions are implementation-level representation or explicitly separate subsystem policy; they do not change the linearization points or Manager accounting defined here.
 
 ## 27. Architecture Review Traceability
 
@@ -463,10 +524,10 @@ These questions do not change the linearization points or Manager accounting def
 | --- | --- | --- |
 | F-01 | Resolved | BeginShutdown performs the nonblocking transition; Wait is a separate context-bounded observation. |
 | F-02 | Resolved | Complete is one atomic `Registered -> Removed` mutation and the sole visibility/accounting linearization point. |
-| F-03 | Resolved | Reservation handle gives Handshake/execution setup continuous Commit-or-Abort ownership. |
-| F-04 | Resolved | Execution owner exists before Commit; shutdown between Commit and Start is a normal terminal path ending in Complete. |
+| F-03 | Resolved | Reservation handle moves once from Session handoff/Dispatcher to Execution Owner and retains continuous Commit-or-Abort ownership. |
+| F-04 | Resolved | Execution Owner exists before Commit; shutdown between Commit and Start is a normal terminal path ending in Stop and Complete. |
 | F-05 | Resolved | Shutdown snapshot contains stable Stop capabilities whose invocation lifetime survives Complete. |
-| F-06 | Resolved | Stop requests are independent and nonblocking or caller-context bounded; Manager invokes none of them. |
+| F-06 | Resolved | Stop requests are independent and strictly nonblocking; Manager invokes none of them. |
 | F-07 | Resolved | Runtime shutdown orchestration owns Stop requests; Manager progresses through Abort/Complete mutations without a waiting caller. |
 | F-08 | Resolved | RegistrationView includes never-reused RegistrationID, distinguishing SessionID reuse. |
 | F-09 | Resolved | RegistrationID is unique for Manager lifetime and never reused. |
@@ -475,7 +536,7 @@ These questions do not change the linearization points or Manager accounting def
 | F-12 | Clarified | Lookup is intentionally metadata-only and is not an operational Session capability. |
 | F-13 | Resolved | Lookup returns immutable RegistrationView, never raw Session or mutable execution capability. |
 | F-14 | Resolved | Normative `Completing` state was removed. |
-| F-15 | Resolved | Execution owner is created before Commit and survives completion plus outstanding Stop invocations. |
+| F-15 | Resolved | Execution Owner is created by Session handoff before Commit and survives completion plus outstanding Stop invocations. |
 | F-16 | Clarified | SessionID is opaque, byte-for-byte, at most 255 bytes, and not automatically logged raw. |
 | F-17 | Clarified | Migration explicitly acknowledges substantial internal lifecycle and concurrency changes. |
 | F-18 | Clarified | Manager responsibilities are restricted by explicit negative invariants. |
@@ -489,19 +550,38 @@ These questions do not change the linearization points or Manager accounting def
 | F-26 | Resolved | Manager has no terminal error aggregation; Wait returns nil or caller `ctx.Err()`. |
 | F-27 | Resolved | Immutable view carries RegistrationID, so stale and reused SessionID observations are distinguishable. |
 
-## 28. Approval Readiness
+## 28. TASK-B4-007B Blocker Traceability
+
+| Finding | Status | Resolution |
+| --- | --- | --- |
+| B-01 — Creator boundary | Resolved | Session handoff/Dispatcher is the sole production creator of one per-Session Execution Owner. |
+| B-02 — Ownership start | Resolved | Successful Commit activates completion; the immediately following serialized owner activation is the single execution-ownership point before Start or successful handoff is observable. |
+| B-03 — Pre-Commit cleanup | Resolved | Owner Abort resolves Reservation; Upgrade boundary retains and closes transport; Stop and Complete are not invoked. |
+| B-04 — Launch model | Resolved | One owned goroutine performs Commit activation and the normative Start/Run/Stop lifecycle; handoff waits only for commit/acceptance outcome. |
+| B-05 — Completion activation | Resolved | Successful Commit returns RegistrationID and activates exactly one terminal Complete obligation; failed Commit never activates it. |
+| B-06 — Panic semantics | Resolved | Recoverable owned-boundary panic is recovered, cleanup and Complete are attempted, one sanitized terminal result is observed, and panic is not rethrown. |
+| B-07 — Stop before Start | Resolved | A Stop request winning before Start causes Stop from Created and forbids Start and Run. |
+| B-08 — Concurrent Start/Stop | Resolved | Owner serializes control state; first Stop records termination once, Start wins only through its explicit linearization point, and Run cannot begin after accepted Stop. |
+| B-09 — RegistrationID handoff | Resolved | Owner exists inactive without RegistrationID and receives the opaque identity only from successful Commit. |
+| B-10 — Completion capability | Resolved | Owner uses injected `Complete(RegistrationID) bool` semantics and never depends on concrete Manager. |
+| B-11 — Stop-request capability | Resolved | `RequestStop() bool` is nonblocking, idempotent, context-free, Session-free, and has stable terminal no-op behavior. |
+| B-12 — Owner lifetime | Resolved | Owner lasts through terminal cleanup, one Complete invocation, one terminal observation, and all Stop invocations entered before terminal completion. |
+
+No TASK-B4-007B blocker finding is Deferred.
+
+## 29. Approval Readiness
 
 Second-review Blockers F-01 through F-03 are resolved by split shutdown contracts, atomic Complete, and continuously owned reservation handles. High findings F-04 through F-10 are resolved through execution-owner lifetime, stable Stop capabilities, independent shutdown orchestration, identity-safe views, and removal of undefined Manager terminal errors.
 
 Accepted limitations are explicit: process termination, unrecoverable failure, permanently blocked goroutines, or external contract violation may prevent accounting from becoming empty. Manager remains truthfully `Closing` rather than declaring false completion.
 
-Remaining questions concern concrete capability shape, future diagnostics delivery, configured limits, durable Runtime identity, and operational handling of permanently blocked work. They do not alter the core lifecycle.
+All TASK-B4-007B blocker decisions are resolved normatively. Exact Go names, private package placement within the Session handoff subsystem, terminal-result representation, and cleanup deadline mechanics remain implementation-level choices constrained by this contract. Configured limits, durable Runtime identity, and operational handling of permanently blocked work remain separate subsystem questions and do not alter this lifecycle.
 
 **Approval decision candidate:** Approved with Findings.
 
-The document remains Draft until independent review confirms the simplified BeginShutdown/Wait ordering, atomic completion, reservation ownership, and stable capability lifetime.
+The document remains Draft and the Execution Owner contract is ready for targeted independent review. That review must confirm the creator boundary, commit-to-ownership transition, owned-goroutine launch, Stop ordering, completion capability, recoverable-panic cleanup, and stable capability lifetime.
 
-## 29. References
+## 30. References
 
 - [ARCH-001: Runtime Architectural Pattern](../architecture/ARCH-001-runtime-architectural-pattern.md)
 - [ARCH-002: Runtime Foundation Freeze](../architecture/ARCH-002-runtime-foundation-freeze.md)
