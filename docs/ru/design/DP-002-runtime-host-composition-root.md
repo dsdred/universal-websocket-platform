@@ -185,15 +185,22 @@ Shutdown обращает порядок externally visible ownership и depende
 ```text
 Runtime Ready = false
     -> закрытие admission gate
-    -> остановка Listener acceptance и HTTP admission
+    -> Session Manager BeginShutdown и immutable Stop snapshot
+    -> запрос Stop для Sessions из snapshot
     -> cancellation root Runtime context
-    -> завершение или abort активных Handshakes и commits
-    -> ожидание handed-off Sessions из Runtime shutdown set
+    -> initiation Listener Stop
+       |-> завершение или abort активных Handshakes и drain handlers Listener
+       |-> terminalization owners и release eligible lifetime leases
+    -> после возврата Listener Stop выполняется Session Manager Wait
     -> остановка владельцев Session handoff и message processing
     -> освобождение Authentication components
     -> освобождение startup-resolved Secrets и ресурсов Resolver
     -> Runtime Stopped
 ```
+
+Для active Sessions [DP-004](DP-004-per-session-execution-boundary.md) является нормативным уточнением интервала между закрытием admission и остановкой remaining components. Этот ordering следует реализованному правилу ARCH-002, по которому cancellation root Runtime context предшествует Listener Stop.
+
+Drain handlers Listener и drain owners выполняются параллельно после initiation Listener Stop. Ни одна ветка по contract не ждёт другую. Session Manager Wait начинается после возврата Listener Stop и завершается успешно только после правдивой convergence accounting Registration и owner lease.
 
 Гарантии:
 

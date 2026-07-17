@@ -256,6 +256,10 @@ The conceptual handoff point occurs only after all of the following are true:
 
 Before this point, any failure is closed by the Upgrade boundary. At this point ownership transfers exactly once to Session. After it, Session is the sole closer. A downstream error after acceptance is a Session failure and never causes a second Close by the upper boundary.
 
+[DP-004](DP-004-per-session-execution-boundary.md) is the normative refinement of this point. Its single synchronous atomic handoff publishes Session construction, Runtime-owned connection context, shutdown accounting, and transport ownership acceptance together. `accepted=false` means no transfer occurred and the Upgrade boundary cleans the WebSocket; `accepted=true` means transfer occurred and the Upgrade boundary never cleans it.
+
+The general `AuthenticatedDispatcher` ownership contract permits an implementation to return an error with either ownership result: `accepted` alone determines cleanup ownership, and Handshake never reclaims transport after `accepted=true`. The target production Session Dispatcher defined by DP-004 is stricter: every pre-Commit failure returns `accepted=false` with its safe error, successful Commit returns only `accepted=true, nil`, and asynchronous terminal failures are delivered through its Terminal Observer. Generic Handshake tests for `accepted=true, error!=nil` therefore remain valid ownership-boundary tests without requiring the target Dispatcher to produce that combination.
+
 ### Authentication Result and Principal
 
 Authentication result data is request-scoped and owns no transport. Principal is copied across the commit boundary so downstream mutation cannot change evaluated identity. Credentials and resolved Secrets are never included.
