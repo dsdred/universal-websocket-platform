@@ -218,7 +218,7 @@ Runtime Host remains the production composition root. It constructs:
 
 Execution Owner receives only:
 
-- owner control cell and Runtime-derived execution context;
+- owner control cell, Runtime-derived execution context, and read-only root Runtime context observation input;
 - lifecycle-only Session after activation;
 - owner-scoped Completion Adapter;
 - owner-scoped Lifetime Lease;
@@ -238,7 +238,7 @@ Pre-Commit activation prepares:
 1. the fully formed but not yet Runtime-owned Session;
 2. the owner control cell and causal termination state;
 3. the Stop-publication binding required by Commit;
-4. the immutable Runtime context input required by the future owned execution path;
+4. the immutable read-only root Runtime context observation input required by the future owned execution path;
 5. exactly one dormant launch goroutine and its private one-shot Commit gate.
 
 The owner is then in `PreCommit`. The launch goroutine exists, but it is still provisional Dispatcher-owned control flow and cannot pass the Commit gate. It does not call Session Start, Run, Stop, Cleanup, Complete, observer, or lease release.
@@ -356,7 +356,7 @@ Observable `DispatchAuthenticated(...)(accepted, error)` semantics are:
 - `accepted=false, error!=nil` — no ownership transfer occurred; Handshake/Upgrade boundary retains and cleans transport after recording the operational failure;
 - `accepted=true, error=nil` — Commit succeeded, ownership transfer completed, and Dispatcher returns immediately while owner progresses independently.
 
-Production Dispatcher does not return `accepted=true` with an error. Every recoverable post-Commit outcome is delivered only through Terminal Observer. Request cancellation before Commit causes Abort and `accepted=false`; cancellation after Commit is a normal owner termination source.
+Production Dispatcher does not return `accepted=true` with an error. Recoverable post-Commit execution outcomes fixed before Terminal Result construction are delivered through Terminal Observer. Callback outcomes arising after that construction belong only to the existing terminal-accounting path and never return through Dispatcher. Request cancellation before Commit causes Abort and `accepted=false`; cancellation after Commit is a normal owner termination source.
 
 ## 14. Execution Owner Lifecycle
 
@@ -381,7 +381,7 @@ Terminalizing
     -> Terminal
 ```
 
-`PreCommit` means the owner, Session values, control cell, Stop binding, Runtime context input, and one dormant launch goroutine are prepared while Dispatcher still owns Reservation, transport, and provisional launch control. No Runtime-cancellation callback exists. The goroutine is blocked on the Commit gate, so Session execution has not started.
+`PreCommit` means the owner, Session values, control cell, Stop binding, read-only root Runtime context observation input, and one dormant launch goroutine are prepared while Dispatcher still owns Reservation, transport, and provisional launch control. No Runtime-cancellation callback exists. The goroutine is blocked on the Commit gate, so Session execution has not started.
 
 `Committed` begins inside successful Commit before the shared synchronization boundary is released. Registration, lease, Stop capability, Session ownership, and execution eligibility are published together, while Start has not yet linearized. Actual scheduling may occur later without creating another lifecycle state.
 
@@ -395,11 +395,11 @@ The dormant goroutine belongs to `PreCommit`; it does not require another lifecy
 
 ## 15. Start and Run Linearization
 
-After handoff and before Start linearization, owner installs Runtime-cancellation observation. Callback creation and ownership belong exclusively to owner; Dispatcher and Manager neither create nor retain it. The callback receives only the narrow causal-cell operation and no Session, Manager, WebSocket, lifecycle control, or completion capability.
+After handoff and before Start linearization, owner installs cancellation observation on the Host-owned root Runtime context. This root context is the single normative observation source; the callback never observes the derived execution context. Callback creation and ownership belong exclusively to owner; Dispatcher and Manager neither create nor retain it. The callback receives only the narrow causal-cell operation and no Session, Manager, WebSocket, lifecycle control, or completion capability.
 
-Installation uses one race-safe contract: register observation first, then synchronously check the Runtime context, or use an equivalent primitive with the same guarantee. Cancellation before or during registration is therefore either delivered by the context mechanism or observed by the post-registration check. Both paths attempt the same `RuntimeCanceled` first-writer mutation, so cancellation is effective at most once. Repeated callback invocation is safe.
+Installation uses one race-safe contract: register observation first, then synchronously check the root Runtime context, or use an equivalent primitive with the same guarantee. Root cancellation before or during registration is therefore either delivered by the context mechanism or observed by the post-registration check. Both paths attempt the same `RuntimeCanceled` first-writer mutation, so cancellation is effective at most once. Repeated callback invocation is safe.
 
-If callback installation returns an error or panics, the owner wrapper records a sanitized callback-installation anomaly, attempts `ExecutionFailure` as termination intent, and enters `Terminalizing`. Registration and ownership remain committed; rollback is forbidden. If the context is observed canceled, `RuntimeCanceled` is attempted instead. Callback cleanup still runs through the common terminal contract, including when installation created no registration.
+If callback installation returns an error or panics, the owner wrapper records a sanitized callback-installation anomaly, attempts `ExecutionFailure` as termination intent, and enters `Terminalizing`. Registration and ownership remain committed; rollback is forbidden. If the root Runtime context is observed canceled, `RuntimeCanceled` is attempted instead. Callback cleanup still runs through the common terminal contract, including when installation created no registration.
 
 After installation, owner checks unified termination state under its control lock.
 
@@ -435,7 +435,7 @@ The first source to write the empty causal cell becomes the primary termination 
 
 `RequestStop() bool` returns `true` only when that invocation first establishes termination intent. It returns `false` after earlier Runtime cancellation, earlier explicit Stop, Terminalizing, or Terminal.
 
-Runtime-cancellation timing has one normative model. No callback registration exists before Commit. After the dormant owner observes `Committed`, it installs the callback before Start linearization using the race-safe registration-and-check contract above. A context canceled before Commit is rejected synchronously by Dispatcher and never creates a callback. A context canceled after Commit but before installation is observed during installation and competes through the causal cell as `RuntimeCanceled`.
+Runtime-cancellation timing has one normative model. No callback registration exists before Commit. After the dormant owner observes `Committed`, it installs observation of the root Runtime context before Start linearization using the race-safe registration-and-check contract above. A root context canceled before Commit is rejected synchronously by Dispatcher and never creates a callback. A root context canceled after Commit but before installation is observed during installation and competes through the causal cell as `RuntimeCanceled`. Session Cleanup cancels only the derived execution context through its private cancellation cell; because the callback observes the distinct root Runtime context, normal Session Cleanup cannot itself generate `RuntimeCanceled`.
 
 Owner owns callback registration from creation through cleanup. Callback invocation and explicit RequestStop share the same admission and outstanding control-call accounting. The callback wrapper is panic-safe: outward panic is forbidden, a panic becomes a sanitized callback anomaly, termination intent is still attempted, and entered-call accounting is decremented in a final guard. Callback performs no Session I/O and waits for neither Cleanup, Complete, observer, nor lease release.
 
@@ -567,7 +567,7 @@ Safe invocation rules:
 | Runtime-callback invocation | Final guard decrements entered-call accounting; outward panic is converted to a sanitized callback anomaly and termination intent is still attempted | Callback returns without Session I/O or terminal waits |
 | Completion Adapter | Record `CompletePanic` and accounting anomaly | Observer and callback cleanup continue; Terminal and release remain conditional |
 | Terminal Observer adapter | Isolate panic as local operational anomaly outside Terminal Result; do not re-invoke | Callback cleanup continues; Terminal and release remain conditional |
-| `UnregisterAndDrain` | Close entry admission, recover internal panic, unregister, and wait for entered calls; return immutable `CallbackCleanupResult` | Confirmed result permits seal and Terminal; unconfirmed result keeps owner Terminalizing and lease active without retry |
+| `UnregisterAndDrain` | Close entry admission, recover internal panic, unregister, and wait for entered calls; on completion return immutable `CallbackCleanupResult` | Confirmed result permits seal and Terminal; unconfirmed result keeps owner Terminalizing and lease active without retry |
 | Lease release adapter | Recover panic and return explicit unsuccessful release outcome outside Terminal Result; do not re-panic | No hidden retry; lease accounting remains active and Wait cannot succeed |
 
 Start and Run panic are recovered by the owned-goroutine boundary, categorized, and routed into Terminalizing.
@@ -586,7 +586,7 @@ An invocation:
 4. performs local execution-context cancellation if it won;
 5. decrements count before return.
 
-Entry into `Terminalizing` fixes lifecycle direction but does not itself close control-call admission. After observer returns, owner invokes idempotent `UnregisterAndDrain() CallbackCleanupResult`. The operation closes admission under the control lock, prevents future callback entry, performs panic-safe unregister, and waits outside Session, lifecycle, and Manager locks for already-entered calls to return. It always returns an immutable result and never propagates panic.
+Entry into `Terminalizing` fixes lifecycle direction but does not itself close control-call admission. After observer returns, owner invokes idempotent `UnregisterAndDrain() CallbackCleanupResult`. The operation closes admission under the control lock, prevents future callback entry, performs panic-safe unregister, and waits outside Session, lifecycle, and Manager locks for already-entered calls to return. If the operation completes, it returns exactly one immutable result and never propagates panic. A permanently blocked entered call keeps the operation in progress, owner in Terminalizing, lease active, and Manager Wait blocked.
 
 `Confirmed` proves that the registration cannot produce future callback work and that every entered callback/control call returned. Owner may then seal the cell and reach Terminal. `Unconfirmed` records the callback-lifetime anomaly; owner remains in Terminalizing, lease remains active, Manager Wait remains blocked, and no automatic retry occurs. Repeated cleanup returns the same detached result and has no second unregister or accounting effect.
 
@@ -607,9 +607,9 @@ Terminal Result is an immutable value containing only bounded enums and booleans
 - primary termination source;
 - bounded secondary termination categories.
 
-It stores no arbitrary raw error, credentials, headers, request, WebSocket, Context, callback, Session, or mutable collection. It is built only from outcomes known before observer invocation: Runtime-callback installation or invocation anomaly, Start, Run, Cleanup/Stop, recovered execution panic, Complete, and termination source.
+It stores no arbitrary raw error, credentials, headers, request, WebSocket, Context, callback, Session, or mutable collection. It intentionally represents only execution-lifecycle outcomes known when it is constructed before observer invocation: Runtime-callback installation or invocation anomaly already observed by that point, Start, Run, Cleanup/Stop, recovered execution panic, Complete, and termination source.
 
-Observer invocation outcome, lease-release outcome, and goroutine-return outcome are deliberately outside Terminal Result because they occur after the value is built. Observer panic is isolated by its adapter, does not mutate the published result, and does not prevent later lease release. Lease-release anomaly likewise does not mutate Terminal Result. Both are local operational anomalies; diagnostics backend remains outside scope.
+Callback invocation outcomes first arising after Terminal Result construction, `UnregisterAndDrain` outcome, Observer invocation outcome, lease-release outcome, and goroutine-return outcome are deliberately outside Terminal Result because they occur after the value is built. They never mutate the published result and never cause a second Observer invocation. Late callback outcomes remain bounded local terminal-accounting facts; callback cleanup alone determines whether callback lifetime permits Terminal. Observer panic is isolated by its adapter and does not prevent later callback cleanup or eligible lease release. Lease-release anomaly likewise does not mutate Terminal Result. These are local operational anomalies; diagnostics backend remains outside scope.
 
 Observer blocking keeps lease active and Wait pending. Observer cannot call Complete, release lease, request Stop, or retain an execution capability through its contract.
 
@@ -658,7 +658,7 @@ Every pre-Commit row uses the panic-safe sequence: publish non-committed, wait f
 | RequestStop before owner scheduling | Committed path observes `ExplicitStop` | Owner | Owner control cell | Consumed | Registered until Complete | Prior `true`, nil | Once | Once with ExplicitStop | Installation and cleanup remain owner obligations | `Committed -> Terminalizing -> Terminal` after Confirmed cleanup | Released if all conditions hold | Pending until Complete and release |
 | Callback entry during Starting | RuntimeCanceled competes before Run linearization | Owner | Owner control cell | Consumed | Registered until Complete | Prior `true`, nil | Once | Once | Entry accounted; Run forbidden if callback wins | `Starting -> Terminalizing -> Terminal` after Confirmed cleanup | Released if all conditions hold | Pending until Complete and release |
 | Callback entry during Running | RuntimeCanceled cancels execution | Owner | Owner control cell | Consumed | Registered until Complete | Prior `true`, nil | Once | Once | Entry accounted and returns without Session I/O | `Running -> Terminalizing -> Terminal` after Confirmed cleanup | Released if all conditions hold | Pending until Complete and release |
-| Callback wrapper panic | Panic sanitized; termination attempted; entry count decremented | Owner | Owner control cell | Consumed | Registered until Complete | Prior `true`, nil | Once | Once with callback anomaly | Wrapper returns; Confirmed cleanup still required | Terminal after Confirmed cleanup | Released if all conditions hold | Pending until Complete and release |
+| Callback wrapper panic | Panic sanitized; termination attempted; entry count decremented | Owner | Owner control cell | Consumed | Registered until Complete | Prior `true`, nil | Once | Once with callback anomaly only if known before Terminal Result construction; no second invocation for a later anomaly | Wrapper returns; a late anomaly remains a bounded terminal-accounting fact; Confirmed cleanup still required | Terminal after Confirmed cleanup; otherwise remains Terminalizing | Released if all conditions hold; otherwise remains active | Pending until Complete and release; blocked while cleanup is Unconfirmed |
 | Normal completion | Committed path runs normally | Owner | Owner | Consumed | Removed by Complete | Prior `true`, nil | Once, effective once | Once with NaturalCompletion | `UnregisterAndDrain` Confirmed | `Running -> Terminalizing -> Terminal` | Released once | Succeeds after release |
 | Callback already entered during terminalization | Owner waits outside lifecycle and Manager locks | Owner | Entered callback until return | Consumed | Complete already attempted | Prior `true`, nil | Once | Returned once | Drain waits for entry; no future entry | Terminalizing until drain, then Terminal | Active until Terminal | Blocked until entry returns and lease releases |
 | Unregister success | Confirmed cleanup result | Owner | Sealed owner cell after drain | Consumed | Complete already attempted | Prior `true`, nil | Once | Returned once | No future or entered callback work | `Terminalizing -> Terminal` | Eligible subject to remaining conditions | Pending until release |
@@ -779,7 +779,7 @@ None is a service locator or generic coordination framework. Owner does not gain
 - Owner preparation precedes Commit; Session execution begins only after Commit.
 - Every committed path enters Terminalizing before Terminal.
 - Start and Run each have one linearization point.
-- Owner installs Runtime-cancellation observation only after Commit and before Start, using race-safe register-and-check semantics.
+- Owner installs observation of only the root Runtime context after Commit and before Start, using race-safe register-and-check semantics.
 - Explicit Stop and Runtime cancellation share one first-writer termination state.
 - Session Cleanup synchronously acknowledges effective canceled state.
 - Owner alone receives bound completion and lease capabilities.
@@ -969,7 +969,7 @@ All TASK-REV-010 and TASK-REV-011 Blocker and High findings are resolved normati
 
 Accepted limitations remain process termination or unrecoverable Go runtime failure, scheduler starvation, permanently blocked Session Cleanup, observer, or entered callback, unconfirmed callback cleanup, cancellation acknowledgement anomaly, and unsuccessful lease release. Callback-lifetime anomaly remains Terminalizing; cancellation acknowledgement anomaly may reach Terminal, but both keep lease accounting and Wait active rather than producing false completion.
 
-DP-003 and DP-004 remain Draft. Callback timing is singular, pre-Commit callback registration is absent, and Terminal has one provable definition. The documentation set is ready for a final independent approval review. Decomposition of B4-007B may begin only after that review approves the contracts.
+DP-003 and DP-004 remain Draft because document status is controlled separately. Callback timing is singular, pre-Commit callback registration is absent, and Terminal has one provable definition. TASK-REV-013 Codex concluded Approved with one non-blocking clarity finding, TASK-REV-013 Kiro concluded Approved, and no architectural Blocker or High finding remains for implementation. TASK-DOC-016 resolves the remaining clarity and synchronization findings without changing the approved architecture.
 
 ## 45. References
 

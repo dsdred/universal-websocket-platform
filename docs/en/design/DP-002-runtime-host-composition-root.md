@@ -106,6 +106,8 @@ Published ConfigurationVersion
          |
          +-> Message Handler
          +-> Session handoff/Dispatcher
+         |      +-> Execution Owner
+         |             +-> read-only root Runtime context observation input
          +-> Handshake executor
          |      +-> read-only Runtime capabilities
          |      +-> Authentication Service
@@ -116,7 +118,9 @@ Published ConfigurationVersion
                        +-> Handshake executor
 ```
 
-The graph describes explicit production composition, not a package mandate or a generic construction API. The composition bridge supplies Handshake with live, read-only admission permission and Runtime context access while preserving Host ownership. Existing Authentication Factory and Registry contracts remain subsystem-specific; Host does not introduce a universal Factory or Registry.
+The graph describes explicit production composition, not a package mandate or a generic construction API. The composition bridge supplies Handshake with live, read-only admission permission and Runtime context access while preserving Host ownership. Through that read-only capability boundary, composition also supplies each Execution Owner with the read-only root Runtime context observation input required by DP-004; the root `CancelFunc` is never exposed, and ownership of the root context remains with Runtime Host. Existing Authentication Factory and Registry contracts remain subsystem-specific; Host does not introduce a universal Factory or Registry.
+
+The Runtime-derived connection/execution context remains a separate Session-owned context. The Runtime-cancellation callback observes only the Host-owned root Runtime context. Session Cleanup cancels the derived context and therefore cannot itself produce `RuntimeCanceled`.
 
 ### Runtime Call Direction
 
