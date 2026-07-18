@@ -38,10 +38,9 @@ const (
 	StateTerminal
 )
 
-// Owner represents one per-Session execution lifecycle.
-//
-// Owner exposes lifecycle state transitions only. It does not start execution
-// or own Session, Runtime callback, registration, or lease resources.
+// Owner represents one per-Session execution lifecycle. After Commit, Execute
+// is the exclusive lifecycle writer and external control is limited to
+// termination intent.
 type Owner struct {
 	state *ownerState
 }
@@ -108,10 +107,41 @@ func (owner *Owner) StopRequested() bool {
 	return state.control.stopRequested
 }
 
-// Transition atomically changes the lifecycle state when from matches the
-// state observed at the transition linearization point and the transition is
-// permitted by the Execution Owner lifecycle.
+// Transition publishes the PreCommit-to-Committed ownership boundary.
+// Post-Commit lifecycle transitions are internal to the execution path.
 func (owner *Owner) Transition(from, to State) error {
+	if owner == nil || owner.state == nil {
+		return ErrUninitializedOwner
+	}
+
+	state := owner.state
+	state.mu.Lock()
+	defer state.mu.Unlock()
+
+	if state.current != from {
+		return fmt.Errorf(
+			"%w: current=%s expected=%s requested=%s: current state does not match expected source",
+			ErrInvalidTransition,
+			stateName(state.current),
+			stateName(from),
+			stateName(to),
+		)
+	}
+	if from != StatePreCommit || to != StateCommitted {
+		return fmt.Errorf(
+			"%w: current=%s expected=%s requested=%s: external post-Commit transition is not permitted",
+			ErrInvalidTransition,
+			stateName(state.current),
+			stateName(from),
+			stateName(to),
+		)
+	}
+
+	state.current = to
+	return nil
+}
+
+func (owner *Owner) transitionLifecycle(from, to State) error {
 	if owner == nil || owner.state == nil {
 		return ErrUninitializedOwner
 	}

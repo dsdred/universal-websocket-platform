@@ -1,4 +1,4 @@
-package executionowner_test
+package executionowner
 
 import (
 	"errors"
@@ -6,20 +6,18 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
-
-	"github.com/dsdred/universal-websocket-platform/internal/executionowner"
 )
 
 func TestCreateOwnerSuccess(t *testing.T) {
-	owner := executionowner.New()
+	owner := New()
 	if owner == nil {
 		t.Fatal("New() returned a nil Owner")
 	}
 }
 
 func TestInitialState(t *testing.T) {
-	owner := executionowner.New()
-	if got := owner.State(); got != executionowner.StatePreCommit {
+	owner := New()
+	if got := owner.State(); got != StatePreCommit {
 		t.Fatalf("State() = %d, want StatePreCommit", got)
 	}
 	if owner.StopRequested() {
@@ -28,12 +26,12 @@ func TestInitialState(t *testing.T) {
 }
 
 func TestZeroValueNotUsable(t *testing.T) {
-	var owner executionowner.Owner
+	var owner Owner
 
 	if got := owner.State(); got != 0 {
 		t.Fatalf("zero-value State() = %d, want invalid zero state", got)
 	}
-	if err := owner.Transition(executionowner.StatePreCommit, executionowner.StateCommitted); !errors.Is(err, executionowner.ErrUninitializedOwner) {
+	if err := owner.transitionLifecycle(StatePreCommit, StateCommitted); !errors.Is(err, ErrUninitializedOwner) {
 		t.Fatalf("zero-value Transition() error = %v, want ErrUninitializedOwner", err)
 	}
 	if owner.RequestStop() {
@@ -45,12 +43,12 @@ func TestZeroValueNotUsable(t *testing.T) {
 }
 
 func TestNilOwnerNotUsable(t *testing.T) {
-	var owner *executionowner.Owner
+	var owner *Owner
 
 	if got := owner.State(); got != 0 {
 		t.Fatalf("nil State() = %d, want invalid zero state", got)
 	}
-	if err := owner.Transition(executionowner.StatePreCommit, executionowner.StateCommitted); !errors.Is(err, executionowner.ErrUninitializedOwner) {
+	if err := owner.transitionLifecycle(StatePreCommit, StateCommitted); !errors.Is(err, ErrUninitializedOwner) {
 		t.Fatalf("nil Transition() error = %v, want ErrUninitializedOwner", err)
 	}
 	if owner.RequestStop() {
@@ -62,7 +60,7 @@ func TestNilOwnerNotUsable(t *testing.T) {
 }
 
 func TestRequestStopIsOneShotAndDoesNotChangeLifecycle(t *testing.T) {
-	owner := executionowner.New()
+	owner := New()
 
 	if !owner.RequestStop() {
 		t.Fatal("first RequestStop() = false, want true")
@@ -73,27 +71,27 @@ func TestRequestStopIsOneShotAndDoesNotChangeLifecycle(t *testing.T) {
 	if owner.RequestStop() {
 		t.Fatal("repeated RequestStop() = true, want false")
 	}
-	if got := owner.State(); got != executionowner.StatePreCommit {
+	if got := owner.State(); got != StatePreCommit {
 		t.Fatalf("State() = %d after RequestStop(), want StatePreCommit", got)
 	}
 }
 
 func TestStopRequestRemainsClosedAcrossLifecycleTransitions(t *testing.T) {
-	owner := executionowner.New()
+	owner := New()
 	if !owner.RequestStop() {
 		t.Fatal("first RequestStop() = false, want true")
 	}
 
-	path := []executionowner.State{
-		executionowner.StatePreCommit,
-		executionowner.StateCommitted,
-		executionowner.StateStarting,
-		executionowner.StateRunning,
-		executionowner.StateTerminalizing,
-		executionowner.StateTerminal,
+	path := []State{
+		StatePreCommit,
+		StateCommitted,
+		StateStarting,
+		StateRunning,
+		StateTerminalizing,
+		StateTerminal,
 	}
 	for index := 1; index < len(path); index++ {
-		if err := owner.Transition(path[index-1], path[index]); err != nil {
+		if err := owner.transitionLifecycle(path[index-1], path[index]); err != nil {
 			t.Fatalf("Transition(%d, %d) error = %v", path[index-1], path[index], err)
 		}
 		if !owner.StopRequested() {
@@ -106,7 +104,7 @@ func TestStopRequestRemainsClosedAcrossLifecycleTransitions(t *testing.T) {
 }
 
 func TestTwoConcurrentStopRequestsHaveOneWinner(t *testing.T) {
-	owner := executionowner.New()
+	owner := New()
 	results := runConcurrentStopRequests(2, func(int) bool {
 		return owner.RequestStop()
 	})
@@ -118,7 +116,7 @@ func TestTwoConcurrentStopRequestsHaveOneWinner(t *testing.T) {
 }
 
 func TestMassConcurrentStopRequestsHaveOneWinner(t *testing.T) {
-	owner := executionowner.New()
+	owner := New()
 	results := runConcurrentStopRequests(128, func(int) bool {
 		return owner.RequestStop()
 	})
@@ -127,7 +125,7 @@ func TestMassConcurrentStopRequestsHaveOneWinner(t *testing.T) {
 }
 
 func TestConcurrentStopRequestedAndRequestStop(t *testing.T) {
-	owner := executionowner.New()
+	owner := New()
 	const readers = 128
 
 	start := make(chan struct{})
@@ -163,7 +161,7 @@ func TestConcurrentStopRequestedAndRequestStop(t *testing.T) {
 }
 
 func TestOwnerCopiesShareOneControlCell(t *testing.T) {
-	original := executionowner.New()
+	original := New()
 	copy1 := *original
 	copy2 := copy1
 
@@ -179,10 +177,10 @@ func TestOwnerCopiesShareOneControlCell(t *testing.T) {
 }
 
 func TestConcurrentStopRequestsThroughCopiesHaveOneWinner(t *testing.T) {
-	original := executionowner.New()
+	original := New()
 	copy1 := *original
 	copy2 := copy1
-	owners := []*executionowner.Owner{original, &copy1, &copy2}
+	owners := []*Owner{original, &copy1, &copy2}
 
 	results := runConcurrentStopRequests(96, func(index int) bool {
 		return owners[index%len(owners)].RequestStop()
@@ -198,10 +196,10 @@ func TestConcurrentStopRequestsThroughCopiesHaveOneWinner(t *testing.T) {
 func TestRequestStopAfterTerminalizingIsRejected(t *testing.T) {
 	tests := []struct {
 		name  string
-		state executionowner.State
+		state State
 	}{
-		{name: "Terminalizing", state: executionowner.StateTerminalizing},
-		{name: "Terminal", state: executionowner.StateTerminal},
+		{name: "Terminalizing", state: StateTerminalizing},
+		{name: "Terminal", state: StateTerminal},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -217,7 +215,7 @@ func TestRequestStopAfterTerminalizingIsRejected(t *testing.T) {
 }
 
 func TestRequestStopAndTerminalizingTransitionLinearizeConsistently(t *testing.T) {
-	owner := ownerInState(t, executionowner.StateRunning)
+	owner := ownerInState(t, StateRunning)
 	start := make(chan struct{})
 	requestResult := make(chan bool, 1)
 	transitionResult := make(chan error, 1)
@@ -236,7 +234,7 @@ func TestRequestStopAndTerminalizingTransitionLinearizeConsistently(t *testing.T
 		defer finished.Done()
 		ready.Done()
 		<-start
-		transitionResult <- owner.Transition(executionowner.StateRunning, executionowner.StateTerminalizing)
+		transitionResult <- owner.transitionLifecycle(StateRunning, StateTerminalizing)
 	}()
 
 	ready.Wait()
@@ -250,7 +248,7 @@ func TestRequestStopAndTerminalizingTransitionLinearizeConsistently(t *testing.T
 	if owner.StopRequested() != requested {
 		t.Fatalf("StopRequested() = %t, want RequestStop() result %t", owner.StopRequested(), requested)
 	}
-	if got := owner.State(); got != executionowner.StateTerminalizing {
+	if got := owner.State(); got != StateTerminalizing {
 		t.Fatalf("State() = %d, want StateTerminalizing", got)
 	}
 }
@@ -258,47 +256,47 @@ func TestRequestStopAndTerminalizingTransitionLinearizeConsistently(t *testing.T
 func TestAllowedTransitions(t *testing.T) {
 	tests := []struct {
 		name string
-		path []executionowner.State
+		path []State
 	}{
 		{
 			name: "normal lifecycle",
-			path: []executionowner.State{
-				executionowner.StatePreCommit,
-				executionowner.StateCommitted,
-				executionowner.StateStarting,
-				executionowner.StateRunning,
-				executionowner.StateTerminalizing,
-				executionowner.StateTerminal,
+			path: []State{
+				StatePreCommit,
+				StateCommitted,
+				StateStarting,
+				StateRunning,
+				StateTerminalizing,
+				StateTerminal,
 			},
 		},
 		{
 			name: "terminalize before Start",
-			path: []executionowner.State{
-				executionowner.StatePreCommit,
-				executionowner.StateCommitted,
-				executionowner.StateTerminalizing,
-				executionowner.StateTerminal,
+			path: []State{
+				StatePreCommit,
+				StateCommitted,
+				StateTerminalizing,
+				StateTerminal,
 			},
 		},
 		{
 			name: "terminalize after Start linearization",
-			path: []executionowner.State{
-				executionowner.StatePreCommit,
-				executionowner.StateCommitted,
-				executionowner.StateStarting,
-				executionowner.StateTerminalizing,
-				executionowner.StateTerminal,
+			path: []State{
+				StatePreCommit,
+				StateCommitted,
+				StateStarting,
+				StateTerminalizing,
+				StateTerminal,
 			},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			owner := executionowner.New()
+			owner := New()
 			for index := 1; index < len(test.path); index++ {
 				from := test.path[index-1]
 				to := test.path[index]
-				if err := owner.Transition(from, to); err != nil {
+				if err := owner.transitionLifecycle(from, to); err != nil {
 					t.Fatalf("Transition(%d, %d) error = %v", from, to, err)
 				}
 				if got := owner.State(); got != to {
@@ -310,27 +308,27 @@ func TestAllowedTransitions(t *testing.T) {
 }
 
 func TestInvalidTransitionsDoNotChangeState(t *testing.T) {
-	const unknown executionowner.State = 255
+	const unknown State = 255
 	tests := []struct {
 		name      string
-		current   executionowner.State
-		from      executionowner.State
-		to        executionowner.State
+		current   State
+		from      State
+		to        State
 		wantParts []string
 	}{
-		{name: "skip state", current: executionowner.StatePreCommit, from: executionowner.StatePreCommit, to: executionowner.StateStarting},
-		{name: "move backward", current: executionowner.StateRunning, from: executionowner.StateRunning, to: executionowner.StateStarting},
-		{name: "same state", current: executionowner.StateCommitted, from: executionowner.StateCommitted, to: executionowner.StateCommitted},
-		{name: "from Terminal", current: executionowner.StateTerminal, from: executionowner.StateTerminal, to: executionowner.StateTerminalizing},
-		{name: "unknown target", current: executionowner.StateCommitted, from: executionowner.StateCommitted, to: unknown, wantParts: []string{"Committed", "State(255)"}},
-		{name: "unknown expected source", current: executionowner.StatePreCommit, from: unknown, to: executionowner.StateCommitted, wantParts: []string{"PreCommit", "State(255)", "Committed"}},
+		{name: "skip state", current: StatePreCommit, from: StatePreCommit, to: StateStarting},
+		{name: "move backward", current: StateRunning, from: StateRunning, to: StateStarting},
+		{name: "same state", current: StateCommitted, from: StateCommitted, to: StateCommitted},
+		{name: "from Terminal", current: StateTerminal, from: StateTerminal, to: StateTerminalizing},
+		{name: "unknown target", current: StateCommitted, from: StateCommitted, to: unknown, wantParts: []string{"Committed", "State(255)"}},
+		{name: "unknown expected source", current: StatePreCommit, from: unknown, to: StateCommitted, wantParts: []string{"PreCommit", "State(255)", "Committed"}},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			owner := ownerInState(t, test.current)
-			err := owner.Transition(test.from, test.to)
-			if !errors.Is(err, executionowner.ErrInvalidTransition) {
+			err := owner.transitionLifecycle(test.from, test.to)
+			if !errors.Is(err, ErrInvalidTransition) {
 				t.Fatalf("Transition(%d, %d) error = %v, want ErrInvalidTransition", test.from, test.to, err)
 			}
 			for _, part := range test.wantParts {
@@ -346,40 +344,40 @@ func TestInvalidTransitionsDoNotChangeState(t *testing.T) {
 }
 
 func TestConcurrentIdenticalTransitionHasOneWinner(t *testing.T) {
-	owner := executionowner.New()
+	owner := New()
 	const callers = 64
 
 	results := runConcurrentTransitions(callers, func(int) error {
-		return owner.Transition(executionowner.StatePreCommit, executionowner.StateCommitted)
+		return owner.transitionLifecycle(StatePreCommit, StateCommitted)
 	})
 	assertOneTransitionWinner(t, results)
-	if got := owner.State(); got != executionowner.StateCommitted {
+	if got := owner.State(); got != StateCommitted {
 		t.Fatalf("State() = %d, want StateCommitted", got)
 	}
 }
 
 func TestConcurrentDifferentTransitionsHaveOneValidWinner(t *testing.T) {
-	owner := ownerInState(t, executionowner.StateCommitted)
+	owner := ownerInState(t, StateCommitted)
 	results := runConcurrentTransitions(2, func(index int) error {
 		if index == 0 {
-			return owner.Transition(executionowner.StateCommitted, executionowner.StateStarting)
+			return owner.transitionLifecycle(StateCommitted, StateStarting)
 		}
-		return owner.Transition(executionowner.StateCommitted, executionowner.StateTerminalizing)
+		return owner.transitionLifecycle(StateCommitted, StateTerminalizing)
 	})
 	assertOneTransitionWinner(t, results)
 
 	got := owner.State()
-	if got != executionowner.StateStarting && got != executionowner.StateTerminalizing {
+	if got != StateStarting && got != StateTerminalizing {
 		t.Fatalf("State() = %d, want StateStarting or StateTerminalizing", got)
 	}
 }
 
 func TestConcurrentStateAndTransitionObserveOnlyValidStates(t *testing.T) {
-	owner := executionowner.New()
+	owner := New()
 	const readers = 128
 
 	start := make(chan struct{})
-	observed := make(chan executionowner.State, readers)
+	observed := make(chan State, readers)
 	var waitGroup sync.WaitGroup
 	for range readers {
 		waitGroup.Add(1)
@@ -393,7 +391,7 @@ func TestConcurrentStateAndTransitionObserveOnlyValidStates(t *testing.T) {
 	go func() {
 		defer waitGroup.Done()
 		<-start
-		if err := owner.Transition(executionowner.StatePreCommit, executionowner.StateCommitted); err != nil {
+		if err := owner.transitionLifecycle(StatePreCommit, StateCommitted); err != nil {
 			t.Errorf("Transition() error = %v", err)
 		}
 	}()
@@ -402,21 +400,21 @@ func TestConcurrentStateAndTransitionObserveOnlyValidStates(t *testing.T) {
 	waitGroup.Wait()
 	close(observed)
 	for state := range observed {
-		if state != executionowner.StatePreCommit && state != executionowner.StateCommitted {
+		if state != StatePreCommit && state != StateCommitted {
 			t.Fatalf("State() observed invalid state %d", state)
 		}
 	}
 }
 
 func TestLifecycleTransitionsFromDifferentGoroutines(t *testing.T) {
-	owner := executionowner.New()
-	path := []executionowner.State{
-		executionowner.StatePreCommit,
-		executionowner.StateCommitted,
-		executionowner.StateStarting,
-		executionowner.StateRunning,
-		executionowner.StateTerminalizing,
-		executionowner.StateTerminal,
+	owner := New()
+	path := []State{
+		StatePreCommit,
+		StateCommitted,
+		StateStarting,
+		StateRunning,
+		StateTerminalizing,
+		StateTerminal,
 	}
 
 	for index := 1; index < len(path); index++ {
@@ -427,7 +425,7 @@ func TestLifecycleTransitionsFromDifferentGoroutines(t *testing.T) {
 		to := path[index]
 		go func() {
 			defer finished.Done()
-			result <- owner.Transition(from, to)
+			result <- owner.transitionLifecycle(from, to)
 		}()
 		err := <-result
 		finished.Wait()
@@ -436,107 +434,107 @@ func TestLifecycleTransitionsFromDifferentGoroutines(t *testing.T) {
 		}
 	}
 
-	if got := owner.State(); got != executionowner.StateTerminal {
+	if got := owner.State(); got != StateTerminal {
 		t.Fatalf("State() = %d, want StateTerminal", got)
 	}
 }
 
 func TestOwnerCopySharesLifecycle(t *testing.T) {
-	original := executionowner.New()
+	original := New()
 	copy := *original
 
-	if err := original.Transition(executionowner.StatePreCommit, executionowner.StateCommitted); err != nil {
+	if err := original.transitionLifecycle(StatePreCommit, StateCommitted); err != nil {
 		t.Fatalf("Transition() through original error = %v", err)
 	}
-	if got := copy.State(); got != executionowner.StateCommitted {
+	if got := copy.State(); got != StateCommitted {
 		t.Fatalf("copy State() = %d, want StateCommitted", got)
 	}
-	if err := copy.Transition(executionowner.StateCommitted, executionowner.StateStarting); err != nil {
+	if err := copy.transitionLifecycle(StateCommitted, StateStarting); err != nil {
 		t.Fatalf("Transition() through copy error = %v", err)
 	}
-	if got := original.State(); got != executionowner.StateStarting {
+	if got := original.State(); got != StateStarting {
 		t.Fatalf("original State() = %d, want StateStarting", got)
 	}
 
 	secondCopy := copy
-	if err := secondCopy.Transition(executionowner.StateStarting, executionowner.StateRunning); err != nil {
+	if err := secondCopy.transitionLifecycle(StateStarting, StateRunning); err != nil {
 		t.Fatalf("Transition() through second copy error = %v", err)
 	}
-	if got := original.State(); got != executionowner.StateRunning {
+	if got := original.State(); got != StateRunning {
 		t.Fatalf("original State() after second-copy transition = %d, want StateRunning", got)
 	}
 }
 
 func TestConcurrentTransitionsThroughCopiesShareLifecycle(t *testing.T) {
-	original := executionowner.New()
+	original := New()
 	copy := *original
 
 	results := runConcurrentTransitions(2, func(index int) error {
 		if index == 0 {
-			return original.Transition(executionowner.StatePreCommit, executionowner.StateCommitted)
+			return original.transitionLifecycle(StatePreCommit, StateCommitted)
 		}
-		return copy.Transition(executionowner.StatePreCommit, executionowner.StateCommitted)
+		return copy.transitionLifecycle(StatePreCommit, StateCommitted)
 	})
 	assertOneTransitionWinner(t, results)
-	if original.State() != executionowner.StateCommitted || copy.State() != executionowner.StateCommitted {
+	if original.State() != StateCommitted || copy.State() != StateCommitted {
 		t.Fatalf("copies do not observe one StateCommitted lifecycle")
 	}
 }
 
 func TestCopyAfterMultipleTransitionsSharesLifecycle(t *testing.T) {
-	original := ownerInState(t, executionowner.StateRunning)
+	original := ownerInState(t, StateRunning)
 	copy := *original
 
-	if err := copy.Transition(executionowner.StateRunning, executionowner.StateTerminalizing); err != nil {
+	if err := copy.transitionLifecycle(StateRunning, StateTerminalizing); err != nil {
 		t.Fatalf("Transition() through late copy error = %v", err)
 	}
-	if got := original.State(); got != executionowner.StateTerminalizing {
+	if got := original.State(); got != StateTerminalizing {
 		t.Fatalf("original State() = %d, want StateTerminalizing", got)
 	}
 }
 
 func TestTerminalIsIrreversibleUnderConcurrency(t *testing.T) {
-	owner := ownerInState(t, executionowner.StateTerminal)
+	owner := ownerInState(t, StateTerminal)
 	const callers = 64
 
 	results := runConcurrentTransitions(callers, func(index int) error {
-		states := []executionowner.State{
-			executionowner.StatePreCommit,
-			executionowner.StateCommitted,
-			executionowner.StateStarting,
-			executionowner.StateRunning,
-			executionowner.StateTerminalizing,
-			executionowner.StateTerminal,
+		states := []State{
+			StatePreCommit,
+			StateCommitted,
+			StateStarting,
+			StateRunning,
+			StateTerminalizing,
+			StateTerminal,
 		}
-		return owner.Transition(executionowner.StateTerminal, states[index%len(states)])
+		return owner.transitionLifecycle(StateTerminal, states[index%len(states)])
 	})
 	for _, err := range results {
-		if !errors.Is(err, executionowner.ErrInvalidTransition) {
+		if !errors.Is(err, ErrInvalidTransition) {
 			t.Errorf("post-Terminal Transition() error = %v, want ErrInvalidTransition", err)
 		}
 	}
-	if got := owner.State(); got != executionowner.StateTerminal {
+	if got := owner.State(); got != StateTerminal {
 		t.Fatalf("State() = %d, want immutable StateTerminal", got)
 	}
 }
 
-func ownerInState(t *testing.T, target executionowner.State) *executionowner.Owner {
+func ownerInState(t *testing.T, target State) *Owner {
 	t.Helper()
 
-	owner := executionowner.New()
-	path := []executionowner.State{
-		executionowner.StatePreCommit,
-		executionowner.StateCommitted,
-		executionowner.StateStarting,
-		executionowner.StateRunning,
-		executionowner.StateTerminalizing,
-		executionowner.StateTerminal,
+	owner := New()
+	path := []State{
+		StatePreCommit,
+		StateCommitted,
+		StateStarting,
+		StateRunning,
+		StateTerminalizing,
+		StateTerminal,
 	}
-	if target == executionowner.StatePreCommit {
+	if target == StatePreCommit {
 		return owner
 	}
 	for index := 1; index < len(path); index++ {
-		if err := owner.Transition(path[index-1], path[index]); err != nil {
+		if err := owner.transitionLifecycle(path[index-1], path[index]); err != nil {
 			t.Fatalf("advance Transition(%d, %d) error = %v", path[index-1], path[index], err)
 		}
 		if path[index] == target {
@@ -597,7 +595,7 @@ func assertOneTransitionWinner(t *testing.T, results []error) {
 		switch {
 		case err == nil:
 			successes.Add(1)
-		case errors.Is(err, executionowner.ErrInvalidTransition):
+		case errors.Is(err, ErrInvalidTransition):
 		default:
 			t.Errorf("Transition() error = %v, want nil or ErrInvalidTransition", err)
 		}
