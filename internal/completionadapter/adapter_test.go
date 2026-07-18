@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/dsdred/universal-websocket-platform/internal/executionowner"
+	"github.com/dsdred/universal-websocket-platform/internal/lifetimelease"
 	"github.com/dsdred/universal-websocket-platform/internal/sessionmanager"
 )
 
@@ -266,11 +267,14 @@ func committedRegistration(
 	if err != nil {
 		t.Fatalf("Manager.Reserve(%q) error = %v", sessionID, err)
 	}
-	registrationID, err := reservation.Commit()
+	result, err := reservation.Commit()
 	if err != nil {
 		t.Fatalf("Reservation.Commit() error = %v", err)
 	}
-	return registrationID
+	if outcome := result.LifetimeLease().Release(); outcome != lifetimelease.ReleaseOutcomeReleased {
+		t.Fatalf("LifetimeLease.Release() = %d, want ReleaseOutcomeReleased", outcome)
+	}
+	return result.RegistrationID()
 }
 
 func assertRegistrationPresent(

@@ -74,7 +74,7 @@ func TestManagerShutdownSnapshotExcludesReservation(t *testing.T) {
 	snapshot := manager.BeginShutdown()
 
 	assertSnapshotCount(t, snapshot, 0)
-	if registrationID, err := handle.Commit(); registrationID != (RegistrationID{}) || !errors.Is(err, ErrManagerNotOpen) {
+	if registrationID, err := handle.Commit(); registrationID != (CommitResult{}) || !errors.Is(err, ErrManagerNotOpen) {
 		t.Fatalf("Commit() = (%+v, %v), want zero ID and ErrManagerNotOpen", registrationID, err)
 	}
 	handle.AbortUnlessCommitted()
@@ -100,7 +100,7 @@ func TestManagerCommitAfterBeginShutdownDoesNotAppearInSnapshot(t *testing.T) {
 
 	registrationID, err := handle.Commit()
 
-	if registrationID != (RegistrationID{}) || !errors.Is(err, ErrManagerNotOpen) {
+	if registrationID != (CommitResult{}) || !errors.Is(err, ErrManagerNotOpen) {
 		t.Fatalf("Commit() = (%+v, %v), want zero ID and ErrManagerNotOpen", registrationID, err)
 	}
 	assertSnapshotCount(t, snapshot, 0)
@@ -152,8 +152,8 @@ func TestManagerConcurrentCommitAndBeginShutdownSnapshotLinearization(t *testing
 
 		go func() {
 			<-start
-			committedID, err := handle.Commit()
-			commitResults <- commitResult{registrationID: committedID, err: err}
+			committed, err := handle.Commit()
+			commitResults <- commitResult{registrationID: committed.RegistrationID(), err: err}
 		}()
 		go func() {
 			<-start

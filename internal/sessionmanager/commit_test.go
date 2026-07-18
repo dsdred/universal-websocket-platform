@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"testing"
+
+	"github.com/dsdred/universal-websocket-platform/internal/lifetimelease"
 )
 
 func TestReservationCommitPublishesRegistration(t *testing.T) {
@@ -11,30 +13,30 @@ func TestReservationCommitPublishesRegistration(t *testing.T) {
 	handle := mustReserve(t, manager, "session-1")
 	reservedID := reservationFromHandle(t, handle).registrationID
 
-	committedID, err := handle.Commit()
+	committed, err := handle.Commit()
 	if err != nil {
 		t.Fatalf("Commit() error = %v", err)
 	}
-	if committedID != reservedID {
-		t.Fatalf("Commit() RegistrationID = %+v, want %+v", committedID, reservedID)
+	if committed.RegistrationID() != reservedID {
+		t.Fatalf("Commit() RegistrationID = %+v, want %+v", committed.RegistrationID(), reservedID)
 	}
 
 	assertReservationCount(t, manager, 0)
-	assertRegistration(t, manager, committedID, "session-1")
+	assertRegistration(t, manager, committed.RegistrationID(), "session-1")
 }
 
 func TestReservationDoubleCommitIsIdempotent(t *testing.T) {
 	manager := New()
 	handle := mustReserve(t, manager, "session-1")
 
-	firstID, firstErr := handle.Commit()
-	secondID, secondErr := handle.Commit()
+	first, firstErr := handle.Commit()
+	second, secondErr := handle.Commit()
 
 	if firstErr != nil || secondErr != nil {
 		t.Fatalf("Commit() errors = (%v, %v), want nil", firstErr, secondErr)
 	}
-	if firstID != secondID {
-		t.Fatalf("Commit() IDs = (%+v, %+v), want equal", firstID, secondID)
+	if first.RegistrationID() != second.RegistrationID() {
+		t.Fatalf("Commit() IDs = (%+v, %+v), want equal", first.RegistrationID(), second.RegistrationID())
 	}
 	assertRegistrationCount(t, manager, 1)
 }
@@ -49,7 +51,7 @@ func TestReservationCommitAfterCompleteReturnsRegistrationRemoved(t *testing.T) 
 
 	retriedID, err := handle.Commit()
 
-	if retriedID != (RegistrationID{}) || !errors.Is(err, ErrRegistrationRemoved) {
+	if retriedID != (CommitResult{}) || !errors.Is(err, ErrRegistrationRemoved) {
 		t.Fatalf("Commit() after Complete = (%+v, %v), want zero ID and ErrRegistrationRemoved", retriedID, err)
 	}
 	assertRegistrationCount(t, manager, 0)
@@ -70,7 +72,7 @@ func TestReservationCommitAfterSessionIDReuseDoesNotDescribeNewRegistration(t *t
 
 	retriedID, err := stale.Commit()
 
-	if retriedID != (RegistrationID{}) || !errors.Is(err, ErrRegistrationRemoved) {
+	if retriedID != (CommitResult{}) || !errors.Is(err, ErrRegistrationRemoved) {
 		t.Fatalf("stale Commit() = (%+v, %v), want zero ID and ErrRegistrationRemoved", retriedID, err)
 	}
 	if freshID == staleID {
@@ -88,7 +90,7 @@ func TestReservationCommitAfterAbort(t *testing.T) {
 
 	registrationID, err := handle.Commit()
 
-	if registrationID != (RegistrationID{}) || !errors.Is(err, ErrReservationAborted) {
+	if registrationID != (CommitResult{}) || !errors.Is(err, ErrReservationAborted) {
 		t.Fatalf("Commit() = (%+v, %v), want zero ID and ErrReservationAborted", registrationID, err)
 	}
 	assertRegistrationCount(t, manager, 0)
@@ -97,7 +99,7 @@ func TestReservationCommitAfterAbort(t *testing.T) {
 func TestReservationAbortAfterCommitIsNoOp(t *testing.T) {
 	manager := New()
 	handle := mustReserve(t, manager, "session-1")
-	registrationID, err := handle.Commit()
+	result, err := handle.Commit()
 	if err != nil {
 		t.Fatalf("Commit() error = %v", err)
 	}
@@ -105,7 +107,7 @@ func TestReservationAbortAfterCommitIsNoOp(t *testing.T) {
 	handle.Abort()
 	handle.AbortUnlessCommitted()
 
-	assertRegistration(t, manager, registrationID, "session-1")
+	assertRegistration(t, manager, result.RegistrationID(), "session-1")
 }
 
 func TestReservationConcurrentCommitPublishesExactlyOnce(t *testing.T) {
@@ -117,8 +119,8 @@ func TestReservationConcurrentCommitPublishesExactlyOnce(t *testing.T) {
 	for range concurrentCalls {
 		go func() {
 			<-start
-			registrationID, err := handle.Commit()
-			results <- commitResult{registrationID: registrationID, err: err}
+			result, err := handle.Commit()
+			results <- commitResult{registrationID: result.RegistrationID(), err: err}
 		}()
 	}
 	close(start)
@@ -149,8 +151,8 @@ func TestReservationConcurrentAbortAndCommitHasOneTerminalOutcome(t *testing.T) 
 
 		go func() {
 			<-start
-			registrationID, err := handle.Commit()
-			commitResultChannel <- commitResult{registrationID: registrationID, err: err}
+			result, err := handle.Commit()
+			commitResultChannel <- commitResult{registrationID: result.RegistrationID(), err: err}
 		}()
 		go func() {
 			<-start
@@ -183,8 +185,8 @@ func TestReservationCommitAndBeginShutdownShareLinearizationBoundary(t *testing.
 
 		go func() {
 			<-start
-			registrationID, err := handle.Commit()
-			commitResultChannel <- commitResult{registrationID: registrationID, err: err}
+			result, err := handle.Commit()
+			commitResultChannel <- commitResult{registrationID: result.RegistrationID(), err: err}
 		}()
 		go func() {
 			<-start
@@ -221,7 +223,7 @@ func TestReservationCommitAfterBeginShutdownRequiresAbort(t *testing.T) {
 
 	registrationID, err := handle.Commit()
 
-	if registrationID != (RegistrationID{}) || !errors.Is(err, ErrManagerNotOpen) {
+	if registrationID != (CommitResult{}) || !errors.Is(err, ErrManagerNotOpen) {
 		t.Fatalf("Commit() = (%+v, %v), want zero ID and ErrManagerNotOpen", registrationID, err)
 	}
 	assertReservationCount(t, manager, 1)
@@ -251,9 +253,12 @@ func TestCommittedSessionIDCannotBeReservedAgain(t *testing.T) {
 func TestCommittedRegistrationKeepsManagerClosingUntilComplete(t *testing.T) {
 	manager := New()
 	handle := mustReserve(t, manager, "session-1")
-	registrationID, err := handle.Commit()
+	result, err := handle.Commit()
 	if err != nil {
 		t.Fatalf("Commit() error = %v", err)
+	}
+	if outcome := result.LifetimeLease().Release(); outcome != lifetimelease.ReleaseOutcomeReleased {
+		t.Fatalf("LifetimeLease.Release() = %d, want ReleaseOutcomeReleased", outcome)
 	}
 
 	manager.BeginShutdown()
@@ -265,8 +270,8 @@ func TestCommittedRegistrationKeepsManagerClosingUntilComplete(t *testing.T) {
 	if got := manager.State(); got != StateClosing {
 		t.Fatalf("State() = %v, want StateClosing", got)
 	}
-	assertRegistration(t, manager, registrationID, "session-1")
-	if completed := manager.Complete(registrationID); !completed {
+	assertRegistration(t, manager, result.RegistrationID(), "session-1")
+	if completed := manager.Complete(result.RegistrationID()); !completed {
 		t.Fatal("Complete() = false, want true")
 	}
 	if got := manager.State(); got != StateClosed {

@@ -6,7 +6,7 @@ const maxSessionIDBytes = 255
 
 // ReservationHandle owns one pending Reservation.
 type ReservationHandle interface {
-	Commit() (RegistrationID, error)
+	Commit() (CommitResult, error)
 	Abort()
 	AbortUnlessCommitted()
 }
@@ -28,6 +28,7 @@ type reservation struct {
 type registration struct {
 	registrationID RegistrationID
 	sessionID      SessionID
+	commitResult   CommitResult
 }
 
 type reservationHandle struct {
@@ -79,7 +80,7 @@ func (manager *Manager) Reserve(sessionID SessionID) (ReservationHandle, error) 
 
 // Commit atomically publishes the Reservation as one committed Registration.
 // Repeated calls return the same identity only while that Registration exists.
-func (handle *reservationHandle) Commit() (RegistrationID, error) {
+func (handle *reservationHandle) Commit() (CommitResult, error) {
 	return handle.manager.commit(handle.reservation)
 }
 
@@ -93,7 +94,7 @@ func (handle *reservationHandle) AbortUnlessCommitted() {
 	handle.Abort()
 }
 
-func (manager *Manager) commit(target *reservation) (RegistrationID, error) {
+func (manager *Manager) commit(target *reservation) (CommitResult, error) {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
 
@@ -101,37 +102,47 @@ func (manager *Manager) commit(target *reservation) (RegistrationID, error) {
 	case reservationCommitted:
 		registration, exists := manager.registrations[target.registrationID]
 		if !exists || registration.sessionID != target.sessionID {
-			return RegistrationID{}, ErrRegistrationRemoved
+			return CommitResult{}, ErrRegistrationRemoved
 		}
 		currentID, exists := manager.registeredSessions[target.sessionID]
 		if !exists || currentID != target.registrationID {
-			return RegistrationID{}, ErrRegistrationRemoved
+			return CommitResult{}, ErrRegistrationRemoved
 		}
-		return target.registrationID, nil
+		return registration.commitResult, nil
 	case reservationAborted:
-		return RegistrationID{}, ErrReservationAborted
+		return CommitResult{}, ErrReservationAborted
 	}
 
 	if manager.state != StateOpen {
-		return RegistrationID{}, ErrManagerNotOpen
+		return CommitResult{}, ErrManagerNotOpen
 	}
 
 	current, exists := manager.reservations[target.registrationID]
 	if !exists || current != target {
-		return RegistrationID{}, ErrReservationAborted
+		return CommitResult{}, ErrReservationAborted
 	}
 
+	lease := &boundLifetimeLease{
+		manager:        manager,
+		registrationID: target.registrationID,
+	}
+	result := CommitResult{
+		registrationID: target.registrationID,
+		lifetimeLease:  lease,
+	}
 	committed := &registration{
 		registrationID: target.registrationID,
 		sessionID:      target.sessionID,
+		commitResult:   result,
 	}
 	target.state = reservationCommitted
 	delete(manager.reservations, target.registrationID)
 	delete(manager.reservedSessions, target.sessionID)
 	manager.registrations[target.registrationID] = committed
 	manager.registeredSessions[target.sessionID] = target.registrationID
+	manager.lifetimeLeases[target.registrationID] = struct{}{}
 
-	return target.registrationID, nil
+	return result, nil
 }
 
 func (manager *Manager) abort(target *reservation) {

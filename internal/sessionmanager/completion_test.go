@@ -5,6 +5,8 @@ import (
 	"errors"
 	"sync"
 	"testing"
+
+	"github.com/dsdred/universal-websocket-platform/internal/lifetimelease"
 )
 
 func TestManagerInitialCompleteRemovesCommittedRegistration(t *testing.T) {
@@ -122,8 +124,8 @@ func TestManagerConcurrentCommitAndCompleteHaveAtomicOutcomes(t *testing.T) {
 
 		go func() {
 			<-start
-			committedID, err := handle.Commit()
-			commitResults <- commitResult{registrationID: committedID, err: err}
+			committed, err := handle.Commit()
+			commitResults <- commitResult{registrationID: committed.RegistrationID(), err: err}
 		}()
 		go func() {
 			<-start
@@ -253,9 +255,12 @@ func TestManagerCompleteInClosingClosesManager(t *testing.T) {
 
 func mustCommit(t *testing.T, handle ReservationHandle) RegistrationID {
 	t.Helper()
-	registrationID, err := handle.Commit()
+	result, err := handle.Commit()
 	if err != nil {
 		t.Fatalf("Commit() error = %v", err)
 	}
-	return registrationID
+	if outcome := result.LifetimeLease().Release(); outcome != lifetimelease.ReleaseOutcomeReleased {
+		t.Fatalf("LifetimeLease.Release() = %d, want ReleaseOutcomeReleased", outcome)
+	}
+	return result.RegistrationID()
 }

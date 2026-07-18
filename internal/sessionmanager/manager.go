@@ -45,6 +45,7 @@ type Manager struct {
 	reservedSessions   map[SessionID]RegistrationID
 	registrations      map[RegistrationID]*registration
 	registeredSessions map[SessionID]RegistrationID
+	lifetimeLeases     map[RegistrationID]struct{}
 	shutdownDone       chan struct{}
 	shutdownSnapshot   ShutdownSnapshot
 }
@@ -58,6 +59,7 @@ func New() *Manager {
 		reservedSessions:   make(map[SessionID]RegistrationID),
 		registrations:      make(map[RegistrationID]*registration),
 		registeredSessions: make(map[SessionID]RegistrationID),
+		lifetimeLeases:     make(map[RegistrationID]struct{}),
 		shutdownDone:       make(chan struct{}),
 	}
 }
@@ -114,7 +116,9 @@ func (manager *Manager) State() State {
 }
 
 func (manager *Manager) accountingEmptyLocked() bool {
-	return len(manager.reservations) == 0 && len(manager.registrations) == 0
+	return len(manager.reservations) == 0 &&
+		len(manager.registrations) == 0 &&
+		len(manager.lifetimeLeases) == 0
 }
 
 func (manager *Manager) closeIfAccountingEmptyLocked() {

@@ -77,8 +77,8 @@ func TestManagerConcurrentCommitAndWaitPreserveRegistrationAccounting(t *testing
 	commitResultChannel := make(chan commitResult, 1)
 
 	go func() {
-		committedID, err := handle.Commit()
-		commitResultChannel <- commitResult{registrationID: committedID, err: err}
+		committed, err := handle.Commit()
+		commitResultChannel <- commitResult{registrationID: committed.RegistrationID(), err: err}
 	}()
 	commitResult := <-commitResultChannel
 	if commitResult.err != nil || commitResult.registrationID != registrationID {
@@ -209,7 +209,7 @@ func assertAccountingCount(t *testing.T, manager *Manager, want int) {
 	t.Helper()
 	manager.mu.RLock()
 	defer manager.mu.RUnlock()
-	if got := len(manager.reservations) + len(manager.registrations); got != want {
+	if got := len(manager.reservations) + len(manager.registrations) + len(manager.lifetimeLeases); got != want {
 		t.Fatalf("accounting count = %d, want %d", got, want)
 	}
 }
