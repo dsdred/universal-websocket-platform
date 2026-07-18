@@ -1,6 +1,25 @@
 // Package executionowner defines the per-Session execution ownership boundary.
 package executionowner
 
+import (
+	"fmt"
+	"sync"
+)
+
+type ownerError string
+
+const (
+	// ErrInvalidTransition indicates that a lifecycle transition is not allowed
+	// from the state observed at its linearization point.
+	ErrInvalidTransition ownerError = "invalid execution owner lifecycle transition"
+	// ErrUninitializedOwner indicates that an Owner was not created with New.
+	ErrUninitializedOwner ownerError = "execution owner is uninitialized"
+)
+
+func (err ownerError) Error() string {
+	return string(err)
+}
+
 // State is the read-only lifecycle state of an Owner.
 type State uint8
 
@@ -21,18 +40,104 @@ const (
 
 // Owner represents one per-Session execution lifecycle.
 //
-// This skeleton exposes lifecycle identity only. It does not start execution or
-// own Session, Runtime callback, registration, or lease resources.
+// Owner exposes lifecycle state transitions only. It does not start execution
+// or own Session, Runtime callback, registration, or lease resources.
 type Owner struct {
-	state State
+	state *ownerState
+}
+
+type ownerState struct {
+	mu      sync.RWMutex
+	current State
 }
 
 // New creates a dormant Owner in the PreCommit state.
 func New() *Owner {
-	return &Owner{state: StatePreCommit}
+	return &Owner{
+		state: &ownerState{current: StatePreCommit},
+	}
 }
 
 // State returns the current lifecycle state.
 func (owner *Owner) State() State {
-	return owner.state
+	if owner == nil || owner.state == nil {
+		return 0
+	}
+
+	state := owner.state
+	state.mu.RLock()
+	defer state.mu.RUnlock()
+
+	return state.current
+}
+
+// Transition atomically changes the lifecycle state when from matches the
+// state observed at the transition linearization point and the transition is
+// permitted by the Execution Owner lifecycle.
+func (owner *Owner) Transition(from, to State) error {
+	if owner == nil || owner.state == nil {
+		return ErrUninitializedOwner
+	}
+
+	state := owner.state
+	state.mu.Lock()
+	defer state.mu.Unlock()
+
+	if state.current != from {
+		return fmt.Errorf(
+			"%w: current=%s expected=%s requested=%s: current state does not match expected source",
+			ErrInvalidTransition,
+			stateName(state.current),
+			stateName(from),
+			stateName(to),
+		)
+	}
+	if !transitionAllowed(from, to) {
+		return fmt.Errorf(
+			"%w: current=%s expected=%s requested=%s: transition is not permitted",
+			ErrInvalidTransition,
+			stateName(state.current),
+			stateName(from),
+			stateName(to),
+		)
+	}
+
+	state.current = to
+	return nil
+}
+
+func transitionAllowed(from, to State) bool {
+	switch from {
+	case StatePreCommit:
+		return to == StateCommitted
+	case StateCommitted:
+		return to == StateStarting || to == StateTerminalizing
+	case StateStarting:
+		return to == StateRunning || to == StateTerminalizing
+	case StateRunning:
+		return to == StateTerminalizing
+	case StateTerminalizing:
+		return to == StateTerminal
+	default:
+		return false
+	}
+}
+
+func stateName(state State) string {
+	switch state {
+	case StatePreCommit:
+		return "PreCommit"
+	case StateCommitted:
+		return "Committed"
+	case StateStarting:
+		return "Starting"
+	case StateRunning:
+		return "Running"
+	case StateTerminalizing:
+		return "Terminalizing"
+	case StateTerminal:
+		return "Terminal"
+	default:
+		return fmt.Sprintf("State(%d)", state)
+	}
 }
