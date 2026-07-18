@@ -49,6 +49,11 @@ type Owner struct {
 type ownerState struct {
 	mu      sync.RWMutex
 	current State
+	control controlCell
+}
+
+type controlCell struct {
+	stopRequested bool
 }
 
 // New creates a dormant Owner in the PreCommit state.
@@ -69,6 +74,38 @@ func (owner *Owner) State() State {
 	defer state.mu.RUnlock()
 
 	return state.current
+}
+
+// RequestStop records the first Stop request for this Owner. It does not
+// transition the lifecycle or perform Session work.
+func (owner *Owner) RequestStop() bool {
+	if owner == nil || owner.state == nil {
+		return false
+	}
+
+	state := owner.state
+	state.mu.Lock()
+	defer state.mu.Unlock()
+
+	if state.current == StateTerminalizing || state.current == StateTerminal || state.control.stopRequested {
+		return false
+	}
+
+	state.control.stopRequested = true
+	return true
+}
+
+// StopRequested reports whether this Owner has accepted a Stop request.
+func (owner *Owner) StopRequested() bool {
+	if owner == nil || owner.state == nil {
+		return false
+	}
+
+	state := owner.state
+	state.mu.RLock()
+	defer state.mu.RUnlock()
+
+	return state.control.stopRequested
 }
 
 // Transition atomically changes the lifecycle state when from matches the
