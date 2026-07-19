@@ -64,7 +64,7 @@ The primary design guidance is [ARCH-001: Runtime Architectural Pattern](../arch
 
 ### Configuration First
 
-Configuration defines Runtime behaviour. Published ConfigurationVersion is the source of truth, and Runtime executes an independently copied Snapshot. A Published setting is either supported or rejected explicitly; it is never silently ignored.
+Configuration defines Runtime behaviour. Published ConfigurationVersion is the source of truth, and Runtime executes an independently copied Snapshot. Every startup-critical capability must be executable or explicitly rejected before Runtime becomes Ready. Runtime capabilities assigned by the approved architecture to later roadmap gates may remain configured but inactive, and that status must be explicit.
 
 ### Ownership
 
@@ -169,7 +169,7 @@ Beta work is organized as architectural epics. Each epic requires focused design
 1. **Handshake:** move Authentication and future Origin evaluation before Upgrade, with explicit allow/reject and transport error semantics. A separate DP must define the pipeline.
 2. **Runtime Host:** compose existing components without becoming a god object; own startup ordering, partial-start rollback, and shutdown ordering.
 3. **Lifecycle hardening:** make cancellation and concurrent Stop semantics consistent, remove lifecycle locks from network I/O, and retain shutdown errors.
-4. **Configuration validation:** ensure every Published setting is either executable or rejected before serving traffic.
+4. **Configuration validation:** ensure every startup-critical capability is executable or explicitly rejected before Runtime becomes Ready; capabilities assigned to later gates may remain configured but explicitly inactive.
 
 These gates precede Router because Router must not inherit an unstable security, composition, or shutdown boundary.
 

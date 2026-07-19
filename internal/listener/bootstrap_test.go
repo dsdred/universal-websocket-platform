@@ -25,9 +25,9 @@ func TestBootstrapBuild(t *testing.T) {
 		t.Fatalf("Listener = (Address %q, Running %t)", listener.Address(), listener.Running())
 	}
 	wantTLS := tlsConfiguration{
-		enabled:        true,
-		certificateRef: "certificates/listener",
-		privateKeyRef:  "secrets/listener-key",
+		enabled:        false,
+		certificateRef: "",
+		privateKeyRef:  "",
 		minVersion:     "1.3",
 	}
 	if listener.tls != wantTLS {
@@ -53,7 +53,7 @@ func TestBootstrapBuildDeepCopiesSnapshot(t *testing.T) {
 
 	snapshot.Host = "changed"
 	snapshot.Port = 8080
-	snapshot.TLS.Enabled = false
+	snapshot.TLS.Enabled = true
 	snapshot.TLS.CertificateRef = "changed-certificate"
 	snapshot.TLS.PrivateKeyRef = "changed-key"
 	snapshot.TLS.MinVersion = "1.2"
@@ -62,9 +62,9 @@ func TestBootstrapBuildDeepCopiesSnapshot(t *testing.T) {
 		t.Fatalf("Address() = %q, want 127.0.0.1:9443", listener.Address())
 	}
 	wantTLS := tlsConfiguration{
-		enabled:        true,
-		certificateRef: "certificates/listener",
-		privateKeyRef:  "secrets/listener-key",
+		enabled:        false,
+		certificateRef: "",
+		privateKeyRef:  "",
 		minVersion:     "1.3",
 	}
 	if listener.tls != wantTLS {
@@ -81,8 +81,19 @@ func TestBootstrapBuildRejectsInvalidSnapshot(t *testing.T) {
 		{name: "zero port", mutate: func(snapshot *runtimeconfig.ListenerSnapshot) { snapshot.Port = 0 }},
 		{name: "empty minimum TLS version", mutate: func(snapshot *runtimeconfig.ListenerSnapshot) { snapshot.TLS.MinVersion = "" }},
 		{name: "unsupported TLS version", mutate: func(snapshot *runtimeconfig.ListenerSnapshot) { snapshot.TLS.MinVersion = "1.1" }},
-		{name: "missing certificate", mutate: func(snapshot *runtimeconfig.ListenerSnapshot) { snapshot.TLS.CertificateRef = "" }},
-		{name: "missing private key", mutate: func(snapshot *runtimeconfig.ListenerSnapshot) { snapshot.TLS.PrivateKeyRef = "" }},
+		{name: "missing certificate", mutate: func(snapshot *runtimeconfig.ListenerSnapshot) {
+			snapshot.TLS.Enabled = true
+			snapshot.TLS.PrivateKeyRef = "secrets/listener-key"
+		}},
+		{name: "missing private key", mutate: func(snapshot *runtimeconfig.ListenerSnapshot) {
+			snapshot.TLS.Enabled = true
+			snapshot.TLS.CertificateRef = "certificates/listener"
+		}},
+		{name: "enabled TLS", mutate: func(snapshot *runtimeconfig.ListenerSnapshot) {
+			snapshot.TLS.Enabled = true
+			snapshot.TLS.CertificateRef = "certificates/listener"
+			snapshot.TLS.PrivateKeyRef = "secrets/listener-key"
+		}},
 	}
 
 	for _, test := range tests {
@@ -102,10 +113,7 @@ func validListenerSnapshot() runtimeconfig.ListenerSnapshot {
 		Host: "127.0.0.1",
 		Port: 9443,
 		TLS: runtimeconfig.TLSSnapshot{
-			Enabled:        true,
-			CertificateRef: "certificates/listener",
-			PrivateKeyRef:  "secrets/listener-key",
-			MinVersion:     "1.3",
+			MinVersion: "1.3",
 		},
 	}
 }

@@ -3,6 +3,7 @@ package authentication
 import (
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
 	"github.com/dsdred/universal-websocket-platform/internal/secretresolver"
@@ -47,8 +48,28 @@ func (bootstrap *DefaultBootstrap) Build(
 		return anonymousService{}, nil
 	}
 
-	providers := make([]Provider, 0, len(snapshot.Providers))
+	providerSnapshots := make([]runtimeconfig.AuthenticationProviderSnapshot, 0, len(snapshot.Providers))
 	for _, providerSnapshot := range snapshot.Providers {
+		if providerSnapshot.Enabled {
+			providerSnapshots = append(providerSnapshots, providerSnapshot)
+		}
+	}
+	if len(providerSnapshots) == 0 {
+		return nil, fmt.Errorf("create Authentication Service: %w", ErrInvalidProvider)
+	}
+	slices.SortStableFunc(providerSnapshots, func(first, second runtimeconfig.AuthenticationProviderSnapshot) int {
+		switch {
+		case first.Priority < second.Priority:
+			return -1
+		case first.Priority > second.Priority:
+			return 1
+		default:
+			return 0
+		}
+	})
+
+	providers := make([]Provider, 0, len(providerSnapshots))
+	for _, providerSnapshot := range providerSnapshots {
 		provider, err := bootstrap.registry.Create(providerSnapshot, bootstrap.resolver)
 		if err != nil {
 			return nil, fmt.Errorf("create Authentication Provider %q: %w", providerSnapshot.Name, err)

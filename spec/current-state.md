@@ -143,6 +143,10 @@
 - Host создает независимый root Runtime context после успешного запуска Listener; startup context не становится lifecycle context запущенного Runtime
 - Runtime readiness становится true только после startup commit и сбрасывается в false в начале Stop
 - Host владеет lifecycle-only Admission Gate, который открывается только в Running и закрывается до вызова Listener Stop
+- Production composition до создания Listener проверяет startup-critical поля Snapshot: Runtime identity, Listener binding metadata, поддержку TLS и bounded Handshake timeout
+- Включённый TLS явно отклоняется как unsupported runtime capability до открытия TCP socket; CertificateRef и PrivateKeyRef при этом не разрешаются и не включаются в текст ошибки
+- `HandshakeSeconds` применяется как deadline всей pre-Upgrade evaluation; истёкшее решение не может перейти к `websocket.Accept`
+- `ReadSeconds`, `WriteSeconds` и `IdleSeconds` сохраняются в immutable Snapshot как configured-but-inactive Runtime capabilities до отдельного эпика TLS and Listener settings; default Published Configuration остаётся исполнимой
 - Реализован Listener Bootstrap, создающий потокобезопасный Listener из ListenerSnapshot
 - Listener хранит локальную копию Host, Port и TLS configuration и поддерживает lifecycle `Created -> Running -> Stopping -> Stopped`
 - Listener открывает TCP socket и запускает HTTP Server с единым ответом `501 Not Implemented` для любого запроса
@@ -158,6 +162,7 @@
 - Штатные `http.ErrServerClosed` и `net.ErrClosed` при Listener shutdown не создают ложные terminal error reports
 - Первый Listener Stop выполняет shutdown, конкурентные Stop ожидают тот же terminal result с учетом cancellation context ожидающего caller, а повторный Stop возвращает сохраненный результат; независимые ошибки HTTP Shutdown и TCP Close сохраняются через `errors.Join`
 - Disabled Authentication формирует explicit anonymous Principal без запуска Provider
+- При включённой Authentication Bootstrap создаёт только enabled Providers и упорядочивает их по возрастанию `Priority`; активные Basic и asymmetric JWT configurations продолжают явно отклоняться до Listener Start
 - Реализована минимальная WebSocket Session, которая после Authentication владеет соединением, хранит криптографически случайный ID, глубокую копию Principal, RemoteAddress и время создания
 - Session Dispatcher создает Session из AuthenticatedContext и в текущей goroutine последовательно вызывает Start, блокирующий Run и завершающий Stop
 - Создан независимый пакет `internal/sessionmanager` с потокобезопасным lifecycle skeleton `Open -> Closing -> Closed`
@@ -187,8 +192,8 @@
 - Управления WebSocket-серверами
 - Поведения Runtime для WebSocket-серверов
 - Реальный TLS listener и другие сетевые параметры Listener
-- Применение Listener TimeoutSettings в Runtime
-- Полный Handshake Pipeline за пределами Authentication: configured timeout enforcement, Session shutdown wait set и operational diagnostics
+- Применение read, write и idle Listener TimeoutSettings в Runtime
+- Полный Handshake Pipeline за пределами Authentication и configured timeout enforcement: Session shutdown wait set и operational diagnostics
 - Проверка Basic credentials
 - Асимметричные JWT algorithms, JWKS, OIDC и token revocation
 - Реальные Secret Storage backend и подключение Resolver к Runtime Container еще не реализованы

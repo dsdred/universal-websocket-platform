@@ -373,6 +373,7 @@ func newUnbuiltHost(t *testing.T) *DefaultHost {
 	t.Helper()
 	snapshot := validSnapshot()
 	snapshot.Listener.Port = availablePort(t)
+	snapshot.Listener.TLS = runtimeconfig.TLSSnapshot{MinVersion: "1.2"}
 	snapshot.Authentication.Providers = snapshot.Authentication.Providers[:2]
 	host, err := NewHost(snapshot, emptyResolver(t), nil)
 	if err != nil {

@@ -48,6 +48,11 @@ func (bootstrap DefaultBootstrap) Build(snapshot runtimeconfig.ListenerSnapshot)
 	if snapshot.TLS.Enabled && (certificateRef == "" || privateKeyRef == "") {
 		return nil, ErrInvalidListenerConfiguration
 	}
+	if snapshot.TLS.Enabled {
+		// TLS transport is not implemented. Reject before DefaultListener can call net.Listen
+		// so configured TLS can never silently become a plaintext Listener.
+		return nil, ErrInvalidListenerConfiguration
+	}
 	if bootstrap.handshakeHandler == nil {
 		return nil, ErrInvalidListenerConfiguration
 	}

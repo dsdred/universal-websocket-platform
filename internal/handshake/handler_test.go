@@ -119,6 +119,81 @@ func TestHandlerAuthenticationErrorSkipsUpgradeAndSession(t *testing.T) {
 	assertSafeResponseBody(t, response, "sensitive-credential")
 }
 
+func TestHandlerConfiguredDeadlinePreventsUpgrade(t *testing.T) {
+	entered := make(chan struct{})
+	deadlineObserved := make(chan time.Time, 1)
+	service := &serviceStub{authenticate: func(ctx context.Context, _ authentication.AuthenticationRequest) (authentication.AuthenticationResult, error) {
+		deadline, ok := ctx.Deadline()
+		if !ok {
+			return authentication.AuthenticationResult{}, errors.New("configured deadline missing")
+		}
+		deadlineObserved <- deadline
+		close(entered)
+		<-ctx.Done()
+		// A context-aware dependency normally returns ctx.Err(). Returning Allow here
+		// proves that the Handshake itself invalidates a Decision after its deadline.
+		return allowedResult(), nil
+	}}
+	handoff := &handoffStub{}
+	reporter := &terminalErrorRecorder{}
+	handler, err := NewHandlerWithTerminalErrorReporter(
+		openAdmission(),
+		contextProvider{ctx: context.Background()},
+		service,
+		handoff,
+		reporter.Report,
+	)
+	if err != nil {
+		t.Fatalf("NewHandler() error = %v", err)
+	}
+	timedHandler := http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		ctx, cancel := context.WithTimeoutCause(request.Context(), 25*time.Millisecond, ErrHandshakeTimeout)
+		defer cancel()
+		handler.ServeHTTP(response, request.WithContext(ctx))
+	})
+	server := httptest.NewServer(timedHandler)
+	defer server.Close()
+
+	type dialResult struct {
+		connection *websocket.Conn
+		response   *http.Response
+		err        error
+	}
+	dialResultChannel := make(chan dialResult, 1)
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		connection, response, dialErr := websocket.Dial(ctx, websocketURL(server.URL), nil)
+		dialResultChannel <- dialResult{connection: connection, response: response, err: dialErr}
+	}()
+	receive(t, entered, "Authentication entry")
+	if deadline := receive(t, deadlineObserved, "configured Authentication deadline"); !deadline.After(time.Now().Add(-time.Second)) {
+		t.Fatalf("Authentication deadline = %v, want configured future deadline", deadline)
+	}
+	dial := receive(t, dialResultChannel, "Handshake timeout response")
+	if dial.connection != nil {
+		dial.connection.CloseNow()
+		t.Fatal("Handshake timeout unexpectedly upgraded WebSocket")
+	}
+	if dial.err == nil || dial.response == nil {
+		t.Fatalf("websocket.Dial() = (%v, %v), want HTTP rejection", dial.response, dial.err)
+	}
+	response := dial.response
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusServiceUnavailable {
+		t.Fatalf("status = %d, want %d", response.StatusCode, http.StatusServiceUnavailable)
+	}
+	if handoff.calls.Load() != 0 {
+		t.Fatalf("handoff calls = %d, want 0", handoff.calls.Load())
+	}
+	if reported := reporter.Single(t); !errors.Is(reported, ErrHandshakeTimeout) {
+		t.Fatalf("reported error = %v, want ErrHandshakeTimeout", reported)
+	} else if strings.Contains(reported.Error(), "credential-that-must-not-leak") {
+		t.Fatal("timeout error exposed credentials")
+	}
+	assertSafeResponseBody(t, response, "credential-that-must-not-leak")
+}
+
 func TestHandlerFinalAdmissionValidationPreventsUpgrade(t *testing.T) {
 	admission := openAdmission()
 	entered := make(chan struct{})

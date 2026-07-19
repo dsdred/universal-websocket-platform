@@ -446,6 +446,11 @@ func apiKeySnapshot(t *testing.T) runtimeconfig.Snapshot {
 			Host: "127.0.0.1",
 			Port: availablePort(t),
 			TLS:  runtimeconfig.TLSSnapshot{MinVersion: "1.2"},
+			Timeouts: runtimeconfig.TimeoutSnapshot{
+				HandshakeSeconds: 10,
+				WriteSeconds:     10,
+				IdleSeconds:      60,
+			},
 		},
 		Authentication: runtimeconfig.AuthenticationSnapshot{
 			Enabled: true,

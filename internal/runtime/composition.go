@@ -1,7 +1,10 @@
 package runtime
 
 import (
+	"context"
 	"fmt"
+	"net/http"
+	"time"
 
 	"github.com/dsdred/universal-websocket-platform/internal/authentication"
 	"github.com/dsdred/universal-websocket-platform/internal/handshake"
@@ -12,6 +15,17 @@ import (
 	"github.com/dsdred/universal-websocket-platform/internal/session"
 )
 
+type handshakeTimeoutHandler struct {
+	next    http.Handler
+	timeout time.Duration
+}
+
+func (handler handshakeTimeoutHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+	ctx, cancel := context.WithTimeoutCause(request.Context(), handler.timeout, handshake.ErrHandshakeTimeout)
+	defer cancel()
+	handler.next.ServeHTTP(response, request.WithContext(ctx))
+}
+
 func composeRuntime(
 	snapshot runtimeconfig.Snapshot,
 	resolver secretresolver.Resolver,
@@ -19,6 +33,10 @@ func composeRuntime(
 	capabilities *handshakeCapabilities,
 	reportError func(error),
 ) (listener.Listener, error) {
+	if err := validateExecutableSnapshot(snapshot); err != nil {
+		return nil, fmt.Errorf("validate Runtime Snapshot: %w", err)
+	}
+
 	registry := authentication.NewRegistry()
 	if err := registry.Register(authentication.APIKeyFactory{}); err != nil {
 		return nil, fmt.Errorf("register API Key Factory: %w", err)
@@ -47,9 +65,13 @@ func composeRuntime(
 	if err != nil {
 		return nil, fmt.Errorf("create Handshake: %w", err)
 	}
+	timedHandshakeHandler := handshakeTimeoutHandler{
+		next:    handshakeHandler,
+		timeout: time.Duration(snapshot.Listener.Timeouts.HandshakeSeconds) * time.Second,
+	}
 
 	runtimeListener, err := listener.NewBootstrapWithHandshakeAndTerminalErrorReporter(
-		handshakeHandler,
+		timedHandshakeHandler,
 		reportError,
 	).Build(snapshot.Listener)
 	if err != nil {

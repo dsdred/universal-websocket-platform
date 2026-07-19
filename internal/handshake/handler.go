@@ -16,6 +16,8 @@ var (
 	ErrNilRuntimeContextProvider = errors.New("Handshake Runtime context provider is nil")
 	ErrNilAuthenticationService  = errors.New("Handshake Authentication Service is nil")
 	ErrNilSessionHandoff         = errors.New("Handshake Session handoff is nil")
+	// ErrHandshakeTimeout identifies expiration of the configured pre-Upgrade Handshake deadline.
+	ErrHandshakeTimeout = errors.New("Handshake timeout")
 )
 
 // AdmissionCapability provides a live, read-only view of Host admission state.
@@ -104,7 +106,11 @@ func (handler *Handler) ServeHTTP(response http.ResponseWriter, request *http.Re
 
 	result, err := handler.authentication.Authenticate(handshakeContext, authenticationRequest(request))
 	if err != nil {
-		http.Error(response, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
+		handler.rejectCanceledHandshake(response, handshakeContext)
+		return
+	}
+	if handshakeContext.Err() != nil {
+		handler.rejectCanceledHandshake(response, handshakeContext)
 		return
 	}
 	decision, ok := allowDecision(result)
@@ -113,9 +119,15 @@ func (handler *Handler) ServeHTTP(response http.ResponseWriter, request *http.Re
 		return
 	}
 
-	// This live check is intentionally the last operation before websocket.Accept.
+	// This live check is intentionally the last admission operation before websocket.Accept.
 	if !handler.admission.CanAccept() {
 		http.Error(response, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
+		return
+	}
+	// A Decision loses validity if request, Runtime, or configured timeout cancellation
+	// wins before the Upgrade commit begins.
+	if handshakeContext.Err() != nil {
+		handler.rejectCanceledHandshake(response, handshakeContext)
 		return
 	}
 	websocketConnection, err := websocket.Accept(response, request, nil)
@@ -138,6 +150,14 @@ func (handler *Handler) ServeHTTP(response http.ResponseWriter, request *http.Re
 		_ = websocketConnection.Close(websocket.StatusInternalError, "")
 		websocketConnection.CloseNow()
 	}
+}
+
+func (handler *Handler) rejectCanceledHandshake(response http.ResponseWriter, ctx context.Context) {
+	cause := context.Cause(ctx)
+	if errors.Is(cause, ErrHandshakeTimeout) {
+		reportTerminalError(handler.reportError, ErrHandshakeTimeout)
+	}
+	http.Error(response, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
 }
 
 type sessionHandoffError struct {

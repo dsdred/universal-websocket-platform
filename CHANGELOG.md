@@ -38,6 +38,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Production JWT Factory that deeply converts Authentication Provider Snapshot metadata into Provider-local runtime configuration.
 - Session lifecycle hardening that keeps WebSocket writes outside the lifecycle mutex while preserving serialized writes and deterministic Send-versus-Stop admission.
 - Listener shutdown result sharing for concurrent and repeated Stop calls, context-bounded secondary waits, and independent HTTP Shutdown and TCP Close failures preserved through `errors.Is`.
+- Runtime startup capability validation before Listener construction, with explicit TLS rejection and safe classified errors.
+- Configured pre-Upgrade Handshake deadline propagated through Authentication and final admission validation.
+- Authentication composition of enabled Providers in ascending configured Priority, while disabled Provider metadata remains inactive.
 
 ## [0.1.0-alpha] - 2026-07-12
 

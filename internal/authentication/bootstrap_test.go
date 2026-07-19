@@ -64,15 +64,8 @@ func TestBootstrapBuildEnabledAuthenticationWithoutProviders(t *testing.T) {
 	bootstrap := mustBootstrap(t, registry, bootstrapResolver{})
 
 	service, err := bootstrap.Build(runtimeconfig.AuthenticationSnapshot{Enabled: true})
-	if err != nil {
-		t.Fatalf("Build() error = %v", err)
-	}
-	result, err := service.Authenticate(context.Background(), AuthenticationRequest{})
-	if err != nil {
-		t.Fatalf("Authenticate() error = %v", err)
-	}
-	if result.Success {
-		t.Fatal("Authenticate() Success = true, want false")
+	if service != nil || !errors.Is(err, ErrInvalidProvider) {
+		t.Fatalf("Build() = (%v, %v), want nil and ErrInvalidProvider", service, err)
 	}
 }
 
@@ -91,7 +84,7 @@ func TestBootstrapBuildEnabledAuthenticationWithOneProvider(t *testing.T) {
 	service, err := bootstrap.Build(runtimeconfig.AuthenticationSnapshot{
 		Enabled: true,
 		Providers: []runtimeconfig.AuthenticationProviderSnapshot{
-			{Name: "only", Type: runtimeconfig.AuthenticationProviderAPIKey},
+			{Name: "only", Type: runtimeconfig.AuthenticationProviderAPIKey, Enabled: true},
 		},
 	})
 	if err != nil {
@@ -106,7 +99,7 @@ func TestBootstrapBuildEnabledAuthenticationWithOneProvider(t *testing.T) {
 	}
 }
 
-func TestBootstrapBuildPreservesProviderOrder(t *testing.T) {
+func TestBootstrapBuildOrdersEnabledProvidersByPriority(t *testing.T) {
 	var mutex sync.Mutex
 	authenticationOrder := make([]string, 0, 2)
 	providers := map[string]*bootstrapProvider{
@@ -125,8 +118,9 @@ func TestBootstrapBuildPreservesProviderOrder(t *testing.T) {
 	service, err := bootstrap.Build(runtimeconfig.AuthenticationSnapshot{
 		Enabled: true,
 		Providers: []runtimeconfig.AuthenticationProviderSnapshot{
-			{Name: "first", Type: runtimeconfig.AuthenticationProviderJWT},
-			{Name: "second", Type: runtimeconfig.AuthenticationProviderAPIKey},
+			{Name: "second", Type: runtimeconfig.AuthenticationProviderAPIKey, Enabled: true, Priority: 20},
+			{Name: "disabled", Type: runtimeconfig.AuthenticationProviderBasic, Priority: 5},
+			{Name: "first", Type: runtimeconfig.AuthenticationProviderJWT, Enabled: true, Priority: 10},
 		},
 	})
 	if err != nil {
@@ -358,7 +352,7 @@ func enabledAuthenticationSnapshot() runtimeconfig.AuthenticationSnapshot {
 	return runtimeconfig.AuthenticationSnapshot{
 		Enabled: true,
 		Providers: []runtimeconfig.AuthenticationProviderSnapshot{
-			{Name: "api-key", Type: runtimeconfig.AuthenticationProviderAPIKey},
+			{Name: "api-key", Type: runtimeconfig.AuthenticationProviderAPIKey, Enabled: true},
 		},
 	}
 }
