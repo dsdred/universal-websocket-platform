@@ -260,7 +260,19 @@ func (session *DefaultSession) Run(ctx context.Context) error {
 			observe(runtimeMessage)
 		}
 		if session.handler != nil {
-			if err := session.handler.Handle(ctx, session, runtimeMessage); err != nil {
+			runtimeContext, err := message.NewContext(
+				&runtimeMessage,
+				session,
+				session.id,
+				session.principal.Authenticated,
+				session.principal.Anonymous,
+				string(session.principal.AuthenticationType),
+				session.principal.AuthenticationProvider,
+			)
+			if err != nil {
+				return fmt.Errorf("create Runtime Message Context: %w", err)
+			}
+			if err := session.handler.Handle(ctx, runtimeContext); err != nil {
 				return fmt.Errorf("handle Runtime Message: %w", err)
 			}
 		}

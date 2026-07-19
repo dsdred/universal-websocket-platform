@@ -11,6 +11,6 @@ func NewEchoHandler() EchoHandler {
 }
 
 // Handle returns the original immutable Message through Sender without transport access.
-func (EchoHandler) Handle(ctx context.Context, sender Sender, runtimeMessage Message) error {
-	return sender.Send(ctx, runtimeMessage)
+func (EchoHandler) Handle(ctx context.Context, runtimeContext Context) error {
+	return runtimeContext.Sender().Send(ctx, runtimeContext.Message())
 }

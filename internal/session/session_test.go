@@ -18,6 +18,7 @@ import (
 
 	"github.com/dsdred/universal-websocket-platform/internal/authentication"
 	"github.com/dsdred/universal-websocket-platform/internal/message"
+	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
 )
 
 func TestDefaultSessionImplementsSession(t *testing.T) {
@@ -378,6 +379,173 @@ func TestSessionRunWithNilHandlerKeepsDiscardBehavior(t *testing.T) {
 	}
 }
 
+func TestSessionRunCreatesOneAuthenticatedContextPerMessage(t *testing.T) {
+	serverConnection, clientConnection := testWebSocketPair(t)
+	received := make(chan message.Context, 8)
+	handler := messageHandlerFunc(func(_ context.Context, runtimeContext message.Context) error {
+		received <- runtimeContext
+		return nil
+	})
+	runtimeSession, err := NewWithHandler(serverConnection, validPrincipal(), "", handler)
+	if err != nil {
+		t.Fatalf("NewWithHandler() error = %v", err)
+	}
+	if err := runtimeSession.Start(context.Background()); err != nil {
+		t.Fatalf("Start() error = %v", err)
+	}
+	runResult := make(chan error, 1)
+	go func() { runResult <- runtimeSession.Run(context.Background()) }()
+
+	for _, expected := range []struct {
+		websocketType websocket.MessageType
+		messageType   message.Type
+		payload       []byte
+	}{
+		{websocketType: websocket.MessageText, messageType: message.TypeText, payload: []byte("context text")},
+		{websocketType: websocket.MessageBinary, messageType: message.TypeBinary, payload: []byte{0x00, 0x01, 0xff}},
+	} {
+		writeClientMessage(t, clientConnection, expected.websocketType, expected.payload)
+		runtimeContext := receiveRuntimeContext(t, received)
+		actualMessage := runtimeContext.Message()
+		if actualMessage.Type() != expected.messageType || !bytes.Equal(actualMessage.Data(), expected.payload) {
+			t.Fatalf("Context Message = (%q, %v), want (%q, %v)", actualMessage.Type(), actualMessage.Data(), expected.messageType, expected.payload)
+		}
+		if runtimeContext.Sender() != runtimeSession {
+			t.Fatal("Context Sender is not the current Session")
+		}
+		if runtimeContext.SessionID() != runtimeSession.ID() {
+			t.Fatalf("Context SessionID = %q, want %q", runtimeContext.SessionID(), runtimeSession.ID())
+		}
+		if !runtimeContext.Authenticated() || runtimeContext.Anonymous() ||
+			runtimeContext.AuthenticationType() != string(runtimeconfig.AuthenticationProviderAPIKey) ||
+			runtimeContext.AuthenticationProvider() != "api-key" {
+			t.Fatalf(
+				"Context identity = authenticated:%t anonymous:%t type:%q provider:%q",
+				runtimeContext.Authenticated(),
+				runtimeContext.Anonymous(),
+				runtimeContext.AuthenticationType(),
+				runtimeContext.AuthenticationProvider(),
+			)
+		}
+	}
+
+	closeClientAndWaitForRun(t, clientConnection, websocket.StatusNormalClosure, runResult)
+	select {
+	case duplicate := <-received:
+		t.Fatalf("Session created more than one Context per Message: %#v", duplicate)
+	default:
+	}
+	if err := runtimeSession.Stop(context.Background()); err != nil {
+		t.Fatalf("Stop() error = %v", err)
+	}
+}
+
+func TestSessionRunCreatesAnonymousContext(t *testing.T) {
+	serverConnection, clientConnection := testWebSocketPair(t)
+	received := make(chan message.Context, 1)
+	handler := messageHandlerFunc(func(_ context.Context, runtimeContext message.Context) error {
+		received <- runtimeContext
+		return nil
+	})
+	principal := authentication.Principal{ID: "anonymous", Name: "anonymous", Anonymous: true}
+	runtimeSession, err := NewWithHandler(serverConnection, principal, "", handler)
+	if err != nil {
+		t.Fatalf("NewWithHandler() error = %v", err)
+	}
+	if err := runtimeSession.Start(context.Background()); err != nil {
+		t.Fatalf("Start() error = %v", err)
+	}
+	runResult := make(chan error, 1)
+	go func() { runResult <- runtimeSession.Run(context.Background()) }()
+
+	writeClientMessage(t, clientConnection, websocket.MessageText, []byte("anonymous context"))
+	runtimeContext := receiveRuntimeContext(t, received)
+	if runtimeContext.Authenticated() || !runtimeContext.Anonymous() {
+		t.Fatalf("Context identity = authenticated:%t anonymous:%t", runtimeContext.Authenticated(), runtimeContext.Anonymous())
+	}
+	if runtimeContext.AuthenticationType() != "" || runtimeContext.AuthenticationProvider() != "" {
+		t.Fatalf(
+			"anonymous Context Authentication metadata = (%q, %q)",
+			runtimeContext.AuthenticationType(),
+			runtimeContext.AuthenticationProvider(),
+		)
+	}
+	if runtimeContext.SessionID() != runtimeSession.ID() || runtimeContext.Sender() != runtimeSession {
+		t.Fatal("anonymous Context did not preserve current Session identity and Sender")
+	}
+
+	closeClientAndWaitForRun(t, clientConnection, websocket.StatusNormalClosure, runResult)
+	if err := runtimeSession.Stop(context.Background()); err != nil {
+		t.Fatalf("Stop() error = %v", err)
+	}
+}
+
+func TestSessionRunKeepsContextsIsolatedAcrossSessions(t *testing.T) {
+	firstServer, firstClient := testWebSocketPair(t)
+	secondServer, secondClient := testWebSocketPair(t)
+	received := make(chan message.Context, 2)
+	handler := messageHandlerFunc(func(_ context.Context, runtimeContext message.Context) error {
+		received <- runtimeContext
+		return nil
+	})
+	firstSession, err := NewWithHandler(firstServer, validPrincipal(), "", handler)
+	if err != nil {
+		t.Fatalf("first NewWithHandler() error = %v", err)
+	}
+	secondSession, err := NewWithHandler(secondServer, validPrincipal(), "", handler)
+	if err != nil {
+		t.Fatalf("second NewWithHandler() error = %v", err)
+	}
+	if err := firstSession.Start(context.Background()); err != nil {
+		t.Fatalf("first Start() error = %v", err)
+	}
+	if err := secondSession.Start(context.Background()); err != nil {
+		t.Fatalf("second Start() error = %v", err)
+	}
+	firstRunResult := make(chan error, 1)
+	secondRunResult := make(chan error, 1)
+	go func() { firstRunResult <- firstSession.Run(context.Background()) }()
+	go func() { secondRunResult <- secondSession.Run(context.Background()) }()
+
+	writeClientMessage(t, firstClient, websocket.MessageText, []byte("first session"))
+	writeClientMessage(t, secondClient, websocket.MessageBinary, []byte("second session"))
+	contexts := []message.Context{receiveRuntimeContext(t, received), receiveRuntimeContext(t, received)}
+	wantSessions := map[string]struct {
+		sender    message.Sender
+		sessionID string
+	}{
+		"first session":  {sender: firstSession, sessionID: firstSession.ID()},
+		"second session": {sender: secondSession, sessionID: secondSession.ID()},
+	}
+	seen := make(map[string]bool, len(contexts))
+	for _, runtimeContext := range contexts {
+		payload := string(runtimeContext.Message().Data())
+		wantSession, exists := wantSessions[payload]
+		if !exists {
+			t.Fatalf("unexpected Context payload %q", payload)
+		}
+		if runtimeContext.Sender() != wantSession.sender {
+			t.Fatalf("Context %q received Sender from another Session", payload)
+		}
+		if runtimeContext.SessionID() != wantSession.sessionID {
+			t.Fatalf("Context %q SessionID = %q, want %q", payload, runtimeContext.SessionID(), wantSession.sessionID)
+		}
+		seen[payload] = true
+	}
+	if len(seen) != 2 || firstSession.ID() == secondSession.ID() {
+		t.Fatalf("isolated Contexts = %v, Session IDs = (%q, %q)", seen, firstSession.ID(), secondSession.ID())
+	}
+
+	closeClientAndWaitForRun(t, firstClient, websocket.StatusNormalClosure, firstRunResult)
+	closeClientAndWaitForRun(t, secondClient, websocket.StatusNormalClosure, secondRunResult)
+	if err := firstSession.Stop(context.Background()); err != nil {
+		t.Fatalf("first Stop() error = %v", err)
+	}
+	if err := secondSession.Stop(context.Background()); err != nil {
+		t.Fatalf("second Stop() error = %v", err)
+	}
+}
+
 func TestSessionRunWithEchoHandlerContinuesAcrossMessages(t *testing.T) {
 	serverConnection, clientConnection := testWebSocketPair(t)
 	session, err := NewWithHandler(serverConnection, validPrincipal(), "", message.NewEchoHandler())
@@ -419,9 +587,9 @@ func TestSessionRunWithEchoHandlerContinuesAcrossMessages(t *testing.T) {
 func TestSessionRunReturnsHandlerError(t *testing.T) {
 	wantErr := errors.New("handler failed")
 	serverConnection, clientConnection := testWebSocketPair(t)
-	var receivedSender message.Sender
-	handler := messageHandlerFunc(func(_ context.Context, sender message.Sender, _ message.Message) error {
-		receivedSender = sender
+	var receivedContext message.Context
+	handler := messageHandlerFunc(func(_ context.Context, runtimeContext message.Context) error {
+		receivedContext = runtimeContext
 		return wantErr
 	})
 	session, err := NewWithHandler(serverConnection, validPrincipal(), "", handler)
@@ -447,8 +615,11 @@ func TestSessionRunReturnsHandlerError(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("Run() did not return Handler error")
 	}
-	if receivedSender != session {
+	if receivedContext.Sender() != session {
 		t.Fatal("Handler did not receive current Session Sender")
+	}
+	if receivedContext.SessionID() != session.ID() {
+		t.Fatalf("Handler SessionID() = %q, want %q", receivedContext.SessionID(), session.ID())
 	}
 	clientConnection.CloseNow()
 	_ = session.Stop(context.Background())
@@ -867,14 +1038,35 @@ func readClientMessage(t *testing.T, connection *websocket.Conn) (websocket.Mess
 	return messageType, payload
 }
 
-type messageHandlerFunc func(context.Context, message.Sender, message.Message) error
+func writeClientMessage(t *testing.T, connection *websocket.Conn, messageType websocket.MessageType, payload []byte) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	if err := connection.Write(ctx, messageType, payload); err != nil {
+		t.Fatalf("client Write() error = %v", err)
+	}
+}
+
+func receiveRuntimeContext(t *testing.T, received <-chan message.Context) message.Context {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	select {
+	case runtimeContext := <-received:
+		return runtimeContext
+	case <-ctx.Done():
+		t.Fatalf("Handler did not receive Runtime Message Context: %v", ctx.Err())
+		return message.Context{}
+	}
+}
+
+type messageHandlerFunc func(context.Context, message.Context) error
 
 func (handler messageHandlerFunc) Handle(
 	ctx context.Context,
-	sender message.Sender,
-	runtimeMessage message.Message,
+	runtimeContext message.Context,
 ) error {
-	return handler(ctx, sender, runtimeMessage)
+	return handler(ctx, runtimeContext)
 }
 
 func newTestSession(t *testing.T) *DefaultSession {
@@ -891,6 +1083,7 @@ func validPrincipal() authentication.Principal {
 	return authentication.Principal{
 		ID:                     "administrator",
 		Name:                   "Administrator",
+		AuthenticationType:     runtimeconfig.AuthenticationProviderAPIKey,
 		AuthenticationProvider: "api-key",
 		Claims:                 map[string]string{"tenant": "alpha"},
 		Roles:                  []string{"admin"},

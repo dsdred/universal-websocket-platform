@@ -489,6 +489,6 @@ type runtimeErrorHandler struct {
 	err error
 }
 
-func (handler runtimeErrorHandler) Handle(context.Context, message.Sender, message.Message) error {
+func (handler runtimeErrorHandler) Handle(context.Context, message.Context) error {
 	return handler.err
 }

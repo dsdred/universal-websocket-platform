@@ -10,5 +10,5 @@ type Sender interface {
 
 // Handler processes one transport-neutral Runtime Message.
 type Handler interface {
-	Handle(context.Context, Sender, Message) error
+	Handle(context.Context, Context) error
 }
