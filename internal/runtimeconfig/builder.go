@@ -20,12 +20,51 @@ func (Builder) Build(version configurationversion.ConfigurationVersion) (Snapsho
 		return Snapshot{}, fmt.Errorf("build runtime configuration snapshot: version must be Published")
 	}
 
+	routing, err := buildRouting(version.Routing)
+	if err != nil {
+		return Snapshot{}, fmt.Errorf("build runtime configuration snapshot: routing: %w", err)
+	}
+
 	return Snapshot{
 		ConfigurationID: version.ConfigurationID,
 		VersionID:       version.ID,
 		Listener:        buildListener(version.Listener),
 		Authentication:  buildAuthentication(version.Authentication),
+		Routing:         routing,
 	}, nil
+}
+
+func buildRouting(routing *configurationversion.RoutingSettings) (*RoutingSnapshot, error) {
+	normalized, err := (configurationversion.DefaultRoutingValidator{}).Validate(routing)
+	if err != nil {
+		return nil, err
+	}
+	if normalized == nil {
+		return nil, nil
+	}
+
+	return &RoutingSnapshot{
+		routes: copySlice(normalized.Routes, func(route configurationversion.Route) RouteSnapshot {
+			return RouteSnapshot{
+				id:       route.ID,
+				enabled:  route.Enabled,
+				priority: route.Priority,
+				matchers: copySlice(route.Matchers, func(matcher configurationversion.Matcher) MatcherSnapshot {
+					return MatcherSnapshot{
+						matcherType: MatcherType(matcher.Type),
+						value:       matcher.Value,
+					}
+				}),
+				handlerRef: route.HandlerRef,
+			}
+		}),
+		defaultHandlerRef: normalized.DefaultHandlerRef,
+	}, nil
+}
+
+func cloneRouteSnapshot(route RouteSnapshot) RouteSnapshot {
+	route.matchers = cloneSlice(route.matchers)
+	return route
 }
 
 func buildListener(listener configurationversion.ListenerSettings) ListenerSnapshot {

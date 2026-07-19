@@ -47,6 +47,13 @@ func TestRuntimeSnapshotFieldSupportMatrixIsExhaustive(t *testing.T) {
 		"Authentication.Providers[].JWT.ClockSkewSeconds":        "JWT Provider: clock skew policy",
 		"Authentication.Providers[].Basic.Realm":                 "Authentication Registry: Basic rejected in this build",
 		"Authentication.Providers[].Basic.SecretRef":             "Authentication Registry: Basic rejected in this build",
+		"Routing.routes[].id":                                    "Routing: configured but inactive until Router implementation",
+		"Routing.routes[].enabled":                               "Routing: configured but inactive until Router implementation",
+		"Routing.routes[].priority":                              "Routing: configured but inactive until Router implementation",
+		"Routing.routes[].matchers[].matcherType":                "Routing: configured but inactive until Router implementation",
+		"Routing.routes[].matchers[].value":                      "Routing: configured but inactive until Router implementation",
+		"Routing.routes[].handlerRef":                            "Routing: configured but inactive until Router implementation",
+		"Routing.defaultHandlerRef":                              "Routing: configured but inactive until Router implementation",
 	}
 
 	fields := snapshotLeafFields(reflect.TypeOf(runtimeconfig.Snapshot{}), "", nil)

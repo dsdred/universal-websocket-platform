@@ -7,7 +7,76 @@ type Snapshot struct {
 
 	Listener       ListenerSnapshot
 	Authentication AuthenticationSnapshot
+	Routing        *RoutingSnapshot
 }
+
+// RoutingSnapshot is an immutable runtime view of declarative Routing metadata.
+type RoutingSnapshot struct {
+	routes            []RouteSnapshot
+	defaultHandlerRef string
+}
+
+// Routes returns a detached copy of configured Routes in declaration order.
+func (s *RoutingSnapshot) Routes() []RouteSnapshot {
+	if s == nil {
+		return nil
+	}
+	return copySlice(s.routes, cloneRouteSnapshot)
+}
+
+// DefaultHandlerRef returns the optional normalized default Handler reference.
+func (s *RoutingSnapshot) DefaultHandlerRef() string {
+	if s == nil {
+		return ""
+	}
+	return s.defaultHandlerRef
+}
+
+// RouteSnapshot is an immutable runtime view of one declarative Route.
+type RouteSnapshot struct {
+	id         string
+	enabled    bool
+	priority   uint32
+	matchers   []MatcherSnapshot
+	handlerRef string
+}
+
+// ID returns the normalized Route identity.
+func (s RouteSnapshot) ID() string { return s.id }
+
+// Enabled reports whether this Route participates in future compilation.
+func (s RouteSnapshot) Enabled() bool { return s.enabled }
+
+// Priority returns the configured Route priority.
+func (s RouteSnapshot) Priority() uint32 { return s.priority }
+
+// Matchers returns a detached copy of normalized Matchers in canonical order.
+func (s RouteSnapshot) Matchers() []MatcherSnapshot { return cloneSlice(s.matchers) }
+
+// HandlerRef returns the normalized Handler reference.
+func (s RouteSnapshot) HandlerRef() string { return s.handlerRef }
+
+// MatcherType identifies one supported transport-neutral routing predicate.
+type MatcherType string
+
+const (
+	MatcherTypeMessageType            MatcherType = "message-type"
+	MatcherTypePrincipalKind          MatcherType = "principal-kind"
+	MatcherTypeAuthenticationType     MatcherType = "authentication-type"
+	MatcherTypeAuthenticationProvider MatcherType = "authentication-provider"
+)
+
+// MatcherSnapshot is an immutable normalized routing predicate.
+type MatcherSnapshot struct {
+	matcherType MatcherType
+	value       string
+}
+
+// Type returns the canonical Matcher type.
+func (s MatcherSnapshot) Type() MatcherType { return s.matcherType }
+
+// Value returns the normalized Matcher value.
+func (s MatcherSnapshot) Value() string { return s.value }
 
 // ListenerSnapshot contains values required to configure a runtime Listener.
 type ListenerSnapshot struct {
