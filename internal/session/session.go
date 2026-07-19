@@ -54,13 +54,20 @@ const (
 type idGenerator func() (string, error)
 type messageObserver func(message.Message)
 
+type websocketConnection interface {
+	Read(context.Context) (websocket.MessageType, []byte, error)
+	Write(context.Context, websocket.MessageType, []byte) error
+	Close(websocket.StatusCode, string) error
+	CloseNow() error
+}
+
 // DefaultSession is the default minimal Runtime Session.
 type DefaultSession struct {
 	mu            sync.RWMutex
 	writeMu       sync.Mutex
 	id            string
 	principal     authentication.Principal
-	connection    *websocket.Conn
+	connection    websocketConnection
 	remoteAddress string
 	createdAt     time.Time
 	state         lifecycleState
@@ -111,6 +118,27 @@ func newWithObserver(
 
 func newWithDependencies(
 	connection *websocket.Conn,
+	principal authentication.Principal,
+	remoteAddress string,
+	generate idGenerator,
+	observe messageObserver,
+	handler message.Handler,
+) (*DefaultSession, error) {
+	if connection == nil {
+		return nil, ErrNilConnection
+	}
+	return newWithConnectionDependencies(
+		connection,
+		principal,
+		remoteAddress,
+		generate,
+		observe,
+		handler,
+	)
+}
+
+func newWithConnectionDependencies(
+	connection websocketConnection,
 	principal authentication.Principal,
 	remoteAddress string,
 	generate idGenerator,
@@ -261,8 +289,9 @@ func (session *DefaultSession) Send(ctx context.Context, runtimeMessage message.
 		return ErrSessionNotRunning
 	}
 	connection := session.connection
-	writeErr := connection.Write(ctx, websocketType, payload)
 	session.mu.RUnlock()
+
+	writeErr := connection.Write(ctx, websocketType, payload)
 	if writeErr != nil {
 		return fmt.Errorf("write WebSocket message: %w", writeErr)
 	}
@@ -302,6 +331,8 @@ func (session *DefaultSession) Stop(ctx context.Context) error {
 			closeErr = nil
 		}
 		if readLoopDone != nil {
+			// After terminal shutdown begins, Session retains cleanup ownership and
+			// waits for its read loop even if the caller context is canceled.
 			<-readLoopDone
 		}
 

@@ -51,8 +51,12 @@ type DefaultListener struct {
 	handshakeHandler http.Handler
 	reportError      func(error)
 	serveHTTP        func(*http.Server, net.Listener) error
+	shutdownHTTP     func(*http.Server, context.Context) error
+	closeTCP         func(net.Listener) error
 	wg               sync.WaitGroup
 	handlerWG        sync.WaitGroup
+	stopDone         chan struct{}
+	stopErr          error
 }
 
 // Address returns the configured host and port without opening a socket.
@@ -102,36 +106,71 @@ func (listener *DefaultListener) Start(context.Context) error {
 // Stop gracefully shuts down the HTTP Server and waits for its accept loop.
 func (listener *DefaultListener) Stop(ctx context.Context) error {
 	listener.mu.Lock()
-	if listener.state != listenerRunning {
+	switch listener.state {
+	case listenerCreated:
+		listener.mu.Unlock()
+		return nil
+	case listenerStopping:
+		stopDone := listener.stopDone
+		listener.mu.Unlock()
+		// This caller does not own shutdown. Its context bounds only the wait and
+		// cannot cancel or replace the primary shutdown attempt or its stored result.
+		select {
+		case <-stopDone:
+			listener.mu.RLock()
+			defer listener.mu.RUnlock()
+			return listener.stopErr
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	case listenerStopped:
+		err := listener.stopErr
+		listener.mu.Unlock()
+		return err
+	case listenerRunning:
+		// The caller that performs this transition owns the one shutdown attempt.
+	default:
 		listener.mu.Unlock()
 		return nil
 	}
 	tcpListener := listener.listener
 	httpServer := listener.server
 	serverStop := listener.serverStop
+	stopDone := make(chan struct{})
+	listener.stopDone = stopDone
+	listener.stopErr = nil
 	listener.state = listenerStopping
 	listener.mu.Unlock()
 
 	serverStop()
-	shutdownErr := httpServer.Shutdown(ctx)
-	closeErr := tcpListener.Close()
+	shutdownHTTP := listener.shutdownHTTP
+	if shutdownHTTP == nil {
+		shutdownHTTP = func(server *http.Server, shutdownContext context.Context) error {
+			return server.Shutdown(shutdownContext)
+		}
+	}
+	closeTCP := listener.closeTCP
+	if closeTCP == nil {
+		closeTCP = func(listener net.Listener) error { return listener.Close() }
+	}
+	shutdownErr := shutdownHTTP(httpServer, ctx)
+	closeErr := closeTCP(tcpListener)
 	listener.wg.Wait()
 	listener.handlerWG.Wait()
+	if errors.Is(closeErr, net.ErrClosed) {
+		closeErr = nil
+	}
+	stopErr := errors.Join(shutdownErr, closeErr)
 
 	listener.mu.Lock()
 	listener.listener = nil
 	listener.server = nil
 	listener.serverStop = nil
 	listener.state = listenerStopped
+	listener.stopErr = stopErr
+	close(stopDone)
 	listener.mu.Unlock()
-
-	if shutdownErr != nil {
-		return shutdownErr
-	}
-	if closeErr != nil && !errors.Is(closeErr, net.ErrClosed) {
-		return closeErr
-	}
-	return nil
+	return stopErr
 }
 
 func trackedHandler(handler http.Handler, waitGroup *sync.WaitGroup) http.Handler {

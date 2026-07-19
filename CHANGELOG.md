@@ -36,6 +36,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Production API Key Factory that converts Authentication Provider Snapshot metadata into Provider-local runtime configuration.
 - Runtime JWT Authentication Provider with HS256, HS384, and HS512 verification, declarative Claim policy, and per-request Secret resolution.
 - Production JWT Factory that deeply converts Authentication Provider Snapshot metadata into Provider-local runtime configuration.
+- Session lifecycle hardening that keeps WebSocket writes outside the lifecycle mutex while preserving serialized writes and deterministic Send-versus-Stop admission.
+- Listener shutdown result sharing for concurrent and repeated Stop calls, context-bounded secondary waits, and independent HTTP Shutdown and TCP Close failures preserved through `errors.Is`.
 
 ## [0.1.0-alpha] - 2026-07-12
 

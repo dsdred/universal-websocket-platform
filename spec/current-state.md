@@ -144,7 +144,7 @@
 - Runtime readiness становится true только после startup commit и сбрасывается в false в начале Stop
 - Host владеет lifecycle-only Admission Gate, который открывается только в Running и закрывается до вызова Listener Stop
 - Реализован Listener Bootstrap, создающий потокобезопасный Listener из ListenerSnapshot
-- Listener хранит локальную копию Host, Port и TLS configuration и поддерживает lifecycle `Created -> Running -> Stopped`
+- Listener хранит локальную копию Host, Port и TLS configuration и поддерживает lifecycle `Created -> Running -> Stopping -> Stopped`
 - Listener открывает TCP socket и запускает HTTP Server с единым ответом `501 Not Implemented` для любого запроса
 - Listener корректно завершает HTTP Server, accept loop и связанные goroutine через graceful shutdown
 - Listener передает `GET /ws` выделенному Handshake Handler; `websocket.Accept` выполняется только после начальной проверки Admission Gate, Authentication Allow Decision и финальной проверки Gate
@@ -156,6 +156,7 @@
 - Runtime composition явно передает Handshake и Listener минимальный callback для terminal operational errors без diagnostics registry, event bus или глобального состояния
 - Handshake сохраняет через `errors.Is` причину Session handoff failure в безопасной error-категории; Listener аналогично передает unexpected `http.Server.Serve` failure
 - Штатные `http.ErrServerClosed` и `net.ErrClosed` при Listener shutdown не создают ложные terminal error reports
+- Первый Listener Stop выполняет shutdown, конкурентные Stop ожидают тот же terminal result с учетом cancellation context ожидающего caller, а повторный Stop возвращает сохраненный результат; независимые ошибки HTTP Shutdown и TCP Close сохраняются через `errors.Join`
 - Disabled Authentication формирует explicit anonymous Principal без запуска Provider
 - Реализована минимальная WebSocket Session, которая после Authentication владеет соединением, хранит криптографически случайный ID, глубокую копию Principal, RemoteAddress и время создания
 - Session Dispatcher создает Session из AuthenticatedContext и в текущей goroutine последовательно вызывает Start, блокирующий Run и завершающий Stop
@@ -171,7 +172,7 @@
 - Session не хранит исходный HTTP Request, Headers, Query, credentials, AuthenticationRequest или transport context wrappers
 - Добавлена immutable transport-neutral Runtime Message модель для text и binary application messages с копированием payload и UTC-временем получения
 - Session удерживает WebSocket-соединение открытым и выполняет единственный блокирующий read loop до закрытия клиента, отмены context, Stop или ошибки чтения
-- Session предоставляет потокобезопасный `Send(context.Context, message.Message)` для сериализованной отправки text и binary Runtime Message без raw `[]byte` API
+- Session предоставляет потокобезопасный `Send(context.Context, message.Message)` для сериализованной отправки text и binary Runtime Message без raw `[]byte` API; lifecycle mutex не удерживается во время WebSocket Write, допущенный до Stop write завершается с transport outcome, а новые writes после начала Stop отклоняются
 - Добавлен transport-neutral Runtime Message Handler contract; Session передает ему каждое прочитанное Message, а при nil Handler сохраняет discard-поведение
 - Реализован EchoHandler, возвращающий неизмененные text и binary Runtime Message исключительно через Session Send без доступа к WebSocket transport
 - Router, Middleware, Message Queue, Broadcast, публичный Session Manager Registry API, shutdown orchestration и Persistence отсутствуют
@@ -202,7 +203,7 @@
 - 2026-07-14 выполнено двуязычное [Runtime Alpha Architecture Review](../docs/ru/reviews/runtime-alpha-review.md) ([English version](../docs/en/reviews/runtime-alpha-review.md)).
 - Итоговая оценка: `Ready with findings`.
 - Подтверждены immutable Snapshot, явный dependency injection, отсутствие import cycles и зависимости Runtime от Control Plane Repository, transport-neutral границы Authentication и Message, а также явная передача владения WebSocket-соединением.
-- Authentication после WebSocket Upgrade и отсутствие production composition в Runtime Host устранены; неполная ограниченность lifecycle shutdown по context остается открытым finding.
+- Authentication после WebSocket Upgrade, отсутствие production composition в Runtime Host, lifecycle lock во время Session Write и несогласованный результат concurrent Listener Stop устранены; неполная ограниченность lifecycle shutdown по context остается открытым finding.
 - Проект остается alpha foundation и не заявляется как production-ready.
 
 ## Runtime Architectural Pattern
