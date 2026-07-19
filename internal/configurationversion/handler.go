@@ -33,6 +33,24 @@ type authenticationSettingsRequest struct {
 	Providers []authenticationProviderRequest `json:"providers"`
 }
 
+type routingSettingsRequest struct {
+	Routes            []routeRequest `json:"routes"`
+	DefaultHandlerRef string         `json:"defaultHandlerRef,omitempty"`
+}
+
+type routeRequest struct {
+	ID         string           `json:"id"`
+	Enabled    bool             `json:"enabled"`
+	Priority   uint32           `json:"priority"`
+	Matchers   []matcherRequest `json:"matchers"`
+	HandlerRef string           `json:"handlerRef"`
+}
+
+type matcherRequest struct {
+	Type  string `json:"type"`
+	Value string `json:"value"`
+}
+
 type authenticationProviderRequest struct {
 	Name     string                     `json:"name"`
 	Type     AuthenticationProviderType `json:"type"`
@@ -77,6 +95,62 @@ func (h *Handler) RegisterRoutes(router chi.Router) {
 	router.Put("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/listener/tls", h.updateTLS)
 	router.Put("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/listener/timeouts", h.updateTimeouts)
 	router.Put("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/authentication", h.updateAuthentication)
+	router.Put("/api/v1/workspaces/{workspaceID}/configurations/{configurationID}/versions/{versionID}/routing", h.updateRouting)
+}
+
+func (h *Handler) updateRouting(w http.ResponseWriter, r *http.Request) {
+	workspaceID, configurationID, ok := requestIDs(w, r)
+	if !ok {
+		return
+	}
+	versionID, ok := pathID(w, r, "versionID", "Invalid version ID")
+	if !ok {
+		return
+	}
+
+	var request *routingSettingsRequest
+	if err := httpapi.DecodeJSON(r, &request); err != nil {
+		httpapi.WriteError(w, http.StatusBadRequest, "invalid_request", "Invalid request body")
+		return
+	}
+
+	version, err := h.service.UpdateRouting(r.Context(), workspaceID, configurationID, versionID, request.settings())
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	httpapi.WriteJSON(w, http.StatusOK, version)
+}
+
+func (r *routingSettingsRequest) settings() *RoutingSettings {
+	if r == nil {
+		return nil
+	}
+
+	routing := &RoutingSettings{DefaultHandlerRef: r.DefaultHandlerRef}
+	if r.Routes != nil {
+		routing.Routes = make([]Route, len(r.Routes))
+		for routeIndex, requestRoute := range r.Routes {
+			route := Route{
+				ID:         requestRoute.ID,
+				Enabled:    requestRoute.Enabled,
+				Priority:   requestRoute.Priority,
+				HandlerRef: requestRoute.HandlerRef,
+			}
+			if requestRoute.Matchers != nil {
+				route.Matchers = make([]Matcher, len(requestRoute.Matchers))
+				for matcherIndex, requestMatcher := range requestRoute.Matchers {
+					route.Matchers[matcherIndex] = Matcher{
+						Type:  MatcherType(requestMatcher.Type),
+						Value: requestMatcher.Value,
+					}
+				}
+			}
+			routing.Routes[routeIndex] = route
+		}
+	}
+	return routing
 }
 
 func (h *Handler) updateAuthentication(w http.ResponseWriter, r *http.Request) {

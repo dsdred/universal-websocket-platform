@@ -39,6 +39,7 @@ type Service struct {
 	configurationChecker    ConfigurationExistenceChecker
 	now                     func() time.Time
 	authenticationValidator AuthenticationValidator
+	routingValidator        RoutingValidator
 	lifecycleMu             sync.Mutex
 }
 
@@ -49,6 +50,7 @@ func NewService(repository ConfigurationVersionRepository, configurationChecker 
 		configurationChecker:    configurationChecker,
 		now:                     now,
 		authenticationValidator: DefaultAuthenticationValidator{},
+		routingValidator:        DefaultRoutingValidator{},
 	}
 }
 
@@ -131,6 +133,40 @@ func (s *Service) UpdateAuthentication(
 	}
 
 	version.Authentication = authentication
+	version.UpdatedAt = s.now().UTC()
+	return s.repository.Update(version)
+}
+
+// UpdateRouting validates and replaces Routing settings for a Draft Version.
+func (s *Service) UpdateRouting(
+	ctx context.Context,
+	workspaceID, configurationID, versionID uint64,
+	routing *RoutingSettings,
+) (ConfigurationVersion, error) {
+	if err := s.requireConfiguration(ctx, workspaceID, configurationID); err != nil {
+		return ConfigurationVersion{}, err
+	}
+
+	s.lifecycleMu.Lock()
+	defer s.lifecycleMu.Unlock()
+
+	version, err := s.repository.Get(versionID)
+	if err != nil || version.ConfigurationID != configurationID {
+		if err == nil || errors.Is(err, ErrConfigurationVersionNotFound) {
+			return ConfigurationVersion{}, ErrConfigurationVersionNotFound
+		}
+		return ConfigurationVersion{}, err
+	}
+	if version.State != Draft {
+		return ConfigurationVersion{}, ErrVersionNotEditable
+	}
+
+	normalized, err := s.routingValidator.Validate(routing)
+	if err != nil {
+		return ConfigurationVersion{}, err
+	}
+
+	version.Routing = normalized
 	version.UpdatedAt = s.now().UTC()
 	return s.repository.Update(version)
 }
@@ -254,6 +290,11 @@ func (s *Service) Publish(ctx context.Context, workspaceID, configurationID, ver
 	}
 	if target.State != Draft {
 		return ConfigurationVersion{}, ErrVersionNotPublishable
+	}
+
+	target.Routing, err = s.routingValidator.Validate(target.Routing)
+	if err != nil {
+		return ConfigurationVersion{}, err
 	}
 
 	now := s.now().UTC()
