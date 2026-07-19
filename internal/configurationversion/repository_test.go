@@ -153,6 +153,95 @@ func TestMemoryRepositoryConcurrentAccess(t *testing.T) {
 	}
 }
 
+func TestMemoryRepositoryDetachesRoutingAtEveryBoundary(t *testing.T) {
+	repository := NewMemoryConfigurationVersionRepository()
+	input := ConfigurationVersion{
+		ConfigurationID: 1,
+		Number:          1,
+		State:           Draft,
+		Routing:         routingFixture("created", "text"),
+	}
+	created, err := repository.Create(input)
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	mutateRouting(input.Routing)
+	assertStoredRouting(t, repository, created.ID, "created", "text")
+
+	mutateRouting(created.Routing)
+	assertStoredRouting(t, repository, created.ID, "created", "text")
+
+	got, err := repository.Get(created.ID)
+	if err != nil {
+		t.Fatalf("Get() error = %v", err)
+	}
+	mutateRouting(got.Routing)
+	assertStoredRouting(t, repository, created.ID, "created", "text")
+
+	listed, err := repository.ListByConfiguration(1)
+	if err != nil {
+		t.Fatalf("ListByConfiguration() error = %v", err)
+	}
+	mutateRouting(listed[0].Routing)
+	assertStoredRouting(t, repository, created.ID, "created", "text")
+
+	update, _ := repository.Get(created.ID)
+	update.Routing = routingFixture("updated", "binary")
+	updated, err := repository.Update(update)
+	if err != nil {
+		t.Fatalf("Update() error = %v", err)
+	}
+	mutateRouting(update.Routing)
+	mutateRouting(updated.Routing)
+	assertStoredRouting(t, repository, created.ID, "updated", "binary")
+
+	batch, _ := repository.Get(created.ID)
+	batch.State = Published
+	batch.Routing = routingFixture("batched", "text")
+	if err := repository.UpdateBatch([]ConfigurationVersion{batch}); err != nil {
+		t.Fatalf("UpdateBatch() error = %v", err)
+	}
+	mutateRouting(batch.Routing)
+	assertStoredRouting(t, repository, created.ID, "batched", "text")
+
+	published, err := repository.GetPublished(1)
+	if err != nil {
+		t.Fatalf("GetPublished() error = %v", err)
+	}
+	mutateRouting(published.Routing)
+	assertStoredRouting(t, repository, created.ID, "batched", "text")
+}
+
+func routingFixture(id, value string) *RoutingSettings {
+	return &RoutingSettings{
+		DefaultHandlerRef: "legacy",
+		Routes: []Route{{
+			ID:         id,
+			Enabled:    true,
+			Priority:   1,
+			HandlerRef: "legacy",
+			Matchers:   []Matcher{{Type: MatcherTypeMessageType, Value: value}},
+		}},
+	}
+}
+
+func mutateRouting(routing *RoutingSettings) {
+	routing.DefaultHandlerRef = "changed"
+	routing.Routes[0].ID = "changed"
+	routing.Routes[0].Matchers[0].Value = "changed"
+}
+
+func assertStoredRouting(t *testing.T, repository *MemoryConfigurationVersionRepository, id uint64, routeID, matcherValue string) {
+	t.Helper()
+	stored, err := repository.Get(id)
+	if err != nil {
+		t.Fatalf("Get(%d) error = %v", id, err)
+	}
+	if stored.Routing.DefaultHandlerRef != "legacy" || stored.Routing.Routes[0].ID != routeID || stored.Routing.Routes[0].Matchers[0].Value != matcherValue {
+		t.Fatalf("stored Routing = %#v, want route %q and matcher %q", stored.Routing, routeID, matcherValue)
+	}
+}
+
 func versionNumbers(versions []ConfigurationVersion) []uint32 {
 	numbers := make([]uint32, len(versions))
 	for index, version := range versions {

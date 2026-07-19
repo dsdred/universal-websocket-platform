@@ -27,8 +27,9 @@ func (r *MemoryConfigurationVersionRepository) Create(version ConfigurationVersi
 
 	version.ID = r.nextID
 	r.nextID++
-	r.versions[version.ID] = version
-	return version, nil
+	stored := cloneConfigurationVersion(version)
+	r.versions[version.ID] = stored
+	return cloneConfigurationVersion(stored), nil
 }
 
 // Get returns a Configuration Version by ID.
@@ -40,7 +41,7 @@ func (r *MemoryConfigurationVersionRepository) Get(id uint64) (ConfigurationVers
 	if !exists {
 		return ConfigurationVersion{}, ErrConfigurationVersionNotFound
 	}
-	return version, nil
+	return cloneConfigurationVersion(version), nil
 }
 
 // ListByConfiguration returns Configuration Versions ordered by Number.
@@ -51,7 +52,7 @@ func (r *MemoryConfigurationVersionRepository) ListByConfiguration(configuration
 	versions := make([]ConfigurationVersion, 0)
 	for _, version := range r.versions {
 		if version.ConfigurationID == configurationID {
-			versions = append(versions, version)
+			versions = append(versions, cloneConfigurationVersion(version))
 		}
 	}
 
@@ -69,8 +70,9 @@ func (r *MemoryConfigurationVersionRepository) Update(version ConfigurationVersi
 	if _, exists := r.versions[version.ID]; !exists {
 		return ConfigurationVersion{}, ErrConfigurationVersionNotFound
 	}
-	r.versions[version.ID] = version
-	return version, nil
+	stored := cloneConfigurationVersion(version)
+	r.versions[version.ID] = stored
+	return cloneConfigurationVersion(stored), nil
 }
 
 // UpdateBatch atomically replaces existing Configuration Versions.
@@ -84,7 +86,7 @@ func (r *MemoryConfigurationVersionRepository) UpdateBatch(versions []Configurat
 		}
 	}
 	for _, version := range versions {
-		r.versions[version.ID] = version
+		r.versions[version.ID] = cloneConfigurationVersion(version)
 	}
 	return nil
 }
@@ -108,8 +110,16 @@ func (r *MemoryConfigurationVersionRepository) GetPublished(configurationID uint
 
 	for _, version := range r.versions {
 		if version.ConfigurationID == configurationID && version.State == Published {
-			return version, nil
+			return cloneConfigurationVersion(version), nil
 		}
 	}
 	return ConfigurationVersion{}, ErrConfigurationVersionNotFound
+}
+
+func cloneConfigurationVersion(version ConfigurationVersion) ConfigurationVersion {
+	if version.Authentication.Providers != nil {
+		version.Authentication = cloneAuthenticationSettings(version.Authentication)
+	}
+	version.Routing = cloneRoutingSettings(version.Routing)
+	return version
 }

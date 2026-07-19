@@ -56,6 +56,37 @@ type AuthenticationProvider struct {
 	Basic    *BasicSettings             `json:"basic,omitempty"`
 }
 
+// MatcherType identifies one supported transport-neutral routing predicate.
+type MatcherType string
+
+const (
+	MatcherTypeMessageType            MatcherType = "message-type"
+	MatcherTypePrincipalKind          MatcherType = "principal-kind"
+	MatcherTypeAuthenticationType     MatcherType = "authentication-type"
+	MatcherTypeAuthenticationProvider MatcherType = "authentication-provider"
+)
+
+// RoutingSettings describes optional declarative Runtime Message routing metadata.
+type RoutingSettings struct {
+	Routes            []Route `json:"routes"`
+	DefaultHandlerRef string  `json:"defaultHandlerRef,omitempty"`
+}
+
+// Route describes one ordered Handler selection rule.
+type Route struct {
+	ID         string    `json:"id"`
+	Enabled    bool      `json:"enabled"`
+	Priority   uint32    `json:"priority"`
+	Matchers   []Matcher `json:"matchers"`
+	HandlerRef string    `json:"handlerRef"`
+}
+
+// Matcher describes one exact equality predicate over Runtime Message Context.
+type Matcher struct {
+	Type  MatcherType `json:"type"`
+	Value string      `json:"value"`
+}
+
 // APIKeySettings describes API Key Provider metadata.
 type APIKeySettings struct {
 	Header    string `json:"header"`
@@ -122,6 +153,7 @@ type ConfigurationVersion struct {
 	State           VersionState           `json:"state"`
 	Listener        ListenerSettings       `json:"listener"`
 	Authentication  AuthenticationSettings `json:"authentication"`
+	Routing         *RoutingSettings       `json:"routing,omitempty"`
 	CreatedAt       time.Time              `json:"createdAt"`
 	UpdatedAt       time.Time              `json:"updatedAt"`
 }
