@@ -175,7 +175,7 @@ These gates precede Router because Router must not inherit an unstable security,
 
 ### Message Processing
 
-5. **Router:** select a Handler or destination from Runtime Message Context without accessing WebSocket transport. A dedicated DP defines routing semantics, not this plan.
+5. **Router:** select a Handler or destination from Runtime Message Context without accessing WebSocket transport. [DP-005](../design/DP-005-runtime-message-router.md) defines routing semantics, not this plan.
 6. **Session Manager:** coordinate Session registration, removal, limits, and shutdown without taking over Session transport ownership.
 7. **Delivery:** define recipient selection, ordering, failure, and backpressure semantics before adding Groups, Topics, or broadcast features.
 8. **Persistence:** define what is persisted, when storage is optional or required, and how failures affect Message processing. Storage technology and API remain undecided.

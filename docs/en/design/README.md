@@ -8,3 +8,4 @@ This directory contains focused Runtime design documents. A design document expl
 - [DP-002: Runtime Host Composition Root](DP-002-runtime-host-composition-root.md)
 - [DP-003: Runtime Session Manager](DP-003-runtime-session-manager.md)
 - [DP-004: Per-Session Execution Boundary](DP-004-per-session-execution-boundary.md)
+- [DP-005: Runtime Message Router](DP-005-runtime-message-router.md)
