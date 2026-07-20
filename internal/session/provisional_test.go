@@ -29,12 +29,13 @@ func TestPrepareProvisionalSessionCreatesCompletePreCommitUnit(t *testing.T) {
 		t.Fatalf("newSessionCore() error = %v", err)
 	}
 	connection := &provisionalTestConnection{}
+	cancellation := newProvisionalTestCancellation()
 
-	prepared, err := prepareProvisionalSession(core, connection)
+	prepared, err := prepareProvisionalSession(core, connection, cancellation.dependency())
 	if err != nil {
 		t.Fatalf("prepareProvisionalSession() error = %v", err)
 	}
-	if prepared == nil || prepared.core == nil || prepared.session == nil || prepared.owner == nil {
+	if prepared == nil || prepared.core == nil || prepared.session == nil || prepared.owner == nil || prepared.cleanup == nil {
 		t.Fatalf("prepared unit = %#v, want complete unit", prepared)
 	}
 	if prepared.core != core || prepared.session.core != core {
@@ -55,6 +56,9 @@ func TestPrepareProvisionalSessionCreatesCompletePreCommitUnit(t *testing.T) {
 	if handled.Load() != 0 {
 		t.Fatalf("Handler calls = %d, want 0", handled.Load())
 	}
+	if cancellation.calls.Load() != 0 {
+		t.Fatalf("cancellation calls = %d, want 0", cancellation.calls.Load())
+	}
 	connection.assertUnused(t)
 }
 
@@ -66,17 +70,47 @@ func TestPrepareProvisionalSessionRejectsInvalidDependenciesWithoutSideEffects(t
 
 	t.Run("nil Core", func(t *testing.T) {
 		connection := &provisionalTestConnection{}
-		prepared, err := prepareProvisionalSession(nil, connection)
+		cancellation := newProvisionalTestCancellation()
+		prepared, err := prepareProvisionalSession(nil, connection, cancellation.dependency())
 		if prepared != nil || !errors.Is(err, errNilSessionCore) {
 			t.Fatalf("prepareProvisionalSession() = (%#v, %v), want nil and %v", prepared, err, errNilSessionCore)
+		}
+		if cancellation.calls.Load() != 0 {
+			t.Fatalf("cancellation calls = %d, want 0", cancellation.calls.Load())
 		}
 		connection.assertUnused(t)
 	})
 
 	t.Run("nil transport", func(t *testing.T) {
-		prepared, err := prepareProvisionalSession(core, nil)
+		cancellation := newProvisionalTestCancellation()
+		prepared, err := prepareProvisionalSession(core, nil, cancellation.dependency())
 		if prepared != nil || !errors.Is(err, ErrNilConnection) {
 			t.Fatalf("prepareProvisionalSession() = (%#v, %v), want nil and %v", prepared, err, ErrNilConnection)
+		}
+		if cancellation.calls.Load() != 0 {
+			t.Fatalf("cancellation calls = %d, want 0", cancellation.calls.Load())
+		}
+	})
+
+	t.Run("nil cancellation observation", func(t *testing.T) {
+		var calls atomic.Int32
+		prepared, err := prepareProvisionalSession(core, &provisionalTestConnection{}, cancellationDependency{
+			cancel: func() { calls.Add(1) },
+		})
+		if prepared != nil || !errors.Is(err, errNilCancellationObservation) {
+			t.Fatalf("prepareProvisionalSession() = (%#v, %v), want nil and %v", prepared, err, errNilCancellationObservation)
+		}
+		if calls.Load() != 0 {
+			t.Fatalf("cancellation calls = %d, want 0", calls.Load())
+		}
+	})
+
+	t.Run("nil cancellation operation", func(t *testing.T) {
+		prepared, err := prepareProvisionalSession(core, &provisionalTestConnection{}, cancellationDependency{
+			done: make(chan struct{}),
+		})
+		if prepared != nil || !errors.Is(err, errNilCancellationOperation) {
+			t.Fatalf("prepareProvisionalSession() = (%#v, %v), want nil and %v", prepared, err, errNilCancellationOperation)
 		}
 	})
 }
@@ -85,7 +119,14 @@ func TestPrepareProvisionalSessionFailureCannotCancelCallerContext(t *testing.T)
 	callerContext, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	prepared, err := prepareProvisionalSession(nil, &provisionalTestConnection{})
+	var cancellationCalls atomic.Int32
+	prepared, err := prepareProvisionalSession(nil, &provisionalTestConnection{}, cancellationDependency{
+		done: callerContext.Done(),
+		cancel: func() {
+			cancellationCalls.Add(1)
+			cancel()
+		},
+	})
 	if prepared != nil || !errors.Is(err, errNilSessionCore) {
 		t.Fatalf("prepareProvisionalSession() = (%#v, %v), want nil and %v", prepared, err, errNilSessionCore)
 	}
@@ -93,6 +134,9 @@ func TestPrepareProvisionalSessionFailureCannotCancelCallerContext(t *testing.T)
 	case <-callerContext.Done():
 		t.Fatal("preparation failure canceled caller-owned context")
 	default:
+	}
+	if cancellationCalls.Load() != 0 {
+		t.Fatalf("cancellation calls = %d, want 0", cancellationCalls.Load())
 	}
 }
 
@@ -107,16 +151,18 @@ func TestSeparateProvisionalSessionsDoNotSharePreparedState(t *testing.T) {
 		t.Fatalf("second newSessionCore() error = %v", err)
 	}
 
-	first, err := prepareProvisionalSession(firstCore, &provisionalTestConnection{})
+	firstCancellation := newProvisionalTestCancellation()
+	first, err := prepareProvisionalSession(firstCore, &provisionalTestConnection{}, firstCancellation.dependency())
 	if err != nil {
 		t.Fatalf("first prepareProvisionalSession() error = %v", err)
 	}
-	second, err := prepareProvisionalSession(secondCore, &provisionalTestConnection{})
+	secondCancellation := newProvisionalTestCancellation()
+	second, err := prepareProvisionalSession(secondCore, &provisionalTestConnection{}, secondCancellation.dependency())
 	if err != nil {
 		t.Fatalf("second prepareProvisionalSession() error = %v", err)
 	}
 
-	if first == second || first.core == second.core || first.session == second.session || first.owner == second.owner {
+	if first == second || first.core == second.core || first.session == second.session || first.owner == second.owner || first.cleanup == second.cleanup {
 		t.Fatal("separate preparations share identity-bearing objects")
 	}
 	first.core.principal.Claims["tenant"] = "first-mutated"
@@ -126,6 +172,9 @@ func TestSeparateProvisionalSessionsDoNotSharePreparedState(t *testing.T) {
 	}
 	if first.owner.State() != executionowner.StatePreCommit || second.owner.State() != executionowner.StatePreCommit {
 		t.Fatalf("Owner states = (%v, %v), want PreCommit", first.owner.State(), second.owner.State())
+	}
+	if firstCancellation.calls.Load() != 0 || secondCancellation.calls.Load() != 0 {
+		t.Fatalf("cancellation calls = (%d, %d), want (0, 0)", firstCancellation.calls.Load(), secondCancellation.calls.Load())
 	}
 }
 
@@ -153,6 +202,28 @@ type provisionalTestConnection struct {
 	writes    atomic.Int32
 	closes    atomic.Int32
 	closeNows atomic.Int32
+}
+
+type provisionalTestCancellation struct {
+	done      chan struct{}
+	calls     atomic.Int32
+	cancelled atomic.Bool
+}
+
+func newProvisionalTestCancellation() *provisionalTestCancellation {
+	return &provisionalTestCancellation{done: make(chan struct{})}
+}
+
+func (cancellation *provisionalTestCancellation) dependency() cancellationDependency {
+	return cancellationDependency{
+		done: cancellation.done,
+		cancel: func() {
+			cancellation.calls.Add(1)
+			if cancellation.cancelled.CompareAndSwap(false, true) {
+				close(cancellation.done)
+			}
+		},
+	}
 }
 
 func (connection *provisionalTestConnection) Read(context.Context) (websocket.MessageType, []byte, error) {

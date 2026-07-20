@@ -8,12 +8,18 @@ type provisionalSession struct {
 	core    *sessionCore
 	session *DefaultSession
 	owner   *executionowner.Owner
+	cleanup *sessionCleanup
 }
 
 func prepareProvisionalSession(
 	core *sessionCore,
 	connection websocketConnection,
+	cancellation cancellationDependency,
 ) (*provisionalSession, error) {
+	cancellationCell, err := newCancellationCell(cancellation)
+	if err != nil {
+		return nil, err
+	}
 	runtimeSession, err := newSessionFromCore(core, connection)
 	if err != nil {
 		return nil, err
@@ -23,5 +29,6 @@ func prepareProvisionalSession(
 		core:    core,
 		session: runtimeSession,
 		owner:   executionowner.New(),
+		cleanup: newSessionCleanup(runtimeSession, cancellationCell),
 	}, nil
 }
