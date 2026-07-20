@@ -10,10 +10,15 @@ import (
 	"github.com/dsdred/universal-websocket-platform/internal/handshake"
 	"github.com/dsdred/universal-websocket-platform/internal/listener"
 	"github.com/dsdred/universal-websocket-platform/internal/message"
+	"github.com/dsdred/universal-websocket-platform/internal/router"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
 	"github.com/dsdred/universal-websocket-platform/internal/secretresolver"
 	"github.com/dsdred/universal-websocket-platform/internal/session"
 )
+
+const legacyHandlerReference = "legacy"
+
+type messageRouterFactory func(*runtimeconfig.RoutingSnapshot, message.Handler) (message.Handler, error)
 
 type handshakeTimeoutHandler struct {
 	next    http.Handler
@@ -33,8 +38,31 @@ func composeRuntime(
 	capabilities *handshakeCapabilities,
 	reportError func(error),
 ) (listener.Listener, error) {
+	return composeRuntimeWithRouterFactory(
+		snapshot,
+		resolver,
+		handler,
+		capabilities,
+		reportError,
+		buildMessageRouter,
+	)
+}
+
+func composeRuntimeWithRouterFactory(
+	snapshot runtimeconfig.Snapshot,
+	resolver secretresolver.Resolver,
+	handler message.Handler,
+	capabilities *handshakeCapabilities,
+	reportError func(error),
+	newMessageRouter messageRouterFactory,
+) (listener.Listener, error) {
 	if err := validateExecutableSnapshot(snapshot); err != nil {
 		return nil, fmt.Errorf("validate Runtime Snapshot: %w", err)
+	}
+
+	runtimeRouter, err := newMessageRouter(snapshot.Routing, handler)
+	if err != nil {
+		return nil, fmt.Errorf("build Runtime Message Router: %w", err)
 	}
 
 	registry := authentication.NewRegistry()
@@ -54,7 +82,7 @@ func composeRuntime(
 		return nil, fmt.Errorf("build Authentication: %w", err)
 	}
 
-	sessionDispatcher := session.NewDispatcher(handler)
+	sessionDispatcher := session.NewDispatcher(runtimeRouter)
 	handshakeHandler, err := handshake.NewHandlerWithTerminalErrorReporter(
 		capabilities,
 		capabilities,
@@ -78,4 +106,16 @@ func composeRuntime(
 		return nil, fmt.Errorf("build Listener: %w", err)
 	}
 	return runtimeListener, nil
+}
+
+func buildMessageRouter(
+	routing *runtimeconfig.RoutingSnapshot,
+	legacyHandler message.Handler,
+) (message.Handler, error) {
+	if routing == nil {
+		return router.NewCompatibility(legacyHandler), nil
+	}
+	return router.New(routing, map[string]message.Handler{
+		legacyHandlerReference: legacyHandler,
+	})
 }
