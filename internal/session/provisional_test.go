@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"errors"
+	"reflect"
 	"sync/atomic"
 	"testing"
 
@@ -41,6 +42,15 @@ func TestPrepareProvisionalSessionCreatesCompletePreCommitUnit(t *testing.T) {
 	if prepared.core != core || prepared.session.core != core {
 		t.Fatal("prepared Session does not retain the exact supplied Core")
 	}
+	if prepared.session.connection != connection {
+		t.Fatal("prepared Session is not bound to the supplied transport")
+	}
+	if prepared.cleanup.session != prepared.session {
+		t.Fatal("prepared Cleanup is not bound to the Session in the same aggregate")
+	}
+	if prepared.cleanup.cancellation == nil || prepared.cleanup.cancellation.done != cancellation.done {
+		t.Fatal("prepared Cleanup is not bound to the supplied cancellation observation")
+	}
 	if prepared.session.ID() != "prepared-session" {
 		t.Fatalf("prepared Session ID = %q, want prepared-session", prepared.session.ID())
 	}
@@ -53,6 +63,9 @@ func TestPrepareProvisionalSessionCreatesCompletePreCommitUnit(t *testing.T) {
 	if prepared.owner.StopRequested() {
 		t.Fatal("prepared Owner has an unexpected Stop intent")
 	}
+	if prepared.cleanup.started || prepared.cleanup.cancellation.invoked.Load() {
+		t.Fatal("prepared Cleanup or cancellation is unexpectedly active")
+	}
 	if handled.Load() != 0 {
 		t.Fatalf("Handler calls = %d, want 0", handled.Load())
 	}
@@ -62,8 +75,61 @@ func TestPrepareProvisionalSessionCreatesCompletePreCommitUnit(t *testing.T) {
 	connection.assertUnused(t)
 }
 
+func TestProvisionalSessionMembershipIsStructurallyStable(t *testing.T) {
+	core, err := newSessionCore(validPrincipal(), "", fixedSessionID("stable"), nil, nil)
+	if err != nil {
+		t.Fatalf("newSessionCore() error = %v", err)
+	}
+	connection := &provisionalTestConnection{}
+	cancellation := newProvisionalTestCancellation()
+	prepared, err := prepareProvisionalSession(core, connection, cancellation.dependency())
+	if err != nil {
+		t.Fatalf("prepareProvisionalSession() error = %v", err)
+	}
+
+	wantCore := prepared.core
+	wantSession := prepared.session
+	wantOwner := prepared.owner
+	wantCleanup := prepared.cleanup
+	wantCancellation := prepared.cleanup.cancellation
+	for range 10 {
+		if prepared.core != wantCore || prepared.session != wantSession || prepared.owner != wantOwner ||
+			prepared.cleanup != wantCleanup || prepared.cleanup.cancellation != wantCancellation {
+			t.Fatal("provisional Session component identity changed after construction")
+		}
+	}
+
+	bundleType := reflect.TypeOf(provisionalSession{})
+	for index := 0; index < bundleType.NumField(); index++ {
+		field := bundleType.Field(index)
+		if field.IsExported() {
+			t.Fatalf("provisional Session field %q is exported", field.Name)
+		}
+		if field.Type.Kind() == reflect.Map || field.Type.Kind() == reflect.Slice {
+			t.Fatalf("provisional Session field %q is a mutable component registry", field.Name)
+		}
+	}
+	if bundleType.NumMethod() != 0 {
+		t.Fatalf("provisional Session exported method count = %d, want 0", bundleType.NumMethod())
+	}
+	if cancellation.calls.Load() != 0 {
+		t.Fatalf("cancellation calls = %d, want 0", cancellation.calls.Load())
+	}
+	connection.assertUnused(t)
+}
+
 func TestPrepareProvisionalSessionRejectsInvalidDependenciesWithoutSideEffects(t *testing.T) {
-	core, err := newSessionCore(validPrincipal(), "", fixedSessionID("session-id"), nil, nil)
+	var handled atomic.Int32
+	core, err := newSessionCore(
+		validPrincipal(),
+		"",
+		fixedSessionID("session-id"),
+		nil,
+		messageHandlerFunc(func(context.Context, message.Context) error {
+			handled.Add(1)
+			return nil
+		}),
+	)
 	if err != nil {
 		t.Fatalf("newSessionCore() error = %v", err)
 	}
@@ -94,7 +160,8 @@ func TestPrepareProvisionalSessionRejectsInvalidDependenciesWithoutSideEffects(t
 
 	t.Run("nil cancellation observation", func(t *testing.T) {
 		var calls atomic.Int32
-		prepared, err := prepareProvisionalSession(core, &provisionalTestConnection{}, cancellationDependency{
+		connection := &provisionalTestConnection{}
+		prepared, err := prepareProvisionalSession(core, connection, cancellationDependency{
 			cancel: func() { calls.Add(1) },
 		})
 		if prepared != nil || !errors.Is(err, errNilCancellationObservation) {
@@ -103,16 +170,23 @@ func TestPrepareProvisionalSessionRejectsInvalidDependenciesWithoutSideEffects(t
 		if calls.Load() != 0 {
 			t.Fatalf("cancellation calls = %d, want 0", calls.Load())
 		}
+		connection.assertUnused(t)
 	})
 
 	t.Run("nil cancellation operation", func(t *testing.T) {
-		prepared, err := prepareProvisionalSession(core, &provisionalTestConnection{}, cancellationDependency{
+		connection := &provisionalTestConnection{}
+		prepared, err := prepareProvisionalSession(core, connection, cancellationDependency{
 			done: make(chan struct{}),
 		})
 		if prepared != nil || !errors.Is(err, errNilCancellationOperation) {
 			t.Fatalf("prepareProvisionalSession() = (%#v, %v), want nil and %v", prepared, err, errNilCancellationOperation)
 		}
+		connection.assertUnused(t)
 	})
+
+	if handled.Load() != 0 {
+		t.Fatalf("Handler calls after failed preparations = %d, want 0", handled.Load())
+	}
 }
 
 func TestPrepareProvisionalSessionFailureCannotCancelCallerContext(t *testing.T) {
@@ -151,18 +225,21 @@ func TestSeparateProvisionalSessionsDoNotSharePreparedState(t *testing.T) {
 		t.Fatalf("second newSessionCore() error = %v", err)
 	}
 
+	firstConnection := &provisionalTestConnection{}
 	firstCancellation := newProvisionalTestCancellation()
-	first, err := prepareProvisionalSession(firstCore, &provisionalTestConnection{}, firstCancellation.dependency())
+	first, err := prepareProvisionalSession(firstCore, firstConnection, firstCancellation.dependency())
 	if err != nil {
 		t.Fatalf("first prepareProvisionalSession() error = %v", err)
 	}
+	secondConnection := &provisionalTestConnection{}
 	secondCancellation := newProvisionalTestCancellation()
-	second, err := prepareProvisionalSession(secondCore, &provisionalTestConnection{}, secondCancellation.dependency())
+	second, err := prepareProvisionalSession(secondCore, secondConnection, secondCancellation.dependency())
 	if err != nil {
 		t.Fatalf("second prepareProvisionalSession() error = %v", err)
 	}
 
-	if first == second || first.core == second.core || first.session == second.session || first.owner == second.owner || first.cleanup == second.cleanup {
+	if first == second || first.core == second.core || first.session == second.session || first.owner == second.owner ||
+		first.cleanup == second.cleanup || first.cleanup.cancellation == second.cleanup.cancellation {
 		t.Fatal("separate preparations share identity-bearing objects")
 	}
 	first.core.principal.Claims["tenant"] = "first-mutated"
@@ -173,9 +250,18 @@ func TestSeparateProvisionalSessionsDoNotSharePreparedState(t *testing.T) {
 	if first.owner.State() != executionowner.StatePreCommit || second.owner.State() != executionowner.StatePreCommit {
 		t.Fatalf("Owner states = (%v, %v), want PreCommit", first.owner.State(), second.owner.State())
 	}
-	if firstCancellation.calls.Load() != 0 || secondCancellation.calls.Load() != 0 {
-		t.Fatalf("cancellation calls = (%d, %d), want (0, 0)", firstCancellation.calls.Load(), secondCancellation.calls.Load())
+	if !first.owner.RequestStop() || second.owner.StopRequested() {
+		t.Fatal("Stop intent in first prepared Owner affected the second Owner")
 	}
+
+	first.cleanup.run(context.Background())
+	if firstCancellation.calls.Load() != 1 || secondCancellation.calls.Load() != 0 {
+		t.Fatalf("cancellation calls = (%d, %d), want (1, 0)", firstCancellation.calls.Load(), secondCancellation.calls.Load())
+	}
+	if first.session.state != stateStopped || second.session.state != stateCreated {
+		t.Fatalf("Session states = (%v, %v), want (Stopped, Created)", first.session.state, second.session.state)
+	}
+	secondConnection.assertUnused(t)
 }
 
 func TestExistingSessionConstructionRemainsCreatedAndInactive(t *testing.T) {

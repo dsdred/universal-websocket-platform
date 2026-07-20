@@ -2,8 +2,10 @@ package session
 
 import "github.com/dsdred/universal-websocket-platform/internal/executionowner"
 
-// provisionalSession is transaction-local preparation for a future Commit.
-// It owns no transport or execution authority before that boundary.
+// provisionalSession is the structurally complete, transaction-local
+// Session-side preparation for a future Commit. Its component identities are
+// fixed at construction, but the caller retains transport, cancellation, and
+// execution ownership until that boundary.
 type provisionalSession struct {
 	core    *sessionCore
 	session *DefaultSession
@@ -24,11 +26,13 @@ func prepareProvisionalSession(
 	if err != nil {
 		return nil, err
 	}
+	owner := executionowner.New()
+	cleanup := newSessionCleanup(runtimeSession, cancellationCell)
 
 	return &provisionalSession{
 		core:    core,
 		session: runtimeSession,
-		owner:   executionowner.New(),
-		cleanup: newSessionCleanup(runtimeSession, cancellationCell),
+		owner:   owner,
+		cleanup: cleanup,
 	}, nil
 }
