@@ -2,9 +2,11 @@
 package router
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 
 	"github.com/dsdred/universal-websocket-platform/internal/message"
@@ -107,6 +109,9 @@ func New(snapshot *runtimeconfig.RoutingSnapshot, registry map[string]message.Ha
 			handler:    handler,
 		})
 	}
+	slices.SortFunc(compiledRoutes, func(first, second compiledRoute) int {
+		return cmp.Compare(first.priority, second.priority)
+	})
 
 	compiled := &Router{routes: compiledRoutes}
 	if reference := snapshot.DefaultHandlerRef(); reference != "" {

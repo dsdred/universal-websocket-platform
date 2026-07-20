@@ -40,19 +40,52 @@ func TestNewCompilesImmutableRoutingTable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
-	if len(compiled.routes) != 2 || compiled.routes[0].id != "second" || compiled.routes[1].id != "first" {
+	if len(compiled.routes) != 2 || compiled.routes[0].id != "first" || compiled.routes[1].id != "second" {
 		t.Fatalf("compiled Route order = %#v", compiled.routes)
 	}
-	if compiled.routes[0].priority != 20 || compiled.routes[0].handlerRef != legacyHandlerRef || compiled.routes[0].handler != handler {
+	if compiled.routes[0].priority != 10 || compiled.routes[0].handlerRef != legacyHandlerRef || compiled.routes[0].handler != handler {
 		t.Errorf("compiled first Route = %#v", compiled.routes[0])
 	}
-	if got := compiled.routes[0].matchers; len(got) != 2 ||
+	if got := compiled.routes[1].matchers; len(got) != 2 ||
 		got[0] != (compiledMatcher{matcherType: runtimeconfig.MatcherTypeMessageType, value: "text"}) ||
 		got[1] != (compiledMatcher{matcherType: runtimeconfig.MatcherTypePrincipalKind, value: "authenticated"}) {
 		t.Fatalf("compiled Matchers = %#v", got)
 	}
 	if compiled.defaultHandler == nil || compiled.defaultHandler.reference != legacyHandlerRef || compiled.defaultHandler.handler != handler {
 		t.Fatalf("compiled default Handler = %#v", compiled.defaultHandler)
+	}
+}
+
+func TestNewOrdersEnabledRoutesOnlyByAscendingPriority(t *testing.T) {
+	declarations := [][]configurationversion.Route{
+		{
+			enabledRoute("high", 30, "text"),
+			{ID: "disabled", Priority: 5, HandlerRef: "future", Matchers: []configurationversion.Matcher{}},
+			enabledRoute("low", 10, "binary"),
+			enabledRouteWithPrincipal("middle", 20, "text", "anonymous"),
+		},
+		{
+			enabledRouteWithPrincipal("middle", 20, "text", "anonymous"),
+			enabledRoute("high", 30, "text"),
+			enabledRoute("low", 10, "binary"),
+			{ID: "disabled", Priority: 5, HandlerRef: "future", Matchers: []configurationversion.Matcher{}},
+		},
+	}
+
+	for declarationIndex, routes := range declarations {
+		snapshot := buildRoutingSnapshot(t, &configurationversion.RoutingSettings{Routes: routes})
+		for attempt := 0; attempt < 5; attempt++ {
+			compiled, err := New(snapshot, map[string]message.Handler{legacyHandlerRef: &handlerStub{}})
+			if err != nil {
+				t.Fatalf("New(declaration %d, attempt %d) error = %v", declarationIndex, attempt, err)
+			}
+			if len(compiled.routes) != 3 ||
+				compiled.routes[0].id != "low" || compiled.routes[0].priority != 10 ||
+				compiled.routes[1].id != "middle" || compiled.routes[1].priority != 20 ||
+				compiled.routes[2].id != "high" || compiled.routes[2].priority != 30 {
+				t.Fatalf("compiled order for declaration %d, attempt %d = %#v", declarationIndex, attempt, compiled.routes)
+			}
+		}
 	}
 }
 
@@ -275,6 +308,15 @@ func enabledRoute(id string, priority uint32, messageType string) configurationv
 			Value: messageType,
 		}},
 	}
+}
+
+func enabledRouteWithPrincipal(id string, priority uint32, messageType, principalKind string) configurationversion.Route {
+	route := enabledRoute(id, priority, messageType)
+	route.Matchers = append(route.Matchers, configurationversion.Matcher{
+		Type:  configurationversion.MatcherTypePrincipalKind,
+		Value: principalKind,
+	})
+	return route
 }
 
 type handlerStub struct{}
