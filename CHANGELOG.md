@@ -41,6 +41,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Runtime startup capability validation before Listener construction, with explicit TLS rejection and safe classified errors.
 - Configured pre-Upgrade Handshake deadline propagated through Authentication and final admission validation.
 - Authentication composition of enabled Providers in ascending configured Priority, while disabled Provider metadata remains inactive.
+- Completed DP-005 Runtime Message Router, including optional Routing metadata for ConfigurationVersion with bounded declarative validation, exact normalization, and Draft-only updates.
+- Immutable Routing Snapshot values and a deterministic compiled Runtime Message Router with priority-ordered exact matching, Default Handler, and No Match semantics.
+- Immutable transport-neutral Runtime Message Context passed through the unified Handler contract without exposing Session or WebSocket transport values.
+- Runtime Router composition before Listener startup, including strict configured compilation, absent-Routing compatibility behavior, finite `legacy` Handler resolution, and startup failure for invalid active references.
 
 ## [0.1.0-alpha] - 2026-07-12
 

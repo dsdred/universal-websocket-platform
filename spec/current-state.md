@@ -131,14 +131,14 @@
 - Secret Resolver разрешает Secret References только при запуске Runtime; значения Secret остаются только в памяти процесса
 - Authentication Provider Registry отделяет Runtime и Authentication Service от конкретных реализаций Provider
 - Authentication использует transport-neutral контракты DP-004 и не зависит от WebSocket
-- Реализована immutable Runtime Configuration Snapshot-модель для Listener и Authentication
-- Builder принимает только Published ConfigurationVersion и глубоко копирует все Provider и JWT collections
+- Реализована immutable Runtime Configuration Snapshot-модель для Listener, Authentication и optional Routing
+- Builder принимает только Published ConfigurationVersion, глубоко копирует Provider, JWT и Routing collections и сохраняет различие между отсутствующей и явно пустой Routing-секцией
 - Snapshot не зависит от HTTP API, Repository или исходного ConfigurationVersion после создания
 - Runtime Container хранит собственную глубокую копию Snapshot и возвращает новую копию через единственный метод `Snapshot()`
 - Container пока не содержит других зависимостей и самостоятельно не управляет запуском, остановкой или reload Runtime
 - Реализован потокобезопасный Runtime Host, являющийся production composition root и владеющий независимой копией Snapshot и Container
 - Host поддерживает lifecycle `Created -> Built -> Starting -> Running -> Stopping -> Stopped`; Restart и Reload отсутствуют
-- Runtime Bootstrap создает Built Host, а Host во время Start явно собирает Authentication, connection dispatch, Session handoff, Message Handler и Listener без service locator или DI framework
+- Runtime Bootstrap создает Built Host, а Host во время Start явно собирает Router, Authentication, connection dispatch, Session handoff и Listener без service locator или DI framework
 - Startup transaction публикует Listener только после успешного запуска и выполняет rollback полученного ресурса при ошибке, сохраняя исходную и rollback errors
 - Host создает независимый root Runtime context после успешного запуска Listener; startup context не становится lifecycle context запущенного Runtime
 - Runtime readiness становится true только после startup commit и сбрасывается в false в начале Stop
@@ -178,9 +178,14 @@
 - Добавлена immutable transport-neutral Runtime Message модель для text и binary application messages с копированием payload и UTC-временем получения
 - Session удерживает WebSocket-соединение открытым и выполняет единственный блокирующий read loop до закрытия клиента, отмены context, Stop или ошибки чтения
 - Session предоставляет потокобезопасный `Send(context.Context, message.Message)` для сериализованной отправки text и binary Runtime Message без raw `[]byte` API; lifecycle mutex не удерживается во время WebSocket Write, допущенный до Stop write завершается с transport outcome, а новые writes после начала Stop отклоняются
-- Добавлен transport-neutral Runtime Message Handler contract; Session передает ему каждое прочитанное Message, а при nil Handler сохраняет discard-поведение
+- Добавлены immutable transport-neutral Runtime Message Context и Handler contract; Session создает отдельный Context для каждого прочитанного Message, не раскрывая HTTP или WebSocket transport, а при nil Handler сохраняет discard-поведение
 - Реализован EchoHandler, возвращающий неизмененные text и binary Runtime Message исключительно через Session Send без доступа к WebSocket transport
-- Router, Middleware, Message Queue, Broadcast, публичный Session Manager Registry API, shutdown orchestration и Persistence отсутствуют
+- DP-005 Runtime Message Router завершён: optional Routing metadata проходит нормализацию и валидацию в ConfigurationVersion и `runtimeconfig.Builder`, после чего Runtime до Listener Start создаёт один immutable Router
+- При наличии Routing Runtime использует strict compilation с единственным initial Handler reference `legacy`; при отсутствии Routing создаётся отдельный compatibility Router, сохраняющий прежнее Handler- или nil-discard-поведение
+- Compiled Router хранит только enabled Routes, сортирует их один раз по возрастанию Priority, применяет exact case-sensitive Matchers и синхронно вызывает ровно один выбранный Handler
+- Default Handler используется только после отсутствия explicit match; No Match не вызывает Handler, возвращает nil и позволяет Session продолжить read loop без legacy fallback для явно заданной Routing-секции
+- Router переиспользуется всеми Session как единый immutable `message.Handler`; route compilation, sorting, normalization и Handler resolution на message hot path отсутствуют
+- Middleware, Message Queue, Broadcast, публичный Session Manager Registry API, shutdown orchestration и Persistence отсутствуют
 - Архитектура Runtime принята в ADR-003; pre-Upgrade Handshake реализован в объеме Authentication, а Configuration Loader, полный Session shutdown tracking, operational diagnostics и supervision еще отсутствуют
 
 ## Чего не существует
@@ -216,7 +221,7 @@
 - Создано двуязычное активное архитектурное руководство [ARCH-001: Runtime Architectural Pattern](../docs/ru/architecture/ARCH-001-runtime-architectural-pattern.md) ([English version](../docs/en/architecture/ARCH-001-runtime-architectural-pattern.md)).
 - ARCH-001 обобщает подтвержденный Alpha-вертикалью паттерн `Context -> Evaluation -> Decision -> Execution` без создания универсального Policy Engine или новых обязательных Go-контрактов.
 - Зафиксированы Configuration First, проверяемые границы зависимостей, явная передача владения mutable resources, lifecycle и concurrency requirements, а также принцип Boring Core.
-- Handshake Pipeline, Router, Delivery, Persistence и Plugin ABI остаются предметом будущих DP и при необходимости ADR; ARCH-001 не определяет их API.
+- Router определён и реализован по одобренному [DP-005: Runtime Message Router](../docs/ru/design/DP-005-runtime-message-router.md) ([English version](../docs/en/design/DP-005-runtime-message-router.md)); Delivery, Persistence и Plugin ABI остаются предметом будущих DP и при необходимости ADR.
 
 ## Master Engineering Plan
 
@@ -233,7 +238,7 @@
 - Design переносит обязательную Authentication до WebSocket Upgrade, сохраняя transport-neutral Authentication Service и ownership Session после успешной передачи.
 - Listener остается владельцем HTTP/WebSocket transport effects и не получает Provider-specific logic.
 - Реализация следует основному порядку DP-001: Admission Gate, Authentication, Allow Decision, финальная проверка Gate, Upgrade и Session handoff.
-- Origin Policy, rate limiting, maintenance, IP filtering, Router, Session Manager и Plugin ABI остаются future work без зафиксированных API.
+- Origin Policy, rate limiting, maintenance, IP filtering, Session Manager integration и Plugin ABI остаются future work без зафиксированных API.
 
 ## Runtime Host Composition Root Design
 
@@ -269,7 +274,7 @@
 - Создан двуязычный [ARCH-002: Runtime Foundation Freeze](../docs/ru/architecture/ARCH-002-runtime-foundation-freeze.md) ([English version](../docs/en/architecture/ARCH-002-runtime-foundation-freeze.md)).
 - Архитектурно стабильными признаны реализованные Runtime Host, production composition root, lifecycle, root Runtime context, startup transaction и rollback, readiness и lifecycle-only Admission Gate.
 - Freeze фиксирует фактический lifecycle `Created -> Built -> Starting -> Running -> Stopping -> Stopped` и не объявляет реализованными предложенные в Draft DP-002 состояния `Initialized` или `Failed`.
-- Session ownership в полном Runtime shutdown wait set, Router, Delivery, Persistence, Operational Diagnostics и supervision остаются открытой архитектурой.
+- ARCH-002 оставил Router открытой архитектурой на момент freeze; впоследствии Router определён и реализован по DP-005 без изменения замороженных Runtime Foundation contracts. Session ownership в полном Runtime shutdown wait set, Delivery, Persistence, Operational Diagnostics и supervision остаются открытой архитектурой.
 - Изменение замороженных архитектурных обязанностей, ownership или lifecycle-семантики требует нового сфокусированного DP или ADR.
 
 ## Handshake Runtime Dependency Boundary
