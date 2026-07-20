@@ -127,6 +127,19 @@ type normalizedMatcherSet struct {
 	matchers [maximumMatchers]compiledMatcher
 }
 
+// NewCompatibility creates an immutable Router for absent Routing metadata.
+// A nil default Handler produces normal No Match behavior.
+func NewCompatibility(defaultHandler message.Handler) *Router {
+	compiled := &Router{}
+	if !nilHandler(defaultHandler) {
+		compiled.defaultHandler = &compiledHandler{
+			reference: legacyHandlerRef,
+			handler:   defaultHandler,
+		}
+	}
+	return compiled
+}
+
 // New compiles one immutable Routing Snapshot using the caller's finite Handler registry.
 // The initial compiler recognizes only the legacy Handler reference and does not retain registry.
 func New(snapshot *runtimeconfig.RoutingSnapshot, registry map[string]message.Handler) (*Router, error) {
