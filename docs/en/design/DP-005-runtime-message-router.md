@@ -191,6 +191,10 @@ Composition performs these steps once:
 5. Sort compiled Routes by ascending Priority.
 6. Publish the immutable compiled table only as part of successful Runtime composition.
 
+Runtime selects exactly one Router construction path during startup. When Routing is present, composition passes its valid `RoutingSnapshot` and the finite Handler registry to the existing strict Router compiler. When Routing is absent, composition uses a separate explicit compatibility factory. The compatibility factory creates an immutable Router with zero compiled Routes and, when non-nil, the injected legacy Handler as its Default Handler. The existing compiler is not the compatibility path: it continues to require a valid `RoutingSnapshot` and to reject nil Routing input.
+
+Both construction paths publish the same Router role before Listener construction. Every Message then traverses the same `Router.Handle` path; Runtime and Session never bypass Router or branch on Routing presence during message processing.
+
 For each Runtime Message Context, Router:
 
 1. returns cancellation if the call context is already canceled;
@@ -209,12 +213,13 @@ The four cases are distinct:
 
 | Configuration state | Runtime behavior |
 |---|---|
-| Routing section absent | Composition installs one implicit legacy default with HandlerRef `legacy`, bound to the existing injected Handler; current Echo vertical is unchanged |
+| Routing section absent and injected legacy Handler is non-nil | The compatibility factory installs the injected Handler as the implicit `legacy` Default Handler; current Echo vertical is unchanged |
+| Routing section absent and injected legacy Handler is nil | The compatibility factory installs no Default Handler; every Message produces No Match, Router returns nil, and existing discard behavior is unchanged |
 | Routing section present and empty | Valid intentional reject-all configuration; every Message produces No Match, Router returns nil, and Session continues |
 | Routing section present but invalid | Runtime startup fails before Listener socket acquisition |
 | Valid Routing present but no Route matches and no default exists | No Match; no Handler invocation, Router returns nil, and Session continues without fallback |
 
-The implicit compatibility routing entry exists only when Routing is absent. It is represented as a Default Handler reference to `legacy`, not as an ordinary configured Route. Runtime does not silently add it to an explicitly present Routing section.
+The implicit compatibility routing entry exists only when Routing is absent. A separate compatibility factory constructs it; Runtime does not pass nil to the strict Router compiler. With a non-nil injected Handler, the compatibility Router represents that Handler as the Default Handler associated with `legacy`, not as an ordinary configured Route. With a nil injected Handler, it has zero Routes and no Default Handler. Runtime does not silently add compatibility behavior to an explicitly present Routing section and does not create a synthetic no-op or discard Handler.
 
 ## 13. Handler Execution Model
 
@@ -222,7 +227,9 @@ Router implements the transport-neutral `message.Handler` role and invokes the s
 
 The model is selected because Runtime already composes one Handler into Session. Substituting Router at that seam avoids adding a second dispatcher to Session and keeps route selection outside Session. Returning a Handler to Session would make Session know Router selection outcomes and duplicate execution/error plumbing.
 
-Handler construction and reference resolution occur during Runtime composition. The initial composition-local Handler registry contains exactly one supported reference: `legacy`. Runtime composition binds the existing injected Handler instance to that name before Router compilation. When Routing is absent, the implicit compatibility default refers to the same `legacy` binding; it does not create another Handler.
+Handler construction and reference resolution occur during Runtime composition. The initial composition-local Handler registry contains exactly one supported reference: `legacy`. For present Routing, Runtime composition binds the existing non-nil injected Handler instance to that name before strict Router compilation. For absent Routing, the compatibility factory receives the injected Handler directly: a non-nil value becomes the Default Handler, while nil produces no Default Handler and valid No Match behavior. The factory does not create another Handler.
+
+The strict compiler and compatibility factory have distinct responsibilities. The compiler validates and compiles an explicit `RoutingSnapshot` and continues to reject nil input. The compatibility factory represents only the absent-Routing backward-compatibility case and performs no declarative Route compilation. It does not accept configured Routes or alter the compiler contract.
 
 The registry is a finite construction input, not a dynamic registry, and Router does not retain it after compilation. Every enabled Route and explicit `DefaultHandlerRef` must resolve in it before Runtime readiness and before Listener construction or socket acquisition. Therefore, in the initial implementation, their only accepted resolvable value is `legacy`; any other active reference causes startup failure in the unresolved-Handler category. A syntactically valid reference on a disabled Route is not resolved until a later Configuration enables that Route.
 
@@ -251,7 +258,7 @@ Router does not produce a protocol response, acknowledgement, retry, alternative
 
 ## 15. Concurrency and Lifecycle
 
-Router has no lifecycle states and no `Start` or `Stop`. Runtime composition constructs it before Listener startup and releases it with the Runtime component graph.
+Router has no lifecycle states and no `Start` or `Stop`. Runtime composition constructs exactly one Router before Listener startup, stores that immutable instance in the component graph, reuses it for every Message, and releases it with the Runtime component graph.
 
 The compiled route slice, Matcher values, Route IDs, Handler references, and resolved Handler values never change after construction. Selection performs read-only iteration and requires no Router mutex. Concurrent calls from different Sessions are safe and share no per-message mutable state.
 
@@ -278,7 +285,8 @@ Runtime executability validation owns:
 - support for the Routing Snapshot version and all active Matcher types;
 - resolution of every enabled Route Handler and configured Default Handler;
 - compilation without mutation of Snapshot;
-- installation of the implicit legacy default only when Routing is absent;
+- selection of strict compilation only when Routing is present;
+- construction of the compatibility Router only when Routing is absent, with a non-nil legacy Handler as its Default Handler or no Default Handler when the injected Handler is nil;
 - proof that the compiled Router can be published before Listener startup.
 
 Validation occurs in Runtime composition before Listener construction and socket acquisition. Routing validation participates in the existing startup capability model: active invalid or unsupported routing prevents Ready; disabled Routes are not executable but still pass Control Plane structural validation. Snapshot and compiled-table deep-copy invariants are verified independently.
@@ -346,7 +354,8 @@ Implementation proof must include:
 - duplicate ID, duplicate Priority, duplicate Matcher type, and identical normalized Matcher-set rejection across enabled Routes regardless of Priority;
 - disabled Route exclusion from selection and duplicate-set comparison while retaining its structural validation;
 - whitespace, missing/empty, canonical enum, case-preservation, order-independent set, and cross-layer normalization equivalence;
-- absent Routing implicit legacy behavior;
+- absent Routing compatibility behavior with non-nil and nil injected legacy Handlers;
+- strict compiler rejection of nil Routing input and use of the separate compatibility factory;
 - present empty Routing reject-all behavior;
 - configured Default Handler;
 - No Match as `nil`, without Handler invocation, legacy fallback, or Session termination;
@@ -356,6 +365,7 @@ Implementation proof must include:
 - selected Handler error and `errors.Is` preservation through Session;
 - cancellation before selection and during Handler execution;
 - concurrent routing through one immutable compiled table;
+- exactly one Router construction during startup and reuse of that instance for all Messages;
 - isolation of Context values belonging to different Sessions;
 - Context and Snapshot deep-copy behavior;
 - unresolved Handler and unsupported Matcher rejection before readiness;

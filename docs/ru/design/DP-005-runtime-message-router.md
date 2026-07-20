@@ -191,6 +191,10 @@ Composition один раз выполняет следующие действи
 5. Сортирует compiled Routes по возрастанию Priority.
 6. Публикует неизменяемую compiled table только как часть успешной Runtime composition.
 
+Во время startup Runtime выбирает ровно один путь создания Router. Когда Routing присутствует, composition передаёт её валидный `RoutingSnapshot` и конечный registry Handler в существующий строгий compiler Router. Когда Routing отсутствует, composition использует отдельную явную compatibility factory. Compatibility factory создаёт immutable Router с нулём compiled Routes и, если переданный legacy Handler не равен nil, устанавливает его как Default Handler. Существующий compiler не является compatibility path: он по-прежнему требует валидный `RoutingSnapshot` и отклоняет nil Routing input.
+
+Оба пути создания публикуют одну и ту же роль Router до создания Listener. После этого каждое Message проходит через один и тот же путь `Router.Handle`; Runtime и Session никогда не обходят Router и не выполняют ветвление по наличию Routing во время обработки сообщения.
+
 Для каждого Runtime Message Context Router:
 
 1. возвращает cancellation, если context вызова уже отменён;
@@ -209,12 +213,13 @@ Composition один раз выполняет следующие действи
 
 | Состояние Configuration | Поведение Runtime |
 |---|---|
-| Секция Routing отсутствует | Composition устанавливает один неявный legacy default с HandlerRef `legacy`, связанный с существующим переданным Handler; текущий Echo vertical не меняется |
+| Секция Routing отсутствует, переданный legacy Handler не равен nil | Compatibility factory устанавливает переданный Handler как неявный `legacy` Default Handler; текущий Echo vertical не меняется |
+| Секция Routing отсутствует, переданный legacy Handler равен nil | Compatibility factory не устанавливает Default Handler; каждое Message даёт No Match, Router возвращает nil, существующее discard behavior не меняется |
 | Секция Routing присутствует и пуста | Валидная намеренная reject-all configuration; каждое Message даёт No Match, Router возвращает nil, Session продолжает работу |
 | Секция Routing присутствует, но невалидна | Запуск Runtime завершается ошибкой до захвата Listener socket |
 | Валидная Routing присутствует, но ни один Route не совпал и default отсутствует | No Match; Handler не вызывается, Router возвращает nil, Session продолжает работу без fallback |
 
-Неявная compatibility routing entry существует только при отсутствии Routing. Она представлена Default Handler reference на `legacy`, а не обычным сконфигурированным Route. Runtime не добавляет её скрыто в явно присутствующую секцию Routing.
+Неявная compatibility routing entry существует только при отсутствии Routing. Её создаёт отдельная compatibility factory; Runtime не передаёт nil в строгий compiler Router. При ненулевом переданном Handler compatibility Router представляет его как Default Handler, связанный с `legacy`, а не как обычный сконфигурированный Route. При nil Handler он имеет ноль Routes и не имеет Default Handler. Runtime не добавляет compatibility behavior скрыто в явно присутствующую секцию Routing и не создаёт synthetic no-op или discard Handler.
 
 ## 13. Модель выполнения Handler
 
@@ -222,7 +227,9 @@ Router реализует transport-neutral роль `message.Handler` и син
 
 Она выбрана потому, что Runtime уже компонует один Handler в Session. Подстановка Router на этой границе не добавляет второй dispatcher в Session и оставляет выбор route вне Session. Возврат Handler в Session заставил бы Session знать об outcomes выбора Router и дублировать обработку выполнения и ошибок.
 
-Создание Handler и разрешение ссылок выполняются во время Runtime composition. Исходный локальный для composition registry Handler содержит ровно одну поддерживаемую ссылку: `legacy`. Runtime composition связывает существующий переданный экземпляр Handler с этим именем до Router compilation. При отсутствии Routing неявный compatibility default ссылается на тот же binding `legacy` и не создаёт другой Handler.
+Создание Handler и разрешение ссылок выполняются во время Runtime composition. Исходный локальный для composition registry Handler содержит ровно одну поддерживаемую ссылку: `legacy`. При присутствующем Routing Runtime composition связывает существующий переданный ненулевой экземпляр Handler с этим именем до строгой Router compilation. При отсутствующем Routing compatibility factory получает переданный Handler напрямую: ненулевое значение становится Default Handler, а nil создаёт отсутствие Default Handler и валидное поведение No Match. Factory не создаёт другой Handler.
+
+Строгий compiler и compatibility factory имеют разные обязанности. Compiler валидирует и компилирует явный `RoutingSnapshot` и продолжает отклонять nil input. Compatibility factory представляет только случай backward compatibility при отсутствующем Routing и не выполняет declarative Route compilation. Она не принимает настроенные Routes и не меняет контракт compiler.
 
 Registry является конечным construction input, а не dynamic registry, и Router не удерживает его после compilation. Каждый включённый Route и явный `DefaultHandlerRef` должны разрешиться в нём до Runtime readiness и до создания Listener или захвата socket. Поэтому в исходной реализации их единственным допустимым разрешимым значением является `legacy`; любая другая активная ссылка вызывает startup failure категории unresolved Handler. Синтаксически валидная ссылка отключённого Route не разрешается до более поздней Configuration, включающей этот Route.
 
@@ -251,7 +258,7 @@ Router не создаёт protocol response, acknowledgement, retry, альте
 
 ## 15. Конкурентность и lifecycle
 
-Router не имеет lifecycle states, `Start` или `Stop`. Runtime composition создаёт его до запуска Listener и освобождает вместе с component graph Runtime.
+Router не имеет lifecycle states, `Start` или `Stop`. Runtime composition создаёт ровно один Router до запуска Listener, сохраняет этот immutable экземпляр в component graph, повторно использует его для каждого Message и освобождает вместе с component graph Runtime.
 
 Compiled route slice, значения Matcher, Route IDs, Handler references и разрешённые значения Handler никогда не меняются после создания. Selection выполняет read-only iteration и не требует mutex Router. Concurrent-вызовы из разных Sessions безопасны и не разделяют изменяемое per-message state.
 
@@ -278,7 +285,8 @@ Runtime executability validation владеет:
 - поддержкой версии Routing Snapshot и всех активных типов Matcher;
 - разрешением каждого Handler включённого Route и настроенного Default Handler;
 - компиляцией без изменения Snapshot;
-- установкой неявного legacy default только при отсутствии Routing;
+- выбором строгой compilation только при присутствующем Routing;
+- созданием compatibility Router только при отсутствующем Routing: с ненулевым legacy Handler как Default Handler или без Default Handler, если переданный Handler равен nil;
 - доказательством возможности опубликовать compiled Router до запуска Listener.
 
 Validation выполняется в Runtime composition до создания Listener и захвата socket. Routing validation участвует в существующей модели startup capability: активная невалидная или неподдерживаемая routing не допускает Ready; отключённые Routes не исполняются, но всё равно проходят структурную Control Plane validation. Инварианты deep copy Snapshot и compiled table проверяются независимо.
@@ -346,7 +354,8 @@ Proof реализации должен включать:
 - отклонение duplicate ID, duplicate Priority, duplicate Matcher type и идентичного нормализованного Matcher set включённых Routes независимо от Priority;
 - исключение отключённого Route из selection и сравнения повторяющихся наборов при сохранении его structural validation;
 - эквивалентность whitespace, missing/empty, canonical enum, case-preservation, order-independent set и cross-layer normalization;
-- implicit legacy behavior при отсутствующем Routing;
+- compatibility behavior при отсутствующем Routing с ненулевым и nil переданным legacy Handler;
+- отклонение nil Routing input строгим compiler и использование отдельной compatibility factory;
 - reject-all behavior при присутствующем пустом Routing;
 - настроенный Default Handler;
 - No Match как `nil` без вызова Handler, legacy fallback или завершения Session;
@@ -356,6 +365,7 @@ Proof реализации должен включать:
 - ошибку выбранного Handler и сохранение `errors.Is` через Session;
 - cancellation до selection и во время выполнения Handler;
 - concurrent routing через одну immutable compiled table;
+- ровно одно создание Router во время startup и повторное использование этого экземпляра для всех Messages;
 - изоляцию значений Context разных Sessions;
 - deep-copy Context и Snapshot;
 - отклонение неразрешённого Handler и неподдерживаемого Matcher до readiness;
