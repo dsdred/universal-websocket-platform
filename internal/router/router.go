@@ -3,6 +3,7 @@ package router
 
 import (
 	"cmp"
+	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -29,11 +30,78 @@ var (
 	ErrImpossibleCompiledState = errors.New("impossible compiled router state")
 )
 
-// Router owns an immutable compiled routing table.
-// Message selection and Handler invocation are intentionally not implemented yet.
+// Router owns an immutable compiled routing table and implements message.Handler.
 type Router struct {
 	routes         []compiledRoute
 	defaultHandler *compiledHandler
+}
+
+var _ message.Handler = (*Router)(nil)
+
+// Handle selects the first matching compiled Route and synchronously invokes exactly one Handler.
+func (r *Router) Handle(ctx context.Context, runtimeContext message.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if !validRuntimeContext(runtimeContext) {
+		return message.ErrInvalidContext
+	}
+
+	for index := range r.routes {
+		route := &r.routes[index]
+		if route.matches(runtimeContext) {
+			return route.handler.Handle(ctx, runtimeContext)
+		}
+	}
+	if r.defaultHandler != nil {
+		return r.defaultHandler.handler.Handle(ctx, runtimeContext)
+	}
+	return nil
+}
+
+func (r *compiledRoute) matches(runtimeContext message.Context) bool {
+	for index := range r.matchers {
+		if !r.matchers[index].matches(runtimeContext) {
+			return false
+		}
+	}
+	return true
+}
+
+func (m *compiledMatcher) matches(runtimeContext message.Context) bool {
+	switch m.matcherType {
+	case runtimeconfig.MatcherTypeMessageType:
+		return string(runtimeContext.MessageType()) == m.value
+	case runtimeconfig.MatcherTypePrincipalKind:
+		switch m.value {
+		case "authenticated":
+			return runtimeContext.Authenticated()
+		case "anonymous":
+			return runtimeContext.Anonymous()
+		default:
+			return false
+		}
+	case runtimeconfig.MatcherTypeAuthenticationType:
+		return runtimeContext.AuthenticationType() == m.value
+	case runtimeconfig.MatcherTypeAuthenticationProvider:
+		return runtimeContext.AuthenticationProvider() == m.value
+	default:
+		return false
+	}
+}
+
+func validRuntimeContext(runtimeContext message.Context) bool {
+	messageType := runtimeContext.MessageType()
+	if messageType != message.TypeText && messageType != message.TypeBinary {
+		return false
+	}
+	if runtimeContext.Sender() == nil || runtimeContext.SessionID() == "" || runtimeContext.Authenticated() == runtimeContext.Anonymous() {
+		return false
+	}
+	if runtimeContext.Authenticated() {
+		return runtimeContext.AuthenticationType() != "" && runtimeContext.AuthenticationProvider() != ""
+	}
+	return runtimeContext.AuthenticationType() == "" && runtimeContext.AuthenticationProvider() == ""
 }
 
 type compiledRoute struct {

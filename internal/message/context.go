@@ -68,6 +68,11 @@ func (runtimeContext Context) Message() Message {
 	return cloneMessage(runtimeContext.runtimeMessage)
 }
 
+// MessageType returns the Runtime Message type without copying its payload.
+func (runtimeContext Context) MessageType() Type {
+	return runtimeContext.runtimeMessage.Type()
+}
+
 // Sender returns the transport-neutral outbound capability for the current Session.
 func (runtimeContext Context) Sender() Sender {
 	return runtimeContext.sender

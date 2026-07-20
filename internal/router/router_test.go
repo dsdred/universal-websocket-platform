@@ -264,7 +264,7 @@ func TestDefensiveSnapshotValidationRejectsMalformedValues(t *testing.T) {
 	}
 }
 
-func TestCompiledRouterDoesNotExposeMutableCollectionsOrExecution(t *testing.T) {
+func TestCompiledRouterDoesNotExposeMutableCollectionsOrUnexpectedBehavior(t *testing.T) {
 	for _, typ := range []reflect.Type{
 		reflect.TypeOf(Router{}),
 		reflect.TypeOf(compiledRoute{}),
@@ -278,8 +278,9 @@ func TestCompiledRouterDoesNotExposeMutableCollectionsOrExecution(t *testing.T) 
 			}
 		}
 	}
-	if reflect.TypeOf((*Router)(nil)).NumMethod() != 0 {
-		t.Fatal("Router exposes behavior before the message-routing step")
+	routerType := reflect.TypeOf((*Router)(nil))
+	if routerType.NumMethod() != 1 || routerType.Method(0).Name != "Handle" {
+		t.Fatalf("Router methods = %v, want only Handle", routerType.NumMethod())
 	}
 }
 

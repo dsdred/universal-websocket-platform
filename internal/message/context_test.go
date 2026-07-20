@@ -27,6 +27,9 @@ func TestNewContextCreatesAuthenticatedContext(t *testing.T) {
 	}
 
 	assertContextMessage(t, runtimeContext, runtimeMessage)
+	if runtimeContext.MessageType() != TypeText {
+		t.Fatalf("MessageType() = %q, want %q", runtimeContext.MessageType(), TypeText)
+	}
 	if runtimeContext.Sender() != sender {
 		t.Fatal("Sender() did not return the supplied capability")
 	}
@@ -63,6 +66,9 @@ func TestNewContextCreatesAnonymousContext(t *testing.T) {
 	}
 
 	assertContextMessage(t, runtimeContext, runtimeMessage)
+	if runtimeContext.MessageType() != TypeBinary {
+		t.Fatalf("MessageType() = %q, want %q", runtimeContext.MessageType(), TypeBinary)
+	}
 	if runtimeContext.Sender() != sender {
 		t.Fatal("Sender() did not return the supplied capability")
 	}
@@ -148,8 +154,27 @@ func TestContextPayloadIsImmutable(t *testing.T) {
 	if string(got.Data()) != "original" {
 		t.Fatalf("Context Message payload = %q, want original", got.Data())
 	}
+	if runtimeContext.MessageType() != TypeBinary {
+		t.Fatalf("MessageType() = %q, want %q", runtimeContext.MessageType(), TypeBinary)
+	}
 	if !got.ReceivedAt().Equal(wantReceivedAt) {
 		t.Fatalf("Context Message ReceivedAt = %v, want %v", got.ReceivedAt(), wantReceivedAt)
+	}
+}
+
+func TestContextMessageTypeDoesNotCopyPayload(t *testing.T) {
+	runtimeMessage := mustContextMessage(t, TypeBinary, []byte("payload"))
+	runtimeContext := mustAuthenticatedContext(t, &runtimeMessage)
+	var got Type
+
+	allocations := testing.AllocsPerRun(1000, func() {
+		got = runtimeContext.MessageType()
+	})
+	if got != TypeBinary {
+		t.Fatalf("MessageType() = %q, want %q", got, TypeBinary)
+	}
+	if allocations != 0 {
+		t.Fatalf("MessageType() allocations = %v, want 0", allocations)
 	}
 }
 
@@ -217,6 +242,7 @@ func TestContextContainsOnlyApprovedTransportNeutralFields(t *testing.T) {
 		"AuthenticationProvider": {},
 		"AuthenticationType":     {},
 		"Message":                {},
+		"MessageType":            {},
 		"Sender":                 {},
 		"SessionID":              {},
 	}
@@ -247,7 +273,7 @@ func TestContextSupportsConcurrentReads(t *testing.T) {
 			returnedMessage := runtimeContext.Message()
 			payload := returnedMessage.Data()
 			payload[0] = 'X'
-			if returnedMessage.Type() != TypeBinary || string(runtimeContext.Message().Data()) != "concurrent payload" {
+			if runtimeContext.MessageType() != TypeBinary || returnedMessage.Type() != TypeBinary || string(runtimeContext.Message().Data()) != "concurrent payload" {
 				errorsFound <- fmt.Errorf("Message accessor returned inconsistent data")
 				return
 			}
