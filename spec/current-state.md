@@ -165,6 +165,7 @@
 - При включённой Authentication Bootstrap создаёт только enabled Providers и упорядочивает их по возрастанию `Priority`; активные Basic и asymmetric JWT configurations продолжают явно отклоняться до Listener Start
 - Реализована минимальная WebSocket Session, которая после Authentication владеет соединением, хранит криптографически случайный ID, глубокую копию Principal, RemoteAddress и время создания
 - Private transport-independent Session Core создаёт и хранит stable ID, deep-copied Principal, creation metadata и Handler до формирования transport-bound Session; Core не владеет WebSocket или lifecycle operations, а существующие constructors и synchronous Dispatcher сохраняют прежнее поведение
+- Package-private provisional preparation формирует из существующего Core один transport-bound Session в `Created` и один prospective Execution Owner в `PreCommit` как единый transaction-local unit; этот путь пока не используется Dispatcher, не запускает lifecycle, не передаёт ownership и ничего не публикует
 - Session Dispatcher создает Session из AuthenticatedContext и в текущей goroutine последовательно вызывает Start, блокирующий Run и завершающий Stop
 - Создан независимый пакет `internal/sessionmanager` с потокобезопасным lifecycle skeleton `Open -> Closing -> Closed`
 - Session Manager предоставляет неблокирующий идемпотентный `BeginShutdown`, context-bounded `Wait` и read-only наблюдение состояния; `Wait` не меняет accounting, а `Closed` достижим только при пустых Reservation, Registration и Owner Lifetime Lease sets
