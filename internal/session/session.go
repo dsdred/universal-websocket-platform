@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"strings"
 	"sync"
 	"time"
 
@@ -63,20 +62,15 @@ type websocketConnection interface {
 
 // DefaultSession is the default minimal Runtime Session.
 type DefaultSession struct {
-	mu            sync.RWMutex
-	writeMu       sync.Mutex
-	id            string
-	principal     authentication.Principal
-	connection    websocketConnection
-	remoteAddress string
-	createdAt     time.Time
-	state         lifecycleState
-	readLoop      bool
-	readLoopDone  chan struct{}
-	stopDone      chan struct{}
-	stopErr       error
-	observe       messageObserver
-	handler       message.Handler
+	mu           sync.RWMutex
+	writeMu      sync.Mutex
+	core         *sessionCore
+	connection   websocketConnection
+	state        lifecycleState
+	readLoop     bool
+	readLoopDone chan struct{}
+	stopDone     chan struct{}
+	stopErr      error
 }
 
 // New creates a Session with a cryptographically random identifier.
@@ -148,46 +142,45 @@ func newWithConnectionDependencies(
 	if connection == nil {
 		return nil, ErrNilConnection
 	}
-	validAuthenticated := principal.Authenticated && !principal.Anonymous
-	validAnonymous := principal.Anonymous && !principal.Authenticated && principal.ID == "anonymous"
-	if !validAuthenticated && !validAnonymous {
-		return nil, ErrInvalidPrincipal
-	}
-	id, err := generate()
+	core, err := newSessionCore(principal, remoteAddress, generate, observe, handler)
 	if err != nil {
-		return nil, fmt.Errorf("generate Session ID: %w", err)
+		return nil, err
 	}
+	return newSessionFromCore(core, connection)
+}
 
+func newSessionFromCore(core *sessionCore, connection websocketConnection) (*DefaultSession, error) {
+	if connection == nil {
+		return nil, ErrNilConnection
+	}
+	if core == nil {
+		return nil, errNilSessionCore
+	}
 	return &DefaultSession{
-		id:            id,
-		principal:     clonePrincipal(principal),
-		connection:    connection,
-		remoteAddress: strings.TrimSpace(remoteAddress),
-		createdAt:     time.Now().UTC(),
-		state:         stateCreated,
-		observe:       observe,
-		handler:       handler,
+		core:       core,
+		connection: connection,
+		state:      stateCreated,
 	}, nil
 }
 
 // ID returns the immutable Session identifier.
 func (session *DefaultSession) ID() string {
-	return session.id
+	return session.core.id
 }
 
 // Principal returns an independent copy of the authenticated Principal.
 func (session *DefaultSession) Principal() authentication.Principal {
-	return clonePrincipal(session.principal)
+	return clonePrincipal(session.core.principal)
 }
 
 // RemoteAddress returns the normalized peer address retained by the Session.
 func (session *DefaultSession) RemoteAddress() string {
-	return session.remoteAddress
+	return session.core.remoteAddress
 }
 
 // CreatedAt returns the UTC Session creation time.
 func (session *DefaultSession) CreatedAt() time.Time {
-	return session.createdAt
+	return session.core.createdAt
 }
 
 // Running reports whether the Session is in the Running state.
@@ -227,7 +220,10 @@ func (session *DefaultSession) Run(ctx context.Context) error {
 	session.readLoopDone = make(chan struct{})
 	done := session.readLoopDone
 	connection := session.connection
-	observe := session.observe
+	observe := session.core.observe
+	handler := session.core.handler
+	principal := session.core.principal
+	sessionID := session.core.id
 	session.mu.Unlock()
 
 	defer func() {
@@ -259,20 +255,20 @@ func (session *DefaultSession) Run(ctx context.Context) error {
 		if observe != nil {
 			observe(runtimeMessage)
 		}
-		if session.handler != nil {
+		if handler != nil {
 			runtimeContext, err := message.NewContext(
 				&runtimeMessage,
 				session,
-				session.id,
-				session.principal.Authenticated,
-				session.principal.Anonymous,
-				string(session.principal.AuthenticationType),
-				session.principal.AuthenticationProvider,
+				sessionID,
+				principal.Authenticated,
+				principal.Anonymous,
+				string(principal.AuthenticationType),
+				principal.AuthenticationProvider,
 			)
 			if err != nil {
 				return fmt.Errorf("create Runtime Message Context: %w", err)
 			}
-			if err := session.handler.Handle(ctx, runtimeContext); err != nil {
+			if err := handler.Handle(ctx, runtimeContext); err != nil {
 				return fmt.Errorf("handle Runtime Message: %w", err)
 			}
 		}

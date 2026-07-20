@@ -351,7 +351,7 @@ func TestSessionRunWithNilHandlerKeepsDiscardBehavior(t *testing.T) {
 	if err != nil {
 		t.Fatalf("newWithObserver() error = %v", err)
 	}
-	if session.handler != nil {
+	if session.core.handler != nil {
 		t.Fatal("Handler is not nil")
 	}
 	if err := session.Start(context.Background()); err != nil {
