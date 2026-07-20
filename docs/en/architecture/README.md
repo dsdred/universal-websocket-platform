@@ -6,3 +6,4 @@ Architecture guides describe active, evidence-based design patterns used across 
 
 - [ARCH-001: Runtime Architectural Pattern](ARCH-001-runtime-architectural-pattern.md)
 - [ARCH-002: Runtime Foundation Freeze](ARCH-002-runtime-foundation-freeze.md)
+- [ARCH-003: Runtime Foundation Migration Revision](ARCH-003-runtime-migration-revision.md)

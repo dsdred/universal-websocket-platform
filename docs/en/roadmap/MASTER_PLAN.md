@@ -176,7 +176,7 @@ These gates precede Router because Router must not inherit an unstable security,
 ### Message Processing
 
 5. **Router:** select a Handler or destination from Runtime Message Context without accessing WebSocket transport. [DP-005](../design/DP-005-runtime-message-router.md) defines routing semantics, not this plan.
-6. **Session Manager:** coordinate Session registration, removal, limits, and shutdown without taking over Session transport ownership.
+6. **Session Manager:** coordinate Session registration, removal, limits, and shutdown without taking over Session transport ownership. [ARCH-003](../architecture/ARCH-003-runtime-migration-revision.md) defines the approved completion sequence without changing DP-003 or DP-004.
 7. **Delivery:** define recipient selection, ordering, failure, and backpressure semantics before adding Groups, Topics, or broadcast features.
 8. **Persistence:** define what is persisted, when storage is optional or required, and how failures affect Message processing. Storage technology and API remain undecided.
 
@@ -260,7 +260,7 @@ Architectural debt concerns boundaries that are unresolved or not yet represente
 - **Session ownership integration:** the approved DP-003/DP-004 ownership transfer and terminal accounting are not yet represented in production composition.
 - **Runtime shutdown wait set:** Host does not yet coordinate Manager BeginShutdown, Session Stop capabilities, Listener drain, and Manager Wait.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
-- **Session terminal semantics:** cleanup acknowledgement, callback drain, Terminal Result, Observer, and lease release remain unimplemented.
+- **Session terminal semantics:** private cleanup acknowledgement is implemented; callback drain, Terminal Result, Observer, and lease release remain unimplemented.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router is implemented; Session Manager integration and the Persistence, Delivery, and Plugin contracts still require focused completion or design.
 
