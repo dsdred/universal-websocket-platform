@@ -4,9 +4,9 @@
 
 ## 1. Статус
 
-**Статус:** Draft
+**Статус:** Approved
 
-Документ определяет предлагаемую per-Session execution boundary после успешного WebSocket Upgrade. Он разделяет синхронную activation, ownership transport, асинхронное execution Session, terminal cleanup и shutdown accounting Runtime без изменения замороженного lifecycle Runtime Host.
+Этот утверждённый design определяет per-Session execution boundary после успешного WebSocket Upgrade. Он разделяет синхронную activation, ownership transport, асинхронное execution Session, terminal cleanup и shutdown accounting Runtime без изменения замороженного lifecycle Runtime Host.
 
 ## 2. Постановка проблемы
 
@@ -969,7 +969,9 @@ DP-003 не дублирует execution state, attachment, cleanup или termi
 
 Accepted limitations: process termination или unrecoverable failure Go runtime, scheduler starvation, permanently blocked Session Cleanup, observer или вошедший callback, unconfirmed cleanup callback, anomaly acknowledgement cancellation и unsuccessful release lease. Anomaly lifetime callback сохраняет owner в Terminalizing; anomaly acknowledgement cancellation может достичь Terminal, но оба варианта сохраняют accounting lease и Wait активными вместо false completion.
 
-DP-003 и DP-004 сохраняют статус Draft, поскольку status документов управляется отдельно. Timing callback имеет одну модель, pre-Commit registration callback отсутствует, а Terminal имеет одно доказуемое определение. TASK-REV-013 Codex завершён решением Approved с одним неблокирующим clarity finding, TASK-REV-013 Kiro — решением Approved; архитектурных Blocker или High findings для реализации не осталось. TASK-DOC-016 устраняет оставшиеся clarity и synchronization findings без изменения утверждённой архитектуры.
+**Решение об утверждении:** Approved.
+
+Утверждение основано на завершённом review trail из разделов 33–40. Timing callback имеет одну модель, pre-Commit registration callback отсутствует, а Terminal имеет одно доказуемое определение. TASK-REV-013 Codex завершён решением Approved с одним неблокирующим clarity finding, TASK-REV-013 Kiro — решением Approved, а TASK-DOC-016 устранил оставшиеся clarity и synchronization findings без изменения архитектуры. Пункты раздела 42 относятся к representation реализации и proof instrumentation, а не к нерешённым архитектурным решениям. Открытых архитектурных findings уровня Blocker или High не осталось.
 
 ## 45. Ссылки
 

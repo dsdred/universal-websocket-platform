@@ -4,9 +4,9 @@
 
 ## 1. Status
 
-**Status:** Draft
+**Status:** Approved
 
-This document defines the proposed per-Session execution boundary after successful WebSocket Upgrade. It separates synchronous activation, transport ownership, asynchronous Session execution, terminal cleanup, and Runtime shutdown accounting without changing the frozen Runtime Host lifecycle.
+This approved design defines the per-Session execution boundary after successful WebSocket Upgrade. It separates synchronous activation, transport ownership, asynchronous Session execution, terminal cleanup, and Runtime shutdown accounting without changing the frozen Runtime Host lifecycle.
 
 ## 2. Problem Statement
 
@@ -969,7 +969,9 @@ All TASK-REV-010 and TASK-REV-011 Blocker and High findings are resolved normati
 
 Accepted limitations remain process termination or unrecoverable Go runtime failure, scheduler starvation, permanently blocked Session Cleanup, observer, or entered callback, unconfirmed callback cleanup, cancellation acknowledgement anomaly, and unsuccessful lease release. Callback-lifetime anomaly remains Terminalizing; cancellation acknowledgement anomaly may reach Terminal, but both keep lease accounting and Wait active rather than producing false completion.
 
-DP-003 and DP-004 remain Draft because document status is controlled separately. Callback timing is singular, pre-Commit callback registration is absent, and Terminal has one provable definition. TASK-REV-013 Codex concluded Approved with one non-blocking clarity finding, TASK-REV-013 Kiro concluded Approved, and no architectural Blocker or High finding remains for implementation. TASK-DOC-016 resolves the remaining clarity and synchronization findings without changing the approved architecture.
+**Approval decision:** Approved.
+
+Approval follows the completed review trail in Sections 33–40. Callback timing is singular, pre-Commit callback registration is absent, and Terminal has one provable definition. TASK-REV-013 Codex concluded Approved with one non-blocking clarity finding, TASK-REV-013 Kiro concluded Approved, and TASK-DOC-016 resolved the remaining clarity and synchronization findings without changing the architecture. The items in Section 42 are implementation representation and proof-instrumentation choices, not unresolved architectural decisions. No Blocker or High architectural finding remains open.
 
 ## 45. References
 

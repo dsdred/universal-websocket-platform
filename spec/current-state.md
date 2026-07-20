@@ -166,7 +166,7 @@
 - Реализована минимальная WebSocket Session, которая после Authentication владеет соединением, хранит криптографически случайный ID, глубокую копию Principal, RemoteAddress и время создания
 - Session Dispatcher создает Session из AuthenticatedContext и в текущей goroutine последовательно вызывает Start, блокирующий Run и завершающий Stop
 - Создан независимый пакет `internal/sessionmanager` с потокобезопасным lifecycle skeleton `Open -> Closing -> Closed`
-- Session Manager предоставляет неблокирующий идемпотентный `BeginShutdown`, context-bounded `Wait` и read-only наблюдение состояния; `Wait` не меняет accounting, а `Closed` достижим только при пустых Reservation и Registration sets
+- Session Manager предоставляет неблокирующий идемпотентный `BeginShutdown`, context-bounded `Wait` и read-only наблюдение состояния; `Wait` не меняет accounting, а `Closed` достижим только при пустых Reservation, Registration и Owner Lifetime Lease sets
 - Реализована первая полная граница Reservation transaction: `Reserve` создает уникальный за lifetime Manager `RegistrationID`, запрещает резервировать `SessionID`, уже занятый Reservation или committed Registration, и возвращает единственный Handle
 - Abort атомарно удаляет Reservation, после чего ее `SessionID` можно использовать повторно; stale и concurrent Abort не имеют повторного accounting effect
 - `Commit` является единственной linearization point появления Registration: он атомарно завершает Reservation, сохраняет тот же `RegistrationID` и публикует committed Registration ровно один раз; retry возвращает тот же ID только пока record существует, а после Complete сообщает `ErrRegistrationRemoved`
@@ -251,9 +251,9 @@
 
 ## Runtime Session Manager Design
 
-- Создан двуязычный Draft design [DP-003: Runtime Session Manager](../docs/ru/design/DP-003-runtime-session-manager.md) ([English version](../docs/en/design/DP-003-runtime-session-manager.md)).
+- Утверждён двуязычный design [DP-003: Runtime Session Manager](../docs/ru/design/DP-003-runtime-session-manager.md) ([English version](../docs/en/design/DP-003-runtime-session-manager.md)).
 - DP-003 сохраняет нормативные контракты registration transaction, identity, Lookup, lifecycle Manager, shutdown accounting и реализованного identity-only Shutdown Snapshot; детальная модель execution из него удалена.
-- Создан двуязычный Draft design [DP-004: Per-Session Execution Boundary](../docs/ru/design/DP-004-per-session-execution-boundary.md) ([English version](../docs/en/design/DP-004-per-session-execution-boundary.md)).
+- Утверждён двуязычный design [DP-004: Per-Session Execution Boundary](../docs/ru/design/DP-004-per-session-execution-boundary.md) ([English version](../docs/en/design/DP-004-per-session-execution-boundary.md)).
 - DP-004 определяет transport-independent Session Core и provisional preparation Session/Execution Owner до Commit без transfer ownership или visibility Registration.
 - Commit является единственной irreversible publication point: Dispatcher заранее создаёт ровно один dormant execution path и владеет всей pre-Commit transaction через panic-safe boundary; любой recoverable pre-Commit outcome публикует non-committed один раз, ждёт возврата path, освобождает owner-local values, выполняет Abort и возвращает `accepted=false`. Callback Runtime cancellation до Commit не существует.
 - Integrated Commit предварительно вычисляет fallible bundle, а под одной synchronization boundary выполняет только panic-free publication Registration, Owner Lifetime Lease, Stop capability Snapshot, transfer ownership Session/WebSocket/cancellation и narrow one-shot execution binding. Successful Commit возвращает `accepted=true, nil`, уже имеет один eligible execution path, rollback отсутствует, а Registration удаляется только normal Complete.
@@ -265,9 +265,10 @@
 - После initiation Listener Stop drain HTTP handlers и terminalization owners выполняются параллельно; `Manager.Wait` начинается после возврата Listener Stop и не завершается до правдивой convergence Registration и owner-lifetime accounting.
 - `BeginShutdown` и `Wait` разделяют неблокирующий transition shutdown и ожидание, а атомарный `Complete` предлагается как единственная linearization point удаления будущей committed registration.
 - Runtime Host остается владельцем Admission Gate и корневого Runtime context; Listener, Authentication, Router, Delivery, Persistence и diagnostics не входят в ответственность Session Manager.
-- Реализованы lifecycle Manager, identity-safe registration transaction, read-only Lookup, shutdown accounting и immutable identity-only Shutdown Snapshot, фиксируемый на linearization point первого BeginShutdown. Provisional transport acceptance, Execution Owner, operational Stop capability, owner-lifetime accounting, capability-bearing Snapshot, terminal observer, shutdown orchestration, публичный Registry API и интеграция с Runtime Host в Go-коде отсутствуют.
+- Реализованы lifecycle Manager, identity-safe registration transaction, read-only Lookup, immutable identity-only Shutdown Snapshot, Owner Lifetime Lease accounting, one-shot Execution Binding, bound Completion Adapter, Control Cell и Runtime Skeleton Execution Owner до `Terminalizing`.
+- Provisional transport acceptance, integrated Commit bundle, operational Stop capability в Shutdown Snapshot, cleanup acknowledgement, Runtime-cancellation callback lifecycle, callback drain, Terminal Result, Terminal Observer, полный terminal chain, lease release из Owner, shutdown orchestration и интеграция с Runtime Host в Go-коде отсутствуют.
 - Текущий Session Dispatcher по-прежнему синхронно выполняет отдельную Session без Runtime-wide registration и tracking.
-- TASK-REV-013 Codex утвердил DP-003/DP-004 с одним неблокирующим clarity finding, TASK-REV-013 Kiro утвердил их без findings; TASK-DOC-016 синхронизирует Failure Matrix, composition root dependency и generic/production `accepted,error` semantics. Статус документов остаётся Draft и управляется отдельно; Go-реализация этих contracts отсутствует.
+- TASK-REV-013 Codex утвердил DP-003/DP-004 с одним неблокирующим clarity finding, TASK-REV-013 Kiro утвердил их без findings; TASK-DOC-016 синхронизировал Failure Matrix, composition root dependency и generic/production `accepted,error` semantics. DP-003 и DP-004 имеют статус Approved; их Go-реализация остаётся частичной и не интегрированной в production Runtime.
 
 ## Runtime Foundation Freeze
 

@@ -4,9 +4,9 @@
 
 ## 1. Status
 
-**Status:** Draft
+**Status:** Approved
 
-This revision defines the Session Manager registration, identity, lookup, shutdown-accounting, and shutdown-snapshot contracts. Detailed per-Session execution ownership is defined normatively by [DP-004](DP-004-per-session-execution-boundary.md) and is not duplicated here.
+This approved design defines the Session Manager registration, identity, lookup, shutdown-accounting, and shutdown-snapshot contracts. Detailed per-Session execution ownership is defined normatively by the approved [DP-004](DP-004-per-session-execution-boundary.md) and is not duplicated here.
 
 ## 2. Problem Statement
 
@@ -57,15 +57,15 @@ This notation describes an ownership obligation, not a required Go API. Every re
 
 Session Manager does not define or own Session execution. [DP-004](DP-004-per-session-execution-boundary.md) is the normative source for the creator boundary, provisional Session model, ownership activation, Start/Run/Stop ordering, connection cancellation, terminal observation, panic handling, and Stop-request lifetime.
 
-Manager participates only through opaque registration identity, Commit/Complete accounting, immutable shutdown identity, and the future narrow integration contracts explicitly assigned to it by DP-004. It never receives Session, WebSocket, HTTP request, connection context, or execution-control methods.
+Manager participates only through opaque registration identity, Commit/Complete accounting, immutable shutdown identity, Owner Lifetime Lease accounting, and the remaining narrow integration contracts explicitly assigned to it by DP-004. It never receives Session, WebSocket, HTTP request, connection context, or execution-control methods.
 
 ### Manager Tracking Ownership
 
-Manager owns only reservation accounting, committed registry membership, immutable lookup views, shutdown transition, and completion accounting. It does not own Session execution or WebSocket transport.
+Manager owns only reservation accounting, committed registry membership, immutable lookup views, shutdown transition, completion accounting, and opaque Owner Lifetime Lease accounting. It does not own Session execution or WebSocket transport.
 
 ## 6. Session Manager Responsibilities
 
-Manager contains only responsibilities tied by one invariant: Runtime is `Closed` only after every reserved transaction is resolved and every committed registration is completed. When DP-004 integration is present, the same wait boundary additionally requires every opaque Owner Lifetime Lease to be released; this is additive execution-lifetime accounting and does not change reservation or registration mutations.
+Manager contains only responsibilities tied by one invariant: Runtime is `Closed` only after every reserved transaction is resolved, every committed registration is completed, and every opaque Owner Lifetime Lease is released. Full DP-004 integration binds that implemented execution-lifetime accounting to the Owner terminal contract without changing reservation or registration mutations.
 
 Manager is responsible for:
 
@@ -76,6 +76,7 @@ Manager is responsible for:
 - atomic `Open -> Closing` transition;
 - committed shutdown snapshot;
 - atomic completion accounting;
+- opaque Owner Lifetime Lease accounting;
 - context-bounded waiting for empty accounting.
 
 Manager does not execute Session, own WebSocket, route or send messages, publish Presence events, retain terminal history, aggregate diagnostics, apply Session-limit policy, or know Router, Delivery, Presence, Persistence, and Groups.
@@ -106,7 +107,7 @@ Reservation is counted for Manager closure but is invisible to Lookup and is not
 
 ### Commit
 
-Commit consumes its reservation and atomically creates one committed record containing immutable identity metadata. This mutation is the single registration linearization point: registry visibility and committed wait-set membership appear together. In the current implementation, successful Commit returns the opaque RegistrationID to the committing control flow.
+Commit consumes its reservation and atomically creates one committed record containing immutable identity metadata. This mutation is the single registration linearization point: registry visibility and committed wait-set membership appear together. The current lifecycle foundation returns the opaque RegistrationID and its bound Owner Lifetime Lease to the committing control flow.
 
 The integrated DP-004 contract extends that same atomic success result with one RegistrationID-bound Completion Adapter, one Owner Lifetime Lease, one Stop-publication binding, and one narrow one-shot execution-publication binding prepared before Commit. Dispatcher creates exactly one dormant execution path before calling Commit. Under the same Manager synchronization boundary that excludes Lookup and BeginShutdown, Commit publishes the complete committed record and owner-scoped bundle and invokes the binding's single publication operation with the `Committed` outcome. The synchronization boundary is released only after both mutations are complete.
 
@@ -193,7 +194,7 @@ There is no normative `Completing` state. Manager state never claims that Sessio
 
 The detailed Execution Owner model has moved to [DP-004](DP-004-per-session-execution-boundary.md). DP-003 remains authoritative only for Reservation, Commit, RegistrationID, Complete, Lookup, Manager lifecycle, shutdown accounting, and the implemented identity-only Shutdown Snapshot.
 
-DP-004 adds narrow integration around committed records: the atomic owner-scoped Commit bundle, Stop-request capability storage, owner-lifetime accounting, and a compatible capability accessor on the shutdown snapshot. These additions must not alter the existing meaning or linearization points of Reserve, Commit, Abort, Complete, Lookup, or BeginShutdown, and identity-only Snapshot callers retain their existing behavior.
+DP-004 adds narrow integration around committed records: the complete atomic owner-scoped Commit bundle, Stop-request capability storage, and a compatible capability accessor on the shutdown snapshot. It retains the implemented Owner Lifetime Lease accounting and binds its release to the full Execution Owner terminal contract. These additions must not alter the existing meaning or linearization points of Reserve, Commit, Abort, Complete, Lookup, or BeginShutdown, and identity-only Snapshot callers retain their existing behavior.
 
 ## 12. Completion Linearization
 
@@ -238,13 +239,12 @@ Restart is forbidden.
 - Lookup returns only current Registered views.
 - BeginShutdown is idempotent and refers to the same shutdown cycle.
 - Wait is allowed.
-- transition to `Closed` occurs automatically when reservation and committed accounting both become empty.
-- after DP-004 integration, `Closed` also requires empty Owner Lifetime Lease accounting.
+- transition to `Closed` occurs automatically when reservation, committed, and Owner Lifetime Lease accounting all become empty.
 
 ### Closed
 
 - reservation set and committed registry are empty;
-- after DP-004 integration, Owner Lifetime Lease accounting is empty;
+- Owner Lifetime Lease accounting is empty;
 - Reserve and Commit are rejected;
 - Lookup returns absence;
 - BeginShutdown is idempotent and exposes no active Stop capabilities;
@@ -266,7 +266,7 @@ Restart is forbidden.
 
 The currently implemented shutdown snapshot contains detached immutable Registration identity only. It contains no raw Session, WebSocket, Handler, Execution Owner, callback, or mutable registry record.
 
-DP-004 defines the future narrow Stop-request and owner-lifetime integration. That future integration must preserve atomic first-snapshot capture, reservation exclusion, Commit/BeginShutdown linearization, repeated BeginShutdown semantics, and the independence of the captured identity snapshot from later Complete.
+DP-004 defines the remaining narrow Stop-request integration and binds the implemented owner-lifetime foundation to full Execution Owner lifetime. That integration must preserve atomic first-snapshot capture, reservation exclusion, Commit/BeginShutdown linearization, repeated BeginShutdown semantics, and the independence of the captured identity snapshot from later Complete.
 
 ## 15. Stop-Request Integration
 
@@ -276,12 +276,13 @@ The implemented Manager exposes no operational Stop capability. The future capab
 
 `Wait(ctx)` observes the one Manager shutdown cycle. It does not initiate shutdown and does not perform Stop requests.
 
-In the current identity-only implementation, Wait returns nil when both are empty:
+In the current identity-only Snapshot implementation, Wait returns nil when all three accounting sets are empty:
 
 - reservation accounting;
-- committed registry accounting.
+- committed registry accounting;
+- Owner Lifetime Lease accounting.
 
-DP-004 adds one opaque Owner Lifetime Lease per successful execution handoff. Commit atomically publishes Registration, lease accounting, the bound Stop capability, and the one-shot execution binding at the same irreversible point. Before Commit none is visible or eligible; after Commit none is rolled back. After integration, Wait returns nil only when reservation accounting, committed registry accounting, and owner-lifetime accounting are all empty. The lease does not change Complete, Lookup, or Snapshot identity semantics.
+DP-004 retains one opaque Owner Lifetime Lease per successful execution handoff and extends Commit with the bound Stop capability and one-shot execution binding at the same irreversible point. Before Commit none is visible or eligible; after Commit none is rolled back. Full integration preserves the existing rule that Wait returns nil only when reservation accounting, committed registry accounting, and owner-lifetime accounting are all empty. The lease does not change Complete, Lookup, or Snapshot identity semantics.
 
 The mutation that removes the final outstanding accounting item automatically changes `Closing` to `Closed` and notifies all Wait callers.
 
@@ -350,7 +351,7 @@ Manager does not create, own, replace, or cancel root Runtime context. Host rema
 - Complete is one atomic `Registered -> Removed` mutation.
 - RegistrationID is never reused during Manager lifetime.
 - Stale Complete cannot affect another registration.
-- Manager becomes `Closed` only with empty reservation and committed accounting; after DP-004 integration, owner-lifetime accounting must also be empty.
+- Manager becomes `Closed` only with empty reservation, committed, and Owner Lifetime Lease accounting; full DP-004 integration preserves this rule.
 - BeginShutdown performs no I/O and Wait performs no Stop requests.
 - Lookup returns immutable identity metadata only and never extends lifetime.
 - Manager does not execute Session, own transport, route, deliver, publish Presence, store history, aggregate diagnostics, or apply limits.
@@ -484,9 +485,9 @@ Session Manager lifecycle, registration identity, transaction linearization, loo
 
 Accepted limitations are explicit: process termination, unrecoverable failure, permanently blocked goroutines, or external contract violation may prevent accounting from becoming empty. Manager remains truthfully `Closing` rather than declaring false completion.
 
-**Approval decision candidate:** Approved with Findings.
+**Approval decision:** Approved.
 
-The document remains Draft. DP-004 must be reviewed independently before Execution Owner implementation begins.
+Approval is based on the resolved and delegated findings recorded in Section 27 and the independently reviewed execution contract in approved DP-004. F-20 remains an accepted truthful-accounting limitation, and F-21 remains explicitly deferred Session-limits design; neither changes this proposal's Manager invariants. No Blocker or High architectural finding remains open.
 
 ## 29. References
 

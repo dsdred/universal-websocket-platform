@@ -28,8 +28,8 @@ The repository currently contains an Alpha foundation rather than a production-r
 ### Snapshot
 
 - `runtimeconfig.Builder` accepts only Published ConfigurationVersion.
-- Runtime Snapshot contains Listener and Authentication data.
-- Nested Provider and JWT collections are copied so later Configuration changes do not alter an existing Snapshot.
+- Runtime Snapshot contains Listener, Authentication, and optional Routing data.
+- Nested Provider, JWT, Route, and Matcher collections are copied so later Configuration changes do not alter an existing Snapshot.
 
 ### Listener and Connection
 
@@ -42,7 +42,7 @@ The repository currently contains an Alpha foundation rather than a production-r
 - Transport-neutral request, result, Principal, Provider, Factory, Registry, Service, and Bootstrap boundaries exist.
 - Production API Key and HMAC JWT Providers and Factories exist.
 - Secret values are resolved per Authentication attempt through Secret References.
-- Authentication currently occurs after WebSocket Upgrade; Basic and asymmetric JWT verification are absent.
+- Authentication executes before WebSocket Upgrade; Basic and asymmetric JWT verification remain absent.
 
 ### Session, Message, and Echo
 
@@ -56,7 +56,7 @@ The repository currently contains an Alpha foundation rather than a production-r
 - [ADR-0002](../adr/0002-configuration-dsl.md) defines ConfigurationVersion as the Configuration DSL and Published source of truth.
 - [ADR-0003](../adr/0003-runtime-architecture.md) defines the component Runtime model and explicit dependency injection.
 - [ARCH-001](../architecture/ARCH-001-runtime-architectural-pattern.md) records the confirmed `Context -> Evaluation -> Decision -> Execution` pattern, ownership, lifecycle, and Boring Core.
-- The Runtime Alpha Review verdict is **Ready with findings**. Runtime Host is not yet a production composition root, and lifecycle, effective Listener settings, and operational diagnostics require further work.
+- The Runtime Alpha Review verdict was **Ready with findings**. Runtime Host, lifecycle hardening, startup capability validation, pre-Upgrade Authentication, and the approved DP-005 Router are now implemented. Session Manager foundations exist but are not integrated into production Session handoff or Runtime shutdown.
 
 ## 3. Engineering Principles
 
@@ -243,9 +243,9 @@ Deferred features must not shape the current core through speculative abstractio
 The Runtime Alpha Review identifies implementation debt that must be tracked independently from new functionality:
 
 - Listener stores TLS and timeout metadata without fully enforcing it.
-- Some shutdown waits are not bounded by the caller's context.
-- Concurrent Stop semantics differ between components.
-- Session currently holds a lifecycle read lock across WebSocket write.
+- Full Session shutdown tracking is not integrated with Runtime Host shutdown.
+- The current Dispatcher still synchronously owns Session `Start/Run/Stop` in the HTTP handler path.
+- The implemented Execution Owner stops at `Terminalizing` and does not yet perform the approved terminal chain.
 - HTTP server and Dispatcher errors lack an operational reporting path.
 - `runtimeconfig.Builder` is the explicit ConfigurationVersion adapter inside the Runtime model package and must not accumulate Repository concerns.
 - Basic and asymmetric JWT Runtime coverage is incomplete.
@@ -257,12 +257,12 @@ Technical debt is closed through tests and implementation changes, not by relabe
 
 Architectural debt concerns boundaries that are unresolved or not yet represented by production composition:
 
-- **Authentication before Upgrade:** current post-Upgrade Authentication conflicts with the intended Handshake security boundary.
-- **Runtime Host:** the Host does not yet assemble or own the implemented Runtime vertical.
+- **Session ownership integration:** the approved DP-003/DP-004 ownership transfer and terminal accounting are not yet represented in production composition.
+- **Runtime shutdown wait set:** Host does not yet coordinate Manager BeginShutdown, Session Stop capabilities, Listener drain, and Manager Wait.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
-- **Shutdown semantics:** cancellation, concurrent Stop completion, error propagation, and long-running Handler behavior need a uniform contract.
+- **Session terminal semantics:** cleanup acknowledgement, callback drain, Terminal Result, Observer, and lease release remain unimplemented.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
-- **Extension boundaries:** Router is ready to use Handler as a seam, while Session Manager, Persistence, Delivery, and Plugin contracts still require focused design.
+- **Extension boundaries:** Router is implemented; Session Manager integration and the Persistence, Delivery, and Plugin contracts still require focused completion or design.
 
 Architectural debt is resolved through DP, ADR when consequential, implementation, and follow-up review. MASTER_PLAN does not settle those contracts itself.
 
