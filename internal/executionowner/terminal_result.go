@@ -264,10 +264,6 @@ func validateTerminalResult(
 		!allCauses.Contains(TerminationCauseExecutionFailure) {
 		return fmt.Errorf("%w: failed execution requires ExecutionFailure cause", ErrInvalidTerminalResult)
 	}
-	if allCauses.Contains(TerminationCauseExecutionFailure) &&
-		start != StartCategoryFailed && run != RunCategoryFailed {
-		return fmt.Errorf("%w: ExecutionFailure requires a failed execution phase", ErrInvalidTerminalResult)
-	}
 	if run == RunCategoryReturned &&
 		!allCauses.Contains(TerminationCauseNaturalCompletion) {
 		return fmt.Errorf("%w: returned Run requires NaturalCompletion cause", ErrInvalidTerminalResult)

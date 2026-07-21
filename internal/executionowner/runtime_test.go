@@ -9,9 +9,10 @@ import (
 	"time"
 
 	"github.com/dsdred/universal-websocket-platform/internal/executionowner"
+	"github.com/dsdred/universal-websocket-platform/internal/lifetimelease"
 )
 
-func TestExecuteNormalStartRunTerminalizing(t *testing.T) {
+func TestExecuteNormalStartRunReachesTerminal(t *testing.T) {
 	owner := committedOwner(t)
 	session := &lifecycleSession{
 		start: func(context.Context) error {
@@ -24,10 +25,10 @@ func TestExecuteNormalStartRunTerminalizing(t *testing.T) {
 		},
 	}
 
-	if err := owner.Execute(context.Background(), session); err != nil {
+	if err := executeOwner(owner, context.Background(), session); err != nil {
 		t.Fatalf("Execute() error = %v", err)
 	}
-	assertOwnerState(t, owner, executionowner.StateTerminalizing)
+	assertOwnerState(t, owner, executionowner.StateTerminal)
 	if got := session.startCalls.Load(); got != 1 {
 		t.Fatalf("Start() calls = %d, want 1", got)
 	}
@@ -36,16 +37,16 @@ func TestExecuteNormalStartRunTerminalizing(t *testing.T) {
 	}
 }
 
-func TestExecuteStartErrorTerminalizesWithoutRun(t *testing.T) {
+func TestExecuteStartErrorRunsTerminalLifecycleWithoutRun(t *testing.T) {
 	wantErr := errors.New("start failure")
 	owner := committedOwner(t)
 	session := &lifecycleSession{start: func(context.Context) error { return wantErr }}
 
-	err := owner.Execute(context.Background(), session)
+	err := executeOwner(owner, context.Background(), session)
 	if !errors.Is(err, wantErr) {
 		t.Fatalf("Execute() error = %v, want start failure", err)
 	}
-	assertOwnerState(t, owner, executionowner.StateTerminalizing)
+	assertOwnerState(t, owner, executionowner.StateTerminal)
 	if got := session.startCalls.Load(); got != 1 {
 		t.Fatalf("Start() calls = %d, want 1", got)
 	}
@@ -54,16 +55,16 @@ func TestExecuteStartErrorTerminalizesWithoutRun(t *testing.T) {
 	}
 }
 
-func TestExecuteRunErrorTerminalizes(t *testing.T) {
+func TestExecuteRunErrorRunsTerminalLifecycle(t *testing.T) {
 	wantErr := errors.New("run failure")
 	owner := committedOwner(t)
 	session := &lifecycleSession{run: func(context.Context) error { return wantErr }}
 
-	err := owner.Execute(context.Background(), session)
+	err := executeOwner(owner, context.Background(), session)
 	if !errors.Is(err, wantErr) {
 		t.Fatalf("Execute() error = %v, want run failure", err)
 	}
-	assertOwnerState(t, owner, executionowner.StateTerminalizing)
+	assertOwnerState(t, owner, executionowner.StateTerminal)
 	if got := session.startCalls.Load(); got != 1 {
 		t.Fatalf("Start() calls = %d, want 1", got)
 	}
@@ -78,11 +79,11 @@ func TestExecuteCanceledBeforeStart(t *testing.T) {
 	owner := committedOwner(t)
 	session := &lifecycleSession{}
 
-	err := owner.Execute(ctx, session)
+	err := executeOwner(owner, ctx, session)
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("Execute() error = %v, want context.Canceled", err)
 	}
-	assertOwnerState(t, owner, executionowner.StateTerminalizing)
+	assertOwnerState(t, owner, executionowner.StateTerminal)
 	if got := session.startCalls.Load(); got != 0 {
 		t.Fatalf("Start() calls = %d, want 0", got)
 	}
@@ -98,10 +99,10 @@ func TestExecuteStopIntentBeforeStart(t *testing.T) {
 	}
 	session := &lifecycleSession{}
 
-	if err := owner.Execute(context.Background(), session); err != nil {
+	if err := executeOwner(owner, context.Background(), session); err != nil {
 		t.Fatalf("Execute() error = %v", err)
 	}
-	assertOwnerState(t, owner, executionowner.StateTerminalizing)
+	assertOwnerState(t, owner, executionowner.StateTerminal)
 	if got := session.startCalls.Load(); got != 0 {
 		t.Fatalf("Start() calls = %d, want 0", got)
 	}
@@ -114,10 +115,10 @@ func TestExecuteCannotRunTwice(t *testing.T) {
 	owner := committedOwner(t)
 	session := &lifecycleSession{}
 
-	if err := owner.Execute(context.Background(), session); err != nil {
+	if err := executeOwner(owner, context.Background(), session); err != nil {
 		t.Fatalf("first Execute() error = %v", err)
 	}
-	err := owner.Execute(context.Background(), session)
+	err := executeOwner(owner, context.Background(), session)
 	if !errors.Is(err, executionowner.ErrInvalidTransition) {
 		t.Fatalf("second Execute() error = %v, want ErrInvalidTransition", err)
 	}
@@ -133,7 +134,7 @@ func TestExecuteBeforeCommitDoesNotStartSession(t *testing.T) {
 	owner := executionowner.New()
 	session := &lifecycleSession{}
 
-	err := owner.Execute(context.Background(), session)
+	err := executeOwner(owner, context.Background(), session)
 	if !errors.Is(err, executionowner.ErrInvalidTransition) {
 		t.Fatalf("Execute() error = %v, want ErrInvalidTransition", err)
 	}
@@ -223,9 +224,23 @@ func TestPublicTransitionRejectsPostCommitLifecycleMatrix(t *testing.T) {
 
 	t.Run("Terminalizing", func(t *testing.T) {
 		owner := committedOwner(t)
-		if err := owner.Execute(context.Background(), &lifecycleSession{}); err != nil {
-			t.Fatalf("Execute() error = %v", err)
-		}
+		cleanupEntered := make(chan struct{})
+		releaseCleanup := make(chan struct{})
+		session := &lifecycleSession{cleanup: func(context.Context) (
+			executionowner.CleanupCategory,
+			executionowner.CancellationCategory,
+		) {
+			close(cleanupEntered)
+			<-releaseCleanup
+			return executionowner.CleanupCategorySucceeded,
+				executionowner.CancellationCategoryConfirmed
+		}}
+		result, wait := executeAsync(owner, session)
+		defer func() {
+			close(releaseCleanup)
+			wait()
+		}()
+		waitForSignal(t, cleanupEntered, result, "Cleanup entry")
 		assertRejectedTransitions(t, owner, executionowner.StateTerminalizing, []executionowner.State{
 			executionowner.StateTerminal,
 			executionowner.StateTerminalizing,
@@ -273,7 +288,7 @@ func TestExternalTransitionDuringStartCannotBypassStartFailure(t *testing.T) {
 	if err := <-result; !errors.Is(err, wantErr) {
 		t.Fatalf("Execute() error = %v, want start failure", err)
 	}
-	assertOwnerState(t, owner, executionowner.StateTerminalizing)
+	assertOwnerState(t, owner, executionowner.StateTerminal)
 	if got := session.runCalls.Load(); got != 0 {
 		t.Fatalf("Run() calls = %d, want 0", got)
 	}
@@ -331,7 +346,7 @@ func TestConcurrentExternalTransitionsCannotMutateOwnedLifecycle(t *testing.T) {
 	if err := <-result; err != nil {
 		t.Fatalf("Execute() error = %v", err)
 	}
-	assertOwnerState(t, owner, executionowner.StateTerminalizing)
+	assertOwnerState(t, owner, executionowner.StateTerminal)
 	if got := session.startCalls.Load(); got != 1 {
 		t.Fatalf("Start() calls = %d, want 1", got)
 	}
@@ -366,7 +381,7 @@ func TestStopDuringStartPublishesIntentWithoutChangingLifecycle(t *testing.T) {
 	if err := <-result; err != nil {
 		t.Fatalf("Execute() error = %v", err)
 	}
-	assertOwnerState(t, owner, executionowner.StateTerminalizing)
+	assertOwnerState(t, owner, executionowner.StateTerminal)
 	if got := session.runCalls.Load(); got != 0 {
 		t.Fatalf("Run() calls = %d, want 0", got)
 	}
@@ -402,7 +417,7 @@ func TestConcurrentExecuteAttemptsHaveOneExecutionPath(t *testing.T) {
 			defer done.Done()
 			ready.Done()
 			<-start
-			results <- owner.Execute(context.Background(), session)
+			results <- executeOwner(owner, context.Background(), session)
 		}()
 	}
 	ready.Wait()
@@ -419,7 +434,7 @@ func TestConcurrentExecuteAttemptsHaveOneExecutionPath(t *testing.T) {
 	if err := <-firstResult; err != nil {
 		t.Fatalf("winning Execute() error = %v", err)
 	}
-	assertOwnerState(t, owner, executionowner.StateTerminalizing)
+	assertOwnerState(t, owner, executionowner.StateTerminal)
 	if got := session.startCalls.Load(); got != 1 {
 		t.Fatalf("Start() calls = %d, want 1", got)
 	}
@@ -453,7 +468,7 @@ func TestSimultaneousExecuteClaimFromCommittedHasOneWinner(t *testing.T) {
 			defer done.Done()
 			ready.Done()
 			<-start
-			results <- owner.Execute(context.Background(), session)
+			results <- executeOwner(owner, context.Background(), session)
 		}()
 	}
 	defer func() {
@@ -498,7 +513,7 @@ func TestSimultaneousExecuteClaimFromCommittedHasOneWinner(t *testing.T) {
 	if got := session.runCalls.Load(); got != 1 {
 		t.Fatalf("Run() calls = %d, want 1", got)
 	}
-	assertOwnerState(t, owner, executionowner.StateTerminalizing)
+	assertOwnerState(t, owner, executionowner.StateTerminal)
 }
 
 func TestOwnerCopiesCannotCreateSecondExecutionPath(t *testing.T) {
@@ -520,7 +535,7 @@ func TestOwnerCopiesCannotCreateSecondExecutionPath(t *testing.T) {
 	}()
 	waitForSignal(t, startEntered, firstResult, "Start entry")
 
-	if err := copy.Execute(context.Background(), session); !errors.Is(err, executionowner.ErrInvalidTransition) {
+	if err := executeOwner(&copy, context.Background(), session); !errors.Is(err, executionowner.ErrInvalidTransition) {
 		t.Fatalf("Execute() through copy error = %v, want ErrInvalidTransition", err)
 	}
 	release()
@@ -562,7 +577,7 @@ func TestOwnerCopyCannotMutateOwnedLifecycle(t *testing.T) {
 	if err := <-result; err != nil {
 		t.Fatalf("Execute() error = %v", err)
 	}
-	assertOwnerState(t, &copy, executionowner.StateTerminalizing)
+	assertOwnerState(t, &copy, executionowner.StateTerminal)
 	if got := session.startCalls.Load(); got != 1 {
 		t.Fatalf("Start() calls = %d, want 1", got)
 	}
@@ -572,10 +587,12 @@ func TestOwnerCopyCannotMutateOwnedLifecycle(t *testing.T) {
 }
 
 type lifecycleSession struct {
-	startCalls atomic.Uint32
-	runCalls   atomic.Uint32
-	start      func(context.Context) error
-	run        func(context.Context) error
+	startCalls   atomic.Uint32
+	runCalls     atomic.Uint32
+	cleanupCalls atomic.Uint32
+	start        func(context.Context) error
+	run          func(context.Context) error
+	cleanup      func(context.Context) (executionowner.CleanupCategory, executionowner.CancellationCategory)
 }
 
 func (session *lifecycleSession) Start(ctx context.Context) error {
@@ -592,6 +609,17 @@ func (session *lifecycleSession) Run(ctx context.Context) error {
 		return session.run(ctx)
 	}
 	return nil
+}
+
+func (session *lifecycleSession) Cleanup(
+	ctx context.Context,
+) (executionowner.CleanupCategory, executionowner.CancellationCategory) {
+	session.cleanupCalls.Add(1)
+	if session.cleanup != nil {
+		return session.cleanup(ctx)
+	}
+	return executionowner.CleanupCategorySucceeded,
+		executionowner.CancellationCategoryConfirmed
 }
 
 func committedOwner(t *testing.T) *executionowner.Owner {
@@ -635,9 +663,39 @@ func executeAsync(
 	done.Add(1)
 	go func() {
 		defer done.Done()
-		result <- owner.Execute(context.Background(), session)
+		result <- executeOwner(owner, context.Background(), session)
 	}()
 	return result, done.Wait
+}
+
+func executeOwner(
+	owner *executionowner.Owner,
+	ctx context.Context,
+	session executionowner.SessionLifecycle,
+) error {
+	return owner.Execute(
+		ctx,
+		session,
+		successfulCompletion{},
+		noopTerminalObserver{},
+		successfulLifetimeLease{},
+	)
+}
+
+type successfulCompletion struct{}
+
+func (successfulCompletion) CompleteBoundRegistration() executionowner.CompleteOutcome {
+	return executionowner.CompleteOutcomeCompleted
+}
+
+type noopTerminalObserver struct{}
+
+func (noopTerminalObserver) Observe(executionowner.TerminalResult) {}
+
+type successfulLifetimeLease struct{}
+
+func (successfulLifetimeLease) Release() lifetimelease.ReleaseOutcome {
+	return lifetimelease.ReleaseOutcomeReleased
 }
 
 func closeOnce(channel chan struct{}) func() {

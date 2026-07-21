@@ -110,9 +110,6 @@ func TestNewTerminalResultRejectsInvalidInput(t *testing.T) {
 			input.primary = executionowner.TerminationCauseExplicitStop
 			input.secondary = 0
 		}},
-		{name: "ExecutionFailure without failed phase", mutate: func(input *terminalResultInput) {
-			input.secondary |= executionowner.SecondaryCauseExecutionFailure
-		}},
 		{name: "returned Run without NaturalCompletion", mutate: func(input *terminalResultInput) {
 			input.primary = executionowner.TerminationCauseExplicitStop
 			input.secondary = 0
