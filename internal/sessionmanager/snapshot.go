@@ -7,6 +7,7 @@ import "slices"
 type ShutdownRegistration struct {
 	sessionID      SessionID
 	registrationID RegistrationID
+	stop           StopPublicationBinding
 }
 
 // SessionID returns the captured Session identity.
@@ -17,6 +18,15 @@ func (registration ShutdownRegistration) SessionID() SessionID {
 // RegistrationID returns the captured Registration identity.
 func (registration ShutdownRegistration) RegistrationID() RegistrationID {
 	return registration.registrationID
+}
+
+// RequestStop requests termination through the stable capability captured for
+// this Registration. It performs no Session operation itself.
+func (registration ShutdownRegistration) RequestStop() bool {
+	if isNilStopBinding(registration.stop) {
+		return false
+	}
+	return registration.stop.RequestStop()
 }
 
 // ShutdownSnapshot is an immutable value fixed by the first BeginShutdown.
@@ -42,6 +52,7 @@ func (manager *Manager) captureShutdownSnapshotLocked() ShutdownSnapshot {
 		registrations = append(registrations, ShutdownRegistration{
 			sessionID:      registration.sessionID,
 			registrationID: registration.registrationID,
+			stop:           registration.stop,
 		})
 	}
 	return ShutdownSnapshot{registrations: registrations}

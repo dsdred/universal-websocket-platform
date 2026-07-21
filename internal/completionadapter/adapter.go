@@ -3,8 +3,9 @@
 package completionadapter
 
 import (
+	"reflect"
+
 	"github.com/dsdred/universal-websocket-platform/internal/executionowner"
-	"github.com/dsdred/universal-websocket-platform/internal/sessionmanager"
 )
 
 type adapterError string
@@ -15,36 +16,46 @@ func (err adapterError) Error() string {
 	return string(err)
 }
 
-type completionMutation interface {
-	Complete(sessionmanager.RegistrationID) bool
+// BoundMutation removes one Registration selected before adapter construction.
+// It accepts no caller-supplied identity.
+type BoundMutation interface {
+	CompleteBoundRegistration() bool
 }
 
 type adapter struct {
-	completion     completionMutation
-	registrationID sessionmanager.RegistrationID
+	completion BoundMutation
 }
 
 var _ executionowner.CompletionAdapter = (*adapter)(nil)
 
 // New creates a completion capability bound to one Registration identity.
 func New(
-	manager *sessionmanager.Manager,
-	registrationID sessionmanager.RegistrationID,
+	completion BoundMutation,
 ) (executionowner.CompletionAdapter, error) {
-	if manager == nil || registrationID == (sessionmanager.RegistrationID{}) {
+	if isNilMutation(completion) {
 		return nil, ErrInvalidBinding
 	}
 
-	return &adapter{
-		completion:     manager,
-		registrationID: registrationID,
-	}, nil
+	return &adapter{completion: completion}, nil
 }
 
 func (adapter *adapter) CompleteBoundRegistration() executionowner.CompleteOutcome {
-	if adapter.completion.Complete(adapter.registrationID) {
+	if adapter.completion.CompleteBoundRegistration() {
 		return executionowner.CompleteOutcomeCompleted
 	}
 
 	return executionowner.CompleteOutcomeAccountingAnomaly
+}
+
+func isNilMutation(completion BoundMutation) bool {
+	if completion == nil {
+		return true
+	}
+	value := reflect.ValueOf(completion)
+	switch value.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		return value.IsNil()
+	default:
+		return false
+	}
 }

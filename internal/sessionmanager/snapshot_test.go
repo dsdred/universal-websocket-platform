@@ -33,14 +33,15 @@ func TestManagerShutdownSnapshotContainsCommittedRegistration(t *testing.T) {
 	}
 }
 
-func TestShutdownRegistrationExposesIdentityOnly(t *testing.T) {
+func TestShutdownRegistrationExposesIdentityAndStopOnly(t *testing.T) {
 	registrationType := reflect.TypeOf(ShutdownRegistration{})
-	if got := registrationType.NumField(); got != 2 {
-		t.Fatalf("ShutdownRegistration field count = %d, want 2", got)
+	if got := registrationType.NumField(); got != 3 {
+		t.Fatalf("ShutdownRegistration field count = %d, want 3", got)
 	}
 	wantFieldTypes := []reflect.Type{
 		reflect.TypeOf(SessionID("")),
 		reflect.TypeOf(RegistrationID{}),
+		reflect.TypeOf((*StopPublicationBinding)(nil)).Elem(),
 	}
 	for fieldIndex, wantType := range wantFieldTypes {
 		field := registrationType.Field(fieldIndex)
@@ -54,6 +55,7 @@ func TestShutdownRegistrationExposesIdentityOnly(t *testing.T) {
 
 	wantMethods := map[string]struct{}{
 		"RegistrationID": {},
+		"RequestStop":    {},
 		"SessionID":      {},
 	}
 	if got := registrationType.NumMethod(); got != len(wantMethods) {
@@ -74,7 +76,7 @@ func TestManagerShutdownSnapshotExcludesReservation(t *testing.T) {
 	snapshot := manager.BeginShutdown()
 
 	assertSnapshotCount(t, snapshot, 0)
-	if registrationID, err := handle.Commit(); registrationID != (CommitResult{}) || !errors.Is(err, ErrManagerNotOpen) {
+	if registrationID, err := commitTestReservation(handle); registrationID != (CommitResult{}) || !errors.Is(err, ErrManagerNotOpen) {
 		t.Fatalf("Commit() = (%+v, %v), want zero ID and ErrManagerNotOpen", registrationID, err)
 	}
 	handle.AbortUnlessCommitted()
@@ -98,7 +100,7 @@ func TestManagerCommitAfterBeginShutdownDoesNotAppearInSnapshot(t *testing.T) {
 	handle := mustReserve(t, manager, "session-1")
 	snapshot := manager.BeginShutdown()
 
-	registrationID, err := handle.Commit()
+	registrationID, err := commitTestReservation(handle)
 
 	if registrationID != (CommitResult{}) || !errors.Is(err, ErrManagerNotOpen) {
 		t.Fatalf("Commit() = (%+v, %v), want zero ID and ErrManagerNotOpen", registrationID, err)
@@ -152,7 +154,7 @@ func TestManagerConcurrentCommitAndBeginShutdownSnapshotLinearization(t *testing
 
 		go func() {
 			<-start
-			committed, err := handle.Commit()
+			committed, err := commitTestReservation(handle)
 			commitResults <- commitResult{registrationID: committed.RegistrationID(), err: err}
 		}()
 		go func() {

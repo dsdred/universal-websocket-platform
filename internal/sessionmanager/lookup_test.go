@@ -137,7 +137,7 @@ func TestManagerConcurrentCommitAndLookup(t *testing.T) {
 
 		go func() {
 			<-start
-			committed, err := handle.Commit()
+			committed, err := commitTestReservation(handle)
 			commitResults <- commitResult{registrationID: committed.RegistrationID(), err: err}
 		}()
 		go func() {
@@ -301,7 +301,7 @@ func assertLookupResult(
 func ExampleManager_Lookup() {
 	manager := New()
 	reservation, _ := manager.Reserve("session-1")
-	registrationID, _ := reservation.Commit()
+	registrationID, _ := commitTestReservation(reservation)
 
 	view, found := manager.Lookup("session-1")
 	fmt.Println(found, view.SessionID(), view.RegistrationID() == registrationID.RegistrationID(), view.State() == StateRegistered)

@@ -1,18 +1,31 @@
 package sessionmanager
 
-import "github.com/dsdred/universal-websocket-platform/internal/lifetimelease"
+import (
+	"github.com/dsdred/universal-websocket-platform/internal/executionowner"
+	"github.com/dsdred/universal-websocket-platform/internal/lifetimelease"
+)
 
 // CommitResult is the immutable result of one successful Reservation Commit.
-// It publishes Registration identity and its bound Owner Lifetime Lease
-// capability together.
+// It publishes Registration identity and its owner-bound completion and
+// Lifetime Lease capabilities together.
 type CommitResult struct {
 	registrationID RegistrationID
+	completion     executionowner.CompletionAdapter
 	lifetimeLease  lifetimelease.Lease
 }
 
 // RegistrationID returns the committed Registration identity.
 func (result CommitResult) RegistrationID() RegistrationID {
 	return result.registrationID
+}
+
+// CompletionAdapter returns the completion capability bound to the committed
+// Registration identity.
+func (result CommitResult) CompletionAdapter() executionowner.CompletionAdapter {
+	if result.completion == nil {
+		return invalidCompletionAdapter{}
+	}
+	return result.completion
 }
 
 // LifetimeLease returns the release capability bound to the committed

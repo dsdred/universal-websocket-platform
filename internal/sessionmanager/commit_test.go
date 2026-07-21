@@ -13,7 +13,7 @@ func TestReservationCommitPublishesRegistration(t *testing.T) {
 	handle := mustReserve(t, manager, "session-1")
 	reservedID := reservationFromHandle(t, handle).registrationID
 
-	committed, err := handle.Commit()
+	committed, err := commitTestReservation(handle)
 	if err != nil {
 		t.Fatalf("Commit() error = %v", err)
 	}
@@ -29,8 +29,8 @@ func TestReservationDoubleCommitIsIdempotent(t *testing.T) {
 	manager := New()
 	handle := mustReserve(t, manager, "session-1")
 
-	first, firstErr := handle.Commit()
-	second, secondErr := handle.Commit()
+	first, firstErr := commitTestReservation(handle)
+	second, secondErr := commitTestReservation(handle)
 
 	if firstErr != nil || secondErr != nil {
 		t.Fatalf("Commit() errors = (%v, %v), want nil", firstErr, secondErr)
@@ -49,7 +49,7 @@ func TestReservationCommitAfterCompleteReturnsRegistrationRemoved(t *testing.T) 
 		t.Fatal("Complete() = false, want true")
 	}
 
-	retriedID, err := handle.Commit()
+	retriedID, err := commitTestReservation(handle)
 
 	if retriedID != (CommitResult{}) || !errors.Is(err, ErrRegistrationRemoved) {
 		t.Fatalf("Commit() after Complete = (%+v, %v), want zero ID and ErrRegistrationRemoved", retriedID, err)
@@ -70,7 +70,7 @@ func TestReservationCommitAfterSessionIDReuseDoesNotDescribeNewRegistration(t *t
 	fresh := mustReserve(t, manager, "session-1")
 	freshID := mustCommit(t, fresh)
 
-	retriedID, err := stale.Commit()
+	retriedID, err := commitTestReservation(stale)
 
 	if retriedID != (CommitResult{}) || !errors.Is(err, ErrRegistrationRemoved) {
 		t.Fatalf("stale Commit() = (%+v, %v), want zero ID and ErrRegistrationRemoved", retriedID, err)
@@ -88,7 +88,7 @@ func TestReservationCommitAfterAbort(t *testing.T) {
 	handle := mustReserve(t, manager, "session-1")
 	handle.Abort()
 
-	registrationID, err := handle.Commit()
+	registrationID, err := commitTestReservation(handle)
 
 	if registrationID != (CommitResult{}) || !errors.Is(err, ErrReservationAborted) {
 		t.Fatalf("Commit() = (%+v, %v), want zero ID and ErrReservationAborted", registrationID, err)
@@ -99,7 +99,7 @@ func TestReservationCommitAfterAbort(t *testing.T) {
 func TestReservationAbortAfterCommitIsNoOp(t *testing.T) {
 	manager := New()
 	handle := mustReserve(t, manager, "session-1")
-	result, err := handle.Commit()
+	result, err := commitTestReservation(handle)
 	if err != nil {
 		t.Fatalf("Commit() error = %v", err)
 	}
@@ -119,7 +119,7 @@ func TestReservationConcurrentCommitPublishesExactlyOnce(t *testing.T) {
 	for range concurrentCalls {
 		go func() {
 			<-start
-			result, err := handle.Commit()
+			result, err := commitTestReservation(handle)
 			results <- commitResult{registrationID: result.RegistrationID(), err: err}
 		}()
 	}
@@ -151,7 +151,7 @@ func TestReservationConcurrentAbortAndCommitHasOneTerminalOutcome(t *testing.T) 
 
 		go func() {
 			<-start
-			result, err := handle.Commit()
+			result, err := commitTestReservation(handle)
 			commitResultChannel <- commitResult{registrationID: result.RegistrationID(), err: err}
 		}()
 		go func() {
@@ -185,7 +185,7 @@ func TestReservationCommitAndBeginShutdownShareLinearizationBoundary(t *testing.
 
 		go func() {
 			<-start
-			result, err := handle.Commit()
+			result, err := commitTestReservation(handle)
 			commitResultChannel <- commitResult{registrationID: result.RegistrationID(), err: err}
 		}()
 		go func() {
@@ -221,7 +221,7 @@ func TestReservationCommitAfterBeginShutdownRequiresAbort(t *testing.T) {
 	handle := mustReserve(t, manager, "session-1")
 	manager.BeginShutdown()
 
-	registrationID, err := handle.Commit()
+	registrationID, err := commitTestReservation(handle)
 
 	if registrationID != (CommitResult{}) || !errors.Is(err, ErrManagerNotOpen) {
 		t.Fatalf("Commit() = (%+v, %v), want zero ID and ErrManagerNotOpen", registrationID, err)
@@ -239,7 +239,7 @@ func TestReservationCommitAfterBeginShutdownRequiresAbort(t *testing.T) {
 func TestCommittedSessionIDCannotBeReservedAgain(t *testing.T) {
 	manager := New()
 	handle := mustReserve(t, manager, "session-1")
-	if _, err := handle.Commit(); err != nil {
+	if _, err := commitTestReservation(handle); err != nil {
 		t.Fatalf("Commit() error = %v", err)
 	}
 
@@ -253,7 +253,7 @@ func TestCommittedSessionIDCannotBeReservedAgain(t *testing.T) {
 func TestCommittedRegistrationKeepsManagerClosingUntilComplete(t *testing.T) {
 	manager := New()
 	handle := mustReserve(t, manager, "session-1")
-	result, err := handle.Commit()
+	result, err := commitTestReservation(handle)
 	if err != nil {
 		t.Fatalf("Commit() error = %v", err)
 	}

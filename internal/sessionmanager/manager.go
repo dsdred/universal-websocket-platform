@@ -22,6 +22,9 @@ var (
 	ErrReservationAborted = errors.New("Session Reservation is aborted")
 	// ErrRegistrationRemoved indicates that a committed Registration no longer exists.
 	ErrRegistrationRemoved = errors.New("Session Registration is removed")
+	// ErrInvalidCommitInput indicates that Commit did not receive both valid,
+	// fresh owner-side publication capabilities.
+	ErrInvalidCommitInput = errors.New("invalid Session Registration Commit input")
 )
 
 // State is the read-only lifecycle state of a Manager.

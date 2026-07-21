@@ -14,7 +14,7 @@ func TestFailedCommitAndAbortDoNotCreateLifetimeLease(t *testing.T) {
 	handle := mustReserve(t, manager, "session-1")
 	manager.BeginShutdown()
 
-	result, err := handle.Commit()
+	result, err := commitTestReservation(handle)
 	if result != (CommitResult{}) || !errors.Is(err, ErrManagerNotOpen) {
 		t.Fatalf("Commit() = (%+v, %v), want zero result and ErrManagerNotOpen", result, err)
 	}
@@ -32,7 +32,7 @@ func TestSuccessfulCommitPublishesRegistrationAndLifetimeLease(t *testing.T) {
 	handle := mustReserve(t, manager, "session-1")
 	reservedID := reservationFromHandle(t, handle).registrationID
 
-	result, err := handle.Commit()
+	result, err := commitTestReservation(handle)
 	if err != nil {
 		t.Fatalf("Commit() error = %v", err)
 	}
@@ -50,8 +50,8 @@ func TestRepeatedCommitReturnsSameLifetimeLease(t *testing.T) {
 	manager := New()
 	handle := mustReserve(t, manager, "session-1")
 
-	first, firstErr := handle.Commit()
-	second, secondErr := handle.Commit()
+	first, firstErr := commitTestReservation(handle)
+	second, secondErr := commitTestReservation(handle)
 	if firstErr != nil || secondErr != nil {
 		t.Fatalf("Commit() errors = (%v, %v), want nil", firstErr, secondErr)
 	}
@@ -80,7 +80,7 @@ func TestConcurrentRepeatedCommitPublishesOneLifetimeLease(t *testing.T) {
 		go func() {
 			ready.Done()
 			<-start
-			result, err := handle.Commit()
+			result, err := commitTestReservation(handle)
 			results <- result
 			errorsResult <- err
 		}()
@@ -128,7 +128,7 @@ func TestCommitAndBeginShutdownPublishRegistrationAndLifetimeLeaseAtomically(t *
 		go func() {
 			ready.Done()
 			<-start
-			result, err := handle.Commit()
+			result, err := commitTestReservation(handle)
 			commits <- commitOutcome{result: result, err: err}
 		}()
 		go func() {
@@ -402,7 +402,7 @@ func commitWithLease(t *testing.T, manager *Manager, sessionID SessionID) Commit
 	t.Helper()
 
 	handle := mustReserve(t, manager, sessionID)
-	result, err := handle.Commit()
+	result, err := commitTestReservation(handle)
 	if err != nil {
 		t.Fatalf("Commit() error = %v", err)
 	}

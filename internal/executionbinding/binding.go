@@ -2,6 +2,7 @@
 package executionbinding
 
 import (
+	"errors"
 	"sync"
 	"sync/atomic"
 )
@@ -13,6 +14,9 @@ const (
 	ErrInvalidOutcome bindingError = "invalid execution publication outcome"
 	// ErrWaitAlreadyClaimed indicates that the dormant path was already claimed.
 	ErrWaitAlreadyClaimed bindingError = "execution publication wait already claimed"
+	// ErrInvalidCommitPublisher indicates that a committed-publication facet is
+	// uninitialized or its Binding already has an outcome.
+	ErrInvalidCommitPublisher bindingError = "invalid execution commit publisher"
 )
 
 func (err bindingError) Error() string {
@@ -35,6 +39,12 @@ type Binding struct {
 	state *bindingState
 }
 
+// CommitPublisher is the narrow Manager-facing facet that can publish only a
+// committed outcome. It exposes neither Wait nor non-committed publication.
+type CommitPublisher struct {
+	state *bindingState
+}
+
 type bindingState struct {
 	publishOnce sync.Once
 	ready       chan struct{}
@@ -47,6 +57,46 @@ func New() *Binding {
 	return &Binding{
 		state: &bindingState{ready: make(chan struct{})},
 	}
+}
+
+// CommitPublisher returns the committed-publication facet for this Binding.
+func (binding *Binding) CommitPublisher() CommitPublisher {
+	if binding == nil {
+		return CommitPublisher{}
+	}
+	return CommitPublisher{state: binding.state}
+}
+
+// ValidateFresh verifies that this publisher belongs to an unpublished
+// Binding. Publication ownership must remain serialized after validation.
+func (publisher CommitPublisher) ValidateFresh() error {
+	if publisher.state == nil || publisher.state.ready == nil {
+		return ErrInvalidCommitPublisher
+	}
+	select {
+	case <-publisher.state.ready:
+		return ErrInvalidCommitPublisher
+	default:
+		return nil
+	}
+}
+
+// PublishCommitted fixes and returns the committed outcome. For a valid fresh
+// publisher this operation is nonblocking and panic-free.
+func (publisher CommitPublisher) PublishCommitted() (Outcome, error) {
+	if err := publisher.ValidateFresh(); err != nil {
+		return 0, err
+	}
+	state := publisher.state
+	state.publishOnce.Do(func() {
+		state.outcome = OutcomeCommitted
+		close(state.ready)
+	})
+	<-state.ready
+	if state.outcome != OutcomeCommitted {
+		return state.outcome, errors.Join(ErrInvalidCommitPublisher, ErrInvalidOutcome)
+	}
+	return state.outcome, nil
 }
 
 // Publish fixes and returns the publication outcome.

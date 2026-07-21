@@ -1,4 +1,4 @@
-package completionadapter
+package completionadapter_test
 
 import (
 	"context"
@@ -6,27 +6,25 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/dsdred/universal-websocket-platform/internal/completionadapter"
+	"github.com/dsdred/universal-websocket-platform/internal/executionbinding"
 	"github.com/dsdred/universal-websocket-platform/internal/executionowner"
 	"github.com/dsdred/universal-websocket-platform/internal/lifetimelease"
 	"github.com/dsdred/universal-websocket-platform/internal/sessionmanager"
 )
 
 func TestNewRejectsInvalidBinding(t *testing.T) {
-	manager := sessionmanager.New()
-	registrationID := committedRegistration(t, manager, "session-1")
-
 	tests := []struct {
-		name           string
-		manager        *sessionmanager.Manager
-		registrationID sessionmanager.RegistrationID
+		name     string
+		mutation completionadapter.BoundMutation
 	}{
-		{name: "nil Manager", registrationID: registrationID},
-		{name: "zero Registration ID", manager: manager},
+		{name: "nil mutation"},
+		{name: "typed nil mutation", mutation: (*completionMutation)(nil)},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			adapter, err := New(test.manager, test.registrationID)
-			if adapter != nil || !errors.Is(err, ErrInvalidBinding) {
+			adapter, err := completionadapter.New(test.mutation)
+			if adapter != nil || !errors.Is(err, completionadapter.ErrInvalidBinding) {
 				t.Fatalf("New() = (%v, %v), want nil and ErrInvalidBinding", adapter, err)
 			}
 		})
@@ -249,7 +247,10 @@ func newAdapter(
 ) executionowner.CompletionAdapter {
 	t.Helper()
 
-	adapter, err := New(manager, registrationID)
+	adapter, err := completionadapter.New(completionMutation{
+		manager:        manager,
+		registrationID: registrationID,
+	})
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
@@ -267,7 +268,13 @@ func committedRegistration(
 	if err != nil {
 		t.Fatalf("Manager.Reserve(%q) error = %v", sessionID, err)
 	}
-	result, err := reservation.Commit()
+	owner := executionowner.New()
+	binding := executionbinding.New()
+	input, err := sessionmanager.NewCommitInput(owner, binding.CommitPublisher())
+	if err != nil {
+		t.Fatalf("sessionmanager.NewCommitInput() error = %v", err)
+	}
+	result, err := reservation.Commit(input)
 	if err != nil {
 		t.Fatalf("Reservation.Commit() error = %v", err)
 	}
@@ -275,6 +282,15 @@ func committedRegistration(
 		t.Fatalf("LifetimeLease.Release() = %d, want ReleaseOutcomeReleased", outcome)
 	}
 	return result.RegistrationID()
+}
+
+type completionMutation struct {
+	manager        *sessionmanager.Manager
+	registrationID sessionmanager.RegistrationID
+}
+
+func (mutation completionMutation) CompleteBoundRegistration() bool {
+	return mutation.manager.Complete(mutation.registrationID)
 }
 
 func assertRegistrationPresent(

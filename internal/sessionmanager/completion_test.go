@@ -6,6 +6,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/dsdred/universal-websocket-platform/internal/executionbinding"
+	"github.com/dsdred/universal-websocket-platform/internal/executionowner"
 	"github.com/dsdred/universal-websocket-platform/internal/lifetimelease"
 )
 
@@ -124,7 +126,7 @@ func TestManagerConcurrentCommitAndCompleteHaveAtomicOutcomes(t *testing.T) {
 
 		go func() {
 			<-start
-			committed, err := handle.Commit()
+			committed, err := commitTestReservation(handle)
 			commitResults <- commitResult{registrationID: committed.RegistrationID(), err: err}
 		}()
 		go func() {
@@ -255,7 +257,7 @@ func TestManagerCompleteInClosingClosesManager(t *testing.T) {
 
 func mustCommit(t *testing.T, handle ReservationHandle) RegistrationID {
 	t.Helper()
-	result, err := handle.Commit()
+	result, err := commitTestReservation(handle)
 	if err != nil {
 		t.Fatalf("Commit() error = %v", err)
 	}
@@ -263,4 +265,14 @@ func mustCommit(t *testing.T, handle ReservationHandle) RegistrationID {
 		t.Fatalf("LifetimeLease.Release() = %d, want ReleaseOutcomeReleased", outcome)
 	}
 	return result.RegistrationID()
+}
+
+func commitTestReservation(handle ReservationHandle) (CommitResult, error) {
+	owner := executionowner.New()
+	binding := executionbinding.New()
+	input, err := NewCommitInput(owner, binding.CommitPublisher())
+	if err != nil {
+		panic(err)
+	}
+	return handle.Commit(input)
 }

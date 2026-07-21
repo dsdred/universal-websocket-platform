@@ -2,11 +2,72 @@ package executionbinding
 
 import (
 	"errors"
+	"reflect"
 	"runtime"
 	"sync"
 	"testing"
 	"time"
 )
+
+func TestCommitPublisherExposesCommittedPublicationOnly(t *testing.T) {
+	publisherType := reflect.TypeOf(CommitPublisher{})
+	wantMethods := map[string]struct{}{
+		"PublishCommitted": {},
+		"ValidateFresh":    {},
+	}
+	if publisherType.NumMethod() != len(wantMethods) {
+		t.Fatalf("CommitPublisher method count = %d, want %d", publisherType.NumMethod(), len(wantMethods))
+	}
+	for index := range publisherType.NumMethod() {
+		method := publisherType.Method(index)
+		if _, exists := wantMethods[method.Name]; !exists {
+			t.Fatalf("CommitPublisher exposes unexpected method %q", method.Name)
+		}
+	}
+}
+
+func TestCommitPublisherPublishesCommittedExactlyOnceAcrossCopies(t *testing.T) {
+	binding := New()
+	original := binding.CommitPublisher()
+	copy := original
+
+	if err := original.ValidateFresh(); err != nil {
+		t.Fatalf("ValidateFresh() error = %v", err)
+	}
+	outcome, err := copy.PublishCommitted()
+	if err != nil || outcome != OutcomeCommitted {
+		t.Fatalf("PublishCommitted() = (%d, %v), want OutcomeCommitted and nil", outcome, err)
+	}
+	if err := original.ValidateFresh(); !errors.Is(err, ErrInvalidCommitPublisher) {
+		t.Fatalf("ValidateFresh() after publication error = %v, want ErrInvalidCommitPublisher", err)
+	}
+	repeated, err := binding.Publish(OutcomeNotCommitted)
+	if err != nil || repeated != OutcomeCommitted {
+		t.Fatalf("repeated Binding.Publish() = (%d, %v), want immutable OutcomeCommitted", repeated, err)
+	}
+}
+
+func TestCommitPublisherRejectsZeroAndPreviouslyPublishedBinding(t *testing.T) {
+	var zero CommitPublisher
+	if err := zero.ValidateFresh(); !errors.Is(err, ErrInvalidCommitPublisher) {
+		t.Fatalf("zero ValidateFresh() error = %v, want ErrInvalidCommitPublisher", err)
+	}
+	if outcome, err := zero.PublishCommitted(); outcome != 0 || !errors.Is(err, ErrInvalidCommitPublisher) {
+		t.Fatalf("zero PublishCommitted() = (%d, %v), want zero and ErrInvalidCommitPublisher", outcome, err)
+	}
+
+	binding := New()
+	if _, err := binding.Publish(OutcomeNotCommitted); err != nil {
+		t.Fatalf("Publish(OutcomeNotCommitted) error = %v", err)
+	}
+	publisher := binding.CommitPublisher()
+	if err := publisher.ValidateFresh(); !errors.Is(err, ErrInvalidCommitPublisher) {
+		t.Fatalf("stale ValidateFresh() error = %v, want ErrInvalidCommitPublisher", err)
+	}
+	if outcome, err := publisher.PublishCommitted(); outcome != 0 || !errors.Is(err, ErrInvalidCommitPublisher) {
+		t.Fatalf("stale PublishCommitted() = (%d, %v), want zero and ErrInvalidCommitPublisher", outcome, err)
+	}
+}
 
 func TestCreateBinding(t *testing.T) {
 	binding := New()

@@ -77,7 +77,7 @@ func TestManagerConcurrentCommitAndWaitPreserveRegistrationAccounting(t *testing
 	commitResultChannel := make(chan commitResult, 1)
 
 	go func() {
-		committed, err := handle.Commit()
+		committed, err := commitTestReservation(handle)
 		commitResultChannel <- commitResult{registrationID: committed.RegistrationID(), err: err}
 	}()
 	commitResult := <-commitResultChannel
