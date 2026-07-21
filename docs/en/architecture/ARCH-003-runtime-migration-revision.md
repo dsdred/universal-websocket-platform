@@ -50,6 +50,7 @@ Independent implementation of a primitive does not authorize its isolated produc
 Dormant Execution cannot be separated from:
 
 - one Execution Binding integration;
+- one domain-specific `CommitHandoff` that binds the one-shot outcome to the immutable Manager-created `CommitResult`;
 - Dispatcher pre-Commit ownership;
 - one `NotCommitted` publication for every non-committed outcome;
 - dormant-path return before Dispatcher proceeds;
@@ -66,10 +67,11 @@ Successful Manager Commit publication cannot be separated from:
 - the Registration-bound Completion capability;
 - Owner Lifetime Lease publication;
 - Stop-publication capability;
-- the `Committed` execution outcome;
+- storage of the `CommitHandoff` identity for repeated-Commit validation;
+- publication of `Committed` with the complete immutable `CommitResult` through that handoff;
 - irreversible ownership transfer.
 
-These effects share one synchronization boundary. Failure publishes none of them. No observable Registration may exist without one already eligible execution path.
+These effects share one synchronization boundary. Failure publishes none of them. No observable Registration may exist without one already eligible execution path, and the dormant path cannot observe `Committed` without RegistrationID, Completion Adapter, and Owner Lifetime Lease.
 
 ### Complete Owner Lifecycle
 
@@ -85,11 +87,13 @@ Production Runtime activation must be combined with truthful shutdown integratio
 
 **Objective:** Complete the Manager-side publication contract and compatible capability-bearing Shutdown Snapshot without activating production Session handoff.
 
-**Architectural invariant:** A successful Manager Commit publishes one complete logical Commit result and the `Committed` execution outcome under one synchronization boundary. Failure publishes no committed state.
+**Architectural invariant:** A successful Manager Commit creates one immutable `CommitResult` containing RegistrationID, Registration-bound Completion Adapter, and Owner Lifetime Lease and publishes it as `Committed` through the narrow Manager-facing capability of the transaction's `CommitHandoff` under one synchronization boundary. Stop binding remains Registration state, not owner payload. Failure publishes no committed state.
 
 **Dependencies:** Completed Tasks 1–4 and the existing Manager, Execution Binding, Completion Adapter, Lifetime Lease, and Owner control foundations.
 
 **Out of scope:** Dormant launch-path creation, production Dispatcher selection, Runtime callback lifecycle, complete Owner terminal execution, and Runtime shutdown cutover.
+
+The implemented Task 5 foundation used a raw committed-only Execution publisher before the full dormant contract was available. Before Task 9 can create or select a transaction-capable Dispatcher, that input boundary must be narrowed to the Manager-facing publisher of `CommitHandoff`, and repeated Commit must validate the same handoff identity. This prerequisite correction preserves the Task 5 linearization point and accounting; it does not activate dormant execution or production handoff by itself.
 
 ### Task 6: Runtime-Cancellation and Control-Call Lifecycle
 
@@ -136,9 +140,9 @@ Cleanup
 
 ### Task 9: Transactional Dispatcher and Dormant Handoff
 
-**Objective:** Build and fully test the complete pre-Commit transaction, dormant launch path, Commit handoff, and accepted-result boundary.
+**Objective:** Introduce the domain-specific `CommitHandoff`, apply the Task 5 Commit-input prerequisite correction, and build and fully test the complete pre-Commit transaction, dormant launch path, transactional Dispatcher, and accepted-result boundary.
 
-**Architectural invariant:** Exactly one dormant launch path and one Binding belong to one Dispatcher pre-Commit transaction. Every non-committed path performs:
+**Architectural invariant:** Exactly one `CommitHandoff`, one underlying Execution Binding, and one dormant launch path belong to one Dispatcher pre-Commit transaction. Dispatcher may publish only `NotCommitted`; Manager may publish only `Committed` with the complete `CommitResult`; the dormant path may only wait. Every non-committed path performs:
 
 ```text
 NotCommitted publication
@@ -148,9 +152,9 @@ NotCommitted publication
     -> accepted=false
 ```
 
-Successful Commit makes exactly one execution path eligible and transfers ownership irreversibly.
+Successful Commit makes exactly one execution path eligible, delivers the same logical `CommitResult` to that path and the Commit caller, and transfers ownership irreversibly. No post-Commit activation or capability-delivery step exists.
 
-**Dependencies:** Tasks 5 and 8 and the completed pre-Commit Session bundle.
+**Dependencies:** Tasks 5 and 8, the completed pre-Commit Session bundle, and the Task 5 Commit-input prerequisite correction performed as the first focused sub-step of Task 9.
 
 **Out of scope:** Selection by production Runtime composition, Host shutdown ordering, Listener shutdown orchestration, and production Manager Wait.
 
@@ -158,7 +162,7 @@ A complete transaction-capable Dispatcher may temporarily exist off the producti
 
 ### Task 10: Atomic Runtime Composition and Shutdown Cutover
 
-**Objective:** Select the transaction-capable Dispatcher in production composition and activate truthful Runtime-wide shutdown accounting in the same production cutover.
+**Objective:** Select the already complete transaction-capable Dispatcher and `CommitHandoff` path in production composition and activate truthful Runtime-wide shutdown accounting in the same production cutover.
 
 **Architectural invariant:** Every production accepted Session is Manager-tracked from Commit through completion and Lifetime Lease release. Shutdown follows:
 

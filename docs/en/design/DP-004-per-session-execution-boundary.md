@@ -66,20 +66,20 @@ Upgrade boundary enters Dispatcher
     -> Reserve SessionID
     -> create transport-independent Session Core
     -> construct Execution Owner
-    -> create exactly one dormant launch goroutine blocked on its one-shot Commit gate
-    -> provisionally attach transport and cancellation
+    -> provisionally attach transport and construct the immutable execution environment
+    -> create exactly one CommitHandoff and one dormant launch goroutine waiting on it
     -> activate owner in PreCommit without starting Session execution
     -> Commit
        -> under one Manager synchronization boundary:
-          -> publish Registration, lease accounting, and Stop capability
+          -> create CommitResult and publish Registration, lease accounting, and Stop capability
           -> transfer Session, WebSocket, cancellation, and execution ownership
-          -> transition the one-shot Commit gate from PreCommit to Committed
+          -> publish Committed plus the complete CommitResult through CommitHandoff
        -> release the synchronization boundary only after all publication is complete
     -> return accepted=true immediately
 
 Dormant launch goroutine
-    -> cannot pass the Commit gate before successful Commit
-    -> becomes the owned execution path when the gate reaches Committed
+    -> cannot pass CommitHandoff before successful Commit
+    -> becomes the owned execution path when it observes Committed with the complete CommitResult
     -> install Runtime-cancellation observation with a race-safe post-registration check
     -> Start
     -> Run when permitted
@@ -98,7 +98,7 @@ Dormant launch goroutine
 
 Commit is the sole irreversible publication point for both Registration and execution eligibility. Every operation before Commit is provisional and may fail through Abort plus Dispatcher cleanup. No recoverable operation after Commit can return `accepted=false` or restore pre-Commit state.
 
-“Owner started” has one normative meaning: the one-shot Commit gate reached `Committed`, so the already existing dormant launch goroutine is eligible to enter owner lifecycle. Scheduler execution, `Session.Start`, and `Session.Run` are later effects and are not publication points.
+“Owner started” has one normative meaning: `CommitHandoff` published `Committed` with the complete `CommitResult`, so the already existing dormant launch goroutine is eligible to enter owner lifecycle. Scheduler execution, `Session.Start`, and `Session.Run` are later effects and are not publication points.
 
 ## 7. Ownership Domains
 
@@ -112,7 +112,7 @@ Ownership ends only when Commit succeeds. Commit is the single transport-ownersh
 
 Session Core owns only immutable identity, Principal, metadata, and Message Handler. It is not a Session, exposes no `Start`, `Run`, `Send`, or `Stop`, and owns no transport.
 
-Before Commit, one Core may be provisionally formed into a fully configured Session and bound to a dormant owner and one dormant launch goroutine, but Dispatcher still owns transport, the provisional launch obligation, and cleanup. The goroutine can observe only its private Commit gate and cannot call Session lifecycle. Successful Commit publishes the committed identity, transfers the prepared Session, WebSocket, connection cancellation, and execution responsibility, and makes that same goroutine eligible. No Runtime-owned Session execution exists before Commit.
+Before Commit, one Core may be provisionally formed into a fully configured Session and bound to a dormant owner and one dormant launch goroutine, but Dispatcher still owns transport, the provisional launch obligation, and cleanup. The goroutine can only wait through its private `CommitHandoff` and cannot call Session lifecycle. Successful Commit publishes the committed identity and complete `CommitResult`, transfers the prepared Session, WebSocket, connection cancellation, and execution responsibility, and makes that same goroutine eligible. No Runtime-owned Session execution exists before Commit.
 
 ### Reservation and Registration
 
@@ -122,7 +122,7 @@ Commit consumes Reservation and irreversibly publishes committed identity, owner
 
 ### Execution Owner
 
-Owner construction and pre-Commit activation acquire no Manager or transport ownership. Owner remains dormant in `PreCommit`; Session Start and Run are forbidden. Dispatcher creates exactly one launch goroutine and exactly one one-shot Commit gate for that owner. Successful Commit gives owner the attached Session, committed bundle, and execution responsibility by changing that gate to `Committed` within the same publication boundary. From Commit until Terminal, that single path is the sole production caller of Session `Start`, `Run`, and terminal cleanup.
+Owner construction and pre-Commit activation acquire no Manager or transport ownership. Owner remains dormant in `PreCommit`; Session Start and Run are forbidden. Dispatcher creates exactly one `CommitHandoff` and one launch goroutine for that owner. Successful Commit gives owner the prepared execution environment, the complete `CommitResult`, and execution responsibility by publishing `Committed` through that handoff within the same publication boundary. From Commit until Terminal, that single path is the sole production caller of Session `Start`, `Run`, and terminal cleanup.
 
 ### Session Manager
 
@@ -193,13 +193,13 @@ Its contract:
 
 - one Core can be prepared once;
 - Session formation, owner control-cell installation, and Stop binding preparation complete before Commit;
-- Dispatcher creates exactly one dormant launch goroutine and binds it to exactly one one-shot Commit gate;
+- Dispatcher creates exactly one `CommitHandoff` and binds exactly one dormant launch goroutine to it;
 - WebSocket and cancellation remain owned by Dispatcher throughout preparation;
 - the prepared owner remains in `PreCommit`, and the launch goroutine cannot pass its gate or perform Session lifecycle work;
 - no `Start`, `Run`, or `Cleanup` can race before Commit;
 - it performs bounded in-memory construction and no network I/O;
 - validation failure or recovered panic leaves Registration absent and both supplied resources with Dispatcher;
-- every terminal pre-Commit outcome resolves the gate as non-committed exactly once, waits for the dormant goroutine to return, disposes owner-local prepared values, and then performs Abort before transport cleanup;
+- every terminal pre-Commit outcome publishes `NotCommitted` exactly once through the handoff, waits for the dormant goroutine to return, disposes owner-local prepared values, and then performs Abort before transport cleanup;
 - no Runtime-cancellation callback registration exists before Commit;
 - no lease or Snapshot capability exists before Commit;
 - Start, Run, Stop, and Cleanup can begin only after successful Commit.
@@ -218,12 +218,16 @@ Runtime Host remains the production composition root. It constructs:
 
 Execution Owner receives only:
 
-- owner control cell, Runtime-derived execution context, and read-only root Runtime context observation input;
-- lifecycle-only Session after activation;
+- owner control cell;
+- one immutable prepared execution environment containing the lifecycle-only Session, the Runtime-derived execution context and its narrow cancellation capability, and the read-only root Runtime context observation input;
 - owner-scoped Completion Adapter;
 - owner-scoped Lifetime Lease;
 - one Terminal Observer;
 - immutable RegistrationID.
+
+Runtime composition creates the root Runtime context observation input. It grants only callback registration and observation, never root cancellation authority, and it is not the context passed to Session Start or Run. The Upgrade boundary creates the derived execution context and its cancellation capability. Dispatcher owns that derived context during the pre-Commit transaction; Execution Owner owns its use after Commit. A prepared immutable `ExecutionEnvironment`, or an equivalently explicit type boundary, keeps these two context roles distinct without making either one part of Manager accounting or `CommitResult`.
+
+Explicit Stop and the Runtime-cancellation callback may use only the derived cancellation capability to cancel execution. That capability never cancels the root Runtime context and never changes which context the callback observes.
 
 Owner does not import concrete Runtime Host, Manager, Listener, Handshake, HTTP, WebSocket library, Runtime Snapshot, Router, Delivery, Presence, or Persistence.
 
@@ -238,14 +242,15 @@ Pre-Commit activation prepares:
 1. the fully formed but not yet Runtime-owned Session;
 2. the owner control cell and causal termination state;
 3. the Stop-publication binding required by Commit;
-4. the immutable read-only root Runtime context observation input required by the future owned execution path;
-5. exactly one dormant launch goroutine and its private one-shot Commit gate.
+4. the immutable execution environment required by the future owned execution path;
+5. exactly one `CommitHandoff`;
+6. exactly one dormant launch goroutine waiting through the handoff's private one-shot Execution Binding.
 
-The owner is then in `PreCommit`. The launch goroutine exists, but it is still provisional Dispatcher-owned control flow and cannot pass the Commit gate. It does not call Session Start, Run, Stop, Cleanup, Complete, observer, or lease release.
+The owner is then in `PreCommit`. The launch goroutine exists, but it is still provisional Dispatcher-owned control flow and cannot pass `CommitHandoff`. It does not call Session Start, Run, Stop, Cleanup, Complete, observer, or lease release.
 
 Dispatcher owns the entire pre-Commit transaction through one panic-safe orchestration boundary beginning no later than dormant-path creation. Ordinary error, context cancellation, a Commit lost to BeginShutdown, attachment or preparation panic, and panic immediately before Commit all use one terminal sequence:
 
-1. publish the non-committed gate outcome exactly once;
+1. publish `NotCommitted` exactly once through the Dispatcher-facing handoff capability;
 2. wait for the dormant path to observe that outcome and return;
 3. dispose all owner-local prepared values;
 4. execute Abort;
@@ -254,27 +259,29 @@ Dispatcher owns the entire pre-Commit transaction through one panic-safe orchest
 
 Abort is not a gate-completion mechanism. Dispatcher never returns a pre-Commit outcome before the dormant path has returned. The dormant path never invokes committed Complete, observer, Runtime-cancellation observation, or lease operations. No callback exists to unregister or join on a failed Commit. The orchestration boundary converts recoverable panic to the same safe error result; it does not propagate that panic through the transport contract.
 
-Successful Commit is the owner start boundary and the only execution publication point. Within the same Manager synchronization boundary, it changes the gate `PreCommit -> Committed`, transfers ownership, publishes the owner-scoped bundle, and makes exactly one already existing path eligible. The operation does not return success and does not release the synchronization boundary before all of those effects are complete.
+Successful Commit is the owner start boundary and the only execution publication point. Within the same Manager synchronization boundary, it creates the complete immutable `CommitResult`, publishes that result as `Committed` through the Manager-facing handoff capability, transfers ownership, and makes exactly one already existing path eligible. The operation does not return success and does not release the synchronization boundary before all of those effects are complete.
 
 There is no second launch call, launch acknowledgement, or fallible post-Commit activation step. The goroutine becoming scheduled is not part of Commit, and neither are Session Start, Run, Cleanup, Complete, observer, or lease release.
 
-The Commit gate is not another lifecycle, coordinator, supervisor, or owner. It is a narrow one-shot publication binding representing the existing `PreCommit -> Committed` transition. Dispatcher constructs it and Manager receives only permission to invoke its one publication operation. `Committed` makes the single dormant path eligible. The non-committed outcome terminates that path without execution. Repeated publication returns the already fixed outcome and never releases a second path. The binding provides no lifecycle control after publication.
+`CommitHandoff` is the domain-specific Commit-to-dormant contract. Dispatcher creates it before the dormant path. Internally it combines the existing narrow one-shot Execution Binding with storage for one immutable committed result. Its restricted capabilities are asymmetric: Dispatcher can publish only `NotCommitted`; Manager can publish only `Committed` with a complete `CommitResult`; the dormant path can only wait. The two outcomes are irreversible and exhaustive. `Committed` always carries a complete valid result; `NotCommitted` carries no committed capabilities.
 
-## 12. Commit Bundle and Lease Identity
+The handoff is not another lifecycle, coordinator, supervisor, owner, general capability cell, or replacement for Execution Binding. It creates no Session, Registration, lease, callback, context, or goroutine. It provides no lifecycle control after publication and admits no second activation, capability delivery, or acknowledgement.
 
-Commit is the only Manager and handoff publication point. It either fails without publishing committed state or irreversibly publishes the complete owner bundle:
+## 12. Commit Result, Handoff, and Lease Identity
+
+Commit is the only Manager and handoff publication point. It either fails without publishing committed state or irreversibly publishes the Manager-created immutable `CommitResult`:
 
 ```text
 RegistrationID
 CompletionAdapter
 OwnerLifetimeLease
-StopPublicationBinding
-ExecutionPublicationBinding
 ```
 
-All potentially fallible validation, construction, and allocation required by this bundle completes before the publication critical section. The critical section performs only bounded mutation of Manager-owned maps/accounting and the already prepared panic-free one-shot publication binding. It calls no external code, Session or owner method, callback, goroutine scheduler operation, or blocking channel send while holding the Manager lock.
+The Stop-publication binding is stored in the committed Registration for Snapshot use and is not part of the owner payload. The `CommitHandoff` identity is also stored with that Registration solely to validate repeated Commit. The execution environment is held by the dormant owner path and is neither Manager-created nor part of `CommitResult`.
 
-The bundle has these properties:
+All potentially fallible validation and allocation required by Commit completes before the publication critical section. The critical section performs only bounded mutation of Manager-owned maps/accounting, construction of Manager-bound capabilities, and the already prepared panic-free handoff publication. It calls no arbitrary external code, Session or owner method, callback, goroutine scheduler operation, or blocking channel send while holding the Manager lock.
+
+The committed result and its publication have these properties:
 
 - RegistrationID is never reused for Manager lifetime;
 - Lease identity is bound one-to-one to RegistrationID and one owner control cell;
@@ -282,25 +289,25 @@ The bundle has these properties:
 - Completion Adapter accepts no caller-supplied RegistrationID and can complete only its bound Registration;
 - Lifetime Lease can release only its bound lease;
 - Stop publication binds Snapshot capability to the same already prepared owner control cell;
-- Execution publication binds exactly one dormant launch goroutine to the same RegistrationID and publishes eligibility once through a panic-free state mutation;
-- failure to return the complete bundle means Commit did not occur;
-- no partially committed or partially returned bundle exists.
+- CommitHandoff binds exactly one dormant launch goroutine to the same logical Commit and publishes the complete result once through a panic-free state mutation;
+- failure to return the complete result means Commit did not occur;
+- no partially committed or partially returned result exists.
 
 The panic-contained integrated Commit operation consists only of:
 
 1. validating that Reservation and Manager state still permit Commit;
 2. consuming Reservation and publishing Registration identity;
-3. publishing Completion Adapter, Owner Lifetime Lease, and Stop binding;
-4. invoking the narrow one-shot execution-publication binding with `Committed`;
+3. creating the Registration-bound Completion Adapter and Owner Lifetime Lease, publishing lease accounting, and storing the Stop binding and CommitHandoff identity;
+4. constructing the immutable `CommitResult` and publishing `Committed` plus that complete result through the Manager-facing handoff capability;
 5. releasing the shared Manager synchronization boundary;
 6. returning the complete bound result.
 
-Steps 2–4 are not externally separable. Lookup and BeginShutdown use the same synchronization boundary and cannot observe Registration before the execution binding is committed. Manager holds only the narrow publication right; it does not own the binding's path or invoke Session lifecycle.
+Steps 2–4 are not externally separable. Lookup and BeginShutdown use the same synchronization boundary and cannot observe Registration before the handoff contains `Committed` and the complete result. Manager holds only the narrow committed-publication right; it does not own the handoff, Binding, dormant path, Owner, Session, context, or goroutine and does not invoke Session lifecycle.
 
 Commit has exactly two recoverable outcomes:
 
-- **non-committed failure:** validation fails before the first observable mutation; Registration, lease, Stop binding, and committed execution outcome do not exist, and Dispatcher publishes the non-committed gate outcome;
-- **successful Commit:** Registration and the complete bundle are published and the gate outcome is `Committed`; rollback is forbidden.
+- **non-committed failure:** validation fails before the first observable mutation; Registration, lease, and committed result do not exist, and Dispatcher publishes `NotCommitted` with no capabilities through its handoff facet;
+- **successful Commit:** Registration and the complete result are published and the handoff outcome is `Committed`; rollback is forbidden.
 
 No recoverable panic exists between partial publication mutations. External or arbitrary code is not invoked there, and every prepared publication mutation is panic-free by contract. Process termination, unrecoverable Go runtime failure, memory corruption, and equivalent failures are accepted unrecoverable limitations rather than a recoverable Commit-panic branch.
 
@@ -327,7 +334,7 @@ There is no post-Commit failure branch in Dispatcher. A panic, cancellation, Sta
 
 An interval may exist between Commit return and actual scheduler execution of the launch goroutine. It is safe and is not an orphan interval: Registration, lease, Stop capability, ownership, and an already eligible execution path all exist. Shutdown may request Stop during that interval; the owner observes termination before Start and enters the normal terminal path.
 
-Repeated Commit for the same still-existing Registration returns the same logical bound publication result: the same RegistrationID, Completion Adapter, Owner Lifetime Lease identity, Stop-publication binding, and committed execution outcome. It does not invoke publication again, cause another callback installation, create a lease, Stop capability, or goroutine, or change accounting. Commit after Complete retains the `ErrRegistrationRemoved` semantics defined by DP-003.
+Repeated Commit for the same still-existing Registration and the same `CommitHandoff` identity returns the same logical `CommitResult`: the same RegistrationID, Completion Adapter, and Owner Lifetime Lease identity. It does not invoke publication again, cause another callback installation, create a lease, Stop capability, or goroutine, or change accounting. A different handoff identity is rejected. Commit after Complete retains the `ErrRegistrationRemoved` semantics defined by DP-003.
 
 Lease release is exposed only through an owner-bound panic-safe adapter with an explicit outcome. Release by the owner is effective once. Repeated release is a stable anomaly result. Unknown, stale, or foreign release cannot affect another lease. Never-reused RegistrationID plus owner-bound lease identity prevents ABA.
 
@@ -340,15 +347,16 @@ Dispatcher executes one serialized control flow:
 1. Reserve SessionID;
 2. create Session Core;
 3. create Execution Owner in `PreCommit`;
-4. create exactly one dormant launch goroutine blocked on the owner Commit gate;
-5. provisionally attach WebSocket and connection cancellation;
-6. activate all owner control structures without starting Session execution;
-7. inspect termination and shutdown eligibility;
-8. Commit the prepared owner binding.
+4. provisionally attach WebSocket, create the derived execution context and cancellation capability, and assemble the immutable execution environment;
+5. create exactly one `CommitHandoff`;
+6. create exactly one dormant launch goroutine waiting on that handoff;
+7. activate all owner control structures without starting Session execution;
+8. inspect termination and shutdown eligibility;
+9. Commit the Stop binding and the handoff's narrow Manager-facing publisher.
 
-Commit is the sole Registration publication, execution publication, ownership-transfer, and handoff-success linearization point. Its internal Manager mutation and Commit-gate transition are protected by the same synchronization boundary and are externally indivisible. There is no later activation mutation and no recoverable state “Commit succeeded but execution publication did not”.
+Commit is the sole Registration publication, execution publication, ownership-transfer, and handoff-success linearization point. Its internal Manager mutation and publication of `Committed` plus the complete `CommitResult` are protected by the same synchronization boundary and are externally indivisible. There is no later activation mutation and no recoverable state “Commit succeeded but execution publication did not”.
 
-Dispatcher guarantees exactly-once execution by creating one launch goroutine before Commit and supplying one one-shot gate in the Commit binding. Manager guarantees atomic visibility of the opaque binding with Registration, but does not create or own the goroutine. After Commit returns success, Dispatcher has no launch, cleanup, Session, or cancellation obligation and only returns `accepted=true`.
+Dispatcher guarantees exactly-once execution by creating one `CommitHandoff` and one launch goroutine before Commit. Manager guarantees atomic visibility by publishing its complete result through only the handoff's narrow committed publisher; it does not create or own the handoff, Binding, Owner, Session, context, or goroutine. The dormant path observes the same logical result returned by Commit. After Commit returns success, Dispatcher performs no second activation or capability delivery, has no launch, cleanup, Session, or cancellation obligation, and only returns `accepted=true`.
 
 Observable `DispatchAuthenticated(...)(accepted, error)` semantics are:
 
@@ -381,7 +389,7 @@ Terminalizing
     -> Terminal
 ```
 
-`PreCommit` means the owner, Session values, control cell, Stop binding, read-only root Runtime context observation input, and one dormant launch goroutine are prepared while Dispatcher still owns Reservation, transport, and provisional launch control. No Runtime-cancellation callback exists. The goroutine is blocked on the Commit gate, so Session execution has not started.
+`PreCommit` means the owner, immutable execution environment, control cell, Stop binding, one `CommitHandoff`, and one dormant launch goroutine are prepared while Dispatcher still owns Reservation, transport, derived-context cancellation, and provisional launch control. No Runtime-cancellation callback exists. The goroutine waits on the handoff, so Session execution has not started.
 
 `Committed` begins inside successful Commit before the shared synchronization boundary is released. Registration, lease, Stop capability, Session ownership, and execution eligibility are published together, while Start has not yet linearized. Actual scheduling may occur later without creating another lifecycle state.
 
@@ -391,7 +399,7 @@ Terminalizing
 
 `Terminal` means Session execution and observer work are complete, `UnregisterAndDrain` confirmed that no future or entered callback work remains, control-call admission is closed, every entered control call returned, and the control cell is sealed. Only the conditional lease-release attempt and immediate technical return remain. An unconfirmed callback lifetime remains `Terminalizing` and never claims Terminal. Restart is forbidden.
 
-The dormant goroutine belongs to `PreCommit`; it does not require another lifecycle state. A non-committed gate outcome terminates that path without transition to `Committed` and without Complete, committed observer, callback entry, or Manager owner-lifetime accounting. Every post-Commit terminal outcome enters `Terminalizing` before the single definition of Terminal.
+The dormant goroutine belongs to `PreCommit`; it does not require another lifecycle state. A `NotCommitted` handoff outcome terminates that path without transition to `Committed` and without receiving committed capabilities, Complete, committed observer, callback entry, or Manager owner-lifetime accounting. Every post-Commit terminal outcome enters `Terminalizing` before the single definition of Terminal.
 
 ## 15. Start and Run Linearization
 
@@ -490,7 +498,7 @@ For cancellation `Anomaly`, owner still follows the single terminal order: it at
 
 Execution Owner is the only production terminal completion caller for its Registration.
 
-Owner does not receive general `Manager.Complete(RegistrationID)`. It receives one owner-scoped Completion Adapter created by Runtime composition from the Commit bundle:
+Owner does not receive general `Manager.Complete(RegistrationID)`. It receives the one owner-scoped Completion Adapter created by Session Manager during Commit and carried by `CommitResult`:
 
 ```text
 CompleteBoundRegistration() CompleteOutcome
@@ -650,8 +658,8 @@ Every pre-Commit row uses the panic-safe sequence: publish non-committed, wait f
 | Runtime context canceled before Commit | Non-committed published once; path joined | Dispatcher | Dispatcher | Aborted | None | `false`, cancellation error | Not invoked | Not invoked | Never created | `PreCommit` disposed | None | Unaffected after Abort |
 | BeginShutdown wins Commit | Non-committed published once; path joined | Dispatcher | Dispatcher | Aborted | None; Snapshot excludes it | `false`, Commit rejection | Not invoked | Not invoked | Never created | `PreCommit` disposed | None | Succeeds after Abort if otherwise empty |
 | Recoverable Commit validation failure | Non-committed published once; path joined | Dispatcher | Dispatcher | Aborted | None | `false`, validation error | Not invoked | Not invoked | Never created | `PreCommit` disposed | None | Unaffected after Abort |
-| Successful Commit | Committed once; one path eligible | Owner | Owner | Consumed | Registered with complete bundle | `true`, nil | Once at terminalization | Once | Installed only by owner | `Committed`, then normal lifecycle | Active until eligible release | Succeeds only after Registration and lease clear |
-| Repeated Commit before Complete | Existing committed outcome returned | Owner | Owner | Already consumed | Same Registration and logical bundle | Same prior successful result | No new invocation | No new invocation | No second installation | Existing state unchanged | Same lease; no accounting change | Unchanged |
+| Successful Commit | `Committed` plus complete `CommitResult` published once; one path eligible | Owner | Owner | Consumed | Registered with complete result | `true`, nil | Once at terminalization | Once | Installed only by owner | `Committed`, then normal lifecycle | Active until eligible release | Succeeds only after Registration and lease clear |
+| Repeated Commit before Complete with same handoff identity | Existing committed result returned; no second publication | Owner | Owner | Already consumed | Same Registration and logical `CommitResult` | Same prior successful result | No new invocation | No new invocation | No second installation | Existing state unchanged | Same lease; no accounting change | Unchanged |
 | Runtime context canceled after Commit before callback installation | Owner observes cancellation during race-safe install | Owner | Owner control cell | Consumed | Registered until Complete | Prior `true`, nil | Once | Once with RuntimeCanceled | Registration or post-registration check records RuntimeCanceled once | `Committed -> Terminalizing -> Terminal` after Confirmed cleanup | Released if all conditions hold | Pending until Complete and release |
 | Callback installation succeeds | Owner continues after race-safe check | Owner | Owner control cell | Consumed | Registered until Complete | Prior `true`, nil | Once at later terminalization | Once | One owner-owned registration | `Committed -> Starting` or `Terminalizing` if termination won | Active until eligible release | Pending until terminal accounting clears |
 | Callback installation panic or error | Owner enters common terminal path | Owner | Owner control cell | Consumed | Registered until Complete | Prior `true`, nil | Once | Once with installation anomaly | Partial or absent registration handled by cleanup contract | Terminal only after Confirmed cleanup | Released only after Terminal and all conditions | Blocked permanently if cleanup is Unconfirmed |
@@ -717,8 +725,8 @@ This preserves ARCH-002: admission closes first and root Runtime context is canc
 
 ## 28. Deadlock Analysis
 
-- The pre-Commit proof is `panic-safe Dispatcher boundary -> non-committed publication -> dormant path return -> owner-local disposal -> Abort -> accepted=false`. No callback exists on this path, and Dispatcher cannot return while a recoverable pre-Commit dormant path remains blocked.
-- The Commit proof is `precompute complete bundle -> panic-free atomic publication under Manager lock -> committed gate outcome -> unlock -> one owner path eligible`.
+- The pre-Commit proof is `panic-safe Dispatcher boundary -> CommitHandoff NotCommitted publication -> dormant path return -> owner-local disposal -> Abort -> accepted=false`. No callback exists on this path, and Dispatcher cannot return while a recoverable pre-Commit dormant path remains blocked.
+- The Commit proof is `validate prepared inputs -> construct Manager-bound CommitResult -> panic-free atomic Manager state and CommitHandoff Committed publication under one lock -> unlock -> one owner path receives the same result and becomes eligible`.
 - The post-Commit proof is `owner path -> install callback -> lifecycle -> Terminalizing -> Cleanup -> Complete -> observer -> UnregisterAndDrain -> seal -> Terminal -> lease outcome`. Unconfirmed callback cleanup stops at Terminalizing.
 - Dispatcher does not wait for owner after successful Commit, and owner does not wait for Dispatcher after observing `Committed`.
 - Manager never waits for the dormant path. The dormant path waits only for its one-shot outcome and never waits for Manager after that outcome exists.
@@ -743,8 +751,8 @@ Migration is sequential:
 1. introduce transport-independent Core without changing current Session;
 2. add package-private provisional Session and owner preparation;
 3. add cleanup acknowledgement around current Stop and connection cancellation;
-4. add Manager Commit bundle, opaque one-shot execution binding, and compatible Snapshot capability accessor;
-5. add dormant launch-path preparation and Commit-boundary tests;
+4. add Manager Commit result, Stop binding, lease accounting, and compatible Snapshot capability accessor;
+5. add domain-specific CommitHandoff, dormant launch-path preparation, and Commit-boundary tests;
 6. add owner-only post-Commit Runtime-callback installation and `UnregisterAndDrain` proof;
 7. move Start/Run/Cleanup into owner after Commit succeeds;
 8. wire Manager shutdown ordering through Runtime composition.
@@ -769,11 +777,17 @@ None is a service locator or generic coordination framework. Owner does not gain
 - Dispatcher is the sole handoff coordinator.
 - Dispatcher receives no ambiguous outcome: failed Commit means no transfer; successful Commit means irreversible transfer.
 - Core is not Session and owns no transport.
-- Dispatcher creates exactly one dormant launch goroutine and one one-shot Commit gate per prospective owner.
+- Dispatcher creates exactly one `CommitHandoff` and one dormant launch goroutine per prospective owner.
+- Before Commit, the dormant path observes only its handoff gate; no Registration-bound Lifetime Lease capability exists.
 - Dispatcher owns one panic-safe pre-Commit orchestration boundary, creates no Runtime callback, and cannot return until a non-committed dormant path has returned and prepared values are disposed.
 - Commit is the only Registration, lease, Stop-capability, ownership, and execution publication point.
 - Commit publication contains no fallible external operation and has only complete non-committed or complete committed outcomes.
-- Commit does not return success or release its synchronization boundary until the execution binding is `Committed`.
+- Commit does not return success or release its synchronization boundary until `CommitHandoff` contains `Committed` and the complete immutable `CommitResult`.
+- `Committed` can never be observed without RegistrationID, Completion Adapter, and Owner Lifetime Lease; `NotCommitted` exposes none of them.
+- Execution eligibility and committed capability delivery are one handoff publication; no separate capability cell, post-Commit activation mutation, or second launch acknowledgement exists.
+- Manager creates all Manager-bound capabilities; Dispatcher creates none of them, and Manager owns no Owner, Session, Context, Execution Binding, `CommitHandoff`, or dormant goroutine.
+- Stop binding belongs to the committed Registration, while root observation and derived execution context belong to the prepared execution environment; none is part of `CommitResult`.
+- Repeated Commit requires the same Reservation and `CommitHandoff` identity; a different handoff identity is rejected.
 - No observable Registration exists without an already eligible execution path.
 - Complete is the only Registration removal point.
 - Owner preparation precedes Commit; Session execution begins only after Commit.
@@ -849,7 +863,7 @@ Rejected because one per-Session invariant does not justify a generic framework.
 | F-11 | Clarified | Invocation count and effective cancellation are distinct. |
 | F-12 | Clarified | RequestStop promises no Session wait, not a hard time bound. |
 | F-13 | Resolved | Owner receives registration-bound Completion Adapter only. |
-| F-14 | Resolved | Commit atomically returns one identity-bound complete bundle. |
+| F-14 | Resolved | Commit atomically publishes and returns one identity-bound complete `CommitResult`. |
 | F-15 | Clarified | Snapshot gains a compatible immutable capability accessor. |
 | F-16 | Resolved | Terminal Result contains bounded categories and no raw error. |
 
@@ -901,11 +915,11 @@ Only F-01 through F-04 are closed by this revision.
 
 | Finding | Status | Resolution |
 | --- | --- | --- |
-| F-01 — Commit-to-owner execution boundary | Resolved | Dispatcher creates exactly one dormant launch goroutine. The integrated Commit operation publishes Registration and changes its one-shot execution binding to `Committed` under the same synchronization boundary before returning success. |
+| F-01 — Commit-to-owner execution boundary | Resolved | Dispatcher creates one `CommitHandoff` and one dormant launch goroutine. The integrated Commit operation publishes Registration and the complete Manager-created `CommitResult` as `Committed` through that handoff under the same synchronization boundary before returning success. |
 | F-02 — Runtime-cancellation callback timing | Superseded by TASK-REV-011 | The final model removes pre-Commit registration and gives post-Commit installation to owner. |
 | F-03 — cancellation-anomaly Terminal ordering | Resolved by TASK-REV-010 | Cancellation anomaly follows the single common Terminal order. |
 | F-04 — DP-003 later registration failure after ownership transfer | Resolved | DP-003 now states that Commit itself simultaneously publishes Registration and transfers Session ownership; no later registration failure exists. |
-| F-05 — repeated Commit and owner bundle | Resolved | Repeated Commit for an existing Registration returns the same bound publication observation and cannot create or release another execution path. |
+| F-05 — repeated Commit and owner bundle | Resolved | Repeated Commit with the same handoff identity returns the same `CommitResult` and cannot create or release another execution path; a different identity is rejected. |
 | F-06 — incomplete failure-matrix execution outcome | Clarified | The matrix now states the common pre-Commit and post-Commit accepted and launch-path outcomes; its unrelated terminal columns are unchanged. |
 | F-07 — common-interface `accepted=true, error!=nil` | Resolved by TASK-REV-010 | Generic interface ownership semantics remain valid while the target Dispatcher uses only `true,nil` after Commit. |
 
@@ -920,7 +934,7 @@ Only the Commit-to-execution findings F-01, F-04, and F-05 are closed. F-06 is c
 | F-03 — Runtime-cancellation callback timing | Superseded by TASK-REV-011 | Owner installs observation only after Commit and before Start through one race-safe registration-and-check contract. |
 | F-04 — Terminal ordering | Resolved by TASK-REV-011 | Every committed terminal cause uses one order, and only confirmed callback cleanup permits Terminal. |
 | F-05 — incomplete Failure Matrix | Resolved by TASK-REV-011 | The matrix now separates callback installation, invocation, cleanup, Complete, Observer, owner-state, lease, and Wait outcomes. |
-| F-06 — execution-binding terminology | Clarified | The binding is a narrow one-shot publication capability, not a passive value or general lifecycle control. |
+| F-06 — execution-binding terminology | Clarified | Execution Binding remains the narrow one-shot synchronization primitive inside the domain-specific `CommitHandoff`; neither is a lifecycle or general control surface. |
 | F-07 — accepted/error contract | Resolved | The generic interface permits true plus error as an ownership result; the target production Dispatcher emits only pre-Commit false plus error or successful Commit true plus nil. |
 
 No TASK-REV-010 Blocker or High finding is Deferred.
@@ -940,13 +954,13 @@ No TASK-REV-011 Blocker or High finding is Deferred.
 
 DP-003 remains authoritative for Reserve, Abort, registration identity, Lookup, Complete mutation, Manager lifecycle, BeginShutdown, Wait, and identity Snapshot semantics.
 
-This document adds the normative integrated Commit bundle, owner-lifetime lease accounting, and compatible capability-bearing Snapshot accessor. These additions do not change existing identity or completion linearization points.
+This document adds the normative Manager-created `CommitResult`, its atomic publication through `CommitHandoff`, owner-lifetime lease accounting, and compatible capability-bearing Snapshot accessor. These additions do not change existing identity or completion linearization points.
 
 DP-003 does not duplicate execution state, attachment, cleanup, or termination behavior.
 
 ## 42. Open Questions
 
-- Exact Go names and private package placement of Core, Commit bundle, adapters, and categorized values.
+- Exact Go names and private package placement of Core, the CommitHandoff implementation, adapters, and categorized values where this proposal does not prescribe them.
 - Exact enum names for terminal categories.
 - Test-only instrumentation needed to prove that no Runtime-owned work occurs after successful lease release.
 
