@@ -51,14 +51,13 @@ type ownerState struct {
 	control controlCell
 }
 
-type controlCell struct {
-	stopRequested bool
-}
-
 // New creates a dormant Owner in the PreCommit state.
 func New() *Owner {
 	return &Owner{
-		state: &ownerState{current: StatePreCommit},
+		state: &ownerState{
+			current: StatePreCommit,
+			control: newControlCell(),
+		},
 	}
 }
 
@@ -78,20 +77,7 @@ func (owner *Owner) State() State {
 // RequestStop records the first Stop request for this Owner. It does not
 // transition the lifecycle or perform Session work.
 func (owner *Owner) RequestStop() bool {
-	if owner == nil || owner.state == nil {
-		return false
-	}
-
-	state := owner.state
-	state.mu.Lock()
-	defer state.mu.Unlock()
-
-	if state.current == StateTerminalizing || state.current == StateTerminal || state.control.stopRequested {
-		return false
-	}
-
-	state.control.stopRequested = true
-	return true
+	return owner.requestStop()
 }
 
 // StopRequested reports whether this Owner has accepted a Stop request.
@@ -104,7 +90,7 @@ func (owner *Owner) StopRequested() bool {
 	state.mu.RLock()
 	defer state.mu.RUnlock()
 
-	return state.control.stopRequested
+	return state.control.primary == terminationExplicitStop
 }
 
 // Transition publishes the PreCommit-to-Committed ownership boundary.

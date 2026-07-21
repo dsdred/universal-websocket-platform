@@ -31,7 +31,7 @@ func (owner *Owner) Execute(ctx context.Context, session SessionLifecycle) error
 		state.mu.Unlock()
 		return err
 	}
-	if state.control.stopRequested || ctx.Err() != nil {
+	if state.control.primary == terminationExplicitStop || ctx.Err() != nil {
 		state.current = StateTerminalizing
 		err := ctx.Err()
 		state.mu.Unlock()
@@ -51,7 +51,7 @@ func (owner *Owner) Execute(ctx context.Context, session SessionLifecycle) error
 		state.mu.Unlock()
 		return err
 	}
-	if state.control.stopRequested || ctx.Err() != nil {
+	if state.control.primary == terminationExplicitStop || ctx.Err() != nil {
 		state.current = StateTerminalizing
 		err := ctx.Err()
 		state.mu.Unlock()
