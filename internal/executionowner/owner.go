@@ -46,9 +46,10 @@ type Owner struct {
 }
 
 type ownerState struct {
-	mu      sync.RWMutex
-	current State
-	control controlCell
+	mu               sync.RWMutex
+	current          State
+	executionClaimed bool
+	control          controlCell
 }
 
 // New creates a dormant Owner in the PreCommit state.

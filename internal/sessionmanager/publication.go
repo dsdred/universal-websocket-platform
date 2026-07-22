@@ -5,7 +5,6 @@ import (
 	"reflect"
 
 	"github.com/dsdred/universal-websocket-platform/internal/completionadapter"
-	"github.com/dsdred/universal-websocket-platform/internal/executionbinding"
 	"github.com/dsdred/universal-websocket-platform/internal/executionowner"
 )
 
@@ -19,13 +18,13 @@ type StopPublicationBinding interface {
 // required by an atomic Commit.
 type CommitInput struct {
 	stop      StopPublicationBinding
-	publisher executionbinding.CommitPublisher
+	publisher CommitHandoffPublisher
 }
 
 // NewCommitInput creates an immutable complete publication input.
 func NewCommitInput(
 	stop StopPublicationBinding,
-	publisher executionbinding.CommitPublisher,
+	publisher CommitHandoffPublisher,
 ) (CommitInput, error) {
 	input := CommitInput{stop: stop, publisher: publisher}
 	if err := input.validate(); err != nil {
@@ -38,23 +37,33 @@ func (input CommitInput) validate() error {
 	if isNilStopBinding(input.stop) {
 		return fmt.Errorf("%w: missing Stop publication binding", ErrInvalidCommitInput)
 	}
-	if err := input.publisher.ValidateFresh(); err != nil {
+	if err := input.publisher.validateFresh(); err != nil {
 		return fmt.Errorf("%w: %w", ErrInvalidCommitInput, err)
 	}
 	return nil
 }
 
 func isNilStopBinding(stop StopPublicationBinding) bool {
-	if stop == nil {
+	return isNilCapability(stop)
+}
+
+func isNilCapability(capability any) bool {
+	if capability == nil {
 		return true
 	}
-	value := reflect.ValueOf(stop)
+	value := reflect.ValueOf(capability)
 	switch value.Kind() {
 	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
 		return value.IsNil()
 	default:
 		return false
 	}
+}
+
+func (result CommitResult) valid() bool {
+	return result.registrationID != (RegistrationID{}) &&
+		!isNilCapability(result.completion) &&
+		!isNilCapability(result.lifetimeLease)
 }
 
 type boundCompletionMutation struct {

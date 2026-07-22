@@ -49,10 +49,96 @@ func (owner *Owner) Execute(
 		return ErrNilLifetimeLease
 	}
 
-	outcomes, executionErr, claimed := owner.executeSession(ctx, session)
-	if !claimed {
-		return executionErr
+	if err := owner.claimExecution(); err != nil {
+		return err
 	}
+	return owner.executeClaimed(ctx, nil, session, completion, observer, lease, nil)
+}
+
+// ExecuteInEnvironment runs the single committed path using the prepared
+// derived execution context and installs observation of only the root Runtime
+// context before Session Start.
+func (owner *Owner) ExecuteInEnvironment(
+	environment ExecutionEnvironment,
+	session SessionLifecycle,
+	completion CompletionAdapter,
+	observer TerminalObserver,
+	lease lifetimelease.Lease,
+) error {
+	if !environment.valid() {
+		return ErrInvalidExecutionEnvironment
+	}
+	if owner == nil || owner.state == nil {
+		return ErrUninitializedOwner
+	}
+	if isNilContract(session) {
+		return ErrNilSessionLifecycle
+	}
+	if isNilContract(completion) {
+		return ErrNilCompletion
+	}
+	if isNilContract(observer) {
+		return ErrNilTerminalObserver
+	}
+	if isNilContract(lease) {
+		return ErrNilLifetimeLease
+	}
+	if err := owner.claimExecution(); err != nil {
+		return err
+	}
+
+	var preparationErr error
+	if err := owner.bindExecutionCancellation(environment.cancel); err != nil {
+		owner.recordTermination(terminationExecutionFailure)
+		preparationErr = err
+	} else if err := owner.installRuntimeCancellation(
+		newRuntimeCancellationObservation(environment.root),
+	); err != nil {
+		preparationErr = err
+	}
+
+	return owner.executeClaimed(
+		environment.execution,
+		environment.root,
+		session,
+		completion,
+		observer,
+		lease,
+		preparationErr,
+	)
+}
+
+func (owner *Owner) claimExecution() error {
+	if owner == nil || owner.state == nil {
+		return ErrUninitializedOwner
+	}
+	state := owner.state
+	state.mu.Lock()
+	defer state.mu.Unlock()
+	if state.current != StateCommitted || state.executionClaimed {
+		return invalidTransitionError(state.current, StateCommitted, StateStarting)
+	}
+	state.executionClaimed = true
+	return nil
+}
+
+func (owner *Owner) executeClaimed(
+	ctx context.Context,
+	rootObservation context.Context,
+	session SessionLifecycle,
+	completion CompletionAdapter,
+	observer TerminalObserver,
+	lease lifetimelease.Lease,
+	preparationErr error,
+) error {
+	outcomes, executionErr := owner.executeSession(ctx, session)
+	// A root cancellation can make the derived execution return before the
+	// registered callback is scheduled. Observe the same root source once more
+	// before closing callback admission so that cancellation cannot be lost.
+	if rootObservation != nil && rootObservation.Err() != nil {
+		owner.runtimeCancellationCallback()
+	}
+	executionErr = errors.Join(preparationErr, executionErr)
 
 	return owner.runTerminalLifecycle(
 		session,
@@ -73,7 +159,7 @@ type executionOutcomes struct {
 func (owner *Owner) executeSession(
 	ctx context.Context,
 	session SessionLifecycle,
-) (executionOutcomes, error, bool) {
+) (executionOutcomes, error) {
 	outcomes := executionOutcomes{
 		start: StartCategoryNotAttempted,
 		run:   RunCategoryNotStarted,
@@ -84,7 +170,7 @@ func (owner *Owner) executeSession(
 	if state.current != StateCommitted {
 		err := invalidTransitionError(state.current, StateCommitted, StateStarting)
 		state.mu.Unlock()
-		return outcomes, err, false
+		return outcomes, err
 	}
 	if state.control.primary != terminationNone || ctx.Err() != nil {
 		if state.control.primary == terminationNone {
@@ -93,7 +179,7 @@ func (owner *Owner) executeSession(
 		state.current = StateTerminalizing
 		err := ctx.Err()
 		state.mu.Unlock()
-		return outcomes, err, true
+		return outcomes, err
 	}
 	state.current = StateStarting
 	state.mu.Unlock()
@@ -104,13 +190,11 @@ func (owner *Owner) executeSession(
 		outcomes.start = StartCategoryPanicked
 		outcomes.panicPhase = RecoveredPanicPhaseStart
 		return outcomes,
-			owner.finishExecution(StateStarting, terminationRecoveredPanic, ErrSessionPanic),
-			true
+			owner.finishExecution(StateStarting, terminationRecoveredPanic, ErrSessionPanic)
 	case startErr != nil:
 		outcomes.start = StartCategoryFailed
 		return outcomes,
-			owner.finishExecution(StateStarting, terminationExecutionFailure, startErr),
-			true
+			owner.finishExecution(StateStarting, terminationExecutionFailure, startErr)
 	default:
 		outcomes.start = StartCategorySucceeded
 	}
@@ -119,7 +203,7 @@ func (owner *Owner) executeSession(
 	if state.current != StateStarting {
 		err := invalidTransitionError(state.current, StateStarting, StateRunning)
 		state.mu.Unlock()
-		return outcomes, err, true
+		return outcomes, err
 	}
 	if state.control.primary != terminationNone || ctx.Err() != nil {
 		if state.control.primary == terminationNone {
@@ -128,7 +212,7 @@ func (owner *Owner) executeSession(
 		state.current = StateTerminalizing
 		err := ctx.Err()
 		state.mu.Unlock()
-		return outcomes, err, true
+		return outcomes, err
 	}
 	state.current = StateRunning
 	state.mu.Unlock()
@@ -139,18 +223,15 @@ func (owner *Owner) executeSession(
 		outcomes.run = RunCategoryPanicked
 		outcomes.panicPhase = RecoveredPanicPhaseRun
 		return outcomes,
-			owner.finishExecution(StateRunning, terminationRecoveredPanic, ErrSessionPanic),
-			true
+			owner.finishExecution(StateRunning, terminationRecoveredPanic, ErrSessionPanic)
 	case runErr != nil:
 		outcomes.run = RunCategoryFailed
 		return outcomes,
-			owner.finishExecution(StateRunning, terminationExecutionFailure, runErr),
-			true
+			owner.finishExecution(StateRunning, terminationExecutionFailure, runErr)
 	default:
 		outcomes.run = RunCategoryReturned
 		return outcomes,
-			owner.finishExecution(StateRunning, terminationNaturalCompletion, nil),
-			true
+			owner.finishExecution(StateRunning, terminationNaturalCompletion, nil)
 	}
 }
 

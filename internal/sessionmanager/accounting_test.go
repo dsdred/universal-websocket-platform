@@ -6,6 +6,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/dsdred/universal-websocket-platform/internal/lifetimelease"
 )
 
 func TestManagerWaitEmptyManagerClosesShutdown(t *testing.T) {
@@ -70,19 +72,27 @@ func TestManagerCommitPreservesAccounting(t *testing.T) {
 func TestManagerConcurrentCommitAndWaitPreserveRegistrationAccounting(t *testing.T) {
 	manager := New()
 	handle := mustReserve(t, manager, "session-1")
-	registrationID := mustCommit(t, handle)
+	input := newCommitTestInput()
+	committed, err := handle.Commit(input)
+	if err != nil {
+		t.Fatalf("Commit() error = %v", err)
+	}
+	registrationID := committed.RegistrationID()
 	manager.BeginShutdown()
 	waitResult := startObservedWait(t, manager, context.Background())
 	assertWaitBlocked(t, waitResult)
 	commitResultChannel := make(chan commitResult, 1)
 
 	go func() {
-		committed, err := commitTestReservation(handle)
+		committed, err := handle.Commit(input)
 		commitResultChannel <- commitResult{registrationID: committed.RegistrationID(), err: err}
 	}()
 	commitResult := <-commitResultChannel
 	if commitResult.err != nil || commitResult.registrationID != registrationID {
 		t.Fatalf("repeated Commit() = (%+v, %v), want %+v and nil", commitResult.registrationID, commitResult.err, registrationID)
+	}
+	if outcome := committed.LifetimeLease().Release(); outcome != lifetimelease.ReleaseOutcomeReleased {
+		t.Fatalf("LifetimeLease.Release() = %d, want ReleaseOutcomeReleased", outcome)
 	}
 	assertWaitBlocked(t, waitResult)
 	assertAccountingCount(t, manager, 1)

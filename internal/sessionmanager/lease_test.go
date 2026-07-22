@@ -49,9 +49,10 @@ func TestSuccessfulCommitPublishesRegistrationAndLifetimeLease(t *testing.T) {
 func TestRepeatedCommitReturnsSameLifetimeLease(t *testing.T) {
 	manager := New()
 	handle := mustReserve(t, manager, "session-1")
+	input := newCommitTestInput()
 
-	first, firstErr := commitTestReservation(handle)
-	second, secondErr := commitTestReservation(handle)
+	first, firstErr := handle.Commit(input)
+	second, secondErr := handle.Commit(input)
 	if firstErr != nil || secondErr != nil {
 		t.Fatalf("Commit() errors = (%v, %v), want nil", firstErr, secondErr)
 	}
@@ -70,6 +71,7 @@ func TestRepeatedCommitReturnsSameLifetimeLease(t *testing.T) {
 func TestConcurrentRepeatedCommitPublishesOneLifetimeLease(t *testing.T) {
 	manager := New()
 	handle := mustReserve(t, manager, "session-1")
+	input := newCommitTestInput()
 	start := make(chan struct{})
 	results := make(chan CommitResult, concurrentCalls)
 	errorsResult := make(chan error, concurrentCalls)
@@ -80,7 +82,7 @@ func TestConcurrentRepeatedCommitPublishesOneLifetimeLease(t *testing.T) {
 		go func() {
 			ready.Done()
 			<-start
-			result, err := commitTestReservation(handle)
+			result, err := handle.Commit(input)
 			results <- result
 			errorsResult <- err
 		}()

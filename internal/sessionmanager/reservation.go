@@ -1,9 +1,8 @@
 package sessionmanager
 
 import (
+	"errors"
 	"math"
-
-	"github.com/dsdred/universal-websocket-platform/internal/executionbinding"
 )
 
 const maxSessionIDBytes = 255
@@ -34,6 +33,7 @@ type registration struct {
 	sessionID      SessionID
 	commitResult   CommitResult
 	stop           StopPublicationBinding
+	handoff        CommitHandoffPublisher
 }
 
 type reservationHandle struct {
@@ -103,7 +103,7 @@ func (manager *Manager) commit(target *reservation, input CommitInput) (CommitRe
 	manager.mu.Lock()
 	switch target.state {
 	case reservationCommitted:
-		result, err := manager.committedResultLocked(target)
+		result, err := manager.committedResultLocked(target, input.publisher)
 		manager.mu.Unlock()
 		return result, err
 	case reservationAborted:
@@ -122,6 +122,17 @@ func (manager *Manager) commit(target *reservation, input CommitInput) (CommitRe
 	manager.mu.Unlock()
 
 	if err := input.validate(); err != nil {
+		manager.mu.Lock()
+		if target.state == reservationCommitted {
+			result, committedErr := manager.committedResultLocked(target, input.publisher)
+			manager.mu.Unlock()
+			return result, committedErr
+		}
+		if target.state == reservationAborted {
+			manager.mu.Unlock()
+			return CommitResult{}, ErrReservationAborted
+		}
+		manager.mu.Unlock()
 		return CommitResult{}, err
 	}
 	result, err := prepareCommitResult(manager, target.registrationID)
@@ -134,7 +145,7 @@ func (manager *Manager) commit(target *reservation, input CommitInput) (CommitRe
 
 	switch target.state {
 	case reservationCommitted:
-		return manager.committedResultLocked(target)
+		return manager.committedResultLocked(target, input.publisher)
 	case reservationAborted:
 		return CommitResult{}, ErrReservationAborted
 	}
@@ -147,14 +158,20 @@ func (manager *Manager) commit(target *reservation, input CommitInput) (CommitRe
 	if !exists || current != target {
 		return CommitResult{}, ErrReservationAborted
 	}
-	if err := input.validate(); err != nil {
-		return CommitResult{}, err
+	if isNilStopBinding(input.stop) {
+		return CommitResult{}, errors.Join(ErrInvalidCommitInput, errors.New("missing Stop publication binding"))
 	}
+	handoffState, err := input.publisher.lockFresh()
+	if err != nil {
+		return CommitResult{}, errors.Join(ErrInvalidCommitInput, err)
+	}
+	defer handoffState.mu.Unlock()
 	committed := &registration{
 		registrationID: target.registrationID,
 		sessionID:      target.sessionID,
 		commitResult:   result,
 		stop:           input.stop,
+		handoff:        input.publisher,
 	}
 	target.state = reservationCommitted
 	delete(manager.reservations, target.registrationID)
@@ -163,15 +180,15 @@ func (manager *Manager) commit(target *reservation, input CommitInput) (CommitRe
 	manager.registeredSessions[target.sessionID] = target.registrationID
 	manager.lifetimeLeases[target.registrationID] = struct{}{}
 
-	outcome, publicationErr := input.publisher.PublishCommitted()
-	if publicationErr != nil || outcome != executionbinding.OutcomeCommitted {
-		panic("Session Manager Commit publication invariant violated")
-	}
+	handoffState.publishCommittedLocked(result)
 
 	return result, nil
 }
 
-func (manager *Manager) committedResultLocked(target *reservation) (CommitResult, error) {
+func (manager *Manager) committedResultLocked(
+	target *reservation,
+	publisher CommitHandoffPublisher,
+) (CommitResult, error) {
 	registration, exists := manager.registrations[target.registrationID]
 	if !exists || registration.sessionID != target.sessionID {
 		return CommitResult{}, ErrRegistrationRemoved
@@ -179,6 +196,12 @@ func (manager *Manager) committedResultLocked(target *reservation) (CommitResult
 	currentID, exists := manager.registeredSessions[target.sessionID]
 	if !exists || currentID != target.registrationID {
 		return CommitResult{}, ErrRegistrationRemoved
+	}
+	if !registration.handoff.sameIdentity(publisher) {
+		return CommitResult{}, errors.Join(
+			ErrInvalidCommitInput,
+			ErrInvalidCommitHandoff,
+		)
 	}
 	return registration.commitResult, nil
 }

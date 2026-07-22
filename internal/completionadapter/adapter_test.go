@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/dsdred/universal-websocket-platform/internal/completionadapter"
-	"github.com/dsdred/universal-websocket-platform/internal/executionbinding"
 	"github.com/dsdred/universal-websocket-platform/internal/executionowner"
 	"github.com/dsdred/universal-websocket-platform/internal/lifetimelease"
 	"github.com/dsdred/universal-websocket-platform/internal/sessionmanager"
@@ -269,8 +268,8 @@ func committedRegistration(
 		t.Fatalf("Manager.Reserve(%q) error = %v", sessionID, err)
 	}
 	owner := executionowner.New()
-	binding := executionbinding.New()
-	input, err := sessionmanager.NewCommitInput(owner, binding.CommitPublisher())
+	handoff := sessionmanager.NewCommitHandoff()
+	input, err := sessionmanager.NewCommitInput(owner, handoff.CommitPublisher())
 	if err != nil {
 		t.Fatalf("sessionmanager.NewCommitInput() error = %v", err)
 	}

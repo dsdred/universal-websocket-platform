@@ -36,7 +36,8 @@ func TestPrepareProvisionalSessionCreatesCompletePreCommitUnit(t *testing.T) {
 	if err != nil {
 		t.Fatalf("prepareProvisionalSession() error = %v", err)
 	}
-	if prepared == nil || prepared.core == nil || prepared.session == nil || prepared.owner == nil || prepared.cleanup == nil {
+	if prepared == nil || prepared.core == nil || prepared.session == nil || prepared.owner == nil ||
+		prepared.cleanup == nil || prepared.lifecycle == nil {
 		t.Fatalf("prepared unit = %#v, want complete unit", prepared)
 	}
 	if prepared.core != core || prepared.session.core != core {
@@ -47,6 +48,9 @@ func TestPrepareProvisionalSessionCreatesCompletePreCommitUnit(t *testing.T) {
 	}
 	if prepared.cleanup.session != prepared.session {
 		t.Fatal("prepared Cleanup is not bound to the Session in the same aggregate")
+	}
+	if prepared.lifecycle.session != prepared.session || prepared.lifecycle.cleanup != prepared.cleanup {
+		t.Fatal("prepared execution lifecycle is not bound to the Session and Cleanup in the same aggregate")
 	}
 	if prepared.cleanup.cancellation == nil || prepared.cleanup.cancellation.done != cancellation.done {
 		t.Fatal("prepared Cleanup is not bound to the supplied cancellation observation")
@@ -91,10 +95,12 @@ func TestProvisionalSessionMembershipIsStructurallyStable(t *testing.T) {
 	wantSession := prepared.session
 	wantOwner := prepared.owner
 	wantCleanup := prepared.cleanup
+	wantLifecycle := prepared.lifecycle
 	wantCancellation := prepared.cleanup.cancellation
 	for range 10 {
 		if prepared.core != wantCore || prepared.session != wantSession || prepared.owner != wantOwner ||
-			prepared.cleanup != wantCleanup || prepared.cleanup.cancellation != wantCancellation {
+			prepared.cleanup != wantCleanup || prepared.lifecycle != wantLifecycle ||
+			prepared.cleanup.cancellation != wantCancellation {
 			t.Fatal("provisional Session component identity changed after construction")
 		}
 	}
@@ -239,7 +245,8 @@ func TestSeparateProvisionalSessionsDoNotSharePreparedState(t *testing.T) {
 	}
 
 	if first == second || first.core == second.core || first.session == second.session || first.owner == second.owner ||
-		first.cleanup == second.cleanup || first.cleanup.cancellation == second.cleanup.cancellation {
+		first.cleanup == second.cleanup || first.lifecycle == second.lifecycle ||
+		first.cleanup.cancellation == second.cleanup.cancellation {
 		t.Fatal("separate preparations share identity-bearing objects")
 	}
 	first.core.principal.Claims["tenant"] = "first-mutated"

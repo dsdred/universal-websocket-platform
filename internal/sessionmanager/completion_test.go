@@ -6,7 +6,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/dsdred/universal-websocket-platform/internal/executionbinding"
 	"github.com/dsdred/universal-websocket-platform/internal/executionowner"
 	"github.com/dsdred/universal-websocket-platform/internal/lifetimelease"
 )
@@ -268,11 +267,15 @@ func mustCommit(t *testing.T, handle ReservationHandle) RegistrationID {
 }
 
 func commitTestReservation(handle ReservationHandle) (CommitResult, error) {
+	return handle.Commit(newCommitTestInput())
+}
+
+func newCommitTestInput() CommitInput {
 	owner := executionowner.New()
-	binding := executionbinding.New()
-	input, err := NewCommitInput(owner, binding.CommitPublisher())
+	handoff := NewCommitHandoff()
+	input, err := NewCommitInput(owner, handoff.CommitPublisher())
 	if err != nil {
 		panic(err)
 	}
-	return handle.Commit(input)
+	return input
 }

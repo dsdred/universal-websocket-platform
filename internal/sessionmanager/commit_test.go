@@ -28,9 +28,10 @@ func TestReservationCommitPublishesRegistration(t *testing.T) {
 func TestReservationDoubleCommitIsIdempotent(t *testing.T) {
 	manager := New()
 	handle := mustReserve(t, manager, "session-1")
+	input := newCommitTestInput()
 
-	first, firstErr := commitTestReservation(handle)
-	second, secondErr := commitTestReservation(handle)
+	first, firstErr := handle.Commit(input)
+	second, secondErr := handle.Commit(input)
 
 	if firstErr != nil || secondErr != nil {
 		t.Fatalf("Commit() errors = (%v, %v), want nil", firstErr, secondErr)
@@ -113,13 +114,14 @@ func TestReservationAbortAfterCommitIsNoOp(t *testing.T) {
 func TestReservationConcurrentCommitPublishesExactlyOnce(t *testing.T) {
 	manager := New()
 	handle := mustReserve(t, manager, "session-1")
+	input := newCommitTestInput()
 	start := make(chan struct{})
 	results := make(chan commitResult, concurrentCalls)
 
 	for range concurrentCalls {
 		go func() {
 			<-start
-			result, err := commitTestReservation(handle)
+			result, err := handle.Commit(input)
 			results <- commitResult{registrationID: result.RegistrationID(), err: err}
 		}()
 	}
