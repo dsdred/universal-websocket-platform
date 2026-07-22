@@ -42,7 +42,7 @@ Task 10 includes only:
 
 Task 10 does not include:
 
-- changes to Reserve, Commit, Abort, Complete, Lookup, Snapshot, Wait, `CommitHandoff`, or Owner Lifetime Lease semantics;
+- changes to Reserve, Commit, Abort, Manager Complete as the Registration-removal operation, Lookup, Snapshot, Wait, `CommitHandoff`, or Owner Lifetime Lease semantics;
 - changes to Execution Owner lifecycle, Terminal Result, Observer ordering, callback drain, Cleanup, or the causal cell;
 - Router, Delivery, Presence, Groups, Topics, Broadcast, Persistence, Plugins, Metrics, diagnostics backends, limits, or rate limiting;
 - new Runtime lifecycle states, restart, reload, supervision, or a global coordinator;
@@ -84,7 +84,7 @@ Runtime Host
     -> Listener
 ```
 
-The Host owns the identities of Listener, Manager, Runtime context, Runtime cancellation function, Admission Gate, and the immutable composed dependency graph. Manager owns only reservation, registration, Snapshot, completion, and lifetime-lease accounting. TransactionalDispatcher owns each pre-Commit transaction. Each committed Execution Owner owns its Session execution and terminal obligations.
+The Host owns the identities of Listener, Manager, Runtime context, Runtime cancellation function, Admission Gate, and the immutable composed dependency graph. Manager owns only reservation, registration, Snapshot, Manager Complete, and lifetime-lease accounting. Owner-local Completion remains part of the Owner terminal lifecycle and is not the Manager Registration-removal mutation. TransactionalDispatcher owns each pre-Commit transaction. Each committed Execution Owner owns its Session execution and terminal obligations.
 
 The actual root Runtime context remains absent until Listener startup succeeds, exactly as frozen by ARCH-002. Composition passes the already approved live read-only Runtime-context observation input, not a prematurely created root context and never its cancellation function. Admission remains closed during startup, so no Dispatcher invocation can reach Commit before the Host activates the root context and enters Running.
 
@@ -133,8 +133,9 @@ No Session, Reservation, Registration, callback, dormant path, or lease exists d
 | Before Upgrade | Listener/Handshake boundary | None | None | Admission and root context |
 | After Upgrade, before Commit | TransactionalDispatcher acting for Upgrade boundary | Dispatcher owns provisional path; Owner remains `PreCommit` and cannot execute | Dispatcher owns Reservation obligation; Manager accounts Reservation | No Session execution |
 | Successful Commit | Ownership transfers atomically to Execution Owner | Exactly one committed path is eligible | Manager owns Registration and lease accounting | Coordinates only Runtime lifecycle |
-| Running/Terminalizing | Execution Owner | Execution Owner is sole post-Commit lifecycle writer | Manager retains Registration until Complete and lease until Release | May publish Stop intent and root cancellation |
-| After Complete, before lease release | Execution Owner until terminal obligations finish | Owner may still observe, drain, seal, and reach Terminal | Registration absent; lifetime lease remains active | Wait remains pending |
+| Running/Terminalizing before synchronous Observer return | Execution Owner | Execution Owner is sole post-Commit lifecycle writer and performs Cleanup, owner-local Completion, Terminal Result construction, and synchronous Observer invocation | Manager retains Registration and lifetime lease | May publish Stop intent and root cancellation |
+| After synchronous Observer, during UnregisterAndDrain / Manager Complete | Execution Owner until terminal obligations finish | Owner invokes the Registration-removal boundary only after Observer returns | Manager Complete removes Registration; lifetime lease remains active | Wait remains pending |
+| After Manager Complete, before conditional lease release | Execution Owner | Owner still drains callbacks, seals, and reaches Terminal | Registration is absent; lifetime lease remains active | Wait remains pending |
 | After eligible lease release | No Runtime-owned transport or execution work remains | Owner performs no further Runtime-owned work | Registration and lease accounting are empty for that Session | Manager may converge |
 | Shutdown | Existing owners retain their resources until terminal completion | Owners terminalize independently | Manager fixes Snapshot and waits truthfully | Host orders shutdown but never takes Session ownership |
 
@@ -151,6 +152,7 @@ sequenceDiagram
     participant M as Session Manager
     participant P as Dormant Path
     participant O as Execution Owner
+    participant T as Terminal Observer
     L->>L: Admission and Authentication
     L->>L: WebSocket Accept
     L->>D: DispatchAuthenticated
@@ -165,9 +167,14 @@ sequenceDiagram
     P->>O: Enter committed execution
     O->>O: Install root cancellation observation
     O->>O: Start, Run, Terminalizing
-    O->>M: Complete bound Registration
-    O->>O: Observer, callback drain, seal, Terminal
-    O->>M: Release Lifetime Lease
+    O->>O: Cleanup
+    O->>O: Owner-local Completion
+    O->>O: Construct immutable Terminal Result
+    O->>T: Observe synchronously
+    T-->>O: Return
+    O->>M: UnregisterAndDrain / Manager Complete
+    O->>O: Callback drain, seal, Terminal
+    O->>M: Conditional Lifetime Lease release
 ```
 
 Ownership by stage is:
@@ -177,8 +184,9 @@ Ownership by stage is:
 3. Manager owns only accounting and committed publication inside Commit.
 4. Successful Commit transfers Session, WebSocket, derived cancellation, and execution ownership to the prepared Owner and makes exactly one dormant path eligible.
 5. Dispatcher returns `accepted=true` immediately and performs no post-Commit cleanup.
-6. Owner executes the complete terminal chain. Complete removes Registration; it does not release owner lifetime.
-7. Eligible lease release is the final Runtime-owned operation.
+6. Owner executes the fixed terminal chain: `Terminalizing -> Cleanup -> owner-local Completion -> Terminal Result -> synchronous Terminal Observer -> UnregisterAndDrain / Manager Complete -> callback drain -> seal -> Terminal -> conditional Lifetime Lease release`.
+7. UnregisterAndDrain / Manager Complete removes Registration only after the synchronous Observer returns. It does not release owner lifetime.
+8. Conditional Lifetime Lease release is the final Runtime-owned operation.
 
 ## 10. Failed Commit and Pre-Commit Failure
 
@@ -202,7 +210,7 @@ sequenceDiagram
     H->>H: Cancel connection context and close transport
 ```
 
-No Registration, lease, Stop capability, Runtime callback, Complete, Observer, or Owner execution exists on this path. Runtime integration must not add a post-Commit `accepted=false` branch.
+No Registration, lease, committed or Snapshot-visible Manager-bound Stop capability, Runtime callback, Manager Complete, Observer invocation, or Owner execution exists on this path. A provisional owner-local Stop binding may have been prepared, but it is never committed or published through Snapshot. Runtime integration must not add a post-Commit `accepted=false` branch.
 
 ## 11. Runtime Cancellation
 
@@ -273,8 +281,10 @@ sequenceDiagram
         H->>L: Stop
         L-->>H: Listener Stop returns
     and Owner drain
-        O->>O: Terminal lifecycle
-        O->>M: Complete and eligible lease release
+        O->>O: Cleanup, owner-local Completion, Terminal Result, synchronous Observer
+        O->>M: UnregisterAndDrain / Manager Complete
+        O->>O: Callback drain, seal, Terminal
+        O->>M: Conditional Lifetime Lease release
     end
     H->>M: Wait after Listener Stop
     M-->>H: Accounting converged or caller context error
@@ -321,7 +331,7 @@ Production integration is expected to touch only focused seams:
 - `internal/session/dispatcher.go`: remove the obsolete production implementation when no test-only reference remains;
 - focused Runtime, Handshake, Listener, Session, and Session Manager integration tests.
 
-No production semantic change is expected in Router, Authentication, Listener, Handshake, Session Manager, Completion Adapter, Lifetime Lease, Execution Binding, or Execution Owner terminal logic. Changes in those packages are permitted only when compilation requires the already approved dependency seam; they must not alter their contracts.
+No production semantic change is expected in Router, Authentication, Listener, Handshake, Session Manager, the owner-local Completion stage, the Manager Complete adapter, Lifetime Lease, Execution Binding, or Execution Owner terminal logic. Changes in those packages are permitted only when compilation requires the already approved dependency seam; they must not alter their contracts.
 
 ## 16. Error and Result Semantics
 
@@ -342,7 +352,7 @@ No production semantic change is expected in Router, Authentication, Listener, H
 - Listener Stop may wait for HTTP handlers while committed owners terminalize independently.
 - Owner never waits for Listener Stop or Manager Wait.
 - Manager Wait holds no Manager lock while blocked and never calls Session or Owner.
-- Completion and lease release mutate Manager accounting without waiting for Host.
+- UnregisterAndDrain / Manager Complete and conditional lease release mutate their respective Manager accounting without waiting for Host. Owner-local Completion does not remove Registration.
 - Permanently blocked Cleanup, Observer, callback entry, or unconfirmed callback cleanup may truthfully prevent successful Wait but creates no circular wait under the approved contracts.
 
 ## 18. Task 10 Architectural Invariants
@@ -354,13 +364,14 @@ No production semantic change is expected in Router, Authentication, Listener, H
 - Dispatcher creates exactly one `CommitHandoff` and one dormant path per attempted handoff.
 - Only Session Manager publishes Registration and committed Manager-bound capabilities.
 - Commit remains the sole irreversible Registration, execution-eligibility, and ownership-transfer point.
-- Every accepted production Session is Manager-tracked from Commit through Complete and Lifetime Lease release.
+- Every accepted production Session is Manager-tracked from Commit through UnregisterAndDrain / Manager Complete and conditional Lifetime Lease release.
 - No callback observing Runtime cancellation exists before Commit.
 - Owner alone installs root Runtime-context observation after Commit and before Start.
 - Root Runtime cancellation remains owned exclusively by Host.
 - Derived execution context remains owned by Dispatcher before Commit and Owner after Commit.
 - Session Cleanup cannot generate root `RuntimeCanceled`.
-- Complete is the only Registration removal operation.
+- UnregisterAndDrain / Manager Complete is the only Registration removal operation and occurs only after synchronous Terminal Observer return.
+- The terminal order is `Terminalizing -> Cleanup -> owner-local Completion -> Terminal Result -> synchronous Terminal Observer -> UnregisterAndDrain / Manager Complete -> callback drain -> seal -> Terminal -> conditional Lifetime Lease release`.
 - Lease release remains the final Runtime-owned operation.
 - First BeginShutdown fixes immutable Snapshot membership.
 - Commit and BeginShutdown retain strict mutually exclusive race outcomes.
@@ -380,7 +391,7 @@ Implementation is accepted only when:
 3. Listener remains the last externally visible startup resource and readiness opens only after successful startup commit.
 4. Every accepted WebSocket creates exactly one committed Registration, one eligible execution path, and one Lifetime Lease.
 5. Failed Commit leaves no Registration or lease and returns transport cleanup to Handshake.
-6. Normal disconnect performs Cleanup, Complete, Observer, callback drain, Terminal, and eligible lease release in the approved order.
+6. Normal disconnect performs Cleanup, owner-local Completion, immutable Terminal Result construction, synchronous Terminal Observer, UnregisterAndDrain / Manager Complete, callback drain, seal, Terminal, and conditional Lifetime Lease release in exactly that order.
 7. Root Runtime cancellation is observed only after Commit and before Start/Run continuation.
 8. Stop executes `Admission close -> BeginShutdown -> Snapshot RequestStop -> root cancellation -> Listener Stop -> Manager Wait`.
 9. Commit/BeginShutdown races produce only the two approved outcomes.
@@ -395,7 +406,7 @@ Tests must deterministically prove:
 
 - startup success constructs Manager and selects TransactionalDispatcher exactly once;
 - composition or Listener startup failure opens no admission and leaves no published Runtime Session state;
-- normal authenticated connection reaches Commit, Start, Run, normal disconnect, Complete, Observer, Terminal, and lease release;
+- normal authenticated connection reaches Commit, Start, Run, normal disconnect, Cleanup, owner-local Completion, immutable Terminal Result, synchronous Terminal Observer, UnregisterAndDrain / Manager Complete, callback drain, seal, Terminal, and conditional Lifetime Lease release in order;
 - failed Commit produces `accepted=false`, joins dormant execution, aborts Reservation, and lets Handshake close transport;
 - Start failure, Run failure, Cleanup anomaly, Observer anomaly, and eligible lease release preserve truthful accounting;
 - no matching Router route and Handler error retain their existing Session semantics through TransactionalDispatcher;
@@ -405,13 +416,13 @@ Tests must deterministically prove:
 - root cancellation after Commit is observed by Owner and terminates through the normal path;
 - explicit Snapshot Stop and root cancellation racing have one primary cause and no second lifecycle writer;
 - Commit winning BeginShutdown appears in Snapshot; BeginShutdown winning Commit causes Abort and no Registration;
-- Snapshot membership and Stop capabilities remain immutable and safe after Complete, Terminal, and lease release;
+- Snapshot membership and Stop capabilities remain immutable and safe after UnregisterAndDrain / Manager Complete, Terminal, and lease release;
 - Listener handler drain and Owner drain can overlap without deadlock;
 - Manager Wait begins after Listener Stop returns and remains pending while Registration or lease accounting exists;
 - successful graceful shutdown leaves Manager Closed and all tracked accounting empty;
 - concurrent and repeated Runtime Stop calls observe one shutdown execution and one stored terminal result;
 - legacy Dispatcher is unreachable from production composition;
-- race-enabled tests cover dispatch, Commit/shutdown, Snapshot Stop, callback entry, Complete, lease release, Listener drain, and Wait without arbitrary sleeps.
+- race-enabled tests cover dispatch, Commit/shutdown, Snapshot Stop, callback entry, UnregisterAndDrain / Manager Complete, conditional lease release, Listener drain, and Wait without arbitrary sleeps.
 
 ## 21. Compatibility
 
@@ -440,7 +451,7 @@ Costs and retained limitations:
 
 ### DP-003 Compliance
 
-Compliant. Manager remains limited to Reservation, Commit, Registration, Snapshot, Complete, lease accounting, BeginShutdown, and Wait. Commit and BeginShutdown linearization, Complete-only removal, immutable Snapshot, and truthful Wait are unchanged.
+Compliant. Manager remains limited to Reservation, Commit, Registration, Snapshot, Manager Complete, lease accounting, BeginShutdown, and Wait. Commit and BeginShutdown linearization, removal only through UnregisterAndDrain / Manager Complete after Observer return, immutable Snapshot, and truthful Wait are unchanged.
 
 ### DP-004 Compliance
 

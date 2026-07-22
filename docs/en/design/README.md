@@ -9,3 +9,4 @@ This directory contains focused Runtime design documents. A design document expl
 - [DP-003: Runtime Session Manager](DP-003-runtime-session-manager.md)
 - [DP-004: Per-Session Execution Boundary](DP-004-per-session-execution-boundary.md)
 - [DP-005: Runtime Message Router](DP-005-runtime-message-router.md)
+- [DP-006: Runtime Production Integration](DP-006-runtime-production-integration.md)
