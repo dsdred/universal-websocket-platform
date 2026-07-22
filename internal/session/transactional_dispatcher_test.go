@@ -25,7 +25,7 @@ func TestTransactionalDispatcherCommitsBeforeDormantExecutionStarts(t *testing.T
 	var prepared *provisionalSession
 	dispatcher, err := newTransactionalDispatcher(
 		manager,
-		root,
+		transactionalRuntimeContextProvider{ctx: root},
 		nil,
 		observer,
 		fixedSessionID("transactional-session"),
@@ -95,7 +95,7 @@ func TestTransactionalDispatcherCommitFailureRetiresDormantPathWithoutExecution(
 	var prepared *provisionalSession
 	dispatcher, err := newTransactionalDispatcher(
 		manager,
-		root,
+		transactionalRuntimeContextProvider{ctx: root},
 		nil,
 		observer,
 		fixedSessionID("not-committed-session"),
@@ -140,7 +140,7 @@ func TestTransactionalDispatcherRecoversPreCommitPanicAndJoinsDormantPath(t *tes
 	var prepared *provisionalSession
 	dispatcher, err := newTransactionalDispatcher(
 		manager,
-		context.Background(),
+		transactionalRuntimeContextProvider{ctx: context.Background()},
 		nil,
 		observer,
 		fixedSessionID("panic-before-commit"),
@@ -178,7 +178,7 @@ func TestTransactionalDispatcherCommitLosingToBeginShutdownPublishesNoExecution(
 	var prepared *provisionalSession
 	dispatcher, err := newTransactionalDispatcher(
 		shutdownManager,
-		root,
+		transactionalRuntimeContextProvider{ctx: root},
 		nil,
 		observer,
 		fixedSessionID("shutdown-loser"),
@@ -226,7 +226,7 @@ func TestTransactionalDispatcherCommittedOwnerObservesOnlyRootRuntimeCancellatio
 	observer := &transactionalTestObserver{observed: make(chan executionowner.TerminalResult, 1)}
 	dispatcher, err := newTransactionalDispatcher(
 		manager,
-		root,
+		transactionalRuntimeContextProvider{ctx: root},
 		nil,
 		observer,
 		fixedSessionID("runtime-canceled"),
@@ -274,7 +274,7 @@ func TestTransactionalDispatcherDormantExecutionWaitsForCommitPublication(t *tes
 	var prepared *provisionalSession
 	dispatcher, err := newTransactionalDispatcher(
 		blockingManager,
-		context.Background(),
+		transactionalRuntimeContextProvider{ctx: context.Background()},
 		nil,
 		observer,
 		fixedSessionID("blocked-commit"),
@@ -322,7 +322,7 @@ func TestTransactionalDispatcherRootCancellationBeforeFinalEligibilityDoesNotCom
 	var prepared *provisionalSession
 	dispatcher, err := newTransactionalDispatcher(
 		manager,
-		root,
+		transactionalRuntimeContextProvider{ctx: root},
 		nil,
 		observer,
 		fixedSessionID("canceled-before-commit"),
@@ -365,7 +365,7 @@ func TestTransactionalDispatcherStartFailureCompletesManagerAccounting(t *testin
 	observer := &transactionalTestObserver{observed: make(chan executionowner.TerminalResult, 1)}
 	dispatcher, err := newTransactionalDispatcher(
 		manager,
-		context.Background(),
+		transactionalRuntimeContextProvider{ctx: context.Background()},
 		nil,
 		observer,
 		fixedSessionID("start-failure"),
@@ -550,7 +550,7 @@ func newTransactionalFailureDispatcher(
 	t.Helper()
 	dispatcher, err := newTransactionalDispatcher(
 		manager,
-		context.Background(),
+		transactionalRuntimeContextProvider{ctx: context.Background()},
 		nil,
 		observer,
 		fixedSessionID("transactional-failure"),
@@ -569,6 +569,14 @@ func newTransactionalFailureDispatcher(
 		t.Fatalf("newTransactionalDispatcher() error = %v", err)
 	}
 	return dispatcher
+}
+
+type transactionalRuntimeContextProvider struct {
+	ctx context.Context
+}
+
+func (provider transactionalRuntimeContextProvider) RuntimeContext() context.Context {
+	return provider.ctx
 }
 
 func (observer *transactionalTestObserver) Observe(result executionowner.TerminalResult) {

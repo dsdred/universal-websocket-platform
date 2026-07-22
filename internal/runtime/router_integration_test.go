@@ -25,7 +25,7 @@ func TestRuntimeStartupConstructsMessageRouterExactlyOnce(t *testing.T) {
 		runtimeContext: context.Background,
 	}
 
-	runtimeListener, err := composeRuntimeWithRouterFactory(
+	components, err := composeRuntimeWithRouterFactory(
 		snapshot,
 		emptyResolver(t),
 		message.NewEchoHandler(),
@@ -42,8 +42,11 @@ func TestRuntimeStartupConstructsMessageRouterExactlyOnce(t *testing.T) {
 	if err != nil {
 		t.Fatalf("composeRuntimeWithRouterFactory() error = %v", err)
 	}
-	if runtimeListener == nil {
+	if components.listener == nil {
 		t.Fatal("composeRuntimeWithRouterFactory() returned nil Listener")
+	}
+	if components.sessionManager == nil {
+		t.Fatal("composeRuntimeWithRouterFactory() returned nil Session Manager")
 	}
 	if constructions.Load() != 1 {
 		t.Fatalf("Router constructions = %d, want 1", constructions.Load())
@@ -170,16 +173,6 @@ func TestRuntimeRouterHandlerErrorPreservesTerminalPath(t *testing.T) {
 		readResult <- readErr
 	}()
 	select {
-	case reported := <-reportedErrors:
-		if !errors.Is(reported, wantErr) {
-			t.Fatalf("reported error = %v, want Handler cause", reported)
-		}
-	case <-ctx.Done():
-		_ = connection.CloseNow()
-		<-readResult
-		t.Fatalf("Handler error was not reported: %v (Handler calls: %d)", ctx.Err(), handler.calls.Load())
-	}
-	select {
 	case <-readResult:
 	case <-ctx.Done():
 		_ = connection.CloseNow()
@@ -189,7 +182,69 @@ func TestRuntimeRouterHandlerErrorPreservesTerminalPath(t *testing.T) {
 	if handler.calls.Load() != 1 {
 		t.Fatalf("Handler calls = %d, want 1", handler.calls.Load())
 	}
+	select {
+	case reported := <-reportedErrors:
+		t.Fatalf("post-Commit Handler error escaped the Terminal Observer: %v", reported)
+	default:
+	}
 	if err := host.Stop(context.Background()); err != nil {
+		t.Fatalf("Stop() error = %v", err)
+	}
+}
+
+func TestRuntimeProductionCompositionUsesTransactionalDispatcher(t *testing.T) {
+	handler := &routingIntegrationHandler{echo: true}
+	snapshot := routingRuntimeSnapshot(t, nil)
+	runtimeHost := startRoutingRuntime(t, snapshot, handler, nil)
+	host, ok := runtimeHost.(*DefaultHost)
+	if !ok {
+		t.Fatalf("Host type = %T, want *DefaultHost", runtimeHost)
+	}
+
+	host.mu.RLock()
+	manager := host.sessionManager
+	host.mu.RUnlock()
+	if manager == nil {
+		t.Fatal("running Runtime has no Session Manager lifetime dependency")
+	}
+
+	connection := dialRoutingRuntime(t, snapshot)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	payload := []byte("transactional-production")
+	if err := connection.Write(ctx, websocket.MessageText, payload); err != nil {
+		t.Fatalf("Write() error = %v", err)
+	}
+	messageType, got, err := connection.Read(ctx)
+	if err != nil {
+		t.Fatalf("Read() error = %v", err)
+	}
+	if messageType != websocket.MessageText || string(got) != string(payload) {
+		t.Fatalf("Read() = (%v, %q), want text %q", messageType, got, payload)
+	}
+
+	shutdown := manager.BeginShutdown()
+	registrations := shutdown.Registrations()
+	if len(registrations) != 1 {
+		t.Fatalf("committed Registrations = %d, want 1", len(registrations))
+	}
+	if !registrations[0].RequestStop() {
+		t.Fatal("committed Registration rejected its first Stop request")
+	}
+	if err := manager.Wait(ctx); err != nil {
+		t.Fatalf("Session Manager Wait() error = %v", err)
+	}
+
+	host.mu.RLock()
+	storedManager := host.sessionManager
+	host.mu.RUnlock()
+	if storedManager != manager {
+		t.Fatal("Runtime replaced its Session Manager lifetime dependency")
+	}
+	if handler.calls.Load() != 1 {
+		t.Fatalf("Router Handler calls = %d, want 1", handler.calls.Load())
+	}
+	if err := runtimeHost.Stop(context.Background()); err != nil {
 		t.Fatalf("Stop() error = %v", err)
 	}
 }

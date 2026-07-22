@@ -9,6 +9,7 @@ import (
 	"github.com/dsdred/universal-websocket-platform/internal/message"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
 	"github.com/dsdred/universal-websocket-platform/internal/secretresolver"
+	"github.com/dsdred/universal-websocket-platform/internal/sessionmanager"
 )
 
 var (
@@ -55,13 +56,14 @@ type DefaultHost struct {
 	container         Container
 	resolver          secretresolver.Resolver
 	handler           message.Handler
-	compose           runtimeComposer
+	compose           productionRuntimeComposer
 	newRuntimeContext runtimeContextFactory
 	stateObserver     func(hostState)
 	reportError       func(error)
 	admission         admissionGate
 	capabilities      *handshakeCapabilities
 	runtimeListener   listener.Listener
+	sessionManager    *sessionmanager.Manager
 	runtimeContext    context.Context
 	runtimeCancel     context.CancelFunc
 	state             hostState
@@ -85,6 +87,12 @@ type runtimeComposer func(
 	secretresolver.Resolver,
 	message.Handler,
 ) (listener.Listener, error)
+
+type productionRuntimeComposer func(
+	runtimeconfig.Snapshot,
+	secretresolver.Resolver,
+	message.Handler,
+) (runtimeComposition, error)
 
 type runtimeContextFactory func() (context.Context, context.CancelFunc)
 
@@ -136,11 +144,21 @@ func newHostWithTerminalErrorReporter(
 			snapshot runtimeconfig.Snapshot,
 			resolver secretresolver.Resolver,
 			handler message.Handler,
-		) (listener.Listener, error) {
+		) (runtimeComposition, error) {
 			return composeRuntime(snapshot, resolver, handler, host.capabilities, host.reportError)
 		}
 	} else {
-		host.compose = compose
+		host.compose = func(
+			snapshot runtimeconfig.Snapshot,
+			resolver secretresolver.Resolver,
+			handler message.Handler,
+		) (runtimeComposition, error) {
+			runtimeListener, err := compose(snapshot, resolver, handler)
+			if err != nil {
+				return runtimeComposition{}, err
+			}
+			return runtimeComposition{listener: runtimeListener}, nil
+		}
 	}
 	return host, nil
 }
@@ -189,15 +207,17 @@ func (host *DefaultHost) Start(ctx context.Context) error {
 	startDone := host.startDone
 	host.mu.Unlock()
 
-	runtimeListener, err := host.startTransaction(ctx)
+	components, err := host.startTransaction(ctx)
 
 	host.mu.Lock()
 	host.startErr = err
 	if err == nil {
-		host.runtimeListener = runtimeListener
+		host.runtimeListener = components.listener
+		host.sessionManager = components.sessionManager
 		host.runtimeContext, host.runtimeCancel = host.newRuntimeContext()
 	} else {
 		host.runtimeListener = nil
+		host.sessionManager = nil
 		host.runtimeContext = nil
 		host.runtimeCancel = nil
 	}
@@ -214,34 +234,34 @@ func (host *DefaultHost) Start(ctx context.Context) error {
 	return err
 }
 
-func (host *DefaultHost) startTransaction(ctx context.Context) (listener.Listener, error) {
+func (host *DefaultHost) startTransaction(ctx context.Context) (runtimeComposition, error) {
 	transaction := startupTransaction{}
-	var runtimeListener listener.Listener
+	var components runtimeComposition
 
 	startupErr := transaction.acquire(func() (startupRollback, error) {
-		createdListener, err := host.compose(host.snapshot, host.resolver, host.handler)
+		createdComponents, err := host.compose(host.snapshot, host.resolver, host.handler)
 		if err != nil {
 			return nil, err
 		}
-		if createdListener == nil {
+		if createdComponents.listener == nil {
 			return nil, errNilRuntimeListener
 		}
-		runtimeListener = createdListener
-		return createdListener.Stop, nil
+		components = createdComponents
+		return createdComponents.listener.Stop, nil
 	})
 	if startupErr == nil {
-		startupErr = runtimeListener.Start(ctx)
+		startupErr = components.listener.Start(ctx)
 	}
 	if startupErr != nil {
 		rollbackErr := transaction.rollback(context.Background())
 		if rollbackErr != nil {
-			return nil, errors.Join(startupErr, rollbackErr)
+			return runtimeComposition{}, errors.Join(startupErr, rollbackErr)
 		}
-		return nil, startupErr
+		return runtimeComposition{}, startupErr
 	}
 
 	transaction.commit()
-	return runtimeListener, nil
+	return components, nil
 }
 
 // Stop delegates shutdown to the composed Listener and otherwise remains a no-op.

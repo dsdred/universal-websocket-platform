@@ -14,7 +14,7 @@ import (
 
 var (
 	ErrNilSessionManager          = errors.New("Session Manager is nil")
-	ErrNilRuntimeContext          = errors.New("root Runtime context is nil")
+	ErrNilRuntimeContext          = errors.New("root Runtime context observation input is nil or inactive")
 	ErrNilTransactionalObserver   = errors.New("transactional Dispatcher Terminal Observer is nil")
 	ErrTransactionalDispatchPanic = errors.New("transactional Session dispatch panicked")
 )
@@ -29,23 +29,29 @@ type provisionalPreparer func(
 	cancellationDependency,
 ) (*provisionalSession, error)
 
+// RuntimeContextProvider exposes the active Host-owned root Runtime context
+// without exposing its cancellation authority.
+type RuntimeContextProvider interface {
+	RuntimeContext() context.Context
+}
+
 // TransactionalDispatcher owns the complete pre-Commit transaction and
 // returns immediately after successful irreversible ownership transfer. It is
-// intentionally not selected by production Runtime composition in Task 9.
+// the sole production Session handoff selected by Runtime composition.
 type TransactionalDispatcher struct {
 	manager  reservationManager
-	root     context.Context
+	root     RuntimeContextProvider
 	handler  message.Handler
 	observer executionowner.TerminalObserver
 	generate idGenerator
 	prepare  provisionalPreparer
 }
 
-// NewTransactionalDispatcher creates the off-production transaction-capable
-// Dispatcher required by the Runtime Foundation migration.
+// NewTransactionalDispatcher creates the production transaction-capable
+// Dispatcher required by the Runtime Foundation.
 func NewTransactionalDispatcher(
 	manager *sessionmanager.Manager,
-	root context.Context,
+	root RuntimeContextProvider,
 	handler message.Handler,
 	observer executionowner.TerminalObserver,
 ) (*TransactionalDispatcher, error) {
@@ -61,7 +67,7 @@ func NewTransactionalDispatcher(
 
 func newTransactionalDispatcher(
 	manager reservationManager,
-	root context.Context,
+	root RuntimeContextProvider,
 	handler message.Handler,
 	observer executionowner.TerminalObserver,
 	generate idGenerator,
@@ -70,7 +76,7 @@ func newTransactionalDispatcher(
 	if isNilDependency(manager) {
 		return nil, ErrNilSessionManager
 	}
-	if root == nil {
+	if isNilDependency(root) {
 		return nil, ErrNilRuntimeContext
 	}
 	if isNilDependency(observer) {
@@ -113,7 +119,11 @@ func (dispatcher *TransactionalDispatcher) DispatchAuthenticated(
 	if err := executionContext.Err(); err != nil {
 		return false, err
 	}
-	if err := dispatcher.root.Err(); err != nil {
+	rootContext := dispatcher.root.RuntimeContext()
+	if rootContext == nil {
+		return false, ErrNilRuntimeContext
+	}
+	if err := rootContext.Err(); err != nil {
 		return false, err
 	}
 	request := connectionContext.Request()
@@ -157,7 +167,7 @@ func (dispatcher *TransactionalDispatcher) DispatchAuthenticated(
 		return false, err
 	}
 	environment, err := executionowner.NewExecutionEnvironment(
-		dispatcher.root,
+		rootContext,
 		executionContext,
 		connectionContext.Cancel,
 	)
@@ -179,7 +189,7 @@ func (dispatcher *TransactionalDispatcher) DispatchAuthenticated(
 	if err := executionContext.Err(); err != nil {
 		return false, err
 	}
-	if err := dispatcher.root.Err(); err != nil {
+	if err := rootContext.Err(); err != nil {
 		return false, err
 	}
 	input, err := sessionmanager.NewCommitInput(

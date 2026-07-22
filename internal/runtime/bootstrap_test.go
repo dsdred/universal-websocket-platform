@@ -266,7 +266,7 @@ func TestBootstrapHostAuthenticationErrorPreventsUpgrade(t *testing.T) {
 	}
 }
 
-func TestBootstrapReportsSessionTerminalErrorOnce(t *testing.T) {
+func TestBootstrapTerminalObserverConsumesSessionError(t *testing.T) {
 	wantErr := errors.New("handler failed with credential-that-must-not-leak")
 	reportedErrors := make(chan error, 2)
 	bootstrap, err := NewBootstrapWithTerminalErrorReporter(
@@ -310,17 +310,6 @@ func TestBootstrapReportsSessionTerminalErrorOnce(t *testing.T) {
 	}()
 
 	select {
-	case reported := <-reportedErrors:
-		if !errors.Is(reported, wantErr) {
-			t.Fatalf("reported error = %v, want Handler sentinel", reported)
-		}
-		if reported.Error() != "Session handoff failed" {
-			t.Fatalf("reported error text = %q, want redacted terminal category", reported.Error())
-		}
-	case <-ctx.Done():
-		t.Fatalf("terminal Session error was not reported: %v", ctx.Err())
-	}
-	select {
 	case <-readResult:
 	case <-ctx.Done():
 		t.Fatalf("Session connection did not close: %v", ctx.Err())
@@ -329,8 +318,8 @@ func TestBootstrapReportsSessionTerminalErrorOnce(t *testing.T) {
 		t.Fatalf("Stop() error = %v", err)
 	}
 	select {
-	case duplicate := <-reportedErrors:
-		t.Fatalf("terminal error reported more than once: %v", duplicate)
+	case reported := <-reportedErrors:
+		t.Fatalf("post-Commit Session error escaped the Terminal Observer: %v", reported)
 	default:
 	}
 }

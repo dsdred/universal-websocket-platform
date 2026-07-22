@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dsdred/universal-websocket-platform/internal/authentication"
+	"github.com/dsdred/universal-websocket-platform/internal/executionowner"
 	"github.com/dsdred/universal-websocket-platform/internal/handshake"
 	"github.com/dsdred/universal-websocket-platform/internal/listener"
 	"github.com/dsdred/universal-websocket-platform/internal/message"
@@ -14,11 +15,26 @@ import (
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
 	"github.com/dsdred/universal-websocket-platform/internal/secretresolver"
 	"github.com/dsdred/universal-websocket-platform/internal/session"
+	"github.com/dsdred/universal-websocket-platform/internal/sessionmanager"
 )
 
 const legacyHandlerReference = "legacy"
 
 type messageRouterFactory func(*runtimeconfig.RoutingSnapshot, message.Handler) (message.Handler, error)
+
+type runtimeComposition struct {
+	listener       listener.Listener
+	sessionManager *sessionmanager.Manager
+}
+
+type terminalObserver struct{}
+
+func (terminalObserver) Observe(executionowner.TerminalResult) {}
+
+var (
+	_ executionowner.TerminalObserver = terminalObserver{}
+	_ session.RuntimeContextProvider  = (*handshakeCapabilities)(nil)
+)
 
 type handshakeTimeoutHandler struct {
 	next    http.Handler
@@ -37,7 +53,7 @@ func composeRuntime(
 	handler message.Handler,
 	capabilities *handshakeCapabilities,
 	reportError func(error),
-) (listener.Listener, error) {
+) (runtimeComposition, error) {
 	return composeRuntimeWithRouterFactory(
 		snapshot,
 		resolver,
@@ -55,34 +71,43 @@ func composeRuntimeWithRouterFactory(
 	capabilities *handshakeCapabilities,
 	reportError func(error),
 	newMessageRouter messageRouterFactory,
-) (listener.Listener, error) {
+) (runtimeComposition, error) {
 	if err := validateExecutableSnapshot(snapshot); err != nil {
-		return nil, fmt.Errorf("validate Runtime Snapshot: %w", err)
+		return runtimeComposition{}, fmt.Errorf("validate Runtime Snapshot: %w", err)
 	}
 
 	runtimeRouter, err := newMessageRouter(snapshot.Routing, handler)
 	if err != nil {
-		return nil, fmt.Errorf("build Runtime Message Router: %w", err)
+		return runtimeComposition{}, fmt.Errorf("build Runtime Message Router: %w", err)
 	}
 
 	registry := authentication.NewRegistry()
 	if err := registry.Register(authentication.APIKeyFactory{}); err != nil {
-		return nil, fmt.Errorf("register API Key Factory: %w", err)
+		return runtimeComposition{}, fmt.Errorf("register API Key Factory: %w", err)
 	}
 	if err := registry.Register(authentication.JWTFactory{}); err != nil {
-		return nil, fmt.Errorf("register JWT Factory: %w", err)
+		return runtimeComposition{}, fmt.Errorf("register JWT Factory: %w", err)
 	}
 
 	authenticationBootstrap, err := authentication.NewBootstrap(registry, resolver)
 	if err != nil {
-		return nil, fmt.Errorf("create Authentication Bootstrap: %w", err)
+		return runtimeComposition{}, fmt.Errorf("create Authentication Bootstrap: %w", err)
 	}
 	authenticationService, err := authenticationBootstrap.Build(snapshot.Authentication)
 	if err != nil {
-		return nil, fmt.Errorf("build Authentication: %w", err)
+		return runtimeComposition{}, fmt.Errorf("build Authentication: %w", err)
 	}
 
-	sessionDispatcher := session.NewDispatcher(runtimeRouter)
+	sessionManager := sessionmanager.New()
+	sessionDispatcher, err := session.NewTransactionalDispatcher(
+		sessionManager,
+		capabilities,
+		runtimeRouter,
+		terminalObserver{},
+	)
+	if err != nil {
+		return runtimeComposition{}, fmt.Errorf("create transactional Session Dispatcher: %w", err)
+	}
 	handshakeHandler, err := handshake.NewHandlerWithTerminalErrorReporter(
 		capabilities,
 		capabilities,
@@ -91,7 +116,7 @@ func composeRuntimeWithRouterFactory(
 		reportError,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("create Handshake: %w", err)
+		return runtimeComposition{}, fmt.Errorf("create Handshake: %w", err)
 	}
 	timedHandshakeHandler := handshakeTimeoutHandler{
 		next:    handshakeHandler,
@@ -103,9 +128,12 @@ func composeRuntimeWithRouterFactory(
 		reportError,
 	).Build(snapshot.Listener)
 	if err != nil {
-		return nil, fmt.Errorf("build Listener: %w", err)
+		return runtimeComposition{}, fmt.Errorf("build Listener: %w", err)
 	}
-	return runtimeListener, nil
+	return runtimeComposition{
+		listener:       runtimeListener,
+		sessionManager: sessionManager,
+	}, nil
 }
 
 func buildMessageRouter(
