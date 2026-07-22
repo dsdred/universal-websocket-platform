@@ -15,6 +15,7 @@ import (
 	"github.com/dsdred/universal-websocket-platform/internal/message"
 	"github.com/dsdred/universal-websocket-platform/internal/router"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
+	"github.com/dsdred/universal-websocket-platform/internal/sessionmanager"
 )
 
 func TestRuntimeStartupConstructsMessageRouterExactlyOnce(t *testing.T) {
@@ -223,16 +224,19 @@ func TestRuntimeProductionCompositionUsesTransactionalDispatcher(t *testing.T) {
 		t.Fatalf("Read() = (%v, %q), want text %q", messageType, got, payload)
 	}
 
+	if err := runtimeHost.Stop(ctx); err != nil {
+		t.Fatalf("Runtime Host Stop() error = %v", err)
+	}
+	if got := manager.State(); got != sessionmanager.StateClosed {
+		t.Fatalf("Session Manager state after Runtime Stop = %v, want Closed", got)
+	}
 	shutdown := manager.BeginShutdown()
 	registrations := shutdown.Registrations()
 	if len(registrations) != 1 {
-		t.Fatalf("committed Registrations = %d, want 1", len(registrations))
+		t.Fatalf("captured shutdown Registrations = %d, want 1", len(registrations))
 	}
-	if !registrations[0].RequestStop() {
-		t.Fatal("committed Registration rejected its first Stop request")
-	}
-	if err := manager.Wait(ctx); err != nil {
-		t.Fatalf("Session Manager Wait() error = %v", err)
+	if registrations[0].RequestStop() {
+		t.Fatal("captured Stop capability accepted a second request after Runtime Stop")
 	}
 
 	host.mu.RLock()
@@ -243,9 +247,6 @@ func TestRuntimeProductionCompositionUsesTransactionalDispatcher(t *testing.T) {
 	}
 	if handler.calls.Load() != 1 {
 		t.Fatalf("Router Handler calls = %d, want 1", handler.calls.Load())
-	}
-	if err := runtimeHost.Stop(context.Background()); err != nil {
-		t.Fatalf("Stop() error = %v", err)
 	}
 }
 

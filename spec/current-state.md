@@ -1,9 +1,9 @@
 # Текущее состояние
 
 **Веха:** Beta — Complete the Single-Node Runtime
-**Статус реализации:** DP-005 Router и Runtime Foundation Tasks 1–9 реализованы; TASK-M10-001 переключил production composition на TransactionalDispatcher. Manager-aware shutdown orchestration остаётся следующей задачей TASK-M10-002.
+**Статус реализации:** DP-005 Router и Runtime Foundation Tasks 1–10 реализованы; TASK-M10-002 добавил полный Manager-aware production shutdown pipeline. Независимая финальная проверка DP-006 ещё не выполнена.
 **Release:** v0.1.0-alpha
-**Architecture Review:** TASK-ARCH-REVIEW-010 — Runtime migration partially complete; DP-001, DP-002 и DP-006 остаются Draft
+**Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
 ## Архитектурные решения
 
@@ -143,6 +143,9 @@
 - Host создает независимый root Runtime context после успешного запуска Listener; startup context не становится lifecycle context запущенного Runtime
 - Runtime readiness становится true только после startup commit и сбрасывается в false в начале Stop
 - Host владеет lifecycle-only Admission Gate, который открывается только в Running и закрывается до вызова Listener Stop
+- Первый Host Stop выполняет единый production shutdown pipeline: закрывает Admission, вызывает `SessionManager.BeginShutdown`, запрашивает Stop для immutable Snapshot, отменяет root Runtime context, останавливает Listener и затем ожидает `SessionManager.Wait`
+- Listener Stop и Manager Wait выполняются без удержания lifecycle mutex; их ошибки сохраняются вместе, а concurrent и repeated Stop получают один сохранённый terminal result
+- Успешный Host Stop подтверждает `SessionManager.StateClosed` и пустое Reservation, Registration и Owner Lifetime Lease accounting; context-bounded Wait failure оставляет Manager правдиво в `Closing`
 - Production composition до создания Listener проверяет startup-critical поля Snapshot: Runtime identity, Listener binding metadata, поддержку TLS и bounded Handshake timeout
 - Включённый TLS явно отклоняется как unsupported runtime capability до открытия TCP socket; CertificateRef и PrivateKeyRef при этом не разрешаются и не включаются в текст ошибки
 - `HandshakeSeconds` применяется как deadline всей pre-Upgrade evaluation; истёкшее решение не может перейти к `websocket.Accept`
@@ -189,8 +192,8 @@
 - Compiled Router хранит только enabled Routes, сортирует их один раз по возрастанию Priority, применяет exact case-sensitive Matchers и синхронно вызывает ровно один выбранный Handler
 - Default Handler используется только после отсутствия explicit match; No Match не вызывает Handler, возвращает nil и позволяет Session продолжить read loop без legacy fallback для явно заданной Routing-секции
 - Router переиспользуется всеми Session как единый immutable `message.Handler`; route compilation, sorting, normalization и Handler resolution на message hot path отсутствуют
-- Middleware, Message Queue, Broadcast, публичный Session Manager Registry API, Runtime shutdown orchestration и Persistence отсутствуют
-- Архитектура Runtime принята в ADR-003; pre-Upgrade Handshake и transactional production Session handoff реализованы, а Configuration Loader, Manager-aware Runtime shutdown, operational diagnostics и supervision ещё отсутствуют
+- Middleware, Message Queue, Broadcast, публичный Session Manager Registry API и Persistence отсутствуют
+- Архитектура Runtime принята в ADR-003; pre-Upgrade Handshake, transactional production Session handoff и Manager-aware Runtime shutdown реализованы, а Configuration Loader, operational diagnostics и supervision ещё отсутствуют
 
 ## Чего не существует
 
@@ -242,8 +245,8 @@
 - Design переносит обязательную Authentication до WebSocket Upgrade, сохраняя transport-neutral Authentication Service и ownership Session после успешной передачи.
 - Listener остается владельцем HTTP/WebSocket transport effects и не получает Provider-specific logic.
 - Реализация следует основному порядку DP-001: Admission Gate, Authentication, Allow Decision, финальная проверка Gate, Upgrade и Session handoff.
-- TASK-ARCH-REVIEW-010 подтвердил production-реализацию pre-Upgrade Authentication, bounded Handshake, Runtime-owned connection context и transactional ownership handoff. Полный Runtime shutdown wait set и operational diagnostics/supervision не реализованы, поэтому DP-001 остаётся Draft.
-- Origin Policy, rate limiting, maintenance, IP filtering, Manager-aware Runtime shutdown и Plugin ABI остаются future work без зафиксированных API.
+- TASK-ARCH-REVIEW-010 подтвердил production-реализацию pre-Upgrade Authentication, bounded Handshake, Runtime-owned connection context и transactional ownership handoff. TASK-M10-002 добавил полный Runtime shutdown wait set; operational diagnostics/supervision остаются незавершёнными, поэтому status review DP-001 ещё требуется.
+- Origin Policy, rate limiting, maintenance, IP filtering и Plugin ABI остаются future work без зафиксированных API.
 
 ## Runtime Host Composition Root Design
 
@@ -252,8 +255,8 @@
 - Определён lifecycle `Created -> Initialized -> Starting -> Running -> Stopping -> Stopped` с terminal state `Failed` и запретом Restart и in-place Reload.
 - Host владеет root Runtime context, запускает Listener последним и закрывает admission до cancellation и cleanup в обратном порядке.
 - Container не превращается в service locator; DI framework, reflection, generic component factories и Universal Component Registry запрещены.
-- После публикации DP-002 реализована его фундаментальная часть: Host стал production composition root, получил startup transaction, root Runtime context, readiness и lifecycle-only Admission Gate; `Failed`, supervision и полный shutdown wait set пока отсутствуют.
-- TASK-ARCH-REVIEW-010 подтвердил частичное выполнение DP-002. Manager-aware shutdown, terminal-состояние `Failed`, mandatory-component supervision и продолжение Host-owned cleanup после истечения context caller остаются невыполненными; статус DP-002 остаётся Draft.
+- После публикации DP-002 Host стал production composition root и получил startup transaction, root Runtime context, readiness, lifecycle-only Admission Gate и полный Manager-aware shutdown wait set; `Failed` и supervision пока отсутствуют.
+- TASK-M10-002 закрыл выявленный TASK-ARCH-REVIEW-010 разрыв Manager-aware shutdown. Terminal-состояние `Failed`, mandatory-component supervision и продолжение Host-owned cleanup после истечения context caller остаются невыполненными; статус DP-002 остаётся Draft до отдельной проверки.
 
 ## Runtime Session Manager Design
 
@@ -280,8 +283,8 @@
 - Task 8 завершает Owner-local terminal lifecycle: каждый claimed committed execution path проходит `Terminalizing -> Cleanup -> Completion -> Terminal Result -> Observer -> UnregisterAndDrain -> seal -> Terminal -> conditional lease release`; panic Completion и Observer изолируются, unconfirmed callback drain оставляет Owner в `Terminalizing`, а cancellation anomaly запрещает release lease после `Terminal`.
 - TASK-M10-001 переключил production Runtime composition на TransactionalDispatcher: один Session Manager и synchronous composition-local Terminal Observer создаются на экземпляр Runtime, Router передаётся как `message.Handler`, а Handshake использует только transactional handoff. Live read-only input корневого Runtime context устанавливает post-Commit Runtime-cancellation observation без передачи Host-owned cancellation authority.
 - Создан новый двуязычный Draft design [DP-006: Runtime Production Integration](../docs/ru/design/DP-006-runtime-production-integration.md) ([English version](../docs/en/design/DP-006-runtime-production-integration.md)), который фиксирует только production composition и shutdown cutover Task 10 без изменения DP-003, DP-004 или ARCH-003.
-- Session Manager хранится как Runtime lifetime dependency, но Host Stop ещё не вызывает `BeginShutdown`, Snapshot Stop requests и `Manager.Wait`. Полный shutdown order DP-006 остаётся задачей TASK-M10-002; до неё production composition и Manager-aware shutdown ещё не образуют завершённый Task 10 cutover.
-- TASK-ARCH-REVIEW-010 подтвердил acceptance criteria DP-006 1-7, 12 и 13. Критерии 8-11 не выполнены из-за отсутствия Manager-aware Host Stop; DP-006 остаётся Draft до TASK-M10-002 и полной независимой проверки.
+- TASK-M10-002 завершил production shutdown cutover: Host Stop один раз выполняет `BeginShutdown`, фиксирует capability-bearing Snapshot, вызывает каждый `RequestStop`, отменяет root Runtime context, останавливает Listener и после его возврата вызывает `Manager.Wait`.
+- Реализация TASK-M10-002 закрывает acceptance criteria DP-006 8-11: Commit/BeginShutdown сохраняют одну Manager linearization boundary, успешный Stop требует закрытого Manager accounting, а Listener и context-bounded Wait errors не скрывают друг друга. Формальный статус DP-006 остаётся Draft до независимой полной проверки criteria 1-13.
 - TASK-REV-013 Codex утвердил DP-003/DP-004 с одним неблокирующим clarity finding, TASK-REV-013 Kiro утвердил их без findings; TASK-DOC-016 синхронизировал Failure Matrix, composition root dependency и generic/production `accepted,error` semantics. DP-003 и DP-004 имеют статус Approved и интегрированы в production Session handoff; Runtime shutdown integration остаётся незавершённой.
 
 ## Runtime Foundation Freeze

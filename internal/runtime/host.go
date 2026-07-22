@@ -264,7 +264,7 @@ func (host *DefaultHost) startTransaction(ctx context.Context) (runtimeCompositi
 	return components, nil
 }
 
-// Stop delegates shutdown to the composed Listener and otherwise remains a no-op.
+// Stop coordinates the single Runtime shutdown and publishes one shared result.
 func (host *DefaultHost) Stop(ctx context.Context) error {
 	host.mu.Lock()
 	switch host.state {
@@ -283,6 +283,7 @@ func (host *DefaultHost) Stop(ctx context.Context) error {
 		host.mu.RLock()
 		startErr := host.startErr
 		runtimeListener := host.runtimeListener
+		manager := host.sessionManager
 		runtimeCancel := host.runtimeCancel
 		host.mu.RUnlock()
 		if startErr != nil {
@@ -294,10 +295,10 @@ func (host *DefaultHost) Stop(ctx context.Context) error {
 			return nil
 		}
 
-		runtimeCancel()
-		return host.stopListener(ctx, runtimeListener, stopDone)
+		return host.stopRuntime(ctx, runtimeListener, manager, runtimeCancel, stopDone)
 	case hostRunning:
 		runtimeListener := host.runtimeListener
+		manager := host.sessionManager
 		runtimeCancel := host.runtimeCancel
 		host.admission.close()
 		host.state = hostStopping
@@ -307,8 +308,7 @@ func (host *DefaultHost) Stop(ctx context.Context) error {
 		stopDone := host.stopDone
 		host.mu.Unlock()
 
-		runtimeCancel()
-		return host.stopListener(ctx, runtimeListener, stopDone)
+		return host.stopRuntime(ctx, runtimeListener, manager, runtimeCancel, stopDone)
 	case hostStopping:
 		stopDone := host.stopDone
 		host.mu.Unlock()
@@ -333,19 +333,34 @@ func (host *DefaultHost) observeStateLocked(state hostState) {
 	}
 }
 
-func (host *DefaultHost) stopListener(
+func (host *DefaultHost) stopRuntime(
 	ctx context.Context,
 	runtimeListener listener.Listener,
+	manager *sessionmanager.Manager,
+	runtimeCancel context.CancelFunc,
 	stopDone chan struct{},
 ) error {
-	err := runtimeListener.Stop(ctx)
+	if manager != nil {
+		shutdown := manager.BeginShutdown()
+		for _, registration := range shutdown.Registrations() {
+			registration.RequestStop()
+		}
+	}
+
+	runtimeCancel()
+	listenerErr := runtimeListener.Stop(ctx)
+	var managerErr error
+	if manager != nil {
+		managerErr = manager.Wait(ctx)
+	}
+	stopErr := errors.Join(listenerErr, managerErr)
 
 	host.mu.Lock()
 	host.state = hostStopped
-	host.stopErr = err
+	host.stopErr = stopErr
 	close(stopDone)
 	host.mu.Unlock()
-	return err
+	return stopErr
 }
 
 // Running reports whether the Host and its composed Listener are Running.

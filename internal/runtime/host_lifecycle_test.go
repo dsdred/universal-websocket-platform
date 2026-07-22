@@ -201,8 +201,10 @@ type controlledListener struct {
 	startCalls    atomic.Int32
 	stopEntered   chan struct{}
 	releaseStop   chan struct{}
+	stopReturned  chan struct{}
 	stopErr       error
 	stopOnce      sync.Once
+	returnOnce    sync.Once
 	stopObserver  func()
 	mu            sync.RWMutex
 	running       bool
@@ -266,6 +268,9 @@ func (runtimeListener *controlledListener) Stop(context.Context) error {
 	runtimeListener.mu.Lock()
 	runtimeListener.running = false
 	runtimeListener.mu.Unlock()
+	if runtimeListener.stopReturned != nil {
+		runtimeListener.returnOnce.Do(func() { close(runtimeListener.stopReturned) })
+	}
 	return runtimeListener.stopErr
 }
 
