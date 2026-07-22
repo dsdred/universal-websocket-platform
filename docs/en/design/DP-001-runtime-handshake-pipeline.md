@@ -6,6 +6,13 @@
 
 **Status:** Draft
 
+**Implementation status (TASK-ARCH-REVIEW-010):** Partially implemented. The
+pre-Upgrade Authentication boundary, live admission checks, bounded Handshake,
+Runtime-owned connection context, and transactional ownership handoff are in
+production. The document remains Draft because Host shutdown does not yet use
+the Session Manager wait set and the operational diagnostics/supervision
+contracts remain incomplete.
+
 This document proposes the Runtime Handshake architecture. It defines conceptual boundaries and invariants, not Go interfaces, packages, or a reusable policy framework.
 
 ## 2. Background

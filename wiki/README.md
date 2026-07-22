@@ -43,12 +43,20 @@ Lessons
 ```text
 wiki/
     principles/
+    lessons/
+
+docs/{en,ru}/
     process/
     architecture/
-    decisions/
-    lessons/
+    adr/
+    design/
+    reviews/
     roadmap/
 ```
+
+Wiki хранит knowledge map, Principles и Lessons. Нормативная двуязычная
+документация остаётся в `docs/en/` и `docs/ru/`; Wiki ссылается на неё, а не
+создаёт параллельные копии.
 
 ### `principles/`
 
@@ -56,23 +64,36 @@ wiki/
 хранятся решения для отдельных компонентов, описания реализации или история
 разработки.
 
-### `process/`
+- [P-0001: Architecture First](principles/P-0001-architecture-first.md)
+
+### `docs/{en,ru}/process/`
 
 Описывает воспроизводимые рабочие процессы: проектирование, review, проверку и
 другие этапы изменения проекта. Здесь не определяются архитектура системы и
 результаты конкретных задач.
 
-### `architecture/`
+- [English process documents](../docs/en/process/)
+- [Русские process-документы](../docs/ru/process/)
+
+### `docs/{en,ru}/architecture/`
 
 Описывает устройство системы, границы компонентов, ownership, lifecycle и
 инварианты. Здесь не хранится хронология разработки и не подменяются документы
 о конкретных решениях.
 
-### `decisions/`
+- [English architecture index](../docs/en/architecture/README.md)
+- [Русский индекс архитектуры](../docs/ru/architecture/README.md)
+
+### `docs/{en,ru}/adr/` и `docs/{en,ru}/design/`
 
 Содержит принятые инженерные и архитектурные решения вместе с контекстом и
 обоснованием. Здесь не размещаются общие принципы, инструкции процесса или
 ретроспективы реализации.
+
+- [English ADR index](../docs/en/adr/README.md)
+- [Русский индекс ADR](../docs/ru/adr/README.md)
+- [English Runtime design index](../docs/en/design/README.md)
+- [Русский индекс Runtime design](../docs/ru/design/README.md)
 
 ### `lessons/`
 
@@ -80,11 +101,16 @@ wiki/
 реализации и review. Lessons не устанавливают нормативную архитектуру и не
 заменяют решения.
 
-### `roadmap/`
+- [L-0001: Runtime Skeleton Development](lessons/L-0001-runtime-skeleton-development.md)
+
+### `docs/{en,ru}/roadmap/`
 
 Описывает направления развития и последовательность инженерных этапов. Здесь
 не проектируются будущие API и не фиксируются уже принятые архитектурные
 решения.
+
+- [English roadmap index](../docs/en/roadmap/README.md)
+- [Русский индекс roadmap](../docs/ru/roadmap/README.md)
 
 ## 4. Reading Order
 

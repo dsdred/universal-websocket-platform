@@ -4,33 +4,23 @@
 
 ## Architecture Guides
 
-Active architecture-wide patterns are available in [`architecture/`](architecture/).
-
-- [ARCH-001: Runtime Architectural Pattern](architecture/ARCH-001-runtime-architectural-pattern.md)
-- [ARCH-002: Runtime Foundation Freeze](architecture/ARCH-002-runtime-foundation-freeze.md)
+Active architecture-wide patterns, including the complete ARCH document list, are maintained in the [Architecture Guides index](architecture/README.md).
 
 ## Engineering Roadmap
 
-Living engineering maturity plans are available in [`roadmap/`](roadmap/).
-
-- [Master Engineering Plan](roadmap/MASTER_PLAN.md)
+Living engineering maturity plans are maintained in the [Engineering Roadmap index](roadmap/README.md).
 
 ## Runtime Design Documents
 
-Focused Runtime subsystem designs are available in [`design/`](design/).
-
-- [DP-001: Runtime Handshake Pipeline](design/DP-001-runtime-handshake-pipeline.md)
-- [DP-002: Runtime Host Composition Root](design/DP-002-runtime-host-composition-root.md)
-- [DP-003: Runtime Session Manager](design/DP-003-runtime-session-manager.md)
-- [DP-004: Per-Session Execution Boundary](design/DP-004-per-session-execution-boundary.md)
+Focused Runtime subsystem designs, their document statuses, and the complete DP list are maintained in the [Runtime Design Documents index](design/README.md).
 
 ## Architecture Decision Records
 
-Accepted architecture decisions and ADR conventions are available in [`adr/`](adr/).
+Accepted architecture decisions and ADR conventions are maintained in the [Architecture Decision Records index](adr/README.md).
 
-## Design Proposals
+## Authentication Design Proposals
 
-Proposed designs that have not become accepted architecture decisions are available in [`proposals/`](proposals/).
+Authentication proposals that predate the separate Runtime design-document series are available in [`proposals/`](proposals/).
 
 - [DP-001: Authentication](proposals/DP-001-authentication.md)
 - [DP-002: Secret References](proposals/DP-002-secret-references.md)
@@ -43,10 +33,16 @@ Release-specific summaries are available in [`releases/`](releases/).
 
 ## Architecture Reviews
 
-Evidence-based implementation reviews are available in [`reviews/`](reviews/).
+Evidence-based implementation reviews are maintained in the [Architecture Reviews index](reviews/README.md).
 
-- [Runtime Alpha Architecture Review](reviews/runtime-alpha-review.md)
+## Engineering Process
+
+- [LLM Development Guide](process/LLM_DEVELOPMENT_GUIDE.md)
+
+## Retrospectives
+
+- [DP-005 Runtime Message Router Retrospective](retrospectives/DP-005.md)
 
 ## Internal Specifications
 
-The team's working specifications are maintained in [`spec/`](../../spec/). They are internal documents, currently written predominantly in Russian, and may describe work in progress rather than stable public contracts.
+The team's working specifications are maintained in [`spec/`](../../spec/). The factual implementation record is [`spec/current-state.md`](../../spec/current-state.md). Internal specifications are currently written predominantly in Russian and may describe work in progress rather than stable public contracts.

@@ -45,6 +45,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Immutable Routing Snapshot values and a deterministic compiled Runtime Message Router with priority-ordered exact matching, Default Handler, and No Match semantics.
 - Immutable transport-neutral Runtime Message Context passed through the unified Handler contract without exposing Session or WebSocket transport values.
 - Runtime Router composition before Listener startup, including strict configured compilation, absent-Routing compatibility behavior, finite `legacy` Handler resolution, and startup failure for invalid active references.
+- Runtime Foundation Session Manager, atomic `CommitHandoff`, capability-bearing shutdown Snapshot, dormant execution path, Execution Owner terminal lifecycle, and truthful Registration and Owner Lifetime Lease accounting.
+- Production Runtime composition with one Session Manager, a synchronous Terminal Observer, and TransactionalDispatcher as the sole Handshake Session handoff; Manager-aware Host shutdown remains deferred to TASK-M10-002.
+- Bilingual DP-006 Runtime Production Integration design documenting the production composition and shutdown cutover without changing the approved DP-003/DP-004 ownership model.
 
 ## [0.1.0-alpha] - 2026-07-12
 

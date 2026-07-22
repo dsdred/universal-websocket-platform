@@ -1,9 +1,9 @@
 # Текущее состояние
 
-**Веха:** M3 Listener Settings
-**Статус реализации:** Control Service предоставляет in-memory API для Workspace, Configuration, Configuration Version и ListenerSettings.
+**Веха:** Beta — Complete the Single-Node Runtime
+**Статус реализации:** DP-005 Router и Runtime Foundation Tasks 1–9 реализованы; TASK-M10-001 переключил production composition на TransactionalDispatcher. Manager-aware shutdown orchestration остаётся следующей задачей TASK-M10-002.
 **Release:** v0.1.0-alpha
-**Architecture Review:** AR-001 — PASS
+**Architecture Review:** TASK-ARCH-REVIEW-010 — Runtime migration partially complete; DP-001, DP-002 и DP-006 остаются Draft
 
 ## Архитектурные решения
 
@@ -101,13 +101,13 @@
 
 ## JWT Provider Design
 
-- DP-003 предлагает Configuration-модель JWT Provider с несколькими Signing Keys, algorithms, issuers, audiences и Required Claims
+- [Authentication proposal DP-003: JWT Provider](../docs/ru/proposals/DP-003-jwt-provider.md) предлагает Configuration-модель JWT Provider с несколькими Signing Keys, algorithms, issuers, audiences и Required Claims
 - Signing Keys представлены только Secret References без хранения PEM, JWK или HMAC secret в ConfigurationVersion
 - JWT Provider metadata и Runtime Provider реализованы; Runtime поддерживает только HS256, HS384 и HS512 и выполняет Provider через pre-Upgrade Authentication Pipeline
 
 ## Authentication Runtime Contracts Design
 
-- DP-004 предлагает transport-neutral контракты AuthenticationRequest, Principal, AuthenticationResult и AuthenticationProvider
+- [Authentication proposal DP-004: Authentication Runtime Contracts](../docs/ru/proposals/DP-004-authentication-runtime-contracts.md) предлагает transport-neutral контракты AuthenticationRequest, Principal, AuthenticationResult и AuthenticationProvider
 - Предлагаемые контракты отделяют AuthenticationService и Provider от transport, Repository, Storage и внутреннего устройства ConfigurationVersion
 - Модель ошибок различает rejected credentials, Provider error, Configuration error и Internal error
 - Principal после успешной Authentication предлагается сделать immutable перед передачей в Authorization
@@ -130,7 +130,7 @@
 - Принята последовательность компонентов от Configuration Loader и Configuration Snapshot до Monitoring
 - Secret Resolver разрешает Secret References только при запуске Runtime; значения Secret остаются только в памяти процесса
 - Authentication Provider Registry отделяет Runtime и Authentication Service от конкретных реализаций Provider
-- Authentication использует transport-neutral контракты DP-004 и не зависит от WebSocket
+- Authentication использует transport-neutral контракты [Authentication proposal DP-004](../docs/ru/proposals/DP-004-authentication-runtime-contracts.md) и не зависит от WebSocket
 - Реализована immutable Runtime Configuration Snapshot-модель для Listener, Authentication и optional Routing
 - Builder принимает только Published ConfigurationVersion, глубоко копирует Provider, JWT и Routing collections и сохраняет различие между отсутствующей и явно пустой Routing-секцией
 - Snapshot не зависит от HTTP API, Repository или исходного ConfigurationVersion после создания
@@ -153,22 +153,22 @@
 - Listener корректно завершает HTTP Server, accept loop и связанные goroutine через graceful shutdown
 - Listener передает `GET /ws` выделенному Handshake Handler; `websocket.Accept` выполняется только после начальной проверки Admission Gate, Authentication Allow Decision и финальной проверки Gate
 - Immutable ConnectionContext содержит derived Runtime context, WebSocket connection и исходный HTTP request, используемый только синхронно при handoff
-- DefaultDispatcher сразу завершает переданное WebSocket-соединение с normal closure; Bootstrap позволяет внедрить другую реализацию Dispatcher
+- Legacy `DefaultDispatcher` сохраняется для изолированных compatibility-тестов, но недостижим из production Runtime composition
 - Production composition передает Handshake только read-only Admission capability и Runtime Context Provider; concrete Runtime Host в Handshake не передается
 - Handshake преобразует HTTP metadata в transport-neutral AuthenticationRequest и выполняет Authentication до `websocket.Accept`
 - Authentication Reject и operational error предотвращают Upgrade и возвращаются как HTTP rejection; Session создается только после успешного Upgrade
-- Runtime composition явно передает Handshake и Listener минимальный callback для terminal operational errors без diagnostics registry, event bus или глобального состояния
-- Handshake сохраняет через `errors.Is` причину Session handoff failure в безопасной error-категории; Listener аналогично передает unexpected `http.Server.Serve` failure
+- Runtime composition явно передаёт Handshake и Listener минимальный callback для pre-Commit и transport terminal operational errors без diagnostics registry, event bus или глобального состояния
+- Handshake сохраняет через `errors.Is` причину pre-Commit Session handoff failure в безопасной error-категории; Listener аналогично передаёт unexpected `http.Server.Serve` failure. Post-Commit outcomes проходят через synchronous Terminal Observer; DP-006 пока не определяет для него diagnostics backend
 - Штатные `http.ErrServerClosed` и `net.ErrClosed` при Listener shutdown не создают ложные terminal error reports
 - Первый Listener Stop выполняет shutdown, конкурентные Stop ожидают тот же terminal result с учетом cancellation context ожидающего caller, а повторный Stop возвращает сохраненный результат; независимые ошибки HTTP Shutdown и TCP Close сохраняются через `errors.Join`
 - Disabled Authentication формирует explicit anonymous Principal без запуска Provider
 - При включённой Authentication Bootstrap создаёт только enabled Providers и упорядочивает их по возрастанию `Priority`; активные Basic и asymmetric JWT configurations продолжают явно отклоняться до Listener Start
 - Реализована минимальная WebSocket Session, которая после Authentication владеет соединением, хранит криптографически случайный ID, глубокую копию Principal, RemoteAddress и время создания
-- Private transport-independent Session Core создаёт и хранит stable ID, deep-copied Principal, creation metadata и Handler до формирования transport-bound Session; Core не владеет WebSocket или lifecycle operations, а существующие constructors и synchronous Dispatcher сохраняют прежнее поведение
-- Package-private provisional preparation формирует из существующего Core один transport-bound Session в `Created` и один prospective Execution Owner в `PreCommit` как единый transaction-local unit; этот путь пока не используется Dispatcher, не запускает lifecycle, не передаёт ownership и ничего не публикует
-- Provisional unit содержит dormant private Cleanup machinery: один synchronous Cleanup выполняет существующий Session Stop, затем panic-safe cancellation и наблюдение derived connection context, после чего возвращает один stable immutable categorized acknowledgement; repeated и concurrent calls разделяют execution/result, а production Dispatcher этот путь пока не вызывает
-- Pre-Commit Session Bundle формализован как один structurally complete private Session-side object graph с фиксированными identities Core, Session, Owner, Cleanup и cancellation cell; он полностью создаётся до возврата, остаётся caller-owned и не является нормативным Manager Commit result
-- Session Dispatcher создает Session из AuthenticatedContext и в текущей goroutine последовательно вызывает Start, блокирующий Run и завершающий Stop
+- Private transport-independent Session Core создаёт и хранит stable ID, deep-copied Principal, creation metadata и Handler до формирования transport-bound Session; Core не владеет WebSocket или lifecycle operations
+- Package-private provisional preparation формирует из существующего Core один transport-bound Session в `Created` и один prospective Execution Owner в `PreCommit` как единый transaction-local unit; TransactionalDispatcher использует этот путь до Commit без запуска lifecycle, передачи ownership или publication Registration
+- Provisional unit содержит private Cleanup machinery: один synchronous Cleanup выполняет Session Stop, затем panic-safe cancellation и наблюдение derived connection context, после чего возвращает один stable immutable categorized acknowledgement; repeated и concurrent calls разделяют execution/result, а committed Execution Owner вызывает Cleanup в terminal lifecycle
+- Pre-Commit Session Bundle является одним structurally complete private Session-side object graph с фиксированными identities Core, Session, Owner, Cleanup и cancellation cell; TransactionalDispatcher владеет им до Commit, после которого ownership необратимо переходит Execution Owner
+- Production TransactionalDispatcher подготавливает Session и dormant execution path, выполняет Reserve/Commit transaction и после успешного Commit возвращает `accepted=true` без post-Commit ownership; legacy synchronous Dispatcher остаётся только для изолированных тестов
 - Создан независимый пакет `internal/sessionmanager` с потокобезопасным lifecycle skeleton `Open -> Closing -> Closed`
 - Session Manager предоставляет неблокирующий идемпотентный `BeginShutdown`, context-bounded `Wait` и read-only наблюдение состояния; `Wait` не меняет accounting, а `Closed` достижим только при пустых Reservation, Registration и Owner Lifetime Lease sets
 - Реализована первая полная граница Reservation transaction: `Reserve` создает уникальный за lifetime Manager `RegistrationID`, запрещает резервировать `SessionID`, уже занятый Reservation или committed Registration, и возвращает единственный Handle
@@ -177,7 +177,7 @@
 - `Complete(RegistrationID)` является единственной linearization point удаления Registration: первая валидная completion атомарно удаляет committed record и освобождает `SessionID`, а repeated, unknown и stale completion ничего не изменяют
 - Reservation и committed Registration содержат только identity metadata, не хранят Session, WebSocket, Context или Runtime-компоненты и участвуют в shutdown accounting; Commit переносит одну accounting entry без изменения общего количества, Abort и Complete удаляют ее
 - Committed registrations хранятся внутри Manager; `Lookup(SessionID)` возвращает только detached immutable `RegistrationView` с `SessionID`, `RegistrationID` и нормативным `StateRegistered`, не раскрывая Session или lifecycle capabilities
-- Первый `BeginShutdown` атомарно фиксирует immutable identity-only `ShutdownSnapshot` только из committed registrations; Snapshot содержит только `SessionID` и `RegistrationID`, не меняется после Complete и одинаково возвращается повторными BeginShutdown; operational Stop capability и execution owner намеренно отложены без placeholder API
+- Первый `BeginShutdown` атомарно фиксирует immutable capability-bearing `ShutdownSnapshot` только из committed registrations; Snapshot содержит `SessionID`, `RegistrationID` и Manager-bound Stop capability, не раскрывает Session или Owner, не меняется после Complete и одинаково возвращается повторными BeginShutdown
 - Session не хранит исходный HTTP Request, Headers, Query, credentials, AuthenticationRequest или transport context wrappers
 - Добавлена immutable transport-neutral Runtime Message модель для text и binary application messages с копированием payload и UTC-временем получения
 - Session удерживает WebSocket-соединение открытым и выполняет единственный блокирующий read loop до закрытия клиента, отмены context, Stop или ошибки чтения
@@ -189,8 +189,8 @@
 - Compiled Router хранит только enabled Routes, сортирует их один раз по возрастанию Priority, применяет exact case-sensitive Matchers и синхронно вызывает ровно один выбранный Handler
 - Default Handler используется только после отсутствия explicit match; No Match не вызывает Handler, возвращает nil и позволяет Session продолжить read loop без legacy fallback для явно заданной Routing-секции
 - Router переиспользуется всеми Session как единый immutable `message.Handler`; route compilation, sorting, normalization и Handler resolution на message hot path отсутствуют
-- Middleware, Message Queue, Broadcast, публичный Session Manager Registry API, shutdown orchestration и Persistence отсутствуют
-- Архитектура Runtime принята в ADR-003; pre-Upgrade Handshake реализован в объеме Authentication, а Configuration Loader, полный Session shutdown tracking, operational diagnostics и supervision еще отсутствуют
+- Middleware, Message Queue, Broadcast, публичный Session Manager Registry API, Runtime shutdown orchestration и Persistence отсутствуют
+- Архитектура Runtime принята в ADR-003; pre-Upgrade Handshake и transactional production Session handoff реализованы, а Configuration Loader, Manager-aware Runtime shutdown, operational diagnostics и supervision ещё отсутствуют
 
 ## Чего не существует
 
@@ -199,7 +199,7 @@
 - Validation, Rollback и lifecycle Snapshot для Configuration Version
 - PostgreSQL
 - Управления WebSocket-серверами
-- Поведения Runtime для WebSocket-серверов
+- Control Plane lifecycle управления экземплярами Runtime
 - Реальный TLS listener и другие сетевые параметры Listener
 - Применение read, write и idle Listener TimeoutSettings в Runtime
 - Полный Handshake Pipeline за пределами Authentication и configured timeout enforcement: Session shutdown wait set и operational diagnostics
@@ -242,7 +242,8 @@
 - Design переносит обязательную Authentication до WebSocket Upgrade, сохраняя transport-neutral Authentication Service и ownership Session после успешной передачи.
 - Listener остается владельцем HTTP/WebSocket transport effects и не получает Provider-specific logic.
 - Реализация следует основному порядку DP-001: Admission Gate, Authentication, Allow Decision, финальная проверка Gate, Upgrade и Session handoff.
-- Origin Policy, rate limiting, maintenance, IP filtering, Session Manager integration и Plugin ABI остаются future work без зафиксированных API.
+- TASK-ARCH-REVIEW-010 подтвердил production-реализацию pre-Upgrade Authentication, bounded Handshake, Runtime-owned connection context и transactional ownership handoff. Полный Runtime shutdown wait set и operational diagnostics/supervision не реализованы, поэтому DP-001 остаётся Draft.
+- Origin Policy, rate limiting, maintenance, IP filtering, Manager-aware Runtime shutdown и Plugin ABI остаются future work без зафиксированных API.
 
 ## Runtime Host Composition Root Design
 
@@ -252,11 +253,12 @@
 - Host владеет root Runtime context, запускает Listener последним и закрывает admission до cancellation и cleanup в обратном порядке.
 - Container не превращается в service locator; DI framework, reflection, generic component factories и Universal Component Registry запрещены.
 - После публикации DP-002 реализована его фундаментальная часть: Host стал production composition root, получил startup transaction, root Runtime context, readiness и lifecycle-only Admission Gate; `Failed`, supervision и полный shutdown wait set пока отсутствуют.
+- TASK-ARCH-REVIEW-010 подтвердил частичное выполнение DP-002. Manager-aware shutdown, terminal-состояние `Failed`, mandatory-component supervision и продолжение Host-owned cleanup после истечения context caller остаются невыполненными; статус DP-002 остаётся Draft.
 
 ## Runtime Session Manager Design
 
 - Утверждён двуязычный design [DP-003: Runtime Session Manager](../docs/ru/design/DP-003-runtime-session-manager.md) ([English version](../docs/en/design/DP-003-runtime-session-manager.md)).
-- DP-003 сохраняет нормативные контракты registration transaction, identity, Lookup, lifecycle Manager, shutdown accounting и реализованного identity-only Shutdown Snapshot; детальная модель execution из него удалена.
+- DP-003 сохраняет нормативные контракты registration transaction, identity, Lookup, lifecycle Manager, shutdown accounting и реализованного capability-bearing Shutdown Snapshot; детальная модель execution из него удалена.
 - Утверждён двуязычный design [DP-004: Per-Session Execution Boundary](../docs/ru/design/DP-004-per-session-execution-boundary.md) ([English version](../docs/en/design/DP-004-per-session-execution-boundary.md)).
 - DP-004 определяет transport-independent Session Core и provisional preparation Session/Execution Owner до Commit без transfer ownership или visibility Registration.
 - Commit является единственной irreversible publication point: Dispatcher заранее создаёт ровно один `CommitHandoff` и один dormant execution path и владеет всей pre-Commit transaction через panic-safe boundary; любой recoverable pre-Commit outcome публикует `NotCommitted` один раз, ждёт возврата path, освобождает owner-local values, выполняет Abort и возвращает `accepted=false`. Callback Runtime cancellation до Commit не существует.
@@ -267,19 +269,20 @@
 - Terminal Result является immutable снимком execution-lifecycle outcomes, известных до Observer; поздние callback и cleanup outcomes относятся только к terminal accounting и не изменяют result. Panic-safe Session Cleanup возвращает immutable cancellation outcome. После confirmed cleanup callback `Cancellation Anomaly` допускает lifecycle до `Terminal`, но запрещает release lease; неподтверждённый lifetime callback оставляет owner в `Terminalizing`. Оба outcome оставляют `Manager.Wait` заблокированным без hidden retry.
 - Release lease разрешён только после confirmed cancellation, возврата Complete и observer, confirmed `UnregisterAndDrain`, достижения `Terminal` и seal causal cell; release является последней Runtime-owned operation.
 - После initiation Listener Stop drain HTTP handlers и terminalization owners выполняются параллельно; `Manager.Wait` начинается после возврата Listener Stop и не завершается до правдивой convergence Registration и owner-lifetime accounting.
-- `BeginShutdown` и `Wait` разделяют неблокирующий transition shutdown и ожидание, а атомарный `Complete` предлагается как единственная linearization point удаления будущей committed registration.
+- `BeginShutdown` и `Wait` разделяют неблокирующий transition shutdown и ожидание, а атомарный `Complete` реализован как единственная linearization point удаления committed Registration.
 - Runtime Host остается владельцем Admission Gate и корневого Runtime context; Listener, Authentication, Router, Delivery, Persistence и diagnostics не входят в ответственность Session Manager.
-- Реализованы transport-independent Session Core, lifecycle Manager, identity-safe registration transaction, read-only Lookup, immutable identity-only Shutdown Snapshot, Owner Lifetime Lease accounting, one-shot Execution Binding, bound Completion Adapter, Control Cell, Runtime Skeleton Execution Owner и его Owner-local terminal lifecycle до conditional Lifetime Lease release.
+- Реализованы transport-independent Session Core, lifecycle Manager, identity-safe registration transaction, read-only Lookup, immutable capability-bearing Shutdown Snapshot, Owner Lifetime Lease accounting, one-shot Execution Binding, bound Completion Adapter, Control Cell, Runtime Execution Owner и полный Owner-local terminal lifecycle до conditional Lifetime Lease release.
 - Активное двуязычное руководство [ARCH-003: Runtime Foundation Migration Revision](../docs/ru/architecture/ARCH-003-runtime-migration-revision.md) ([English version](../docs/en/architecture/ARCH-003-runtime-migration-revision.md)) фиксирует завершённые Tasks 1–8 и пересмотренную последовательность Tasks 9–10; target architecture DP-003/DP-004 и production behavior не изменены.
 - Текущая Go-реализация Task 9 завершает atomic Commit-to-Execution publication через domain-specific `CommitHandoff`. Successful Commit под одной Manager synchronization boundary публикует Registration, Registration-bound Completion Adapter, Owner Lifetime Lease accounting, Snapshot Stop capability и полный immutable `CommitResult`; тот же logical result получает dormant execution path. Repeated Commit проверяет identity handoff и не создаёт повторную публикацию или accounting.
 - `CommitHandoffPublisher` является непрозрачной Manager-facing capability без доступных внешнему package committed-side операций. Только `ReservationHandle.Commit` может опубликовать `Committed`; Dispatcher сохраняет отдельную `NotCommittedPublisher` для pre-Commit failure path.
 - Task 6 завершает Owner-local Runtime-cancellation и control-call primitives: explicit Stop и Runtime cancellation используют одну first-writer causal state; root Runtime context наблюдается только через явно устанавливаемую read-only dependency; control-call admission, outstanding accounting, panic-safe callback, idempotent unregister-and-drain result и seal после confirmed drain реализованы без production integration.
 - Task 7 добавляет immutable, нативно сравнимый Terminal Result с validating construction и синхронный Terminal Observer contract.
 - Task 8 завершает Owner-local terminal lifecycle: каждый claimed committed execution path проходит `Terminalizing -> Cleanup -> Completion -> Terminal Result -> Observer -> UnregisterAndDrain -> seal -> Terminal -> conditional lease release`; panic Completion и Observer изолируются, unconfirmed callback drain оставляет Owner в `Terminalizing`, а cancellation anomaly запрещает release lease после `Terminal`.
-- Transaction-capable Dispatcher, dormant execution path и полный post-Commit Owner lifecycle реализованы и покрыты изолированными тестами, но production Runtime composition по-прежнему использует legacy Dispatcher. Переключение Runtime на transactional Dispatcher, production-установка Runtime-cancellation observation и shutdown orchestration остаются задачей Task 10.
+- TASK-M10-001 переключил production Runtime composition на TransactionalDispatcher: один Session Manager и synchronous composition-local Terminal Observer создаются на экземпляр Runtime, Router передаётся как `message.Handler`, а Handshake использует только transactional handoff. Live read-only input корневого Runtime context устанавливает post-Commit Runtime-cancellation observation без передачи Host-owned cancellation authority.
 - Создан новый двуязычный Draft design [DP-006: Runtime Production Integration](../docs/ru/design/DP-006-runtime-production-integration.md) ([English version](../docs/en/design/DP-006-runtime-production-integration.md)), который фиксирует только production composition и shutdown cutover Task 10 без изменения DP-003, DP-004 или ARCH-003.
-- Текущий production Session Dispatcher по-прежнему синхронно выполняет отдельную Session без Runtime-wide registration и tracking; transaction-capable Dispatcher ещё не выбран Runtime composition.
-- TASK-REV-013 Codex утвердил DP-003/DP-004 с одним неблокирующим clarity finding, TASK-REV-013 Kiro утвердил их без findings; TASK-DOC-016 синхронизировал Failure Matrix, composition root dependency и generic/production `accepted,error` semantics. DP-003 и DP-004 имеют статус Approved; их Go-реализация остаётся частичной и не интегрированной в production Runtime.
+- Session Manager хранится как Runtime lifetime dependency, но Host Stop ещё не вызывает `BeginShutdown`, Snapshot Stop requests и `Manager.Wait`. Полный shutdown order DP-006 остаётся задачей TASK-M10-002; до неё production composition и Manager-aware shutdown ещё не образуют завершённый Task 10 cutover.
+- TASK-ARCH-REVIEW-010 подтвердил acceptance criteria DP-006 1-7, 12 и 13. Критерии 8-11 не выполнены из-за отсутствия Manager-aware Host Stop; DP-006 остаётся Draft до TASK-M10-002 и полной независимой проверки.
+- TASK-REV-013 Codex утвердил DP-003/DP-004 с одним неблокирующим clarity finding, TASK-REV-013 Kiro утвердил их без findings; TASK-DOC-016 синхронизировал Failure Matrix, composition root dependency и generic/production `accepted,error` semantics. DP-003 и DP-004 имеют статус Approved и интегрированы в production Session handoff; Runtime shutdown integration остаётся незавершённой.
 
 ## Runtime Foundation Freeze
 

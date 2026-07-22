@@ -6,6 +6,13 @@
 
 **Status:** Draft
 
+**Implementation status (TASK-ARCH-REVIEW-010):** Partially implemented. Host is
+the production composition root and implements startup transaction, rollback,
+readiness, Admission Gate, root Runtime context, and transactional Session
+composition. The document remains Draft because Manager-aware shutdown,
+terminal `Failed` state, mandatory-component supervision, and the documented
+context-bounded cleanup ownership are not complete.
+
 This document proposes the production composition boundary for one Runtime instance. It defines component assembly, readiness, lifecycle coordination, startup rollback, and shutdown ordering. It does not define Go APIs or subsystem business behavior.
 
 ## 2. Background

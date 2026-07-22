@@ -56,7 +56,7 @@ The repository currently contains an Alpha foundation rather than a production-r
 - [ADR-0002](../adr/0002-configuration-dsl.md) defines ConfigurationVersion as the Configuration DSL and Published source of truth.
 - [ADR-0003](../adr/0003-runtime-architecture.md) defines the component Runtime model and explicit dependency injection.
 - [ARCH-001](../architecture/ARCH-001-runtime-architectural-pattern.md) records the confirmed `Context -> Evaluation -> Decision -> Execution` pattern, ownership, lifecycle, and Boring Core.
-- The Runtime Alpha Review verdict was **Ready with findings**. Runtime Host, lifecycle hardening, startup capability validation, pre-Upgrade Authentication, and the approved DP-005 Router are now implemented. Session Manager foundations exist but are not integrated into production Session handoff or Runtime shutdown.
+- The Runtime Alpha Review verdict was **Ready with findings**. Runtime Host, lifecycle hardening, startup capability validation, pre-Upgrade Authentication, the approved DP-005 Router, and transactional production Session handoff are implemented. The Session Manager is part of the production Runtime graph; Manager-aware Host shutdown remains the next Runtime Foundation task.
 
 ## 3. Engineering Principles
 
@@ -243,9 +243,8 @@ Deferred features must not shape the current core through speculative abstractio
 The Runtime Alpha Review identifies implementation debt that must be tracked independently from new functionality:
 
 - Listener stores TLS and timeout metadata without fully enforcing it.
-- Full Session shutdown tracking is not integrated with Runtime Host shutdown.
-- The current Dispatcher still synchronously owns Session `Start/Run/Stop` in the HTTP handler path.
-- The implemented Execution Owner stops at `Terminalizing` and does not yet perform the approved terminal chain.
+- Manager-aware Session shutdown tracking is not yet integrated with Runtime Host Stop.
+- The legacy synchronous Dispatcher remains only for isolated compatibility tests and must not return to production composition.
 - HTTP server and Dispatcher errors lack an operational reporting path.
 - `runtimeconfig.Builder` is the explicit ConfigurationVersion adapter inside the Runtime model package and must not accumulate Repository concerns.
 - Basic and asymmetric JWT Runtime coverage is incomplete.
@@ -255,14 +254,13 @@ Technical debt is closed through tests and implementation changes, not by relabe
 
 ## 9. Architectural Debt
 
-Architectural debt concerns boundaries that are unresolved or not yet represented by production composition:
+Architectural debt concerns boundaries that remain unresolved or incomplete after production composition:
 
-- **Session ownership integration:** the approved DP-003/DP-004 ownership transfer and terminal accounting are not yet represented in production composition.
 - **Runtime shutdown wait set:** Host does not yet coordinate Manager BeginShutdown, Session Stop capabilities, Listener drain, and Manager Wait.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
-- **Session terminal semantics:** private cleanup acknowledgement is implemented; callback drain, Terminal Result, Observer, and lease release remain unimplemented.
+- **Runtime Foundation cutover completion:** transactional Session ownership and the complete Owner terminal chain are active in production, but they are not yet paired with the Manager-aware Host shutdown required by DP-006.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
-- **Extension boundaries:** Router is implemented; Session Manager integration and the Persistence, Delivery, and Plugin contracts still require focused completion or design.
+- **Extension boundaries:** Router and transactional Session handoff are implemented; Runtime shutdown integration and the Persistence, Delivery, and Plugin contracts still require focused completion or design.
 
 Architectural debt is resolved through DP, ADR when consequential, implementation, and follow-up review. MASTER_PLAN does not settle those contracts itself.
 

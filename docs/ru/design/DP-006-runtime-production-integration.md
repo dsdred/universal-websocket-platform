@@ -6,6 +6,13 @@
 
 **Статус:** Draft
 
+**Статус реализации (TASK-ARCH-REVIEW-010):** Частично реализован в
+TASK-M10-001. Acceptance criteria 1-7, 12 и 13 выполняются production
+composition и committed execution path. Критерии 8-11 не выполнены: Host Stop
+ещё не вызывает `BeginShutdown`, не запрашивает Stop через immutable Snapshot и
+не ожидает Manager accounting. DP-006 остаётся Draft до завершения TASK-M10-002
+и независимой проверки полного набора acceptance criteria.
+
 Это предложение определяет только production-интеграцию уже утверждённых и реализованных контрактов Runtime Foundation. Оно не пересматривает [DP-003](DP-003-runtime-session-manager.md), [DP-004](DP-004-per-session-execution-boundary.md) или [ARCH-003](../architecture/ARCH-003-runtime-migration-revision.md).
 
 ## 2. Назначение

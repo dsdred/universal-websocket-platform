@@ -6,6 +6,13 @@
 
 **Статус:** Draft
 
+**Статус реализации (TASK-ARCH-REVIEW-010):** Реализован частично. В production
+работают pre-Upgrade Authentication boundary, live-проверки admission,
+ограниченный Handshake, Runtime-owned connection context и transactional
+ownership handoff. Документ остаётся Draft, поскольку Host shutdown ещё не
+использует wait set Session Manager, а контракты operational diagnostics и
+supervision остаются незавершёнными.
+
 Этот документ предлагает архитектуру Runtime Handshake. Он определяет концептуальные границы и инварианты, а не Go-интерфейсы, пакеты или переиспользуемый policy framework.
 
 ## 2. Контекст

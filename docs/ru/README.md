@@ -4,33 +4,23 @@
 
 ## Архитектурные руководства
 
-Активные общие архитектурные паттерны находятся в каталоге [`architecture/`](architecture/).
-
-- [ARCH-001: Runtime Architectural Pattern](architecture/ARCH-001-runtime-architectural-pattern.md)
-- [ARCH-002: Runtime Foundation Freeze](architecture/ARCH-002-runtime-foundation-freeze.md)
+Активные общие архитектурные паттерны и полный перечень документов ARCH поддерживаются в [индексе архитектурных руководств](architecture/README.md).
 
 ## Инженерный план развития
 
-Живые планы инженерной зрелости находятся в каталоге [`roadmap/`](roadmap/).
-
-- [Master Engineering Plan](roadmap/MASTER_PLAN.md)
+Живые планы инженерной зрелости поддерживаются в [индексе инженерного плана развития](roadmap/README.md).
 
 ## Документы проектирования Runtime
 
-Сфокусированные designs подсистем Runtime находятся в каталоге [`design/`](design/).
-
-- [DP-001: Runtime Handshake Pipeline](design/DP-001-runtime-handshake-pipeline.md)
-- [DP-002: Runtime Host Composition Root](design/DP-002-runtime-host-composition-root.md)
-- [DP-003: Runtime Session Manager](design/DP-003-runtime-session-manager.md)
-- [DP-004: Per-Session Execution Boundary](design/DP-004-per-session-execution-boundary.md)
+Сфокусированные designs подсистем Runtime, их статусы и полный перечень DP поддерживаются в [индексе документов проектирования Runtime](design/README.md).
 
 ## Архитектурные решения
 
-Принятые архитектурные решения и правила оформления ADR находятся в каталоге [`adr/`](adr/).
+Принятые архитектурные решения и правила оформления ADR поддерживаются в [индексе архитектурных решений](adr/README.md).
 
-## Проектные предложения
+## Проектные предложения Authentication
 
-Предлагаемые решения, которые еще не стали принятыми архитектурными решениями, находятся в каталоге [`proposals/`](proposals/).
+Предложения Authentication, созданные до выделения отдельной серии документов проектирования Runtime, находятся в каталоге [`proposals/`](proposals/).
 
 - [DP-001: Authentication](proposals/DP-001-authentication.md)
 - [DP-002: Secret References](proposals/DP-002-secret-references.md)
@@ -43,10 +33,16 @@
 
 ## Архитектурные ревью
 
-Основанные на фактах ревью реализации находятся в каталоге [`reviews/`](reviews/).
+Основанные на фактах ревью реализации поддерживаются в [индексе архитектурных ревью](reviews/README.md).
 
-- [Runtime Alpha Architecture Review](reviews/runtime-alpha-review.md)
+## Инженерный процесс
+
+- [Руководство по разработке с помощью LLM](process/LLM_DEVELOPMENT_GUIDE.md)
+
+## Ретроспективы
+
+- [Ретроспектива DP-005 Runtime Message Router](retrospectives/DP-005.md)
 
 ## Внутренние спецификации
 
-Рабочие спецификации команды находятся в каталоге [`spec/`](../../spec/). Русский язык является для них основным; эти документы могут описывать незавершенную работу и не являются стабильными публичными контрактами.
+Рабочие спецификации команды находятся в каталоге [`spec/`](../../spec/). Фактическое состояние реализации зафиксировано в [`spec/current-state.md`](../../spec/current-state.md). Русский язык является основным для внутренних спецификаций; они могут описывать незавершённую работу и не являются стабильными публичными контрактами.

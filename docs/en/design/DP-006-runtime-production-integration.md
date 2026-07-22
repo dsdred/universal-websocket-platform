@@ -6,6 +6,13 @@
 
 **Status:** Draft
 
+**Implementation status (TASK-ARCH-REVIEW-010):** Partially implemented by
+TASK-M10-001. Acceptance criteria 1-7, 12, and 13 are satisfied by the
+production composition and committed execution path. Criteria 8-11 are not satisfied:
+Host Stop does not yet call `BeginShutdown`, request Stop through the immutable
+Snapshot, or wait for Manager accounting. DP-006 remains Draft until
+TASK-M10-002 completes and the full acceptance set is independently verified.
+
 This proposal defines only the production integration of the already approved and implemented Runtime Foundation contracts. It does not revise [DP-003](DP-003-runtime-session-manager.md), [DP-004](DP-004-per-session-execution-boundary.md), or [ARCH-003](../architecture/ARCH-003-runtime-migration-revision.md).
 
 ## 2. Purpose
