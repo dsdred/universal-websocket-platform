@@ -8,3 +8,4 @@
 - [ARCH-002: Runtime Foundation Freeze](ARCH-002-runtime-foundation-freeze.md)
 - [ARCH-003: Runtime Foundation Migration Revision](ARCH-003-runtime-migration-revision.md)
 - [ARCH-004: Runtime Deployment and Identity Model](ARCH-004-runtime-deployment-and-identity-model.md)
+- [ARCH-005: Runtime Configuration Snapshot and Loading Model](ARCH-005-runtime-configuration-snapshot-and-loading-model.md)
