@@ -12,3 +12,4 @@
 | [DP-004: Per-Session Execution Boundary](DP-004-per-session-execution-boundary.md) | Approved |
 | [DP-005: Маршрутизатор Runtime-сообщений](DP-005-runtime-message-router.md) | Approved |
 | [DP-006: Production-интеграция Runtime](DP-006-runtime-production-integration.md) | Draft; реализован частично |
+| [DP-007: Configuration Loader Contract](DP-007-configuration-loader-contract.md) | Draft |
