@@ -9,11 +9,14 @@
 This proposal describes a future implementation contract. It does not claim
 that the Loader-to-Builder-to-Launcher pipeline is implemented.
 
+The focused implementation-prerequisites refinement is complete. The Runtime
+Bootstrap implementation and its production integration remain planned.
+
 ## 2. Purpose
 
 Define the engineering boundary by which the stateless Runtime Launcher invokes
-Runtime Bootstrap with one immutable Runtime Snapshot, and Bootstrap creates
-one Host and synchronously invokes `Host.Start()`.
+Runtime Bootstrap with one concrete request, and Bootstrap creates at most one
+Host and synchronously invokes `Host.Start()` at most once.
 
 Host remains the sole production composition root and sole owner of the
 operational startup transaction.
@@ -61,9 +64,9 @@ DP-009 does not define:
 
 ### Runtime Bootstrap
 
-Runtime Bootstrap is a construction boundary. It receives launch input, checks
-its static representation, binds concrete dependencies, creates one Host, and
-invokes `Host.Start()` exactly once.
+Runtime Bootstrap is a construction boundary. It receives one concrete request,
+checks only its static representation, binds fixed dependencies, creates and
+builds one Host, and invokes `Host.Start()` at most once.
 
 Bootstrap is not a production composition root, resource owner, lifecycle
 owner, registry, or management authority.
@@ -86,7 +89,7 @@ the final startup result.
 
 Bootstrap Failure is a failure before `Host.Start()` begins: invalid static
 construction input, missing required dependency binding, or inability to create
-the unstarted Host value. It creates no operational Runtime resource.
+or build the unstarted Host value. It creates no operational Runtime resource.
 
 ### Startup Failure
 
@@ -100,9 +103,10 @@ Bootstrap Failure.
 Runtime Lifecycle Owner
     -> Runtime Launcher
         -> Runtime Bootstrap
-            -> validate static construction input
-            -> bind dependencies
+            -> validate request
+            -> validate dependency bindings
             -> create Host
+            -> Host.Build()
             -> Host.Start()
                 -> validate fully assembled Runtime configuration
                 -> compose operational Runtime graph
@@ -121,61 +125,91 @@ bypass Launcher and does not absorb Host startup ownership.
 
 The single architectural operation is **Construct and Start Runtime Host**:
 
-1. receive one immutable Runtime Snapshot and required construction
-   dependencies from Launcher;
-2. validate static presence, identity, and representation of those inputs;
-3. bind the selected implementations without creating operational resources;
-4. create exactly one unstarted Host;
-5. invoke `Host.Start()` exactly once;
-6. return either the active Host, one Bootstrap Failure, or the Host Startup
-   Failure.
+1. validate the concrete Bootstrap Request;
+2. validate its concrete Dependency Bindings;
+3. invoke the fixed production Host constructor at most once;
+4. invoke `Host.Build()` at most once;
+5. invoke `Host.Start(startupContext)` at most once;
+6. return exactly one Success, Bootstrap Failure, or Startup Failure.
 
-The operation is synchronous. Bootstrap retains no launch state after return.
+The order is fixed and fail-fast. A failed step prevents all later steps. The
+operation is synchronous, contains no retry, and retains no request,
+dependency, Host, or launch state after return.
 
-## 8. Inputs
+`Host.Build()` performs only the existing non-operational transition from
+Created to Built. A Build failure is a Bootstrap Failure. Operational resource
+acquisition remains impossible before `Host.Start()` and belongs exclusively
+to Host after Start begins.
 
-Bootstrap receives:
+## 8. Concrete Bootstrap Request
 
-- one complete immutable Runtime Snapshot;
-- the fixed construction dependencies required to create Host;
-- the startup context and launch-scoped inputs required by the existing Host
-  contract.
+The request is one structurally complete value containing exactly:
 
-Bootstrap does not receive:
+| Field | Contract |
+| --- | --- |
+| Snapshot | One complete immutable architectural Runtime Snapshot, passed by value |
+| Startup Context | One required non-nil startup context, borrowed only for the synchronous `Host.Start()` call and passed unchanged |
+| Dependency Bindings | One fixed typed Dependency Bindings value defined by Section 11 |
 
-- Repository or Configuration Source;
-- Loader or Builder authority;
-- publication history;
-- Control Plane management authority;
-- a preconstructed Listener or operational Runtime graph.
+Snapshot provenance is the only launch identity carried by the request. The
+request must not duplicate Workspace, Configuration, ConfigurationVersion,
+schema, Runtime Instance, or Launch Attempt identity outside Snapshot.
 
-Any external construction configuration read by Bootstrap is limited to static
-dependency wiring. It is not a second declarative Configuration source and
-cannot override Runtime Snapshot.
+The startup context is not the Runtime lifetime context. Bootstrap borrows it,
+passes the same context value to `Host.Start()`, and does not retain it. An
+already-cancelled context is a valid static input. If Host refuses startup
+because that context is cancelled, the result is Startup Failure rather than
+Bootstrap Failure.
 
-## 9. Output
+The request carries no Repository, Configuration Source, Loader, Builder,
+publication, management, Runtime Lifecycle Owner, preconstructed Listener, or
+operational Runtime graph authority. Dependency Bindings cannot override
+Snapshot or act as a second declarative Configuration source.
 
-The operation returns exactly one outcome:
+## 9. Exclusive Bootstrap Outcome
 
-- the active Host whose startup commit completed;
-- one Bootstrap Failure produced before `Host.Start()`; or
-- one Startup Failure returned after Host-owned rollback.
+The closed tagged outcome has exactly one of these forms:
 
-No partially constructed, unstarted, or failed Host is published to Runtime
-Lifecycle Owner. No separate `PreparedRuntime` handoff exists in this contract.
+| Outcome | Payload | Meaning |
+| --- | --- | --- |
+| Success | `ActiveHost` | `Host.Start()` succeeded and Host is Running |
+| Bootstrap Failure | `Stage`, `Code`, optional `Cause` | Failure before `Host.Start()` was invoked |
+| Startup Failure | required `Cause` | `Host.Start()` was invoked and returned failure after Host-owned rollback |
+
+The outcome cannot contain both Host and failure. Success cannot contain a nil,
+Built, unstarted, failed, or partially constructed Host. Bootstrap Failure and
+Startup Failure publish no Host. No `PreparedRuntime`, partial-success, or
+intermediate Host outcome exists.
 
 ## 10. Validation Boundary
 
-Bootstrap validates only:
+Bootstrap performs exactly three static validation checks, in this order:
 
-- required construction inputs are present;
-- their static identities and types are internally consistent;
-- required dependency bindings can be selected without operational work;
-- one Host can be created from those values.
+1. the request envelope and startup context are structurally present;
+2. Snapshot is non-zero and contains all eight provenance facts:
+   Workspace ID, Configuration ID, ConfigurationVersion ID and number, schema
+   identity and version, Runtime Instance ID, and Launch Attempt ID;
+3. the Dependency Bindings envelope is structurally present and its required
+   Secret Resolver is present under Section 11.
+
+After those validations succeed, Bootstrap executes the fixed production Host
+constructor and then executes the created Host's non-operational `Build()`.
+These are real execution steps, not static checks or dry runs. Constructor
+failure and Build failure are the fourth and fifth failure points in the
+global fail-fast precedence defined by Section 14. Bootstrap does not invoke
+the constructor after an earlier validation failure, does not invoke Build
+unless construction succeeded, and does not invoke Start unless Build
+succeeded.
+
+A nil or typed-nil startup context fails static input validation. An
+already-cancelled but non-nil context passes static validation and reaches
+`Host.Start()`.
 
 Bootstrap does not validate:
 
 - Configuration domain semantics owned by Builder;
+- schema, Listener, TLS, Timeout, Authentication, or Routing semantics already
+  owned by Builder and Snapshot;
 - whether startup capabilities are executable;
 - whether Listener, TLS, Authentication, or other operational resources can be
   acquired;
@@ -186,14 +220,32 @@ Components may own focused startup validators. `Host.Start()` is the only
 caller and coordinator of those validators for the fully assembled Runtime
 configuration.
 
-## 11. Dependency Binding
+## 11. Concrete Dependency Bindings
 
-Bootstrap selects and binds the concrete implementations required by the Host
-constructor. Binding is explicit and deterministic. It does not instantiate
-the operational graph that Host composes during Start.
+Dependency Bindings is one fixed typed value, not a map, service locator, or
+registry:
 
-Binding must not introduce a service locator, reflection-based dependency
-injection, global registry, hidden fallback, or mutable shared launch state.
+| Binding | Presence | Bootstrap contract |
+| --- | --- | --- |
+| Secret Resolver | Required, including when Authentication is disabled | Stable borrowed capability; Bootstrap never calls `Resolve` |
+| Legacy Message Handler | Optional | Absence is explicit; Host composition alone decides whether it is needed |
+| Terminal Error Reporter | Optional | Synchronous callback capability; Bootstrap never invokes it |
+
+For the required Secret Resolver, nil and typed-nil both mean missing. For each
+optional binding, nil and typed-nil both mean absent. Absence never selects a
+fallback implementation.
+
+Bindings carry no Runtime or Launch Attempt identity and no Loader, Builder,
+Repository, publication, management, or lifecycle authority. Bootstrap passes
+the selected stable capability references to Host without closing them.
+External owners retain ownership; Host may retain only the references required
+by its existing composition contract.
+
+The production Host constructor is fixed and owned by Bootstrap rather than
+supplied as a caller binding. An implementation may use a private immutable
+factory seam only for tests. Binding must not introduce reflection-based
+dependency injection, a global registry, hidden fallback, mutable shared
+launch state, or operational graph construction.
 
 ## 12. Host Startup Boundary
 
@@ -213,17 +265,18 @@ transfer any of these responsibilities to Bootstrap or Launcher.
 
 ## 13. Cleanup and Rollback
 
-Before `Host.Start()`, Bootstrap cleans up only Bootstrap-local construction
-values that it created and did not transfer to Host. Such cleanup is not
-operational startup rollback.
+Before `Host.Start()`, a failed Bootstrap invocation discards only its local
+construction values. Those values are non-operational and require no cleanup
+contract.
 
 After `Host.Start()` begins, Host owns every operational resource acquired for
-startup and all rollback. Bootstrap performs no duplicate cleanup or retry.
+startup and all rollback. Bootstrap never calls `Host.Stop()`, performs
+cleanup, retries, creates a second Host, or invokes Start again.
 
 After successful startup, Runtime Lifecycle Owner owns the active Host
 reference under ARCH-004. Bootstrap retains no ownership.
 
-## 14. Failure Contract
+## 14. Structured Failure Contract
 
 Bootstrap Failure and Startup Failure are mutually exclusive stages:
 
@@ -231,20 +284,50 @@ Bootstrap Failure and Startup Failure are mutually exclusive stages:
 - Startup Failure means Host startup was invoked and returned only after its
   rollback contract completed.
 
+Bootstrap uses this complete, ordered Bootstrap Failure registry:
+
+| Precedence | Stage | Code | Fixed description |
+| --- | --- | --- | --- |
+| 1 | Input Validation | `invalid-startup-context` | Bootstrap startup context is missing |
+| 2 | Input Validation | `invalid-snapshot` | Bootstrap Snapshot is invalid |
+| 3 | Dependency Binding | `missing-secret-resolver` | Bootstrap Secret Resolver binding is missing |
+| 4 | Host Construction | `host-construction-failed` | Runtime Host construction failed |
+| 5 | Host Preparation | `host-build-failed` | Runtime Host build failed |
+
+Validation is fail-fast and returns at most one Bootstrap Failure using the
+first applicable pair. Missing optional bindings are not failures.
+
+`Stage` and `Code` are the stable machine-readable Bootstrap failure identity.
+Bootstrap Failure may have a cause; Startup Failure always has the cause
+returned by `Host.Start()`. A failure directly unwraps its cause so
+`errors.Is`, `errors.As`, and an existing `errors.Join` chain remain observable.
+Bootstrap does not replace, flatten, stringify, or reclassify a Host startup
+cause.
+
+Every error after the actual call to `Host.Start()` begins is exclusively a
+Startup Failure. Bootstrap performs no cleanup, Stop, retry, second Start, or
+fallback after it.
+
+Failure identity does not duplicate Runtime Instance or Launch Attempt
+identity, which remains solely in Snapshot provenance. Bootstrap failure
+descriptions are constant and contain no Snapshot values, Secret values,
+dependency values, or cause text. This contract does not claim that a cause is
+safe to log and does not define logging, serialization, operational
+presentation, storage, or redaction.
+
 Neither outcome selects another ConfigurationVersion, rebuilds Snapshot,
 retries launch, or changes Launch Attempt identity. Runtime Lifecycle Owner
 records the truthful Launch Attempt outcome.
-
-Concrete Go errors, wrapping, diagnostics presentation, retry, and persistence
-remain outside this proposal.
 
 ## 15. Ownership
 
 | Object | Before Bootstrap | During Bootstrap | After success |
 | --- | --- | --- | --- |
-| Runtime Snapshot | Lifecycle Owner | Borrowed for Host creation | Host owns its immutable copy |
-| Construction dependencies | Launcher boundary | Borrowed for binding | Host owns required bindings |
-| Host | Does not exist | Created by Bootstrap; startup owned by Host | Lifecycle Owner owns active reference |
+| Bootstrap Request | Launcher boundary | Borrowed by synchronous invocation | Not retained |
+| Runtime Snapshot | Lifecycle Owner | Passed by value for Host creation | Host owns its immutable value |
+| Startup context | Caller | Borrowed and passed unchanged to `Host.Start()` | Not retained by Bootstrap |
+| Stable dependency capabilities | External owners | Borrowed for binding; never closed by Bootstrap | Host retains required references; external ownership is unchanged |
+| Host | Does not exist | Constructed and built by Bootstrap; startup owned by Host | Lifecycle Owner owns the sole active reference |
 | Operational Runtime graph | Does not exist | Created and owned inside `Host.Start()` | Host |
 | Listener | Does not exist | Created and owned inside `Host.Start()` | Host |
 | Runtime context | Does not exist | Created at Host startup commit | Host |
@@ -274,13 +357,16 @@ Bootstrap return does not create a second activation point.
 
 ## 17. Determinism and Concurrency
 
-For the same Snapshot, construction dependencies, and equivalent external
-conditions, Bootstrap selects the same bindings and delegates the same startup
-operation.
+Before Start, Bootstrap follows the same fixed validation precedence and
+binding order for the same request. It does not iterate a dependency map or
+consult a global, registry, cache, environment fallback, or mutable shared
+state.
 
-One Bootstrap invocation creates at most one Host and invokes its Start at most
-once. Bootstrap contains no mutable global state, registry, cache, goroutine,
-or background lifecycle. Concurrent invocations are independent.
+One Bootstrap invocation constructs at most one Host, calls Build at most once,
+and calls Start at most once. Bootstrap creates no goroutine or background
+lifecycle. Concurrent invocations are independent. The result of
+`Host.Start()` may depend on operational external conditions; this does not
+weaken deterministic pre-Start behavior.
 
 ## 18. Dependency Rules
 
@@ -292,8 +378,8 @@ Runtime Lifecycle Owner
 ```
 
 - Launcher depends on the Bootstrap contract, not Host internals.
-- Bootstrap may depend on Host construction contracts and focused dependency
-  factories.
+- Bootstrap depends on the fixed Host construction contract and fixed typed
+  Dependency Bindings.
 - Host does not depend on Launcher or Bootstrap.
 - Bootstrap does not depend on Loader implementation, Builder implementation,
   Repository, HTTP, or Control Plane services.
@@ -312,22 +398,29 @@ sequenceDiagram
     participant H as Runtime Host
     O->>L: Launch immutable Snapshot
     L->>B: Construct and start Host
-    B->>B: Validate static input and bind dependencies
+    B->>B: Validate request and bindings
     alt Bootstrap construction fails
         B-->>L: Bootstrap Failure
         L-->>O: Failed launch outcome
     else Host created
-        B->>H: Host.Start()
-        H->>H: Validate, compose, acquire, start
-        alt Host startup fails
-            H->>H: Roll back operational resources
-            H-->>B: Startup Failure
-            B-->>L: Startup Failure
+        B->>H: Host.Build()
+        alt Host build fails
+            H-->>B: Bootstrap Failure
+            B-->>L: Bootstrap Failure
             L-->>O: Failed launch outcome
-        else Host startup commits
-            H-->>B: Active Host
-            B-->>L: Active Host
-            L-->>O: Active Host
+        else Host built
+            B->>H: Host.Start(startupContext)
+            H->>H: Validate, compose, acquire, start
+            alt Host startup fails
+                H->>H: Roll back operational resources
+                H-->>B: Startup Failure
+                B-->>L: Startup Failure
+                L-->>O: Failed launch outcome
+            else Host startup commits
+                H-->>B: Active Host
+                B-->>L: Active Host
+                L-->>O: Active Host
+            end
         end
     end
 ```
@@ -346,15 +439,19 @@ coordinated by Host.
 ### AP-003: Launcher Presence
 
 Every production launch request passes through the stateless Runtime Launcher.
+An isolated Bootstrap implementation cannot prove this integration property;
+proof is required when Launcher, Lifecycle Owner, and production launch wiring
+are implemented.
 
 ### AP-004: Bootstrap Boundary
 
-Bootstrap validates static construction input, binds dependencies, creates one
-Host, and performs no operational startup work itself.
+Bootstrap validates static construction input, binds dependencies, creates at
+most one Host, and performs no operational startup work itself.
 
-### AP-005: Start Exactly Once
+### AP-005: At-Most-Once Build and Start
 
-One Bootstrap operation invokes `Host.Start()` at most once.
+One Bootstrap operation constructs at most one Host, invokes `Host.Build()` at
+most once, and invokes `Host.Start()` at most once.
 
 ### AP-006: No Partial Host Publication
 
@@ -363,7 +460,8 @@ Only an active Host whose startup committed can be returned successfully.
 ### AP-007: Failure Separation
 
 Bootstrap Failure proves Start was not invoked; Startup Failure proves
-Host-owned rollback completed before return.
+Host-owned rollback completed before return. The structured outcome is
+exclusive and preserves the original cause chain.
 
 ### AP-008: Snapshot Authority
 
@@ -383,7 +481,8 @@ by Host rollback.
 ### AP-011: Stateless Launcher
 
 Launcher retains no Snapshot, Host, registry, or lifecycle state after the
-launch call.
+launch call. An isolated Bootstrap implementation cannot prove this Launcher
+property; proof is required by production integration.
 
 ### AP-012: Bootstrap Detachment
 
@@ -403,6 +502,34 @@ dependency cycle is introduced.
 
 Until implementation is verified, project-state documentation identifies this
 pipeline as planned rather than implemented.
+
+### AP-016: Concrete Request
+
+Bootstrap accepts exactly one Snapshot by value, one required non-nil startup
+context, and one fixed typed Dependency Bindings value. No launch identity is
+duplicated outside Snapshot provenance.
+
+### AP-017: Fixed Binding Semantics
+
+Secret Resolver is always required. Nil and typed-nil are treated identically
+for required and optional bindings, optional absence selects no fallback, and
+Bootstrap invokes neither Secret Resolver nor Terminal Error Reporter.
+
+### AP-018: Validation Precedence
+
+Every pre-Start failure selects at most one of the five ordered Stage/Code
+pairs, and no optional-binding absence produces a failure.
+
+### AP-019: Cause Preservation
+
+Startup Failure directly unwraps the unchanged `Host.Start()` cause, including
+`errors.Join` chains, and Bootstrap performs no post-Start cleanup, Stop, retry,
+or reclassification.
+
+### AP-020: Ownership and Independence
+
+Bootstrap retains no request, context, dependency, Host, or launch state;
+concurrent invocations share no Bootstrap-owned mutable state.
 
 ## 21. Architecture Compatibility
 
@@ -430,11 +557,11 @@ source validation, semantic normalization, or Snapshot repair.
 
 The following remain outside DP-009:
 
-- concrete Go interfaces and package layout;
-- external construction-input representation;
-- concrete dependency factories;
+- concrete Go types, signatures, and package layout;
+- the private test-factory seam and production wiring details;
 - Runtime Launcher implementation;
-- operational diagnostics and redaction;
+- Runtime Lifecycle Owner and Control Service integration;
+- operational diagnostics, logging, serialization, storage, and redaction;
 - retry, replacement, reconciliation, and persistence;
 - Secret resolution timing where not already fixed by higher authority;
 - process topology and remote launch transport.
@@ -443,18 +570,26 @@ None may be implemented as hidden Bootstrap behavior.
 
 ## 23. Implementation Prerequisites
 
-Before implementation, focused work must define the concrete Bootstrap input,
-dependency bindings, and failure representation without moving operational
-startup responsibility out of Host.
+The focused prerequisite refinement defines the concrete request semantics,
+fixed binding set and nil behavior, ordered failure identity, exclusive outcome,
+and cause preservation required before implementation.
+
+This completes the design refinement prerequisite, not implementation or
+production integration. Concrete Go types, signatures, package placement, the
+private test seam, and production wiring remain for a separate implementation
+task within Sections 7–18. AP-003 and AP-011 remain integration-gated.
 
 ## 24. Decision
 
 UWP uses Runtime Launcher as the mandatory stateless launch boundary. Launcher
-invokes one synchronous Runtime Bootstrap operation. Bootstrap validates static
-construction input, binds dependencies, creates one Host, and invokes
-`Host.Start()` exactly once.
+will invoke one synchronous Runtime Bootstrap operation with one concrete
+request: Snapshot by value, required startup context, and fixed typed
+Dependency Bindings. Bootstrap validates only static representation in a fixed
+order, constructs at most one Host, calls Build at most once, and calls Start at
+most once.
 
 Host alone validates the fully assembled Runtime configuration, composes and
 starts the operational graph, acquires resources, owns rollback, and publishes
-startup success. Bootstrap returns only the resulting active Host or failure
-and retains no lifecycle state.
+startup success. Bootstrap returns exactly one Success, structured Bootstrap
+Failure, or cause-preserving Startup Failure, publishes no partial Host,
+performs no cleanup or retry, and retains no lifecycle state.
