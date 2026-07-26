@@ -11,12 +11,22 @@
 
 ## Установленные ограничения проекта
 
-Для M0 Bootstrap установлены следующие исходные условия, которые не заменяют будущие ADR:
+Следующие исходные условия не заменяют ADR, Active/Frozen ARCH или Approved DP:
 
 - Миссия проекта определена в `00-product/vision.md`.
 - Архитектурные принципы определены в `01-principles/architecture-principles.md`.
 - Первый Control Service реализуется на Go 1.25 с Chi Router и `slog`.
 
-## Ожидающие принятия решения
+## Определённые архитектурные границы
 
-Границы последующих компонентов, контракты Configuration и Provider, а также модели развертывания пока не определены. Эти вопросы следует рассматривать только в рамках той вехи, где они необходимы, и фиксировать в ADR, если решение имеет существенные последствия.
+- ADR-0003 определяет component boundaries Runtime и Provider-based composition.
+- ARCH-004 определяет Runtime Instance, Launch Attempt и deployment identity model; реализация этих operational сущностей ещё отсутствует.
+- ARCH-005 определяет Configuration Loader, Snapshot provenance и loading boundary.
+- Draft DP-007, DP-008 и DP-009 являются implementation contracts и не повышаются до нормативного статуса реализацией или commit.
+
+## Ожидающие отдельного решения
+
+Delivery, Persistence, Plugin ABI, production deployment adapters, operational
+diagnostics и supervision требуют сфокусированных решений в соответствующих
+вехах. Их отсутствие не отменяет уже определённые component, configuration и
+deployment boundaries.

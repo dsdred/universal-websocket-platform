@@ -12,4 +12,6 @@ This directory contains focused Runtime design documents. A design document expl
 | [DP-004: Per-Session Execution Boundary](DP-004-per-session-execution-boundary.md) | Approved |
 | [DP-005: Runtime Message Router](DP-005-runtime-message-router.md) | Approved |
 | [DP-006: Runtime Production Integration](DP-006-runtime-production-integration.md) | Draft; partially implemented |
-| [DP-007: Configuration Loader Contract](DP-007-configuration-loader-contract.md) | Draft |
+| [DP-007: Configuration Loader Contract](DP-007-configuration-loader-contract.md) | Draft; implemented in isolation |
+| [DP-008: Snapshot Builder Contract](DP-008-snapshot-builder-contract.md) | Draft; planned |
+| [DP-009: Runtime Bootstrap Contract](DP-009-runtime-bootstrap-contract.md) | Draft; planned |

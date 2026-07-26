@@ -4,6 +4,10 @@
 
 **Status:** Draft
 
+**Implementation Status:** Planned; the current Builder still accepts
+ConfigurationVersion directly and does not construct complete ARCH-005
+provenance or blocking Diagnostics
+
 **Architecture status:** Implementation contract for the approved model in
 [ARCH-004](../architecture/ARCH-004-runtime-deployment-and-identity-model.md)
 and
@@ -352,9 +356,10 @@ Control Plane validation and Loader validation do not remove Builder's
 defensive semantic responsibility. Builder acceptance semantics must not
 contradict the approved Configuration domain.
 
-Runtime Bootstrap retains startup-critical capability validation required by
-ARCH-002 and ARCH-005. That validation concerns executable resource
-construction, not Configuration semantic validity.
+`Host.Start()` retains startup-critical capability validation required by
+ARCH-002 and ARCH-005. That validation concerns the executable fully assembled
+Runtime configuration and operational resource construction, not Configuration
+semantic validity. Bootstrap may validate only its static construction input.
 
 ## 12. Normalization and Pure Derived Structures
 
@@ -388,13 +393,14 @@ Builder must not create as part of normalization:
 - Router instances;
 - Listener, Session Manager, or other Runtime objects.
 
-Those objects belong to Runtime Bootstrap or the focused Runtime component
-that owns their construction.
+Those objects belong to `Host.Start()` or the focused Runtime component whose
+construction Host coordinates.
 
-Bootstrap and Runtime Services must not repeat semantic normalization, create
-source-specific defaults, or reinterpret a valid Snapshot. Bootstrap may only
-perform the startup-critical checks and Runtime resource construction already
-assigned to it.
+Bootstrap, Host startup, and Runtime Services must not repeat semantic
+normalization, create source-specific defaults, or reinterpret a valid
+Snapshot. Bootstrap may only validate static construction input and bind
+dependencies. `Host.Start()` performs startup-critical checks and Runtime
+resource construction.
 
 ## 13. Diagnostics Contract
 
@@ -478,7 +484,7 @@ The following states are forbidden:
 - Snapshot and Diagnostics returned together;
 - partial Snapshot;
 - recoverable or degraded Snapshot;
-- Snapshot containing invalid sections to be checked by Bootstrap;
+- Snapshot containing invalid semantic sections to be checked during startup;
 - Snapshot completed asynchronously after return;
 - success followed by later Builder-owned failure.
 
@@ -522,7 +528,7 @@ observer may obtain a partially validated or partially normalized Snapshot.
   rules owned by Builder.
 - Unsupported schema and semantically invalid input cannot produce Snapshot.
 - Secret References may be preserved; Secret values cannot enter Snapshot.
-- Bootstrap does not receive unresolved semantic violations.
+- Bootstrap and Host do not receive unresolved semantic violations.
 
 ### Normalization Invariants
 
@@ -557,8 +563,8 @@ observer may obtain a partially validated or partially normalized Snapshot.
 
 - Every supported behavior-affecting input value is either represented in the
   Snapshot according to approved semantics or causes blocking Diagnostics.
-- Snapshot is sufficient for Bootstrap without another declarative source
-  read.
+- Snapshot is sufficient for Bootstrap and Host without another declarative
+  source read.
 - No supported semantic obligation is deferred to Runtime Services.
 
 ### Atomicity
@@ -630,8 +636,10 @@ Runtime Lifecycle Owner
             -> immutable Runtime Snapshot
 
 Runtime Lifecycle Owner
-    -> Runtime Launcher / Bootstrap
-        -> immutable Runtime Snapshot
+    -> Runtime Launcher
+        -> Runtime Bootstrap
+            -> immutable Runtime Snapshot
+            -> Host.Start()
 ```
 
 Builder consumes only the neutral Loader handoff contract. It does not import
@@ -649,7 +657,8 @@ Required rules:
   Manager, Router implementation, or Runtime Services.
 - Builder does not know Secret Resolver.
 - Loader does not import or invoke Builder.
-- Runtime Bootstrap accepts Runtime Snapshot and does not receive
+- Runtime Bootstrap accepts Runtime Snapshot, binds construction inputs,
+  creates Host, and invokes `Host.Start()`; it does not receive
   `DetachedLoadResult`.
 - Runtime Host and Runtime Services receive neither Builder nor Loader
   authority.
@@ -665,6 +674,7 @@ sequenceDiagram
     participant O as Runtime Lifecycle Owner
     participant L as Configuration Loader
     participant B as Builder
+    participant X as Runtime Launcher
     participant R as Runtime Bootstrap
     participant H as Runtime Host
     L-->>O: Complete Detached Load Result
@@ -676,11 +686,12 @@ sequenceDiagram
     else Input is valid
         B->>B: Normalize and construct complete Snapshot
         B-->>O: Immutable Runtime Snapshot
-        O->>R: Launch with Snapshot
-        R-->>O: Built Host or startup failure
-        opt Host is built
-            O->>H: Continue approved Host lifecycle
-        end
+        O->>X: Launch with Snapshot
+        X->>R: Invoke Bootstrap
+        R->>H: Bind inputs, create Host, invoke Host.Start()
+        H-->>R: Active Host or startup failure after rollback
+        R-->>X: Launch outcome
+        X-->>O: Launch outcome
     end
 ```
 
@@ -750,11 +761,13 @@ Build success alone creates no Runtime component, goroutine, channel, lock,
 socket, timer, TLS configuration, validator, context, readiness state, or other
 Runtime resource.
 
-### AP-011: Bootstrap Responsibility
+### AP-011: Startup Responsibility
 
 Builder returns only semantically complete Snapshot values; Bootstrap performs
-startup-critical capability validation and resource construction without
-repeating Configuration semantic validation or normalization.
+only static construction-input validation and dependency binding, while
+`Host.Start()` performs startup-critical capability validation and resource
+construction. Neither repeats Configuration semantic validation or
+normalization.
 
 ### AP-012: Identity Preservation
 
@@ -777,7 +790,7 @@ or retain operation state.
 ### AP-015: Snapshot Authority
 
 Builder is the sole construction authority for Runtime Snapshot; Loader,
-Bootstrap, Runtime Host, and Runtime Services neither complete, normalize,
+Bootstrap, `Host.Start()`, and Runtime Services neither complete, normalize,
 repair, nor mutate Snapshot.
 
 ## 21. Architecture Compatibility
@@ -796,9 +809,9 @@ constructs no Runtime service.
 
 ### ARCH-002
 
-DP-008 ends before Runtime Bootstrap. It does not change Host composition,
-startup transaction, readiness, Admission Gate, rollback, shutdown, or
-lifecycle.
+DP-008 ends before Runtime Bootstrap. It does not change Host-owned
+composition, startup transaction, readiness, Admission Gate, rollback,
+shutdown, or lifecycle.
 
 ### ARCH-004
 
@@ -862,5 +875,7 @@ Runtime Snapshot is a detached Runtime model, not ConfigurationVersion or a
 Control Plane entity. It contains only complete effective Runtime configuration
 and provenance, remains immutable after successful construction, and is
 deterministic for semantically equivalent input. Bootstrap receives only a
-semantically complete Snapshot and remains responsible for startup-critical
-capability validation and Runtime resource construction.
+semantically complete Snapshot, validates static construction input, binds
+dependencies, creates Host, and invokes `Host.Start()`. Host alone owns
+startup-critical capability validation, operational composition, resource
+construction, rollback, and final startup outcome.

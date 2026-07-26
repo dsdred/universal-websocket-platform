@@ -56,7 +56,7 @@ The repository currently contains an Alpha foundation rather than a production-r
 - [ADR-0002](../adr/0002-configuration-dsl.md) defines ConfigurationVersion as the Configuration DSL and Published source of truth.
 - [ADR-0003](../adr/0003-runtime-architecture.md) defines the component Runtime model and explicit dependency injection.
 - [ARCH-001](../architecture/ARCH-001-runtime-architectural-pattern.md) records the confirmed `Context -> Evaluation -> Decision -> Execution` pattern, ownership, lifecycle, and Boring Core.
-- The Runtime Alpha Review verdict was **Ready with findings**. Runtime Host, lifecycle hardening, startup capability validation, pre-Upgrade Authentication, the approved DP-005 Router, and transactional production Session handoff are implemented. The Session Manager is part of the production Runtime graph; Manager-aware Host shutdown remains the next Runtime Foundation task.
+- The Runtime Alpha Review verdict was **Ready with findings**. Runtime Host, lifecycle hardening, startup capability validation, pre-Upgrade Authentication, the approved DP-005 Router, transactional production Session handoff, and Manager-aware Host shutdown are implemented. The Configuration Loader boundary is also implemented, but the Loader-to-Builder-to-Launcher pipeline is not.
 
 ## 3. Engineering Principles
 
@@ -243,10 +243,10 @@ Deferred features must not shape the current core through speculative abstractio
 The Runtime Alpha Review identifies implementation debt that must be tracked independently from new functionality:
 
 - Listener stores TLS and timeout metadata without fully enforcing it.
-- Manager-aware Session shutdown tracking is not yet integrated with Runtime Host Stop.
+- Manager-aware Session shutdown tracking is integrated with Runtime Host Stop.
 - The legacy synchronous Dispatcher remains only for isolated compatibility tests and must not return to production composition.
 - HTTP server and Dispatcher errors lack an operational reporting path.
-- `runtimeconfig.Builder` is the explicit ConfigurationVersion adapter inside the Runtime model package and must not accumulate Repository concerns.
+- `runtimeconfig.Builder` still accepts ConfigurationVersion directly instead of the neutral Loader handoff and does not yet construct full ARCH-005 provenance.
 - Basic and asymmetric JWT Runtime coverage is incomplete.
 - Origin behavior relies on library defaults rather than explicit Configuration.
 
@@ -256,11 +256,15 @@ Technical debt is closed through tests and implementation changes, not by relabe
 
 Architectural debt concerns boundaries that remain unresolved or incomplete after production composition:
 
-- **Runtime shutdown wait set:** Host does not yet coordinate Manager BeginShutdown, Session Stop capabilities, Listener drain, and Manager Wait.
+- **Runtime launch pipeline:** Configuration Loader exists, but Builder, Runtime Launcher, Runtime Lifecycle Owner, and Bootstrap are not connected into a production launch flow.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
-- **Runtime Foundation cutover completion:** transactional Session ownership and the complete Owner terminal chain are active in production, but they are not yet paired with the Manager-aware Host shutdown required by DP-006.
+- **Snapshot provenance:** the current Snapshot does not yet identify Workspace, schema, Runtime Instance, and Launch Attempt as required by ARCH-005.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
-- **Extension boundaries:** Router and transactional Session handoff are implemented; Runtime shutdown integration and the Persistence, Delivery, and Plugin contracts still require focused completion or design.
+- **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Persistence, Delivery, and Plugin contracts still require focused design.
+
+The next development task is implementation of the Draft DP-008 Snapshot
+Builder contract over the neutral `DetachedLoadResult`, including complete
+ARCH-005 provenance and blocking Diagnostics. Draft status is unchanged.
 
 Architectural debt is resolved through DP, ADR when consequential, implementation, and follow-up review. MASTER_PLAN does not settle those contracts itself.
 

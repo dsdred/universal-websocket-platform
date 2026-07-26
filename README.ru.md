@@ -6,7 +6,7 @@ Universal WebSocket Platform — open-source платформа для созд�
 
 ## Статус
 
-Проект находится на ранней alpha-стадии и не готов к production-эксплуатации. Репозиторий содержит Control Service, in-memory доменные API и реализованную single-node Runtime vertical, для которой ещё завершается Manager-aware shutdown integration.
+Проект находится на ранней alpha-стадии и не готов к production-эксплуатации. Репозиторий содержит Control Service, in-memory доменные API и реализованную single-node Runtime vertical с Manager-aware shutdown. Граница Configuration Loader реализована, но ещё не связана со Snapshot Builder и production pipeline запуска Runtime.
 
 ## Текущий релиз
 
@@ -39,6 +39,9 @@ Universal WebSocket Platform — open-source платформа для созд�
 - [Инженерная Wiki](wiki/README.md)
 - [Заметки к релизам](docs/ru/releases/)
 - [Внутренние спецификации](spec/README.md)
+- [Точка входа AI-агентов](AGENTS.md)
+- [Внутренний инженерный процесс](docs/engineering/AGENT.md)
+- [Задачи и отчёт о синхронизации](docs/tasks/README.md)
 
 ## Участие в разработке
 

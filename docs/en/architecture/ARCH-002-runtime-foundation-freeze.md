@@ -36,9 +36,19 @@ Runtime Host owns an independent Snapshot copy, its Container, the composed List
 
 ### Composition Root
 
-Runtime Bootstrap creates and builds Host. Host is the production composition root for one Runtime instance. During Start, explicit constructors assemble the supported Authentication, connection dispatch, Session handoff, Message Handler, and Listener graph. No service locator, reflection, DI framework, or generic component registry is used.
+Runtime Bootstrap may prepare construction input and create Host, but it does
+not compose or start the operational Runtime graph. Host is the sole production
+composition root for one Runtime instance. During `Host.Start()`, explicit
+constructors assemble the supported Authentication, connection dispatch,
+Session handoff, Message Handler, and Listener graph. No service locator,
+reflection, DI framework, or generic component registry is used.
 
-The frozen property is the existence of one explicit production composition root and its dependency direction. The future Handshake order and future subsystem graph are not frozen by this document.
+The frozen property is the existence of one explicit production composition
+root, its dependency direction, and Host ownership of the startup transaction.
+The external launch boundary that invokes `Host.Start()` is outside the
+implemented freeze and may be specified by a later design without transferring
+that ownership. The future Handshake order and future subsystem graph are not
+frozen by this document.
 
 ### Lifecycle
 
@@ -50,7 +60,13 @@ Host owns one Runtime context for a successfully started instance. Callers can o
 
 ### Startup Transaction and Rollback
 
-Start acquires the composed Listener as a startup resource, starts it, commits only after success, and rolls back acquired resources on failure. Startup and rollback errors remain distinguishable through normal Go error wrapping and joining.
+`Host.Start()` is the sole owner and coordinator of the startup transaction. It
+validates the fully assembled Runtime configuration and startup-critical
+capabilities, constructs or acquires operational resources including Listener,
+starts Runtime components, commits only after success, and rolls back acquired
+resources on failure. Components may provide focused validators, but only Host
+invokes and coordinates them as part of startup. Startup and rollback errors
+remain distinguishable through normal Go error wrapping and joining.
 
 ### Runtime Readiness
 
@@ -65,11 +81,14 @@ Host owns a small, thread-safe, lifecycle-only Admission Gate. It answers only w
 The following implemented invariants are frozen:
 
 - Host is the production composition root and lifecycle coordinator, not a business-logic service.
-- Dependencies are connected explicitly through constructors and focused Bootstrap components.
+- Dependencies are connected explicitly; Bootstrap may bind construction
+  inputs, while operational composition occurs only inside `Host.Start()`.
 - Container remains a Snapshot holder rather than a service locator.
 - Host stores and returns independent Snapshot copies.
 - `Build` prepares lifecycle state without opening network resources.
-- Runtime dependencies are composed during `Start`; Listener is the externally visible component started by Host.
+- Runtime dependencies and operational resources are composed during
+  `Host.Start()`; Listener is the externally visible component constructed and
+  started by Host.
 - Startup publishes Runtime resources only after successful Listener startup.
 - Failed startup does not leave Host Running, Ready, or open for admission.
 - Acquired startup resources are rolled back after startup failure.
