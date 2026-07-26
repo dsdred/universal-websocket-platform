@@ -8,17 +8,36 @@
 **Последняя завершённая development task:** TASK-001 — реализация Draft DP-008
 Snapshot Builder contract поверх neutral `DetachedLoadResult`
 
-**Текущая development task:** не назначена; TASK-001 принята Coordinator и
-закрыта.
+**Последняя завершённая operational task:** TASK-002 — Stage 1 упрощённого
+автономного продолжения проекта; Completed — Coordinator Accepted. Tester
+verdict — PASS, Reviewer verdict — Approved after rework, scope audit принят:
+8 Required, 0 Questionable, 0 Removable.
+
+**Текущая operational task:** не назначена. Закрытые изменения TASK-002
+остаются в attributed dirty worktree ветки
+`docs/autonomous-project-governance`.
 
 **Verification TASK-001:** targeted tests PASS 3/3; full
 `go test ./... -count=1` PASS 2/2; `go vet ./...`, `gofmt -d` и
 `git diff --check` PASS. Race detector недоступен в текущей среде без CGO/gcc.
 
-**Следующий разрешённый шаг:** commit закрытой TASK-001 только после отдельного
-разрешения пользователя; следующая development task не выбрана. Builder не
-подключён к production launch pipeline. Design Status DP-008 остаётся Draft,
-Implementation Status — Implemented.
+**Следующий разрешённый шаг:** отдельно разрешённый commit TASK-002. До
+появления clean trusted baseline точная команда `Продолжай проект.` распознаёт
+closed dirty state, останавливается и не начинает новую task.
+
+**Следующая рекомендация:** только после отдельно разрешённого commit,
+создавшего clean trusted Stage 1 baseline, правила рекомендуют сфокусированное
+уточнение implementation prerequisites Draft DP-009: concrete Bootstrap input,
+dependency bindings и failure representation. Candidate не начат; DP-009,
+Runtime Launcher, Runtime Lifecycle Owner и production
+Loader-to-Builder-to-Launcher pipeline не реализуются и не повышают status.
+
+**Stage 2 verification debt:** TASK-002 сохранил self-hosting chronology,
+которая не доказала task-before-work ordering. Следующая практическая
+валидация процесса обязана доказать этот invariant без его ослабления.
+
+Builder не подключён к production launch pipeline. Design Status DP-008
+остаётся Draft, Implementation Status — Implemented.
 
 ## Архитектурные решения
 

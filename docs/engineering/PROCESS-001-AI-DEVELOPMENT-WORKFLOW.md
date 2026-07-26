@@ -76,6 +76,117 @@ Design Status автоматически.
 документами. На текущем этапе их канонический язык — русский; обязательное
 EN-зеркало для них отсутствует. Отсутствие такого зеркала не является drift.
 
+## Autonomous Continuation
+
+Точная bare-команда `Продолжай проект.`, определённая в
+[`AGENT.md`](AGENT.md), запускает следующий алгоритм.
+
+### Preflight
+
+Coordinator до выбора работы:
+
+1. читает branch, status и локальную историю без изменения репозитория;
+2. читает task index и все active task records;
+3. сверяет `.ai/PROJECT_CONTEXT.md`, `spec/current-state.md`,
+   `spec/decisions.md` и MASTER_PLAN;
+4. не очищает, не сбрасывает и не переопределяет происхождение необъяснённых
+   изменений.
+
+Attributed dirty worktree разрешён только для возобновления ровно одной active
+task, когда branch и изменения однозначно соответствуют её record. При выборе
+или подготовке новой task любой dirty baseline останавливает autonomous
+continuation, включая изменения завершённой task до их отдельно разрешённого
+commit. Неатрибутированный dirty worktree и diverged либо необъяснимый
+branch/history всегда останавливают autonomous continuation.
+
+### Deterministic Work Selection
+
+Coordinator выбирает ровно один bounded slice:
+
+1. возобновляет однозначно атрибутированную `In Progress` task; `Blocked` task
+   возобновляется только при наличии в репозитории evidence, что blocker
+   устранён, иначе autonomous continuation останавливается;
+2. иначе использует явную current или next task из project-state documents
+   либо closure последней завершённой task после проверки readiness;
+3. иначе пересекает dependency ordering текущей milestone из MASTER_PLAN,
+   фактические gaps из `spec/current-state.md`, открытые решения из
+   `spec/decisions.md` и существующие ADR, ARCH и DP.
+
+MASTER_PLAN задаёт зависимости, но не является очередью задач. Candidate
+считается `Ready`, только если:
+
+- это наименьший независимо проверяемый bounded slice;
+- все обязательные продуктовые и архитектурные решения уже существуют;
+- его prerequisites подтверждены repository evidence;
+- scope, non-goals и verification можно однозначно записать;
+- работа не требует неразрешённого изменения Approved или Frozen источника.
+
+Architecture refinement может быть `Ready`, когда production implementation
+ещё не готова.
+
+Ready candidates ранжируются последовательно:
+
+1. dependency current milestone;
+2. prerequisite order;
+3. наименьший независимо проверяемый scope;
+4. наименьший unresolved risk;
+5. порядок первого появления в authoritative repository documents.
+
+Если остаются materially different candidates или выбор является продуктовой
+приоритизацией, Coordinator останавливается и запрашивает решение пользователя.
+Отсутствие Ready candidate, конфликт источников или отсутствующее критическое
+решение также являются stop condition.
+
+### Task and Branch Preparation
+
+После выбора новой task Coordinator сначала готовит безопасную локальную
+task-ветку, если она требуется. Task record является первым content change в
+этой ветке и создаётся либо актуализируется до остальной работы. Record
+обязательно содержит:
+
+- evidence выбора и отклонённые альтернативы;
+- scope, non-goals, sources, roles и verification;
+- branch decision и stop conditions;
+- следующий candidate, который не становится active автоматически.
+
+Новая task и её ветка начинаются только с чистого, понятного baseline и при
+отсутствии другой active task. Для production work используется локальная
+ветка с префиксом `feature/`, для documentation-only work — с префиксом
+`docs/`; новый slug должен включать Task ID, если он уже назначен. Если
+подходящая task-ветка уже активна, работа продолжается в ней. Создавать или
+переключаться на ветку можно только без перезаписи, удаления, rebase или
+изменения `main`.
+
+Bare-команда не разрешает stage, commit, push, merge, удаление веток, fetch,
+pull, remote mutation или иное неявное изменение git history. Исключение для
+attributed dirty worktree применяется только к resume единственной active task;
+оно никогда не разрешает выбор или подготовку новой task. Unattributed dirty
+или diverged baseline всегда требует остановки.
+
+### Autonomous Full Cycle
+
+После подготовки task Coordinator проводит применимые стадии:
+
+```text
+Task Intake
+    -> Documentation Baseline
+    -> explicit Architecture Confirmation
+    -> Pre-Implementation Documentation, если меняется contract
+    -> Developer, только если меняется production code
+    -> Verification
+    -> Independent Review and Rework
+    -> PROCESS-002
+    -> Scope Audit
+    -> Final Checks and Independent Review
+    -> Coordinator Acceptance
+    -> Project-State Update
+    -> Next-Task Recommendation
+```
+
+Роли и независимость review сохраняются. Неприменимый этап пропускается только
+с явным обоснованием в task record. Следующая рекомендация не запускает новую
+task и не создаёт для неё branch.
+
 ## Task Intake
 
 Coordinator:
@@ -176,6 +287,28 @@ Rework Loop.
    там, где они применимы;
 4. фиксирует сознательно отложенную работу.
 
+## Scope Audit
+
+После PROCESS-002 и до финального gate Coordinator проверяет полный diff.
+Каждый изменённый production, test, documentation или generated-файл
+классифицируется как:
+
+- `Required` — необходим для acceptance criteria либо обязательной
+  синхронизации;
+- `Questionable` — связь со scope требует отдельного доказательства;
+- `Removable` — не требуется task contract.
+
+Audit отдельно проверяет:
+
+- не началась ли следующая task или преждевременная pipeline integration;
+- нет ли unrelated behavior, refactoring или изменения архитектуры;
+- нет ли generated, formatting-only либо случайных файлов;
+- не описывает ли документация planned behavior как implemented.
+
+`Removable` change должен быть удалён владельцем изменения. `Questionable`
+change должен получить доказательство необходимости либо также быть удалён.
+Результат audit и disposition каждого finding фиксируются в task record.
+
 ## Closure
 
 Coordinator закрывает задачу только после получения всех обязательных
@@ -189,7 +322,8 @@ Closure record содержит:
 - результаты проверок;
 - известные ограничения;
 - итоговый статус;
-- следующий разрешённый шаг.
+- следующий разрешённый шаг;
+- следующую рекомендуемую ready work либо причину отсутствия рекомендации.
 
 Commit выполняется только при явном разрешении.
 
@@ -262,6 +396,7 @@ Coordinator выбирает Rework Loop либо статус `Blocked`.
 - подтверждение documentation parity и ссылок;
 - явная применимость `spec/current-state.md`, `spec/decisions.md`,
   `.ai/PROJECT_CONTEXT.md`, roadmap, root README и `CHANGELOG.md`;
+- scope audit всех изменённых файлов;
 - подтверждение отсутствия неожиданных файлов в diff.
 
 ## Definition of Done
@@ -272,6 +407,8 @@ Coordinator выбирает Rework Loop либо статус `Blocked`.
 - language complete для документов с обязательным EN/RU mirror;
 - navigation complete: индексы, ссылки и orphans проверены;
 - project-state complete: каждый обязательный status-файл проверен явно;
+- scope complete: все изменённые файлы классифицированы, а `Questionable` и
+  `Removable` changes разрешены;
 - repository complete: проверки успешны, conflict markers и trailing
   whitespace отсутствуют;
 - final gate выполнен независимым Reviewer;
