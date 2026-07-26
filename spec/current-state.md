@@ -7,9 +7,17 @@
 
 **Последняя завершённая development task:** реализация Configuration Loader contract DP-007
 
-**Следующая development task:** реализация Draft DP-008 Snapshot Builder contract
-поверх neutral `DetachedLoadResult`, включая полный provenance ARCH-005 и
-blocking Diagnostics. Design Status DP-008 остаётся Draft.
+**Текущая development task:** TASK-001 — реализация Draft DP-008 Snapshot
+Builder contract поверх neutral `DetachedLoadResult` — имеет статус `Blocked
+for Architecture`.
+
+**Следующий разрешённый шаг:** focused Architect refinement Draft DP-008 EN/RU
+должен определить identity и compatibility поддерживаемой schema, полное
+представление Snapshot с section-specific normalization и immutable reader
+surface, а также structured representation, ordering и applicability
+Diagnostics. После refinement требуется independent review; Developer может
+начать реализацию только после снятия blocker. Design Status DP-008 остаётся
+Draft.
 
 ## Архитектурные решения
 

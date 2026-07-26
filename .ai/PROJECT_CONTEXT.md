@@ -11,7 +11,9 @@
 - Текущая веха: **Beta — Complete the Single-Node Runtime**
 - Статус реализации: **Control Service, single-node Runtime vertical и Configuration Loader boundary реализованы; production launch pipeline не завершён**
 - Последняя завершённая development task: **реализация Configuration Loader contract DP-007**
-- Следующая development task: **реализовать DP-008 Snapshot Builder contract поверх neutral `DetachedLoadResult`, включая полный ARCH-005 provenance и blocking Diagnostics**
+- Текущая development task: **TASK-001 — Draft DP-008 Snapshot Builder поверх neutral `DetachedLoadResult`; Blocked for Architecture**
+- Следующий разрешённый шаг: **focused Architect refinement Draft DP-008 EN/RU должен определить identity и compatibility поддерживаемой schema, полное представление Snapshot с section-specific normalization и immutable reader surface, а также structured representation, ordering и applicability Diagnostics; затем требуется independent review, и только после снятия blocker Developer может начать реализацию**
+- Design Status DP-008 остаётся **Draft**
 - Содержимое репозитория: документация, спецификации, инженерные соглашения, исполняемый Control Service и изолированные Runtime-компоненты с тестами
 
 ## Архитектурные принципы
