@@ -4,9 +4,10 @@
 
 **Status:** Draft
 
-**Implementation Status:** Planned; the current Builder still accepts
-ConfigurationVersion directly and does not construct complete ARCH-005
-provenance or blocking Diagnostics
+**Implementation Status:** Implemented in isolation; Builder accepts neutral
+`DetachedLoadResult`, constructs complete ARCH-005 provenance, and returns
+exhaustive blocking Diagnostics, but is not connected to the production launch
+pipeline
 
 **Architecture status:** Implementation contract for the approved model in
 [ARCH-004](../architecture/ARCH-004-runtime-deployment-and-identity-model.md)
@@ -1223,10 +1224,12 @@ The focused pre-implementation refinement is complete:
 3. Section 13 defines the exhaustive structured Diagnostics registry,
    applicability, duplicate anchoring, deduplication, and canonical ordering.
 
-These contracts resolve the TASK-001 architecture blocker without changing
-ownership, validation, atomicity, or Runtime independence. Design Status
-remains `Draft`, Implementation Status remains `Planned`, and the Builder
-implementation has not started.
+These contracts resolved the TASK-001 architecture blocker without changing
+ownership, validation, atomicity, or Runtime independence. The Builder is now
+implemented and independently reviewed in isolation. Design Status remains
+`Draft`; Implementation Status is `Implemented`. Runtime Launcher, Runtime
+Lifecycle Owner, production launch integration, and DP-009 remain outside this
+implementation.
 
 ## 24. Decision
 

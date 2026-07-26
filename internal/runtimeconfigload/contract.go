@@ -90,6 +90,7 @@ type DetachedLoadResult struct {
 func NewDetachedLoadResult(
 	request LoadRequest,
 	version configurationversion.ConfigurationVersion,
+	configurationNumber uint32,
 	published bool,
 	schemaIdentity string,
 	schemaVersion uint32,
@@ -98,7 +99,7 @@ func NewDetachedLoadResult(
 		workspaceID:            request.workspaceID,
 		configurationID:        request.configurationID,
 		configurationVersionID: request.configurationVersionID,
-		configurationNumber:    version.Number,
+		configurationNumber:    configurationNumber,
 		published:              published,
 		schemaIdentity:         schemaIdentity,
 		schemaVersion:          schemaVersion,

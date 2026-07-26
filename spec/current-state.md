@@ -1,21 +1,24 @@
 # Текущее состояние
 
 **Веха:** Beta — Complete the Single-Node Runtime
-**Статус реализации:** DP-005 Router и Runtime Foundation Tasks 1–10 реализованы; TASK-M10-002 добавил полный Manager-aware production shutdown pipeline. Configuration Loader contract DP-007 реализован изолированно. Pipeline Loader-to-Builder-to-Launcher, operational identity и DP-009 Bootstrap пока не реализованы.
+**Статус реализации:** DP-005 Router и Runtime Foundation Tasks 1–10 реализованы; TASK-M10-002 добавил полный Manager-aware production shutdown pipeline. Configuration Loader contract DP-007 и Snapshot Builder contract DP-008 реализованы изолированно. Production pipeline Loader-to-Builder-to-Launcher, operational identity entities и DP-009 Bootstrap пока не реализованы.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
-**Последняя завершённая development task:** реализация Configuration Loader contract DP-007
+**Последняя завершённая development task:** TASK-001 — реализация Draft DP-008
+Snapshot Builder contract поверх neutral `DetachedLoadResult`
 
-**Текущая development task:** TASK-001 — реализация Draft DP-008 Snapshot
-Builder contract поверх neutral `DetachedLoadResult`; architecture refinement
-утверждён, implementation не начата.
+**Текущая development task:** не назначена; TASK-001 принята Coordinator и
+закрыта.
 
-**Следующий разрешённый шаг:** Developer реализует полный уточнённый Draft
-DP-008 contract: exact schema `uwp.configuration` v1, private immutable
-detached Snapshot с полным provenance ARCH-005 и exhaustive blocking
-Diagnostics. Builder не подключается к production launch pipeline. Design
-Status DP-008 остаётся Draft, Implementation Status — Planned.
+**Verification TASK-001:** targeted tests PASS 3/3; full
+`go test ./... -count=1` PASS 2/2; `go vet ./...`, `gofmt -d` и
+`git diff --check` PASS. Race detector недоступен в текущей среде без CGO/gcc.
+
+**Следующий разрешённый шаг:** commit закрытой TASK-001 только после отдельного
+разрешения пользователя; следующая development task не выбрана. Builder не
+подключён к production launch pipeline. Design Status DP-008 остаётся Draft,
+Implementation Status — Implemented.
 
 ## Архитектурные решения
 
@@ -147,10 +150,12 @@ Status DP-008 остаётся Draft, Implementation Status — Planned.
 - Реализован neutral immutable `runtimeconfigload` handoff: `LoadRequest` и `DetachedLoadResult` сохраняют declarative и operational identities, schema facts и detached ConfigurationVersion
 - Реализован Configuration Loader, который загружает ровно одну pinned Published ConfigurationVersion через source boundary, проверяет completeness, identity chain, lifecycle state и schema facts и возвращает detached result
 - Loader и neutral handoff покрыты unit-тестами, но не подключены к production launch pipeline Control Service или Runtime
-- Текущий Builder принимает только Published ConfigurationVersion напрямую, а не neutral `DetachedLoadResult`; он глубоко копирует Provider, JWT и Routing collections и сохраняет различие между отсутствующей и явно пустой Routing-секцией
-- Snapshot пока хранит только ConfigurationID, VersionID и effective Listener, Authentication и Routing; полный provenance Workspace, schema, Runtime Instance и Launch Attempt из ARCH-005 отсутствует
+- Реализован Snapshot Builder поверх neutral `DetachedLoadResult`: он проверяет exact schema `uwp.configuration` v1, handoff identity и все применимые Listener, TLS, Timeout, Authentication и Routing semantics
+- Builder возвращает исключительно полный Snapshot без Diagnostics либо полные дедуплицированные blocking Diagnostics без Snapshot; registry содержит 93 детерминированно упорядоченных Code/Location/fixed Message rules
+- Snapshot хранит полный provenance Workspace, Configuration, ConfigurationVersion ID и number, schema identity/version, Runtime Instance и Launch Attempt из ARCH-005
+- Snapshot имеет private storage и detached readers для Listener, Authentication и optional Routing; вложенные collections и повторные Build не разделяют mutable logical content
 - Snapshot не зависит от HTTP API, Repository или исходного ConfigurationVersion после создания
-- Runtime Container хранит собственную глубокую копию Snapshot и возвращает новую копию через единственный метод `Snapshot()`
+- Runtime Container хранит immutable Snapshot value и возвращает его by value через единственный метод `Snapshot()`; independent ownership сохраняется private storage и detached readers Snapshot без mutable logical aliases
 - Container пока не содержит других зависимостей и самостоятельно не управляет запуском, остановкой или reload Runtime
 - Реализован потокобезопасный Runtime Host, являющийся production composition root и владеющий независимой копией Snapshot и Container
 - Host поддерживает lifecycle `Created -> Built -> Starting -> Running -> Stopping -> Stopped`; Restart и Reload отсутствуют
@@ -225,7 +230,6 @@ Status DP-008 остаётся Draft, Implementation Status — Planned.
 - Control Plane lifecycle управления экземплярами Runtime
 - Runtime Instance и Launch Attempt как operational entities
 - Runtime Lifecycle Owner и Runtime Launcher
-- Builder, принимающий neutral `DetachedLoadResult` и создающий полный provenance ARCH-005
 - Интеграция Configuration Loader в production launch pipeline
 - Запуск Runtime и управление им из Control Service
 - Реальный TLS listener и другие сетевые параметры Listener

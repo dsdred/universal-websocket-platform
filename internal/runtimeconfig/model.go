@@ -1,35 +1,62 @@
 package runtimeconfig
 
-// Snapshot is an immutable runtime view of a Published Configuration Version.
-type Snapshot struct {
-	ConfigurationID uint64
-	VersionID       uint64
+import "github.com/dsdred/universal-websocket-platform/internal/runtimeconfigload"
 
-	Listener       ListenerSnapshot
-	Authentication AuthenticationSnapshot
-	Routing        *RoutingSnapshot
+// Snapshot is the immutable, detached Runtime view of one loaded Published
+// ConfigurationVersion for one Launch Attempt.
+type Snapshot struct {
+	provenance     Provenance
+	listener       ListenerSnapshot
+	authentication AuthenticationSnapshot
+	routing        *RoutingSnapshot
 }
 
-// RoutingSnapshot is an immutable runtime view of declarative Routing metadata.
+// Provenance identifies the declarative and operational origin of a Snapshot.
+type Provenance struct {
+	WorkspaceID                uint64
+	ConfigurationID            uint64
+	ConfigurationVersionID     uint64
+	ConfigurationVersionNumber uint32
+	SchemaIdentity             string
+	SchemaVersion              uint32
+	RuntimeInstanceID          runtimeconfigload.RuntimeInstanceID
+	LaunchAttemptID            runtimeconfigload.LaunchAttemptID
+}
+
+// Provenance returns a detached copy of the Snapshot provenance.
+func (s Snapshot) Provenance() Provenance { return s.provenance }
+
+// Listener returns a detached copy of the Listener configuration.
+func (s Snapshot) Listener() ListenerSnapshot { return s.listener }
+
+// Authentication returns a recursively detached copy of Authentication.
+func (s Snapshot) Authentication() AuthenticationSnapshot {
+	return cloneAuthenticationSnapshot(s.authentication)
+}
+
+// Routing returns presence and a recursively detached copy of Routing.
+func (s Snapshot) Routing() (RoutingSnapshot, bool) {
+	if s.routing == nil {
+		return RoutingSnapshot{}, false
+	}
+	return cloneRoutingSnapshot(*s.routing), true
+}
+
+// RoutingSnapshot is an immutable Runtime view of declarative Routing metadata.
 type RoutingSnapshot struct {
-	routes            []RouteSnapshot
-	defaultHandlerRef string
+	routes                   []RouteSnapshot
+	defaultHandlerRef        string
+	defaultHandlerRefPresent bool
 }
 
 // Routes returns a detached copy of configured Routes in declaration order.
-func (s *RoutingSnapshot) Routes() []RouteSnapshot {
-	if s == nil {
-		return nil
-	}
+func (s RoutingSnapshot) Routes() []RouteSnapshot {
 	return copySlice(s.routes, cloneRouteSnapshot)
 }
 
-// DefaultHandlerRef returns the optional normalized default Handler reference.
-func (s *RoutingSnapshot) DefaultHandlerRef() string {
-	if s == nil {
-		return ""
-	}
-	return s.defaultHandlerRef
+// DefaultHandlerRef returns presence and the normalized default Handler reference.
+func (s RoutingSnapshot) DefaultHandlerRef() (string, bool) {
+	return s.defaultHandlerRef, s.defaultHandlerRefPresent
 }
 
 // RouteSnapshot is an immutable runtime view of one declarative Route.
@@ -41,22 +68,12 @@ type RouteSnapshot struct {
 	handlerRef string
 }
 
-// ID returns the normalized Route identity.
-func (s RouteSnapshot) ID() string { return s.id }
-
-// Enabled reports whether this Route participates in future compilation.
-func (s RouteSnapshot) Enabled() bool { return s.enabled }
-
-// Priority returns the configured Route priority.
-func (s RouteSnapshot) Priority() uint32 { return s.priority }
-
-// Matchers returns a detached copy of normalized Matchers in canonical order.
+func (s RouteSnapshot) ID() string                  { return s.id }
+func (s RouteSnapshot) Enabled() bool               { return s.enabled }
+func (s RouteSnapshot) Priority() uint32            { return s.priority }
 func (s RouteSnapshot) Matchers() []MatcherSnapshot { return cloneSlice(s.matchers) }
+func (s RouteSnapshot) HandlerRef() string          { return s.handlerRef }
 
-// HandlerRef returns the normalized Handler reference.
-func (s RouteSnapshot) HandlerRef() string { return s.handlerRef }
-
-// MatcherType identifies one supported transport-neutral routing predicate.
 type MatcherType string
 
 const (
@@ -66,19 +83,14 @@ const (
 	MatcherTypeAuthenticationProvider MatcherType = "authentication-provider"
 )
 
-// MatcherSnapshot is an immutable normalized routing predicate.
 type MatcherSnapshot struct {
 	matcherType MatcherType
 	value       string
 }
 
-// Type returns the canonical Matcher type.
 func (s MatcherSnapshot) Type() MatcherType { return s.matcherType }
+func (s MatcherSnapshot) Value() string     { return s.value }
 
-// Value returns the normalized Matcher value.
-func (s MatcherSnapshot) Value() string { return s.value }
-
-// ListenerSnapshot contains values required to configure a runtime Listener.
 type ListenerSnapshot struct {
 	Host     string
 	Port     uint16
@@ -86,7 +98,6 @@ type ListenerSnapshot struct {
 	Timeouts TimeoutSnapshot
 }
 
-// TLSSnapshot contains runtime TLS settings and Secret References.
 type TLSSnapshot struct {
 	Enabled        bool
 	CertificateRef string
@@ -94,7 +105,6 @@ type TLSSnapshot struct {
 	MinVersion     string
 }
 
-// TimeoutSnapshot contains Listener timeout values in seconds.
 type TimeoutSnapshot struct {
 	HandshakeSeconds uint32
 	ReadSeconds      uint32
@@ -102,13 +112,11 @@ type TimeoutSnapshot struct {
 	IdleSeconds      uint32
 }
 
-// AuthenticationSnapshot contains values required to configure runtime Authentication.
 type AuthenticationSnapshot struct {
 	Enabled   bool
 	Providers []AuthenticationProviderSnapshot
 }
 
-// AuthenticationProviderType identifies an Authentication Provider implementation.
 type AuthenticationProviderType string
 
 const (
@@ -117,7 +125,6 @@ const (
 	AuthenticationProviderBasic  AuthenticationProviderType = "basic"
 )
 
-// AuthenticationProviderSnapshot contains runtime settings for one Authentication Provider.
 type AuthenticationProviderSnapshot struct {
 	Name     string
 	Type     AuthenticationProviderType
@@ -128,19 +135,16 @@ type AuthenticationProviderSnapshot struct {
 	Basic    *BasicSnapshot
 }
 
-// APIKeySnapshot contains runtime API Key Provider settings.
 type APIKeySnapshot struct {
 	Header    string
 	SecretRef string
 }
 
-// BasicSnapshot contains runtime Basic Provider settings.
 type BasicSnapshot struct {
 	Realm     string
 	SecretRef string
 }
 
-// JWTSnapshot contains runtime JWT verification policy.
 type JWTSnapshot struct {
 	SigningKeys       []JWTSigningKeySnapshot
 	AllowedAlgorithms []JWTAlgorithm
@@ -150,19 +154,16 @@ type JWTSnapshot struct {
 	ClockSkewSeconds  uint32
 }
 
-// JWTSigningKeySnapshot identifies one JWT Signing Key by Secret Reference.
 type JWTSigningKeySnapshot struct {
 	Name      string
 	SecretRef string
 }
 
-// JWTRequiredClaimSnapshot contains one required JWT Claim and value.
 type JWTRequiredClaimSnapshot struct {
 	Name  string
 	Value string
 }
 
-// JWTAlgorithm identifies an allowed JWT signing algorithm.
 type JWTAlgorithm string
 
 const (
@@ -179,3 +180,61 @@ const (
 	PS384 JWTAlgorithm = "PS384"
 	PS512 JWTAlgorithm = "PS512"
 )
+
+func cloneAuthenticationSnapshot(source AuthenticationSnapshot) AuthenticationSnapshot {
+	result := source
+	result.Providers = copySlice(source.Providers, cloneAuthenticationProviderSnapshot)
+	return result
+}
+
+func cloneAuthenticationProviderSnapshot(source AuthenticationProviderSnapshot) AuthenticationProviderSnapshot {
+	result := source
+	if source.APIKey != nil {
+		value := *source.APIKey
+		result.APIKey = &value
+	}
+	if source.Basic != nil {
+		value := *source.Basic
+		result.Basic = &value
+	}
+	if source.JWT != nil {
+		value := *source.JWT
+		value.SigningKeys = cloneSlice(source.JWT.SigningKeys)
+		value.AllowedAlgorithms = cloneSlice(source.JWT.AllowedAlgorithms)
+		value.AllowedIssuers = cloneSlice(source.JWT.AllowedIssuers)
+		value.AllowedAudiences = cloneSlice(source.JWT.AllowedAudiences)
+		value.RequiredClaims = cloneSlice(source.JWT.RequiredClaims)
+		result.JWT = &value
+	}
+	return result
+}
+
+func cloneRoutingSnapshot(source RoutingSnapshot) RoutingSnapshot {
+	source.routes = copySlice(source.routes, cloneRouteSnapshot)
+	return source
+}
+
+func cloneRouteSnapshot(route RouteSnapshot) RouteSnapshot {
+	route.matchers = cloneSlice(route.matchers)
+	return route
+}
+
+func cloneSlice[T any](source []T) []T {
+	if len(source) == 0 {
+		return []T{}
+	}
+	result := make([]T, len(source))
+	copy(result, source)
+	return result
+}
+
+func copySlice[S, T any](source []S, convert func(S) T) []T {
+	if len(source) == 0 {
+		return []T{}
+	}
+	result := make([]T, len(source))
+	for index, value := range source {
+		result[index] = convert(value)
+	}
+	return result
+}

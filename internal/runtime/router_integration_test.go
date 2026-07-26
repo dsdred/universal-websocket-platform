@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -15,6 +16,7 @@ import (
 	"github.com/dsdred/universal-websocket-platform/internal/message"
 	"github.com/dsdred/universal-websocket-platform/internal/router"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
+	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfigload"
 	"github.com/dsdred/universal-websocket-platform/internal/sessionmanager"
 )
 
@@ -277,7 +279,7 @@ func TestRuntimeStartupFailsWhenRouterConstructionFails(t *testing.T) {
 	if host.Running() || host.Ready() || host.CanAccept() || host.RuntimeContext() != nil {
 		t.Fatal("Router construction failure published active Runtime state")
 	}
-	assertPortAvailable(t, snapshot.Listener.Port)
+	assertPortAvailable(t, snapshot.Listener().Port)
 }
 
 func TestRuntimeCompiledRouterHandlesConcurrentSessions(t *testing.T) {
@@ -345,9 +347,10 @@ func TestRuntimeCompiledRouterHandlesConcurrentSessions(t *testing.T) {
 
 func routingRuntimeSnapshot(t *testing.T, routing *configurationversion.RoutingSettings) runtimeconfig.Snapshot {
 	t.Helper()
-	snapshot, err := runtimeconfig.NewBuilder().Build(configurationversion.ConfigurationVersion{
+	version := configurationversion.ConfigurationVersion{
 		ID:              1,
 		ConfigurationID: 1,
+		Number:          1,
 		State:           configurationversion.Published,
 		Listener: configurationversion.ListenerSettings{
 			Host: "127.0.0.1",
@@ -360,9 +363,12 @@ func routingRuntimeSnapshot(t *testing.T, routing *configurationversion.RoutingS
 			},
 		},
 		Routing: routing,
-	})
-	if err != nil {
-		t.Fatalf("runtimeconfig.Build() error = %v", err)
+	}
+	request := runtimeconfigload.NewLoadRequest(1, 1, 1, "runtime", "attempt")
+	input := runtimeconfigload.NewDetachedLoadResult(request, version, 1, true, "uwp.configuration", 1)
+	snapshot, diagnostics := runtimeconfig.NewBuilder().Build(input)
+	if len(diagnostics) != 0 {
+		t.Fatalf("runtimeconfig.Build() diagnostics = %#v", diagnostics)
 	}
 	return snapshot
 }
@@ -429,7 +435,16 @@ func closeRoutingRuntime(t *testing.T, host Host, connection *websocket.Conn) {
 }
 
 func routingRuntimeURL(snapshot runtimeconfig.Snapshot) string {
-	return "ws://127.0.0.1:" + portString(snapshot.Listener.Port) + "/ws"
+	return "ws://127.0.0.1:" + portString(snapshot.Listener().Port) + "/ws"
+}
+
+func assertPortAvailable(t *testing.T, port uint16) {
+	t.Helper()
+	socket, err := net.Listen("tcp", net.JoinHostPort("127.0.0.1", portString(port)))
+	if err != nil {
+		t.Fatalf("port %d remains unavailable: %v", port, err)
+	}
+	_ = socket.Close()
 }
 
 type routingIntegrationHandler struct {

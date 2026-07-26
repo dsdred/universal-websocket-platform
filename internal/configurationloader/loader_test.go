@@ -326,13 +326,13 @@ func TestEquivalentSourcesProduceEquivalentDetachedResults(t *testing.T) {
 	}
 
 	assertSemanticallyEquivalent(t, first, second)
-	firstSnapshot, err := runtimeconfig.NewBuilder().Build(first.ConfigurationVersion())
-	if err != nil {
-		t.Fatalf("Build(first) error = %v", err)
+	firstSnapshot, diagnostics := runtimeconfig.NewBuilder().Build(first)
+	if len(diagnostics) != 0 {
+		t.Fatalf("Build(first) diagnostics = %#v", diagnostics)
 	}
-	secondSnapshot, err := runtimeconfig.NewBuilder().Build(second.ConfigurationVersion())
-	if err != nil {
-		t.Fatalf("Build(second) error = %v", err)
+	secondSnapshot, diagnostics := runtimeconfig.NewBuilder().Build(second)
+	if len(diagnostics) != 0 {
+		t.Fatalf("Build(second) diagnostics = %#v", diagnostics)
 	}
 	if !reflect.DeepEqual(firstSnapshot, secondSnapshot) {
 		t.Fatalf("Builder snapshots differ:\n first  %#v\n second %#v", firstSnapshot, secondSnapshot)
@@ -448,8 +448,8 @@ func completeObservation() SourceObservation {
 				Port: 8080,
 				TLS: configurationversion.TLSSettings{
 					Enabled:        true,
-					CertificateRef: "secret://tls/certificate",
-					PrivateKeyRef:  "secret://tls/private-key",
+					CertificateRef: "secrets/tls/certificate",
+					PrivateKeyRef:  "secrets/tls/private-key",
 					MinVersion:     "1.3",
 				},
 				Timeouts: configurationversion.TimeoutSettings{
@@ -469,7 +469,7 @@ func completeObservation() SourceObservation {
 						Priority: 1,
 						JWT: &configurationversion.JWTSettings{
 							SigningKeys: []configurationversion.JWTSigningKey{
-								{Name: "primary", SecretRef: "secret://jwt/key"},
+								{Name: "primary", SecretRef: "secrets/jwt/key"},
 							},
 							AllowedAlgorithms: []configurationversion.JWTAlgorithm{configurationversion.RS256},
 							AllowedIssuers:    []string{"issuer"},
@@ -487,7 +487,7 @@ func completeObservation() SourceObservation {
 						Priority: 2,
 						APIKey: &configurationversion.APIKeySettings{
 							Header:    "X-API-Key",
-							SecretRef: "secret://api/key",
+							SecretRef: "secrets/api/key",
 						},
 					},
 					{
@@ -497,7 +497,7 @@ func completeObservation() SourceObservation {
 						Priority: 3,
 						Basic: &configurationversion.BasicSettings{
 							Realm:     "runtime",
-							SecretRef: "secret://basic/users",
+							SecretRef: "secrets/basic/users",
 						},
 					},
 				},

@@ -127,6 +127,7 @@ func (l *Loader) Load(request LoadRequest) (DetachedLoadResult, error) {
 	return runtimeconfigload.NewDetachedLoadResult(
 		request,
 		observation.ConfigurationVersion,
+		observation.ConfigurationVersion.Number,
 		true,
 		observation.SchemaIdentity,
 		observation.SchemaVersion,

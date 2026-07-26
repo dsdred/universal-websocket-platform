@@ -76,7 +76,12 @@ func composeRuntimeWithRouterFactory(
 		return runtimeComposition{}, fmt.Errorf("validate Runtime Snapshot: %w", err)
 	}
 
-	runtimeRouter, err := newMessageRouter(snapshot.Routing, handler)
+	routing, routingPresent := snapshot.Routing()
+	var routingInput *runtimeconfig.RoutingSnapshot
+	if routingPresent {
+		routingInput = &routing
+	}
+	runtimeRouter, err := newMessageRouter(routingInput, handler)
 	if err != nil {
 		return runtimeComposition{}, fmt.Errorf("build Runtime Message Router: %w", err)
 	}
@@ -93,7 +98,7 @@ func composeRuntimeWithRouterFactory(
 	if err != nil {
 		return runtimeComposition{}, fmt.Errorf("create Authentication Bootstrap: %w", err)
 	}
-	authenticationService, err := authenticationBootstrap.Build(snapshot.Authentication)
+	authenticationService, err := authenticationBootstrap.Build(snapshot.Authentication())
 	if err != nil {
 		return runtimeComposition{}, fmt.Errorf("build Authentication: %w", err)
 	}
@@ -118,15 +123,16 @@ func composeRuntimeWithRouterFactory(
 	if err != nil {
 		return runtimeComposition{}, fmt.Errorf("create Handshake: %w", err)
 	}
+	listenerSnapshot := snapshot.Listener()
 	timedHandshakeHandler := handshakeTimeoutHandler{
 		next:    handshakeHandler,
-		timeout: time.Duration(snapshot.Listener.Timeouts.HandshakeSeconds) * time.Second,
+		timeout: time.Duration(listenerSnapshot.Timeouts.HandshakeSeconds) * time.Second,
 	}
 
 	runtimeListener, err := listener.NewBootstrapWithHandshakeAndTerminalErrorReporter(
 		timedHandshakeHandler,
 		reportError,
-	).Build(snapshot.Listener)
+	).Build(listenerSnapshot)
 	if err != nil {
 		return runtimeComposition{}, fmt.Errorf("build Listener: %w", err)
 	}

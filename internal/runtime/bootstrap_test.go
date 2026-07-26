@@ -11,8 +11,10 @@ import (
 
 	"github.com/coder/websocket"
 	"github.com/dsdred/universal-websocket-platform/internal/authentication"
+	"github.com/dsdred/universal-websocket-platform/internal/configurationversion"
 	"github.com/dsdred/universal-websocket-platform/internal/message"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
+	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfigload"
 	"github.com/dsdred/universal-websocket-platform/internal/secretresolver"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -59,18 +61,18 @@ func TestBootstrapHostStartPreservesAuthenticationBuildErrors(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewBootstrap() error = %v", err)
 	}
-	snapshot := apiKeySnapshot(t)
-	snapshot.Authentication.Providers = []runtimeconfig.AuthenticationProviderSnapshot{
-		{
+	snapshot := snapshotWithAuthentication(t, configurationversion.AuthenticationSettings{
+		Enabled: true,
+		Providers: []configurationversion.AuthenticationProvider{{
 			Name:    "basic",
-			Type:    runtimeconfig.AuthenticationProviderBasic,
+			Type:    configurationversion.AuthenticationProviderBasic,
 			Enabled: true,
-			Basic: &runtimeconfig.BasicSnapshot{
+			Basic: &configurationversion.BasicSettings{
 				Realm:     "Universal WebSocket Platform",
 				SecretRef: "secrets/basic/main",
 			},
-		},
-	}
+		}},
+	})
 
 	built, err := bootstrap.Build(snapshot)
 	if err != nil {
@@ -123,7 +125,7 @@ func TestBootstrapHostPreservesRuntimeVertical(t *testing.T) {
 	if runtimeContext == nil {
 		t.Fatal("RuntimeContext() = nil after successful Start")
 	}
-	address := net.JoinHostPort(snapshot.Listener.Host, portString(snapshot.Listener.Port))
+	address := net.JoinHostPort(snapshot.Listener().Host, portString(snapshot.Listener().Port))
 	t.Cleanup(func() {
 		if err := built.Stop(context.Background()); err != nil {
 			t.Errorf("cleanup Stop() error = %v", err)
@@ -136,7 +138,7 @@ func TestBootstrapHostPreservesRuntimeVertical(t *testing.T) {
 	header.Set("X-API-Key", "runtime-secret")
 	connection, response, err := websocket.Dial(
 		ctx,
-		"ws://127.0.0.1:"+portString(snapshot.Listener.Port)+"/ws",
+		"ws://127.0.0.1:"+portString(snapshot.Listener().Port)+"/ws",
 		&websocket.DialOptions{HTTPHeader: header},
 	)
 	if err != nil {
@@ -213,7 +215,7 @@ func TestBootstrapHostRejectsAuthenticationBeforeUpgrade(t *testing.T) {
 	header.Set("X-API-Key", "wrong-secret")
 	connection, response, err := websocket.Dial(
 		ctx,
-		"ws://127.0.0.1:"+portString(snapshot.Listener.Port)+"/ws",
+		"ws://127.0.0.1:"+portString(snapshot.Listener().Port)+"/ws",
 		&websocket.DialOptions{HTTPHeader: header},
 	)
 	if connection != nil {
@@ -250,7 +252,7 @@ func TestBootstrapHostAuthenticationErrorPreventsUpgrade(t *testing.T) {
 	header.Set("X-API-Key", "credential")
 	connection, response, err := websocket.Dial(
 		ctx,
-		"ws://127.0.0.1:"+portString(snapshot.Listener.Port)+"/ws",
+		"ws://127.0.0.1:"+portString(snapshot.Listener().Port)+"/ws",
 		&websocket.DialOptions{HTTPHeader: header},
 	)
 	if connection != nil {
@@ -293,7 +295,7 @@ func TestBootstrapTerminalObserverConsumesSessionError(t *testing.T) {
 	header.Set("X-API-Key", "runtime-secret")
 	connection, _, err := websocket.Dial(
 		ctx,
-		"ws://127.0.0.1:"+portString(snapshot.Listener.Port)+"/ws",
+		"ws://127.0.0.1:"+portString(snapshot.Listener().Port)+"/ws",
 		&websocket.DialOptions{HTTPHeader: header},
 	)
 	if err != nil {
@@ -329,8 +331,7 @@ func TestBootstrapHostDisabledAuthenticationUsesAnonymousSession(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewBootstrap() error = %v", err)
 	}
-	snapshot := apiKeySnapshot(t)
-	snapshot.Authentication = runtimeconfig.AuthenticationSnapshot{}
+	snapshot := snapshotWithAuthentication(t, configurationversion.AuthenticationSettings{})
 	host, err := bootstrap.Build(snapshot)
 	if err != nil {
 		t.Fatalf("Build() error = %v", err)
@@ -344,7 +345,7 @@ func TestBootstrapHostDisabledAuthenticationUsesAnonymousSession(t *testing.T) {
 	defer cancel()
 	connection, response, err := websocket.Dial(
 		ctx,
-		"ws://127.0.0.1:"+portString(snapshot.Listener.Port)+"/ws",
+		"ws://127.0.0.1:"+portString(snapshot.Listener().Port)+"/ws",
 		nil,
 	)
 	if err != nil {
@@ -377,18 +378,18 @@ func TestBootstrapHostJWTAuthenticationBeforeUpgrade(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewBootstrap() error = %v", err)
 	}
-	snapshot := apiKeySnapshot(t)
-	snapshot.Authentication.Providers = []runtimeconfig.AuthenticationProviderSnapshot{
-		{
+	snapshot := snapshotWithAuthentication(t, configurationversion.AuthenticationSettings{
+		Enabled: true,
+		Providers: []configurationversion.AuthenticationProvider{{
 			Name:    "runtime-jwt",
-			Type:    runtimeconfig.AuthenticationProviderJWT,
+			Type:    configurationversion.AuthenticationProviderJWT,
 			Enabled: true,
-			JWT: &runtimeconfig.JWTSnapshot{
-				SigningKeys:       []runtimeconfig.JWTSigningKeySnapshot{{Name: "primary", SecretRef: secretRef}},
-				AllowedAlgorithms: []runtimeconfig.JWTAlgorithm{runtimeconfig.HS256},
+			JWT: &configurationversion.JWTSettings{
+				SigningKeys:       []configurationversion.JWTSigningKey{{Name: "primary", SecretRef: secretRef}},
+				AllowedAlgorithms: []configurationversion.JWTAlgorithm{configurationversion.HS256},
 			},
-		},
-	}
+		}},
+	})
 	host, err := bootstrap.Build(snapshot)
 	if err != nil {
 		t.Fatalf("Build() error = %v", err)
@@ -411,7 +412,7 @@ func TestBootstrapHostJWTAuthenticationBeforeUpgrade(t *testing.T) {
 	header.Set("Authorization", "Bearer "+token)
 	connection, response, err := websocket.Dial(
 		ctx,
-		"ws://127.0.0.1:"+portString(snapshot.Listener.Port)+"/ws",
+		"ws://127.0.0.1:"+portString(snapshot.Listener().Port)+"/ws",
 		&websocket.DialOptions{HTTPHeader: header},
 	)
 	if err != nil {
@@ -428,35 +429,44 @@ func TestBootstrapHostJWTAuthenticationBeforeUpgrade(t *testing.T) {
 
 func apiKeySnapshot(t *testing.T) runtimeconfig.Snapshot {
 	t.Helper()
-	return runtimeconfig.Snapshot{
-		ConfigurationID: 1,
-		VersionID:       1,
-		Listener: runtimeconfig.ListenerSnapshot{
+	return snapshotWithAuthentication(t, configurationversion.AuthenticationSettings{
+		Enabled: true,
+		Providers: []configurationversion.AuthenticationProvider{{
+			Name:     "api-key",
+			Type:     configurationversion.AuthenticationProviderAPIKey,
+			Enabled:  true,
+			Priority: 10,
+			APIKey: &configurationversion.APIKeySettings{
+				Header:    "X-API-Key",
+				SecretRef: "secrets/api-key/runtime",
+			},
+		}},
+	})
+}
+
+func snapshotWithAuthentication(t *testing.T, authentication configurationversion.AuthenticationSettings) runtimeconfig.Snapshot {
+	t.Helper()
+	version := configurationversion.ConfigurationVersion{
+		ID: 1, ConfigurationID: 1, Number: 1, State: configurationversion.Published,
+		Listener: configurationversion.ListenerSettings{
 			Host: "127.0.0.1",
 			Port: availablePort(t),
-			TLS:  runtimeconfig.TLSSnapshot{MinVersion: "1.2"},
-			Timeouts: runtimeconfig.TimeoutSnapshot{
+			TLS:  configurationversion.TLSSettings{MinVersion: "1.2"},
+			Timeouts: configurationversion.TimeoutSettings{
 				HandshakeSeconds: 10,
 				WriteSeconds:     10,
 				IdleSeconds:      60,
 			},
 		},
-		Authentication: runtimeconfig.AuthenticationSnapshot{
-			Enabled: true,
-			Providers: []runtimeconfig.AuthenticationProviderSnapshot{
-				{
-					Name:     "api-key",
-					Type:     runtimeconfig.AuthenticationProviderAPIKey,
-					Enabled:  true,
-					Priority: 10,
-					APIKey: &runtimeconfig.APIKeySnapshot{
-						Header:    "X-API-Key",
-						SecretRef: "secrets/api-key/runtime",
-					},
-				},
-			},
-		},
+		Authentication: authentication,
 	}
+	request := runtimeconfigload.NewLoadRequest(1, 1, 1, "runtime", "attempt")
+	input := runtimeconfigload.NewDetachedLoadResult(request, version, 1, true, "uwp.configuration", 1)
+	snapshot, diagnostics := runtimeconfig.NewBuilder().Build(input)
+	if len(diagnostics) != 0 {
+		t.Fatalf("runtimeconfig.Build() diagnostics = %#v", diagnostics)
+	}
+	return snapshot
 }
 
 func apiKeyResolver(t *testing.T) secretresolver.Resolver {

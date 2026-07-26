@@ -2,9 +2,9 @@
 
 ## Status
 
-**Architecture Refinement Approved — Implementation Not Started**
+**Completed — Coordinator Accepted**
 
-**Branch:** `docs/dp-008-contract-refinement`
+**Branch:** `feature/task-001-dp008-snapshot-builder`
 
 ## Objective
 
@@ -69,15 +69,24 @@ Active или Frozen источники.
   anchoring, deduplication и ordering. Approved/Frozen architecture не
   изменялась.
 - **Documentation Agent:** утверждённый Architect handoff зеркально
-  зафиксирован в Draft DP-008 EN/RU; project-state documents синхронизированы
-  с состоянием `refinement complete / implementation not started`.
-- **Developer:** не начинал работу из-за stop condition.
-- **Tester:** не начинал verification implementation из-за stop condition.
+  зафиксирован в Draft DP-008 EN/RU; после реализации выполнен PROCESS-002 и
+  project-state documents синхронизированы с фактическим состоянием
+  изолированного Builder.
+- **Developer:** реализовал полный контракт Builder поверх neutral
+  `DetachedLoadResult`, private Snapshot/readers, полный provenance,
+  exhaustive Diagnostics и механически перевёл существующих Runtime
+  consumers на reader surface.
+- **Tester:** независимо проверил coverage и обязательные команды; после
+  Reviewer findings добавлены только недостающие proof tests и повторно
+  выполнены целевые проверки.
 - **Reviewer архитектурного refinement:** `Approved`; обязательные findings
   отсутствуют.
-- **Reviewer implementation:** не начинался из-за отсутствия реализации.
-- **Post-Implementation Documentation Synchronization:** не выполнялась;
-  реализации не было и фактически реализованная capability не изменилась.
+- **Reviewer implementation:** после двух test-only rework cycles выдал
+  итоговый verdict `Approved`; production, architecture и scope findings
+  отсутствуют.
+- **Post-Implementation Documentation Synchronization:** выполнена по
+  PROCESS-002; Design Status DP-008 сохранён `Draft`, Implementation Status
+  изменён на `Implemented`.
 
 ## Constraints
 
@@ -112,8 +121,9 @@ Focused Architect refinement определил и independent Reviewer утве
    canonical ordering.
 
 Контракт зафиксирован в DP-008 EN/RU с semantic и heading parity. Design Status
-DP-008 остаётся `Draft`, Implementation Status — `Planned`. Architecture
-blocker снят; implementation ещё не начата.
+DP-008 остаётся `Draft`. Architecture blocker был снят до coding; текущая
+реализация прошла verification и независимый implementation review, поэтому
+Implementation Status — `Implemented`.
 
 ## Acceptance Criteria
 
@@ -155,51 +165,100 @@ blocker снят; implementation ещё не начата.
   tests с verdict `Approved` либо rework по обязательным findings;
 - PROCESS-002 после утверждённой реализации.
 
-Эти implementation-команды пока не выполнялись: implementation не начата.
+Результаты verification:
+
+- `gofmt` и итоговый `gofmt -d` для изменённых Go-файлов — PASS, formatter
+  drift отсутствует;
+- целевые `go test` затронутых пакетов с `-count=1` — PASS, 3 из 3 запусков
+  обязательного gate; после test-only rework целевые тесты также повторно
+  прошли;
+- `go test ./... -count=1` — PASS, 2 из 2 запусков обязательного gate;
+- `go vet ./...` — PASS;
+- `git diff --check` — PASS;
+- Diagnostics registry DP-008 EN/RU — 93 из 93 строк с точным parity;
+- race detector в текущей Windows-среде недоступен: при `CGO_ENABLED=0`
+  команда сообщает `-race requires cgo`, а при `CGO_ENABLED=1` отсутствует
+  `gcc` в `PATH`.
+
+После финальной documentation synchronization Coordinator выполнил применимый
+repository gate: targeted tests PASS 3/3, full repository tests PASS 2/2,
+`go vet ./...`, `gofmt -d` и `git diff --check` — PASS. Race gap остаётся
+только ограничением среды.
 
 ## Next Allowed Action
 
-Следующий разрешённый шаг — Developer implementation полного уточнённого Draft
-DP-008 contract поверх neutral `DetachedLoadResult`. Developer должен
-сохранить утверждённые boundaries и не подключать Builder к production launch
-pipeline. После implementation обязательны Tester verification, independent
-implementation review и PROCESS-002.
+Следующий разрешённый шаг — commit закрытой TASK-001 только после отдельного
+разрешения пользователя. Следующая development task не выбрана. DP-009,
+Runtime Launcher, Runtime Lifecycle Owner и production launch pipeline не
+являются следующим неявным шагом.
 
 ## Handoff
 
-- **Completed architecture-refinement scope:** определены и зеркально
-  зафиксированы все три implementation prerequisites; independent Reviewer
-  выдал `Approved`; architecture blocker снят.
-- **Implementation scope:** не начат и не объявляется выполненным.
-- **Production files:** не изменялись.
-- **Test files:** не изменялись.
-- **Architecture/design files:** только Draft DP-008 EN/RU; ADR, ARCH, DP-007
-  и DP-009 не изменялись.
+- **Architect handoff:** `Ready for Implementation`; конфликтов с ADR-0002,
+  ADR-0003, ARCH-002, ARCH-004, ARCH-005, DP-007 и Draft DP-008 не найдено.
+  Builder ограничен neutral handoff, pure validation/normalization и
+  immutable Snapshot; Runtime lifecycle и production launch pipeline
+  запрещены.
+- **Developer handoff:** реализован exclusive result contract
+  `Snapshot/no Diagnostics` либо `no Snapshot/non-empty Diagnostics`, exact
+  schema `uwp.configuration` v1, полный ARCH-005 provenance, private detached
+  readers, все 93 blocking Diagnostics и механическая миграция существующих
+  consumers без подключения production pipeline.
+- **Tester handoff:** обязательный gate прошёл; race detector недоступен по
+  причине toolchain environment, а не test failure.
+- **Reviewer handoff:** initial `Needs Revision` содержал пять test coverage
+  findings: exhaustive Runtime support matrix, три именованных Runtime proofs,
+  AP-004 full model, AP-005 zero result и recursive detachment. Re-review
+  оставил два test findings: `availablePort` для TLS proof и package-local
+  cross-Build backing isolation. Все findings исправлены только тестами.
+  Итоговый verdict — `Approved`.
+- **Production files:** `internal/configurationloader/loader.go`,
+  `internal/router/router.go`, `internal/runtime/composition.go`,
+  `internal/runtime/configuration_validation.go`,
+  `internal/runtime/container.go`, `internal/runtime/host.go`,
+  `internal/runtimeconfig/builder.go`, `internal/runtimeconfig/diagnostic.go`,
+  `internal/runtimeconfig/model.go`, `internal/runtimeconfig/validation.go`,
+  `internal/runtimeconfigload/contract.go`.
+- **Test files:** `internal/configurationloader/loader_test.go`,
+  `internal/router/router_test.go`, `internal/runtime/bootstrap_test.go`,
+  `internal/runtime/configuration_validation_test.go`,
+  `internal/runtime/container_test.go`,
+  `internal/runtime/handshake_shutdown_test.go`,
+  `internal/runtime/host_test.go`,
+  `internal/runtime/router_integration_test.go`,
+  `internal/runtimeconfig/builder_test.go`,
+  `internal/runtimeconfig/registry_test.go`,
+  `internal/runtimeconfig/routing_builder_test.go`.
+- **Architecture/design files:** зеркала Draft DP-008 синхронизированы по
+  факту implementation status; в зеркалах Draft DP-007 исправлено устаревшее
+  утверждение, что neutral handoff не используется Builder. Design Status
+  обоих DP не повышался; ADR, ARCH и DP-009 не изменялись.
 - **Operational documentation:** этот task record; `docs/tasks/README.md`
   проверен, изменение навигации не требуется.
 - **Project-state documentation:** `.ai/PROJECT_CONTEXT.md`,
   `spec/current-state.md`, `docs/en/roadmap/MASTER_PLAN.md` и
   `docs/ru/roadmap/MASTER_PLAN.md`.
-- **CHANGELOG:** обновлён только фактом approved pre-implementation contract
-  refinement; capability не объявлена реализованной.
-- **Documentation evidence:** `git diff --check`, scope guard, trailing
-  whitespace и conflict-marker checks — PASS; repository Markdown links и
-  fences — PASS для 97 tracked файлов; DP-008 heading hierarchy — 74/74 с
-  учётом H1; все 93
-  Code/Location/Message rows Diagnostics byte-identical в EN/RU;
-  MASTER_PLAN heading hierarchy — 35/35; `markdownlint` недоступен.
-- **Post-implementation synchronization:** не применима до реализации и не
-  объявляется выполненной.
-- **Finding:** architecture blocker устранён; implementation evidence пока
-  отсутствует.
-- **Unresolved risk:** Developer и Tester должны доказать полный exhaustive
-  contract; production launch pipeline остаётся вне scope.
-- **Current status:** Architecture Refinement Approved — Implementation Not
-  Started.
+- **CHANGELOG:** факт изолированной реализации Builder добавлен без заявления
+  о production launch pipeline.
+- **Documentation evidence:** `git diff --check`, trailing whitespace и
+  conflict-marker checks — PASS; repository Markdown links и fences — PASS
+  для 97 tracked файлов; DP-008 heading hierarchy — 74/74 с учётом H1; все 93
+  Code/Location/Message rows Diagnostics byte-identical в EN/RU; MASTER_PLAN
+  heading hierarchy — 35/35; `markdownlint` недоступен в среде.
+- **Post-implementation synchronization:** выполнена; Design Status и
+  Implementation Status разделены.
+- **Unresolved risk:** race detector не запущен из-за отсутствия CGO/gcc в
+  среде. Production launch pipeline, operational identities как сущности,
+  Runtime Launcher, Runtime Lifecycle Owner и DP-009 остаются вне scope и не
+  реализованы.
+- **Current status:** Completed — Coordinator Accepted.
 
 ## Closure
 
 - **Architecture refinement status:** Approved; blocker resolved.
-- **Task closure:** не выполнена, поскольку implementation, verification,
-  implementation review и post-implementation documentation ещё впереди.
+- **Implementation review status:** Approved after test-only rework.
+- **Documentation synchronization status:** Synchronized and independently
+  re-reviewed.
+- **Coordinator acceptance:** Accepted.
+- **Task closure:** Completed; обязательный repository gate завершён успешно.
 - **Commit:** не создаётся без отдельного явного разрешения.

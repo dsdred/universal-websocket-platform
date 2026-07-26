@@ -151,7 +151,8 @@ func New(snapshot *runtimeconfig.RoutingSnapshot, registry map[string]message.Ha
 	if len(routes) > maximumRoutes {
 		return nil, invalidSnapshot("too many Routes")
 	}
-	if reference := snapshot.DefaultHandlerRef(); reference != "" && !validIdentifier(reference) {
+	defaultReference, defaultPresent := snapshot.DefaultHandlerRef()
+	if defaultPresent && !validIdentifier(defaultReference) {
 		return nil, invalidSnapshot("invalid DefaultHandlerRef")
 	}
 
@@ -195,12 +196,12 @@ func New(snapshot *runtimeconfig.RoutingSnapshot, registry map[string]message.Ha
 	})
 
 	compiled := &Router{routes: compiledRoutes}
-	if reference := snapshot.DefaultHandlerRef(); reference != "" {
-		handler, ok := resolveHandler(registry, reference)
+	if defaultPresent {
+		handler, ok := resolveHandler(registry, defaultReference)
 		if !ok {
-			return nil, unresolvedHandler(reference)
+			return nil, unresolvedHandler(defaultReference)
 		}
-		compiled.defaultHandler = &compiledHandler{reference: reference, handler: handler}
+		compiled.defaultHandler = &compiledHandler{reference: defaultReference, handler: handler}
 	}
 	if err := validateCompiled(compiled); err != nil {
 		return nil, err

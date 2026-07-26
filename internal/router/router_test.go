@@ -9,6 +9,7 @@ import (
 	"github.com/dsdred/universal-websocket-platform/internal/configurationversion"
 	"github.com/dsdred/universal-websocket-platform/internal/message"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
+	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfigload"
 )
 
 func TestNewCompilesImmutableRoutingTable(t *testing.T) {
@@ -286,16 +287,29 @@ func TestCompiledRouterDoesNotExposeMutableCollectionsOrUnexpectedBehavior(t *te
 
 func buildRoutingSnapshot(t *testing.T, routing *configurationversion.RoutingSettings) *runtimeconfig.RoutingSnapshot {
 	t.Helper()
-	snapshot, err := runtimeconfig.NewBuilder().Build(configurationversion.ConfigurationVersion{
+	version := configurationversion.ConfigurationVersion{
 		ID:              1,
 		ConfigurationID: 1,
+		Number:          1,
 		State:           configurationversion.Published,
-		Routing:         routing,
-	})
-	if err != nil {
-		t.Fatalf("runtimeconfig.Build() error = %v", err)
+		Listener: configurationversion.ListenerSettings{
+			Host: "127.0.0.1", Port: 8080,
+			TLS:      configurationversion.TLSSettings{MinVersion: "1.2"},
+			Timeouts: configurationversion.TimeoutSettings{HandshakeSeconds: 10, WriteSeconds: 10},
+		},
+		Routing: routing,
 	}
-	return snapshot.Routing
+	request := runtimeconfigload.NewLoadRequest(1, 1, 1, "runtime", "attempt")
+	input := runtimeconfigload.NewDetachedLoadResult(request, version, 1, true, "uwp.configuration", 1)
+	snapshot, diagnostics := runtimeconfig.NewBuilder().Build(input)
+	if len(diagnostics) != 0 {
+		t.Fatalf("runtimeconfig.Build() diagnostics = %#v", diagnostics)
+	}
+	result, present := snapshot.Routing()
+	if !present {
+		t.Fatal("runtimeconfig.Build() returned absent Routing")
+	}
+	return &result
 }
 
 func enabledRoute(id string, priority uint32, messageType string) configurationversion.Route {
