@@ -258,6 +258,28 @@ Builder does not reread or re-establish:
 A Loader guarantee is not permission to omit defensive handoff validation.
 Defensive validation must not turn Builder into a second Loader.
 
+### Supported Schema and Handoff Contract
+
+This Builder supports exactly the byte-for-byte schema pair
+`uwp.configuration` and version `1`. It performs no trimming, case folding,
+range negotiation, migration, downgrade, or fallback for schema identity or
+version. An empty schema identity and version zero are missing. Any other
+non-empty identity or non-zero version is unsupported.
+
+Workspace, Configuration, ConfigurationVersion, and ConfigurationVersion
+number use their existing numeric representations. Zero is missing. Runtime
+Instance and Launch Attempt identities remain opaque; an empty identity is
+missing and every non-empty identity is preserved byte-for-byte.
+
+The carried Published fact must be `true`, and the detached payload state must
+be exactly `Published`. The payload Configuration ID, Version ID, and Version
+number must each be non-zero and equal their corresponding carried provenance
+values. Builder does not repair either side.
+
+Missing or unsupported schema facts make all section-specific rules
+inapplicable. They do not suppress the independent provenance, Published, or
+payload-to-provenance consistency rules.
+
 ## 9. Runtime Snapshot Output
 
 On success, Builder returns one Runtime Snapshot containing exactly the
@@ -289,8 +311,59 @@ Runtime Snapshot must not contain:
 - desired or actual lifecycle state;
 - Snapshot identity, Build identity, source metadata, or telemetry.
 
-Concrete Runtime Snapshot field layout remains an implementation design matter.
-It must not weaken the invariants in this proposal.
+### Complete Snapshot Model
+
+The Snapshot contains the following private logical model:
+
+- `Provenance`: `WorkspaceID uint64`, `ConfigurationID uint64`,
+  `ConfigurationVersionID uint64`, `ConfigurationVersionNumber uint32`,
+  `SchemaIdentity string`, `SchemaVersion uint32`, opaque
+  `RuntimeInstanceID`, and opaque `LaunchAttemptID`;
+- `Listener`: `Host string`, `Port uint16`, `TLS`, and `Timeouts`;
+- `TLS`: `Enabled bool`, `CertificateRef string`, `PrivateKeyRef string`, and
+  `MinVersion string`;
+- `Timeouts`: `HandshakeSeconds`, `ReadSeconds`, `WriteSeconds`, and
+  `IdleSeconds`, each `uint32`;
+- `Authentication`: `Enabled bool` and ordered `Providers`;
+- each Provider: `Name`, exact `Type` (`jwt`, `api-key`, or `basic`),
+  `Enabled`, `Priority`, and exactly one present typed settings branch;
+- API Key settings: `Header` and `SecretRef`;
+- Basic settings: `Realm` and `SecretRef`;
+- JWT settings: ordered `SigningKeys` of `Name` and `SecretRef`, ordered
+  `AllowedAlgorithms`, `AllowedIssuers`, `AllowedAudiences`, ordered
+  `RequiredClaims` of `Name` and `Value`, and `ClockSkewSeconds`;
+- optional `Routing`, whose presence is observable; when present it contains
+  ordered `Routes` and optional `DefaultHandlerRef`, whose presence is also
+  observable;
+- each Route: `ID`, `Enabled`, `Priority`, canonical `Matchers`, and
+  `HandlerRef`;
+- each Matcher: `Type` and `Value`.
+
+Absent Routing is distinct from present Routing with no Routes and no default
+handler. The provider settings branches form a discriminated union: exactly
+the branch matching Provider Type is present.
+
+### Private Detached Readers
+
+Every aggregate and collection in the Snapshot is private. Every read of an
+aggregate, optional aggregate, or collection returns a fully detached value
+copy. A Routing read exposes both presence and its detached value. Provider
+settings branches and `DefaultHandlerRef` expose presence separately.
+
+Provider collections, every JWT sequence, Routes, and Matchers are copied
+recursively on every read, including every logical value they contain. Scalars
+are returned by value. No reader exposes an internal slice, pointer, map,
+iterator, mutable view, or Configuration domain object. Exact Go signatures
+remain an implementation choice only when this observable behavior is
+identical.
+
+Mutation of the borrowed input, any reader result, or another Build result must
+not change the Snapshot or another read. Independently successful Build
+operations share no mutable logical content.
+
+Only schema-defined optionality is observable: Routing, `DefaultHandlerRef`,
+and the discriminated provider settings branch. Nil and empty repeated fields
+are semantically equal and normalize to one empty sequence.
 
 ## 10. Provenance Contract
 
@@ -360,6 +433,116 @@ contradict the approved Configuration domain.
 ARCH-002 and ARCH-005. That validation concerns the executable fully assembled
 Runtime configuration and operational resource construction, not Configuration
 semantic validity. Bootstrap may validate only its static construction input.
+
+### String and Reference Rules
+
+Where this section says a string is trimmed, Builder removes only leading and
+trailing Unicode `White_Space`. It does not collapse internal whitespace,
+lowercase, case-fold, apply Unicode normalization, or introduce a default.
+Character limits count Unicode code points unless a byte limit is stated.
+
+A Secret Reference is its trimmed value and must contain 1 through 255 ASCII
+characters from `[A-Za-z0-9/._-]`. It must not have a leading or trailing
+slash, contain `//` or `://`, or contain `-----BEGIN`. Builder preserves only
+references and never resolves Secret values.
+
+### Listener, TLS, and Timeout Rules
+
+Listener Host is trimmed, required, and limited to 255 Unicode code points.
+It must be one of:
+
+- IPv4 with exactly four unsigned decimal octets in `0..255`, with no leading
+  zero except the single digit `0`;
+- IPv6 in an RFC 4291 section 2.2 form, without brackets or a zone identifier;
+- an ASCII hostname, optionally ending with one dot, at most 255 bytes in
+  total, with labels of 1 through 63 letters, digits, or hyphens and
+  alphanumeric label endpoints.
+
+Valid spelling is preserved. Listener Port must be in `1..65535`.
+
+TLS `CertificateRef`, `PrivateKeyRef`, and `MinVersion` are trimmed.
+`MinVersion` is required and must be exactly `1.2` or `1.3`. When TLS is
+enabled, both references are required. A present reference must satisfy the
+Secret Reference grammar. Disabled TLS preserves every valid present
+reference; a trimmed-empty reference is absent.
+
+Timeout ranges in seconds are: Handshake `1..300`, Read `0..86400`, Write
+`1..300`, and Idle `0..86400`.
+
+### Authentication Rules
+
+Provider declaration order is preserved; nil and empty Providers normalize to
+one empty sequence. Enabled Authentication requires a non-empty Providers
+sequence and at least one enabled Provider. Disabled Authentication still
+validates and preserves configured Providers.
+
+Provider Name is trimmed, required, limited to 255 Unicode code points, and
+unique by exact case-sensitive value. Priority is preserved unchanged; zero is
+allowed, and every Provider Priority must be unique. Type is an exact,
+required token: `jwt`, `api-key`, or `basic`.
+
+For a supported Type, exactly its matching settings branch is required and
+every present nonmatching branch is forbidden. Missing or unsupported Type
+makes branch and branch-child rules inapplicable.
+
+API Key Header is trimmed, required, limited to 255 Unicode code points, and
+must use HTTP token syntax: ASCII letters or digits, or one of
+``!#$%&'*+-.^_`|~``. API Key `SecretRef` follows the Secret Reference rule.
+
+Basic Realm is trimmed, required, and limited to 255 Unicode code points.
+Internal whitespace and case are preserved. Basic `SecretRef` follows the
+Secret Reference rule.
+
+JWT rules are:
+
+- Signing Keys are non-empty and preserve order. Each Name is trimmed,
+  required, and unique by exact case-sensitive value; no additional maximum
+  applies. Each `SecretRef` follows the Secret Reference rule.
+- Allowed Algorithms are non-empty, preserve order, and contain only exact
+  tokens `HS256`, `HS384`, `HS512`, `RS256`, `RS384`, `RS512`, `ES256`,
+  `ES384`, `ES512`, `PS256`, `PS384`, and `PS512`; exact duplicates are
+  forbidden.
+- Allowed Issuers and Allowed Audiences preserve order. Each item is trimmed,
+  non-empty, and unique by exact case-sensitive value; no additional length or
+  syntax rule applies.
+- Required Claims preserve order. Name and Value are trimmed and non-empty;
+  Names are unique by exact case-sensitive value. No additional length or
+  syntax rule applies.
+- `ClockSkewSeconds` must be in `0..300`.
+
+No Authentication collection is sorted.
+
+### Routing Rules
+
+Routing preserves absence versus presence. Present Routing with nil or empty
+Routes normalizes to one empty sequence. Route declaration order is preserved,
+and at most 256 Routes are allowed.
+
+Route ID and Handler Reference are trimmed, required, limited to 128 ASCII
+characters, and must match `[A-Za-z][A-Za-z0-9._-]*`. Route ID and every
+positive Priority are unique across all Routes, including disabled Routes.
+Priority must be positive.
+
+Each Route has at most four Matchers. An enabled Route requires at least one
+Matcher. Matcher Type and Value are trimmed. Type is unique within the Route
+and must be exactly `message-type`, `principal-kind`, `authentication-type`,
+or `authentication-provider`. The corresponding Value must be:
+
+- `text` or `binary` for `message-type`;
+- `authenticated` or `anonymous` for `principal-kind`;
+- `jwt`, `api-key`, or `basic` for `authentication-type`;
+- any non-empty trimmed, case-preserved value for
+  `authentication-provider`.
+
+Canonical Matchers are sorted by the exact `(Type, Value)` pair. Enabled Routes
+must have unique canonical Matcher sets; disabled Routes do not participate in
+that uniqueness rule.
+
+Raw-empty `DefaultHandlerRef` is absent. A raw non-empty value is present and
+is then trimmed, required, limited to 128 ASCII characters, and validated by
+the same grammar as a Route Handler Reference.
+
+Builder does not resolve a Handler Reference or compile a Router.
 
 ## 12. Normalization and Pure Derived Structures
 
@@ -465,12 +648,190 @@ Builder must not log Diagnostics, publish them to an external system, record
 Launch Attempt failure, or choose a management response. Runtime Lifecycle
 Owner remains responsible for the failed launch outcome after Builder returns.
 
-Exact Diagnostic code namespace, logical-location grammar, canonical ordering,
-localization policy, and redaction presentation require an implementation
-contract before coding.
+### Diagnostic Representation and Location Grammar
 
-**TODO:** Define those Diagnostics representation details without changing the
-blocking-only semantic contract established here.
+Every Diagnostic is an immutable tuple of `Severity`, `Code`, `Location`, and
+`Message`. `Severity` is always the literal `error`. Code, Location, and Message
+are the fixed redacted English strings in the exhaustive registry below.
+Messages contain no rejected value and are not localized by Builder.
+
+A Location starts at `$`, uses lower-camel-case field tokens, and uses
+zero-based original declaration indices. Registry tokens `[i]` and `[j]` are
+patterns replaced by the actual indices.
+
+### Diagnostic Registry: Handoff, Provenance, and Listener
+
+| Code | Location | Message |
+| --- | --- | --- |
+| `snapshot.provenance.workspace.required` | `$.provenance.workspaceId` | `workspace identity is required` |
+| `snapshot.provenance.configuration.required` | `$.provenance.configurationId` | `configuration identity is required` |
+| `snapshot.provenance.configuration_version.required` | `$.provenance.configurationVersionId` | `configuration version identity is required` |
+| `snapshot.provenance.configuration_number.required` | `$.provenance.configurationVersionNumber` | `configuration version number is required` |
+| `snapshot.provenance.runtime_instance.required` | `$.provenance.runtimeInstanceId` | `runtime instance identity is required` |
+| `snapshot.provenance.launch_attempt.required` | `$.provenance.launchAttemptId` | `launch attempt identity is required` |
+| `snapshot.schema.identity.required` | `$.provenance.schemaIdentity` | `configuration schema identity is required` |
+| `snapshot.schema.identity.unsupported` | `$.provenance.schemaIdentity` | `configuration schema identity is unsupported` |
+| `snapshot.schema.version.required` | `$.provenance.schemaVersion` | `configuration schema version is required` |
+| `snapshot.schema.version.unsupported` | `$.provenance.schemaVersion` | `configuration schema version is unsupported` |
+| `snapshot.handoff.not_published` | `$.handoff.published` | `detached load result is not published` |
+| `snapshot.configuration_version.state.not_published` | `$.configurationVersion.state` | `configuration version state is not published` |
+| `snapshot.configuration_version.configuration.required` | `$.configurationVersion.configurationId` | `configuration version payload configuration identity is required` |
+| `snapshot.configuration_version.identity.required` | `$.configurationVersion.id` | `configuration version payload identity is required` |
+| `snapshot.configuration_version.number.required` | `$.configurationVersion.number` | `configuration version payload number is required` |
+| `snapshot.configuration_version.configuration.inconsistent` | `$.configurationVersion.configurationId` | `configuration identity conflicts with provenance` |
+| `snapshot.configuration_version.identity.inconsistent` | `$.configurationVersion.id` | `configuration version identity conflicts with provenance` |
+| `snapshot.configuration_version.number.inconsistent` | `$.configurationVersion.number` | `configuration version number conflicts with provenance` |
+| `snapshot.listener.host.required` | `$.listener.host` | `listener host is required` |
+| `snapshot.listener.host.too_long` | `$.listener.host` | `listener host exceeds 255 characters` |
+| `snapshot.listener.host.invalid` | `$.listener.host` | `listener host is not a valid IP address or hostname` |
+| `snapshot.listener.port.out_of_range` | `$.listener.port` | `listener port must be between 1 and 65535` |
+| `snapshot.listener.tls.min_version.required` | `$.listener.tls.minVersion` | `TLS minimum version is required` |
+| `snapshot.listener.tls.min_version.unsupported` | `$.listener.tls.minVersion` | `TLS minimum version is unsupported` |
+| `snapshot.listener.tls.certificate.required` | `$.listener.tls.certificateRef` | `TLS certificate reference is required when TLS is enabled` |
+| `snapshot.listener.tls.certificate.too_long` | `$.listener.tls.certificateRef` | `TLS certificate reference exceeds 255 characters` |
+| `snapshot.listener.tls.certificate.invalid` | `$.listener.tls.certificateRef` | `TLS certificate reference is invalid` |
+| `snapshot.listener.tls.private_key.required` | `$.listener.tls.privateKeyRef` | `TLS private key reference is required when TLS is enabled` |
+| `snapshot.listener.tls.private_key.too_long` | `$.listener.tls.privateKeyRef` | `TLS private key reference exceeds 255 characters` |
+| `snapshot.listener.tls.private_key.invalid` | `$.listener.tls.privateKeyRef` | `TLS private key reference is invalid` |
+| `snapshot.listener.timeout.handshake.out_of_range` | `$.listener.timeouts.handshakeSeconds` | `handshake timeout must be between 1 and 300 seconds` |
+| `snapshot.listener.timeout.read.out_of_range` | `$.listener.timeouts.readSeconds` | `read timeout must be between 0 and 86400 seconds` |
+| `snapshot.listener.timeout.write.out_of_range` | `$.listener.timeouts.writeSeconds` | `write timeout must be between 1 and 300 seconds` |
+| `snapshot.listener.timeout.idle.out_of_range` | `$.listener.timeouts.idleSeconds` | `idle timeout must be between 0 and 86400 seconds` |
+
+### Diagnostic Registry: Authentication
+
+| Code | Location | Message |
+| --- | --- | --- |
+| `snapshot.authentication.providers.required` | `$.authentication.providers` | `authentication requires at least one provider` |
+| `snapshot.authentication.enabled_provider.required` | `$.authentication.providers` | `authentication requires at least one enabled provider` |
+| `snapshot.authentication.provider.name.required` | `$.authentication.providers[i].name` | `authentication provider name is required` |
+| `snapshot.authentication.provider.name.too_long` | `$.authentication.providers[i].name` | `authentication provider name exceeds 255 characters` |
+| `snapshot.authentication.provider.name.duplicate` | `$.authentication.providers[i].name` | `authentication provider name is duplicated` |
+| `snapshot.authentication.provider.priority.duplicate` | `$.authentication.providers[i].priority` | `authentication provider priority is duplicated` |
+| `snapshot.authentication.provider.type.required` | `$.authentication.providers[i].type` | `authentication provider type is required` |
+| `snapshot.authentication.provider.type.unsupported` | `$.authentication.providers[i].type` | `authentication provider type is unsupported` |
+| `snapshot.authentication.provider.settings.required` | matching `$.authentication.providers[i].apiKey`, `.basic`, or `.jwt` | `authentication provider settings are required for its type` |
+| `snapshot.authentication.provider.settings.forbidden` | each present nonmatching `$.authentication.providers[i].apiKey`, `.basic`, or `.jwt` | `authentication provider settings are forbidden for its type` |
+| `snapshot.authentication.api_key.header.required` | `$.authentication.providers[i].apiKey.header` | `API key header is required` |
+| `snapshot.authentication.api_key.header.too_long` | `$.authentication.providers[i].apiKey.header` | `API key header exceeds 255 characters` |
+| `snapshot.authentication.api_key.header.invalid` | `$.authentication.providers[i].apiKey.header` | `API key header is invalid` |
+| `snapshot.authentication.api_key.secret_ref.required` | `$.authentication.providers[i].apiKey.secretRef` | `API key secret reference is required` |
+| `snapshot.authentication.api_key.secret_ref.too_long` | `$.authentication.providers[i].apiKey.secretRef` | `API key secret reference exceeds 255 characters` |
+| `snapshot.authentication.api_key.secret_ref.invalid` | `$.authentication.providers[i].apiKey.secretRef` | `API key secret reference is invalid` |
+| `snapshot.authentication.basic.realm.required` | `$.authentication.providers[i].basic.realm` | `Basic realm is required` |
+| `snapshot.authentication.basic.realm.too_long` | `$.authentication.providers[i].basic.realm` | `Basic realm exceeds 255 characters` |
+| `snapshot.authentication.basic.secret_ref.required` | `$.authentication.providers[i].basic.secretRef` | `Basic secret reference is required` |
+| `snapshot.authentication.basic.secret_ref.too_long` | `$.authentication.providers[i].basic.secretRef` | `Basic secret reference exceeds 255 characters` |
+| `snapshot.authentication.basic.secret_ref.invalid` | `$.authentication.providers[i].basic.secretRef` | `Basic secret reference is invalid` |
+| `snapshot.authentication.jwt.signing_keys.required` | `$.authentication.providers[i].jwt.signingKeys` | `JWT requires at least one signing key` |
+| `snapshot.authentication.jwt.signing_key.name.required` | `$.authentication.providers[i].jwt.signingKeys[j].name` | `JWT signing key name is required` |
+| `snapshot.authentication.jwt.signing_key.name.duplicate` | `$.authentication.providers[i].jwt.signingKeys[j].name` | `JWT signing key name is duplicated` |
+| `snapshot.authentication.jwt.signing_key.secret_ref.required` | `$.authentication.providers[i].jwt.signingKeys[j].secretRef` | `JWT signing key secret reference is required` |
+| `snapshot.authentication.jwt.signing_key.secret_ref.too_long` | `$.authentication.providers[i].jwt.signingKeys[j].secretRef` | `JWT signing key secret reference exceeds 255 characters` |
+| `snapshot.authentication.jwt.signing_key.secret_ref.invalid` | `$.authentication.providers[i].jwt.signingKeys[j].secretRef` | `JWT signing key secret reference is invalid` |
+| `snapshot.authentication.jwt.algorithms.required` | `$.authentication.providers[i].jwt.allowedAlgorithms` | `JWT requires at least one allowed algorithm` |
+| `snapshot.authentication.jwt.algorithm.unsupported` | `$.authentication.providers[i].jwt.allowedAlgorithms[j]` | `JWT algorithm is unsupported` |
+| `snapshot.authentication.jwt.algorithm.duplicate` | `$.authentication.providers[i].jwt.allowedAlgorithms[j]` | `JWT algorithm is duplicated` |
+| `snapshot.authentication.jwt.issuer.required` | `$.authentication.providers[i].jwt.allowedIssuers[j]` | `JWT issuer must not be empty` |
+| `snapshot.authentication.jwt.issuer.duplicate` | `$.authentication.providers[i].jwt.allowedIssuers[j]` | `JWT issuer is duplicated` |
+| `snapshot.authentication.jwt.audience.required` | `$.authentication.providers[i].jwt.allowedAudiences[j]` | `JWT audience must not be empty` |
+| `snapshot.authentication.jwt.audience.duplicate` | `$.authentication.providers[i].jwt.allowedAudiences[j]` | `JWT audience is duplicated` |
+| `snapshot.authentication.jwt.claim.name.required` | `$.authentication.providers[i].jwt.requiredClaims[j].name` | `JWT required claim name is required` |
+| `snapshot.authentication.jwt.claim.name.duplicate` | `$.authentication.providers[i].jwt.requiredClaims[j].name` | `JWT required claim name is duplicated` |
+| `snapshot.authentication.jwt.claim.value.required` | `$.authentication.providers[i].jwt.requiredClaims[j].value` | `JWT required claim value is required` |
+| `snapshot.authentication.jwt.clock_skew.out_of_range` | `$.authentication.providers[i].jwt.clockSkewSeconds` | `JWT clock skew must be between 0 and 300 seconds` |
+
+### Diagnostic Registry: Routing
+
+| Code | Location | Message |
+| --- | --- | --- |
+| `snapshot.routing.routes.too_many` | `$.routing.routes` | `routing contains more than 256 routes` |
+| `snapshot.routing.default_handler.required` | `$.routing.defaultHandlerRef` | `default handler reference is required when present` |
+| `snapshot.routing.default_handler.too_long` | `$.routing.defaultHandlerRef` | `default handler reference exceeds 128 characters` |
+| `snapshot.routing.default_handler.invalid` | `$.routing.defaultHandlerRef` | `default handler reference is invalid` |
+| `snapshot.routing.route.id.required` | `$.routing.routes[i].id` | `route identity is required` |
+| `snapshot.routing.route.id.too_long` | `$.routing.routes[i].id` | `route identity exceeds 128 characters` |
+| `snapshot.routing.route.id.invalid` | `$.routing.routes[i].id` | `route identity is invalid` |
+| `snapshot.routing.route.id.duplicate` | `$.routing.routes[i].id` | `route identity is duplicated` |
+| `snapshot.routing.route.priority.out_of_range` | `$.routing.routes[i].priority` | `route priority must be positive` |
+| `snapshot.routing.route.priority.duplicate` | `$.routing.routes[i].priority` | `route priority is duplicated` |
+| `snapshot.routing.route.handler.required` | `$.routing.routes[i].handlerRef` | `route handler reference is required` |
+| `snapshot.routing.route.handler.too_long` | `$.routing.routes[i].handlerRef` | `route handler reference exceeds 128 characters` |
+| `snapshot.routing.route.handler.invalid` | `$.routing.routes[i].handlerRef` | `route handler reference is invalid` |
+| `snapshot.routing.route.matchers.too_many` | `$.routing.routes[i].matchers` | `route contains more than four matchers` |
+| `snapshot.routing.route.matchers.required` | `$.routing.routes[i].matchers` | `enabled route requires at least one matcher` |
+| `snapshot.routing.matcher.type.required` | `$.routing.routes[i].matchers[j].type` | `matcher type is required` |
+| `snapshot.routing.matcher.type.unsupported` | `$.routing.routes[i].matchers[j].type` | `matcher type is unsupported` |
+| `snapshot.routing.matcher.type.duplicate` | `$.routing.routes[i].matchers[j].type` | `matcher type is duplicated within the route` |
+| `snapshot.routing.matcher.value.required` | `$.routing.routes[i].matchers[j].value` | `matcher value is required` |
+| `snapshot.routing.matcher.value.unsupported` | `$.routing.routes[i].matchers[j].value` | `matcher value is unsupported for its type` |
+| `snapshot.routing.matcher_set.duplicate` | `$.routing.routes[i].matchers` | `enabled route duplicates an earlier normalized matcher set` |
+
+For `settings.required`, the actual Location is the missing branch selected by
+Type. For `settings.forbidden`, one Diagnostic is emitted at each present
+nonmatching branch. These are the only permitted locations for those Codes.
+The exact mapping is:
+
+- Type `api-key`: required `$.authentication.providers[i].apiKey`; forbidden
+  `$.authentication.providers[i].basic` and
+  `$.authentication.providers[i].jwt`;
+- Type `basic`: required `$.authentication.providers[i].basic`; forbidden
+  `$.authentication.providers[i].apiKey` and
+  `$.authentication.providers[i].jwt`;
+- Type `jwt`: required `$.authentication.providers[i].jwt`; forbidden
+  `$.authentication.providers[i].apiKey` and
+  `$.authentication.providers[i].basic`.
+
+### Applicability, Duplicate Anchoring, and Ordering
+
+The following precedence rules are normative:
+
+1. A required-value rule is evaluated after the specified trimming. Its
+   failure suppresses too-long, invalid, unsupported, and uniqueness rules for
+   that same value. A present value may independently fail both too-long and
+   invalid rules.
+2. Schema required precedes schema unsupported. A missing or unsupported
+   schema pair suppresses section rules only.
+3. Payload required rules are independent. Payload zero produces its payload
+   required Diagnostic. An inconsistency rule applies only when both compared
+   values are non-zero: carried non-zero and payload zero produces only the
+   payload-required Diagnostic; carried zero and payload non-zero produces
+   only the carried-required Diagnostic; both zero produce both required
+   Diagnostics; both non-zero and unequal produce only inconsistent; equal
+   values produce none. Published handoff and payload-state checks are
+   independent and do not suppress valid-schema section rules.
+4. Enabled Authentication with zero Providers produces only
+   `snapshot.authentication.providers.required`; the enabled-provider rule
+   applies only to a non-empty Providers sequence. Missing Type suppresses
+   unsupported and all branch rules. Unknown Type produces unsupported and
+   suppresses branch rules. For a supported Type, a missing expected branch
+   produces settings-required and suppresses its children; each present wrong
+   branch produces settings-forbidden and suppresses its children.
+5. Scalar uniqueness uses only usable normalized values and exact
+   case-sensitive equality. The lowest original declaration index is the
+   silent anchor; every later original index receives one duplicate
+   Diagnostic at its scalar Location. This applies to Provider Name and
+   Priority, JWT Signing Key Name, Algorithm, Issuer, Audience, Claim Name,
+   Route ID and Priority, and Matcher Type.
+6. A too-many rule does not suppress element rules. The enabled-route
+   matcher-required rule applies only to an empty sequence.
+7. An enabled Matcher-set candidate requires one through four Matchers, with
+   every Type and Value present and supported and every Type unique. Its
+   normalized pairs are sorted. The lowest original Route index is the silent
+   anchor; every later equivalent candidate receives the Matcher-set duplicate
+   Diagnostic at its Matchers Location. Route ID, Priority, and Handler rules
+   remain independent. Disabled Routes do not participate.
+8. Absent Routing suppresses every Routing rule; present-empty Routing is
+   valid. A raw-empty default handler is absent. A raw non-empty,
+   trimmed-empty default handler is present and produces only its required
+   Diagnostic.
+
+Diagnostics are deduplicated by exact `(Code, actual Location)`. Their
+canonical order is Location first, using a segment-aware comparison: field
+tokens compare bytewise, indices compare numerically, and a parent precedes its
+descendant. Code then compares bytewise. Message is never an ordering key.
+Equivalent invalid inputs produce identical ordered Severity, Code, Location,
+and Message fields.
 
 ## 14. Result Atomicity and Failure Semantics
 
@@ -501,6 +862,11 @@ On Builder failure:
 
 Diagnostics publication to the caller is the failure linearization point. No
 observer may obtain a partially validated or partially normalized Snapshot.
+Any Diagnostic therefore means no Snapshot, partial Snapshot, or degraded
+result. Builder invokes neither Bootstrap nor Host, records no Launch Attempt
+failure, and creates no resource. Conversely, `Host.Start()` startup or
+resource errors never become Builder Diagnostics, and Builder-invalid input is
+never deferred to Host.
 
 ## 15. Snapshot Invariants
 
@@ -849,16 +1215,18 @@ None of these may be implemented as hidden Builder behavior.
 
 ## 23. Implementation Prerequisites
 
-The approved architecture does not yet specify:
+The focused pre-implementation refinement is complete:
 
-1. the exact supported Configuration schema identity and compatibility rule;
-2. the complete Runtime Snapshot field layout and section-specific
-   normalization rules;
-3. the exact structured Diagnostics representation and canonical ordering.
+1. Section 8 defines the exact supported schema pair and compatibility rule.
+2. Sections 9 through 12 define the complete Snapshot model, detached reader
+   behavior, normalization, and all supported section semantics.
+3. Section 13 defines the exhaustive structured Diagnostics registry,
+   applicability, duplicate anchoring, deduplication, and canonical ordering.
 
-**TODO:** Resolve these three implementation contracts through focused review
-before coding Builder. Their resolution must refine this proposal without
-changing the ownership, validation, atomicity, or Runtime-independence model.
+These contracts resolve the TASK-001 architecture blocker without changing
+ownership, validation, atomicity, or Runtime independence. Design Status
+remains `Draft`, Implementation Status remains `Planned`, and the Builder
+implementation has not started.
 
 ## 24. Decision
 

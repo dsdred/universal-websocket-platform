@@ -2,9 +2,9 @@
 
 ## Status
 
-**Blocked for Architecture**
+**Architecture Refinement Approved — Implementation Not Started**
 
-**Branch:** `feature/dp-008-snapshot-builder`
+**Branch:** `docs/dp-008-contract-refinement`
 
 ## Objective
 
@@ -15,7 +15,7 @@ pipeline.
 
 ## Scope
 
-После устранения архитектурного blocker задача включает:
+Implementation scope:
 
 - вход Builder только через полный neutral `DetachedLoadResult`;
 - defensive handoff, schema и identity checks на границе Builder;
@@ -63,16 +63,19 @@ Active или Frozen источники.
 ## Roles and Stage State
 
 - **Coordinator:** intake, task contract, назначение ролей и обработка blocker.
-- **Architect:** анализ завершён; возвращён blocker до начала coding.
-- **Documentation Agent:** создан этот operational record и обновлена
-  навигация задач; выполнена blocker-state synchronization в
-  `.ai/PROJECT_CONTEXT.md`, `spec/current-state.md` и MASTER_PLAN EN/RU,
-  отражающая статус `Blocked for Architecture` и следующий разрешённый
-  refinement. Архитектурные и implementation-документы не изменялись.
+- **Architect:** focused refinement завершён. Определены точная schema v1,
+  полный Snapshot и detached-reader contract, все section semantics,
+  исчерпывающий Diagnostics registry и правила applicability, duplicate
+  anchoring, deduplication и ordering. Approved/Frozen architecture не
+  изменялась.
+- **Documentation Agent:** утверждённый Architect handoff зеркально
+  зафиксирован в Draft DP-008 EN/RU; project-state documents синхронизированы
+  с состоянием `refinement complete / implementation not started`.
 - **Developer:** не начинал работу из-за stop condition.
 - **Tester:** не начинал verification implementation из-за stop condition.
-- **Reviewer:** implementation review не начинался из-за отсутствия
-  реализации.
+- **Reviewer архитектурного refinement:** `Approved`; обязательные findings
+  отсутствуют.
+- **Reviewer implementation:** не начинался из-за отсутствия реализации.
 - **Post-Implementation Documentation Synchronization:** не выполнялась;
   реализации не было и фактически реализованная capability не изменилась.
 
@@ -86,11 +89,11 @@ Active или Frozen источники.
 - Работа выполняется только в текущей feature-ветке; `main` не изменяется.
 - Commit и push запрещены.
 
-## Architecture Handoff and Blocker
+## Architecture Refinement Handoff
 
 Architect сверил задачу с ADR-0002, ADR-0003, ARCH-002, ARCH-005, DP-007 и
-Draft DP-008. Архитектурного разрешения для начала реализации нет: DP-008 §13
-и §23 явно требуют до coding определить три implementation contracts:
+Draft DP-008. Первоначальный blocker DP-008 §13 и §23 требовал до coding
+определить три implementation contracts:
 
 1. точные identity поддерживаемой Configuration schema и compatibility rule;
 2. полную структуру полей Runtime Snapshot, section-specific normalization и
@@ -98,13 +101,23 @@ Draft DP-008. Архитектурного разрешения для нача�
 3. точное structured representation Diagnostics, включая namespace codes,
    logical-location grammar, canonical ordering и applicability.
 
-Репозиторий этих контрактов не содержит. Используемое в тестах
-`uwp.configuration` v1 является fixture, а не authoritative schema contract.
-Выбор этих деталей в Developer stage был бы новым архитектурным решением.
+Focused Architect refinement определил и independent Reviewer утвердил:
+
+1. ровно schema pair `uwp.configuration` / version `1` без negotiation,
+   migration, downgrade или fallback;
+2. полную private Snapshot model, observable optionality, recursively detached
+   reader behavior и section-specific validation/normalization;
+3. immutable Diagnostics tuple, exhaustive Code/Location/fixed English Message
+   registry, applicability, precedence, duplicate anchoring, deduplication и
+   canonical ordering.
+
+Контракт зафиксирован в DP-008 EN/RU с semantic и heading parity. Design Status
+DP-008 остаётся `Draft`, Implementation Status — `Planned`. Architecture
+blocker снят; implementation ещё не начата.
 
 ## Acceptance Criteria
 
-После устранения blocker реализация должна доказать:
+Реализация должна доказать:
 
 1. Builder принимает `DetachedLoadResult`, не `ConfigurationVersion` и не
    source-specific input.
@@ -142,43 +155,51 @@ Draft DP-008. Архитектурного разрешения для нача�
   tests с verdict `Approved` либо rework по обязательным findings;
 - PROCESS-002 после утверждённой реализации.
 
-Эти implementation-команды пока не выполнялись: Architecture Analysis
-завершился обязательной stop condition до Developer stage.
+Эти implementation-команды пока не выполнялись: implementation не начата.
 
 ## Next Allowed Action
 
-Единственный разрешённый следующий шаг — focused Architect refinement Draft
-DP-008 в EN/RU, который определит три отсутствующих implementation contracts,
-сохранит Design Status `Draft` и не изменит ownership, validation, atomicity
-или Runtime-independence model. Уточнение должно пройти независимый review.
-Только после его утверждения Coordinator может открыть Developer stage.
+Следующий разрешённый шаг — Developer implementation полного уточнённого Draft
+DP-008 contract поверх neutral `DetachedLoadResult`. Developer должен
+сохранить утверждённые boundaries и не подключать Builder к production launch
+pipeline. После implementation обязательны Tester verification, independent
+implementation review и PROCESS-002.
 
 ## Handoff
 
-- **Completed scope:** зафиксированы task contract, implementation boundaries,
-  acceptance criteria, verification contract и точный architecture blocker;
-  project-state документы синхронизированы со статусом blocker и следующим
-  разрешённым Architect refinement.
+- **Completed architecture-refinement scope:** определены и зеркально
+  зафиксированы все три implementation prerequisites; independent Reviewer
+  выдал `Approved`; architecture blocker снят.
+- **Implementation scope:** не начат и не объявляется выполненным.
 - **Production files:** не изменялись.
 - **Test files:** не изменялись.
-- **Architecture/design files:** не изменялись.
-- **Operational documentation:** этот task record и `docs/tasks/README.md`.
+- **Architecture/design files:** только Draft DP-008 EN/RU; ADR, ARCH, DP-007
+  и DP-009 не изменялись.
+- **Operational documentation:** этот task record; `docs/tasks/README.md`
+  проверен, изменение навигации не требуется.
 - **Project-state documentation:** `.ai/PROJECT_CONTEXT.md`,
   `spec/current-state.md`, `docs/en/roadmap/MASTER_PLAN.md` и
   `docs/ru/roadmap/MASTER_PLAN.md`.
-- **Documentation evidence:** local Markdown links и fences проверены;
-  MASTER_PLAN EN/RU сохраняют semantic parity и одинаковую heading hierarchy;
-  conflict markers и trailing whitespace отсутствуют; `git diff --check`
-  выполнен успешно.
+- **CHANGELOG:** обновлён только фактом approved pre-implementation contract
+  refinement; capability не объявлена реализованной.
+- **Documentation evidence:** `git diff --check`, scope guard, trailing
+  whitespace и conflict-marker checks — PASS; repository Markdown links и
+  fences — PASS для 97 tracked файлов; DP-008 heading hierarchy — 74/74 с
+  учётом H1; все 93
+  Code/Location/Message rows Diagnostics byte-identical в EN/RU;
+  MASTER_PLAN heading hierarchy — 35/35; `markdownlint` недоступен.
 - **Post-implementation synchronization:** не применима до реализации и не
   объявляется выполненной.
-- **Finding:** три implementation contracts отсутствуют; coding запрещён.
-- **Unresolved risk:** до focused refinement невозможно реализовать Builder
-  без скрытого schema, Snapshot API или Diagnostics design decision.
-- **Final status:** Blocked for Architecture.
+- **Finding:** architecture blocker устранён; implementation evidence пока
+  отсутствует.
+- **Unresolved risk:** Developer и Tester должны доказать полный exhaustive
+  contract; production launch pipeline остаётся вне scope.
+- **Current status:** Architecture Refinement Approved — Implementation Not
+  Started.
 
 ## Closure
 
-- **Final status:** Blocked for Architecture
-- **Reason:** DP-008 §23 implementation prerequisites не определены.
-- **Commit:** не создавался.
+- **Architecture refinement status:** Approved; blocker resolved.
+- **Task closure:** не выполнена, поскольку implementation, verification,
+  implementation review и post-implementation documentation ещё впереди.
+- **Commit:** не создаётся без отдельного явного разрешения.

@@ -262,14 +262,14 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Persistence, Delivery, and Plugin contracts still require focused design.
 
-The current development task, TASK-001 for the Draft DP-008 Snapshot Builder
-over the neutral `DetachedLoadResult`, is `Blocked for Architecture`. Before
-implementation, a focused Architect refinement of Draft DP-008 in EN/RU must
-define the supported schema identity and compatibility rule, the complete
-Snapshot representation with section-specific normalization and immutable
-reader surface, and the structured Diagnostics representation, ordering, and
-applicability. An independent review must approve that refinement; Developer
-work may begin only after the blocker is removed. Draft status is unchanged.
+The focused architecture refinement for the current development task,
+TASK-001, is complete and independently approved. Draft DP-008 now defines the
+exact `uwp.configuration` v1 contract, the complete private detached Snapshot
+model and readers, section-specific normalization, and exhaustive blocking
+Diagnostics. Implementation has not started. The next allowed step is
+Developer implementation over neutral `DetachedLoadResult`, without connecting
+Builder to the production launch pipeline. Design Status remains Draft and
+Implementation Status remains Planned.
 
 Architectural debt is resolved through DP, ADR when consequential, implementation, and follow-up review. MASTER_PLAN does not settle those contracts itself.
 

@@ -8,16 +8,14 @@
 **Последняя завершённая development task:** реализация Configuration Loader contract DP-007
 
 **Текущая development task:** TASK-001 — реализация Draft DP-008 Snapshot
-Builder contract поверх neutral `DetachedLoadResult` — имеет статус `Blocked
-for Architecture`.
+Builder contract поверх neutral `DetachedLoadResult`; architecture refinement
+утверждён, implementation не начата.
 
-**Следующий разрешённый шаг:** focused Architect refinement Draft DP-008 EN/RU
-должен определить identity и compatibility поддерживаемой schema, полное
-представление Snapshot с section-specific normalization и immutable reader
-surface, а также structured representation, ordering и applicability
-Diagnostics. После refinement требуется independent review; Developer может
-начать реализацию только после снятия blocker. Design Status DP-008 остаётся
-Draft.
+**Следующий разрешённый шаг:** Developer реализует полный уточнённый Draft
+DP-008 contract: exact schema `uwp.configuration` v1, private immutable
+detached Snapshot с полным provenance ARCH-005 и exhaustive blocking
+Diagnostics. Builder не подключается к production launch pipeline. Design
+Status DP-008 остаётся Draft, Implementation Status — Planned.
 
 ## Архитектурные решения
 
