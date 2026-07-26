@@ -36,9 +36,19 @@ Runtime Host владеет независимой копией Snapshot, сво
 
 ### Composition Root
 
-Runtime Bootstrap создает и подготавливает Host. Host является production composition root для одного экземпляра Runtime. Во время Start явные конструкторы собирают поддерживаемый граф Authentication, connection dispatch, Session handoff, Message Handler и Listener. Service locator, reflection, DI framework и generic component registry не используются.
+Runtime Bootstrap может подготовить construction input и создать Host, но не
+собирает и не запускает operational Runtime graph. Host является единственным
+production composition root для одного экземпляра Runtime. Во время
+`Host.Start()` явные конструкторы собирают поддерживаемый граф Authentication,
+connection dispatch, Session handoff, Message Handler и Listener. Service
+locator, reflection, DI framework и generic component registry не используются.
 
-Замороженным свойством является наличие единственного явного production composition root и направление его зависимостей. Будущий порядок Handshake и будущий граф подсистем этим документом не замораживаются.
+Замороженным свойством является наличие единственного явного production
+composition root, направление его зависимостей и ownership startup transaction
+со стороны Host. Внешняя launch boundary, вызывающая `Host.Start()`, находится
+вне реализованного freeze и может быть определена более поздним design без
+передачи этого ownership. Будущий порядок Handshake и будущий граф подсистем
+этим документом не замораживаются.
 
 ### Lifecycle
 
@@ -50,7 +60,14 @@ Host владеет одним Runtime context успешно запущенно
 
 ### Startup Transaction and Rollback
 
-Start получает собранный Listener как startup resource, запускает его, выполняет commit только после успеха и откатывает полученные ресурсы при ошибке. Ошибки startup и rollback остаются различимыми через обычные механизмы wrapping и joining ошибок Go.
+`Host.Start()` является единственным owner и coordinator startup transaction.
+Он проверяет полностью собранную Runtime configuration и startup-critical
+capabilities, создаёт или получает operational resources, включая Listener,
+запускает Runtime components, выполняет commit только после успеха и откатывает
+полученные ресурсы при ошибке. Components могут предоставлять focused
+validators, но только Host вызывает и координирует их как часть startup. Ошибки
+startup и rollback остаются различимыми через обычные механизмы wrapping и
+joining ошибок Go.
 
 ### Runtime Readiness
 
@@ -65,11 +82,14 @@ Host владеет небольшим потокобезопасным Admissio
 Замораживаются следующие реализованные инварианты:
 
 - Host является production composition root и lifecycle coordinator, а не сервисом бизнес-логики.
-- Зависимости соединяются явно через конструкторы и сфокусированные Bootstrap-компоненты.
+- Зависимости соединяются явно; Bootstrap может связывать construction inputs,
+  а operational composition выполняется только внутри `Host.Start()`.
 - Container остается хранилищем Snapshot, а не service locator.
 - Host хранит и возвращает независимые копии Snapshot.
 - `Build` подготавливает lifecycle-состояние без открытия сетевых ресурсов.
-- Runtime dependencies собираются во время `Start`; Listener является внешне наблюдаемым компонентом, запускаемым Host.
+- Runtime dependencies и operational resources собираются во время
+  `Host.Start()`; Listener является внешне наблюдаемым компонентом, создаваемым
+  и запускаемым Host.
 - Startup публикует Runtime resources только после успешного запуска Listener.
 - Ошибка startup не оставляет Host в Running, Ready или с открытым admission.
 - Полученные startup resources откатываются после ошибки запуска.

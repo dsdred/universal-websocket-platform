@@ -203,7 +203,9 @@ Validation is layered without transferring ownership between components:
 2. Control Plane validates Configuration domain and publication rules.
 3. Loader validates requested identity, Published eligibility, consistent source observation, and source integrity.
 4. Builder defensively validates completeness, supported schema, cross-field Snapshot invariants, and deterministic conversion.
-5. Runtime Bootstrap validates startup-critical capabilities before acquiring externally visible resources and before readiness.
+5. `Host.Start()` validates startup-critical capabilities of the fully
+   assembled Runtime configuration before acquiring externally visible
+   resources and before readiness.
 
 Validation at an earlier layer does not permit a later trust boundary to omit defensive checks. Layers must not contradict the Configuration domain's acceptance semantics. A failure stops launch preparation or startup at the layer that owns the relevant responsibility.
 
@@ -213,7 +215,12 @@ Configuration domain rules define semantic equality and canonical values. Source
 
 Builder is the authoritative Runtime-boundary normalization step. It produces one canonical Snapshot without mutating the loaded ConfigurationVersion. Equivalent valid inputs from different sources must produce semantically equivalent Snapshot values.
 
-Loader does not normalize Runtime configuration. Bootstrap and Runtime Services do not repeat Configuration normalization or establish source-specific defaults. Defensive validation in multiple layers is permitted, but its acceptance semantics must remain equivalent.
+Loader does not normalize Runtime configuration. Bootstrap, Host startup, and
+Runtime Services do not repeat Configuration normalization or establish
+source-specific defaults. Bootstrap may validate only the representation of
+its construction input. `Host.Start()` may perform the defensive
+startup-critical validation it owns. Defensive validation in multiple layers
+is permitted, but its acceptance semantics must remain equivalent.
 
 ## 15. Snapshot Immutability
 
@@ -238,11 +245,16 @@ Ownership transfers in one direction:
 | Loader | Temporarily owns the load operation and detached loaded material; never owns Snapshot lifetime |
 | Builder | Owns construction only; retains neither source nor result |
 | Launch preparation | Owns the complete Snapshot before Runtime construction |
-| Runtime Bootstrap | Accepts the Snapshot for one Host construction and transfers an independent immutable value to Host |
+| Runtime Bootstrap | Accepts the Snapshot, validates static construction input, binds dependencies, creates one Host, and transfers an independent immutable value to it |
 | Runtime Host | Owns Snapshot for the entire Host lifetime |
 | Runtime Services | Read only; they do not own, replace, or mutate Snapshot |
 
-If Bootstrap fails before ownership transfer completes, launch preparation releases its values and no Host-visible Snapshot exists. After successful construction, Host retains Snapshot through startup, Running, shutdown, and terminal completion. Its value lifetime ends when the terminal Host and all permitted readers become unreachable.
+If Bootstrap fails before ownership transfer completes, launch preparation
+releases its values and no Host-visible Snapshot exists. Bootstrap does not
+acquire operational Runtime resources or own their rollback. After successful
+Host construction, Host retains Snapshot through startup, Running, shutdown,
+and terminal completion. Its value lifetime ends when the terminal Host and all
+permitted readers become unreachable.
 
 Snapshot has no explicit destruction protocol because it contains no Secret values or independently owned Runtime resources.
 
@@ -289,7 +301,11 @@ Loading or construction failure occurs before Runtime Host ownership and before 
 - does not select a fallback or newer version implicitly;
 - produces a truthful failed Launch Attempt through the ARCH-004 lifecycle owner.
 
-Bootstrap failures after a Snapshot has been handed to Runtime remain governed by ARCH-002 startup transaction and rollback. ARCH-005 does not define retry, backoff, fallback, or recovery policy.
+Failures before Host construction completes remain Bootstrap construction
+failures. Once Bootstrap invokes `Host.Start()`, startup-critical validation,
+operational resource acquisition, final startup failure, and rollback are owned
+exclusively by Host under ARCH-002. ARCH-005 does not define retry, backoff,
+fallback, or recovery policy.
 
 ## 21. Source Equivalence
 
@@ -342,6 +358,14 @@ These questions must not be answered through hidden Loader or Builder behavior.
 
 UWP adopts Runtime Configuration Snapshot as the sole immutable Runtime input between Published ConfigurationVersion and Runtime Host.
 
-Runtime Lifecycle Owner pins one exact Published ConfigurationVersion for one Launch Attempt. Configuration Loader obtains that exact published source without exposing persistence or management infrastructure. Builder defensively validates, normalizes, detaches, and constructs one Snapshot with effective Runtime configuration and mandatory declarative and operational provenance. Bootstrap transfers the complete Snapshot to one Host, which owns it for its lifetime; Runtime Services are read-only consumers.
+Runtime Lifecycle Owner pins one exact Published ConfigurationVersion for one
+Launch Attempt. Configuration Loader obtains that exact published source
+without exposing persistence or management infrastructure. Builder defensively
+validates, normalizes, detaches, and constructs one Snapshot with effective
+Runtime configuration and mandatory declarative and operational provenance.
+Bootstrap binds static construction dependencies, creates one Host, and invokes
+`Host.Start()` through the approved stateless launch flow. Host alone composes
+and starts the operational Runtime graph and owns the Snapshot for its lifetime;
+Runtime Services are read-only consumers.
 
 All Configuration sources must be semantically equivalent at this boundary. Snapshot never contains Secret values, never changes in place, and is never redirected by later publication. Loading, construction, schema incompatibility, and validation failures prevent Runtime resource acquisition and produce no partial Runtime input.

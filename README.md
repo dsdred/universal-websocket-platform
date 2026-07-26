@@ -6,7 +6,7 @@ Universal WebSocket Platform is an open-source platform for creating, configurin
 
 ## Status
 
-The project is in early alpha and is not production-ready. The repository contains the Control Service, in-memory domain APIs, and an implemented single-node Runtime vertical whose Manager-aware shutdown integration is still in progress.
+The project is in early alpha and is not production-ready. The repository contains the Control Service, in-memory domain APIs, and an implemented single-node Runtime vertical with Manager-aware shutdown. The Configuration Loader boundary is implemented but is not yet connected to the Snapshot Builder or a production Runtime launch pipeline.
 
 ## Current release
 
@@ -39,6 +39,9 @@ This release includes the Control Service and the basic lifecycle for Workspace,
 - [Engineering Wiki](wiki/README.md)
 - [Release Notes](docs/en/releases/)
 - [Internal specifications](spec/README.md)
+- [AI agent entry point](AGENTS.md)
+- [Internal engineering process](docs/engineering/AGENT.md)
+- [Task records and synchronization report](docs/tasks/README.md)
 
 ## Contributing
 

@@ -46,3 +46,10 @@ Evidence-based implementation reviews are maintained in the [Architecture Review
 ## Internal Specifications
 
 The team's working specifications are maintained in [`spec/`](../../spec/). The factual implementation record is [`spec/current-state.md`](../../spec/current-state.md). Internal specifications are currently written predominantly in Russian and may describe work in progress rather than stable public contracts.
+
+## Internal Agent Workflow
+
+AI agents start at the repository root [`AGENTS.md`](../../AGENTS.md), then read
+the internal [agent contract](../engineering/AGENT.md). Operational task records
+and synchronization reports are indexed in [`docs/tasks/`](../tasks/README.md).
+These internal Russian-language documents do not require public EN/RU mirrors.

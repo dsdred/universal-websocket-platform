@@ -56,7 +56,7 @@ Universal WebSocket Platform — open-source платформа для созд�
 - [ADR-0002](../adr/0002-configuration-dsl.md) определяет ConfigurationVersion как Configuration DSL и Published source of truth.
 - [ADR-0003](../adr/0003-runtime-architecture.md) определяет компонентную модель Runtime и явный dependency injection.
 - [ARCH-001](../architecture/ARCH-001-runtime-architectural-pattern.md) фиксирует подтвержденный паттерн `Context -> Evaluation -> Decision -> Execution`, ownership, lifecycle и Boring Core.
-- Вердикт Runtime Alpha Review был **Ready with findings**. Runtime Host, lifecycle hardening, validation startup capabilities, pre-Upgrade Authentication, утверждённый Router DP-005 и transactional production handoff Session реализованы. Session Manager входит в production graph Runtime; Manager-aware shutdown Host остаётся следующей задачей Runtime Foundation.
+- Вердикт Runtime Alpha Review был **Ready with findings**. Runtime Host, lifecycle hardening, validation startup capabilities, pre-Upgrade Authentication, утверждённый Router DP-005, transactional production handoff Session и Manager-aware shutdown Host реализованы. Граница Configuration Loader также реализована, но pipeline Loader-to-Builder-to-Launcher отсутствует.
 
 ## 3. Engineering Principles
 
@@ -243,10 +243,10 @@ Deferred features не должны формировать текущий Core �
 Runtime Alpha Review фиксирует implementation debt, который необходимо учитывать отдельно от новой функциональности:
 
 - Listener хранит TLS и timeout metadata, не применяя их полностью.
-- Manager-aware shutdown tracking Session ещё не интегрирован с Runtime Host Stop.
+- Manager-aware shutdown tracking Session интегрирован с Runtime Host Stop.
 - Legacy synchronous Dispatcher сохраняется только для изолированных compatibility-тестов и не должен возвращаться в production composition.
 - У ошибок HTTP server и Dispatcher нет operational reporting path.
-- `runtimeconfig.Builder` является явным adapter ConfigurationVersion внутри пакета Runtime model и не должен накапливать concerns Repository.
+- `runtimeconfig.Builder` всё ещё принимает ConfigurationVersion напрямую вместо neutral Loader handoff и пока не строит полный provenance ARCH-005.
 - Покрытие Runtime для Basic и asymmetric JWT неполное.
 - Поведение Origin полагается на defaults библиотеки, а не на явную Configuration.
 
@@ -256,11 +256,15 @@ Technical debt закрывается тестами и изменениями �
 
 Architectural debt относится к границам, которые остаются неразрешёнными или незавершёнными после production composition:
 
-- **Shutdown wait set Runtime:** Host пока не координирует Manager BeginShutdown, Stop capabilities Session, drain Listener и Manager Wait.
+- **Pipeline запуска Runtime:** Configuration Loader существует, но Builder, Runtime Launcher, Runtime Lifecycle Owner и Bootstrap не соединены в production launch flow.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
-- **Завершение cutover Runtime Foundation:** transactional ownership Session и полный terminal chain Owner активны в production, но ещё не объединены с Manager-aware shutdown Host, требуемым DP-006.
+- **Provenance Snapshot:** текущий Snapshot пока не идентифицирует Workspace, schema, Runtime Instance и Launch Attempt согласно ARCH-005.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
-- **Extension boundaries:** Router и transactional handoff Session реализованы; integration shutdown Runtime и contracts Persistence, Delivery и Plugin всё ещё требуют сфокусированного завершения или design.
+- **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Persistence, Delivery и Plugin всё ещё требуют focused design.
+
+Следующая development task — реализация Draft DP-008 Snapshot Builder contract
+поверх neutral `DetachedLoadResult`, включая полный provenance ARCH-005 и
+blocking Diagnostics. Draft status не изменяется.
 
 Architectural debt устраняется через DP, при значимых последствиях ADR, реализацию и последующее review. MASTER_PLAN не определяет эти контракты самостоятельно.
 

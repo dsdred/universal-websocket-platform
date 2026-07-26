@@ -126,7 +126,7 @@ Provisional Session будет существовать без допустим�
 
 ```text
 Published Snapshot
-    -> Runtime Host bootstrap и readiness validation
+    -> composition и startup-critical validation в Host.Start()
     -> Host-owned Admission Gate и Runtime context holder
     -> read-only Runtime capabilities
     -> composition bridge
@@ -340,7 +340,7 @@ Diagnostics sink, event schema, metrics и logging integration требуют о
 
 ## 19. Configuration и Readiness
 
-До Listener Start Runtime bootstrap проверяет и компонует:
+До Listener Start `Host.Start()` проверяет и компонует:
 
 - совместимость Published Snapshot;
 - настроенный Handshake timeout;
@@ -428,7 +428,7 @@ Anonymous identity, общий Handshake timeout, startup readiness, shutdown ad
 | F-09 — Категории ошибок не гарантированы | Clarified | Минимальные категории должны оставаться различимыми без определения Go error types. |
 | F-10 — У terminal operational error нет владельца | Clarified | Handshake executor владеет terminal outcome Handshake; Listener и Session владеют errors после своих границ. |
 | F-11 — Будущая расширяемость не доказана | Deferred | Первый scope ограничен Authentication; Origin и другие policies требуют focused DP и не обещаны как extension points. |
-| F-12 — Владелец Configuration validation неоднозначен | Resolved | Runtime bootstrap readiness предшествует Listener Start; request path не читает Snapshot или Control Plane. |
+| F-12 — Владелец Configuration validation неоднозначен | Resolved | Host-owned startup validation и composition предшествуют Listener Start; request path не читает Snapshot или Control Plane. |
 | F-13 — Session Manager зависит от неопределённого handoff | Clarified | Session входит в Runtime shutdown wait set до ownership acceptance; API Session Manager не проектируется. |
 | F-14 — Pipeline может стать преждевременным policy framework | Deferred | Framework evaluators не вводится; общая policy-механика ждёт нескольких подтверждённых use cases. |
 

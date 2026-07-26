@@ -1,9 +1,15 @@
 # Текущее состояние
 
 **Веха:** Beta — Complete the Single-Node Runtime
-**Статус реализации:** DP-005 Router и Runtime Foundation Tasks 1–10 реализованы; TASK-M10-002 добавил полный Manager-aware production shutdown pipeline. Независимая финальная проверка DP-006 ещё не выполнена.
+**Статус реализации:** DP-005 Router и Runtime Foundation Tasks 1–10 реализованы; TASK-M10-002 добавил полный Manager-aware production shutdown pipeline. Configuration Loader contract DP-007 реализован изолированно. Pipeline Loader-to-Builder-to-Launcher, operational identity и DP-009 Bootstrap пока не реализованы.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
+
+**Последняя завершённая development task:** реализация Configuration Loader contract DP-007
+
+**Следующая development task:** реализация Draft DP-008 Snapshot Builder contract
+поверх neutral `DetachedLoadResult`, включая полный provenance ARCH-005 и
+blocking Diagnostics. Design Status DP-008 остаётся Draft.
 
 ## Архитектурные решения
 
@@ -132,13 +138,19 @@
 - Authentication Provider Registry отделяет Runtime и Authentication Service от конкретных реализаций Provider
 - Authentication использует transport-neutral контракты [Authentication proposal DP-004](../docs/ru/proposals/DP-004-authentication-runtime-contracts.md) и не зависит от WebSocket
 - Реализована immutable Runtime Configuration Snapshot-модель для Listener, Authentication и optional Routing
-- Builder принимает только Published ConfigurationVersion, глубоко копирует Provider, JWT и Routing collections и сохраняет различие между отсутствующей и явно пустой Routing-секцией
+- Реализован neutral immutable `runtimeconfigload` handoff: `LoadRequest` и `DetachedLoadResult` сохраняют declarative и operational identities, schema facts и detached ConfigurationVersion
+- Реализован Configuration Loader, который загружает ровно одну pinned Published ConfigurationVersion через source boundary, проверяет completeness, identity chain, lifecycle state и schema facts и возвращает detached result
+- Loader и neutral handoff покрыты unit-тестами, но не подключены к production launch pipeline Control Service или Runtime
+- Текущий Builder принимает только Published ConfigurationVersion напрямую, а не neutral `DetachedLoadResult`; он глубоко копирует Provider, JWT и Routing collections и сохраняет различие между отсутствующей и явно пустой Routing-секцией
+- Snapshot пока хранит только ConfigurationID, VersionID и effective Listener, Authentication и Routing; полный provenance Workspace, schema, Runtime Instance и Launch Attempt из ARCH-005 отсутствует
 - Snapshot не зависит от HTTP API, Repository или исходного ConfigurationVersion после создания
 - Runtime Container хранит собственную глубокую копию Snapshot и возвращает новую копию через единственный метод `Snapshot()`
 - Container пока не содержит других зависимостей и самостоятельно не управляет запуском, остановкой или reload Runtime
 - Реализован потокобезопасный Runtime Host, являющийся production composition root и владеющий независимой копией Snapshot и Container
 - Host поддерживает lifecycle `Created -> Built -> Starting -> Running -> Stopping -> Stopped`; Restart и Reload отсутствуют
 - Runtime Bootstrap создает Built Host, а Host во время Start явно собирает Router, Authentication, connection dispatch, Session handoff и Listener без service locator или DI framework
+- Отдельный `PreparedRuntime` handoff был исключён принятым Architect rewrite
+  DP-009 и не является target implementation
 - Startup transaction публикует Listener только после успешного запуска и выполняет rollback полученного ресурса при ошибке, сохраняя исходную и rollback errors
 - Host создает независимый root Runtime context после успешного запуска Listener; startup context не становится lifecycle context запущенного Runtime
 - Runtime readiness становится true только после startup commit и сбрасывается в false в начале Stop
@@ -152,7 +164,9 @@
 - `ReadSeconds`, `WriteSeconds` и `IdleSeconds` сохраняются в immutable Snapshot как configured-but-inactive Runtime capabilities до отдельного эпика TLS and Listener settings; default Published Configuration остаётся исполнимой
 - Реализован Listener Bootstrap, создающий потокобезопасный Listener из ListenerSnapshot
 - Listener хранит локальную копию Host, Port и TLS configuration и поддерживает lifecycle `Created -> Running -> Stopping -> Stopped`
-- Listener открывает TCP socket и запускает HTTP Server с единым ответом `501 Not Implemented` для любого запроса
+- Listener открывает TCP socket и запускает HTTP Server; `GET /ws` передаётся
+  Handshake Handler, а fallback для остальных неподдерживаемых путей возвращает
+  `501 Not Implemented`
 - Listener корректно завершает HTTP Server, accept loop и связанные goroutine через graceful shutdown
 - Listener передает `GET /ws` выделенному Handshake Handler; `websocket.Accept` выполняется только после начальной проверки Admission Gate, Authentication Allow Decision и финальной проверки Gate
 - Immutable ConnectionContext содержит derived Runtime context, WebSocket connection и исходный HTTP request, используемый только синхронно при handoff
@@ -193,7 +207,7 @@
 - Default Handler используется только после отсутствия explicit match; No Match не вызывает Handler, возвращает nil и позволяет Session продолжить read loop без legacy fallback для явно заданной Routing-секции
 - Router переиспользуется всеми Session как единый immutable `message.Handler`; route compilation, sorting, normalization и Handler resolution на message hot path отсутствуют
 - Middleware, Message Queue, Broadcast, публичный Session Manager Registry API и Persistence отсутствуют
-- Архитектура Runtime принята в ADR-003; pre-Upgrade Handshake, transactional production Session handoff и Manager-aware Runtime shutdown реализованы, а Configuration Loader, operational diagnostics и supervision ещё отсутствуют
+- Архитектура Runtime принята в ADR-003; pre-Upgrade Handshake, transactional production Session handoff, Manager-aware Runtime shutdown и изолированный Configuration Loader реализованы, а production launch pipeline, operational diagnostics и supervision ещё отсутствуют
 
 ## Чего не существует
 
@@ -203,9 +217,16 @@
 - PostgreSQL
 - Управления WebSocket-серверами
 - Control Plane lifecycle управления экземплярами Runtime
+- Runtime Instance и Launch Attempt как operational entities
+- Runtime Lifecycle Owner и Runtime Launcher
+- Builder, принимающий neutral `DetachedLoadResult` и создающий полный provenance ARCH-005
+- Интеграция Configuration Loader в production launch pipeline
+- Запуск Runtime и управление им из Control Service
 - Реальный TLS listener и другие сетевые параметры Listener
 - Применение read, write и idle Listener TimeoutSettings в Runtime
-- Полный Handshake Pipeline за пределами Authentication и configured timeout enforcement: Session shutdown wait set и operational diagnostics
+- Operational diagnostics и supervision полного Handshake Pipeline за
+  пределами реализованных Authentication, configured timeout enforcement и
+  Session shutdown wait set
 - Проверка Basic credentials
 - Асимметричные JWT algorithms, JWKS, OIDC и token revocation
 - Реальные Secret Storage backend и подключение Resolver к Runtime Container еще не реализованы
@@ -285,14 +306,18 @@
 - Создан новый двуязычный Draft design [DP-006: Runtime Production Integration](../docs/ru/design/DP-006-runtime-production-integration.md) ([English version](../docs/en/design/DP-006-runtime-production-integration.md)), который фиксирует только production composition и shutdown cutover Task 10 без изменения DP-003, DP-004 или ARCH-003.
 - TASK-M10-002 завершил production shutdown cutover: Host Stop один раз выполняет `BeginShutdown`, фиксирует capability-bearing Snapshot, вызывает каждый `RequestStop`, отменяет root Runtime context, останавливает Listener и после его возврата вызывает `Manager.Wait`.
 - Реализация TASK-M10-002 закрывает acceptance criteria DP-006 8-11: Commit/BeginShutdown сохраняют одну Manager linearization boundary, успешный Stop требует закрытого Manager accounting, а Listener и context-bounded Wait errors не скрывают друг друга. Формальный статус DP-006 остаётся Draft до независимой полной проверки criteria 1-13.
-- TASK-REV-013 Codex утвердил DP-003/DP-004 с одним неблокирующим clarity finding, TASK-REV-013 Kiro утвердил их без findings; TASK-DOC-016 синхронизировал Failure Matrix, composition root dependency и generic/production `accepted,error` semantics. DP-003 и DP-004 имеют статус Approved и интегрированы в production Session handoff; Runtime shutdown integration остаётся незавершённой.
+- TASK-REV-013 Codex утвердил DP-003/DP-004 с одним неблокирующим clarity finding, TASK-REV-013 Kiro утвердил их без findings; TASK-DOC-016 синхронизировал Failure Matrix, composition root dependency и generic/production `accepted,error` semantics. DP-003 и DP-004 имеют статус Approved и интегрированы в production Session handoff; TASK-M10-002 завершил Runtime shutdown integration.
 
 ## Runtime Foundation Freeze
 
 - Создан двуязычный [ARCH-002: Runtime Foundation Freeze](../docs/ru/architecture/ARCH-002-runtime-foundation-freeze.md) ([English version](../docs/en/architecture/ARCH-002-runtime-foundation-freeze.md)).
 - Архитектурно стабильными признаны реализованные Runtime Host, production composition root, lifecycle, root Runtime context, startup transaction и rollback, readiness и lifecycle-only Admission Gate.
 - Freeze фиксирует фактический lifecycle `Created -> Built -> Starting -> Running -> Stopping -> Stopped` и не объявляет реализованными предложенные в Draft DP-002 состояния `Initialized` или `Failed`.
-- ARCH-002 оставил Router открытой архитектурой на момент freeze; впоследствии Router определён и реализован по DP-005 без изменения замороженных Runtime Foundation contracts. Session ownership в полном Runtime shutdown wait set, Delivery, Persistence, Operational Diagnostics и supervision остаются открытой архитектурой.
+- ARCH-002 оставил Router и Session ownership в полном Runtime shutdown wait
+  set открытыми на момент freeze; впоследствии Router реализован по DP-005, а
+  shutdown wait set — в TASK-M10-002 без изменения замороженных Runtime
+  Foundation contracts. Delivery, Persistence, Operational Diagnostics и
+  supervision остаются открытой архитектурой.
 - Изменение замороженных архитектурных обязанностей, ownership или lifecycle-семантики требует нового сфокусированного DP или ADR.
 
 ## Handshake Runtime Dependency Boundary

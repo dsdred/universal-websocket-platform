@@ -6,15 +6,22 @@
 
 **Статус:** Draft
 
+**Статус реализации:** реализован изолированно; не интегрирован с Builder или
+production launch pipeline
+
 **Статус архитектуры:** Контракт реализации утверждённой модели [ARCH-004](../architecture/ARCH-004-runtime-deployment-and-identity-model.md) и [ARCH-005](../architecture/ARCH-005-runtime-configuration-snapshot-and-loading-model.md)
 
 Этот proposal не вводит и не пересматривает архитектуру. Он определяет инженерный контракт, посредством которого Runtime Lifecycle Owner получает точную Published ConfigurationVersion, закреплённую за Launch Attempt, и передаёт detached source material в Builder.
 
 ## 2. Назначение
 
-В repository существуют lifecycle публикации ConfigurationVersion, Snapshot Builder и Runtime Bootstrap, но отсутствует production boundary, соединяющая их. Сейчас Builder получает подготовленную ConfigurationVersion, а Bootstrap получает подготовленный Snapshot.
+В repository существуют lifecycle публикации ConfigurationVersion,
+изолированная реализация Configuration Loader, Snapshot Builder и Runtime
+Bootstrap, но отсутствует production boundary, соединяющая их. Сейчас Builder
+получает подготовленную ConfigurationVersion, а Bootstrap получает
+подготовленный Snapshot.
 
-DP-007 определяет этот отсутствующий implementation contract:
+DP-007 определяет Loader contract, реализованный изолированно:
 
 ```text
 Runtime Lifecycle Owner
@@ -242,11 +249,18 @@ Loader не должен проверять:
 - существование Secrets или Secret values;
 - может ли Runtime получить Listener или другие resources.
 
-Эти обязанности остаются у Builder, построения Runtime-компонентов или Bootstrap, как установлено ARCH-005.
+Эти обязанности остаются у Builder либо у построения и startup
+Runtime-компонентов, координируемых `Host.Start()`, как установлено ARCH-002 и
+ARCH-005.
 
 Для Builder **semantic completeness** означает, что detached declarative values удовлетворяют поддерживаемой schema, domain и cross-field invariants, необходимым для построения canonical Snapshot. Поэтому representation может быть полной для Loader и при этом отклоняться Builder.
 
-Validation при публикации в Control Plane не отменяет defensive identity и lifecycle checks Loader. Validation Loader не отменяет validation Builder или Bootstrap. Builder обязан повторно проверить Published state по fact, содержащемуся в Detached Load Result; он не выполняет новое чтение source. Отсутствующий или non-Published fact является Builder failure, поскольку нарушен контракт Loader-to-Builder.
+Validation при публикации в Control Plane не отменяет defensive identity и
+lifecycle checks Loader. Validation Loader не отменяет semantic validation
+Builder или Host-owned startup-critical validation. Builder обязан повторно
+проверить Published state по fact, содержащемуся в Detached Load Result; он не
+выполняет новое чтение source. Отсутствующий или non-Published fact является
+Builder failure, поскольку нарушен контракт Loader-to-Builder.
 
 ## 11. Failure contract
 
@@ -416,7 +430,9 @@ sequenceDiagram
         alt Builder succeeds
             B-->>O: Complete immutable Snapshot
             O->>R: Launch with Snapshot
-            R-->>O: Built Host or startup failure
+            R->>H: Bind inputs, create Host, invoke Host.Start()
+            H-->>R: Active Host or startup failure after rollback
+            R-->>O: Launch outcome
         else Builder fails
             B-->>O: Builder failure
             O->>O: Record failed Launch Attempt
@@ -427,7 +443,11 @@ sequenceDiagram
     end
 ```
 
-Runtime Launcher остаётся утверждённой stateless boundary между Lifecycle Owner и Bootstrap. Его конкретная реализация находится вне DP-007.
+Runtime Launcher остаётся утверждённой stateless boundary между Lifecycle
+Owner и Bootstrap. Bootstrap связывает construction inputs, создаёт Host и
+вызывает `Host.Start()`; Host исключительно владеет operational composition,
+startup validation, получением resources и rollback. Их конкретная реализация
+находится вне DP-007.
 
 ## 17. Acceptance proofs
 
@@ -497,7 +517,9 @@ Loader failure возвращает управление Runtime Lifecycle Owner
 
 ### ARCH-002
 
-DP-007 заканчивается до Runtime Bootstrap. Он не изменяет построение Host, startup transaction, readiness, rollback, shutdown или ownership Snapshot.
+DP-007 заканчивается до Runtime Bootstrap. Он не изменяет построение Host,
+Host-owned startup transaction, readiness, rollback, shutdown или ownership
+Snapshot.
 
 ### ARCH-004
 
@@ -505,7 +527,10 @@ Runtime Lifecycle Owner остаётся единственной launch authori
 
 ### ARCH-005
 
-Loader получает один exact Published source и возвращает detached material. Builder остаётся boundary normalization и construction Snapshot. Bootstrap и Host получают только Snapshot.
+Loader получает один exact Published source и возвращает detached material.
+Builder остаётся boundary normalization и construction Snapshot. Bootstrap и
+Host получают только Snapshot как declarative Runtime configuration; только
+Host владеет operational startup.
 
 ### ADR-0002
 

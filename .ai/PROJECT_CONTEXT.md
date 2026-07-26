@@ -8,9 +8,11 @@
 
 ## Текущее состояние
 
-- Текущая веха: **M0 Bootstrap**
-- Статус реализации: **минимальный HTTP Control Service на Go**
-- Содержимое репозитория: документация, спецификации, инженерные соглашения и первый исполняемый сервис
+- Текущая веха: **Beta — Complete the Single-Node Runtime**
+- Статус реализации: **Control Service, single-node Runtime vertical и Configuration Loader boundary реализованы; production launch pipeline не завершён**
+- Последняя завершённая development task: **реализация Configuration Loader contract DP-007**
+- Следующая development task: **реализовать DP-008 Snapshot Builder contract поверх neutral `DetachedLoadResult`, включая полный ARCH-005 provenance и blocking Diagnostics**
+- Содержимое репозитория: документация, спецификации, инженерные соглашения, исполняемый Control Service и изолированные Runtime-компоненты с тестами
 
 ## Архитектурные принципы
 
@@ -31,4 +33,4 @@
 - `spec/decisions.md` содержит перечень принятых и ожидающих принятия решений.
 - `docs/en/adr/` и `docs/ru/adr/` содержат публичные записи об архитектурных решениях.
 
-Не делайте вывод о реализованных возможностях на основании миссии или спецификаций, описывающих будущее состояние. Перед изменением репозитория сверяйтесь с `spec/current-state.md`.
+Не делайте вывод о реализованных возможностях на основании миссии или спецификаций, описывающих будущее состояние. Перед изменением репозитория начните с корневого `AGENTS.md`, затем следуйте `docs/engineering/AGENT.md` и сверяйтесь с `spec/current-state.md`.

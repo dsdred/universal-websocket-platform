@@ -6,15 +6,21 @@
 
 **Status:** Draft
 
+**Implementation Status:** Implemented in isolation; not integrated with Builder
+or a production launch pipeline
+
 **Architecture status:** Implementation contract for the approved model in [ARCH-004](../architecture/ARCH-004-runtime-deployment-and-identity-model.md) and [ARCH-005](../architecture/ARCH-005-runtime-configuration-snapshot-and-loading-model.md)
 
 This proposal does not introduce or revise architecture. It defines the engineering contract by which Runtime Lifecycle Owner obtains the exact Published ConfigurationVersion pinned by a Launch Attempt and hands detached source material to Builder.
 
 ## 2. Purpose
 
-The repository has a ConfigurationVersion publication lifecycle, a Snapshot Builder, and Runtime Bootstrap, but no production boundary connecting them. Builder currently receives a prepared ConfigurationVersion, while Bootstrap receives a prepared Snapshot.
+The repository has a ConfigurationVersion publication lifecycle, an isolated
+Configuration Loader implementation, a Snapshot Builder, and Runtime Bootstrap,
+but no production boundary connecting them. Builder currently receives a
+prepared ConfigurationVersion, while Bootstrap receives a prepared Snapshot.
 
-DP-007 defines that missing implementation contract:
+DP-007 defines the Loader contract that has been implemented in isolation:
 
 ```text
 Runtime Lifecycle Owner
@@ -242,11 +248,18 @@ Loader must not validate:
 - Secret existence or Secret values;
 - whether Runtime can acquire Listener or other resources.
 
-Those responsibilities remain with Builder, Runtime component construction, or Bootstrap as established by ARCH-005.
+Those responsibilities remain with Builder or with Runtime component
+construction and startup coordinated by `Host.Start()`, as established by
+ARCH-002 and ARCH-005.
 
 For Builder, **semantic completeness** means that the detached declarative values satisfy the supported schema, domain and cross-field invariants required to construct a canonical Snapshot. A representation may therefore be complete for Loader and still be rejected by Builder.
 
-Validation at Control Plane publication does not remove Loader's defensive identity and lifecycle checks. Loader validation does not remove Builder or Bootstrap validation. Builder must repeat the Published-state check against the fact carried by Detached Load Result; it does not reread the source. A missing or non-Published fact is a Builder failure because the Loader-to-Builder contract has been violated.
+Validation at Control Plane publication does not remove Loader's defensive
+identity and lifecycle checks. Loader validation does not remove Builder
+semantic validation or Host-owned startup-critical validation. Builder must
+repeat the Published-state check against the fact carried by Detached Load
+Result; it does not reread the source. A missing or non-Published fact is a
+Builder failure because the Loader-to-Builder contract has been violated.
 
 ## 11. Failure Contract
 
@@ -416,7 +429,9 @@ sequenceDiagram
         alt Builder succeeds
             B-->>O: Complete immutable Snapshot
             O->>R: Launch with Snapshot
-            R-->>O: Built Host or startup failure
+            R->>H: Bind inputs, create Host, invoke Host.Start()
+            H-->>R: Active Host or startup failure after rollback
+            R-->>O: Launch outcome
         else Builder fails
             B-->>O: Builder failure
             O->>O: Record failed Launch Attempt
@@ -427,7 +442,11 @@ sequenceDiagram
     end
 ```
 
-Runtime Launcher remains the approved stateless boundary between Lifecycle Owner and Bootstrap. Its concrete implementation is outside DP-007.
+Runtime Launcher remains the approved stateless boundary between Lifecycle
+Owner and Bootstrap. Bootstrap binds construction inputs, creates Host, and
+invokes `Host.Start()`; Host exclusively owns operational composition, startup
+validation, resource acquisition, and rollback. Their concrete implementation
+is outside DP-007.
 
 ## 17. Acceptance Proofs
 
@@ -497,7 +516,9 @@ A Loader failure returns control to Runtime Lifecycle Owner, which remains the o
 
 ### ARCH-002
 
-DP-007 ends before Runtime Bootstrap. It does not change Host construction, startup transaction, readiness, rollback, shutdown, or Snapshot ownership.
+DP-007 ends before Runtime Bootstrap. It does not change Host construction,
+Host-owned startup transaction, readiness, rollback, shutdown, or Snapshot
+ownership.
 
 ### ARCH-004
 
@@ -505,7 +526,10 @@ Runtime Lifecycle Owner remains the only launch authority. It creates Launch Att
 
 ### ARCH-005
 
-Loader obtains one exact Published source and returns detached material. Builder remains the normalization and Snapshot-construction boundary. Bootstrap and Host receive only Snapshot.
+Loader obtains one exact Published source and returns detached material.
+Builder remains the normalization and Snapshot-construction boundary. Bootstrap
+and Host receive only Snapshot as declarative Runtime configuration; Host alone
+owns operational startup.
 
 ### ADR-0002
 

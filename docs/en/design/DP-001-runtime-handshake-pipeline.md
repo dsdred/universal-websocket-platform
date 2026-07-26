@@ -126,7 +126,7 @@ This alternative is selected. “Pipeline” describes the ordered lifecycle of 
 
 ```text
 Published Snapshot
-    -> Runtime Host bootstrap and readiness validation
+    -> Host.Start() composition and startup-critical validation
     -> Host-owned Admission Gate and Runtime context holder
     -> read-only Runtime capabilities
     -> composition bridge
@@ -340,7 +340,7 @@ A diagnostics sink, event schema, metrics, and logging integration require separ
 
 ## 19. Configuration and Readiness
 
-Before Listener Start, Runtime bootstrap validates and composes:
+Before Listener Start, `Host.Start()` validates and composes:
 
 - Published Snapshot compatibility;
 - configured Handshake timeout;
@@ -428,7 +428,7 @@ Anonymous identity, total Handshake timeout, startup readiness, shutdown admissi
 | F-09 — Error categories are not guaranteed | Clarified | Minimal categories must remain distinguishable without prescribing Go error types. |
 | F-10 — Terminal operational error has no owner | Clarified | Handshake executor owns the terminal Handshake outcome; Listener and Session own errors after their boundaries. |
 | F-11 — Future extensibility is unproven | Deferred | First scope is Authentication only; Origin and other policies require focused DPs and are not promised extension points. |
-| F-12 — Configuration validation owner is ambiguous | Resolved | Runtime bootstrap readiness precedes Listener Start; request path reads neither Snapshot nor Control Plane. |
+| F-12 — Configuration validation owner is ambiguous | Resolved | Host-owned startup validation and composition precede Listener Start; request path reads neither Snapshot nor Control Plane. |
 | F-13 — Session Manager depends on an undefined handoff | Clarified | Session enters the Runtime shutdown wait set before ownership acceptance; no Session Manager API is designed. |
 | F-14 — Pipeline may become a premature policy framework | Deferred | No evaluator framework is introduced; common policy machinery waits for multiple demonstrated use cases. |
 

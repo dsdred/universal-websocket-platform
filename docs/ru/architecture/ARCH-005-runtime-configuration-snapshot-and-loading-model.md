@@ -203,7 +203,9 @@ Validation является многоуровневой и не передаё�
 2. Control Plane проверяет Configuration domain и правила публикации.
 3. Loader проверяет запрошенную identity, допустимость Published, согласованное наблюдение источника и его целостность.
 4. Builder defensively проверяет полноту, поддерживаемую schema, cross-field инварианты Snapshot и deterministic conversion.
-5. Runtime Bootstrap проверяет startup-critical capabilities до получения externally visible resources и до readiness.
+5. `Host.Start()` проверяет startup-critical capabilities полностью собранной
+   Runtime configuration до получения externally visible resources и до
+   readiness.
 
 Validation на более раннем слое не позволяет следующей trust boundary отказаться от defensive checks. Слои не должны противоречить acceptance semantics домена Configuration. Ошибка останавливает launch preparation или startup на слое, который владеет соответствующей ответственностью.
 
@@ -213,7 +215,12 @@ Validation на более раннем слое не позволяет сле�
 
 Builder является authoritative шагом Runtime-boundary normalization. Он создаёт один canonical Snapshot без изменения загруженной ConfigurationVersion. Эквивалентный valid input из разных источников должен создавать семантически эквивалентные значения Snapshot.
 
-Loader не нормализует Runtime configuration. Bootstrap и Runtime Services не повторяют normalization Configuration и не устанавливают source-specific defaults. Defensive validation на нескольких слоях допускается, но её acceptance semantics должны оставаться эквивалентными.
+Loader не нормализует Runtime configuration. Bootstrap, startup Host и Runtime
+Services не повторяют normalization Configuration и не устанавливают
+source-specific defaults. Bootstrap может проверять только representation
+своего construction input. `Host.Start()` может выполнять принадлежащую ему
+defensive startup-critical validation. Defensive validation на нескольких
+слоях допускается, но её acceptance semantics должны оставаться эквивалентными.
 
 ## 15. Immutability Snapshot
 
@@ -238,11 +245,16 @@ Ownership передаётся только в одном направлении
 | Loader | Временно владеет операцией загрузки и detached loaded material; никогда не владеет lifetime Snapshot |
 | Builder | Владеет только construction; не сохраняет ни source, ни result |
 | Launch preparation | Владеет полным Snapshot до построения Runtime |
-| Runtime Bootstrap | Принимает Snapshot для построения одного Host и передаёт Host независимое immutable value |
+| Runtime Bootstrap | Принимает Snapshot, проверяет static construction input, связывает dependencies, создаёт один Host и передаёт ему независимое immutable value |
 | Runtime Host | Владеет Snapshot весь lifetime Host |
 | Runtime Services | Только читают; не владеют, не заменяют и не изменяют Snapshot |
 
-Если Bootstrap завершается ошибкой до полного ownership transfer, launch preparation освобождает свои values и Host-visible Snapshot не возникает. После успешного построения Host сохраняет Snapshot во время startup, Running, shutdown и terminal completion. Lifetime его значения заканчивается, когда terminal Host и все разрешённые readers становятся недостижимы.
+Если Bootstrap завершается ошибкой до полного ownership transfer, launch
+preparation освобождает свои values и Host-visible Snapshot не возникает.
+Bootstrap не получает operational Runtime resources и не владеет их rollback.
+После успешного построения Host сохраняет Snapshot во время startup, Running,
+shutdown и terminal completion. Lifetime его значения заканчивается, когда
+terminal Host и все разрешённые readers становятся недостижимы.
 
 Snapshot не имеет явного destruction protocol, поскольку не содержит Secret values или независимо owned Runtime resources.
 
@@ -289,7 +301,11 @@ Publication consistency относится к выбранному деклар�
 - не выбирает fallback или более новую версию неявно;
 - создаёт truthful failed Launch Attempt через lifecycle owner ARCH-004.
 
-Ошибки Bootstrap после передачи Snapshot в Runtime регулируются startup transaction и rollback из ARCH-002. ARCH-005 не определяет retry, backoff, fallback или recovery policy.
+Ошибки до завершения построения Host остаются construction failures Bootstrap.
+После вызова Bootstrap операции `Host.Start()` startup-critical validation,
+получение operational resources, итоговая startup failure и rollback
+принадлежат исключительно Host согласно ARCH-002. ARCH-005 не определяет retry,
+backoff, fallback или recovery policy.
 
 ## 21. Эквивалентность источников
 
@@ -342,6 +358,14 @@ Focused Design Proposals должны определить implementation contra
 
 UWP принимает Runtime Configuration Snapshot как единственный immutable Runtime input между Published ConfigurationVersion и Runtime Host.
 
-Runtime Lifecycle Owner закрепляет одну точную Published ConfigurationVersion за одним Launch Attempt. Configuration Loader получает этот точный published source, не раскрывая persistence или management infrastructure. Builder defensively validates, normalizes, detaches и строит один Snapshot с effective Runtime configuration и обязательной declarative и operational provenance. Bootstrap передаёт полный Snapshot одному Host, который владеет им весь lifetime; Runtime Services являются read-only consumers.
+Runtime Lifecycle Owner закрепляет одну точную Published ConfigurationVersion
+за одним Launch Attempt. Configuration Loader получает этот точный published
+source, не раскрывая persistence или management infrastructure. Builder
+defensively validates, normalizes, detaches и строит один Snapshot с effective
+Runtime configuration и обязательной declarative и operational provenance.
+Bootstrap связывает static construction dependencies, создаёт один Host и
+вызывает `Host.Start()` через утверждённый stateless launch flow. Только Host
+собирает и запускает operational Runtime graph и владеет Snapshot весь lifetime;
+Runtime Services являются read-only consumers.
 
 Все источники Configuration должны быть семантически эквивалентны на этой границе. Snapshot никогда не содержит Secret values, никогда не изменяется in place и никогда не перенаправляется последующей публикацией. Ошибки загрузки, построения, несовместимости schema и validation предотвращают получение Runtime resources и не создают частичный Runtime input.
