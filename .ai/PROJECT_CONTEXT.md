@@ -11,7 +11,9 @@
 - Текущая веха: **Beta — Complete the Single-Node Runtime**
 - Статус реализации: **Control Service, single-node Runtime vertical и Configuration Loader boundary реализованы; production launch pipeline не завершён**
 - Последняя завершённая development task: **реализация Configuration Loader contract DP-007**
-- Следующая development task: **реализовать DP-008 Snapshot Builder contract поверх neutral `DetachedLoadResult`, включая полный ARCH-005 provenance и blocking Diagnostics**
+- Текущая development task: **TASK-001 — Draft DP-008 Snapshot Builder поверх neutral `DetachedLoadResult`; architecture refinement Approved, implementation not started**
+- Следующий разрешённый шаг: **Developer реализует полный уточнённый Draft DP-008 contract: exact schema `uwp.configuration` v1, private immutable detached Snapshot с полным ARCH-005 provenance и exhaustive blocking Diagnostics; Builder не подключается к production launch pipeline**
+- Design Status DP-008 остаётся **Draft**
 - Содержимое репозитория: документация, спецификации, инженерные соглашения, исполняемый Control Service и изолированные Runtime-компоненты с тестами
 
 ## Архитектурные принципы

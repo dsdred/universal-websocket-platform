@@ -50,6 +50,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Bilingual DP-006 Runtime Production Integration design documenting the production composition and shutdown cutover without changing the approved DP-003/DP-004 ownership model.
 - Neutral immutable Loader-to-Builder handoff values and a Configuration Loader that loads one exact Published ConfigurationVersion with identity, lifecycle, schema, source-integrity, and detachment checks.
 - Draft DP-008 Snapshot Builder and DP-009 Runtime Bootstrap implementation contracts; their production pipeline remains unimplemented.
+- Focused Draft DP-008 pre-implementation refinement defining the exact `uwp.configuration` v1 contract, complete private detached Snapshot model and readers, section semantics, and exhaustive blocking Diagnostics; Builder implementation remains planned.
 
 ## [0.1.0-alpha] - 2026-07-12
 

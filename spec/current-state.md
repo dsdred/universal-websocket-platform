@@ -7,9 +7,15 @@
 
 **Последняя завершённая development task:** реализация Configuration Loader contract DP-007
 
-**Следующая development task:** реализация Draft DP-008 Snapshot Builder contract
-поверх neutral `DetachedLoadResult`, включая полный provenance ARCH-005 и
-blocking Diagnostics. Design Status DP-008 остаётся Draft.
+**Текущая development task:** TASK-001 — реализация Draft DP-008 Snapshot
+Builder contract поверх neutral `DetachedLoadResult`; architecture refinement
+утверждён, implementation не начата.
+
+**Следующий разрешённый шаг:** Developer реализует полный уточнённый Draft
+DP-008 contract: exact schema `uwp.configuration` v1, private immutable
+detached Snapshot с полным provenance ARCH-005 и exhaustive blocking
+Diagnostics. Builder не подключается к production launch pipeline. Design
+Status DP-008 остаётся Draft, Implementation Status — Planned.
 
 ## Архитектурные решения
 

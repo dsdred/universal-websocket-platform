@@ -262,9 +262,14 @@ Architectural debt относится к границам, которые ост
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Persistence, Delivery и Plugin всё ещё требуют focused design.
 
-Следующая development task — реализация Draft DP-008 Snapshot Builder contract
-поверх neutral `DetachedLoadResult`, включая полный provenance ARCH-005 и
-blocking Diagnostics. Draft status не изменяется.
+Focused architecture refinement для текущей development task TASK-001
+завершён и независимо утверждён. Draft DP-008 теперь определяет exact contract
+`uwp.configuration` v1, полную private detached модель Snapshot и readers,
+section-specific normalization и exhaustive blocking Diagnostics.
+Implementation не начата. Следующий разрешённый шаг — Developer implementation
+поверх neutral `DetachedLoadResult` без подключения Builder к production
+launch pipeline. Design Status остаётся Draft, Implementation Status —
+Planned.
 
 Architectural debt устраняется через DP, при значимых последствиях ADR, реализацию и последующее review. MASTER_PLAN не определяет эти контракты самостоятельно.
 
