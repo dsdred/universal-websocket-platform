@@ -11,14 +11,16 @@
 - Текущая веха: **Beta — Complete the Single-Node Runtime**
 - Статус реализации: **Control Service, single-node Runtime vertical, Configuration Loader boundary и DP-008 Snapshot Builder реализованы изолированно; production launch pipeline не завершён**
 - Последняя завершённая development task: **TASK-001 — Draft DP-008 Snapshot Builder поверх neutral `DetachedLoadResult`**
-- Последняя завершённая operational task: **TASK-002 — Stage 1 упрощённого автономного продолжения проекта; Completed — Coordinator Accepted**
-- Текущая operational task: **не назначена; закрытые изменения TASK-002 остаются в attributed dirty worktree ветки `docs/autonomous-project-governance`**
+- Последняя завершённая operational task: **TASK-003 — уточнение implementation prerequisites Draft DP-009; Completed — Coordinator Accepted**
+- Текущая operational task: **не назначена; закрытые изменения TASK-003 остаются в attributed dirty worktree ветки `docs/task-003-dp009-prerequisites-refinement`**
 - Verification TASK-001: **targeted tests PASS 3/3; full `go test ./... -count=1` PASS 2/2; `go vet ./...`, `gofmt -d` и `git diff --check` PASS; race detector недоступен без CGO/gcc**
 - Operational entry после принятия TASK-002: **точная команда `Продолжай проект.` запускает repository-native selection и полный PROCESS-001 cycle без неявных commit, push или merge**
 - Verification TASK-002: **Tester PASS; Reviewer Approved after rework; scope audit accepted — 8 Required, 0 Questionable, 0 Removable**
-- Следующий разрешённый шаг: **отдельно разрешённый commit TASK-002; до clean trusted baseline bare-команда останавливается на closed dirty state и не начинает новую task**
-- Следующая рекомендация только после clean trusted Stage 1 baseline: **сфокусированное уточнение implementation prerequisites Draft DP-009; candidate не начат**
-- Stage 2 обязан практически доказать task-before-work ordering, не доказанный self-hosting chronology TASK-002
+- Результат TASK-003: **implementation prerequisites Draft DP-009 завершены; Tester PASS after rework; Reviewer final closure Approved; Coordinator scope audit accepted — 6 Required, 0 Questionable, 0 Removable**
+- Следующий разрешённый шаг: **отдельно разрешённый commit TASK-003; commit, push и merge не выполняются без разрешения**
+- Следующая рекомендуемая Ready work после clean trusted baseline: **изолированная реализация Runtime Bootstrap DP-009; task и branch не созданы, AP-003/AP-011 и production integration явно отложены**
+- Stage 2 task-before-work ordering выполнен: TASK-003 создан первым content change, а task index обновлён вторым
+- Design Status DP-009 остаётся **Draft**, Implementation Status — **Planned**; Bootstrap и production launch pipeline не реализованы
 - Design Status DP-008 остаётся **Draft**
 - Содержимое репозитория: документация, спецификации, инженерные соглашения, исполняемый Control Service и изолированные Runtime-компоненты с тестами
 

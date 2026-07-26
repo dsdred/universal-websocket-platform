@@ -8,33 +8,37 @@
 **Последняя завершённая development task:** TASK-001 — реализация Draft DP-008
 Snapshot Builder contract поверх neutral `DetachedLoadResult`
 
-**Последняя завершённая operational task:** TASK-002 — Stage 1 упрощённого
-автономного продолжения проекта; Completed — Coordinator Accepted. Tester
-verdict — PASS, Reviewer verdict — Approved after rework, scope audit принят:
-8 Required, 0 Questionable, 0 Removable.
+**Последняя завершённая operational task:** TASK-003 — уточнение implementation
+prerequisites Draft DP-009; Completed — Coordinator Accepted. Tester verdict —
+PASS after rework, Reviewer final closure verdict — Approved, scope audit
+принят: 6 Required, 0 Questionable, 0 Removable.
 
-**Текущая operational task:** не назначена. Закрытые изменения TASK-002
+**Текущая operational task:** не назначена. Закрытые изменения TASK-003
 остаются в attributed dirty worktree ветки
-`docs/autonomous-project-governance`.
+`docs/task-003-dp009-prerequisites-refinement`.
 
 **Verification TASK-001:** targeted tests PASS 3/3; full
 `go test ./... -count=1` PASS 2/2; `go vet ./...`, `gofmt -d` и
 `git diff --check` PASS. Race detector недоступен в текущей среде без CGO/gcc.
 
-**Следующий разрешённый шаг:** отдельно разрешённый commit TASK-002. До
-появления clean trusted baseline точная команда `Продолжай проект.` распознаёт
-closed dirty state, останавливается и не начинает новую task.
+**Результат TASK-003:** implementation prerequisites Draft DP-009 завершены:
+concrete Bootstrap request, fixed dependency bindings и structured failure
+representation зеркально уточнены. Design Status остаётся Draft,
+Implementation Status — Planned. Реализация Bootstrap, Runtime Launcher,
+Runtime Lifecycle Owner и production Loader-to-Builder-to-Launcher pipeline не
+начаты.
 
-**Следующая рекомендация:** только после отдельно разрешённого commit,
-создавшего clean trusted Stage 1 baseline, правила рекомендуют сфокусированное
-уточнение implementation prerequisites Draft DP-009: concrete Bootstrap input,
-dependency bindings и failure representation. Candidate не начат; DP-009,
-Runtime Launcher, Runtime Lifecycle Owner и production
-Loader-to-Builder-to-Launcher pipeline не реализуются и не повышают status.
+**Следующий разрешённый шаг:** отдельно разрешённый commit TASK-003; commit,
+push и merge не выполняются без разрешения.
 
-**Stage 2 verification debt:** TASK-002 сохранил self-hosting chronology,
-которая не доказала task-before-work ordering. Следующая практическая
-валидация процесса обязана доказать этот invariant без его ослабления.
+**Следующая рекомендуемая Ready work после clean trusted baseline:**
+изолированная реализация Runtime Bootstrap DP-009. Следующая task и branch не
+созданы; production integration и acceptance proofs AP-003/AP-011 явно
+отложены.
+
+**Stage 2 verification completed:** TASK-003 создан как первый content change
+на task branch, а task index обновлён вторым change; task-before-work ordering
+доказан без ослабления invariant.
 
 Builder не подключён к production launch pipeline. Design Status DP-008
 остаётся Draft, Implementation Status — Implemented.
