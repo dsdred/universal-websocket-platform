@@ -10,6 +10,7 @@ import (
 
 	"github.com/coder/websocket"
 	"github.com/dsdred/universal-websocket-platform/internal/authentication"
+	"github.com/dsdred/universal-websocket-platform/internal/configurationversion"
 	"github.com/dsdred/universal-websocket-platform/internal/connection"
 	"github.com/dsdred/universal-websocket-platform/internal/handshake"
 	"github.com/dsdred/universal-websocket-platform/internal/listener"
@@ -23,9 +24,13 @@ func TestHostShutdownDuringAuthenticationPreventsUpgrade(t *testing.T) {
 	release := make(chan struct{})
 	service := &blockingAuthenticationService{entered: entered, release: release}
 	handoff := &countingAuthenticatedDispatcher{}
-	snapshot := validSnapshot()
-	snapshot.Listener.Port = availablePort(t)
-	snapshot.Listener.TLS.Enabled = false
+	snapshot, diagnostics := buildSnapshotForTest(func(version *configurationversion.ConfigurationVersion) {
+		version.Listener.Port = availablePort(t)
+		version.Listener.TLS.Enabled = false
+	})
+	if len(diagnostics) != 0 {
+		t.Fatalf("Builder diagnostics = %#v", diagnostics)
+	}
 
 	var host *DefaultHost
 	composer := func(
@@ -37,7 +42,7 @@ func TestHostShutdownDuringAuthenticationPreventsUpgrade(t *testing.T) {
 		if err != nil {
 			return nil, err
 		}
-		return listener.NewBootstrapWithHandshake(handler).Build(snapshot.Listener)
+		return listener.NewBootstrapWithHandshake(handler).Build(snapshot.Listener())
 	}
 	created, err := newHost(snapshot, emptyResolver(t), nil, composer)
 	if err != nil {
@@ -57,7 +62,7 @@ func TestHostShutdownDuringAuthenticationPreventsUpgrade(t *testing.T) {
 		defer cancel()
 		connection, response, dialErr := websocket.Dial(
 			ctx,
-			"ws://127.0.0.1:"+portString(snapshot.Listener.Port)+"/ws",
+			"ws://127.0.0.1:"+portString(snapshot.Listener().Port)+"/ws",
 			nil,
 		)
 		if connection != nil {

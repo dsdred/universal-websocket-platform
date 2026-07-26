@@ -6,8 +6,8 @@
 
 **Статус:** Draft
 
-**Статус реализации:** реализован изолированно; не интегрирован с Builder или
-production launch pipeline
+**Статус реализации:** реализован изолированно и используется Builder DP-008;
+не подключён к production launch pipeline
 
 **Статус архитектуры:** Контракт реализации утверждённой модели [ARCH-004](../architecture/ARCH-004-runtime-deployment-and-identity-model.md) и [ARCH-005](../architecture/ARCH-005-runtime-configuration-snapshot-and-loading-model.md)
 
@@ -16,10 +16,10 @@ production launch pipeline
 ## 2. Назначение
 
 В repository существуют lifecycle публикации ConfigurationVersion,
-изолированная реализация Configuration Loader, Snapshot Builder и Runtime
-Bootstrap, но отсутствует production boundary, соединяющая их. Сейчас Builder
-получает подготовленную ConfigurationVersion, а Bootstrap получает
-подготовленный Snapshot.
+изолированная реализация Configuration Loader, Snapshot Builder, принимающий
+neutral Detached Load Result, и Runtime Bootstrap, но отсутствует production
+boundary, соединяющая Loader и Builder с launch orchestration. Bootstrap
+получает подготовленный Snapshot.
 
 DP-007 определяет Loader contract, реализованный изолированно:
 

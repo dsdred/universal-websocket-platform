@@ -6,8 +6,8 @@
 
 **Status:** Draft
 
-**Implementation Status:** Implemented in isolation; not integrated with Builder
-or a production launch pipeline
+**Implementation Status:** Implemented in isolation and consumed by the
+DP-008 Builder; not connected to a production launch pipeline
 
 **Architecture status:** Implementation contract for the approved model in [ARCH-004](../architecture/ARCH-004-runtime-deployment-and-identity-model.md) and [ARCH-005](../architecture/ARCH-005-runtime-configuration-snapshot-and-loading-model.md)
 
@@ -16,9 +16,10 @@ This proposal does not introduce or revise architecture. It defines the engineer
 ## 2. Purpose
 
 The repository has a ConfigurationVersion publication lifecycle, an isolated
-Configuration Loader implementation, a Snapshot Builder, and Runtime Bootstrap,
-but no production boundary connecting them. Builder currently receives a
-prepared ConfigurationVersion, while Bootstrap receives a prepared Snapshot.
+Configuration Loader implementation, a Snapshot Builder that consumes the
+neutral Detached Load Result, and Runtime Bootstrap, but no production boundary
+connecting Loader and Builder to launch orchestration. Bootstrap receives a
+prepared Snapshot.
 
 DP-007 defines the Loader contract that has been implemented in isolation:
 

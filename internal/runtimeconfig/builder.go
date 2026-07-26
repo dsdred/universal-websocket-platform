@@ -1,173 +1,141 @@
 package runtimeconfig
 
 import (
-	"fmt"
-
 	"github.com/dsdred/universal-websocket-platform/internal/configurationversion"
+	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfigload"
 )
 
-// Builder creates immutable runtime Configuration Snapshots.
+const (
+	supportedSchemaIdentity = "uwp.configuration"
+	supportedSchemaVersion  = uint32(1)
+)
+
+// Builder constructs complete immutable Runtime Snapshots.
 type Builder struct{}
 
-// NewBuilder creates a Configuration Snapshot Builder.
-func NewBuilder() Builder {
-	return Builder{}
-}
+func NewBuilder() Builder { return Builder{} }
 
-// Build copies a Published Configuration Version into a runtime Snapshot.
-func (Builder) Build(version configurationversion.ConfigurationVersion) (Snapshot, error) {
-	if version.State != configurationversion.Published {
-		return Snapshot{}, fmt.Errorf("build runtime configuration snapshot: version must be Published")
+// Build returns exactly one complete Snapshot or one non-empty Diagnostics
+// collection. It retains neither input nor output.
+func (Builder) Build(input runtimeconfigload.DetachedLoadResult) (Snapshot, []Diagnostic) {
+	collector := newDiagnosticCollector()
+	version := input.ConfigurationVersion()
+	validateHandoff(input, version, collector)
+
+	schemaSupported := input.SchemaIdentity() == supportedSchemaIdentity &&
+		input.SchemaVersion() == supportedSchemaVersion
+	if schemaSupported {
+		validateConfiguration(version, collector)
 	}
 
-	routing, err := buildRouting(version.Routing)
-	if err != nil {
-		return Snapshot{}, fmt.Errorf("build runtime configuration snapshot: routing: %w", err)
+	diagnostics := collector.diagnostics()
+	if len(diagnostics) != 0 {
+		return Snapshot{}, diagnostics
 	}
 
 	return Snapshot{
-		ConfigurationID: version.ConfigurationID,
-		VersionID:       version.ID,
-		Listener:        buildListener(version.Listener),
-		Authentication:  buildAuthentication(version.Authentication),
-		Routing:         routing,
+		provenance: Provenance{
+			WorkspaceID:                input.WorkspaceID(),
+			ConfigurationID:            input.ConfigurationID(),
+			ConfigurationVersionID:     input.ConfigurationVersionID(),
+			ConfigurationVersionNumber: input.ConfigurationVersionNumber(),
+			SchemaIdentity:             input.SchemaIdentity(),
+			SchemaVersion:              input.SchemaVersion(),
+			RuntimeInstanceID:          input.RuntimeInstanceID(),
+			LaunchAttemptID:            input.LaunchAttemptID(),
+		},
+		listener:       buildListener(version.Listener),
+		authentication: buildAuthentication(version.Authentication),
+		routing:        buildRouting(version.Routing),
 	}, nil
 }
 
-func buildRouting(routing *configurationversion.RoutingSettings) (*RoutingSnapshot, error) {
-	normalized, err := (configurationversion.DefaultRoutingValidator{}).Validate(routing)
-	if err != nil {
-		return nil, err
-	}
-	if normalized == nil {
-		return nil, nil
-	}
-
-	return &RoutingSnapshot{
-		routes: copySlice(normalized.Routes, func(route configurationversion.Route) RouteSnapshot {
-			return RouteSnapshot{
-				id:       route.ID,
-				enabled:  route.Enabled,
-				priority: route.Priority,
-				matchers: copySlice(route.Matchers, func(matcher configurationversion.Matcher) MatcherSnapshot {
-					return MatcherSnapshot{
-						matcherType: MatcherType(matcher.Type),
-						value:       matcher.Value,
-					}
-				}),
-				handlerRef: route.HandlerRef,
-			}
-		}),
-		defaultHandlerRef: normalized.DefaultHandlerRef,
-	}, nil
-}
-
-func cloneRouteSnapshot(route RouteSnapshot) RouteSnapshot {
-	route.matchers = cloneSlice(route.matchers)
-	return route
-}
-
-func buildListener(listener configurationversion.ListenerSettings) ListenerSnapshot {
+func buildListener(source configurationversion.ListenerSettings) ListenerSnapshot {
 	return ListenerSnapshot{
-		Host: listener.Host,
-		Port: listener.Port,
+		Host: stringsTrim(source.Host),
+		Port: source.Port,
 		TLS: TLSSnapshot{
-			Enabled:        listener.TLS.Enabled,
-			CertificateRef: listener.TLS.CertificateRef,
-			PrivateKeyRef:  listener.TLS.PrivateKeyRef,
-			MinVersion:     listener.TLS.MinVersion,
+			Enabled:        source.TLS.Enabled,
+			CertificateRef: stringsTrim(source.TLS.CertificateRef),
+			PrivateKeyRef:  stringsTrim(source.TLS.PrivateKeyRef),
+			MinVersion:     stringsTrim(source.TLS.MinVersion),
 		},
 		Timeouts: TimeoutSnapshot{
-			HandshakeSeconds: listener.Timeouts.HandshakeSeconds,
-			ReadSeconds:      listener.Timeouts.ReadSeconds,
-			WriteSeconds:     listener.Timeouts.WriteSeconds,
-			IdleSeconds:      listener.Timeouts.IdleSeconds,
+			HandshakeSeconds: source.Timeouts.HandshakeSeconds,
+			ReadSeconds:      source.Timeouts.ReadSeconds,
+			WriteSeconds:     source.Timeouts.WriteSeconds,
+			IdleSeconds:      source.Timeouts.IdleSeconds,
 		},
 	}
 }
 
-func buildAuthentication(authentication configurationversion.AuthenticationSettings) AuthenticationSnapshot {
-	providers := copySlice(authentication.Providers, buildAuthenticationProvider)
-
+func buildAuthentication(source configurationversion.AuthenticationSettings) AuthenticationSnapshot {
 	return AuthenticationSnapshot{
-		Enabled:   authentication.Enabled,
-		Providers: providers,
-	}
-}
-
-func buildAuthenticationProvider(provider configurationversion.AuthenticationProvider) AuthenticationProviderSnapshot {
-	return AuthenticationProviderSnapshot{
-		Name:     provider.Name,
-		Type:     AuthenticationProviderType(provider.Type),
-		Enabled:  provider.Enabled,
-		Priority: provider.Priority,
-		APIKey:   buildAPIKey(provider.APIKey),
-		JWT:      buildJWT(provider.JWT),
-		Basic:    buildBasic(provider.Basic),
-	}
-}
-
-func buildAPIKey(settings *configurationversion.APIKeySettings) *APIKeySnapshot {
-	if settings == nil {
-		return nil
-	}
-
-	return &APIKeySnapshot{
-		Header:    settings.Header,
-		SecretRef: settings.SecretRef,
-	}
-}
-
-func buildBasic(settings *configurationversion.BasicSettings) *BasicSnapshot {
-	if settings == nil {
-		return nil
-	}
-
-	return &BasicSnapshot{
-		Realm:     settings.Realm,
-		SecretRef: settings.SecretRef,
-	}
-}
-
-func buildJWT(settings *configurationversion.JWTSettings) *JWTSnapshot {
-	if settings == nil {
-		return nil
-	}
-
-	return &JWTSnapshot{
-		SigningKeys: copySlice(settings.SigningKeys, func(key configurationversion.JWTSigningKey) JWTSigningKeySnapshot {
-			return JWTSigningKeySnapshot{Name: key.Name, SecretRef: key.SecretRef}
+		Enabled: source.Enabled,
+		Providers: copySlice(source.Providers, func(provider configurationversion.AuthenticationProvider) AuthenticationProviderSnapshot {
+			result := AuthenticationProviderSnapshot{
+				Name:     stringsTrim(provider.Name),
+				Type:     AuthenticationProviderType(provider.Type),
+				Enabled:  provider.Enabled,
+				Priority: provider.Priority,
+			}
+			if provider.APIKey != nil {
+				result.APIKey = &APIKeySnapshot{
+					Header:    stringsTrim(provider.APIKey.Header),
+					SecretRef: stringsTrim(provider.APIKey.SecretRef),
+				}
+			}
+			if provider.Basic != nil {
+				result.Basic = &BasicSnapshot{
+					Realm:     stringsTrim(provider.Basic.Realm),
+					SecretRef: stringsTrim(provider.Basic.SecretRef),
+				}
+			}
+			if provider.JWT != nil {
+				result.JWT = &JWTSnapshot{
+					SigningKeys: copySlice(provider.JWT.SigningKeys, func(key configurationversion.JWTSigningKey) JWTSigningKeySnapshot {
+						return JWTSigningKeySnapshot{Name: stringsTrim(key.Name), SecretRef: stringsTrim(key.SecretRef)}
+					}),
+					AllowedAlgorithms: copySlice(provider.JWT.AllowedAlgorithms, func(algorithm configurationversion.JWTAlgorithm) JWTAlgorithm {
+						return JWTAlgorithm(algorithm)
+					}),
+					AllowedIssuers:   copySlice(provider.JWT.AllowedIssuers, stringsTrim),
+					AllowedAudiences: copySlice(provider.JWT.AllowedAudiences, stringsTrim),
+					RequiredClaims: copySlice(provider.JWT.RequiredClaims, func(claim configurationversion.JWTRequiredClaim) JWTRequiredClaimSnapshot {
+						return JWTRequiredClaimSnapshot{Name: stringsTrim(claim.Name), Value: stringsTrim(claim.Value)}
+					}),
+					ClockSkewSeconds: provider.JWT.ClockSkewSeconds,
+				}
+			}
+			return result
 		}),
-		AllowedAlgorithms: copySlice(settings.AllowedAlgorithms, func(algorithm configurationversion.JWTAlgorithm) JWTAlgorithm {
-			return JWTAlgorithm(algorithm)
-		}),
-		AllowedIssuers:   cloneSlice(settings.AllowedIssuers),
-		AllowedAudiences: cloneSlice(settings.AllowedAudiences),
-		RequiredClaims: copySlice(settings.RequiredClaims, func(claim configurationversion.JWTRequiredClaim) JWTRequiredClaimSnapshot {
-			return JWTRequiredClaimSnapshot{Name: claim.Name, Value: claim.Value}
-		}),
-		ClockSkewSeconds: settings.ClockSkewSeconds,
 	}
 }
 
-func cloneSlice[T any](source []T) []T {
+func buildRouting(source *configurationversion.RoutingSettings) *RoutingSnapshot {
 	if source == nil {
 		return nil
 	}
-
-	result := make([]T, len(source))
-	copy(result, source)
-	return result
-}
-
-func copySlice[S, T any](source []S, convert func(S) T) []T {
-	if source == nil {
-		return nil
-	}
-
-	result := make([]T, len(source))
-	for index, value := range source {
-		result[index] = convert(value)
+	defaultPresent := source.DefaultHandlerRef != ""
+	result := &RoutingSnapshot{
+		routes: copySlice(source.Routes, func(route configurationversion.Route) RouteSnapshot {
+			matchers := copySlice(route.Matchers, func(matcher configurationversion.Matcher) MatcherSnapshot {
+				return MatcherSnapshot{
+					matcherType: MatcherType(stringsTrim(string(matcher.Type))),
+					value:       stringsTrim(matcher.Value),
+				}
+			})
+			sortMatchers(matchers)
+			return RouteSnapshot{
+				id:         stringsTrim(route.ID),
+				enabled:    route.Enabled,
+				priority:   route.Priority,
+				matchers:   matchers,
+				handlerRef: stringsTrim(route.HandlerRef),
+			}
+		}),
+		defaultHandlerRef:        stringsTrim(source.DefaultHandlerRef),
+		defaultHandlerRefPresent: defaultPresent,
 	}
 	return result
 }

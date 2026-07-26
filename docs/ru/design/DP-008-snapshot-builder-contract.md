@@ -6,9 +6,10 @@
 
 **Статус:** Draft
 
-**Статус реализации:** запланирован; текущий Builder всё ещё принимает
-ConfigurationVersion напрямую и не строит полный provenance ARCH-005 или
-blocking Diagnostics
+**Статус реализации:** реализован изолированно; Builder принимает neutral
+`DetachedLoadResult`, создаёт полный provenance ARCH-005 и возвращает
+исчерпывающие blocking Diagnostics, но не подключён к production launch
+pipeline
 
 **Статус архитектуры:** Контракт реализации утверждённой модели из
 [ARCH-004](../architecture/ARCH-004-runtime-deployment-and-identity-model.md)
@@ -1254,9 +1255,11 @@ Focused pre-implementation refinement завершён:
 3. Section 13 определяет исчерпывающий structured registry Diagnostics,
    applicability, duplicate anchoring, deduplication и canonical ordering.
 
-Эти contracts снимают architecture blocker TASK-001, не изменяя ownership,
-validation, atomicity или Runtime independence. Design Status остаётся `Draft`,
-Implementation Status остаётся `Planned`, implementation Builder не начата.
+Эти contracts сняли architecture blocker TASK-001, не изменяя ownership,
+validation, atomicity или Runtime independence. Builder реализован и независимо
+проверен изолированно. Design Status остаётся `Draft`, Implementation Status —
+`Implemented`. Runtime Launcher, Runtime Lifecycle Owner, production launch
+integration и DP-009 остаются вне этой реализации.
 
 ## 24. Решение
 

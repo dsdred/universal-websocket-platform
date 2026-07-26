@@ -9,10 +9,11 @@
 ## Текущее состояние
 
 - Текущая веха: **Beta — Complete the Single-Node Runtime**
-- Статус реализации: **Control Service, single-node Runtime vertical и Configuration Loader boundary реализованы; production launch pipeline не завершён**
-- Последняя завершённая development task: **реализация Configuration Loader contract DP-007**
-- Текущая development task: **TASK-001 — Draft DP-008 Snapshot Builder поверх neutral `DetachedLoadResult`; architecture refinement Approved, implementation not started**
-- Следующий разрешённый шаг: **Developer реализует полный уточнённый Draft DP-008 contract: exact schema `uwp.configuration` v1, private immutable detached Snapshot с полным ARCH-005 provenance и exhaustive blocking Diagnostics; Builder не подключается к production launch pipeline**
+- Статус реализации: **Control Service, single-node Runtime vertical, Configuration Loader boundary и DP-008 Snapshot Builder реализованы изолированно; production launch pipeline не завершён**
+- Последняя завершённая development task: **TASK-001 — Draft DP-008 Snapshot Builder поверх neutral `DetachedLoadResult`**
+- Текущая development task: **не назначена; TASK-001 принята Coordinator и закрыта**
+- Verification TASK-001: **targeted tests PASS 3/3; full `go test ./... -count=1` PASS 2/2; `go vet ./...`, `gofmt -d` и `git diff --check` PASS; race detector недоступен без CGO/gcc**
+- Следующий разрешённый шаг: **commit закрытой TASK-001 только после отдельного разрешения пользователя; следующая development task не выбрана**
 - Design Status DP-008 остаётся **Draft**
 - Содержимое репозитория: документация, спецификации, инженерные соглашения, исполняемый Control Service и изолированные Runtime-компоненты с тестами
 

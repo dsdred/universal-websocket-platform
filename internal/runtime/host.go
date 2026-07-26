@@ -167,7 +167,7 @@ func newHostWithTerminalErrorReporter(
 func (host *DefaultHost) Snapshot() runtimeconfig.Snapshot {
 	host.mu.RLock()
 	defer host.mu.RUnlock()
-	return cloneSnapshot(host.snapshot)
+	return host.snapshot
 }
 
 // RuntimeContext returns the Host-owned context for the running Runtime.
@@ -385,9 +385,13 @@ func (host *DefaultHost) CanAccept() bool {
 }
 
 func isZeroSnapshot(snapshot runtimeconfig.Snapshot) bool {
-	return snapshot.ConfigurationID == 0 &&
-		snapshot.VersionID == 0 &&
-		snapshot.Listener == (runtimeconfig.ListenerSnapshot{}) &&
-		!snapshot.Authentication.Enabled &&
-		snapshot.Authentication.Providers == nil
+	provenance := snapshot.Provenance()
+	listener := snapshot.Listener()
+	authentication := snapshot.Authentication()
+	_, routingPresent := snapshot.Routing()
+	return provenance == (runtimeconfig.Provenance{}) &&
+		listener == (runtimeconfig.ListenerSnapshot{}) &&
+		!authentication.Enabled &&
+		len(authentication.Providers) == 0 &&
+		!routingPresent
 }

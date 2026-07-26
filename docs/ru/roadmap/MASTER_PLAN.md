@@ -27,9 +27,13 @@ Universal WebSocket Platform — open-source платформа для созд�
 
 ### Snapshot
 
-- `runtimeconfig.Builder` принимает только Published ConfigurationVersion.
-- Runtime Snapshot содержит данные Listener, Authentication и optional Routing.
-- Вложенные коллекции Provider, JWT, Route и Matcher копируются, поэтому последующее изменение Configuration не меняет существующий Snapshot.
+- `runtimeconfig.Builder` принимает neutral `DetachedLoadResult` и
+  поддерживает ровно schema `uwp.configuration` версии 1.
+- Runtime Snapshot содержит полный provenance ARCH-005, Listener,
+  Authentication и optional Routing за detached readers.
+- Builder возвращает либо один полный Snapshot, либо исчерпывающие
+  детерминированные blocking Diagnostics; вложенное mutable содержимое не
+  разделяется с input, readers или независимыми Builds.
 
 ### Listener and Connection
 
@@ -56,7 +60,7 @@ Universal WebSocket Platform — open-source платформа для созд�
 - [ADR-0002](../adr/0002-configuration-dsl.md) определяет ConfigurationVersion как Configuration DSL и Published source of truth.
 - [ADR-0003](../adr/0003-runtime-architecture.md) определяет компонентную модель Runtime и явный dependency injection.
 - [ARCH-001](../architecture/ARCH-001-runtime-architectural-pattern.md) фиксирует подтвержденный паттерн `Context -> Evaluation -> Decision -> Execution`, ownership, lifecycle и Boring Core.
-- Вердикт Runtime Alpha Review был **Ready with findings**. Runtime Host, lifecycle hardening, validation startup capabilities, pre-Upgrade Authentication, утверждённый Router DP-005, transactional production handoff Session и Manager-aware shutdown Host реализованы. Граница Configuration Loader также реализована, но pipeline Loader-to-Builder-to-Launcher отсутствует.
+- Вердикт Runtime Alpha Review был **Ready with findings**. Runtime Host, lifecycle hardening, validation startup capabilities, pre-Upgrade Authentication, утверждённый Router DP-005, transactional production handoff Session и Manager-aware shutdown Host реализованы. Границы Configuration Loader и Snapshot Builder также реализованы изолированно, но production pipeline Loader-to-Builder-to-Launcher отсутствует.
 
 ## 3. Engineering Principles
 
@@ -246,7 +250,6 @@ Runtime Alpha Review фиксирует implementation debt, который не
 - Manager-aware shutdown tracking Session интегрирован с Runtime Host Stop.
 - Legacy synchronous Dispatcher сохраняется только для изолированных compatibility-тестов и не должен возвращаться в production composition.
 - У ошибок HTTP server и Dispatcher нет operational reporting path.
-- `runtimeconfig.Builder` всё ещё принимает ConfigurationVersion напрямую вместо neutral Loader handoff и пока не строит полный provenance ARCH-005.
 - Покрытие Runtime для Basic и asymmetric JWT неполное.
 - Поведение Origin полагается на defaults библиотеки, а не на явную Configuration.
 
@@ -258,18 +261,15 @@ Architectural debt относится к границам, которые ост
 
 - **Pipeline запуска Runtime:** Configuration Loader существует, но Builder, Runtime Launcher, Runtime Lifecycle Owner и Bootstrap не соединены в production launch flow.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
-- **Provenance Snapshot:** текущий Snapshot пока не идентифицирует Workspace, schema, Runtime Instance и Launch Attempt согласно ARCH-005.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Persistence, Delivery и Plugin всё ещё требуют focused design.
 
-Focused architecture refinement для текущей development task TASK-001
-завершён и независимо утверждён. Draft DP-008 теперь определяет exact contract
-`uwp.configuration` v1, полную private detached модель Snapshot и readers,
-section-specific normalization и exhaustive blocking Diagnostics.
-Implementation не начата. Следующий разрешённый шаг — Developer implementation
-поверх neutral `DetachedLoadResult` без подключения Builder к production
-launch pipeline. Design Status остаётся Draft, Implementation Status —
-Planned.
+TASK-001 реализует и независимо проверяет изолированный уточнённый контракт
+Draft DP-008: exact support `uwp.configuration` v1, полную private detached
+модель Snapshot и readers, полный provenance ARCH-005, section-specific
+normalization и exhaustive blocking Diagnostics. Builder не подключён к
+production launch pipeline. Design Status остаётся Draft, Implementation
+Status — Implemented.
 
 Architectural debt устраняется через DP, при значимых последствиях ADR, реализацию и последующее review. MASTER_PLAN не определяет эти контракты самостоятельно.
 

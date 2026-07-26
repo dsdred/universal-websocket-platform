@@ -24,24 +24,26 @@ const (
 // Read, write, and idle timeouts are retained as configured-but-inactive Runtime
 // capabilities until the Listener Settings roadmap gate defines their execution.
 func validateExecutableSnapshot(snapshot runtimeconfig.Snapshot) error {
-	if snapshot.ConfigurationID == 0 || snapshot.VersionID == 0 {
+	provenance := snapshot.Provenance()
+	if provenance.ConfigurationID == 0 || provenance.ConfigurationVersionID == 0 {
 		return invalidRuntimeField("identity")
 	}
-	if strings.TrimSpace(snapshot.Listener.Host) == "" || snapshot.Listener.Port == 0 {
+	listener := snapshot.Listener()
+	if strings.TrimSpace(listener.Host) == "" || listener.Port == 0 {
 		return invalidRuntimeField("listener")
 	}
-	if snapshot.Listener.TLS.MinVersion != "1.2" && snapshot.Listener.TLS.MinVersion != "1.3" {
+	if listener.TLS.MinVersion != "1.2" && listener.TLS.MinVersion != "1.3" {
 		return invalidRuntimeField("TLS minimum version")
 	}
-	if snapshot.Listener.TLS.Enabled {
+	if listener.TLS.Enabled {
 		return fmt.Errorf(
 			"%w: %w: TLS",
 			ErrInvalidRuntimeConfiguration,
 			ErrUnsupportedRuntimeCapability,
 		)
 	}
-	if snapshot.Listener.Timeouts.HandshakeSeconds < minimumHandshakeSeconds ||
-		snapshot.Listener.Timeouts.HandshakeSeconds > maximumHandshakeSeconds {
+	if listener.Timeouts.HandshakeSeconds < minimumHandshakeSeconds ||
+		listener.Timeouts.HandshakeSeconds > maximumHandshakeSeconds {
 		return invalidRuntimeField("handshake timeout")
 	}
 	return nil

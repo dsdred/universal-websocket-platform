@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dsdred/universal-websocket-platform/internal/configurationversion"
 	"github.com/dsdred/universal-websocket-platform/internal/listener"
 	"github.com/dsdred/universal-websocket-platform/internal/message"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
@@ -38,8 +39,8 @@ func TestNewHostCreatesHostAndContainer(t *testing.T) {
 		t.Fatal("new Host accepts connections, want false")
 	}
 	got := host.Snapshot()
-	if got.ConfigurationID != snapshot.ConfigurationID || got.VersionID != snapshot.VersionID {
-		t.Fatalf("Snapshot identifiers = (%d, %d)", got.ConfigurationID, got.VersionID)
+	if got.Provenance() != snapshot.Provenance() {
+		t.Fatalf("Snapshot provenance = %#v", got.Provenance())
 	}
 }
 
@@ -64,15 +65,13 @@ func TestHostSnapshotIsDeepCopy(t *testing.T) {
 		t.Fatalf("NewHost() error = %v", err)
 	}
 
-	snapshot.Listener.Host = "changed-source"
-	snapshot.Authentication.Providers[0].JWT.SigningKeys[0].SecretRef = "changed-source-key"
 	first := host.Snapshot()
-	first.Listener.Host = "changed-result"
-	first.Authentication.Providers[0].JWT.SigningKeys[0].SecretRef = "changed-result-key"
-	first.Authentication.Providers = append(first.Authentication.Providers, runtimeconfig.AuthenticationProviderSnapshot{Name: "new"})
-
-	assertOriginalSnapshot(t, host.Snapshot())
-	assertOriginalSnapshot(t, host.container.Snapshot())
+	authentication := first.Authentication()
+	authentication.Providers[0].JWT.SigningKeys[0].SecretRef = "changed-result-key"
+	authentication.Providers = append(authentication.Providers, runtimeconfig.AuthenticationProviderSnapshot{Name: "new"})
+	if got := host.Snapshot().Authentication(); len(got.Providers) != 1 || got.Providers[0].JWT.SigningKeys[0].SecretRef != "secrets/jwt/key" {
+		t.Fatalf("Host Snapshot aliases reader memory: %#v", got)
+	}
 }
 
 func TestHostBuildPreparesStartup(t *testing.T) {
@@ -371,10 +370,12 @@ func mustHost(t *testing.T) *DefaultHost {
 
 func newUnbuiltHost(t *testing.T) *DefaultHost {
 	t.Helper()
-	snapshot := validSnapshot()
-	snapshot.Listener.Port = availablePort(t)
-	snapshot.Listener.TLS = runtimeconfig.TLSSnapshot{MinVersion: "1.2"}
-	snapshot.Authentication.Providers = snapshot.Authentication.Providers[:2]
+	snapshot, diagnostics := buildSnapshotForTest(func(version *configurationversion.ConfigurationVersion) {
+		version.Listener.Port = availablePort(t)
+	})
+	if len(diagnostics) != 0 {
+		t.Fatalf("Builder diagnostics = %#v", diagnostics)
+	}
 	host, err := NewHost(snapshot, emptyResolver(t), nil)
 	if err != nil {
 		t.Fatalf("NewHost() error = %v", err)
