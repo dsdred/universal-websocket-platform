@@ -145,28 +145,23 @@ func TestTLSValidationFailsBeforeSocketAndPreservesSnapshot(t *testing.T) {
 		t.Fatalf("Builder diagnostics = %#v", diagnostics)
 	}
 	wantSnapshot := snapshot
-	bootstrap, err := NewBootstrapWithTerminalErrorReporter(emptyResolver(t), nil, nil)
-	if err != nil {
-		t.Fatalf("NewBootstrap() error = %v", err)
+	outcome := Bootstrap(&BootstrapRequest{
+		Snapshot:       snapshot,
+		StartupContext: context.Background(),
+		Dependencies:   &DependencyBindings{SecretResolver: emptyResolver(t)},
+	})
+	failure, ok := outcome.StartupFailure()
+	if !ok || !errors.Is(failure, ErrUnsupportedRuntimeCapability) ||
+		!errors.Is(failure, ErrInvalidRuntimeConfiguration) {
+		t.Fatalf("Bootstrap() StartupFailure = (%v, %t), want unsupported invalid Runtime configuration", failure, ok)
 	}
-	built, err := bootstrap.Build(snapshot)
-	if err != nil {
-		t.Fatalf("Build() error = %v", err)
+	if strings.Contains(failure.Error(), "credential-that-must-not-leak") {
+		t.Fatal("StartupFailure error exposed a Secret Reference")
 	}
-	err = built.Start(context.Background())
-	if !errors.Is(err, ErrUnsupportedRuntimeCapability) || !errors.Is(err, ErrInvalidRuntimeConfiguration) {
-		t.Fatalf("Start() error = %v, want unsupported invalid Runtime configuration", err)
+	if host, ok := outcome.Success(); ok || host != nil {
+		t.Fatal("failed Bootstrap published a partial Host")
 	}
-	if strings.Contains(err.Error(), "credential-that-must-not-leak") {
-		t.Fatal("Start() error exposed a Secret Reference")
-	}
-	if built.Running() || built.Ready() || built.CanAccept() || built.RuntimeContext() != nil {
-		t.Fatal("failed Host published active Runtime state")
-	}
-	if built.(*DefaultHost).runtimeListener != nil {
-		t.Fatal("failed Host published a Listener")
-	}
-	if !reflect.DeepEqual(built.Snapshot(), wantSnapshot) {
+	if !reflect.DeepEqual(snapshot, wantSnapshot) {
 		t.Fatal("validation mutated Snapshot")
 	}
 	assertPortAvailable(t, snapshot.Listener().Port)
@@ -198,16 +193,14 @@ func TestDefaultPublishedConfigurationStarts(t *testing.T) {
 	if len(diagnostics) != 0 {
 		t.Fatalf("runtimeconfig.Build() diagnostics = %#v", diagnostics)
 	}
-	bootstrap, err := NewBootstrap(emptyResolver(t), nil)
-	if err != nil {
-		t.Fatalf("NewBootstrap() error = %v", err)
-	}
-	host, err := bootstrap.Build(snapshot)
-	if err != nil {
-		t.Fatalf("Build() error = %v", err)
-	}
-	if err := host.Start(context.Background()); err != nil {
-		t.Fatalf("Start() error = %v", err)
+	outcome := Bootstrap(&BootstrapRequest{
+		Snapshot:       snapshot,
+		StartupContext: context.Background(),
+		Dependencies:   &DependencyBindings{SecretResolver: emptyResolver(t)},
+	})
+	host, ok := outcome.Success()
+	if !ok {
+		t.Fatalf("Bootstrap() = %#v, want Success", outcome)
 	}
 	if !host.Running() || !host.Ready() || !host.CanAccept() || host.RuntimeContext() == nil {
 		t.Fatal("default Published Configuration did not become Ready")

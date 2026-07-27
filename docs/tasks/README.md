@@ -8,6 +8,7 @@ operational документы ведутся на русском языке и 
 - [TASK-001 — DP-008 Snapshot Builder поверх DetachedLoadResult](TASK-001-DP-008-SNAPSHOT-BUILDER.md)
 - [TASK-002 — Упрощённое автономное продолжение проекта](TASK-002-AUTONOMOUS-PROJECT-CONTINUATION.md)
 - [TASK-003 — Уточнение implementation prerequisites Draft DP-009](TASK-003-DP-009-IMPLEMENTATION-PREREQUISITES.md)
+- [TASK-004 — Изолированная реализация Runtime Bootstrap DP-009](TASK-004-DP-009-RUNTIME-BOOTSTRAP.md)
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

@@ -4,13 +4,14 @@
 
 **Design Status:** Draft
 
-**Implementation Status:** Planned
+**Implementation Status:** Implemented in isolation
 
-This proposal describes a future implementation contract. It does not claim
-that the Loader-to-Builder-to-Launcher pipeline is implemented.
+The Bootstrap boundary defined by this proposal is implemented and verified in
+isolation. This status does not claim that Runtime Launcher, Runtime Lifecycle
+Owner, or the Loader-to-Builder-to-Launcher production pipeline is implemented.
 
-The focused implementation-prerequisites refinement is complete. The Runtime
-Bootstrap implementation and its production integration remain planned.
+AP-003 and AP-011 remain integration-gated. Production integration remains
+planned.
 
 ## 2. Purpose
 
@@ -574,10 +575,10 @@ The focused prerequisite refinement defines the concrete request semantics,
 fixed binding set and nil behavior, ordered failure identity, exclusive outcome,
 and cause preservation required before implementation.
 
-This completes the design refinement prerequisite, not implementation or
-production integration. Concrete Go types, signatures, package placement, the
-private test seam, and production wiring remain for a separate implementation
-task within Sections 7–18. AP-003 and AP-011 remain integration-gated.
+The isolated implementation now supplies the concrete Go types, signatures,
+package placement, and private immutable test seam within Sections 7–18. This
+does not implement production wiring, Runtime Launcher, or Runtime Lifecycle
+Owner. AP-003 and AP-011 remain integration-gated.
 
 ## 24. Decision
 

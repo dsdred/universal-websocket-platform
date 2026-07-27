@@ -14,4 +14,4 @@
 | [DP-006: Production-интеграция Runtime](DP-006-runtime-production-integration.md) | Draft; реализован частично |
 | [DP-007: Configuration Loader Contract](DP-007-configuration-loader-contract.md) | Draft; реализован изолированно |
 | [DP-008: Snapshot Builder Contract](DP-008-snapshot-builder-contract.md) | Draft; запланирован |
-| [DP-009: Runtime Bootstrap Contract](DP-009-runtime-bootstrap-contract.md) | Draft; запланирован |
+| [DP-009: Runtime Bootstrap Contract](DP-009-runtime-bootstrap-contract.md) | Draft; реализован изолированно |

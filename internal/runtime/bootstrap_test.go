@@ -5,7 +5,11 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"reflect"
 	"strconv"
+	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -19,48 +23,452 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func TestDefaultBootstrapImplementsBootstrap(t *testing.T) {
-	var _ Bootstrap = (*DefaultBootstrap)(nil)
-}
+func TestBootstrapRequestShapeAndCompleteProvenance(t *testing.T) {
+	requestType := reflect.TypeOf(BootstrapRequest{})
+	if requestType.NumField() != 3 {
+		t.Fatalf("BootstrapRequest fields = %d, want exactly 3", requestType.NumField())
+	}
+	for index, want := range []struct {
+		name string
+		typ  reflect.Type
+	}{
+		{name: "Snapshot", typ: reflect.TypeOf(runtimeconfig.Snapshot{})},
+		{name: "StartupContext", typ: reflect.TypeOf((*context.Context)(nil)).Elem()},
+		{name: "Dependencies", typ: reflect.TypeOf((*DependencyBindings)(nil))},
+	} {
+		field := requestType.Field(index)
+		if field.Name != want.name || field.Type != want.typ {
+			t.Fatalf("BootstrapRequest field %d = %s %v, want %s %v",
+				index, field.Name, field.Type, want.name, want.typ)
+		}
+	}
 
-func TestNewBootstrapRejectsNilResolver(t *testing.T) {
-	bootstrap, err := NewBootstrap(nil, nil)
-	if bootstrap != nil || !errors.Is(err, ErrNilSecretResolver) {
-		t.Fatalf("NewBootstrap() = (%v, %v), want nil and ErrNilSecretResolver", bootstrap, err)
+	complete := runtimeconfig.Provenance{
+		WorkspaceID:                1,
+		ConfigurationID:            2,
+		ConfigurationVersionID:     3,
+		ConfigurationVersionNumber: 4,
+		SchemaIdentity:             "uwp.configuration",
+		SchemaVersion:              5,
+		RuntimeInstanceID:          runtimeconfigload.RuntimeInstanceID("runtime"),
+		LaunchAttemptID:            runtimeconfigload.LaunchAttemptID("attempt"),
+	}
+	if !completeBootstrapProvenance(complete) {
+		t.Fatal("complete provenance was rejected")
+	}
+	tests := []struct {
+		name   string
+		mutate func(*runtimeconfig.Provenance)
+	}{
+		{name: "Workspace ID", mutate: func(value *runtimeconfig.Provenance) { value.WorkspaceID = 0 }},
+		{name: "Configuration ID", mutate: func(value *runtimeconfig.Provenance) { value.ConfigurationID = 0 }},
+		{name: "ConfigurationVersion ID", mutate: func(value *runtimeconfig.Provenance) { value.ConfigurationVersionID = 0 }},
+		{name: "ConfigurationVersion number", mutate: func(value *runtimeconfig.Provenance) { value.ConfigurationVersionNumber = 0 }},
+		{name: "schema identity", mutate: func(value *runtimeconfig.Provenance) { value.SchemaIdentity = "" }},
+		{name: "schema version", mutate: func(value *runtimeconfig.Provenance) { value.SchemaVersion = 0 }},
+		{name: "Runtime Instance ID", mutate: func(value *runtimeconfig.Provenance) { value.RuntimeInstanceID = "" }},
+		{name: "Launch Attempt ID", mutate: func(value *runtimeconfig.Provenance) { value.LaunchAttemptID = "" }},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			incomplete := complete
+			test.mutate(&incomplete)
+			if completeBootstrapProvenance(incomplete) {
+				t.Fatalf("provenance without %s was accepted", test.name)
+			}
+		})
 	}
 }
 
-func TestBootstrapBuildUsesRuntimeHost(t *testing.T) {
-	resolver := apiKeyResolver(t)
-	bootstrap, err := NewBootstrap(resolver, nil)
-	if err != nil {
-		t.Fatalf("NewBootstrap() error = %v", err)
+func TestBootstrapFailurePrecedenceAndRegistry(t *testing.T) {
+	snapshot := apiKeySnapshot(t)
+	resolver := emptyResolver(t)
+	constructionCause := errors.New("construction cause")
+	buildCause := errors.New("build cause")
+
+	tests := []struct {
+		name        string
+		request     *BootstrapRequest
+		factory     bootstrapHostFactory
+		wantStage   BootstrapFailureStage
+		wantCode    BootstrapFailureCode
+		wantError   string
+		wantCause   error
+		wantFactory int
+		wantBuild   int
+		wantStart   int
+	}{
+		{
+			name:        "missing request envelope",
+			wantStage:   BootstrapStageInputValidation,
+			wantCode:    BootstrapCodeInvalidStartupContext,
+			wantError:   invalidStartupContextDescription,
+			wantFactory: 0,
+		},
+		{
+			name: "typed nil startup context wins over invalid snapshot and bindings",
+			request: &BootstrapRequest{
+				StartupContext: (*bootstrapProofContext)(nil),
+			},
+			wantStage:   BootstrapStageInputValidation,
+			wantCode:    BootstrapCodeInvalidStartupContext,
+			wantError:   invalidStartupContextDescription,
+			wantFactory: 0,
+		},
+		{
+			name: "invalid snapshot wins over missing bindings",
+			request: &BootstrapRequest{
+				StartupContext: context.Background(),
+			},
+			wantStage:   BootstrapStageInputValidation,
+			wantCode:    BootstrapCodeInvalidSnapshot,
+			wantError:   invalidSnapshotDescription,
+			wantFactory: 0,
+		},
+		{
+			name: "missing secret resolver",
+			request: &BootstrapRequest{
+				Snapshot:       snapshot,
+				StartupContext: context.Background(),
+				Dependencies:   &DependencyBindings{},
+			},
+			wantStage:   BootstrapStageDependencyBinding,
+			wantCode:    BootstrapCodeMissingSecretResolver,
+			wantError:   missingSecretResolverDescription,
+			wantFactory: 0,
+		},
+		{
+			name: "typed nil secret resolver",
+			request: &BootstrapRequest{
+				Snapshot:       snapshot,
+				StartupContext: context.Background(),
+				Dependencies: &DependencyBindings{
+					SecretResolver: (*bootstrapProofResolver)(nil),
+				},
+			},
+			wantStage:   BootstrapStageDependencyBinding,
+			wantCode:    BootstrapCodeMissingSecretResolver,
+			wantError:   missingSecretResolverDescription,
+			wantFactory: 0,
+		},
+		{
+			name: "host construction",
+			request: &BootstrapRequest{
+				Snapshot:       snapshot,
+				StartupContext: context.Background(),
+				Dependencies:   &DependencyBindings{SecretResolver: resolver},
+			},
+			factory: func(runtimeconfig.Snapshot, secretresolver.Resolver, message.Handler, func(error)) (Host, error) {
+				return nil, constructionCause
+			},
+			wantStage:   BootstrapStageHostConstruction,
+			wantCode:    BootstrapCodeHostConstructionFailed,
+			wantError:   hostConstructionFailedDescription,
+			wantCause:   constructionCause,
+			wantFactory: 1,
+		},
+		{
+			name: "host preparation",
+			request: &BootstrapRequest{
+				Snapshot:       snapshot,
+				StartupContext: context.Background(),
+				Dependencies:   &DependencyBindings{SecretResolver: resolver},
+			},
+			factory:     proofBootstrapFactory(&bootstrapProofHost{buildErr: buildCause}, nil),
+			wantStage:   BootstrapStageHostPreparation,
+			wantCode:    BootstrapCodeHostBuildFailed,
+			wantError:   hostBuildFailedDescription,
+			wantCause:   buildCause,
+			wantFactory: 1,
+			wantBuild:   1,
+		},
 	}
 
-	built, err := bootstrap.Build(apiKeySnapshot(t))
-	if err != nil {
-		t.Fatalf("Build() error = %v", err)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var factoryCalls int
+			factory := test.factory
+			var proofHost *bootstrapProofHost
+			if factory == nil {
+				proofHost = &bootstrapProofHost{}
+				factory = proofBootstrapFactory(proofHost, &factoryCalls)
+			} else {
+				delegate := factory
+				factory = func(
+					snapshot runtimeconfig.Snapshot,
+					resolver secretresolver.Resolver,
+					handler message.Handler,
+					reporter func(error),
+				) (Host, error) {
+					factoryCalls++
+					host, err := delegate(snapshot, resolver, handler, reporter)
+					if candidate, ok := host.(*bootstrapProofHost); ok {
+						proofHost = candidate
+					}
+					return host, err
+				}
+			}
+
+			outcome := bootstrap(test.request, factory)
+			failure, ok := outcome.BootstrapFailure()
+			if !ok {
+				t.Fatalf("bootstrap() = %#v, want BootstrapFailure", outcome)
+			}
+			if failure.Stage() != test.wantStage || failure.Code() != test.wantCode {
+				t.Fatalf("failure identity = (%q, %q), want (%q, %q)",
+					failure.Stage(), failure.Code(), test.wantStage, test.wantCode)
+			}
+			if failure.Error() != test.wantError {
+				t.Fatalf("failure Error() = %q, want %q", failure.Error(), test.wantError)
+			}
+			if test.wantCause != nil && !errors.Is(failure, test.wantCause) {
+				t.Fatalf("errors.Is(failure, cause) = false, cause %v", test.wantCause)
+			}
+			if factoryCalls != test.wantFactory {
+				t.Fatalf("factory calls = %d, want %d", factoryCalls, test.wantFactory)
+			}
+			if proofHost != nil {
+				if proofHost.buildCalls != test.wantBuild || proofHost.startCalls != test.wantStart {
+					t.Fatalf("Host calls Build/Start = %d/%d, want %d/%d",
+						proofHost.buildCalls, proofHost.startCalls, test.wantBuild, test.wantStart)
+				}
+				if proofHost.stopCalls != 0 {
+					t.Fatalf("Host Stop calls = %d, want 0", proofHost.stopCalls)
+				}
+			}
+			assertExclusiveBootstrapOutcome(t, outcome, bootstrapOutcomeBootstrapFailure)
+		})
 	}
-	host, ok := built.(*DefaultHost)
+}
+
+func TestBootstrapBindsCapabilitiesAndStartsExactlyOnce(t *testing.T) {
+	snapshot := apiKeySnapshot(t)
+	startupContext, cancel := context.WithCancel(context.Background())
+	cancel()
+	resolver := &bootstrapProofResolver{}
+	var typedNilHandler *bootstrapProofHandler
+	var typedNilReporter func(error)
+	host := &bootstrapProofHost{snapshot: snapshot}
+	var capturedSnapshot runtimeconfig.Snapshot
+	var capturedResolver secretresolver.Resolver
+	var capturedHandler message.Handler
+	var capturedReporter func(error)
+	factoryCalls := 0
+
+	outcome := bootstrap(&BootstrapRequest{
+		Snapshot:       snapshot,
+		StartupContext: startupContext,
+		Dependencies: &DependencyBindings{
+			SecretResolver:        resolver,
+			LegacyMessageHandler:  typedNilHandler,
+			TerminalErrorReporter: typedNilReporter,
+		},
+	}, func(
+		gotSnapshot runtimeconfig.Snapshot,
+		gotResolver secretresolver.Resolver,
+		gotHandler message.Handler,
+		gotReporter func(error),
+	) (Host, error) {
+		factoryCalls++
+		capturedSnapshot = gotSnapshot
+		capturedResolver = gotResolver
+		capturedHandler = gotHandler
+		capturedReporter = gotReporter
+		return host, nil
+	})
+
+	active, ok := outcome.Success()
+	if !ok || active != host {
+		t.Fatalf("bootstrap() Success = (%T, %t), want proof Host", active, ok)
+	}
+	if factoryCalls != 1 || host.buildCalls != 1 || host.startCalls != 1 || host.stopCalls != 0 {
+		t.Fatalf("calls factory/Build/Start/Stop = %d/%d/%d/%d, want 1/1/1/0",
+			factoryCalls, host.buildCalls, host.startCalls, host.stopCalls)
+	}
+	if capturedSnapshot.Provenance() != snapshot.Provenance() {
+		t.Fatal("factory did not receive Snapshot by value")
+	}
+	if capturedResolver != resolver || capturedHandler != nil || capturedReporter != nil {
+		t.Fatal("factory received altered required binding or non-normalized optional typed nil")
+	}
+	if host.startContext != startupContext {
+		t.Fatal("Host.Start did not receive the original startup context")
+	}
+	if resolver.resolveCalls.Load() != 0 {
+		t.Fatal("Bootstrap invoked a bound capability")
+	}
+	assertExclusiveBootstrapOutcome(t, outcome, bootstrapOutcomeSuccess)
+}
+
+func TestBootstrapPassesOptionalCapabilitiesWithoutCallingThem(t *testing.T) {
+	request := validBootstrapProofRequest(t)
+	handler := &bootstrapProofHandler{}
+	var reporterCalls atomic.Int32
+	reporter := func(error) { reporterCalls.Add(1) }
+	request.Dependencies.LegacyMessageHandler = handler
+	request.Dependencies.TerminalErrorReporter = reporter
+	host := &bootstrapProofHost{}
+
+	outcome := bootstrap(request, func(
+		_ runtimeconfig.Snapshot,
+		_ secretresolver.Resolver,
+		gotHandler message.Handler,
+		gotReporter func(error),
+	) (Host, error) {
+		if gotHandler != handler || reflect.ValueOf(gotReporter).Pointer() != reflect.ValueOf(reporter).Pointer() {
+			t.Fatal("factory did not receive the original optional capabilities")
+		}
+		return host, nil
+	})
+
+	if _, ok := outcome.Success(); !ok {
+		t.Fatalf("bootstrap() = %#v, want Success", outcome)
+	}
+	if handler.handleCalls.Load() != 0 || reporterCalls.Load() != 0 {
+		t.Fatal("Bootstrap invoked an optional capability")
+	}
+}
+
+func TestBootstrapStartupFailurePreservesCauseAndPerformsNoCleanup(t *testing.T) {
+	first := errors.New("first startup cause")
+	second := &bootstrapProofError{label: "second startup cause"}
+	joined := errors.Join(first, second)
+	host := &bootstrapProofHost{startErr: joined}
+
+	outcome := bootstrap(validBootstrapProofRequest(t), proofBootstrapFactory(host, nil))
+	failure, ok := outcome.StartupFailure()
 	if !ok {
-		t.Fatalf("Build() Host type = %T, want *DefaultHost", built)
+		t.Fatalf("bootstrap() = %#v, want StartupFailure", outcome)
 	}
-	if host.state != hostBuilt || host.runtimeListener != nil {
-		t.Fatalf("Build() Host = %#v, want Built Host without published Listener", host)
+	if failure.Error() != hostStartupFailedDescription {
+		t.Fatalf("StartupFailure.Error() = %q", failure.Error())
 	}
-	if built.Ready() {
-		t.Fatal("Build() returned Ready Host")
+	if errors.Unwrap(failure) != joined || !errors.Is(failure, first) {
+		t.Fatal("StartupFailure did not directly preserve the joined cause")
 	}
-	if built.CanAccept() {
-		t.Fatal("Build() returned Host accepting connections")
+	var found *bootstrapProofError
+	if !errors.As(failure, &found) || found != second {
+		t.Fatal("StartupFailure did not preserve errors.As through joined cause")
+	}
+	if host.buildCalls != 1 || host.startCalls != 1 || host.stopCalls != 0 {
+		t.Fatalf("Host calls Build/Start/Stop = %d/%d/%d, want 1/1/0",
+			host.buildCalls, host.startCalls, host.stopCalls)
+	}
+	assertExclusiveBootstrapOutcome(t, outcome, bootstrapOutcomeStartupFailure)
+}
+
+func TestBootstrapFailurePreservesCauseAndPerformsNoCleanup(t *testing.T) {
+	first := errors.New("first construction cause")
+	second := &bootstrapProofError{label: "second construction cause"}
+	joined := errors.Join(first, second)
+
+	outcome := bootstrap(validBootstrapProofRequest(t), func(
+		runtimeconfig.Snapshot,
+		secretresolver.Resolver,
+		message.Handler,
+		func(error),
+	) (Host, error) {
+		return nil, joined
+	})
+	failure, ok := outcome.BootstrapFailure()
+	if !ok {
+		t.Fatalf("bootstrap() = %#v, want BootstrapFailure", outcome)
+	}
+	if failure.Error() != hostConstructionFailedDescription {
+		t.Fatalf("BootstrapFailure.Error() = %q", failure.Error())
+	}
+	if errors.Unwrap(failure) != joined || !errors.Is(failure, first) {
+		t.Fatal("BootstrapFailure did not directly preserve the joined cause")
+	}
+	var found *bootstrapProofError
+	if !errors.As(failure, &found) || found != second {
+		t.Fatal("BootstrapFailure did not preserve errors.As through joined cause")
+	}
+	if strings.Contains(failure.Error(), first.Error()) ||
+		strings.Contains(failure.Error(), second.Error()) {
+		t.Fatal("BootstrapFailure description exposed cause text")
+	}
+	assertExclusiveBootstrapOutcome(t, outcome, bootstrapOutcomeBootstrapFailure)
+}
+
+func TestBootstrapConcurrentInvocationsAreIndependent(t *testing.T) {
+	const invocations = 32
+	request := validBootstrapProofRequest(t)
+	var factoryCalls atomic.Int32
+	hosts := make(chan *bootstrapProofHost, invocations)
+	factory := func(
+		runtimeconfig.Snapshot,
+		secretresolver.Resolver,
+		message.Handler,
+		func(error),
+	) (Host, error) {
+		factoryCalls.Add(1)
+		host := &bootstrapProofHost{}
+		hosts <- host
+		return host, nil
+	}
+
+	var wait sync.WaitGroup
+	outcomes := make(chan BootstrapOutcome, invocations)
+	for range invocations {
+		wait.Add(1)
+		go func() {
+			defer wait.Done()
+			outcomes <- bootstrap(request, factory)
+		}()
+	}
+	wait.Wait()
+	close(outcomes)
+	close(hosts)
+
+	for outcome := range outcomes {
+		if host, ok := outcome.Success(); !ok || host == nil {
+			t.Fatalf("concurrent bootstrap() = %#v, want Success", outcome)
+		}
+	}
+	if factoryCalls.Load() != invocations {
+		t.Fatalf("factory calls = %d, want %d", factoryCalls.Load(), invocations)
+	}
+	seen := map[*bootstrapProofHost]bool{}
+	for host := range hosts {
+		if seen[host] {
+			t.Fatal("concurrent invocation reused a Host")
+		}
+		seen[host] = true
+		if host.buildCalls != 1 || host.startCalls != 1 {
+			t.Fatalf("Host calls Build/Start = %d/%d, want 1/1", host.buildCalls, host.startCalls)
+		}
+	}
+}
+
+func TestBootstrapUsesRuntimeHost(t *testing.T) {
+	resolver := apiKeyResolver(t)
+	outcome := Bootstrap(&BootstrapRequest{
+		Snapshot:       apiKeySnapshot(t),
+		StartupContext: context.Background(),
+		Dependencies:   &DependencyBindings{SecretResolver: resolver},
+	})
+	active, ok := outcome.Success()
+	if !ok {
+		t.Fatalf("Bootstrap() = %#v, want Success", outcome)
+	}
+	host, ok := active.(*DefaultHost)
+	if !ok {
+		t.Fatalf("Bootstrap() Host type = %T, want *DefaultHost", active)
+	}
+	t.Cleanup(func() { _ = active.Stop(context.Background()) })
+	if host.state != hostRunning || host.runtimeListener == nil {
+		t.Fatalf("Bootstrap() Host = %#v, want Running Host with published Listener", host)
+	}
+	if !active.Ready() {
+		t.Fatal("Bootstrap() returned Host that is not Ready")
+	}
+	if !active.CanAccept() {
+		t.Fatal("Bootstrap() returned Host with closed admission")
 	}
 }
 
 func TestBootstrapHostStartPreservesAuthenticationBuildErrors(t *testing.T) {
-	bootstrap, err := NewBootstrap(emptyResolver(t), nil)
-	if err != nil {
-		t.Fatalf("NewBootstrap() error = %v", err)
-	}
 	snapshot := snapshotWithAuthentication(t, configurationversion.AuthenticationSettings{
 		Enabled: true,
 		Providers: []configurationversion.AuthenticationProvider{{
@@ -74,46 +482,35 @@ func TestBootstrapHostStartPreservesAuthenticationBuildErrors(t *testing.T) {
 		}},
 	})
 
-	built, err := bootstrap.Build(snapshot)
-	if err != nil {
-		t.Fatalf("Build() error = %v", err)
+	outcome := Bootstrap(&BootstrapRequest{
+		Snapshot:       snapshot,
+		StartupContext: context.Background(),
+		Dependencies:   &DependencyBindings{SecretResolver: emptyResolver(t)},
+	})
+	failure, ok := outcome.StartupFailure()
+	if !ok || !errors.Is(failure, authentication.ErrFactoryNotFound) {
+		t.Fatalf("Bootstrap() StartupFailure = (%v, %t), want ErrFactoryNotFound", failure, ok)
 	}
-	err = built.Start(context.Background())
-	if !errors.Is(err, authentication.ErrFactoryNotFound) {
-		t.Fatalf("Start() error = %v, want ErrFactoryNotFound", err)
-	}
-	host := built.(*DefaultHost)
-	if got := currentHostState(host); got != hostBuilt {
-		t.Fatalf("Host state = %v, want hostBuilt", got)
-	}
-	if host.RuntimeContext() != nil || host.runtimeListener != nil {
-		t.Fatal("failed dependency acquisition published Runtime resources")
-	}
-	if built.Ready() {
-		t.Fatal("dependency acquisition error left Host Ready")
-	}
-	if built.CanAccept() {
-		t.Fatal("dependency acquisition error left admission open")
+	if host, ok := outcome.Success(); ok || host != nil {
+		t.Fatal("startup failure published a partial Host")
 	}
 }
 
 func TestBootstrapHostPreservesRuntimeVertical(t *testing.T) {
 	reportedErrors := make(chan error, 4)
-	bootstrap, err := NewBootstrapWithTerminalErrorReporter(
-		apiKeyResolver(t),
-		message.NewEchoHandler(),
-		func(err error) { reportedErrors <- err },
-	)
-	if err != nil {
-		t.Fatalf("NewBootstrap() error = %v", err)
-	}
 	snapshot := apiKeySnapshot(t)
-	built, err := bootstrap.Build(snapshot)
-	if err != nil {
-		t.Fatalf("Build() error = %v", err)
-	}
-	if err := built.Start(context.Background()); err != nil {
-		t.Fatalf("Start() error = %v", err)
+	outcome := Bootstrap(&BootstrapRequest{
+		Snapshot:       snapshot,
+		StartupContext: context.Background(),
+		Dependencies: &DependencyBindings{
+			SecretResolver:        apiKeyResolver(t),
+			LegacyMessageHandler:  message.NewEchoHandler(),
+			TerminalErrorReporter: func(err error) { reportedErrors <- err },
+		},
+	})
+	built, ok := outcome.Success()
+	if !ok {
+		t.Fatalf("Bootstrap() = %#v, want Success", outcome)
 	}
 	if !built.Ready() {
 		t.Fatal("Host Ready() = false after successful Start")
@@ -195,17 +592,18 @@ func TestBootstrapHostPreservesRuntimeVertical(t *testing.T) {
 }
 
 func TestBootstrapHostRejectsAuthenticationBeforeUpgrade(t *testing.T) {
-	bootstrap, err := NewBootstrap(apiKeyResolver(t), message.NewEchoHandler())
-	if err != nil {
-		t.Fatalf("NewBootstrap() error = %v", err)
-	}
 	snapshot := apiKeySnapshot(t)
-	host, err := bootstrap.Build(snapshot)
-	if err != nil {
-		t.Fatalf("Build() error = %v", err)
-	}
-	if err := host.Start(context.Background()); err != nil {
-		t.Fatalf("Start() error = %v", err)
+	outcome := Bootstrap(&BootstrapRequest{
+		Snapshot:       snapshot,
+		StartupContext: context.Background(),
+		Dependencies: &DependencyBindings{
+			SecretResolver:       apiKeyResolver(t),
+			LegacyMessageHandler: message.NewEchoHandler(),
+		},
+	})
+	host, ok := outcome.Success()
+	if !ok {
+		t.Fatalf("Bootstrap() = %#v, want Success", outcome)
 	}
 	t.Cleanup(func() { _ = host.Stop(context.Background()) })
 
@@ -232,17 +630,15 @@ func TestBootstrapHostRejectsAuthenticationBeforeUpgrade(t *testing.T) {
 }
 
 func TestBootstrapHostAuthenticationErrorPreventsUpgrade(t *testing.T) {
-	bootstrap, err := NewBootstrap(emptyResolver(t), nil)
-	if err != nil {
-		t.Fatalf("NewBootstrap() error = %v", err)
-	}
 	snapshot := apiKeySnapshot(t)
-	host, err := bootstrap.Build(snapshot)
-	if err != nil {
-		t.Fatalf("Build() error = %v", err)
-	}
-	if err := host.Start(context.Background()); err != nil {
-		t.Fatalf("Start() error = %v", err)
+	outcome := Bootstrap(&BootstrapRequest{
+		Snapshot:       snapshot,
+		StartupContext: context.Background(),
+		Dependencies:   &DependencyBindings{SecretResolver: emptyResolver(t)},
+	})
+	host, ok := outcome.Success()
+	if !ok {
+		t.Fatalf("Bootstrap() = %#v, want Success", outcome)
 	}
 	t.Cleanup(func() { _ = host.Stop(context.Background()) })
 
@@ -271,21 +667,19 @@ func TestBootstrapHostAuthenticationErrorPreventsUpgrade(t *testing.T) {
 func TestBootstrapTerminalObserverConsumesSessionError(t *testing.T) {
 	wantErr := errors.New("handler failed with credential-that-must-not-leak")
 	reportedErrors := make(chan error, 2)
-	bootstrap, err := NewBootstrapWithTerminalErrorReporter(
-		apiKeyResolver(t),
-		runtimeErrorHandler{err: wantErr},
-		func(err error) { reportedErrors <- err },
-	)
-	if err != nil {
-		t.Fatalf("NewBootstrapWithTerminalErrorReporter() error = %v", err)
-	}
 	snapshot := apiKeySnapshot(t)
-	host, err := bootstrap.Build(snapshot)
-	if err != nil {
-		t.Fatalf("Build() error = %v", err)
-	}
-	if err := host.Start(context.Background()); err != nil {
-		t.Fatalf("Start() error = %v", err)
+	outcome := Bootstrap(&BootstrapRequest{
+		Snapshot:       snapshot,
+		StartupContext: context.Background(),
+		Dependencies: &DependencyBindings{
+			SecretResolver:        apiKeyResolver(t),
+			LegacyMessageHandler:  runtimeErrorHandler{err: wantErr},
+			TerminalErrorReporter: func(err error) { reportedErrors <- err },
+		},
+	})
+	host, ok := outcome.Success()
+	if !ok {
+		t.Fatalf("Bootstrap() = %#v, want Success", outcome)
 	}
 	t.Cleanup(func() { _ = host.Stop(context.Background()) })
 
@@ -327,17 +721,18 @@ func TestBootstrapTerminalObserverConsumesSessionError(t *testing.T) {
 }
 
 func TestBootstrapHostDisabledAuthenticationUsesAnonymousSession(t *testing.T) {
-	bootstrap, err := NewBootstrap(emptyResolver(t), message.NewEchoHandler())
-	if err != nil {
-		t.Fatalf("NewBootstrap() error = %v", err)
-	}
 	snapshot := snapshotWithAuthentication(t, configurationversion.AuthenticationSettings{})
-	host, err := bootstrap.Build(snapshot)
-	if err != nil {
-		t.Fatalf("Build() error = %v", err)
-	}
-	if err := host.Start(context.Background()); err != nil {
-		t.Fatalf("Start() error = %v", err)
+	outcome := Bootstrap(&BootstrapRequest{
+		Snapshot:       snapshot,
+		StartupContext: context.Background(),
+		Dependencies: &DependencyBindings{
+			SecretResolver:       emptyResolver(t),
+			LegacyMessageHandler: message.NewEchoHandler(),
+		},
+	})
+	host, ok := outcome.Success()
+	if !ok {
+		t.Fatalf("Bootstrap() = %#v, want Success", outcome)
 	}
 	t.Cleanup(func() { _ = host.Stop(context.Background()) })
 
@@ -374,10 +769,6 @@ func TestBootstrapHostJWTAuthenticationBeforeUpgrade(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewMemory() error = %v", err)
 	}
-	bootstrap, err := NewBootstrap(resolver, message.NewEchoHandler())
-	if err != nil {
-		t.Fatalf("NewBootstrap() error = %v", err)
-	}
 	snapshot := snapshotWithAuthentication(t, configurationversion.AuthenticationSettings{
 		Enabled: true,
 		Providers: []configurationversion.AuthenticationProvider{{
@@ -390,12 +781,17 @@ func TestBootstrapHostJWTAuthenticationBeforeUpgrade(t *testing.T) {
 			},
 		}},
 	})
-	host, err := bootstrap.Build(snapshot)
-	if err != nil {
-		t.Fatalf("Build() error = %v", err)
-	}
-	if err := host.Start(context.Background()); err != nil {
-		t.Fatalf("Start() error = %v", err)
+	outcome := Bootstrap(&BootstrapRequest{
+		Snapshot:       snapshot,
+		StartupContext: context.Background(),
+		Dependencies: &DependencyBindings{
+			SecretResolver:       resolver,
+			LegacyMessageHandler: message.NewEchoHandler(),
+		},
+	})
+	host, ok := outcome.Success()
+	if !ok {
+		t.Fatalf("Bootstrap() = %#v, want Success", outcome)
 	}
 	t.Cleanup(func() { _ = host.Stop(context.Background()) })
 
@@ -490,4 +886,126 @@ type runtimeErrorHandler struct {
 
 func (handler runtimeErrorHandler) Handle(context.Context, message.Context) error {
 	return handler.err
+}
+
+type bootstrapProofHost struct {
+	snapshot     runtimeconfig.Snapshot
+	buildErr     error
+	startErr     error
+	startContext context.Context
+	buildCalls   int
+	startCalls   int
+	stopCalls    int
+}
+
+func (host *bootstrapProofHost) Snapshot() runtimeconfig.Snapshot { return host.snapshot }
+func (host *bootstrapProofHost) RuntimeContext() context.Context  { return nil }
+func (host *bootstrapProofHost) Build() error {
+	host.buildCalls++
+	return host.buildErr
+}
+func (host *bootstrapProofHost) Start(ctx context.Context) error {
+	host.startCalls++
+	host.startContext = ctx
+	return host.startErr
+}
+func (host *bootstrapProofHost) Stop(context.Context) error {
+	host.stopCalls++
+	return nil
+}
+func (host *bootstrapProofHost) Running() bool   { return host.startCalls == 1 && host.startErr == nil }
+func (host *bootstrapProofHost) Ready() bool     { return host.Running() }
+func (host *bootstrapProofHost) CanAccept() bool { return host.Running() }
+
+type bootstrapProofResolver struct {
+	resolveCalls atomic.Int32
+}
+
+func (resolver *bootstrapProofResolver) Resolve(context.Context, string) (secretresolver.Secret, error) {
+	resolver.resolveCalls.Add(1)
+	return secretresolver.Secret{}, nil
+}
+
+type bootstrapProofHandler struct {
+	handleCalls atomic.Int32
+}
+
+func (handler *bootstrapProofHandler) Handle(context.Context, message.Context) error {
+	handler.handleCalls.Add(1)
+	return nil
+}
+
+type bootstrapProofContext struct{}
+
+func (*bootstrapProofContext) Deadline() (time.Time, bool) { return time.Time{}, false }
+func (*bootstrapProofContext) Done() <-chan struct{}       { return nil }
+func (*bootstrapProofContext) Err() error                  { return nil }
+func (*bootstrapProofContext) Value(any) any               { return nil }
+
+type bootstrapProofError struct {
+	label string
+}
+
+func (failure *bootstrapProofError) Error() string { return failure.label }
+
+func validBootstrapProofRequest(t *testing.T) *BootstrapRequest {
+	t.Helper()
+	return &BootstrapRequest{
+		Snapshot:       apiKeySnapshot(t),
+		StartupContext: context.Background(),
+		Dependencies:   &DependencyBindings{SecretResolver: &bootstrapProofResolver{}},
+	}
+}
+
+func proofBootstrapFactory(
+	host Host,
+	calls *int,
+) bootstrapHostFactory {
+	return func(
+		runtimeconfig.Snapshot,
+		secretresolver.Resolver,
+		message.Handler,
+		func(error),
+	) (Host, error) {
+		if calls != nil {
+			*calls++
+		}
+		return host, nil
+	}
+}
+
+func assertExclusiveBootstrapOutcome(
+	t *testing.T,
+	outcome BootstrapOutcome,
+	want bootstrapOutcomeKind,
+) {
+	t.Helper()
+	host, success := outcome.Success()
+	bootstrapFailure, failedBeforeStart := outcome.BootstrapFailure()
+	startupFailure, failedDuringStart := outcome.StartupFailure()
+	present := 0
+	for _, value := range []bool{success, failedBeforeStart, failedDuringStart} {
+		if value {
+			present++
+		}
+	}
+	if present != 1 {
+		t.Fatalf("outcome accessors selected %d variants, want exactly one", present)
+	}
+	switch want {
+	case bootstrapOutcomeSuccess:
+		if !success || host == nil || bootstrapFailure != nil || startupFailure != nil {
+			t.Fatalf("outcome = %#v, want exclusive Success", outcome)
+		}
+	case bootstrapOutcomeBootstrapFailure:
+		if success || host != nil || !failedBeforeStart || bootstrapFailure == nil || startupFailure != nil {
+			t.Fatalf("outcome = %#v, want exclusive BootstrapFailure", outcome)
+		}
+	case bootstrapOutcomeStartupFailure:
+		if success || host != nil || bootstrapFailure != nil || !failedDuringStart || startupFailure == nil {
+			t.Fatalf("outcome = %#v, want exclusive StartupFailure", outcome)
+		}
+	default:
+		t.Fatalf("unknown expected outcome kind %d", want)
+	}
 }
