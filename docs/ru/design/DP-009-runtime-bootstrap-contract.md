@@ -6,13 +6,15 @@
 
 **Design Status:** Draft
 
-**Implementation Status:** Planned
+**Implementation Status:** Implemented in isolation
 
-Это предложение описывает будущий контракт реализации. Оно не утверждает,
-что pipeline Loader-to-Builder-to-Launcher реализован.
+Граница Bootstrap, определённая этим proposal, реализована и проверена
+изолированно. Этот статус не утверждает, что реализованы Runtime Launcher,
+Runtime Lifecycle Owner или production pipeline
+Loader-to-Builder-to-Launcher.
 
-Сфокусированное уточнение implementation prerequisites завершено. Реализация
-Runtime Bootstrap и его production integration остаются запланированными.
+AP-003 и AP-011 остаются integration-gated. Production integration остаётся
+запланированной.
 
 ## 2. Назначение
 
@@ -588,11 +590,10 @@ Bootstrap.
 фиксированный набор bindings и nil behavior, упорядоченную identity failure,
 взаимоисключающий outcome и сохранение cause, необходимые до реализации.
 
-Это завершает prerequisite design refinement, а не implementation или
-production integration. Конкретные Go types, signatures, package placement,
-private test seam и production wiring остаются для отдельной implementation
-task в границах разделов 7–18. AP-003 и AP-011 остаются
-integration-gated.
+Изолированная реализация теперь предоставляет concrete Go types, signatures,
+package placement и private immutable test seam в границах разделов 7–18. Это
+не реализует production wiring, Runtime Launcher или Runtime Lifecycle Owner.
+AP-003 и AP-011 остаются integration-gated.
 
 ## 24. Решение
 

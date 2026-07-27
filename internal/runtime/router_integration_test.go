@@ -263,21 +263,20 @@ func TestRuntimeStartupFailsWhenRouterConstructionFails(t *testing.T) {
 			Value: "text",
 		}},
 	}}})
-	bootstrap, err := NewBootstrap(emptyResolver(t), message.NewEchoHandler())
-	if err != nil {
-		t.Fatalf("NewBootstrap() error = %v", err)
+	outcome := Bootstrap(&BootstrapRequest{
+		Snapshot:       snapshot,
+		StartupContext: context.Background(),
+		Dependencies: &DependencyBindings{
+			SecretResolver:       emptyResolver(t),
+			LegacyMessageHandler: message.NewEchoHandler(),
+		},
+	})
+	failure, ok := outcome.StartupFailure()
+	if !ok || !errors.Is(failure, router.ErrUnresolvedHandlerRef) {
+		t.Fatalf("Bootstrap() StartupFailure = (%v, %t), want ErrUnresolvedHandlerRef", failure, ok)
 	}
-	host, err := bootstrap.Build(snapshot)
-	if err != nil {
-		t.Fatalf("Build() error = %v", err)
-	}
-
-	err = host.Start(context.Background())
-	if !errors.Is(err, router.ErrUnresolvedHandlerRef) {
-		t.Fatalf("Start() error = %v, want ErrUnresolvedHandlerRef", err)
-	}
-	if host.Running() || host.Ready() || host.CanAccept() || host.RuntimeContext() != nil {
-		t.Fatal("Router construction failure published active Runtime state")
+	if host, ok := outcome.Success(); ok || host != nil {
+		t.Fatal("Router construction failure published a partial Host")
 	}
 	assertPortAvailable(t, snapshot.Listener().Port)
 }
@@ -393,16 +392,18 @@ func startRoutingRuntime(
 	reportError func(error),
 ) Host {
 	t.Helper()
-	bootstrap, err := NewBootstrapWithTerminalErrorReporter(emptyResolver(t), handler, reportError)
-	if err != nil {
-		t.Fatalf("NewBootstrapWithTerminalErrorReporter() error = %v", err)
-	}
-	host, err := bootstrap.Build(snapshot)
-	if err != nil {
-		t.Fatalf("Build() error = %v", err)
-	}
-	if err := host.Start(context.Background()); err != nil {
-		t.Fatalf("Start() error = %v", err)
+	outcome := Bootstrap(&BootstrapRequest{
+		Snapshot:       snapshot,
+		StartupContext: context.Background(),
+		Dependencies: &DependencyBindings{
+			SecretResolver:        emptyResolver(t),
+			LegacyMessageHandler:  handler,
+			TerminalErrorReporter: reportError,
+		},
+	})
+	host, ok := outcome.Success()
+	if !ok {
+		t.Fatalf("Bootstrap() = %#v, want Success", outcome)
 	}
 	t.Cleanup(func() { _ = host.Stop(context.Background()) })
 	return host

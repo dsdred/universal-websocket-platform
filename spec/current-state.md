@@ -1,21 +1,21 @@
 # Текущее состояние
 
 **Веха:** Beta — Complete the Single-Node Runtime
-**Статус реализации:** DP-005 Router и Runtime Foundation Tasks 1–10 реализованы; TASK-M10-002 добавил полный Manager-aware production shutdown pipeline. Configuration Loader contract DP-007 и Snapshot Builder contract DP-008 реализованы изолированно. Production pipeline Loader-to-Builder-to-Launcher, operational identity entities и DP-009 Bootstrap пока не реализованы.
+**Статус реализации:** DP-005 Router и Runtime Foundation Tasks 1–10 реализованы; TASK-M10-002 добавил полный Manager-aware production shutdown pipeline. Configuration Loader contract DP-007, Snapshot Builder contract DP-008 и Runtime Bootstrap contract DP-009 реализованы изолированно. Runtime Launcher, Runtime Lifecycle Owner, production pipeline Loader-to-Builder-to-Launcher и operational identity entities пока не реализованы.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
-**Последняя завершённая development task:** TASK-001 — реализация Draft DP-008
-Snapshot Builder contract поверх neutral `DetachedLoadResult`
+**Последняя завершённая development task:** TASK-004 — изолированная реализация
+Runtime Bootstrap DP-009; Completed — Coordinator Accepted.
 
-**Последняя завершённая operational task:** TASK-003 — уточнение implementation
-prerequisites Draft DP-009; Completed — Coordinator Accepted. Tester verdict —
-PASS after rework, Reviewer final closure verdict — Approved, scope audit
-принят: 6 Required, 0 Questionable, 0 Removable.
+**Последняя завершённая operational task:** TASK-004 — изолированная реализация
+Runtime Bootstrap DP-009; Completed — Coordinator Accepted. Tester verdict —
+PASS, Reviewer verdict — Approved with Findings, blocking findings — 0, scope
+audit принят: 12 Required, 0 Questionable, 0 Removable.
 
-**Текущая operational task:** не назначена. Закрытые изменения TASK-003
+**Текущая operational task:** не назначена. Принятые изменения TASK-004
 остаются в attributed dirty worktree ветки
-`docs/task-003-dp009-prerequisites-refinement`.
+`feature/task-004-dp009-runtime-bootstrap` до отдельно разрешённого commit.
 
 **Verification TASK-001:** targeted tests PASS 3/3; full
 `go test ./... -count=1` PASS 2/2; `go vet ./...`, `gofmt -d` и
@@ -23,25 +23,41 @@ PASS after rework, Reviewer final closure verdict — Approved, scope audit
 
 **Результат TASK-003:** implementation prerequisites Draft DP-009 завершены:
 concrete Bootstrap request, fixed dependency bindings и structured failure
-representation зеркально уточнены. Design Status остаётся Draft,
-Implementation Status — Planned. Реализация Bootstrap, Runtime Launcher,
-Runtime Lifecycle Owner и production Loader-to-Builder-to-Launcher pipeline не
-начаты.
+representation зеркально уточнены. На момент closure TASK-003 Design Status
+оставался Draft, а Implementation Status — Planned. Последующая TASK-004
+реализовала Bootstrap изолированно; Runtime Launcher, Runtime Lifecycle Owner и
+production Loader-to-Builder-to-Launcher pipeline по-прежнему не реализованы.
 
-**Следующий разрешённый шаг:** отдельно разрешённый commit TASK-003; commit,
-push и merge не выполняются без разрешения.
+**Verification TASK-004:** targeted Bootstrap, затрагиваемые Runtime boundaries,
+Host lifecycle/rollback/admission и полный `go test ./... -count=1` — PASS;
+`go vet ./...`, `gofmt -d` и `git diff --check` — PASS. Blocking Tester findings
+отсутствуют. Race detector недоступен: `CGO_ENABLED=0`, а при включении CGO
+отсутствует `gcc`.
 
-**Следующая рекомендуемая Ready work после clean trusted baseline:**
-изолированная реализация Runtime Bootstrap DP-009. Следующая task и branch не
-созданы; production integration и acceptance proofs AP-003/AP-011 явно
-отложены.
+**Следующий разрешённый шаг:** только отдельно разрешённый commit TASK-004.
+Commit, push и merge не выполнялись и не выполняются без разрешения.
 
-**Stage 2 verification completed:** TASK-003 создан как первый content change
-на task branch, а task index обновлён вторым change; task-before-work ordering
-доказан без ослабления invariant.
+**Следующая рекомендуемая Ready work:** focused architecture/documentation
+refinement implementation prerequisites in-process Runtime Launcher boundary:
+concrete Launcher input/output, точная delegation в реализованный Bootstrap,
+ownership handoff будущему Runtime Lifecycle Owner, failure passthrough и
+граница proof AP-003/AP-011. Следующая task и branch не созданы.
+
+ARCH-004 явно не определяет implementation APIs, а DP-009 §22 откладывает
+Launcher implementation. Поэтому Launcher code, Runtime Lifecycle Owner и
+production integration ещё не Ready и не начинаются.
+
+**Stage 2 verification completed:** для TASK-003 и TASK-004 соответствующий task
+record создан как первый content change на task branch, а task index обновлён
+вторым change; task-before-work ordering доказан без ослабления invariant.
 
 Builder не подключён к production launch pipeline. Design Status DP-008
 остаётся Draft, Implementation Status — Implemented.
+
+Runtime Bootstrap DP-009 реализован и проверен изолированно. Design Status
+остаётся Draft, Implementation Status — Implemented in isolation. Runtime
+Launcher, Runtime Lifecycle Owner и production launch pipeline не реализованы;
+AP-003 и AP-011 остаются integration-gated.
 
 ## Архитектурные решения
 
@@ -182,7 +198,8 @@ Builder не подключён к production launch pipeline. Design Status DP-
 - Container пока не содержит других зависимостей и самостоятельно не управляет запуском, остановкой или reload Runtime
 - Реализован потокобезопасный Runtime Host, являющийся production composition root и владеющий независимой копией Snapshot и Container
 - Host поддерживает lifecycle `Created -> Built -> Starting -> Running -> Stopping -> Stopped`; Restart и Reload отсутствуют
-- Runtime Bootstrap создает Built Host, а Host во время Start явно собирает Router, Authentication, connection dispatch, Session handoff и Listener без service locator или DI framework
+- Runtime Bootstrap принимает concrete request со Snapshot by value, startup context и fixed typed bindings, выполняет три ordered static validations, конструирует и строит не более одного Host и синхронно вызывает `Host.Start()` не более одного раза
+- Runtime Bootstrap возвращает взаимоисключающий Success, structured Bootstrap Failure либо сохраняющий cause Startup Failure; Host остаётся владельцем operational composition, startup transaction и rollback
 - Отдельный `PreparedRuntime` handoff был исключён принятым Architect rewrite
   DP-009 и не является target implementation
 - Startup transaction публикует Listener только после успешного запуска и выполняет rollback полученного ресурса при ошибке, сохраняя исходную и rollback errors
