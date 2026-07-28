@@ -8,16 +8,15 @@
 
 **Bootstrap Implementation Status:** Implemented in isolation
 
-**Runtime Launcher Implementation Status:** Planned
+**Runtime Launcher Implementation Status:** Implemented in isolation
 
-Граница Bootstrap, определённая этим proposal, реализована и проверена
-изолированно. Этот статус не утверждает, что реализованы Runtime Launcher,
-Runtime Lifecycle Owner или production pipeline
-Loader-to-Builder-to-Launcher.
+Границы Bootstrap и Runtime Launcher, определённые этим proposal, реализованы и
+проверены изолированно. Этот статус не утверждает, что реализованы Runtime
+Lifecycle Owner или production pipeline Loader-to-Builder-to-Launcher.
 
-Concrete contract in-process Launcher определён для будущей реализации, но код
-Launcher отсутствует. AP-003 и AP-011 остаются integration-gated. Production
-integration остаётся запланированной.
+Concrete in-process Launcher реализован как exact stateless delegation в
+Bootstrap. AP-003 и AP-011 остаются integration-gated. Production integration
+остаётся запланированной.
 
 ## 2. Назначение
 
@@ -62,7 +61,7 @@ DP-009 не определяет:
 
 - загрузку Configuration или построение Snapshot;
 - хранение Runtime Instance или Launch Attempt;
-- реализацию Runtime Launcher;
+- Runtime Lifecycle Owner и production integration Launcher;
 - внутреннее устройство Host или изменения публичного API;
 - operational composition, startup validation, получение ресурсов, startup
   rollback, readiness, Admission Gate, shutdown, retry или replacement policy;
@@ -142,7 +141,7 @@ Runtime Lifecycle Owner не вызывает Bootstrap или `Host.Start()` н
 Launcher не создаёт Host и не компонует Runtime graph. Bootstrap не обходит
 Launcher и не поглощает владение startup, принадлежащее Host.
 
-Полное планируемое поведение Launcher эквивалентно:
+Полное реализованное поведение Launcher эквивалентно:
 
 ```go
 func Launch(request *BootstrapRequest) BootstrapOutcome {
@@ -415,7 +414,7 @@ goroutine или background lifecycle. Конкурентные вызовы н�
 `Host.Start()` может зависеть от operational external conditions; это не
 ослабляет детерминированное поведение до Start.
 
-Планируемый Launcher не имеет fields, cache, registry, goroutine, background
+Реализованный Launcher не имеет fields, cache, registry, goroutine, background
 lifecycle или mutable package state. Каждый вызов делегирует синхронно и
 независимо. После возврата Launcher не сохраняет ни request, ни outcome.
 
@@ -429,7 +428,7 @@ Runtime Lifecycle Owner
 ```
 
 - Launcher зависит от контракта Bootstrap, а не от внутреннего устройства Host.
-- Планируемый Launcher находится в `internal/runtime`, принимает
+- Launcher находится в `internal/runtime`, принимает
   `*BootstrapRequest`, возвращает `BootstrapOutcome` и делегирует в
   `Bootstrap` без adapter или dependency cycle.
 - Bootstrap зависит от фиксированного контракта создания Host и фиксированных
@@ -494,16 +493,16 @@ Host.
 
 Каждый production launch request проходит через stateless Runtime Launcher.
 
-Изолированная реализация Launcher может доказать только local delegation
-property: каждый вызов `Launch` вызывает `Bootstrap` ровно один раз с тем же
-pointer request и возвращает его неизменённый outcome. Полная AP-003
+Изолированная реализация Launcher доказывает local delegation property: каждый
+вызов `Launch` вызывает `Bootstrap` ровно один раз с тем же pointer request и
+возвращает его неизменённый outcome. Полная AP-003
 дополнительно требует integration proof, что каждый production launch path
 или start path Runtime Lifecycle Owner использует `Launch`, а ни один такой
 path не вызывает Bootstrap или `Host.Start()` напрямую в обход Launcher.
 После успешного handoff Lifecycle Owner законно использует принадлежащую ему
 ссылку Host для lifecycle operations, включая Stop, по ARCH-004. Пока
-Launcher, Lifecycle Owner и production wiring не реализованы и не проверены,
-AP-003 остаётся integration-gated.
+Lifecycle Owner и production wiring не реализованы и не проверены, AP-003
+остаётся integration-gated.
 
 ### AP-004: Граница Bootstrap
 
@@ -547,7 +546,7 @@ configuration.
 Launcher не сохраняет Snapshot, Host, registry или lifecycle state после
 вызова launch.
 
-Изолированная реализация Launcher может доказать local property через zero-state
+Изолированная реализация Launcher доказывает local property через zero-state
 surface, exact delegation, неизменённые identities и независимые конкурентные
 вызовы. Полная AP-011 дополнительно требует proof production composition, что
 к ownership Launcher не прикреплены adapter, registry, cache, goroutine или
@@ -633,7 +632,6 @@ source validation, semantic normalization или исправление Snapshot
 За пределами DP-009 остаются:
 
 - private test-factory seam и детали production wiring;
-- реализация Runtime Launcher;
 - integration Runtime Lifecycle Owner и Control Service;
 - operational diagnostics, logging, serialization, storage и redaction;
 - retry, replacement, reconciliation и persistence;
@@ -653,17 +651,17 @@ Bootstrap.
 Изолированная реализация Bootstrap предоставляет concrete Go types, signatures,
 package placement и private immutable test seam в границах разделов 7–18.
 
-Сфокусированное prerequisite refinement Launcher определяет planned input и
-output `internal/runtime.Launch`, семантику borrowed pointer, exactly-once
-delegation в `Bootstrap`, unchanged passthrough outcome и failures, ownership
-handoff и разделение local и integration proofs. Этот refinement не реализует
-Runtime Launcher, Runtime Lifecycle Owner или production wiring. AP-003 и
-AP-011 остаются integration-gated.
+Сфокусированное prerequisite refinement Launcher определило input и output
+`internal/runtime.Launch`, семантику borrowed pointer, exactly-once delegation
+в `Bootstrap`, unchanged passthrough outcome и failures, ownership handoff и
+разделение local и integration proofs. Изолированная реализация предоставляет
+эту exact stateless boundary без Runtime Lifecycle Owner или production wiring.
+AP-003 и AP-011 остаются integration-gated.
 
 ## 24. Решение
 
 UWP использует Runtime Launcher как обязательную stateless launch boundary.
-Launcher будет предоставлять planned синхронную операцию
+Launcher предоставляет реализованную изолированно синхронную операцию
 `func Launch(request *BootstrapRequest) BootstrapOutcome` в
 `internal/runtime`. Он заимствует pointer request, вызывает
 `Bootstrap(request)` ровно один раз и возвращает outcome без изменения.
