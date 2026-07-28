@@ -6,7 +6,7 @@
 
 **Design Status:** Draft
 
-**Implementation Status:** Planned
+**Implementation Status:** Implemented in isolation
 
 **Статус архитектуры:** implementation contract утверждённой модели
 operational identity из
@@ -14,8 +14,10 @@ operational identity из
 и модели loading из
 [ARCH-005](../architecture/ARCH-005-runtime-configuration-snapshot-and-loading-model.md).
 
-Runtime Lifecycle Owner и production wiring Loader-to-Builder-to-Launcher не
-реализованы. Этот Draft не пересматривает утверждённую архитектуру.
+Runtime Lifecycle Owner реализован изолированно в
+`internal/runtimelifecycle`. Production wiring
+Loader-to-Builder-to-Launcher не реализован. Этот Draft не пересматривает
+утверждённую архитектуру.
 
 ## 2. Назначение
 
@@ -390,10 +392,12 @@ unknown или other-Owner tokens возвращают `ErrPreparationNotOwned`.
 - Snapshot result переводит `AttemptPreparing -> AttemptLaunching`, создаёт
   одну tracked operation и после unlock планирует ровно один Launcher call.
 
-Owner сохраняет этот exact Snapshot value или error interface identity как
-единственный result attempt. Он не выполняет structural, pointer, deep, text,
-`errors.Is`, chain, comparability или semantic-equivalence comparison между
-results.
+Owner принимает этот exact Snapshot value или error interface identity как
+единственный preparation result attempt. Tracked launch operation сохраняет
+Snapshot только до возврата Launcher; Owner не сохраняет Snapshot в
+historical attempt. Exact identity preparation error сохраняется в convergent
+outcome. Owner не выполняет structural, pointer, deep, text, `errors.Is`,
+chain, comparability или semantic-equivalence comparison между results.
 
 После первой acceptance каждый последующий Start с тем же authentic token
 полностью игнорирует переданный `PreparationResult`, включая zero или different
@@ -624,7 +628,7 @@ waits.
 | Identity и record Launch Attempt | Candidate выделяется injected source; attempt создаётся и owned Owner при claim. |
 | Exact pin ConfigurationVersion | Выбирается StartRequest и pin Owner до Loader/Builder. |
 | LoadRequest | Создаётся Owner и раскрывается read-only через preparation. |
-| Snapshot или preparation failure | Создаётся снаружи и возвращается через closed PreparationResult. |
+| Snapshot или preparation failure | Создаётся снаружи и возвращается через closed PreparationResult. Snapshot сохраняется только tracked launch operation до возврата Launcher; exact failure сохраняется в convergent outcome. |
 | Dependency bindings | Внешний owner; stable borrowed без изменений Owner. |
 | Preparation/start context | Создаётся, отменяется и owned Owner. |
 | Runtime Launcher | Stateless и не владеет lifecycle state. |
@@ -656,7 +660,8 @@ Host-owned terminal signal.
    игнорируются, а non-comparable Snapshots или errors не приводят к equality
    call или panic;
 9. exact preparation и Launch failures сходятся unchanged;
-10. accepted Snapshot приводит ровно к одному Launcher call;
+10. accepted Snapshot приводит ровно к одному Launcher call, а Owner
+    освобождает свою копию Snapshot после возврата Launcher;
 11. Running публикуется только после возврата successful ready Host;
 12. Stop работает в Preparing, Launching, Running, Stopping и обеих формах
     Failed;
@@ -711,13 +716,13 @@ DP-010 не определяет:
 
 ## 31. Implementation boundary
 
-Первый code slice может добавить только `internal/runtimelifecycle` и local
-proof tests этого contract. Он может использовать fakes вокруг package-private
-launch seam и external preparation boundary.
+Реализованный первый code slice добавляет только
+`internal/runtimelifecycle` и local proof tests этого contract. Он использует
+fakes вокруг package-private immutable launch seam и external preparation
+boundary.
 
-Он не должен подключать Loader, Builder, HTTP handlers Control Service,
-repositories, persistence или production routing. Implementation не повышает
-design status.
+Он не подключает Loader, Builder, HTTP handlers Control Service, repositories,
+persistence или production routing. Implementation не повышает design status.
 
 ## 32. Итог
 

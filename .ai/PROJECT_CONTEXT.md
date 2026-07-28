@@ -9,10 +9,17 @@
 ## Текущее состояние
 
 - Текущая веха: **Beta — Complete the Single-Node Runtime**
-- Статус реализации: **Control Service, single-node Runtime vertical, Configuration Loader boundary, DP-008 Snapshot Builder, DP-009 Runtime Bootstrap и stateless Runtime Launcher реализованы изолированно; Runtime Lifecycle Owner и production launch pipeline не реализованы**
-- Последняя завершённая development task: **TASK-007 — Draft DP-010 Runtime Lifecycle Owner prerequisites; Completed — Coordinator Accepted**
+- Статус реализации: **Control Service, single-node Runtime vertical,
+  Configuration Loader boundary, DP-008 Snapshot Builder, DP-009 Runtime
+  Bootstrap, stateless Runtime Launcher и DP-010 Runtime Lifecycle Owner
+  реализованы изолированно; production launch pipeline не реализован**
+- Последняя завершённая development task: **TASK-009 — Runtime Lifecycle Owner implementation; Completed — Coordinator Accepted**
 - Последняя завершённая operational task: **TASK-008 — Publisher pipeline governance; Completed — Coordinator Accepted**
-- Текущая operational task: **не назначена**
+- Текущая operational task: **отсутствует**
+- Trusted baseline TASK-009: **clean synchronized
+  `main@63b961eeb59af9205c3c3d0b68d3f4bd7b8ac25c`; локальная ветка
+  `feature/task-009-runtime-lifecycle-owner`; task record создан первым
+  content change**
 - Trusted baseline TASK-008: **TASK-007 task commit `2e6d221` опубликован через PR #8 и merged в clean `main` commit `802760a`; TASK-008 начата от этого baseline, task record создан первым content change**
 - Verification TASK-001: **targeted tests PASS 3/3; full `go test ./... -count=1` PASS 2/2; `go vet ./...`, `gofmt -d` и `git diff --check` PASS; race detector недоступен без CGO/gcc**
 - Operational entry после принятия TASK-002: **точная команда `Продолжай проект.` запускает repository-native selection и полный PROCESS-001 cycle без неявных commit, push или merge**
@@ -28,13 +35,33 @@
 - Verification TASK-007: **после rework B-001/B-002, R-001/R-002 и project-state correction F-001 Final Reviewer выдал Approved, 0 blocking и 0 nonblocking findings; Final Tester PASS; PROCESS-002 Synchronized; Coordinator Scope Audit accepted — 8 Required, 0 Questionable, 0 Removable; Coordinator Acceptance получена**
 - Operational governance TASK-008: **точная команда `Разрешаю публиковать.` документирована как единое разрешение P0–P10 для одного immutable task target; Initial P0 отделён от phase-aware Resume Reconstruction Guard, push/merge являются checkpoints, external blocker сохраняет authority, post-P6 resume остаётся на `main`, No CI допускается только при `MERGEABLE / CLEAN`, cleanup и terminal payload обязательны; R-001/R-002 устранены, Final Reviewer Approved 0/0, Tester PASS, PROCESS-002 Synchronized, Coordinator Scope Audit accepted — 14 Required, 0 Questionable, 0 Removable; Coordinator Acceptance получена**
 - Product impact TASK-008: **отсутствует; production code/tests, `.github`, ADR/ARCH/DP, product capability и Runtime implementation не изменены**
+- Результат TASK-009: **добавлен изолированный
+  `internal/runtimelifecycle`: Owner-bound identities, Owner-issued Launch
+  Attempt и exact version pin через `PrepareStart`, closed preparation result,
+  single tracked Launcher/Host Stop operations, same-token convergence,
+  origin-sensitive truthful outcomes, cancellation-only caller waits и
+  coherent observation; Bootstrap, Launcher, Host и production wiring не
+  изменены**
+- Verification TASK-009: **targeted и full `go test ./... -count=1`,
+  stress `-count=100`, `go vet ./...`, `go fmt ./...`,
+  `git diff --check`, EN/RU parity и link validation PASS; race detector
+  недоступен при `CGO_ENABLED=0` и отсутствующем `gcc`; independent Tester
+  PASS; Scope Audit accepted — 14 Required, 0 Questionable, 0 Removable;
+  Final Reviewer Approved, 0 blocking и 0 nonblocking findings; Coordinator
+  Acceptance получена**
 - Closure publication state TASK-008: **на момент closure stage, commit и publication не выполнялись; это historical fact, а не live gate. Любая последующая разрешённая публикация reconstruct-ит фактическое состояние из Git/GitHub и не хранит transient dirty/push/PR/cleanup state в project context**
-- Следующая рекомендуемая work после closure TASK-007: **отдельная изолированная production implementation минимального in-process Runtime Lifecycle Owner по reviewed Draft DP-010; следующая task/branch не созданы и implementation не начата**
-- Readiness boundary следующей work: **только локальный Owner package и proof tests DP-010 могут стать bounded implementation candidate; Loader/Builder production wiring, persistence, management API, retry/reconciliation и supervision остаются отдельной неготовой work**
+- Следующая work после TASK-009: **не активирована; production wiring
+  Loader-to-Builder-to-Launcher, persistence, management API,
+  retry/reconciliation и supervision остаются за границей TASK-009 и требуют
+  отдельного readiness/contract решения**
 - Stage 2 task-before-work ordering выполнен для TASK-003, TASK-004, TASK-005, TASK-006 и TASK-007: task record создан первым content change, а task index обновлён только после initial gate
 - Publication history: **TASK-005 commit `99e0d3d`, TASK-006 commit `fd0f80a` и TASK-007 commit `2e6d221` merged через PR #6/#7/#8; transient pre-commit/Publisher blockers не являются durable project-state instructions**
-- Design Status DP-009 остаётся **Draft**; Bootstrap и Runtime Launcher Implementation Status — **Implemented in isolation**; Runtime Lifecycle Owner и production launch pipeline не реализованы; AP-003 и AP-011 остаются integration-gated
-- Design Status DP-010 остаётся **Draft**, Implementation Status — **Planned**; reviewed contract не является реализацией Owner или production pipeline
+- Design Status DP-009 остаётся **Draft**; Bootstrap и Runtime Launcher
+  Implementation Status — **Implemented in isolation**; production launch
+  pipeline не реализован, AP-003 и AP-011 остаются integration-gated
+- Design Status DP-010 остаётся **Draft**, Implementation Status —
+  **Implemented in isolation**; status не утверждает production wiring,
+  persistence или management capability
 - Design Status DP-008 остаётся **Draft**, Implementation Status — **Implemented in isolation**
 - Содержимое репозитория: документация, спецификации, инженерные соглашения, исполняемый Control Service и изолированные Runtime-компоненты с тестами
 

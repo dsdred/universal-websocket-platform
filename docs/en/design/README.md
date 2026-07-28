@@ -15,4 +15,4 @@ This directory contains focused Runtime design documents. A design document expl
 | [DP-007: Configuration Loader Contract](DP-007-configuration-loader-contract.md) | Draft; implemented in isolation |
 | [DP-008: Snapshot Builder Contract](DP-008-snapshot-builder-contract.md) | Draft; implemented in isolation |
 | [DP-009: Runtime Bootstrap Contract](DP-009-runtime-bootstrap-contract.md) | Draft; implemented in isolation |
-| [DP-010: Runtime Lifecycle Owner Contract](DP-010-runtime-lifecycle-owner-contract.md) | Draft; planned |
+| [DP-010: Runtime Lifecycle Owner Contract](DP-010-runtime-lifecycle-owner-contract.md) | Draft; implemented in isolation |
