@@ -10,10 +10,10 @@
 
 - Текущая веха: **Beta — Complete the Single-Node Runtime**
 - Статус реализации: **Control Service, single-node Runtime vertical, Configuration Loader boundary, DP-008 Snapshot Builder, DP-009 Runtime Bootstrap и stateless Runtime Launcher реализованы изолированно; Runtime Lifecycle Owner и production launch pipeline не реализованы**
-- Последняя завершённая development task: **TASK-006 — isolated implementation in-process stateless Runtime Launcher; Completed — Coordinator Accepted**
-- Последняя завершённая operational task: **TASK-006 — isolated implementation in-process stateless Runtime Launcher; Completed — Coordinator Accepted**
-- Текущая operational task: **не назначена; принятые изменения TASK-006 остаются в attributed dirty worktree ветки `feature/task-006-runtime-launcher` до отдельно разрешённого commit**
-- Trusted baseline TASK-006: **TASK-005 merged в clean `main` commit `249634a`; TASK-006 начата от этого baseline в `feature/task-006-runtime-launcher`**
+- Последняя завершённая development task: **TASK-007 — Draft DP-010 Runtime Lifecycle Owner prerequisites; Completed — Coordinator Accepted**
+- Последняя завершённая operational task: **TASK-007 — Draft DP-010 Runtime Lifecycle Owner prerequisites; Completed — Coordinator Accepted**
+- Текущая operational task: **не назначена; принятый восьмифайловый diff TASK-007 остаётся в attributed dirty worktree ветки `docs/task-007-runtime-lifecycle-owner-prerequisites` до отдельно разрешённого commit**
+- Trusted baseline TASK-007: **TASK-006 merged через PR #7 в clean `main` commit `e791482`; TASK-007 начата от этого baseline в `docs/task-007-runtime-lifecycle-owner-prerequisites`, task record создан первым content change**
 - Verification TASK-001: **targeted tests PASS 3/3; full `go test ./... -count=1` PASS 2/2; `go vet ./...`, `gofmt -d` и `git diff --check` PASS; race detector недоступен без CGO/gcc**
 - Operational entry после принятия TASK-002: **точная команда `Продолжай проект.` запускает repository-native selection и полный PROCESS-001 cycle без неявных commit, push или merge**
 - Verification TASK-002: **Tester PASS; Reviewer Approved after rework; scope audit accepted — 8 Required, 0 Questionable, 0 Removable**
@@ -24,12 +24,15 @@
 - Verification TASK-005: **Tester PASS; PROCESS-002 Synchronized; Final Reviewer Approved, 0 blocking и 0 nonblocking findings; Coordinator Scope Audit accepted — 6 Required, 0 Questionable, 0 Removable; Coordinator Acceptance получена**
 - Результат TASK-006: **`internal/runtime.Launch` реализован как exact stateless `return Bootstrap(request)` без adapter, state, validation, wrapping, cleanup, retry или lifecycle policy; Lifecycle Owner и production wiring отсутствуют**
 - Verification TASK-006: **targeted и full Go tests, `go vet`, `gofmt -d`, EN/RU structure/status parity и diff checks PASS; race detector недоступен при `CGO_ENABLED=0` и отсутствующем `gcc`; Final Reviewer Approved, 0 blocking и 0 nonblocking findings; Scope Audit accepted — 8 Required, 0 Questionable, 0 Removable**
-- Следующий разрешённый шаг: **только отдельно разрешённый commit TASK-006; commit, push и merge не выполняются без отдельного разрешения**
-- Следующая рекомендуемая Ready work после closure TASK-006: **focused architecture/documentation refinement минимальных implementation prerequisites in-process Runtime Lifecycle Owner по ARCH-004; task и branch не созданы и работа не активирована**
-- Readiness boundary следующей work: **production implementation Runtime Lifecycle Owner и Loader-to-Builder-to-Launcher wiring не Ready до concrete Owner API, serialization/outcome и local/integration proof contract**
-- Stage 2 task-before-work ordering выполнен для TASK-003, TASK-004, TASK-005 и TASK-006: task record создан первым content change, а task index обновлён только после initial gate
+- Результат TASK-007: **зеркальный Draft DP-010 с Implementation Status Planned фиксирует минимальный `internal/runtimelifecycle` contract: Owner-bound Workspace/Configuration/Runtime Instance, Owner-issued Launch Attempt и exact ConfigurationVersion pin в `PrepareStart` до Loader/Builder, closed `PreparationResult`, first-valid-result-wins, origin-sensitive Stop, truthful immutable outcomes/observation и local-vs-integration proofs; production code отсутствует**
+- Verification TASK-007: **после rework B-001/B-002, R-001/R-002 и project-state correction F-001 Final Reviewer выдал Approved, 0 blocking и 0 nonblocking findings; Final Tester PASS; PROCESS-002 Synchronized; Coordinator Scope Audit accepted — 8 Required, 0 Questionable, 0 Removable; Coordinator Acceptance получена**
+- Следующий разрешённый шаг: **только отдельно разрешённый commit принятого diff TASK-007; stage, commit, push и merge не выполняются неявно**
+- Следующая рекомендуемая work после closure TASK-007: **отдельная изолированная production implementation минимального in-process Runtime Lifecycle Owner по reviewed Draft DP-010; следующая task/branch не созданы и implementation не начата**
+- Readiness boundary следующей work: **только локальный Owner package и proof tests DP-010 могут стать bounded implementation candidate; Loader/Builder production wiring, persistence, management API, retry/reconciliation и supervision остаются отдельной неготовой work**
+- Stage 2 task-before-work ordering выполнен для TASK-003, TASK-004, TASK-005, TASK-006 и TASK-007: task record создан первым content change, а task index обновлён только после initial gate
 - Design Status DP-009 остаётся **Draft**; Bootstrap и Runtime Launcher Implementation Status — **Implemented in isolation**; Runtime Lifecycle Owner и production launch pipeline не реализованы; AP-003 и AP-011 остаются integration-gated
-- Design Status DP-008 остаётся **Draft**
+- Design Status DP-010 остаётся **Draft**, Implementation Status — **Planned**; reviewed contract не является реализацией Owner или production pipeline
+- Design Status DP-008 остаётся **Draft**, Implementation Status — **Implemented in isolation**
 - Содержимое репозитория: документация, спецификации, инженерные соглашения, исполняемый Control Service и изолированные Runtime-компоненты с тестами
 
 ## Архитектурные принципы

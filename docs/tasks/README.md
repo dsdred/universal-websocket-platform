@@ -11,6 +11,7 @@ operational документы ведутся на русском языке и 
 - [TASK-004 — Изолированная реализация Runtime Bootstrap DP-009](TASK-004-DP-009-RUNTIME-BOOTSTRAP.md)
 - [TASK-005 — Implementation prerequisites Runtime Launcher](TASK-005-RUNTIME-LAUNCHER-PREREQUISITES.md)
 - [TASK-006 — Изолированная реализация Runtime Launcher](TASK-006-RUNTIME-LAUNCHER.md)
+- [TASK-007 — Implementation prerequisites Runtime Lifecycle Owner](TASK-007-RUNTIME-LIFECYCLE-OWNER-PREREQUISITES.md)
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.
