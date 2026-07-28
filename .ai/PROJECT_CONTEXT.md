@@ -12,10 +12,14 @@
 - Статус реализации: **Control Service, single-node Runtime vertical,
   Configuration Loader boundary, DP-008 Snapshot Builder, DP-009 Runtime
   Bootstrap, stateless Runtime Launcher и DP-010 Runtime Lifecycle Owner
-  реализованы изолированно; production launch pipeline не реализован**
+  реализованы изолированно; Draft DP-011 определяет planned integration
+  contract, production launch pipeline не реализован**
 - Последняя завершённая development task: **TASK-009 — Runtime Lifecycle Owner implementation; Completed — Coordinator Accepted**
 - Последняя завершённая operational task: **TASK-008 — Publisher pipeline governance; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
+- Последняя завершённая architecture task: **TASK-010 — Production Launch
+  Pipeline Design; Completed — Coordinator Accepted**
+- Текущая development task: **отсутствует**
 - Trusted baseline TASK-009: **clean synchronized
   `main@63b961eeb59af9205c3c3d0b68d3f4bd7b8ac25c`; локальная ветка
   `feature/task-009-runtime-lifecycle-owner`; task record создан первым
@@ -50,10 +54,23 @@
   Final Reviewer Approved, 0 blocking и 0 nonblocking findings; Coordinator
   Acceptance получена**
 - Closure publication state TASK-008: **на момент closure stage, commit и publication не выполнялись; это historical fact, а не live gate. Любая последующая разрешённая публикация reconstruct-ит фактическое состояние из Git/GitHub и не хранит transient dirty/push/PR/cleanup state в project context**
-- Следующая work после TASK-009: **не активирована; production wiring
-  Loader-to-Builder-to-Launcher, persistence, management API,
-  retry/reconciliation и supervision остаются за границей TASK-009 и требуют
-  отдельного readiness/contract решения**
+- Следующая work после TASK-009: **активирована как documentation-first
+  TASK-010; production implementation Loader-to-Builder-to-Launcher,
+  persistence, management API, retry/reconciliation и supervision остаются
+  отдельной work и требуют собственного readiness/contract решения**
+- Результат TASK-010: **создан и независимо reviewed зеркальный Draft DP-011
+  с Implementation Status Planned; он определяет immutable
+  `internal/runtimelaunchflow`, synchronous Start Operation, Caller
+  Cancellation Gate и точный `PrepareStart -> Load -> Build -> Start`
+  contract без production code, Source composition, management API,
+  persistence или Production Activation**
+- Verification TASK-010: **EN/RU 33/33 headings и 14/14 fences; broken links
+  0; `git diff --check` PASS; Scope Audit 11 Required, 0 Questionable,
+  0 Removable; repeat Independent Reviewer Approved 0/0**
+- Следующий candidate после TASK-010: **не активирован; минимальная
+  implementation `internal/runtimelaunchflow` и local proof tests требуют
+  нового task intake, а Source adapter, Control Service routing, persistence
+  и Production Activation остаются вне slice**
 - Stage 2 task-before-work ordering выполнен для TASK-003, TASK-004, TASK-005, TASK-006 и TASK-007: task record создан первым content change, а task index обновлён только после initial gate
 - Publication history: **TASK-005 commit `99e0d3d`, TASK-006 commit `fd0f80a` и TASK-007 commit `2e6d221` merged через PR #6/#7/#8; transient pre-commit/Publisher blockers не являются durable project-state instructions**
 - Design Status DP-009 остаётся **Draft**; Bootstrap и Runtime Launcher

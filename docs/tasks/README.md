@@ -14,6 +14,7 @@ operational документы ведутся на русском языке и 
 - [TASK-007 — Implementation prerequisites Runtime Lifecycle Owner](TASK-007-RUNTIME-LIFECYCLE-OWNER-PREREQUISITES.md)
 - [TASK-008 — Publisher pipeline governance](TASK-008-PUBLISHER-PIPELINE-GOVERNANCE.md)
 - [TASK-009 — Runtime Lifecycle Owner implementation](TASK-009-RUNTIME-LIFECYCLE-OWNER.md)
+- [TASK-010 — Production Launch Pipeline Design](TASK-010-PRODUCTION-LAUNCH-PIPELINE-DESIGN.md)
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

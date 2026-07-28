@@ -7,7 +7,8 @@ pipeline. Configuration Loader contract DP-007, Snapshot Builder contract
 DP-008, Runtime Bootstrap contract DP-009, stateless Runtime Launcher и
 Runtime Lifecycle Owner DP-010 реализованы изолированно. Production pipeline
 Loader-to-Builder-to-Launcher и persistent operational identity entities пока
-не реализованы.
+не реализованы. Draft DP-011 определяет planned integration contract этого
+pipeline без production implementation или Control Service activation.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
@@ -18,6 +19,11 @@ implementation; `Completed — Coordinator Accepted`.
 governance; `Completed — Coordinator Accepted`.
 
 **Текущая operational task:** отсутствует.
+
+**Последняя завершённая architecture task:** TASK-010 — Production Launch
+Pipeline Design; `Completed — Coordinator Accepted`.
+
+**Текущая development task:** отсутствует.
 
 **Trusted baseline TASK-009:** clean synchronized
 `main@63b961eeb59af9205c3c3d0b68d3f4bd7b8ac25c`; локальная ветка
@@ -129,10 +135,27 @@ publication не выполнялись. Это historical fact, а не live op
 из Git/GitHub; transient dirty-branch, push, PR, checks или cleanup state здесь
 не хранится.
 
-**Следующая work после TASK-009:** не активирована. Production wiring
-Loader-to-Builder-to-Launcher, persistence, management API,
-retry/reconciliation и supervision остаются отдельной work и требуют
-собственного readiness/contract решения.
+**Следующая work после TASK-009:** активирована как documentation-first
+TASK-010. Production implementation Loader-to-Builder-to-Launcher,
+persistence, management API, retry/reconciliation и supervision остаются
+отдельной work и требуют собственного readiness/contract решения.
+
+**Результат TASK-010:** создан и независимо reviewed зеркальный Draft DP-011.
+Он определяет immutable `internal/runtimelaunchflow` boundary, synchronous
+Start Operation, Caller Cancellation Gate и exact
+`PrepareStart -> Load -> Build -> Start` contract. Implementation, Source
+composition, management routing/authorization, persistence и Production
+Activation не начаты.
+
+**Verification TASK-010:** EN/RU имеют 33/33 headings, 14/14 fences и
+эквивалентный нормативный смысл; links broken 0; `git diff --check` PASS;
+Scope Audit accepted — 11 Required, 0 Questionable, 0 Removable; repeat
+Independent Reviewer verdict `Approved`, 0 blocking и 0 nonblocking findings.
+
+**Следующий candidate после TASK-010:** не активирован. Минимальная
+implementation `internal/runtimelaunchflow` и local proof tests по DP-011
+допустимы только через новый task intake; Source adapter, Control Service
+routing, persistence и Production Activation остаются вне этого slice.
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task
