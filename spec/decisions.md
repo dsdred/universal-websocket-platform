@@ -25,7 +25,8 @@
   изолированно, а persistence и production routing operational сущностей
   отсутствуют.
 - ARCH-005 определяет Configuration Loader, Snapshot provenance и loading boundary.
-- Draft DP-007, DP-008 и DP-009 являются implementation contracts и не повышаются до нормативного статуса реализацией или commit.
+- Draft DP-007, DP-008, DP-009, DP-010 и DP-011 являются implementation
+  contracts и не повышаются до нормативного статуса реализацией или commit.
 
 ## Ожидающие отдельного решения
 
@@ -33,3 +34,9 @@ Delivery, Persistence, Plugin ABI, production deployment adapters, operational
 diagnostics и supervision требуют сфокусированных решений в соответствующих
 вехах. Их отсутствие не отменяет уже определённые component, configuration и
 deployment boundaries.
+
+Draft DP-011 определяет только planned in-process integration
+`PrepareStart -> Load -> Build -> Start`. Concrete Source composition,
+management API/authorization, persistence operational identities,
+recovery/reconciliation и Production Activation остаются ожидающими отдельных
+решений.

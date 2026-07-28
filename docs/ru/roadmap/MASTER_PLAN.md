@@ -261,7 +261,10 @@ Architectural debt относится к границам, которые ост
 
 - **Pipeline запуска Runtime:** Configuration Loader, Builder, Runtime
   Launcher, Runtime Lifecycle Owner и Bootstrap существуют изолированно, но не
-  соединены в production launch flow.
+  соединены в production launch flow. Draft
+  [DP-011](../design/DP-011-runtime-launch-pipeline-integration.md) определяет
+  минимальный `PrepareStart -> Load -> Build -> Start` integration contract,
+  но его implementation и Production Activation отсутствуют.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Persistence, Delivery и Plugin всё ещё требуют focused design.

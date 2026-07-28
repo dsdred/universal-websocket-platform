@@ -261,7 +261,10 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
 
 - **Runtime launch pipeline:** Configuration Loader, Builder, Runtime Launcher,
   Runtime Lifecycle Owner, and Bootstrap exist in isolation but are not
-  connected into a production launch flow.
+  connected into a production launch flow. Draft
+  [DP-011](../design/DP-011-runtime-launch-pipeline-integration.md) defines the
+  minimal `PrepareStart -> Load -> Build -> Start` integration contract, but
+  its implementation and Production Activation are absent.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Persistence, Delivery, and Plugin contracts still require focused design.
