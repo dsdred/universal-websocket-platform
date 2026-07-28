@@ -1,26 +1,26 @@
 # Текущее состояние
 
 **Веха:** Beta — Complete the Single-Node Runtime
-**Статус реализации:** DP-005 Router и Runtime Foundation Tasks 1–10 реализованы; TASK-M10-002 добавил полный Manager-aware production shutdown pipeline. Configuration Loader contract DP-007, Snapshot Builder contract DP-008 и Runtime Bootstrap contract DP-009 реализованы изолированно. Runtime Launcher, Runtime Lifecycle Owner, production pipeline Loader-to-Builder-to-Launcher и operational identity entities пока не реализованы.
+**Статус реализации:** DP-005 Router и Runtime Foundation Tasks 1–10 реализованы; TASK-M10-002 добавил полный Manager-aware production shutdown pipeline. Configuration Loader contract DP-007, Snapshot Builder contract DP-008, Runtime Bootstrap contract DP-009 и stateless Runtime Launcher реализованы изолированно. Runtime Lifecycle Owner, production pipeline Loader-to-Builder-to-Launcher и operational identity entities пока не реализованы.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
-**Последняя завершённая development task:** TASK-005 — documentation-only
-refinement implementation prerequisites in-process Runtime Launcher; Completed
-— Coordinator Accepted.
+**Последняя завершённая development task:** TASK-006 — isolated implementation
+in-process stateless Runtime Launcher; Completed — Coordinator Accepted.
 
-**Последняя завершённая operational task:** TASK-005 — documentation-only
-refinement implementation prerequisites in-process Runtime Launcher; Completed
-— Coordinator Accepted. Tester verdict — PASS, PROCESS-002 — Synchronized,
-Final Reviewer verdict — Approved, 0 blocking и 0 nonblocking findings, scope
-audit принят: 6 Required, 0 Questionable, 0 Removable.
+**Последняя завершённая operational task:** TASK-006 — isolated implementation
+in-process stateless Runtime Launcher; Completed — Coordinator Accepted. Tester
+verdict — PASS, PROCESS-002 — Synchronized, Final Reviewer verdict — Approved,
+0 blocking и 0 nonblocking findings, scope audit принят: 8 Required,
+0 Questionable, 0 Removable.
 
-**Текущая operational task:** не назначена. Принятые изменения TASK-005
+**Текущая operational task:** не назначена. Принятые изменения TASK-006
 остаются в attributed dirty worktree ветки
-`docs/task-005-runtime-launcher-prerequisites` до отдельно разрешённого commit.
+`feature/task-006-runtime-launcher` до отдельно разрешённого commit.
 
-**Trusted baseline TASK-005:** TASK-004 merged в `main` commit `7d614c4`;
-TASK-005 начата от clean baseline этого commit.
+**Trusted baseline TASK-006:** TASK-005 merged в clean `main` commit `249634a`;
+TASK-006 начата от этого baseline в ветке
+`feature/task-006-runtime-launcher`.
 
 **Verification TASK-001:** targeted tests PASS 3/3; full
 `go test ./... -count=1` PASS 2/2; `go vet ./...`, `gofmt -d` и
@@ -30,8 +30,9 @@ TASK-005 начата от clean baseline этого commit.
 concrete Bootstrap request, fixed dependency bindings и structured failure
 representation зеркально уточнены. На момент closure TASK-003 Design Status
 оставался Draft, а Implementation Status — Planned. Последующая TASK-004
-реализовала Bootstrap изолированно; Runtime Launcher, Runtime Lifecycle Owner и
-production Loader-to-Builder-to-Launcher pipeline по-прежнему не реализованы.
+реализовала Bootstrap изолированно; последующая TASK-006 реализовала Launcher
+изолированно. Runtime Lifecycle Owner и production
+Loader-to-Builder-to-Launcher pipeline по-прежнему не реализованы.
 
 **Verification TASK-004:** targeted Bootstrap, затрагиваемые Runtime boundaries,
 Host lifecycle/rollback/admission и полный `go test ./... -count=1` — PASS;
@@ -54,18 +55,31 @@ Final Reviewer verdict — Approved, 0 blocking и 0 nonblocking findings.
 Coordinator Scope Audit accepted: 6 Required, 0 Questionable, 0 Removable.
 Coordinator Acceptance получена.
 
-**Следующий разрешённый шаг:** только отдельно разрешённый commit TASK-005.
-Commit, push и merge не выполнялись и не выполняются без разрешения.
+**Результат TASK-006:** `internal/runtime.Launch` реализован как exact stateless
+`return Bootstrap(request)`. Launcher не добавляет adapter, state, validation,
+wrapping, cleanup, retry или lifecycle policy и не сохраняет Host.
 
-**Следующая рекомендуемая Ready work после closure TASK-005:** isolated
-implementation in-process stateless Runtime Launcher строго по уточнённому
-contract. Следующая task и branch не созданы, работа не активирована.
+**Verification TASK-006:** targeted `go test ./internal/runtime -count=1`,
+полный `go test ./... -count=1`, `go vet ./...`, `gofmt -d`, EN/RU
+structure/status parity и diff checks — PASS. Race detector недоступен:
+`CGO_ENABLED=0`, `gcc` отсутствует. Final Reviewer verdict — Approved,
+0 blocking и 0 nonblocking findings. Coordinator Scope Audit accepted:
+8 Required, 0 Questionable, 0 Removable.
 
-Launcher implementation может начаться только после closure TASK-005 и clean
-trusted baseline. Runtime Lifecycle Owner и production
-Loader-to-Builder-to-Launcher pipeline остаются отдельной неготовой работой.
+**Следующий разрешённый шаг:** только отдельно разрешённый commit TASK-006.
+Commit, push и merge не выполняются без отдельного разрешения.
 
-**Stage 2 verification completed:** для TASK-003, TASK-004 и TASK-005
+**Следующая рекомендуемая Ready work после closure TASK-006:** focused
+architecture/documentation refinement минимальных implementation prerequisites
+in-process Runtime Lifecycle Owner по ARCH-004. Следующая task и branch не
+созданы, работа не активирована.
+
+Runtime Lifecycle Owner и production Loader-to-Builder-to-Launcher pipeline
+остаются отдельной неготовой work. Production implementation Owner и pipeline
+wiring не Ready до concrete Owner API, serialization/outcome и
+local/integration proof contract.
+
+**Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005 и TASK-006
 соответствующий task record создан как первый content change на task branch, а
 task index обновлён только после initial gate; task-before-work ordering доказан
 без ослабления invariant.
@@ -75,7 +89,7 @@ Builder не подключён к production launch pipeline. Design Status DP-
 
 Runtime Bootstrap DP-009 реализован и проверен изолированно. Design Status
 остаётся Draft, Bootstrap Implementation Status — Implemented in isolation,
-Runtime Launcher Implementation Status — Planned. Runtime Launcher, Runtime
+Runtime Launcher Implementation Status — Implemented in isolation. Runtime
 Lifecycle Owner и production launch pipeline не реализованы; AP-003 и AP-011
 остаются integration-gated.
 
@@ -289,7 +303,7 @@ Lifecycle Owner и production launch pipeline не реализованы; AP-00
 - Управления WebSocket-серверами
 - Control Plane lifecycle управления экземплярами Runtime
 - Runtime Instance и Launch Attempt как operational entities
-- Runtime Lifecycle Owner и Runtime Launcher
+- Runtime Lifecycle Owner
 - Интеграция Configuration Loader в production launch pipeline
 - Запуск Runtime и управление им из Control Service
 - Реальный TLS listener и другие сетевые параметры Listener
