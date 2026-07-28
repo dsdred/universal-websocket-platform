@@ -5,22 +5,24 @@
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
-**Последняя завершённая development task:** TASK-006 — isolated implementation
-in-process stateless Runtime Launcher; Completed — Coordinator Accepted.
+**Последняя завершённая development task:** TASK-007 — Draft DP-010 Runtime
+Lifecycle Owner prerequisites; Completed — Coordinator Accepted.
 
-**Последняя завершённая operational task:** TASK-006 — isolated implementation
-in-process stateless Runtime Launcher; Completed — Coordinator Accepted. Tester
+**Последняя завершённая operational task:** TASK-007 — Draft DP-010 Runtime
+Lifecycle Owner prerequisites; Completed — Coordinator Accepted. Final Tester
 verdict — PASS, PROCESS-002 — Synchronized, Final Reviewer verdict — Approved,
-0 blocking и 0 nonblocking findings, scope audit принят: 8 Required,
-0 Questionable, 0 Removable.
+0 blocking и 0 nonblocking findings, Coordinator Scope Audit accepted:
+8 Required, 0 Questionable, 0 Removable.
 
-**Текущая operational task:** не назначена. Принятые изменения TASK-006
-остаются в attributed dirty worktree ветки
-`feature/task-006-runtime-launcher` до отдельно разрешённого commit.
+**Текущая operational task:** не назначена. Принятый восьмифайловый diff
+TASK-007 остаётся в attributed dirty worktree ветки
+`docs/task-007-runtime-lifecycle-owner-prerequisites` до отдельно разрешённого
+commit.
 
-**Trusted baseline TASK-006:** TASK-005 merged в clean `main` commit `249634a`;
-TASK-006 начата от этого baseline в ветке
-`feature/task-006-runtime-launcher`.
+**Trusted baseline TASK-007:** TASK-006 merged через PR #7 в clean `main`
+commit `e791482`; TASK-007 начата от этого baseline в ветке
+`docs/task-007-runtime-lifecycle-owner-prerequisites`, task record создан
+первым content change.
 
 **Verification TASK-001:** targeted tests PASS 3/3; full
 `go test ./... -count=1` PASS 2/2; `go vet ./...`, `gofmt -d` и
@@ -66,23 +68,41 @@ structure/status parity и diff checks — PASS. Race detector недоступ�
 0 blocking и 0 nonblocking findings. Coordinator Scope Audit accepted:
 8 Required, 0 Questionable, 0 Removable.
 
-**Следующий разрешённый шаг:** только отдельно разрешённый commit TASK-006.
-Commit, push и merge не выполняются без отдельного разрешения.
+**Результат TASK-007:** зеркальный Draft DP-010 с
+Implementation Status `Planned` определяет минимальный
+`internal/runtimelifecycle` contract. Owner immutable bound к Workspace,
+Configuration и Runtime Instance, создаёт Launch Attempt и pin exact
+ConfigurationVersion в `PrepareStart` до Loader/Builder, принимает closed
+`PreparationResult` с first-valid-result-wins, сохраняет origin-sensitive
+truthful Start/Stop outcomes и отделяет local proofs от production integration.
+Runtime Lifecycle Owner и production wiring не реализованы.
 
-**Следующая рекомендуемая Ready work после closure TASK-006:** focused
-architecture/documentation refinement минимальных implementation prerequisites
-in-process Runtime Lifecycle Owner по ARCH-004. Следующая task и branch не
-созданы, работа не активирована.
+**Review TASK-007:** initial findings B-001/B-002 и repeat findings R-001/R-002
+устранены зеркально. Independent Reviewer verdict — `Approved`, 0 blocking и
+0 nonblocking findings. Final PROCESS-002 — `Synchronized`; Final Tester —
+`PASS`; Coordinator Scope Audit accepted: 8 Required, 0 Questionable,
+0 Removable. Final Reviewer finding F-001 относился только к stale
+project-state instructions и исправлен. Repeat Final Reviewer verdict —
+`Approved`, 0 blocking и 0 nonblocking findings; Coordinator Acceptance
+получена. TASK-007 завершена.
 
-Runtime Lifecycle Owner и production Loader-to-Builder-to-Launcher pipeline
-остаются отдельной неготовой work. Production implementation Owner и pipeline
-wiring не Ready до concrete Owner API, serialization/outcome и
-local/integration proof contract.
+**Следующий разрешённый шаг:** только отдельно разрешённый commit принятого
+diff TASK-007. Stage, commit, push и merge не выполняются неявно.
 
-**Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005 и TASK-006
-соответствующий task record создан как первый content change на task branch, а
-task index обновлён только после initial gate; task-before-work ordering доказан
-без ослабления invariant.
+**Следующая рекомендуемая work после closure TASK-007:** отдельная
+изолированная production implementation минимального in-process Runtime
+Lifecycle Owner по reviewed Draft DP-010. Следующая task/branch не созданы,
+implementation не начата.
+
+Локальный Owner package и proof tests DP-010 являются единственным возможным
+bounded implementation candidate после closure. Loader/Builder production
+wiring, persistence, management API, retry/reconciliation и supervision
+остаются отдельной неготовой work.
+
+**Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
+и TASK-007 соответствующий task record создан как первый content change на task
+branch, а task index обновлён только после initial gate; task-before-work
+ordering доказан без ослабления invariant.
 
 Builder не подключён к production launch pipeline. Design Status DP-008
 остаётся Draft, Implementation Status — Implemented.
@@ -92,6 +112,12 @@ Runtime Bootstrap DP-009 реализован и проверен изолиро
 Runtime Launcher Implementation Status — Implemented in isolation. Runtime
 Lifecycle Owner и production launch pipeline не реализованы; AP-003 и AP-011
 остаются integration-gated.
+
+Runtime Lifecycle Owner DP-010 зеркально спроектирован и независимо reviewed.
+Design Status остаётся Draft, Implementation Status — Planned. Two-phase
+contract `PrepareStart -> external preparation -> Start` не означает, что
+Loader/Builder adapter, Owner package, management routing или production
+pipeline реализованы.
 
 ## Архитектурные решения
 
