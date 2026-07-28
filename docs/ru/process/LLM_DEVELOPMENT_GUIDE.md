@@ -105,6 +105,15 @@
 
 Ни одна роль не может принимать полномочия другой роли только ради продолжения реализации.
 
+### Publisher
+
+Publisher интегрирует один принятый task commit после явного разрешения на
+публикацию. Точная команда `Разрешаю публиковать.` разрешает весь pipeline
+immutable target от read-only preflight через push, Pull Request, checks,
+merge, cleanup веток, синхронизированный локальный `main`, terminal report и
+STOP. Push и merge являются checkpoints, а не terminal outcomes. Создание
+commit остаётся отдельно разрешаемым действием.
+
 ## Стандартный процесс
 
 ```text
@@ -130,6 +139,9 @@ Architecture Fix, if required
     |
     v
 Commit
+    |
+    v
+Publication
     |
     v
 Post-Implementation Architecture Review
@@ -169,6 +181,58 @@ Independent Review проверяет фактический код и тест�
 ### Commit
 
 Commit создаётся только после завершения реализации в заданном scope и обязательных проверок, когда findings устранены или явно приняты. Commit фиксирует одну завершённую идею.
+
+### Publication
+
+Разрешение публикации связано с одной принятой task branch, exact task commit,
+base `main` и accepted scope:
+
+```text
+P0 read-only preflight
+    -> P1 push exact branch/commit
+    -> P2 inspect then create or discover one PR to main
+    -> P3 inspect required checks
+    -> P4 reconfirm MERGEABLE / CLEAN and merge
+    -> P5 delete the exact remote task branch
+    -> P6 checkout main
+    -> P7 pull --ff-only
+    -> P8 safely delete the exact local task branch
+    -> P9 verify main == origin/main and a clean worktree
+    -> P10 full terminal report and STOP
+```
+
+Initial P0 проверяет чистое staged/unstaged/untracked состояние, current exact
+task branch и commit, immutable Target, origin и noninteractive SSH access,
+`gh auth status`, а также доступ к текущему GitHub repository/default branch.
+Auth, transport или repository failure внутри P0 оставляет P0 первым
+незавершённым, zero completed pipeline steps и P1 not attempted. Успешный push
+непосредственно переходит к discovery/creation Pull Request без нового
+permission или запроса `Создать Pull Request`.
+
+Required checks должны завершиться успешно. Отсутствие workflows или zero
+registered checks фиксируется как `No CI` и не блокирует только при merge gate
+`MERGEABLE / CLEAN`. Pending или failed required checks, недоказанный либо
+non-mergeable PR, conflicts и branch protection refusal блокируют merge и не
+могут обходиться.
+
+External blockers не расходуют publication authorization. Blocker report
+перечисляет завершённые шаги, exact первый незавершённый шаг, factual state,
+сохранённые refs/worktree и требуемое unblock action. После
+`Авторизация готова. Продолжай ранее разрешённую публикацию.` Publisher
+использует non-checkpoint phase-aware Resume Reconstruction Guard и продолжает
+без новой команды публикации. До confirmed P6 он обычно ожидает clean
+task-branch/commit phase. После confirmed P6 он требует clean current `main`,
+никогда не требует и не recreates task branch, допускает отставание `main` до
+P7 и требует equality только в P9. Изменение target commit, branch, base или
+scope вместо этого invalidates exact authorization.
+
+После confirmed merge обязательны remote/local branch cleanup и
+синхронизированный clean `main`. Cleanup использует exact branch, проверяет,
+что remote ref всё ещё указывает на authorized commit, применяет только
+fast-forward pull и safe local deletion и никогда не использует force, reset
+или rebase. Terminal success сообщает PR number/URL, task и merge commits,
+checks state, наблюдавшийся `MERGEABLE / CLEAN`, удаление обеих веток,
+`main == origin/main`, clean worktree/current `main`, а затем STOP.
 
 ### Post-Implementation Architecture Review
 

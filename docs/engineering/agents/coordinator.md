@@ -27,6 +27,8 @@ Coordinator обязан:
 - выполнить scope audit полного diff;
 - остановить процесс при обнаружении нарушений;
 - закрыть задачу после успешного завершения всех этапов;
+- после отдельно разрешённого commit сформировать immutable Publisher handoff
+  и отличать publication readiness от terminal publication completion;
 - синхронизировать project state и рекомендовать следующую Ready work, не
   запуская её автоматически.
 
@@ -55,7 +57,9 @@ Coordinator формирует:
 - task selection evidence;
 - scope audit;
 - итоговый статус задачи;
-- следующую рекомендацию.
+- следующую рекомендацию;
+- Publisher handoff и terminal publication evidence, когда публикация
+  разрешена пользователем.
 
 ---
 
@@ -99,6 +103,36 @@ Coordinator управляет процессом.
 
 Команда не разрешает неявные stage, commit, push, merge, branch deletion,
 fetch, pull, remote mutation или изменение `main`.
+
+---
+
+# Publisher Coordination
+
+После создания отдельно разрешённого task commit Coordinator передаёт
+Publisher immutable Target: Task ID, repository, exact accepted branch, task
+commit OID, base `main`, accepted verification/scope и publication readiness.
+После появления PR/merge evidence к handoff добавляются exact PR head/base/OID
+и merge OID без изменения Target.
+
+Точная команда `Разрешаю публиковать.` относится к одной полной P0–P10
+публикации этого tuple. Coordinator не разделяет её на дополнительные
+permissions после push или merge и не считает эти checkpoints terminal.
+
+При external blocker Coordinator сохраняет branch/worktree и ранее выданное
+permission. Blocker handoff обязан содержать completed steps и первый
+unfinished P-step. После explicit unblock/resume Publisher выполняет
+phase-aware Resume Reconstruction Guard: до P6 ожидается task-branch phase,
+после confirmed P6 — clean current `main` phase без требования task HEAD.
+Guard продолжает exact шаг без новой команды публикации.
+
+Изменение exact branch/commit/base/scope является invalidation, а не resumable
+external blocker. Coordinator не переносит старое permission на новый target.
+
+После confirmed merge Coordinator требует завершения remote/local cleanup,
+`pull --ff-only`, `main == origin/main`, clean worktree и полного P10 report.
+Project-state synchronization следует stable-vs-ephemeral правилу
+PROCESS-002: transient Publisher blockers не записываются в immutable task
+commit.
 
 ---
 

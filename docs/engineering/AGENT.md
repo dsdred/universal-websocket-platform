@@ -57,6 +57,34 @@ pull, изменение remote или изменение `main`.
 
 ---
 
+# Publisher Entry
+
+Сообщение, всё содержимое которого после удаления начальных и конечных
+пробельных символов равно `Разрешаю публиковать.`, после отдельно разрешённого
+и созданного task commit даёт Publisher одно разрешение на весь exact pipeline
+`preflight -> push -> create/discover PR -> inspect checks -> merge -> cleanup
+-> synchronized main -> terminal report -> STOP`.
+
+Разрешение связано с accepted task branch, exact task commit, base `main` и
+scope. Push и merge являются checkpoint: здоровый pipeline продолжается без
+дополнительного запроса. Реальный внешний blocker сохраняет разрешение и
+позволяет inspect-first phase-aware resume командой
+`Авторизация готова. Продолжай ранее разрешённую публикацию.` без повторного
+`Разрешаю публиковать.`. Изменение target tuple или scope invalidates
+разрешение.
+
+Initial P0 требует current exact task branch/commit. Resume Reconstruction
+Guard reconstruct-ит checkpoints по immutable Target и после confirmed P6
+ожидает clean current `main`, а не task branch/commit. Полный P0–P10, blocker
+report, CI/merge gate, safe cleanup и terminal evidence определены в
+[PROCESS-001](PROCESS-001-AI-DEVELOPMENT-WORKFLOW.md) и
+[Publisher contract](agents/publisher.md).
+
+Auth/transport/repository failure внутри initial P0 оставляет P0 первым
+незавершённым и P1 not attempted.
+
+---
+
 # Read Before Work
 
 После перехода из корневого `AGENTS.md` агент обязан изучить:

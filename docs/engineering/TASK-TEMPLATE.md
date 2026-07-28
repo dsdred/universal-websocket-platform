@@ -44,6 +44,7 @@
 - Developer:
 - Tester:
 - Reviewer:
+- Publisher:
 
 Неприменимый stage должен иметь явное обоснование.
 
@@ -99,6 +100,21 @@ generated, formatting-only и незадокументированное planned
 - результаты проверок;
 - открытые findings и risks;
 - следующий разрешённый шаг.
+
+## Publication
+
+- publication readiness отдельно от completion;
+- repository:
+- accepted task branch:
+- exact task commit:
+- base `main`:
+- accepted verification/scope:
+- Publisher P0–P10 state или `not authorized`;
+- при blocker: completed steps, exact first unfinished step, preserved state и
+  phase (`task branch` до P6 либо `main` после P6), known PR/merge OID и
+  confirmation, что permission остаётся действительным;
+- при terminal success: PR, task/merge commits, checks, merge gate, обе branch
+  deletions, `main == origin/main`, clean worktree и STOP.
 
 ## Next Candidate
 
