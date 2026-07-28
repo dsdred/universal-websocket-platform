@@ -1,17 +1,28 @@
 # Текущее состояние
 
 **Веха:** Beta — Complete the Single-Node Runtime
-**Статус реализации:** DP-005 Router и Runtime Foundation Tasks 1–10 реализованы; TASK-M10-002 добавил полный Manager-aware production shutdown pipeline. Configuration Loader contract DP-007, Snapshot Builder contract DP-008, Runtime Bootstrap contract DP-009 и stateless Runtime Launcher реализованы изолированно. Runtime Lifecycle Owner, production pipeline Loader-to-Builder-to-Launcher и operational identity entities пока не реализованы.
+**Статус реализации:** DP-005 Router и Runtime Foundation Tasks 1–10
+реализованы; TASK-M10-002 добавил полный Manager-aware production shutdown
+pipeline. Configuration Loader contract DP-007, Snapshot Builder contract
+DP-008, Runtime Bootstrap contract DP-009, stateless Runtime Launcher и
+Runtime Lifecycle Owner DP-010 реализованы изолированно. Production pipeline
+Loader-to-Builder-to-Launcher и persistent operational identity entities пока
+не реализованы.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
-**Последняя завершённая development task:** TASK-007 — Draft DP-010 Runtime
-Lifecycle Owner prerequisites; Completed — Coordinator Accepted.
+**Последняя завершённая development task:** TASK-009 — Runtime Lifecycle Owner
+implementation; `Completed — Coordinator Accepted`.
 
 **Последняя завершённая operational task:** TASK-008 — Publisher pipeline
 governance; `Completed — Coordinator Accepted`.
 
-**Текущая operational task:** не назначена.
+**Текущая operational task:** отсутствует.
+
+**Trusted baseline TASK-009:** clean synchronized
+`main@63b961eeb59af9205c3c3d0b68d3f4bd7b8ac25c`; локальная ветка
+`feature/task-009-runtime-lifecycle-owner`; task record создан первым content
+change.
 
 **Trusted baseline TASK-008:** task commit TASK-007 `2e6d221` опубликован
 через PR #8 и merged в clean `main` commit `802760a`. TASK-008 начата от этого
@@ -95,21 +106,33 @@ TASK-008 завершена.
 **Product impact TASK-008:** отсутствует. Production code/tests, `.github`,
 ADR/ARCH/DP, product capability и Runtime implementation не изменены.
 
+**Результат TASK-009:** добавлен изолированный package
+`internal/runtimelifecycle`. Один Owner permanently bound к Workspace,
+Configuration и Runtime Instance, создаёт и pin Launch Attempt/version через
+`PrepareStart`, accepts один closed `PreparationResult`, вызывает только
+stateless `runtime.Launch`, владеет active Host reference и сериализует
+truthful Start/Stop/Observe semantics без production wiring, persistence,
+retry или supervision.
+
+**Verification TASK-009:** targeted `go test
+./internal/runtimelifecycle -count=1`, полный `go test ./... -count=1`,
+stress `-count=100`, `go vet ./...`, `go fmt ./...`, `git diff --check`,
+EN/RU parity и link validation — PASS. Race detector недоступен при
+`CGO_ENABLED=0` и отсутствующем `gcc`. Independent Tester verdict — `PASS`.
+Coordinator Scope Audit accepted: 14 Required, 0 Questionable, 0 Removable.
+Final Reviewer verdict — `Approved`, 0 blocking и 0 nonblocking findings;
+Coordinator Acceptance получена.
+
 **Closure publication state TASK-008:** на момент closure stage, commit и
 publication не выполнялись. Это historical fact, а не live operational gate.
 Любая последующая разрешённая публикация reconstruct-ит фактическое состояние
 из Git/GitHub; transient dirty-branch, push, PR, checks или cleanup state здесь
 не хранится.
 
-**Следующая рекомендуемая work после closure TASK-007:** отдельная
-изолированная production implementation минимального in-process Runtime
-Lifecycle Owner по reviewed Draft DP-010. Следующая task/branch не созданы,
-implementation не начата.
-
-Локальный Owner package и proof tests DP-010 являются единственным возможным
-bounded implementation candidate после closure. Loader/Builder production
-wiring, persistence, management API, retry/reconciliation и supervision
-остаются отдельной неготовой work.
+**Следующая work после TASK-009:** не активирована. Production wiring
+Loader-to-Builder-to-Launcher, persistence, management API,
+retry/reconciliation и supervision остаются отдельной work и требуют
+собственного readiness/contract решения.
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task
@@ -126,15 +149,14 @@ Builder не подключён к production launch pipeline. Design Status DP-
 
 Runtime Bootstrap DP-009 реализован и проверен изолированно. Design Status
 остаётся Draft, Bootstrap Implementation Status — Implemented in isolation,
-Runtime Launcher Implementation Status — Implemented in isolation. Runtime
-Lifecycle Owner и production launch pipeline не реализованы; AP-003 и AP-011
-остаются integration-gated.
+Runtime Launcher Implementation Status — Implemented in isolation. Production
+launch pipeline не реализован; AP-003 и AP-011 остаются integration-gated.
 
 Runtime Lifecycle Owner DP-010 зеркально спроектирован и независимо reviewed.
-Design Status остаётся Draft, Implementation Status — Planned. Two-phase
-contract `PrepareStart -> external preparation -> Start` не означает, что
-Loader/Builder adapter, Owner package, management routing или production
-pipeline реализованы.
+Design Status остаётся Draft, Implementation Status — Implemented in
+isolation. Two-phase contract `PrepareStart -> external preparation -> Start`
+реализован в локальном Owner package, но не означает, что Loader/Builder
+adapter, management routing или production pipeline реализованы.
 
 ## Архитектурные решения
 
@@ -336,6 +358,10 @@ pipeline реализованы.
 - Router переиспользуется всеми Session как единый immutable `message.Handler`; route compilation, sorting, normalization и Handler resolution на message hot path отсутствуют
 - Middleware, Message Queue, Broadcast, публичный Session Manager Registry API и Persistence отсутствуют
 - Архитектура Runtime принята в ADR-003; pre-Upgrade Handshake, transactional production Session handoff, Manager-aware Runtime shutdown и изолированный Configuration Loader реализованы, а production launch pipeline, operational diagnostics и supervision ещё отсутствуют
+- Изолированный `internal/runtimelifecycle` реализует DP-010
+  `PrepareStart`/`Start`/`Stop`/`Observe`, Owner-issued Launch Attempt,
+  per-Instance serialization и truthful Host ownership без management или
+  production integration
 
 ## Чего не существует
 
@@ -346,7 +372,7 @@ pipeline реализованы.
 - Управления WebSocket-серверами
 - Control Plane lifecycle управления экземплярами Runtime
 - Runtime Instance и Launch Attempt как operational entities
-- Runtime Lifecycle Owner
+- Production integration Runtime Lifecycle Owner в Control Service
 - Интеграция Configuration Loader в production launch pipeline
 - Запуск Runtime и управление им из Control Service
 - Реальный TLS listener и другие сетевые параметры Listener

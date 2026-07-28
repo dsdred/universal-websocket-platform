@@ -20,7 +20,10 @@
 ## Определённые архитектурные границы
 
 - ADR-0003 определяет component boundaries Runtime и Provider-based composition.
-- ARCH-004 определяет Runtime Instance, Launch Attempt и deployment identity model; реализация этих operational сущностей ещё отсутствует.
+- ARCH-004 определяет Runtime Instance, Launch Attempt и deployment identity
+  model; минимальный in-process Runtime Lifecycle Owner реализован
+  изолированно, а persistence и production routing operational сущностей
+  отсутствуют.
 - ARCH-005 определяет Configuration Loader, Snapshot provenance и loading boundary.
 - Draft DP-007, DP-008 и DP-009 являются implementation contracts и не повышаются до нормативного статуса реализацией или commit.
 

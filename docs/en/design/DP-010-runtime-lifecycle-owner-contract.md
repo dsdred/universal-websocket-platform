@@ -6,7 +6,7 @@
 
 **Design Status:** Draft
 
-**Implementation Status:** Planned
+**Implementation Status:** Implemented in isolation
 
 **Architecture status:** implementation contract for the approved operational
 identity model in
@@ -14,8 +14,9 @@ identity model in
 and loading model in
 [ARCH-005](../architecture/ARCH-005-runtime-configuration-snapshot-and-loading-model.md).
 
-Runtime Lifecycle Owner and production Loader-to-Builder-to-Launcher wiring are
-not implemented. This Draft does not revise approved architecture.
+Runtime Lifecycle Owner is implemented in isolation in
+`internal/runtimelifecycle`. Production Loader-to-Builder-to-Launcher wiring
+is not implemented. This Draft does not revise approved architecture.
 
 ## 2. Purpose
 
@@ -389,8 +390,11 @@ mutex wins:
 - a Snapshot result moves `AttemptPreparing -> AttemptLaunching`, creates one
   tracked operation, and schedules exactly one Launcher call after unlock.
 
-Owner retains that exact Snapshot value or error interface identity as the sole
-result for the attempt. It performs no structural, pointer, deep, text,
+Owner accepts that exact Snapshot value or error interface identity as the sole
+preparation result for the attempt. The tracked launch operation retains the
+Snapshot only until Launcher returns; Owner does not retain a Snapshot in the
+historical attempt. The exact preparation error identity remains retained in
+the convergent outcome. Owner performs no structural, pointer, deep, text,
 `errors.Is`, chain, comparability, or semantic-equivalence comparison between
 results.
 
@@ -627,7 +631,7 @@ waits.
 | Launch Attempt identity and record | Candidate allocated by injected source; attempt created and owned by Owner at claim. |
 | Exact ConfigurationVersion pin | Selected by StartRequest and pinned by Owner before Loader/Builder. |
 | LoadRequest | Constructed by Owner and exposed read-only through preparation. |
-| Snapshot or preparation failure | Produced externally and returned through closed PreparationResult. |
+| Snapshot or preparation failure | Produced externally and returned through closed PreparationResult. Snapshot is retained only by the tracked launch operation until Launcher returns; exact failure is retained in the convergent outcome. |
 | Dependency bindings | Externally owned; borrowed stable and unchanged by Owner. |
 | Preparation/start context | Created, canceled, and owned by Owner. |
 | Runtime Launcher | Stateless and owns no lifecycle state. |
@@ -660,7 +664,8 @@ The isolated implementation must prove:
    ignored, and non-comparable Snapshots or errors trigger no equality call or
    panic;
 9. exact preparation and Launch failures converge unchanged;
-10. accepted Snapshot causes exactly one Launcher call;
+10. accepted Snapshot causes exactly one Launcher call, and Owner releases its
+    Snapshot copy after Launcher returns;
 11. Running publishes only after successful ready Host return;
 12. Stop works in Preparing, Launching, Running, Stopping, and both Failed
     forms;
@@ -714,11 +719,11 @@ DP-010 does not define:
 
 ## 31. Implementation Boundary
 
-The first code slice may add only `internal/runtimelifecycle` and local proof
-tests for this contract. It may use fakes around the package-private launch
-seam and external preparation boundary.
+The implemented first code slice adds only `internal/runtimelifecycle` and
+local proof tests for this contract. It uses fakes around the package-private
+immutable launch seam and external preparation boundary.
 
-It must not wire Loader, Builder, Control Service HTTP handlers, repositories,
+It does not wire Loader, Builder, Control Service HTTP handlers, repositories,
 persistence, or production routing. Implementation does not promote the design
 status.
 

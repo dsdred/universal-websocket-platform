@@ -259,7 +259,9 @@ Technical debt is closed through tests and implementation changes, not by relabe
 
 Architectural debt concerns boundaries that remain unresolved or incomplete after production composition:
 
-- **Runtime launch pipeline:** Configuration Loader exists, but Builder, Runtime Launcher, Runtime Lifecycle Owner, and Bootstrap are not connected into a production launch flow.
+- **Runtime launch pipeline:** Configuration Loader, Builder, Runtime Launcher,
+  Runtime Lifecycle Owner, and Bootstrap exist in isolation but are not
+  connected into a production launch flow.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Persistence, Delivery, and Plugin contracts still require focused design.
