@@ -35,7 +35,8 @@ Synchronization и Closure нельзя считать пройденными н
 - [Documentation Agent](agents/documentation.md);
 - [Developer](agents/developer.md);
 - [Tester](agents/tester.md);
-- [Reviewer](agents/reviewer.md).
+- [Reviewer](agents/reviewer.md);
+- [Publisher](agents/publisher.md).
 
 Один агент может выполнять несколько непересекающихся ролей только при
 явном назначении Coordinator. Автор изменения не выполняет независимый
@@ -326,6 +327,98 @@ Closure record содержит:
 - следующую рекомендуемую ready work либо причину отсутствия рекомендации.
 
 Commit выполняется только при явном разрешении.
+
+## Publication
+
+Publication readiness не является publication completion. После отдельного
+разрешения commit Coordinator передаёт Publisher immutable tuple: Task ID,
+accepted task branch, exact task commit OID, base `main`, accepted
+verification/scope и publication readiness.
+
+Сообщение, всё содержимое которого после удаления начальных и конечных
+пробельных символов равно `Разрешаю публиковать.`, разрешает одну полную
+публикацию этого tuple:
+
+```text
+P0 read-only preflight
+    -> P1 push exact branch/OID
+    -> P2 inspect then create/discover one PR to main
+    -> P3 inspect checks
+    -> P4 reconfirm gate and merge
+    -> P5 delete exact remote branch
+    -> P6 checkout main
+    -> P7 pull --ff-only
+    -> P8 safely delete exact local branch
+    -> P9 verify main/origin/main, refs and clean worktree
+    -> P10 terminal report and STOP
+```
+
+Initial P0 до первой mutation проверяет clean staged/unstaged/untracked state,
+current exact task branch/HEAD, immutable Target `{TaskID, repository, task
+branch, task commit, base main}`, origin URL/repository, noninteractive SSH и
+`git ls-remote --exit-code origin`, `gh auth status` и repository/default
+branch через `gh repo view` либо equivalent. Failure любого transport/auth/
+repository subcheck внутри P0 оставляет P0 первым незавершённым, zero completed
+pipeline steps и P1 not attempted.
+
+Resume использует отдельный non-checkpoint Resume Reconstruction Guard и не
+регрессирует P0. Guard сначала reconstruct-ит completed checkpoints, PR head
+OID и merge OID:
+
+- до confirmed P6 current branch/HEAD обычно остаются exact task branch/task
+  OID; remote ref допустим до P4 и отсутствует после P5;
+- после confirmed P6 current branch обязан быть clean `main`; task branch/HEAD
+  больше не требуются, local task branch существует только до P8, remote уже
+  отсутствует, `main` может отставать до P7, а equality требуется лишь P9;
+- ambiguous P6 доказывается состоянием: clean current `main` означает P6
+  complete, exact current task branch — P6 first unfinished.
+
+Resume никогда не recreates/checkout-ит удалённую task branch и сначала
+inspect-ит ambiguous outcomes.
+
+P1 подтверждает `remote OID == task OID` и немедленно переходит к P2. P2
+сначала ищет exact PR по head branch/OID и base `main`, затем при необходимости
+создаёт ровно один PR; ambiguous response inspect-ится до retry. Успешный push
+не является terminal outcome и не разрешает запрос `Создать Pull Request`.
+
+P3 различает `Required Success`, `No CI`, `Pending` и `Failed`. Отсутствие
+`.github/workflows` либо zero registered checks фиксируется как `No CI` и не
+блокирует merge при `MERGEABLE / CLEAN`. Required pending/failed блокируют P3;
+checks и protection не обходятся.
+
+P4 повторно подтверждает exact base/head OID, checks и
+`MERGEABLE / CLEAN`, выполняет merge без implicit branch deletion, затем
+подтверждает `MERGED` и merge commit. `UNKNOWN`, conflict, non-clean gate,
+protection refusal или неподтверждённый merge блокируют P4. Merge является
+checkpoint, после которого обязательны P5–P10.
+
+P5–P9 выполняют отдельный безопасный cleanup только после confirmed merge:
+remote ref удаляется лишь если всё ещё равен authorized task OID; затем
+checkout `main`, только `pull --ff-only`, local delete через `-d` и final
+verification. Recreated/moved remote ref не удаляется. Force, `-D`, reset,
+rebase, non-fast-forward pull, globs и удаление unmerged/unconfirmed branch
+запрещены.
+
+External blocker не расходует publish authority. Blocker report перечисляет
+completed steps, exact first unfinished P-step, factual error/check state,
+известные PR/task/merge IDs, current branch/HEAD/worktree/refs, unblock action
+и сохранение разрешения. Команда
+`Авторизация готова. Продолжай ранее разрешённую публикацию.` либо столь же
+явная unblock/resume ссылка выполняет phase-aware Resume Reconstruction Guard
+и продолжает первый незавершённый шаг без нового publish permission. Blind
+replay uncertain mutation запрещён.
+
+Dirty/ambiguous baseline является safety failure; изменение branch/task
+OID/base/scope invalidates exact authority. Они отличаются от SSH, `gh`,
+repository, PR, checks, merge-gate/protection и cleanup external blockers.
+
+P10 сообщает PR number/URL, task commit, merge commit, CI/checks state,
+наблюдавшийся `MERGEABLE / CLEAN`, удаление remote/local task branches,
+`main == origin/main` с OID, current `main`, clean worktree и затем STOP.
+Отчёт только о push или merge запрещён.
+
+Process behavior проверяется
+[Publisher Acceptance Scenarios](PUBLISHER-ACCEPTANCE-SCENARIOS.md).
 
 ## Rework Loop
 

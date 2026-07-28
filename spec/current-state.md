@@ -8,21 +8,14 @@
 **Последняя завершённая development task:** TASK-007 — Draft DP-010 Runtime
 Lifecycle Owner prerequisites; Completed — Coordinator Accepted.
 
-**Последняя завершённая operational task:** TASK-007 — Draft DP-010 Runtime
-Lifecycle Owner prerequisites; Completed — Coordinator Accepted. Final Tester
-verdict — PASS, PROCESS-002 — Synchronized, Final Reviewer verdict — Approved,
-0 blocking и 0 nonblocking findings, Coordinator Scope Audit accepted:
-8 Required, 0 Questionable, 0 Removable.
+**Последняя завершённая operational task:** TASK-008 — Publisher pipeline
+governance; `Completed — Coordinator Accepted`.
 
-**Текущая operational task:** не назначена. Принятый восьмифайловый diff
-TASK-007 остаётся в attributed dirty worktree ветки
-`docs/task-007-runtime-lifecycle-owner-prerequisites` до отдельно разрешённого
-commit.
+**Текущая operational task:** не назначена.
 
-**Trusted baseline TASK-007:** TASK-006 merged через PR #7 в clean `main`
-commit `e791482`; TASK-007 начата от этого baseline в ветке
-`docs/task-007-runtime-lifecycle-owner-prerequisites`, task record создан
-первым content change.
+**Trusted baseline TASK-008:** task commit TASK-007 `2e6d221` опубликован
+через PR #8 и merged в clean `main` commit `802760a`. TASK-008 начата от этого
+baseline; task record создан первым content change.
 
 **Verification TASK-001:** targeted tests PASS 3/3; full
 `go test ./... -count=1` PASS 2/2; `go vet ./...`, `gofmt -d` и
@@ -86,8 +79,27 @@ project-state instructions и исправлен. Repeat Final Reviewer verdict 
 `Approved`, 0 blocking и 0 nonblocking findings; Coordinator Acceptance
 получена. TASK-007 завершена.
 
-**Следующий разрешённый шаг:** только отдельно разрешённый commit принятого
-diff TASK-007. Stage, commit, push и merge не выполняются неявно.
+**Operational governance TASK-008:** документировано единое разрешение команды
+`Разрешаю публиковать.` на полный P0–P10 pipeline одного immutable task
+target. Initial P0 отделён от phase-aware Resume Reconstruction Guard;
+push/merge являются checkpoints, external blocker сохраняет authority,
+post-P6 resume остаётся на `main`, No CI допускается только при
+`MERGEABLE / CLEAN`, cleanup и terminal payload обязательны. R-001/R-002
+устранены; Repeat Reviewer verdict — `Approved`, 0 blocking и 0 nonblocking
+findings; Tester verdict — `PASS`; PROCESS-002 — `Synchronized`. Commit
+остаётся отдельно разрешаемым действием. Final Reviewer verdict — `Approved`,
+0 blocking и 0 nonblocking findings; Coordinator Scope Audit accepted:
+14 Required, 0 Questionable, 0 Removable; Coordinator Acceptance получена.
+TASK-008 завершена.
+
+**Product impact TASK-008:** отсутствует. Production code/tests, `.github`,
+ADR/ARCH/DP, product capability и Runtime implementation не изменены.
+
+**Closure publication state TASK-008:** на момент closure stage, commit и
+publication не выполнялись. Это historical fact, а не live operational gate.
+Любая последующая разрешённая публикация reconstruct-ит фактическое состояние
+из Git/GitHub; transient dirty-branch, push, PR, checks или cleanup state здесь
+не хранится.
 
 **Следующая рекомендуемая work после closure TASK-007:** отдельная
 изолированная production implementation минимального in-process Runtime
@@ -103,6 +115,11 @@ wiring, persistence, management API, retry/reconciliation и supervision
 и TASK-007 соответствующий task record создан как первый content change на task
 branch, а task index обновлён только после initial gate; task-before-work
 ordering доказан без ослабления invariant.
+
+**Publication history:** TASK-005 commit `99e0d3d`, TASK-006 commit
+`fd0f80a` и TASK-007 commit `2e6d221` merged через PR #6, PR #7 и PR #8.
+Transient pre-commit или Publisher blocker state не является durable
+project-state инструкцией и реконструируется из Git/GitHub.
 
 Builder не подключён к production launch pipeline. Design Status DP-008
 остаётся Draft, Implementation Status — Implemented.

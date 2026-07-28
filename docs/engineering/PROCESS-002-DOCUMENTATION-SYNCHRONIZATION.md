@@ -124,6 +124,44 @@ Status. Documentation Agent не повышает статус самостоя�
 
 ---
 
+# Publication-State Synchronization
+
+Project-state документы сохраняют только устойчивые repository facts:
+
+- accepted task и factual closure;
+- task commit и подтверждённый merge/PR outcome после terminal publication;
+- текущую active task и product implemented/planned boundary;
+- следующую рекомендацию, если она не активирована.
+
+В них не фиксируются ephemeral Publisher states: live auth failure, pending
+checks, push pending, temporary branch/worktree condition, первый
+незавершённый cleanup step или инструкция «разрешён только commit». Blocker и
+resume state принадлежат Publisher blocker/terminal report и при resume
+реконструируются read-only из Git/GitHub.
+
+Причина: accepted task commit является immutable publication target.
+Записывать transient blocker state в этот commit после выдачи publish
+authority означало бы изменить OID и invalidate разрешение.
+
+После terminal publication Documentation Agent при следующем применимом
+PROCESS-002 сверяет main/GitHub evidence и удаляет stale pre-commit/pre-merge
+operational gates. Historical task closure может правдиво говорить, что на
+момент closure commit или publication не выполнялись; это не является live
+инструкцией после последующего merge.
+
+Coordinator отдельно различает publication readiness, active blocked
+Publisher run и terminal publication completion. Устойчивый project state не
+подменяет inspect-first Publisher reconstruction.
+
+Live blocker/terminal report хранит immutable Target, известные PR/merge OID,
+completed checkpoints и phase. Phase-aware Resume Reconstruction Guard до
+confirmed P6 обычно ожидает current task branch/HEAD; после P6 truthful phase
+использует current `main`, допускает его отставание до P7 и не
+требует/не восстанавливает task branch. Эти ephemeral checkpoint facts не
+записываются изменением accepted task commit.
+
+---
+
 # Outputs
 
 Результатом процесса является один из статусов.

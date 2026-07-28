@@ -9,6 +9,8 @@
 - [PROCESS-001 — AI Development Workflow](PROCESS-001-AI-DEVELOPMENT-WORKFLOW.md)
 - [PROCESS-002 — Documentation Synchronization](PROCESS-002-DOCUMENTATION-SYNCHRONIZATION.md)
 - [Контракты ролей](agents/)
+- [Publisher Agent](agents/publisher.md)
+- [Publisher acceptance scenarios](PUBLISHER-ACCEPTANCE-SCENARIOS.md)
 - [Шаблон task record](TASK-TEMPLATE.md)
 - [Индекс task records](../tasks/README.md)
 
