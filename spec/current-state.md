@@ -5,17 +5,22 @@
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
-**Последняя завершённая development task:** TASK-004 — изолированная реализация
-Runtime Bootstrap DP-009; Completed — Coordinator Accepted.
+**Последняя завершённая development task:** TASK-005 — documentation-only
+refinement implementation prerequisites in-process Runtime Launcher; Completed
+— Coordinator Accepted.
 
-**Последняя завершённая operational task:** TASK-004 — изолированная реализация
-Runtime Bootstrap DP-009; Completed — Coordinator Accepted. Tester verdict —
-PASS, Reviewer verdict — Approved with Findings, blocking findings — 0, scope
-audit принят: 12 Required, 0 Questionable, 0 Removable.
+**Последняя завершённая operational task:** TASK-005 — documentation-only
+refinement implementation prerequisites in-process Runtime Launcher; Completed
+— Coordinator Accepted. Tester verdict — PASS, PROCESS-002 — Synchronized,
+Final Reviewer verdict — Approved, 0 blocking и 0 nonblocking findings, scope
+audit принят: 6 Required, 0 Questionable, 0 Removable.
 
-**Текущая operational task:** не назначена. Принятые изменения TASK-004
+**Текущая operational task:** не назначена. Принятые изменения TASK-005
 остаются в attributed dirty worktree ветки
-`feature/task-004-dp009-runtime-bootstrap` до отдельно разрешённого commit.
+`docs/task-005-runtime-launcher-prerequisites` до отдельно разрешённого commit.
+
+**Trusted baseline TASK-005:** TASK-004 merged в `main` commit `7d614c4`;
+TASK-005 начата от clean baseline этого commit.
 
 **Verification TASK-001:** targeted tests PASS 3/3; full
 `go test ./... -count=1` PASS 2/2; `go vet ./...`, `gofmt -d` и
@@ -34,30 +39,45 @@ Host lifecycle/rollback/admission и полный `go test ./... -count=1` — P
 отсутствуют. Race detector недоступен: `CGO_ENABLED=0`, а при включении CGO
 отсутствует `gcc`.
 
-**Следующий разрешённый шаг:** только отдельно разрешённый commit TASK-004.
+**Результат TASK-005:** planned in-process
+`func Launch(request *BootstrapRequest) BootstrapOutcome` contract зеркально
+уточнён в Draft DP-009. Launcher заимствует тот же pointer request, ровно один
+раз делегирует в реализованный Bootstrap и возвращает unchanged
+outcome/Host/failure identities и cause chain. Success передаёт Host reference
+будущему Runtime Lifecycle Owner; Launcher не добавляет policy, cleanup или
+state. AP-003/AP-011 разделены на local и future integration proof. Production
+code отсутствует. TASK-005 завершена со статусом
+`Completed — Coordinator Accepted`.
+
+**Verification TASK-005:** Tester verdict — PASS. PROCESS-002 — Synchronized.
+Final Reviewer verdict — Approved, 0 blocking и 0 nonblocking findings.
+Coordinator Scope Audit accepted: 6 Required, 0 Questionable, 0 Removable.
+Coordinator Acceptance получена.
+
+**Следующий разрешённый шаг:** только отдельно разрешённый commit TASK-005.
 Commit, push и merge не выполнялись и не выполняются без разрешения.
 
-**Следующая рекомендуемая Ready work:** focused architecture/documentation
-refinement implementation prerequisites in-process Runtime Launcher boundary:
-concrete Launcher input/output, точная delegation в реализованный Bootstrap,
-ownership handoff будущему Runtime Lifecycle Owner, failure passthrough и
-граница proof AP-003/AP-011. Следующая task и branch не созданы.
+**Следующая рекомендуемая Ready work после closure TASK-005:** isolated
+implementation in-process stateless Runtime Launcher строго по уточнённому
+contract. Следующая task и branch не созданы, работа не активирована.
 
-ARCH-004 явно не определяет implementation APIs, а DP-009 §22 откладывает
-Launcher implementation. Поэтому Launcher code, Runtime Lifecycle Owner и
-production integration ещё не Ready и не начинаются.
+Launcher implementation может начаться только после closure TASK-005 и clean
+trusted baseline. Runtime Lifecycle Owner и production
+Loader-to-Builder-to-Launcher pipeline остаются отдельной неготовой работой.
 
-**Stage 2 verification completed:** для TASK-003 и TASK-004 соответствующий task
-record создан как первый content change на task branch, а task index обновлён
-вторым change; task-before-work ordering доказан без ослабления invariant.
+**Stage 2 verification completed:** для TASK-003, TASK-004 и TASK-005
+соответствующий task record создан как первый content change на task branch, а
+task index обновлён только после initial gate; task-before-work ordering доказан
+без ослабления invariant.
 
 Builder не подключён к production launch pipeline. Design Status DP-008
 остаётся Draft, Implementation Status — Implemented.
 
 Runtime Bootstrap DP-009 реализован и проверен изолированно. Design Status
-остаётся Draft, Implementation Status — Implemented in isolation. Runtime
-Launcher, Runtime Lifecycle Owner и production launch pipeline не реализованы;
-AP-003 и AP-011 остаются integration-gated.
+остаётся Draft, Bootstrap Implementation Status — Implemented in isolation,
+Runtime Launcher Implementation Status — Planned. Runtime Launcher, Runtime
+Lifecycle Owner и production launch pipeline не реализованы; AP-003 и AP-011
+остаются integration-gated.
 
 ## Архитектурные решения
 
