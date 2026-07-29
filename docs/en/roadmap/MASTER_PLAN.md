@@ -279,9 +279,10 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   minimal `PrepareStart -> Load -> Build -> Start` integration contract. The
   Flow package is implemented in isolation. Draft
   [DP-012](../design/DP-012-runtime-source-composition.md), with Implementation
-  Status Planned, defines the confined exact in-memory Source adapter and
-  future `Source -> Loader -> Flow` construction. The adapter, management
-  routing, persistence, and Production Activation remain absent.
+  Status Implemented in isolation, defines the confined exact in-memory Source
+  adapter. The adapter, local proof tests, Loader integration, and isolated
+  `Source -> Loader -> Flow` construction proof exist. Management routing,
+  persistence, application wiring, and Production Activation remain absent.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Persistence, Delivery, and Plugin contracts still require focused design.

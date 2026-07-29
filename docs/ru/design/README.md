@@ -17,4 +17,4 @@
 | [DP-009: Runtime Bootstrap Contract](DP-009-runtime-bootstrap-contract.md) | Draft; реализован изолированно |
 | [DP-010: Контракт Runtime Lifecycle Owner](DP-010-runtime-lifecycle-owner-contract.md) | Draft; реализован изолированно |
 | [DP-011: Интеграция Runtime Launch Pipeline](DP-011-runtime-launch-pipeline-integration.md) | Draft; реализован изолированно |
-| [DP-012: Композиция Runtime Source](DP-012-runtime-source-composition.md) | Draft; запланирован |
+| [DP-012: Композиция Runtime Source](DP-012-runtime-source-composition.md) | Draft; реализован изолированно |

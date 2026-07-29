@@ -8,13 +8,14 @@ DP-008, Runtime Bootstrap contract DP-009, stateless Runtime Launcher и
 Runtime Lifecycle Owner DP-010 реализованы изолированно. Production pipeline
 Loader-to-Builder-to-Launcher и persistent operational identity entities пока
 не активированы. Draft DP-011 и package `internal/runtimelaunchflow`
-реализуют integration contract этого pipeline изолированно, без concrete
-Source composition или Control Service activation.
+реализуют integration contract этого pipeline изолированно. Draft DP-012 и
+package `internal/configurationloadsource` реализуют concrete Source adapter
+изолированно, без management wiring или Control Service activation.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
-**Последняя завершённая development task:** TASK-011 — Runtime Launch Flow
-implementation; `Completed — Coordinator Accepted`.
+**Последняя завершённая development task:** TASK-014 — Runtime Source
+Implementation; `Completed — Coordinator Accepted`.
 
 **Последняя завершённая operational task:** TASK-012 — Engineering Process
 Hardening; `Completed — Coordinator Accepted`.
@@ -201,9 +202,26 @@ persistence и Production Activation не изменены. Final Tester — `PA
 Reviewer — `Approved` 0/0, Scope Audit accepted 10/0/0, PROCESS-002 —
 `Synchronized`.
 
-**Следующий candidate после TASK-013:** не активирован. Отдельная
-implementation `MemorySource`, local proof tests и изолированный construction
-proof требуют нового task intake; management routing, persistence и Production
+**Candidate после TASK-013:** последовательно активирован как TASK-014 и
+завершён. Management routing, persistence и Production Activation остаются
+более поздней work.
+
+**TASK-014:** `internal/configurationloadsource.MemorySource` реализован
+изолированно: exact Version-first repository lookup, short-circuit validation,
+closed Loader error mapping, static `uwp.configuration` v1 facts, deep
+detachment, repeated/concurrent loads, Loader integration и construction proof
+`Source -> Loader -> Flow` без Start/Host. Initial Tester выявил B-001 по
+nil-vs-non-nil empty slices; bounded rework завершён. Repeat Tester —
+`PASS WITH LIMITATION`, 0 blocking и 0 nonblocking findings. Race detector
+недоступен при `CGO_ENABLED=0` и отсутствии `gcc`; substitute stress
+`-count=100` — PASS. После R-001 test-only rework Repeat Final Reviewer —
+`Approved`, 0 blocking и 0 nonblocking findings. Scope Audit accepted 12/0/0,
+PROCESS-002 — `Synchronized`; TASK-014 — `Completed — Coordinator Accepted`.
+Management routing, persistence, application wiring и Production Activation
+отсутствуют.
+
+**Следующий candidate после TASK-014:** не активирован. Отдельная management
+routing design/readiness task требует нового intake; persistence и Production
 Activation остаются более поздней work.
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
@@ -236,9 +254,9 @@ Status — Implemented in isolation. Flow синхронно соединяет 
 Builder, но не выбирает Source, management route или Production Activation.
 
 Runtime Source Composition DP-012 имеет Design Status Draft и Implementation
-Status Planned. Он определяет только будущий in-memory Source adapter и
-обязательный confinement для consistent observation; package и production
-composition отсутствуют.
+Status Implemented in isolation. In-memory Source adapter, local proofs,
+Loader integration и construction proof существуют; management routing,
+persistence и production composition отсутствуют.
 
 ## Архитектурные решения
 

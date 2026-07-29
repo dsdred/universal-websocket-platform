@@ -5,11 +5,12 @@
 ## 1. Статус
 
 - **Design Status:** Draft
-- **Implementation Status:** Planned
+- **Implementation Status:** Implemented in isolation
 
-До утверждения proposal не является нормативным. Он определяет планируемый
-repository-backed `configurationloader.Source`, но не утверждает наличие
-adapter, management composition или Production Activation.
+До утверждения proposal не является нормативным. Он определяет
+repository-backed `configurationloader.Source`. Adapter реализован и
+протестирован изолированно; management composition и Production Activation
+отсутствуют.
 
 ## 2. Назначение
 
@@ -279,9 +280,9 @@ MemorySource, Loader, Owner и Flow. Proposal разрешает только de
 chain; он не разрешает routing management request, вызов `Flow.Start`,
 публикацию Host или иную Runtime activation.
 
-## 24. Будущие implementation proofs
+## 24. Implementation proofs
 
-Implementation task должна доказать:
+TASK-014 предоставляет local proof применимой части implementation contract:
 
 1. compile-time conformance интерфейсу Source;
 2. отсутствие constructor side effects и nil-binding behavior;
@@ -308,6 +309,18 @@ Implementation task должна доказать:
     dependency cycle, cache или goroutine;
 19. targeted tests, stress и race detector при технической доступности.
 
+Implementation содержит exact concrete constructor и private getter-function
+test seam, Version-first lookup, closed error mapping, static schema facts,
+two-way deep detachment, включая non-nil empty collections,
+concurrent/repeated loads, Loader integration и изолированный construction
+`Source -> Loader -> Flow` без Start или Host. Service regressions покрывают
+stale Draft protection и Configuration identity/delete invariants.
+
+Race execution технически недоступен при `CGO_ENABLED=0`, а включение CGO
+завершается ошибкой из-за отсутствия `gcc`; зафиксированный substitute —
+targeted concurrency stress. Composition Audit остаётся static/manual
+evidence будущей application, а не runtime behavior adapter.
+
 ## 25. Activation gate
 
 До Source construction и повторно до Production Activation Composition Audit
@@ -333,13 +346,16 @@ registry, global lock, retry loop или repository extension.
 
 ## 27. Implementation boundary
 
-Implementation Status остаётся Planned. Package, constructor, methods, tests и
-application wiring не появляются из-за этого документа. Реализация требует
-отдельной task после design review и acceptance.
+Implementation Status — Implemented in isolation. Существуют package
+`internal/configurationloadsource`, exact constructor `MemorySource` и
+`LoadExact`, compile assertion, deep detachment, local tests, Loader
+integration и construction proof. Application/Control Service wiring,
+management routing, `Flow.Start`, создание Host и Production Activation
+отсутствуют.
 
 ## 28. Решение
 
-Планируемый минимальный Source — stateless adapter поверх двух существующих
+Реализованный изолированно минимальный Source — stateless adapter поверх двух существующих
 concrete in-memory repositories. Он читает exact Version до exact parent,
 считает Version read точкой L при audited single-instance mutation topology,
 возвращает глубоко detached observation `uwp.configuration` v1 и отображает

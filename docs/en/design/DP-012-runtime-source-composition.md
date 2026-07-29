@@ -5,11 +5,12 @@
 ## 1. Status
 
 - **Design Status:** Draft
-- **Implementation Status:** Planned
+- **Implementation Status:** Implemented in isolation
 
-This proposal is non-normative until approved. It defines a planned
-repository-backed `configurationloader.Source`; it does not claim that the
-adapter, management composition, or Production Activation exists.
+This proposal is non-normative until approved. It defines a
+repository-backed `configurationloader.Source`. The adapter is implemented
+and tested in isolation; management composition and Production Activation do
+not exist.
 
 ## 2. Purpose
 
@@ -275,9 +276,9 @@ MemorySource, Loader, Owner, and Flow. This proposal authorizes only the
 dependency chain; it does not authorize routing a management request, calling
 `Flow.Start`, publishing a Host, or otherwise activating Runtime.
 
-## 24. Future implementation proofs
+## 24. Implementation proofs
 
-The implementation task must prove:
+TASK-014 provides local proof of the applicable implementation contract:
 
 1. compile-time Source interface conformance;
 2. zero constructor side effects and nil-binding behavior;
@@ -304,6 +305,19 @@ The implementation task must prove:
     dependency cycle, cache, or goroutine;
 19. targeted tests, stress, and race detector when technically available.
 
+The implementation includes the exact concrete constructor and private
+getter-function test seam, Version-first lookup, closed error mapping, static
+schema facts, two-way deep detachment including non-nil empty collections,
+concurrent/repeated loads, Loader integration, and isolated
+`Source -> Loader -> Flow` construction without Start or Host. Service
+regressions cover stale Draft protection and Configuration identity/delete
+invariants.
+
+Race execution is technically unavailable with `CGO_ENABLED=0`, and enabling
+CGO fails because `gcc` is absent; targeted concurrency stress is the recorded
+substitute. Composition Audit remains static/manual future application
+evidence, not adapter runtime behavior.
+
 ## 25. Activation gate
 
 Before Source construction and again before Production Activation, a
@@ -329,13 +343,16 @@ lock, retry loop, or repository extension.
 
 ## 27. Implementation boundary
 
-Implementation Status remains Planned. The package, constructor, methods,
-tests, and application wiring do not exist as a result of this document.
-Implementation requires a separate task after design review and acceptance.
+Implementation Status is Implemented in isolation. Package
+`internal/configurationloadsource`, the exact `MemorySource` constructor and
+`LoadExact`, compile assertion, deep detachment, local tests, Loader
+integration, and construction proof exist. Application/Control Service wiring,
+management routing, `Flow.Start`, Host creation, and Production Activation do
+not exist.
 
 ## 28. Decision
 
-The planned minimal Source is a stateless adapter over the two existing
+The implemented-in-isolation minimal Source is a stateless adapter over the two existing
 concrete in-memory repositories. It reads the exact Version before its exact
 parent, treats the Version read as L under the audited single-instance
 mutation topology, returns a deeply detached `uwp.configuration` v1
