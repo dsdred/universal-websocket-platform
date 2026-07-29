@@ -21,8 +21,10 @@ Hardening; `Completed — Coordinator Accepted`.
 
 **Текущая operational task:** отсутствует.
 
-**Последняя завершённая architecture task:** TASK-010 — Production Launch
-Pipeline Design; `Completed — Coordinator Accepted`.
+**Последняя завершённая architecture task:** TASK-013 — Runtime Source
+Composition Design; `Completed — Coordinator Accepted`.
+
+**Текущая architecture task:** отсутствует.
 
 **Текущая development task:** отсутствует.
 
@@ -189,6 +191,21 @@ documentation-first readiness/design task, которая выберет оди�
 prerequisite Production Activation между concrete Source composition,
 management routing и persistence boundary до следующей implementation.
 
+**TASK-013:** design-only task завершена и принята Coordinator. Зеркальный
+Draft DP-012 с Implementation Status `Planned` определяет планируемый
+`internal/configurationloadsource.MemorySource`: exact Version-first lookup,
+mandatory composition confinement, static `uwp.configuration` v1 facts,
+deep detachment, closed Loader error mapping и будущий construction
+`Source -> Loader -> Flow`. Production code, repositories, management routing,
+persistence и Production Activation не изменены. Final Tester — `PASS`, Final
+Reviewer — `Approved` 0/0, Scope Audit accepted 10/0/0, PROCESS-002 —
+`Synchronized`.
+
+**Следующий candidate после TASK-013:** не активирован. Отдельная
+implementation `MemorySource`, local proof tests и изолированный construction
+proof требуют нового task intake; management routing, persistence и Production
+Activation остаются более поздней work.
+
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task
 branch, а task index обновлён только после initial gate; task-before-work
@@ -217,6 +234,11 @@ Runtime Launch Flow DP-011 реализован изолированно в
 `internal/runtimelaunchflow`. Design Status остаётся Draft, Implementation
 Status — Implemented in isolation. Flow синхронно соединяет Owner, Loader и
 Builder, но не выбирает Source, management route или Production Activation.
+
+Runtime Source Composition DP-012 имеет Design Status Draft и Implementation
+Status Planned. Он определяет только будущий in-memory Source adapter и
+обязательный confinement для consistent observation; package и production
+composition отсутствуют.
 
 ## Архитектурные решения
 
