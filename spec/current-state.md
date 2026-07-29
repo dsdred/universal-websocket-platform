@@ -10,7 +10,9 @@ Loader-to-Builder-to-Launcher и persistent operational identity entities пок
 не активированы. Draft DP-011 и package `internal/runtimelaunchflow`
 реализуют integration contract этого pipeline изолированно. Draft DP-012 и
 package `internal/configurationloadsource` реализуют concrete Source adapter
-изолированно, без management wiring или Control Service activation.
+изолированно. Completed Design-only TASK-015 и Draft/Planned DP-013 определяют
+management routing contract; package, HTTP API, persistence, management wiring
+и Control Service activation отсутствуют.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
@@ -22,8 +24,8 @@ Hardening; `Completed — Coordinator Accepted`.
 
 **Текущая operational task:** отсутствует.
 
-**Последняя завершённая architecture task:** TASK-013 — Runtime Source
-Composition Design; `Completed — Coordinator Accepted`.
+**Последняя завершённая architecture task:** TASK-015 — Runtime Management
+Routing Design; `Completed — Coordinator Accepted`.
 
 **Текущая architecture task:** отсутствует.
 
@@ -220,9 +222,30 @@ PROCESS-002 — `Synchronized`; TASK-014 — `Completed — Coordinator Accepted
 Management routing, persistence, application wiring и Production Activation
 отсутствуют.
 
-**Следующий candidate после TASK-014:** не активирован. Отдельная management
-routing design/readiness task требует нового intake; persistence и Production
-Activation остаются более поздней work.
+**Candidate после TASK-014:** активирован и завершён как Design-only TASK-015
+— Runtime Management Routing Design.
+
+**TASK-015:** `Completed — Coordinator Accepted`. Architecture Confirmation —
+Design `READY / valid`, design blockers 0. Зеркальный Draft DP-013 с
+Implementation Status `Planned` определяет один immutable process-local
+`internal/runtimemanagement.Directory`, exact routing Target, policy-neutral
+named function `Authorize`, authorization-before-mutation, static construction
+одного Flow из exact Owner/Loader binding и сохранение существующих Owner/Flow
+outcomes. Implementation Readiness `Blocked` обязательными focused designs
+ARCH-004 §19(2)–(6): operational identity persistence, durable management
+idempotency, activation/replacement/rollback, recovery/reconciliation и
+reporting/redaction. Initial Tester `FAIL` B-001/B-002, bounded rework, Repeat
+Tester `PASS` 0/0; Initial Final Reviewer `Needs Revision` R-001/R-002,
+bounded Architect/Documentation rework, Repeat Final Reviewer `Approved` 0/0.
+Scope Audit — 11 Required / 0 Questionable / 0 Removable; PROCESS-002 —
+`Synchronized`. Package, Go tests, HTTP API/DTO, concrete authorization
+policy, persistence, recovery, application wiring и Production Activation
+отсутствуют. Commit и publication не выполнялись.
+
+**Следующая рекомендация после TASK-015:** не активирована. Отдельный
+Design-only Runtime Operational Identity Persistence contract является первым
+unresolved prerequisite ARCH-004 §19(2); package implementation не является
+готовым candidate.
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task

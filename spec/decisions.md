@@ -25,8 +25,9 @@
   изолированно, а persistence и production routing operational сущностей
   отсутствуют.
 - ARCH-005 определяет Configuration Loader, Snapshot provenance и loading boundary.
-- Draft DP-007, DP-008, DP-009, DP-010 и DP-011 являются implementation
-  contracts и не повышаются до нормативного статуса реализацией или commit.
+- Draft DP-007–DP-013 являются implementation/design contracts и не
+  повышаются до нормативного статуса реализацией или commit. DP-012 реализован
+  изолированно; DP-013 сохраняет Implementation Status Planned.
 
 ## Ожидающие отдельного решения
 
@@ -36,10 +37,19 @@ diagnostics и supervision требуют сфокусированных реш�
 deployment boundaries.
 
 Draft DP-011 определяет in-process integration
-`PrepareStart -> Load -> Build -> Start`. Concrete Source composition,
-management API/authorization, persistence operational identities,
-recovery/reconciliation и Production Activation остаются ожидающими отдельных
-решений.
+`PrepareStart -> Load -> Build -> Start`. Draft DP-012 определяет
+repository-backed Source composition и реализован изолированно. Draft DP-013
+определяет planned process-local management routing и
+authorization-before-mutation. Он не разрешает isolated implementation:
+Active ARCH-004 §19 требует до любого management package focused designs
+operational identity persistence, durable management idempotency,
+activation/replacement/rollback, recovery/reconciliation и operational
+reporting/redaction. Concrete authorization policy, management
+implementation/API и Production Activation также отсутствуют.
+
+Следующая рекомендуемая design work после DP-013 — Runtime Operational
+Identity Persistence как первый unresolved prerequisite ARCH-004 §19(2).
+Рекомендация не активирует task или implementation.
 
 Package `internal/runtimelaunchflow` реализует DP-011 изолированно без
 изменения этих ожидающих решения production boundaries.

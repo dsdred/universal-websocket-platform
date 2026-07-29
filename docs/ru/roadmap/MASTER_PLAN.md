@@ -282,7 +282,16 @@ Architectural debt относится к границам, которые ост
   adapter. Adapter, local proof tests, Loader integration и изолированный
   construction proof `Source -> Loader -> Flow` существуют. Management
   routing, persistence, application wiring и Production Activation
-  отсутствуют.
+  отсутствуют. Design-only TASK-015 добавляет Draft
+  [DP-013](../design/DP-013-runtime-management-routing.md) с Implementation
+  Status Planned для одного immutable process-local directory
+  Start/Stop/Observe, exact routing Runtime Instance,
+  authorization до lifecycle delegation и static binding Owner-to-Flow.
+  Management package, HTTP API, persistence и activation отсутствуют. Design
+  contract готов, но Implementation Readiness заблокирована оставшимися
+  mandatory focused designs ARCH-004 section 19(2)–(6). Следующая
+  рекомендация — отдельный Design-only contract Runtime Operational Identity
+  Persistence, а не package implementation.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Persistence, Delivery и Plugin всё ещё требуют focused design.
