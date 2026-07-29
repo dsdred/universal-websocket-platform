@@ -145,6 +145,8 @@ task-ветку, если она требуется. Task record являетс�
 этой ветке и создаётся либо актуализируется до остальной работы. Record
 обязательно содержит:
 
+- Task Contract: `Task Mode`, `Why Now`, `Definition of Done`, `Out of
+  Scope` и `Verification Plan`;
 - evidence выбора и отклонённые альтернативы;
 - scope, non-goals, sources, roles и verification;
 - branch decision и stop conditions;
@@ -188,18 +190,64 @@ Task Intake
 с явным обоснованием в task record. Следующая рекомендация не запускает новую
 task и не создаёт для неё branch.
 
+### User Command Gates
+
+Пользовательская модель содержит ровно три permission/gate-команды:
+
+```text
+Продолжай проект.
+    -> Coordinator формирует Task Contract
+    -> выполняет task, verification и независимую приёмку
+    -> STOP
+
+Разрешаю коммит.
+    -> один проверенный task commit
+    -> STOP
+
+Разрешаю публиковать.
+    -> Publisher выполняет полный P0–P10
+    -> STOP только после terminal success либо при реальном external blocker
+```
+
+Внутренние P-steps не являются пользовательскими командами или отдельными
+permissions. Publisher resume-сигнал после устранения blocker не является
+четвёртым gate: он не выдаёт нового разрешения и только возобновляет ранее
+разрешённый immutable target.
+
 ## Task Intake
 
 Coordinator:
 
-1. фиксирует цель, scope, запреты и ожидаемый результат;
-2. определяет затрагиваемые источники истины;
-3. назначает необходимые роли;
-4. создаёт или подтверждает task record;
-5. останавливает intake, если задача противоречит источнику более высокого
+1. до проектирования, реализации или изменения тестов фиксирует Task Contract:
+   `Task Mode` (`Design-only`, `Design-update`, `Implementation` или
+   `Documentation-only`), `Why Now`, проверяемый `Definition of Done`, явный
+   `Out of Scope` и risk-based `Verification Plan`;
+2. фиксирует цель, scope, запреты и ожидаемый результат;
+3. определяет затрагиваемые источники истины;
+4. назначает необходимые роли;
+5. создаёт или подтверждает task record;
+6. применяет Size Guard;
+7. до создания или изменения тестов убеждается, что Existing Coverage Report
+   уже заполнен; выполнение отчёта может быть делегировано Tester или
+   Developer, но gate принадлежит Coordinator;
+8. останавливает intake, если задача противоречит источнику более высокого
    уровня.
 
 Результат: однозначный task contract и список обязательных evidence.
+
+### Size Guard
+
+Жёсткий лимит строк или файлов не устанавливается. Coordinator обязан
+остановиться и переоценить scope при одном или нескольких признаках:
+
+- более 15 изменённых файлов;
+- более 500 строк production-кода;
+- более одного нового package;
+- более одного нового архитектурного контракта;
+- более одного независимо поставляемого поведения.
+
+Coordinator либо доказывает целостность slice через Definition of Done и
+verification, либо разделяет task до начала остальной работы.
 
 ## Documentation Baseline
 
@@ -253,15 +301,32 @@ Developer:
 
 ## Verification
 
-Tester либо Developer по назначению Coordinator:
+Coordinator не разрешает создание или изменение тестов до Existing Coverage
+Report. Tester либо Developer по назначению Coordinator:
 
-1. изучает существующие тесты;
-2. сопоставляет их с acceptance criteria;
-3. добавляет недостающие proof tests в разрешённом scope;
-4. выполняет применимые formatter, test, race, vet, lint и diff checks;
-5. сохраняет точные результаты и причины недоступных проверок.
+1. до создания или изменения тестов формирует Existing Coverage Report:
+   `Existing Coverage`, `Coverage Gap`, а после изменений — `Added Proof
+   Tests`, `Added Regression Tests` и `Remaining Limitations`;
+2. сопоставляет существующее покрытие с Definition of Done;
+3. добавляет недостающие proof и regression tests в разрешённом scope;
+4. применяет Verification Matrix;
+5. выполняет применимые formatter, test, race, vet, lint, smoke и diff checks;
+6. сохраняет точные результаты и причины недоступных проверок.
 
 Проверка считается доказательством только при воспроизводимом результате.
+Недоступная обязательная проверка не может быть молча отмечена `PASS`: отчёт
+указывает точную причину, доступные substitute/stress checks и итоговый статус
+`PASS WITH LIMITATION`.
+
+### Verification Matrix
+
+| Изменение | Обязательная verification |
+|---|---|
+| Concurrency, synchronization, lifecycle, cancellation, goroutines или shared state | Race detector и доступные stress checks; при технической недоступности race — `PASS WITH LIMITATION` с точной причиной |
+| API, CLI, UI, configuration или production wiring | Manual smoke либо обоснованный executable proof-сценарий |
+| Imports, dependencies или module boundaries | `go mod tidy`; каждое изменение `go.mod`/`go.sum` объясняется, случайный diff запрещён |
+| Public API | Необходимость и godoc каждого exported identifier, proof через public behavior; иначе identifier делается unexported |
+| Documentation | Применимая EN/RU parity, проверка ссылок и отсутствие противоречий нормативных источников |
 
 ## Review
 
@@ -288,6 +353,12 @@ Rework Loop.
    там, где они применимы;
 4. фиксирует сознательно отложенную работу.
 
+Coordinator после каждой task явно проверяет применимость task record,
+`spec/current-state.md`, зеркальных MASTER_PLAN, связанных Design Proposal,
+`.ai/PROJECT_CONTEXT.md` при изменении фундаментального состояния и
+`CHANGELOG.md` только для user-facing или release changes. Неприменимость
+фиксируется с причиной; отсутствие diff не считается неявной проверкой.
+
 ## Scope Audit
 
 После PROCESS-002 и до финального gate Coordinator проверяет полный diff.
@@ -308,6 +379,15 @@ Audit отдельно проверяет:
 
 `Removable` change должен быть удалён владельцем изменения. `Questionable`
 change должен получить доказательство необходимости либо также быть удалён.
+Для каждого `Questionable` change record указывает:
+
+- какой пункт Definition of Done он обеспечивает;
+- почему без него task некорректна;
+- почему его нельзя вынести в отдельную task.
+
+При отсутствии любого доказательства change становится `Removable`. Final
+Reviewer явно отвечает: «Можно ли удалить это изменение и сохранить
+выполнение Definition of Done?»
 Результат audit и disposition каждого finding фиксируются в task record.
 
 ## Closure
@@ -328,6 +408,22 @@ Closure record содержит:
 
 Commit выполняется только при явном разрешении.
 
+## Commit Gate
+
+Точная команда `Разрешаю коммит.` после Coordinator Acceptance разрешает
+создание ровно одного проверенного task commit из принятого diff. Она не
+разрешает push, PR, merge или публикацию.
+
+Непосредственно перед commit Coordinator:
+
+1. проверяет соответствие commit message принятой policy;
+2. повторно проверяет полный exact file set;
+3. убеждается, что после acceptance не появились неожиданные изменения;
+4. исключает временные, generated и посторонние файлы;
+5. повторяет `git diff --check` и применимые final checks.
+
+GPG, DCO и sign-off не требуются, если отдельно не приняты проектом.
+
 ## Publication
 
 Publication readiness не является publication completion. После отдельного
@@ -345,7 +441,7 @@ P0 read-only preflight
     -> P2 inspect then create/discover one PR to main
     -> P3 inspect checks
     -> P4 reconfirm gate and merge
-    -> P5 delete exact remote branch
+    -> P5 delete exact remote branch and fetch --prune
     -> P6 checkout main
     -> P7 pull --ff-only
     -> P8 safely delete exact local branch
@@ -386,15 +482,23 @@ P3 различает `Required Success`, `No CI`, `Pending` и `Failed`. Отс
 блокирует merge при `MERGEABLE / CLEAN`. Required pending/failed блокируют P3;
 checks и protection не обходятся.
 
+После push Publisher проверяет отсутствие merge conflict. Непосредственно
+перед merge он повторяет CI, exact head/base OID и mergeability; устаревший
+результат P3 не используется как разрешение на P4.
+
 P4 повторно подтверждает exact base/head OID, checks и
 `MERGEABLE / CLEAN`, выполняет merge без implicit branch deletion, затем
 подтверждает `MERGED` и merge commit. `UNKNOWN`, conflict, non-clean gate,
 protection refusal или неподтверждённый merge блокируют P4. Merge является
 checkpoint, после которого обязательны P5–P10.
+Merge strategy называется явно и соответствует действующей policy
+репозитория; Publisher не выбирает новую policy самостоятельно.
 
 P5–P9 выполняют отдельный безопасный cleanup только после confirmed merge:
 remote ref удаляется лишь если всё ещё равен authorized task OID; затем
-checkout `main`, только `pull --ff-only`, local delete через `-d` и final
+P5 выполняет `git fetch --prune`; затем P6 checkout `main`, P7 только
+`pull --ff-only`, P8 local delete
+через `-d` и final
 verification. Recreated/moved remote ref не удаляется. Force, `-D`, reset,
 rebase, non-fast-forward pull, globs и удаление unmerged/unconfirmed branch
 запрещены.
@@ -416,6 +520,11 @@ P10 сообщает PR number/URL, task commit, merge commit, CI/checks state,
 наблюдавшийся `MERGEABLE / CLEAN`, удаление remote/local task branches,
 `main == origin/main` с OID, current `main`, clean worktree и затем STOP.
 Отчёт только о push или merge запрещён.
+
+Publisher фиксирует последний успешно выполненный P-checkpoint. Blocker
+report содержит exact первый незавершённый checkpoint, factual blocker,
+сохранённые branch/HEAD/worktree/refs и требуемое unblock action. Resume
+начинает с первого незавершённого checkpoint после read-only reconstruction.
 
 Process behavior проверяется
 [Publisher Acceptance Scenarios](PUBLISHER-ACCEPTANCE-SCENARIOS.md).
@@ -491,6 +600,29 @@ Coordinator выбирает Rework Loop либо статус `Blocked`.
   `.ai/PROJECT_CONTEXT.md`, roadmap, root README и `CHANGELOG.md`;
 - scope audit всех изменённых файлов;
 - подтверждение отсутствия неожиданных файлов в diff.
+
+## Process Health Review
+
+Coordinator запускает лёгкий documentation-only Process Health Review:
+
+- после каждых десяти завершённых task;
+- после rollback;
+- после дефекта, попавшего в `main`;
+- после повторяющегося Publisher failure;
+- после task, более двух раз возвращённой с review.
+
+Review фиксирует без production metric tooling:
+
+- `Questionable` и `Removable`, найденные Scope Audit;
+- дефекты, найденные после первичной verification;
+- CI failures после локального PASS;
+- post-merge fixes;
+- недоступные проверки;
+- повторяющиеся источники лишней работы.
+
+Результат — bounded process finding или подтверждение отсутствия изменения.
+Review не создаёт fast path, обязательную статистическую систему или новую
+пользовательскую команду.
 
 ## Definition of Done
 

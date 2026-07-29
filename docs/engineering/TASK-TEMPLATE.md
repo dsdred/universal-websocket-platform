@@ -4,6 +4,32 @@
 
 `Planned`, `In Progress`, `Blocked` или `Completed`.
 
+## Task Contract
+
+### Task Mode
+
+`Design-only`, `Design-update`, `Implementation` или `Documentation-only` с
+обоснованием.
+
+### Why Now
+
+- почему выбрана именно эта task;
+- какие зависимости выполнены;
+- что task разблокирует;
+- почему scope целен.
+
+### Definition of Done
+
+Конкретные проверяемые критерии завершения.
+
+### Out of Scope
+
+Явно запрещённые изменения.
+
+### Verification Plan
+
+Существующие tests/checks, Coverage Gap и risk-based дополнительные проверки.
+
 ## Objective
 
 Однозначный проверяемый результат задачи.
@@ -75,6 +101,18 @@
 
 ## Verification
 
+- Existing Coverage Report:
+  - Existing Coverage;
+  - Coverage Gap;
+  - Added Proof Tests;
+  - Added Regression Tests;
+  - Remaining Limitations;
+- Verification Matrix:
+  - concurrency/lifecycle/shared state;
+  - API/CLI/UI/configuration/production wiring;
+  - dependencies;
+  - public API;
+  - documentation;
 - formatter/lint:
 - tests:
 - race/vet:
@@ -90,8 +128,42 @@
 - меняет ли поведение либо является механической migration;
 - disposition для `Questionable` и `Removable`.
 
+Для каждого `Questionable`: пункт Definition of Done, почему task без change
+некорректна и почему change нельзя вынести. Final Reviewer отвечает, можно ли
+удалить change и сохранить Definition of Done.
+
 Отдельно проверить premature next-task/pipeline work, unrelated refactoring,
 generated, formatting-only и незадокументированное planned behavior.
+
+## Size Guard
+
+- сработавшие признаки: >15 files, >500 production lines, >1 new package,
+  >1 architecture contract, >1 independently shipped behavior;
+- решение: доказательство целостности либо split до дальнейшей work.
+
+## Documentation Sync
+
+- task record:
+- current-state:
+- MASTER_PLAN EN/RU:
+- связанные Design Proposal:
+- PROJECT_CONTEXT:
+- CHANGELOG только для user-facing/release change:
+- parity, links и contradictions:
+
+## Commit Gate
+
+- exact command `Разрешаю коммит.` получена: да/нет;
+- commit message policy:
+- exact file set:
+- post-acceptance diff:
+- temporary/generated/unrelated files:
+- final checks:
+
+## Process Health
+
+- trigger применим: да/нет и причина;
+- bounded findings либо отсутствие process change;
 
 ## Handoff
 

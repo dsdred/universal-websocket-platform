@@ -5,14 +5,15 @@
 Эти process scenarios проверяют контракт Publisher из
 [PROCESS-001](PROCESS-001-AI-DEVELOPMENT-WORKFLOW.md) и
 [Publisher role](agents/publisher.md). Во всех сценариях task commit уже
-создан по отдельному разрешению.
+создан по отдельной команде `Разрешаю коммит.`.
 
 ## S-001 — Полностью успешный pipeline
 
 Given clean exact task branch/OID и команда `Разрешаю публиковать.`, Publisher
 выполняет P0–P10 без дополнительных permission prompts. Terminal report
 содержит PR number/URL, task и merge OID, checks state, `MERGEABLE / CLEAN`,
-обе branch deletions, `main == origin/main`, clean worktree и STOP.
+явную repository-approved merge strategy, `git fetch --prune`, обе branch
+deletions, `main == origin/main`, clean worktree и STOP.
 
 ## S-002 — Push является checkpoint
 
@@ -63,11 +64,13 @@ inspect-ит checks без нового publish permission.
 Given required check имеет `Failed`, P3 блокируется. Publisher не bypass-ит
 check и не merge-ит PR; blocker report содержит failed check state.
 
-## S-009 — PR не mergeable
+## S-009 — PR перестал быть mergeable перед P4
 
-Given conflict, `UNKNOWN`, non-clean gate или branch-protection refusal, P4
-остаётся первым незавершённым. PR и refs сохраняются; Publisher не выполняет
-force/rebase/bypass.
+Given P3 ранее завершён, но непосредственный P4 recheck обнаружил новый
+conflict, `UNKNOWN`, non-clean gate или branch-protection refusal, P4 остаётся
+первым незавершённым. PR и refs сохраняются; Publisher не выполняет
+force/rebase/bypass. Conflict, обнаруженный initial P3 после push, относится к
+S-015 и оставляет P3 незавершённым.
 
 ## S-010 — Cleanup failure после merge
 
@@ -100,3 +103,28 @@ Publisher не удаляет ref. P5 остаётся незавершённы�
 Given branch, task OID, base или accepted scope изменились, read-only
 preflight останавливает pipeline до mutation. Это invalidation exact authority,
 а не внешний blocker; старое разрешение не применяется к новому target.
+
+## S-015 — Conflict появился после push
+
+Given P1 завершён, но после push PR стал conflicting, P3 фиксирует conflict и
+остаётся первым незавершённым checkpoint. P4 не начинается, Publisher не
+выполняет rebase/force и blocker report сохраняет exact PR/head state.
+
+## S-016 — Gate изменился перед merge
+
+Given P3 ранее наблюдал success, непосредственно перед P4 Publisher повторно
+проверяет CI, exact head/base OID и mergeability. Новый pending/failed check,
+conflict или non-clean gate блокирует P4; stale P3 result не используется.
+
+## S-017 — Repository merge strategy
+
+Given repository policy разрешает конкретную merge strategy, Publisher явно
+называет и применяет её. Если policy недоступна или разрешённая strategy
+неоднозначна, P4 блокируется; Publisher не изобретает policy.
+
+## S-018 — Pruned cleanup evidence
+
+Given P5 удалил exact remote branch, Publisher выполняет `git fetch --prune`,
+затем P6–P9. P9 подтверждает отсутствие remote-tracking и local task refs,
+`main == origin/main` и clean worktree. Failure prune фиксируется как первый
+незавершённый cleanup action без replay merge.

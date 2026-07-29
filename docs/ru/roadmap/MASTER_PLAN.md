@@ -62,6 +62,18 @@ Universal WebSocket Platform — open-source платформа для созд�
 - [ARCH-001](../architecture/ARCH-001-runtime-architectural-pattern.md) фиксирует подтвержденный паттерн `Context -> Evaluation -> Decision -> Execution`, ownership, lifecycle и Boring Core.
 - Вердикт Runtime Alpha Review был **Ready with findings**. Runtime Host, lifecycle hardening, validation startup capabilities, pre-Upgrade Authentication, утверждённый Router DP-005, transactional production handoff Session и Manager-aware shutdown Host реализованы. Границы Configuration Loader и Snapshot Builder также реализованы изолированно, но production pipeline Loader-to-Builder-to-Launcher отсутствует.
 
+### Engineering Process
+
+- TASK-012 усилила существующий Coordinator/Publisher workflow: добавлены
+  pre-work Task Contract, Existing Coverage Report, risk-oriented Verification
+  Matrix, Size Guard, усиленный Scope Audit, обязательная синхронизация
+  документации, exact Commit Gate, Publisher rechecks и cleanup evidence, а
+  также лёгкий Process Health Review.
+- Три permission/gate-команды сохранили существующий смысл. Это operational
+  изменение не реализует и не анализирует Production Activation и не меняет
+  product architecture или production code. Independent Tester, Scope Audit и
+  Final Reviewer gates пройдены; TASK-012 принята Coordinator.
+
 ## 3. Engineering Principles
 
 Основным руководством по проектированию является [ARCH-001: Runtime Architectural Pattern](../architecture/ARCH-001-runtime-architectural-pattern.md).

@@ -14,7 +14,7 @@ P0 preflight
     -> P2 create or discover PR
     -> P3 inspect checks
     -> P4 merge
-    -> P5 delete remote branch
+    -> P5 delete remote branch and fetch --prune
     -> P6 checkout main
     -> P7 pull --ff-only
     -> P8 delete local branch
@@ -118,6 +118,9 @@ checks сообщаются правдиво, но permission определяе
 protection. Required pending/failed не обходятся; polling/backoff не является
 обязанностью этого контракта.
 
+После push Publisher также проверяет отсутствие merge conflict. Conflict
+делает P3 первым незавершённым шагом и не переносится молча в P4.
+
 ### P4 — Merge
 
 Перед merge Publisher повторно подтверждает exact PR base/head OID, checks и
@@ -125,7 +128,9 @@ gate. Merge разрешён только при `MERGEABLE / CLEAN` и `Require
 `No CI`. `UNKNOWN`, calculating, conflict, non-clean state и protection
 refusal являются blocker.
 
-Merge выполняется без implicit branch deletion. Publisher подтверждает PR
+Publisher называет merge strategy и использует только strategy, разрешённую
+действующей repository policy; новую policy он не выбирает. Merge выполняется
+без implicit branch deletion. Publisher подтверждает PR
 state `MERGED` и сохраняет merge commit OID. Ambiguous response inspect-ится
 до retry. Confirmed merge является checkpoint и немедленно переходит к P5.
 
@@ -135,12 +140,14 @@ state `MERGED` и сохраняет merge commit OID. Ambiguous response inspec
 
 1. P5 удаляет и подтверждает отсутствие exact remote task branch только если
    ref всё ещё указывает на authorized task OID; уже отсутствующая ветка
-   считается завершённым P5, а recreated/moved ref не удаляется;
-2. P6 переключается на `main`;
-3. P7 выполняет только `git pull --ff-only`;
-4. P8 удаляет exact local task branch безопасным `git branch -d`, никогда
+   считается промежуточным результатом P5, а recreated/moved ref не удаляется;
+2. завершает P5 командой `git fetch --prune` и подтверждает актуальное
+   состояние remote refs;
+3. P6 переключается на `main`;
+4. P7 выполняет только `git pull --ff-only`;
+5. P8 удаляет exact local task branch безопасным `git branch -d`, никогда
    `-D`;
-5. P9 подтверждает текущий `main`, отсутствие local и remote task branches,
+6. P9 подтверждает текущий `main`, отсутствие local и remote task branches,
    равенство OID `main == origin/main` и чистый worktree.
 
 Cleanup не использует globs, force, reset, rebase и не удаляет
@@ -152,6 +159,7 @@ unmerged/unconfirmed branch. Ошибка P5–P9 не откатывает merg
 При external blocker Publisher:
 
 - перечисляет завершённые шаги по порядку;
+- фиксирует последний успешно выполненный checkpoint;
 - называет точный первый незавершённый P-step;
 - сообщает factual error/check/gate state;
 - сообщает известные PR, task commit и merge commit;
