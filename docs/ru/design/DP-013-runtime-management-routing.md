@@ -519,8 +519,7 @@ ARCH-004 section 19 имеет Active status и приоритет над эти
 `internal/runtimemanagement` и local proof implementation не начинаются, пока
 focused designs не разрешат все оставшиеся обязательные prerequisites:
 
-1. contracts persistence Runtime Instance и Launch Attempt, включая desired и
-   actual facts и durable allocation opaque identity;
+1. approval/status decision для candidate persistence contract section 19(2);
 2. durable idempotency management command;
 3. ordering activation, replacement и rollback;
 4. recovery и reconciliation после termination Control Service;
@@ -530,9 +529,18 @@ Loader, provenance Snapshot и schema compatibility уже разрешены AR
 DP-007 — DP-012. Прецедент isolated implementation DP-010 — DP-012 не создаёт
 исключение из gate ARCH-004 с более высоким status.
 
-Детерминированная следующая рекомендация — отдельный Design-only contract
-Runtime Operational Identity Persistence, первый unresolved prerequisite в
-ordering ARCH-004 section 19. Он рекомендован, но не активирован.
+Draft [DP-014](DP-014-runtime-operational-identity-persistence.md) предлагает
+candidate contract persistence Runtime Instance и Launch Attempt, требуемый
+ARCH-004 section 19(2). Он определяет durable aggregate, identity, history,
+conditional revision и indeterminate-outcome semantics без создания
+implementation persistence. Поскольку он остаётся non-normative Draft,
+section 19(2) остаётся formal implementation blocker до отдельного
+approval/status decision.
+
+По dependency ordering следующей design-рекомендацией может быть отдельный
+Design-only contract durable idempotency management commands для section
+19(3). Он рекомендован, но не активирован, не снимает gate section 19(2) и не
+активирует implementation.
 
 ## 27. Будущие implementation proofs
 
@@ -579,9 +587,9 @@ Tests могут использовать local fakes или package-private sea
 
 ## 28. Явно отложено
 
-Блокирующие architecture prerequisites до любой implementation:
+Оставшиеся блокирующие architecture prerequisites до любой implementation:
 
-- persistence Runtime Instance и Launch Attempt;
+- approval/status decision для candidate persistence contract section 19(2);
 - durable idempotency management command;
 - ordering activation, replacement и rollback;
 - recovery и reconciliation;
@@ -613,8 +621,9 @@ persistence adapter или activation path не появляются в резу
 
 Implementation Readiness — Blocked. Ни isolated package, ни local proof code
 не разрешены, пока не существуют все обязательные focused designs section 26.
-Следующая рекомендация — отдельный persistence design, а не implementation
-task.
+Следующая рекомендация — отдельный design durable idempotency management
+commands, а не implementation task; она не снимает approval gate section
+19(2).
 
 ## 30. Решение
 
@@ -628,4 +637,4 @@ Runtime Instance, авторизует Start, Stop и Observe до lifecycle del
 симуляцию persistence, retry, transport API или Production Activation.
 
 Design готов к review и возможному принятию как Draft/Planned. Implementation
-остаётся заблокированной ARCH-004 section 19.
+остаётся заблокированной ARCH-004 section 19(2)-(6).

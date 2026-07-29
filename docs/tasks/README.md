@@ -20,6 +20,7 @@ operational документы ведутся на русском языке и 
 - [TASK-013 — Runtime Source Composition Design](TASK-013-RUNTIME-SOURCE-COMPOSITION-DESIGN.md)
 - [TASK-014 — Runtime Source Implementation](TASK-014-RUNTIME-SOURCE-IMPLEMENTATION.md)
 - [TASK-015 — Runtime Management Routing Design](TASK-015-RUNTIME-MANAGEMENT-ROUTING-DESIGN.md)
+- [TASK-016 — Runtime Operational Identity Persistence Design](TASK-016-RUNTIME-OPERATIONAL-IDENTITY-PERSISTENCE-DESIGN.md)
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

@@ -517,8 +517,8 @@ ARCH-004 section 19 is Active and takes precedence over this Draft. No
 `internal/runtimemanagement` package or local proof implementation may begin
 until focused designs resolve all remaining mandatory prerequisites:
 
-1. Runtime Instance and Launch Attempt persistence contracts, including
-   desired and actual facts and durable opaque identity allocation;
+1. approval/status decision for the section 19(2) candidate persistence
+   contract;
 2. management command durable idempotency;
 3. activation, replacement, and rollback ordering;
 4. recovery and reconciliation after Control Service termination;
@@ -529,9 +529,18 @@ ARCH-005 and DP-007 through DP-012. The isolated implementation precedent of
 DP-010 through DP-012 does not create an exception to the higher-status
 ARCH-004 gate.
 
-The deterministic next recommendation is a separate Design-only Runtime
-Operational Identity Persistence contract, the first unresolved prerequisite
-in ARCH-004 section 19 ordering. It is recommended, not activated.
+Draft [DP-014](DP-014-runtime-operational-identity-persistence.md) proposes the
+candidate Runtime Instance and Launch Attempt persistence contract required by
+ARCH-004 section 19(2). It defines durable aggregate, identity, history,
+conditional revision, and indeterminate-outcome semantics without creating
+persistence implementation. Because it remains non-normative Draft, section
+19(2) remains a formal implementation blocker until a separate
+approval/status decision.
+
+By dependency ordering, the deterministic next design recommendation may be a
+separate Design-only durable management command idempotency contract for
+section 19(3). It is recommended, not activated, and does not remove the
+section 19(2) gate or activate implementation.
 
 ## 27. Future implementation proofs
 
@@ -576,9 +585,10 @@ Control Service wiring or Runtime activation.
 
 ## 28. Explicit deferrals
 
-Blocking architecture prerequisites before any implementation:
+Remaining blocking architecture prerequisites before any implementation:
 
-- Runtime Instance and Launch Attempt persistence;
+- approval/status decision for the section 19(2) candidate persistence
+  contract;
 - durable management command idempotency;
 - activation, replacement, and rollback ordering;
 - recovery and reconciliation;
@@ -608,8 +618,9 @@ or activation path exists as a result of this document.
 
 Implementation Readiness is Blocked. Neither an isolated package nor local
 proof code is authorized until every mandatory focused design in section 26
-exists. The next recommendation is the separate persistence design, not an
-implementation task.
+exists. The next recommendation is the separate durable management command
+idempotency design, not an implementation task; it does not remove the
+section 19(2) approval gate.
 
 ## 30. Decision
 
@@ -623,4 +634,4 @@ It adds no second lifecycle owner, dynamic registry, service locator,
 persistence simulation, retry, transport API, or Production Activation.
 
 The design is ready for review and possible acceptance as Draft/Planned.
-Implementation remains blocked by ARCH-004 section 19.
+Implementation remains blocked by ARCH-004 section 19(2)-(6).
