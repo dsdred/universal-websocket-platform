@@ -289,9 +289,19 @@ Architectural debt относится к границам, которые ост
   authorization до lifecycle delegation и static binding Owner-to-Flow.
   Management package, HTTP API, persistence и activation отсутствуют. Design
   contract готов, но Implementation Readiness заблокирована оставшимися
-  mandatory focused designs ARCH-004 section 19(2)–(6). Следующая
-  рекомендация — отдельный Design-only contract Runtime Operational Identity
-  Persistence, а не package implementation.
+  mandatory focused designs и status decisions ARCH-004 section 19(2)–(6).
+  Design-only TASK-016 добавляет Draft
+  [DP-014](../design/DP-014-runtime-operational-identity-persistence.md) с
+  Implementation Status Planned, который предлагает candidate durable
+  aggregate Runtime Instance, append-only membership Launch Attempt и
+  monotonic child facts, namespaces opaque identity, conditional revision,
+  atomic publication lifecycle facts и boundary inspect-after-indeterminate
+  для section 19(2). Как non-normative Draft он не снимает этот formal gate до
+  отдельного approval/status decision. Persistence package, schema, API,
+  recovery и production wiring отсутствуют. По dependency ordering следующей
+  design-рекомендацией может быть отдельный contract durable idempotency
+  management commands section 19(3); он не активирует implementation и не
+  снимает gate section 19(2).
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Persistence, Delivery и Plugin всё ещё требуют focused design.

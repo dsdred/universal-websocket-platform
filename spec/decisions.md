@@ -25,9 +25,9 @@
   изолированно, а persistence и production routing operational сущностей
   отсутствуют.
 - ARCH-005 определяет Configuration Loader, Snapshot provenance и loading boundary.
-- Draft DP-007–DP-013 являются implementation/design contracts и не
+- Draft DP-007–DP-014 являются implementation/design contracts и не
   повышаются до нормативного статуса реализацией или commit. DP-012 реализован
-  изолированно; DP-013 сохраняет Implementation Status Planned.
+  изолированно; DP-013 и DP-014 сохраняют Implementation Status Planned.
 
 ## Ожидающие отдельного решения
 
@@ -40,16 +40,25 @@ Draft DP-011 определяет in-process integration
 `PrepareStart -> Load -> Build -> Start`. Draft DP-012 определяет
 repository-backed Source composition и реализован изолированно. Draft DP-013
 определяет planned process-local management routing и
-authorization-before-mutation. Он не разрешает isolated implementation:
-Active ARCH-004 §19 требует до любого management package focused designs
-operational identity persistence, durable management idempotency,
+authorization-before-mutation. Non-normative Draft DP-014 предлагает candidate
+focused contract ARCH-004 §19(2): durable aggregate Runtime Instance,
+append-only membership Launch Attempt с immutable parent/ID/version pin и
+monotonic child lifecycle facts, opaque identity namespaces, conditional
+revision, atomic phase-sensitive lifecycle publication и
+inspect-after-indeterminate boundary. Он не создаёт persistence
+implementation, schema, API, recovery или production wiring и не снимает
+formal gate §19(2) до отдельного approval/status decision.
+
+DP-013 не разрешает isolated implementation: Active ARCH-004 §19 требует до
+любого management package approval/status decision candidate contract §19(2)
+и focused designs durable management idempotency,
 activation/replacement/rollback, recovery/reconciliation и operational
-reporting/redaction. Concrete authorization policy, management
+reporting/redaction (§19(3)–(6)). Concrete authorization policy, management
 implementation/API и Production Activation также отсутствуют.
 
-Следующая рекомендуемая design work после DP-013 — Runtime Operational
-Identity Persistence как первый unresolved prerequisite ARCH-004 §19(2).
-Рекомендация не активирует task или implementation.
+По dependency ordering следующей рекомендуемой design work после DP-014 может
+быть durable management command idempotency ARCH-004 §19(3). Рекомендация не
+активирует task или implementation и не снимает formal gate §19(2).
 
 Package `internal/runtimelaunchflow` реализует DP-011 изолированно без
 изменения этих ожидающих решения production boundaries.

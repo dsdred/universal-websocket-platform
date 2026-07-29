@@ -6,13 +6,15 @@
 pipeline. Configuration Loader contract DP-007, Snapshot Builder contract
 DP-008, Runtime Bootstrap contract DP-009, stateless Runtime Launcher и
 Runtime Lifecycle Owner DP-010 реализованы изолированно. Production pipeline
-Loader-to-Builder-to-Launcher и persistent operational identity entities пока
-не активированы. Draft DP-011 и package `internal/runtimelaunchflow`
+Loader-to-Builder-to-Launcher и persistent operational identity entities не
+реализованы. Draft DP-011 и package `internal/runtimelaunchflow`
 реализуют integration contract этого pipeline изолированно. Draft DP-012 и
 package `internal/configurationloadsource` реализуют concrete Source adapter
 изолированно. Completed Design-only TASK-015 и Draft/Planned DP-013 определяют
-management routing contract; package, HTTP API, persistence, management wiring
-и Control Service activation отсутствуют.
+management routing contract. Completed Design-only TASK-016 и non-normative
+Draft/Planned DP-014 предлагают durable operational identity persistence
+candidate contract; package, schema, HTTP API, persistence implementation,
+management wiring и Control Service activation отсутствуют.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
@@ -24,8 +26,8 @@ Hardening; `Completed — Coordinator Accepted`.
 
 **Текущая operational task:** отсутствует.
 
-**Последняя завершённая architecture task:** TASK-015 — Runtime Management
-Routing Design; `Completed — Coordinator Accepted`.
+**Последняя завершённая architecture task:** TASK-016 — Runtime Operational
+Identity Persistence Design; `Completed — Coordinator Accepted`.
 
 **Текущая architecture task:** отсутствует.
 
@@ -242,10 +244,41 @@ Scope Audit — 11 Required / 0 Questionable / 0 Removable; PROCESS-002 —
 policy, persistence, recovery, application wiring и Production Activation
 отсутствуют. Commit и publication не выполнялись.
 
-**Следующая рекомендация после TASK-015:** не активирована. Отдельный
-Design-only Runtime Operational Identity Persistence contract является первым
-unresolved prerequisite ARCH-004 §19(2); package implementation не является
-готовым candidate.
+**Candidate после TASK-015:** активирован как Design-only TASK-016 — Runtime
+Operational Identity Persistence Design.
+
+**TASK-016:** `Completed — Coordinator Accepted`. Architecture Analysis — `Ready`,
+blockers 0. Зеркальный non-normative Draft DP-014 с Implementation Status
+`Planned` предлагает candidate contract ARCH-004 §19(2): один durable
+aggregate Runtime Instance с immutable Workspace/Configuration/Instance
+binding, monotonic conditional revision, последними подтверждёнными Owner
+desired/actual facts, не более чем одним active Launch Attempt и append-only
+membership history. Attempt является owned child с key
+`(RuntimeInstanceID, LaunchAttemptID)`; его parent/ID/exact Published
+ConfigurationVersion pin immutable, а lifecycle phase/outcome facts
+conditionally и монотонно обновляются внутри того же child. Atomic
+phase-sensitive publications разрешают retained active `AttemptStopping` при
+stop failure или cleanup-unproven; association очищается только после proof
+отсутствия Host resources. Stale operations выполняют zero mutation, а
+indeterminate outcome требует inspection exact identity/revision без blind
+retry с новым ID. Persisted actual является последним подтверждённым fact, а
+не liveness proof после потери Owner. Lifecycle Owner остаётся единственным
+lifecycle decision maker и owner live Host. Initial Tester — `PASS`. Initial
+Reviewer — `Needs Revision`, findings R-001/R-002/R-003/N-001; bounded
+Architect/Documentation rework завершён. Repeat Tester — `PASS`; Repeat
+Reviewer и Final Reviewer — `Approved`, 0 blocking и 0 nonblocking findings.
+Scope Audit accepted — 13 Required / 0 Questionable / 0 Removable.
+PROCESS-002 — `Synchronized`. Exact scope — 13 files; DP-014 27/27 headings и
+4/4 fences, DP-013 35/35, MASTER_PLAN 36/36; changed links 152/0, repository
+links 753/0; diff check PASS; preceding full `go test ./...` и
+`go vet ./...` PASS reused после documentation-only rework. §19(2) остаётся
+formal implementation blocker до отдельного approval/status decision вместе
+с §19(3)–(6). Persistence package, schema, API, recovery и production wiring
+отсутствуют. Commit и publication не авторизованы и не выполнялись.
+
+**Следующая рекомендация после TASK-016:** не активирована. Отдельный
+Design-only durable management command idempotency contract ARCH-004 §19(3);
+он не снимает formal implementation gate §19(2).
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task

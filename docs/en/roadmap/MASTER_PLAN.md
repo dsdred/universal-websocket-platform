@@ -290,9 +290,19 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   and static Owner-to-Flow binding. No management package, HTTP API,
   persistence, or activation exists. The design contract is ready, but
   implementation readiness is blocked by the remaining mandatory focused
-  designs in ARCH-004 section 19(2)–(6). The next recommendation is a separate
-  Design-only Runtime Operational Identity Persistence contract, not package
-  implementation.
+  designs and status decisions in ARCH-004 section 19(2)–(6). Design-only
+  TASK-016 adds Draft
+  [DP-014](../design/DP-014-runtime-operational-identity-persistence.md), with
+  Implementation Status Planned, which proposes the candidate durable Runtime
+  Instance aggregate, append-only Launch Attempt membership and monotonic
+  child facts, opaque identity namespaces, conditional revision, atomic
+  lifecycle-fact publication, and inspect-after-indeterminate boundary for
+  section 19(2). As a non-normative Draft it does not remove that formal gate
+  before a separate approval/status decision. No persistence package, schema,
+  API, recovery, or production wiring exists. By dependency ordering the next
+  design recommendation may be a separate durable management command
+  idempotency contract for section 19(3); it neither activates implementation
+  nor removes the section 19(2) gate.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Persistence, Delivery, and Plugin contracts still require focused design.

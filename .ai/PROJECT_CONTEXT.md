@@ -16,15 +16,17 @@
   реализуют integration contract изолированно; Draft DP-012 и
   `internal/configurationloadsource.MemorySource` реализуют concrete Source
   adapter изолированно; Completed Design-only TASK-015 и Draft/Planned DP-013
-  определяют management routing contract, но implementation, HTTP,
-  persistence, management wiring и Production Activation отсутствуют**
+  определяют management routing contract; Completed Design-only TASK-016 и
+  non-normative Draft/Planned DP-014 предлагают durable operational identity
+  persistence candidate contract. Implementation, HTTP, persistence
+  package/schema, management wiring и Production Activation отсутствуют**
 - Последняя завершённая development task: **TASK-014 — Runtime Source
   Implementation; Completed — Coordinator Accepted**
 - Последняя завершённая operational task: **TASK-012 — Engineering Process
   Hardening; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
-- Последняя завершённая architecture task: **TASK-015 — Runtime Management
-  Routing Design; Completed — Coordinator Accepted**
+- Последняя завершённая architecture task: **TASK-016 — Runtime Operational
+  Identity Persistence Design; Completed — Coordinator Accepted**
 - Текущая architecture task: **отсутствует**
 - Текущая development task: **отсутствует**
 - Trusted baseline TASK-009: **clean synchronized
@@ -139,9 +141,28 @@
   Architect/Documentation rework -> Repeat Approved 0/0; Scope Audit
   11 Required / 0 Questionable / 0 Removable; PROCESS-002 Synchronized; code,
   commit и publication отсутствуют**
-- Следующая рекомендация после TASK-015: **не активирована; отдельный
-  Design-only Runtime Operational Identity Persistence contract как первый
-  unresolved prerequisite ARCH-004 §19(2), не implementation task**
+- Candidate после TASK-015: **активирован как Design-only TASK-016 — Runtime
+  Operational Identity Persistence Design**
+- TASK-016: **Completed — Coordinator Accepted; Architecture Analysis Ready,
+  blockers 0;
+  зеркальный non-normative Draft DP-014 с Implementation Status Planned
+  предлагает candidate contract ARCH-004 §19(2): immutable aggregate Runtime
+  Instance, append-only membership Launch Attempt с monotonic child facts,
+  opaque identity namespaces, conditional revision, atomic phase-sensitive
+  publication и inspect-after-indeterminate boundary. Initial Reviewer —
+  Needs Revision: R-001/R-002/R-003/N-001; bounded Architect/Documentation
+  rework завершён; Repeat Tester PASS; Repeat Reviewer и Final Reviewer
+  Approved 0/0; Scope Audit accepted 13/0/0; PROCESS-002 Synchronized. Exact
+  scope 13 files; DP-014 27/27 headings и 4/4 fences; DP-013 35/35;
+  MASTER_PLAN 36/36; changed links 152/0, repository links 753/0; diff check
+  PASS; preceding `go test ./...` и `go vet ./...` PASS reused после doc-only
+  rework. §19(2) остаётся formal implementation blocker до отдельного
+  approval/status decision вместе с §19(3)–(6). Persistence
+  package/schema/API, recovery и production wiring отсутствуют; commit и
+  publication не авторизованы и не выполнялись**
+- Следующая рекомендация после TASK-016: **не активирована; отдельный
+  Design-only durable management command idempotency contract ARCH-004
+  §19(3). Он не снимает formal implementation gate §19(2)**
 - Stage 2 task-before-work ordering выполнен для TASK-003, TASK-004, TASK-005, TASK-006 и TASK-007: task record создан первым content change, а task index обновлён только после initial gate
 - Publication history: **TASK-005 commit `99e0d3d`, TASK-006 commit `fd0f80a` и TASK-007 commit `2e6d221` merged через PR #6/#7/#8; transient pre-commit/Publisher blockers не являются durable project-state instructions**
 - Design Status DP-009 остаётся **Draft**; Bootstrap и Runtime Launcher
@@ -158,7 +179,11 @@
   composition отсутствует
 - Design Status DP-013 — **Draft**, Implementation Status — **Planned**;
   management routing определён только на design level; Implementation
-  Readiness **Blocked**, implementation и production wiring отсутствуют
+  Readiness **Blocked** prerequisites ARCH-004 §19(2)–(6),
+  implementation и production wiring отсутствуют
+- Design Status DP-014 — **Draft**, Implementation Status — **Planned**;
+  durable operational identity определена только на design level; repository,
+  schema, API, recovery и production wiring отсутствуют
 - Design Status DP-008 остаётся **Draft**, Implementation Status — **Implemented in isolation**
 - Содержимое репозитория: документация, спецификации, инженерные соглашения, исполняемый Control Service и изолированные Runtime-компоненты с тестами
 
