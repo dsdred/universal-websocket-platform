@@ -12,9 +12,11 @@
 - Статус реализации: **Control Service, single-node Runtime vertical,
   Configuration Loader boundary, DP-008 Snapshot Builder, DP-009 Runtime
   Bootstrap, stateless Runtime Launcher и DP-010 Runtime Lifecycle Owner
-  реализованы изолированно; Draft DP-011 определяет planned integration
-  contract, production launch pipeline не реализован**
-- Последняя завершённая development task: **TASK-009 — Runtime Lifecycle Owner implementation; Completed — Coordinator Accepted**
+  реализованы изолированно; Draft DP-011 и `internal/runtimelaunchflow`
+  реализуют integration contract изолированно, concrete Source composition и
+  Production Activation отсутствуют**
+- Последняя завершённая development task: **TASK-011 — Runtime Launch Flow
+  implementation; Completed — Coordinator Accepted**
 - Последняя завершённая operational task: **TASK-008 — Publisher pipeline governance; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
 - Последняя завершённая architecture task: **TASK-010 — Production Launch
@@ -71,6 +73,21 @@
   implementation `internal/runtimelaunchflow` и local proof tests требуют
   нового task intake, а Source adapter, Control Service routing, persistence
   и Production Activation остаются вне slice**
+- TASK-011: **isolated `internal/runtimelaunchflow` реализует immutable
+  Owner/Loader binding, Caller Cancellation Gate, synchronous
+  `PrepareStart -> Load -> Build -> Start`, exact Loader failures, immutable
+  Build Failure и Stop convergence; Completed — Coordinator Accepted,
+  Production Activation отсутствует**
+- Verification TASK-011: **independent Tester PASS и Final Reviewer Approved,
+  0 blocking и 0 nonblocking findings; targeted stress `-count=100`, affected
+  и full tests, vet, exported-surface, formatting, diff, EN/RU parity и links
+  PASS; PROCESS-002 Synchronized; Scope Audit accepted — 13 Required,
+  0 Questionable, 0 Removable; race detector недоступен при `CGO_ENABLED=0`
+  и отсутствующем `gcc`**
+- Следующий candidate после TASK-011: **не активирован; рекомендуется отдельная
+  documentation-first readiness/design task, выбирающая один prerequisite
+  Production Activation между concrete Source composition, management routing
+  и persistence boundary**
 - Stage 2 task-before-work ordering выполнен для TASK-003, TASK-004, TASK-005, TASK-006 и TASK-007: task record создан первым content change, а task index обновлён только после initial gate
 - Publication history: **TASK-005 commit `99e0d3d`, TASK-006 commit `fd0f80a` и TASK-007 commit `2e6d221` merged через PR #6/#7/#8; transient pre-commit/Publisher blockers не являются durable project-state instructions**
 - Design Status DP-009 остаётся **Draft**; Bootstrap и Runtime Launcher
@@ -79,6 +96,9 @@
 - Design Status DP-010 остаётся **Draft**, Implementation Status —
   **Implemented in isolation**; status не утверждает production wiring,
   persistence или management capability
+- Design Status DP-011 остаётся **Draft**, Implementation Status —
+  **Implemented in isolation**; Flow package не утверждает concrete Source
+  composition, management routing или Production Activation
 - Design Status DP-008 остаётся **Draft**, Implementation Status — **Implemented in isolation**
 - Содержимое репозитория: документация, спецификации, инженерные соглашения, исполняемый Control Service и изолированные Runtime-компоненты с тестами
 

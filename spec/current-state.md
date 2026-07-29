@@ -7,12 +7,13 @@ pipeline. Configuration Loader contract DP-007, Snapshot Builder contract
 DP-008, Runtime Bootstrap contract DP-009, stateless Runtime Launcher и
 Runtime Lifecycle Owner DP-010 реализованы изолированно. Production pipeline
 Loader-to-Builder-to-Launcher и persistent operational identity entities пока
-не реализованы. Draft DP-011 определяет planned integration contract этого
-pipeline без production implementation или Control Service activation.
+не активированы. Draft DP-011 и package `internal/runtimelaunchflow`
+реализуют integration contract этого pipeline изолированно, без concrete
+Source composition или Control Service activation.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
-**Последняя завершённая development task:** TASK-009 — Runtime Lifecycle Owner
+**Последняя завершённая development task:** TASK-011 — Runtime Launch Flow
 implementation; `Completed — Coordinator Accepted`.
 
 **Последняя завершённая operational task:** TASK-008 — Publisher pipeline
@@ -157,6 +158,26 @@ implementation `internal/runtimelaunchflow` и local proof tests по DP-011
 допустимы только через новый task intake; Source adapter, Control Service
 routing, persistence и Production Activation остаются вне этого slice.
 
+**TASK-011:** реализован isolated package `internal/runtimelaunchflow`:
+immutable Owner/Loader binding, Caller Cancellation Gate, synchronous
+`PrepareStart -> Load -> Build -> Start`, exact Loader failure preservation,
+immutable Build Failure и Stop convergence. TASK-011 завершена со статусом
+`Completed — Coordinator Accepted`; Source composition и Production Activation
+отсутствуют.
+
+**Verification TASK-011:** independent Tester verdict — `PASS`; Final Reviewer
+verdict — `Approved`, 0 blocking и 0 nonblocking findings. Targeted stress
+`-count=100`, affected packages, полный `go test ./... -count=1`, `go vet
+./...`, exported-surface, formatting, diff, EN/RU parity и link checks — PASS.
+PROCESS-002 — `Synchronized`; Scope Audit accepted: 13 Required,
+0 Questionable, 0 Removable. Race detector недоступен при `CGO_ENABLED=0` и
+отсутствующем `gcc`.
+
+**Следующий candidate после TASK-011:** не активирован. Рекомендуется отдельная
+documentation-first readiness/design task, которая выберет один минимальный
+prerequisite Production Activation между concrete Source composition,
+management routing и persistence boundary до следующей implementation.
+
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task
 branch, а task index обновлён только после initial gate; task-before-work
@@ -180,6 +201,11 @@ Design Status остаётся Draft, Implementation Status — Implemented in
 isolation. Two-phase contract `PrepareStart -> external preparation -> Start`
 реализован в локальном Owner package, но не означает, что Loader/Builder
 adapter, management routing или production pipeline реализованы.
+
+Runtime Launch Flow DP-011 реализован изолированно в
+`internal/runtimelaunchflow`. Design Status остаётся Draft, Implementation
+Status — Implemented in isolation. Flow синхронно соединяет Owner, Loader и
+Builder, но не выбирает Source, management route или Production Activation.
 
 ## Архитектурные решения
 

@@ -6,13 +6,15 @@
 
 **Design Status:** Draft
 
-**Implementation Status:** Planned
+**Implementation Status:** Implemented in isolation
 
 **Статус архитектуры:** сфокусированный integration contract поверх
 утверждённых ARCH-004 и ARCH-005 и существующих Draft DP-007–DP-010.
 
-Документ не объявляет production launch capability реализованной и не повышает
-статусы связанных Draft DP.
+Package `internal/runtimelaunchflow` реализует этот contract изолированно.
+Concrete Source composition, management routing и Production Activation
+отсутствуют. Implementation не объявляет production launch capability
+реализованной и не повышает статусы связанных Draft DP.
 
 ## 2. Назначение
 
@@ -496,9 +498,10 @@ failures.
   contracts;
 - operational reporting и redaction preparation/launch failures.
 
-DP-011 не выбирает порядок или API этих tasks. Planned package implementation
-может быть отдельно проверяемым prerequisite, но сама по себе не меняет
-`spec/current-state.md` на «управление Runtime из Control Service реализовано».
+DP-011 не выбирает порядок или API этих tasks. Изолированная package
+implementation является отдельно проверенным prerequisite, но сама по себе не
+меняет `spec/current-state.md` на «управление Runtime из Control Service
+реализовано».
 
 ## 25. Намеренно отложено
 
@@ -518,7 +521,7 @@ DP-011 не выбирает порядок или API этих tasks. Planned p
 
 ## 26. Implementation boundary
 
-Следующий допустимый code slice после принятия этого Draft ограничен:
+Первый code slice реализован и ограничен:
 
 - `internal/runtimelaunchflow`;
 - local proof tests;
@@ -527,8 +530,8 @@ DP-011 не выбирает порядок или API этих tasks. Planned p
 Он не изменяет DP-007–DP-010 packages, Control Service, repositories,
 management API, persistence, Host или Bootstrap.
 
-Design review этого Draft предшествует любой implementation. Implementation не
-повышает Design Status автоматически.
+Он не подключён к Control Service и не является Production Activation.
+Implementation не повышает Design Status автоматически.
 
 ## 27. Последствия
 

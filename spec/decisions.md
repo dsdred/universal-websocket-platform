@@ -35,8 +35,11 @@ diagnostics и supervision требуют сфокусированных реш�
 вехах. Их отсутствие не отменяет уже определённые component, configuration и
 deployment boundaries.
 
-Draft DP-011 определяет только planned in-process integration
+Draft DP-011 определяет in-process integration
 `PrepareStart -> Load -> Build -> Start`. Concrete Source composition,
 management API/authorization, persistence operational identities,
 recovery/reconciliation и Production Activation остаются ожидающими отдельных
 решений.
+
+Package `internal/runtimelaunchflow` реализует DP-011 изолированно без
+изменения этих ожидающих решения production boundaries.
