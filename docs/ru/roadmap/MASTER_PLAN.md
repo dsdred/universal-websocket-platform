@@ -276,8 +276,11 @@ Architectural debt относится к границам, которые ост
   соединены в production launch flow. Draft
   [DP-011](../design/DP-011-runtime-launch-pipeline-integration.md) определяет
   минимальный `PrepareStart -> Load -> Build -> Start` integration contract.
-  Package Flow реализован изолированно, но concrete Source composition,
-  management routing и Production Activation отсутствуют.
+  Package Flow реализован изолированно. Draft
+  [DP-012](../design/DP-012-runtime-source-composition.md) с Implementation
+  Status Planned определяет confined exact in-memory Source adapter и будущий
+  construction `Source -> Loader -> Flow`. Adapter, management routing,
+  persistence и Production Activation отсутствуют.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Persistence, Delivery и Plugin всё ещё требуют focused design.
