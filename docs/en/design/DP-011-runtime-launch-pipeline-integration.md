@@ -6,13 +6,15 @@
 
 **Design Status:** Draft
 
-**Implementation Status:** Planned
+**Implementation Status:** Implemented in isolation
 
 **Architecture Status:** focused integration contract over approved ARCH-004
 and ARCH-005 and the existing Draft DP-007 through DP-010.
 
-This document does not claim that the production launch capability is
-implemented and does not raise the status of any related Draft DP.
+The `internal/runtimelaunchflow` package implements this contract in isolation.
+Concrete Source composition, management routing, and Production Activation are
+absent. Implementation does not claim that the production launch capability
+is implemented and does not raise the status of any related Draft DP.
 
 ## 2. Purpose
 
@@ -503,10 +505,10 @@ must define and verify:
   are absent;
 - operational reporting and redaction of preparation/launch failures.
 
-DP-011 does not select the order or API of those tasks. The planned package
-implementation may be an independently verifiable prerequisite, but by itself
-it does not change `spec/current-state.md` to claim that Runtime management
-from the Control Service is implemented.
+DP-011 does not select the order or API of those tasks. The isolated package
+implementation is an independently verified prerequisite, but by itself it
+does not change `spec/current-state.md` to claim that Runtime management from
+the Control Service is implemented.
 
 ## 25. Intentionally Deferred
 
@@ -527,7 +529,7 @@ None of these concerns may be implemented as hidden Flow behavior.
 
 ## 26. Implementation Boundary
 
-The next permissible code slice after acceptance of this Draft is limited to:
+The first code slice is implemented and limited to:
 
 - `internal/runtimelaunchflow`;
 - local proof tests;
@@ -536,8 +538,8 @@ The next permissible code slice after acceptance of this Draft is limited to:
 It does not change the DP-007 through DP-010 packages, Control Service,
 repositories, management API, persistence, Host, or Bootstrap.
 
-Design review of this Draft precedes any implementation. Implementation does
-not automatically raise Design Status.
+It is not connected to the Control Service and is not Production Activation.
+Implementation does not automatically raise Design Status.
 
 ## 27. Consequences
 
