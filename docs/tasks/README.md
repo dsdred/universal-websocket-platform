@@ -18,6 +18,7 @@ operational документы ведутся на русском языке и 
 - [TASK-011 — Runtime Launch Flow implementation](TASK-011-RUNTIME-LAUNCH-FLOW.md)
 - [TASK-012 — Engineering Process Hardening](TASK-012-ENGINEERING-PROCESS-HARDENING.md)
 - [TASK-013 — Runtime Source Composition Design](TASK-013-RUNTIME-SOURCE-COMPOSITION-DESIGN.md)
+- [TASK-014 — Runtime Source Implementation](TASK-014-RUNTIME-SOURCE-IMPLEMENTATION.md)
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

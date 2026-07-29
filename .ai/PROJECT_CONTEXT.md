@@ -13,10 +13,12 @@
   Configuration Loader boundary, DP-008 Snapshot Builder, DP-009 Runtime
   Bootstrap, stateless Runtime Launcher и DP-010 Runtime Lifecycle Owner
   реализованы изолированно; Draft DP-011 и `internal/runtimelaunchflow`
-  реализуют integration contract изолированно, concrete Source composition и
-  Production Activation отсутствуют**
-- Последняя завершённая development task: **TASK-011 — Runtime Launch Flow
-  implementation; Completed — Coordinator Accepted**
+  реализуют integration contract изолированно; Draft DP-012 и
+  `internal/configurationloadsource.MemorySource` реализуют concrete Source
+  adapter изолированно; management wiring и Production Activation
+  отсутствуют**
+- Последняя завершённая development task: **TASK-014 — Runtime Source
+  Implementation; Completed — Coordinator Accepted**
 - Последняя завершённая operational task: **TASK-012 — Engineering Process
   Hardening; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
@@ -107,9 +109,19 @@
   routing, persistence и Production Activation не изменены; final Tester PASS,
   Final Reviewer Approved 0/0, Scope Audit accepted 10/0/0, PROCESS-002
   Synchronized**
-- Следующий candidate после TASK-013: **не активирован; отдельная
-  implementation `MemorySource`, local proof tests и изолированный construction
-  proof; management routing, persistence и Production Activation остаются
+- Candidate после TASK-013: **последовательно активирован как TASK-014 и
+  завершён; management routing, persistence и Production Activation остаются
+  более поздней work**
+- TASK-014: **`internal/configurationloadsource.MemorySource` реализован
+  изолированно с exact Version-first lookup, closed Loader errors, static
+  schema facts, deep detachment, local proof tests, Loader integration и
+  construction proof без Start/Host; после B-001 rework repeat Tester —
+  PASS WITH LIMITATION, 0 findings; race недоступен при CGO=0 и отсутствии
+  gcc, substitute stress PASS; после R-001 test-only rework Repeat Final
+  Reviewer Approved 0/0; Scope Audit accepted 12/0/0; PROCESS-002
+  Synchronized; Completed — Coordinator Accepted**
+- Следующий candidate после TASK-014: **не активирован; отдельная management
+  routing design/readiness task; persistence и Production Activation остаются
   более поздней work**
 - Stage 2 task-before-work ordering выполнен для TASK-003, TASK-004, TASK-005, TASK-006 и TASK-007: task record создан первым content change, а task index обновлён только после initial gate
 - Publication history: **TASK-005 commit `99e0d3d`, TASK-006 commit `fd0f80a` и TASK-007 commit `2e6d221` merged через PR #6/#7/#8; transient pre-commit/Publisher blockers не являются durable project-state instructions**
@@ -122,8 +134,9 @@
 - Design Status DP-011 остаётся **Draft**, Implementation Status —
   **Implemented in isolation**; Flow package не утверждает concrete Source
   composition, management routing или Production Activation
-- Design Status DP-012 — **Draft**, Implementation Status — **Planned**;
-  repository-backed Source adapter и production composition отсутствуют
+- Design Status DP-012 — **Draft**, Implementation Status — **Implemented in
+  isolation**; repository-backed Source adapter реализован, production
+  composition отсутствует
 - Design Status DP-008 остаётся **Draft**, Implementation Status — **Implemented in isolation**
 - Содержимое репозитория: документация, спецификации, инженерные соглашения, исполняемый Control Service и изолированные Runtime-компоненты с тестами
 
