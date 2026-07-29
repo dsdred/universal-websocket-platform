@@ -15,15 +15,16 @@
   реализованы изолированно; Draft DP-011 и `internal/runtimelaunchflow`
   реализуют integration contract изолированно; Draft DP-012 и
   `internal/configurationloadsource.MemorySource` реализуют concrete Source
-  adapter изолированно; management wiring и Production Activation
-  отсутствуют**
+  adapter изолированно; Completed Design-only TASK-015 и Draft/Planned DP-013
+  определяют management routing contract, но implementation, HTTP,
+  persistence, management wiring и Production Activation отсутствуют**
 - Последняя завершённая development task: **TASK-014 — Runtime Source
   Implementation; Completed — Coordinator Accepted**
 - Последняя завершённая operational task: **TASK-012 — Engineering Process
   Hardening; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
-- Последняя завершённая architecture task: **TASK-013 — Runtime Source
-  Composition Design; Completed — Coordinator Accepted**
+- Последняя завершённая architecture task: **TASK-015 — Runtime Management
+  Routing Design; Completed — Coordinator Accepted**
 - Текущая architecture task: **отсутствует**
 - Текущая development task: **отсутствует**
 - Trusted baseline TASK-009: **clean synchronized
@@ -120,9 +121,27 @@
   gcc, substitute stress PASS; после R-001 test-only rework Repeat Final
   Reviewer Approved 0/0; Scope Audit accepted 12/0/0; PROCESS-002
   Synchronized; Completed — Coordinator Accepted**
-- Следующий candidate после TASK-014: **не активирован; отдельная management
-  routing design/readiness task; persistence и Production Activation остаются
-  более поздней work**
+- Candidate после TASK-014: **активирован и завершён как Design-only TASK-015
+  — Runtime Management Routing Design**
+- TASK-015: **Completed — Coordinator Accepted; Architecture Confirmation
+  Design READY/valid, design blockers 0; зеркальный Draft
+  DP-013 с Implementation Status Planned определяет immutable process-local
+  `internal/runtimemanagement.Directory`, exact Target routing,
+  policy-neutral named `Authorize`, authorization-before-mutation и static
+  Owner-to-Flow binding. Design contract READY/valid, но Implementation
+  Readiness BLOCKED обязательными focused designs ARCH-004 §19(2)–(6):
+  operational identity persistence, durable management idempotency,
+  activation/replacement/rollback, recovery/reconciliation и
+  reporting/redaction. Production package, HTTP API/DTO, concrete policy,
+  persistence, recovery, application wiring и Production Activation
+  отсутствуют; Initial Tester FAIL B-001/B-002 -> bounded rework -> Repeat
+  PASS 0/0; Initial Final Reviewer Needs Revision R-001/R-002 -> bounded
+  Architect/Documentation rework -> Repeat Approved 0/0; Scope Audit
+  11 Required / 0 Questionable / 0 Removable; PROCESS-002 Synchronized; code,
+  commit и publication отсутствуют**
+- Следующая рекомендация после TASK-015: **не активирована; отдельный
+  Design-only Runtime Operational Identity Persistence contract как первый
+  unresolved prerequisite ARCH-004 §19(2), не implementation task**
 - Stage 2 task-before-work ordering выполнен для TASK-003, TASK-004, TASK-005, TASK-006 и TASK-007: task record создан первым content change, а task index обновлён только после initial gate
 - Publication history: **TASK-005 commit `99e0d3d`, TASK-006 commit `fd0f80a` и TASK-007 commit `2e6d221` merged через PR #6/#7/#8; transient pre-commit/Publisher blockers не являются durable project-state instructions**
 - Design Status DP-009 остаётся **Draft**; Bootstrap и Runtime Launcher
@@ -137,6 +156,9 @@
 - Design Status DP-012 — **Draft**, Implementation Status — **Implemented in
   isolation**; repository-backed Source adapter реализован, production
   composition отсутствует
+- Design Status DP-013 — **Draft**, Implementation Status — **Planned**;
+  management routing определён только на design level; Implementation
+  Readiness **Blocked**, implementation и production wiring отсутствуют
 - Design Status DP-008 остаётся **Draft**, Implementation Status — **Implemented in isolation**
 - Содержимое репозитория: документация, спецификации, инженерные соглашения, исполняемый Control Service и изолированные Runtime-компоненты с тестами
 

@@ -18,3 +18,4 @@ This directory contains focused Runtime design documents. A design document expl
 | [DP-010: Runtime Lifecycle Owner Contract](DP-010-runtime-lifecycle-owner-contract.md) | Draft; implemented in isolation |
 | [DP-011: Runtime Launch Pipeline Integration](DP-011-runtime-launch-pipeline-integration.md) | Draft; implemented in isolation |
 | [DP-012: Runtime Source Composition](DP-012-runtime-source-composition.md) | Draft; implemented in isolation |
+| [DP-013: Runtime Management Routing](DP-013-runtime-management-routing.md) | Draft; planned |

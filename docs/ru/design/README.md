@@ -18,3 +18,4 @@
 | [DP-010: Контракт Runtime Lifecycle Owner](DP-010-runtime-lifecycle-owner-contract.md) | Draft; реализован изолированно |
 | [DP-011: Интеграция Runtime Launch Pipeline](DP-011-runtime-launch-pipeline-integration.md) | Draft; реализован изолированно |
 | [DP-012: Композиция Runtime Source](DP-012-runtime-source-composition.md) | Draft; реализован изолированно |
+| [DP-013: Маршрутизация управления Runtime](DP-013-runtime-management-routing.md) | Draft; запланирован |

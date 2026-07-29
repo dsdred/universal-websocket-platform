@@ -283,6 +283,16 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   adapter. The adapter, local proof tests, Loader integration, and isolated
   `Source -> Loader -> Flow` construction proof exist. Management routing,
   persistence, application wiring, and Production Activation remain absent.
+  Design-only TASK-015 adds Draft
+  [DP-013](../design/DP-013-runtime-management-routing.md), with Implementation
+  Status Planned, for one immutable process-local Start/Stop/Observe directory,
+  exact Runtime Instance routing, authorization before lifecycle delegation,
+  and static Owner-to-Flow binding. No management package, HTTP API,
+  persistence, or activation exists. The design contract is ready, but
+  implementation readiness is blocked by the remaining mandatory focused
+  designs in ARCH-004 section 19(2)–(6). The next recommendation is a separate
+  Design-only Runtime Operational Identity Persistence contract, not package
+  implementation.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Persistence, Delivery, and Plugin contracts still require focused design.
