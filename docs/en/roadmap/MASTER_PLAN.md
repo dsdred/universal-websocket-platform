@@ -62,6 +62,19 @@ The repository currently contains an Alpha foundation rather than a production-r
 - [ARCH-001](../architecture/ARCH-001-runtime-architectural-pattern.md) records the confirmed `Context -> Evaluation -> Decision -> Execution` pattern, ownership, lifecycle, and Boring Core.
 - The Runtime Alpha Review verdict was **Ready with findings**. Runtime Host, lifecycle hardening, startup capability validation, pre-Upgrade Authentication, the approved DP-005 Router, transactional production Session handoff, and Manager-aware Host shutdown are implemented. Configuration Loader and Snapshot Builder boundaries are also implemented in isolation, but the Loader-to-Builder-to-Launcher production pipeline is not.
 
+### Engineering Process
+
+- TASK-012 hardened the existing Coordinator/Publisher workflow with a
+  pre-work Task Contract, Existing Coverage Report, risk-oriented Verification
+  Matrix, Size Guard, stronger Scope Audit, mandatory documentation
+  synchronization, an exact Commit Gate, Publisher rechecks and cleanup
+  evidence, and a lightweight Process Health Review.
+- The three permission/gate commands keep their existing meaning. This
+  operational change does not implement or analyze Production Activation and
+  does not change product architecture or production code. Independent Tester,
+  Scope Audit, and Final Reviewer gates passed; TASK-012 is Coordinator
+  Accepted.
+
 ## 3. Engineering Principles
 
 The primary design guidance is [ARCH-001: Runtime Architectural Pattern](../architecture/ARCH-001-runtime-architectural-pattern.md).

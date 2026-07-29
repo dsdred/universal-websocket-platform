@@ -107,6 +107,24 @@ Documentation Agent не принимает архитектурные реше�
 утверждённый Design Status и отдельно указывает незавершённый Implementation
 Status. Documentation Agent не повышает статус самостоятельно.
 
+### Mandatory Applicability Record
+
+После каждой task Coordinator и Documentation Agent фиксируют проверку:
+
+- task record — всегда;
+- `spec/current-state.md` — при factual capability, milestone или task-state
+  change;
+- зеркальные MASTER_PLAN — при изменении milestone boundary, engineering
+  dependency или durable roadmap status;
+- связанные Design Proposal — при изменении design или implementation status;
+- `.ai/PROJECT_CONTEXT.md` — при изменении фундаментального состояния,
+  текущей/последней task или durable operational governance;
+- `CHANGELOG.md` — только для user-facing или release changes.
+
+Документ либо синхронизируется, либо получает явное `Not applicable` с
+причиной в task record. CHANGELOG не обновляется автоматически для каждой
+внутренней task.
+
 ---
 
 ## Step 5 — Validate
@@ -121,6 +139,7 @@ Status. Documentation Agent не повышает статус самостоя�
   PROCESS-001;
 - отсутствуют противоречия между документами;
 - новый агент способен продолжить работу без истории переписки.
+- обязательная applicability record заполнена.
 
 ---
 
@@ -218,7 +237,8 @@ Reviewer:
 - все критические расхождения устранены;
 - документация соответствует реализации;
 - отсутствуют противоречия между документами;
-- следующий агент может продолжить работу только по репозиторию.
+- следующий агент может продолжить работу только по репозиторию;
+- обязательная applicability record заполнена.
 
 ---
 

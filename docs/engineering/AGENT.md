@@ -57,6 +57,20 @@ pull, изменение remote или изменение `main`.
 
 ---
 
+# Commit Entry
+
+Сообщение, всё содержимое которого после удаления начальных и конечных
+пробельных символов равно `Разрешаю коммит.`, после Coordinator Acceptance
+разрешает создать ровно один проверенный task commit из принятого diff.
+
+Перед commit Coordinator выполняет Commit Gate PROCESS-001: повторно проверяет
+message policy, exact file set, отсутствие post-acceptance, временных,
+generated и посторонних changes и применимые final checks. Команда не
+разрешает push, PR, merge или публикацию. GPG, DCO и sign-off не добавляются
+без отдельной policy проекта.
+
+---
+
 # Publisher Entry
 
 Сообщение, всё содержимое которого после удаления начальных и конечных

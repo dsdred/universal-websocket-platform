@@ -17,7 +17,8 @@
   Production Activation отсутствуют**
 - Последняя завершённая development task: **TASK-011 — Runtime Launch Flow
   implementation; Completed — Coordinator Accepted**
-- Последняя завершённая operational task: **TASK-008 — Publisher pipeline governance; Completed — Coordinator Accepted**
+- Последняя завершённая operational task: **TASK-012 — Engineering Process
+  Hardening; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
 - Последняя завершённая architecture task: **TASK-010 — Production Launch
   Pipeline Design; Completed — Coordinator Accepted**
@@ -84,6 +85,14 @@
   PASS; PROCESS-002 Synchronized; Scope Audit accepted — 13 Required,
   0 Questionable, 0 Removable; race detector недоступен при `CGO_ENABLED=0`
   и отсутствующем `gcc`**
+- Operational governance TASK-012: **Task Contract, Existing Coverage Report,
+  risk-oriented Verification Matrix, Size Guard, strengthened Scope Audit,
+  mandatory Documentation Sync, exact Commit Gate, Publisher hardening и
+  lightweight Process Health Review встроены в существующий
+  Coordinator/Publisher workflow; три permission/gate-команды не изменены,
+  production code и Production Activation не затронуты; independent Tester
+  PASS, Final Reviewer Approved, Scope Audit 16 Required / 0 Questionable /
+  0 Removable; Completed — Coordinator Accepted**
 - Следующий candidate после TASK-011: **не активирован; рекомендуется отдельная
   documentation-first readiness/design task, выбирающая один prerequisite
   Production Activation между concrete Source composition, management routing

@@ -18,6 +18,8 @@ Agent обязан:
 - поддерживать Wiki;
 - поддерживать историю изменений;
 - проверять согласованность документов.
+- после каждой task заполнять mandatory applicability record PROCESS-002;
+- обновлять CHANGELOG только для user-facing или release changes.
 
 ---
 

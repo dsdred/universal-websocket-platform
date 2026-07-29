@@ -16,8 +16,8 @@ Source composition или Control Service activation.
 **Последняя завершённая development task:** TASK-011 — Runtime Launch Flow
 implementation; `Completed — Coordinator Accepted`.
 
-**Последняя завершённая operational task:** TASK-008 — Publisher pipeline
-governance; `Completed — Coordinator Accepted`.
+**Последняя завершённая operational task:** TASK-012 — Engineering Process
+Hardening; `Completed — Coordinator Accepted`.
 
 **Текущая operational task:** отсутствует.
 
@@ -172,6 +172,17 @@ verdict — `Approved`, 0 blocking и 0 nonblocking findings. Targeted stress
 PROCESS-002 — `Synchronized`; Scope Audit accepted: 13 Required,
 0 Questionable, 0 Removable. Race detector недоступен при `CGO_ENABLED=0` и
 отсутствующем `gcc`.
+
+**Operational governance TASK-012:** в существующий Coordinator/Publisher
+workflow встроены обязательный pre-work Task Contract, Existing Coverage
+Report, risk-oriented Verification Matrix, Size Guard, усиленный Scope Audit,
+mandatory Documentation Sync, exact Commit Gate, Publisher rechecks/cleanup
+evidence и lightweight Process Health Review. Три permission/gate-команды
+сохранили смысл; product architecture, production code, Runtime Launch Flow и
+Production Activation не изменены. Independent Tester — `PASS`; Final
+Reviewer — `Approved`; Scope Audit — 16 Required, 0 Questionable,
+0 Removable. TASK-012 завершена со статусом
+`Completed — Coordinator Accepted`.
 
 **Следующий candidate после TASK-011:** не активирован. Рекомендуется отдельная
 documentation-first readiness/design task, которая выберет один минимальный

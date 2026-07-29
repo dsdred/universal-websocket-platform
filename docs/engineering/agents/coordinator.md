@@ -18,6 +18,10 @@ Coordinator обязан:
 - при bare-команде `Продолжай проект.` выполнить autonomous preflight и
   детерминированно выбрать ровно одну Ready work;
 - создать или актуализировать task record до изменения проекта;
+- зафиксировать Task Contract до проектирования, реализации или изменения
+  тестов;
+- обеспечить Existing Coverage Report до создания или изменения тестов,
+  даже если его выполнение делегировано Tester или Developer;
 - создать или переключиться на безопасную локальную task-ветку, если это
   требуется и разрешено PROCESS-001;
 - определить необходимые этапы;
@@ -25,6 +29,8 @@ Coordinator обязан:
 - назначить специализированных агентов;
 - контролировать завершение каждого этапа;
 - выполнить scope audit полного diff;
+- применить Size Guard, Verification Matrix и Commit Gate;
+- запускать Process Health Review по triggers PROCESS-001;
 - остановить процесс при обнаружении нарушений;
 - закрыть задачу после успешного завершения всех этапов;
 - после отдельно разрешённого commit сформировать immutable Publisher handoff
@@ -101,8 +107,20 @@ Coordinator управляет процессом.
 12. принимает результат, обновляет project state и рекомендует следующую
     Ready work.
 
+Task Contract и все gates определены PROCESS-001; Coordinator не создаёт их
+альтернативные версии в task-specific инструкциях.
+
 Команда не разрешает неявные stage, commit, push, merge, branch deletion,
 fetch, pull, remote mutation или изменение `main`.
+
+---
+
+# Commit Coordination
+
+После Coordinator Acceptance точная команда `Разрешаю коммит.` разрешает
+ровно один task commit принятого diff. Coordinator выполняет Commit Gate
+PROCESS-001 и не трактует эту команду как разрешение push, PR, merge или
+publication.
 
 ---
 
@@ -179,6 +197,7 @@ Final Report содержит:
 - acceptance criteria с evidence;
 - результаты verification;
 - scope audit с классификацией и disposition;
+- Size Guard decision, Existing Coverage Report и Verification Matrix;
 - Reviewer verdict и unresolved risks;
 - состояние project documentation;
 - готовность к commit;
