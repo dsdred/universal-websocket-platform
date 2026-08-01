@@ -6,7 +6,8 @@
 
 **Design Status:** Draft
 
-**Implementation Status:** Implemented in isolation
+**Implementation Status:** Implemented in isolation; private extension
+Start-claim continuation DP-016 — Planned
 
 **Статус архитектуры:** сфокусированный integration contract поверх
 утверждённых ARCH-004 и ARCH-005 и существующих Draft DP-007–DP-010.
@@ -14,7 +15,9 @@
 Package `internal/runtimelaunchflow` реализует этот contract изолированно.
 Concrete Source composition, management routing и Production Activation
 отсутствуют. Implementation не объявляет production launch capability
-реализованной и не повышает статусы связанных Draft DP.
+реализованной и не повышает статусы связанных Draft DP. Текущий package не
+реализует private claim-continuation gate, требуемый DP-016; extension требует
+отдельной implementation task.
 
 ## 2. Назначение
 
@@ -177,8 +180,10 @@ func (f *BuildFailure) Error() string
 func (f *BuildFailure) Diagnostics() []runtimeconfig.Diagnostic
 ```
 
-Дополнительный exported interface, callback, registry, option, stage enum,
-result union или lifecycle state не вводится.
+Реализованный isolated surface не вводит дополнительный exported interface,
+callback, registry, option, stage enum, result union или lifecycle state.
+Private continuation section 10 является planned management integration seam,
+а не частью текущего exported API.
 
 `New` отклоняет nil Flow dependencies с `ErrInvalidFlow`. `Start` отклоняет
 nil context с `ErrInvalidStartContext`. Ошибки Owner, Loader и context не
@@ -230,6 +235,42 @@ Owner.
 - не начинает Load или Build;
 - не вызывает Loader, Builder, Owner.Start или Launcher;
 - возвращает exact error caller.
+
+Management orchestration DP-016 требует один future private **Start-claim
+continuation gate**. Он не переносит claim authority из Owner. Сразу после
+successful return preparation из `Owner.PrepareStart` и до начала Load, Build
+или Launcher work Flow должен синхронно предложить exact claim management
+continuation, связанному с linked Start phase.
+
+Continuation атомарно упорядочивает pending Stop и permission продолжить
+preparation:
+
+- `Continue` означает отсутствие pending Stop или definitive terminal cancelled
+  его original claimant до delegation; Flow может начать Load и Build;
+- `StopConverged` означает, что original claiming path Stop своим permit вызвал
+  exact Stop DP-013 и converge этот Owner attempt; Flow не начинает Load/Build и
+  возвращает Owner-equivalent outcome stopped-before-running;
+- `Blocked` означает потерю permit pending claimant, return без definitive
+  result, unproven convergence Stop или indeterminate rendezvous; Flow не
+  начинает external preparation work, а linked set остаётся unresolved или
+  truthfully failed.
+
+Continuation не несёт mutable Host, Snapshot, lifecycle ownership, permit или
+caller-selected identity. Он только сигнализирует original pending Stop call
+stack о successful Owner claim и затем ждёт durable outcome того же claimant.
+Он выполняется вне mutex Owner; command-admission и Owner locks не удерживаются
+во время wait или convergence Stop. Process loss делает rendezvous и linked
+command set unresolved для future recovery.
+
+Поскольку Flow и management routing являются разными Go packages, future
+extension является internal-package-callable construction capability: Flow при
+construction immutable связывается с одним `StartClaimContinuation`,
+реализованным exact management binding. Capability предоставляет одно
+synchronous decision `AfterOwnerClaim`: `Continue`, `StopConverged` или
+`Blocked`; он не раскрывает `LaunchPreparation` или permit. Go symbol может быть
+exported через repository boundary `internal/`, но не является public
+management/HTTP API. Exact current implementation `New` и `Start` остаётся без
+изменения и не имеет этого seam, поэтому не реализует orchestration DP-016.
 
 ## 11. Synchronous operation и caller lifetime
 

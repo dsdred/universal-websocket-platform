@@ -31,7 +31,7 @@ This proposal refines, without overriding:
   aggregate identity, conditional revision, and lifecycle-fact publication.
 
 Accepted ADRs and Active or Frozen architecture remain authoritative. Draft
-DP-013 through DP-015 do not authorize implementation.
+DP-013 through DP-016 do not authorize implementation.
 
 ## 4. Scope
 
@@ -70,6 +70,14 @@ known, and replayable outcome when terminal.
 returned only to the path that commits a new claim. It authorizes one exact
 DP-013 invocation. It is not durable identity, lifecycle ownership, or proof
 that mutation began.
+
+A focused downstream orchestration design may define one **parent
+orchestration permit** and durably linked **phase claims**. The parent permit
+authorizes only the finite phase-claim transitions declared by that design; it
+authorizes no DP-013 invocation. Each newly committed phase claim returns its
+own non-transferable phase permit for at most one exact DP-013 invocation. A
+phase identity is derived from the parent command identity and immutable phase
+kind/ordinal, is not caller-selectable, and cannot be replayed as another phase.
 
 **Replay-equivalent outcome** is the stable semantic result needed to answer a
 same-intent repeat without delegating lifecycle work again. It is not a stored
@@ -200,11 +208,37 @@ the required ARCH-004 Stop-during-Starting convergence; the Owner captures the
 same Launch Attempt and remains authoritative. Another Start, or another Stop
 after a tracked Stop exists, receives a non-mutating in-progress conflict.
 
-A Claimed record without its exact live permit is **unresolved**. It is a
-durable barrier against every new state-changing command until future recovery
-makes the earlier command Terminal. Observe remains read-only. This barrier
-also applies after process restart, after loss of the claiming call stack, or
-when terminal publication is indeterminate.
+The focused DP-016 contract refines that same single exception for a tracked
+replacement or rollback parent; it does not create a general orchestration
+escape from the barrier. If replacement/rollback is accepted while an earlier
+Start is tracked, the parent claim and its first linked Stop phase claim occupy
+the one Stop exception atomically. No independent Stop can also occupy it. Once
+the old attempt is released, the tracked parent may claim only its declared
+linked Start phase. At the DP-016 Continue gate, one independent Stop is ordered
+against that Start-phase claim: Stop either terminalizes the parent before the
+phase exists, or the phase wins. After the phase wins, exactly one distinct Stop
+may claim the tracked-Start exception. Before Owner claim it is recorded as
+pending and its permit cannot invoke DP-013 Stop; the DP-011/DP-013 Start-claim
+continuation only signals Owner claim to the original Stop claiming path. That
+same blocked call stack retains the non-transferable permit, checks its own
+cancellation, performs its one DP-013 Stop invocation, publishes the outcome,
+and signals the continuation. The continuation never receives or invokes the
+permit. After it returns `Continue`, the same exception delegates Stop directly
+to the already-claimed attempt. Another Stop or lifecycle command receives a
+non-mutating in-progress conflict.
+
+The pending claimant waits for exactly one process-local signal:
+`OwnerClaimed`, or `StartNoClaim` when the linked Start path definitively returns
+before Owner claim. `StartNoClaim` lets that same Stop path consume its permit
+as terminal satisfied without DP-013 Stop. Signal loss is unresolved, never an
+implicit choice.
+
+A Claimed primitive, parent, or phase record without its exact live permit is
+**unresolved**. An unresolved parent or any one of its phases is a durable
+barrier against every new state-changing command and every further phase until
+future recovery makes the linked command set Terminal. Observe remains read-
+only. No tracked exception applies after process restart, after loss of the
+claiming call stack, or when a claim or terminal publication is indeterminate.
 
 ## 14. Lifecycle Delegation
 
@@ -212,6 +246,20 @@ Only the execution path that confirmed creation of a new durable claim may
 delegate the command to the exact DP-013 scope. It delegates at most once in
 that process execution and preserves existing Flow and Owner cancellation,
 outcome, and failure semantics.
+
+A parent orchestration path never delegates to DP-013 directly. It may advance
+only by conditionally committing the next immutable linked phase declared by
+the focused orchestration contract. Only the path holding that phase's newly
+issued permit may perform its one exact DP-013 invocation. Parent and phase
+outcomes advance monotonically; a missing or indeterminate phase outcome closes
+the parent's barrier rather than authorizing another phase or permit.
+
+A pending Stop claiming path remains synchronously blocked while retaining its
+own permit. An Owner-claim signal only opens that path's downstream gate; it
+does not transfer authority. The same path alone invokes DP-013 Stop and then
+publishes and signals one definitive no-mutation, converged, failed, or
+indeterminate outcome. Returning without such an outcome loses the live permit
+and makes the pending Stop and parent unresolved.
 
 A claimed command is not proof that lifecycle mutation began. A caller
 cancellation after claim does not erase the record or permit another request
@@ -319,6 +367,16 @@ its permit is gone; the command remains unresolved Claimed and keeps the per-
 Instance barrier closed. While a Start permit remains live, the separately
 claimed Stop exception remains available and reaches the same Owner.
 
+For a DP-016 pending Stop, cancellation before the Owner-claim signal is checked
+and terminally published by the original claiming path. If it definitively wins
+before delegation, the permit is consumed without DP-013 mutation and the
+Start continuation may return `Continue`. Cancellation visible only after the
+Owner-claim signal is governed by the ordinary DP-010 Stop gate. If the pending
+caller returns, loses its permit, cannot prove no mutation, or cannot publish a
+definitive outcome, it signals `Blocked`; Flow begins no Load and the linked set
+remains unresolved. No admission or Owner lock is held while either call stack
+waits for the signal or result.
+
 Cancellation never deletes the command, transfers command ownership to a
 retry, or authorizes duplicate delegation.
 
@@ -358,9 +416,11 @@ Command key encoding, intent comparison, revision representation, storage,
 locking, transaction mechanics, and serialization are implementation choices.
 The observable requirements are durable claim-before-delegation, exact intent
 binding, one accepted claim, atomic per-Instance command admission, one non-
-transferable permit per accepted claim, the tracked-Start Stop exception, an
-unresolved-command barrier, at-most-once delegation, monotonic command state,
-truthful inspection, and replay without mutation.
+transferable permit per accepted primitive or phase claim, no lifecycle
+delegation by a parent permit, the bounded DP-016 phase/pending-Stop exceptions,
+the Start-claim continuation before external preparation work, an
+unresolved-command-set barrier, at-most-once phase delegation, monotonic
+command state, truthful inspection, and replay without mutation.
 
 Generic CRUD repositories, distributed lock services, universal command buses,
 dynamic registries, and service locators are neither required nor authorized.
@@ -409,8 +469,10 @@ Management implementation remains blocked by:
 4. recovery and reconciliation, section 19(5);
 5. operational error reporting and redaction, section 19(6).
 
-By dependency ordering, section 19(4) may be designed next. This Draft neither
-activates that work nor permits isolated management implementation.
+Draft [DP-016](DP-016-runtime-activation-replacement-rollback.md) now proposes
+the candidate section 19(4) contract. It does not remove the section 19(2),
+19(3), or 19(4) gates. By dependency ordering, section 19(5) may be designed
+next. Neither Draft permits isolated management implementation.
 
 ## 26. Explicit Deferrals
 

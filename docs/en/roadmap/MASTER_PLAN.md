@@ -307,9 +307,17 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   per-Instance barrier while outcome remains unresolved, the required tracked-
   Start Stop exception, and truthful indeterminate outcomes. As a
   non-normative Draft it removes neither the section 19(2) nor 19(3) gate and
-  creates no command store, API, recovery, or wiring. The next dependency-
-  ordered design recommendation may address activation, replacement, and
-  rollback ordering in section 19(4).
+  creates no command store, API, recovery, or wiring. Design-only TASK-018 adds
+  Draft [DP-016](../design/DP-016-runtime-activation-replacement-rollback.md),
+  with Implementation Status Planned, as the candidate section 19(4) contract.
+  It orders exact-version initial activation, replacement, and explicit rollback
+  around Stop-to-proven-release and a fresh Launch Attempt, without Host overlap
+  or automatic fallback. It requires a private DP-011/DP-013 Start-claim
+  continuation after Owner claim and before Load; the current isolated Flow
+  does not implement that seam. As a non-normative Draft it removes none of the
+  section 19(2)–(4) gates and creates no implementation. The next dependency-ordered
+  design recommendation may address recovery and reconciliation in section
+  19(5).
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Persistence, Delivery, and Plugin contracts still require focused design.

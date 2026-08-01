@@ -16,8 +16,9 @@ This directory contains focused Runtime design documents. A design document expl
 | [DP-008: Snapshot Builder Contract](DP-008-snapshot-builder-contract.md) | Draft; implemented in isolation |
 | [DP-009: Runtime Bootstrap Contract](DP-009-runtime-bootstrap-contract.md) | Draft; implemented in isolation |
 | [DP-010: Runtime Lifecycle Owner Contract](DP-010-runtime-lifecycle-owner-contract.md) | Draft; implemented in isolation |
-| [DP-011: Runtime Launch Pipeline Integration](DP-011-runtime-launch-pipeline-integration.md) | Draft; implemented in isolation |
+| [DP-011: Runtime Launch Pipeline Integration](DP-011-runtime-launch-pipeline-integration.md) | Draft; base implemented in isolation, DP-016 continuation planned |
 | [DP-012: Runtime Source Composition](DP-012-runtime-source-composition.md) | Draft; implemented in isolation |
 | [DP-013: Runtime Management Routing](DP-013-runtime-management-routing.md) | Draft; planned |
 | [DP-014: Runtime Operational Identity Persistence](DP-014-runtime-operational-identity-persistence.md) | Draft; planned |
 | [DP-015: Runtime Management Command Idempotency](DP-015-runtime-management-command-idempotency.md) | Draft; planned |
+| [DP-016: Runtime Activation, Replacement, and Rollback](DP-016-runtime-activation-replacement-rollback.md) | Draft; planned |

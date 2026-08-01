@@ -344,6 +344,37 @@ The exact requested version is preserved. Directory does not call
 
 The returned `StartOutcome` and error are returned unchanged.
 
+The future DP-016 implementation keeps this exported `Directory.Start` surface
+unchanged but requires one private management-only Start-claim continuation
+seam in the stored Flow. After Owner claims the exact attempt and before Flow
+begins Load, the seam atomically resolves a Stop already admitted against the
+linked Start phase:
+
+- no pending Stop returns `Continue` and releases Flow;
+- a pending Stop causes the continuation to signal Owner claim to the original
+  blocked Stop call stack; that claimant alone invokes this binding's exact
+  `scope.owner.Stop`, publishes its result, and returns `StopConverged`;
+- claimant cancellation definitively observed before delegation returns
+  `Continue` with a terminal no-mutation Stop outcome;
+- permit loss, return without a definitive outcome, unproven convergence, or an
+  indeterminate rendezvous returns `Blocked`, releases no preparation work, and
+  closes the linked DP-015 barrier.
+
+The command-admission decision occurs before either call stack waits. The
+continuation carries neither permit nor caller context, and no admission or
+Owner lock is held across the signal, result wait, or Owner convergence. A Stop
+arriving after `Continue` uses the ordinary section 17 route and reaches the
+already-claimed attempt. The DP-013 binding supplies the internal-package-
+callable `StartClaimContinuation` when constructing Flow; this adds no exported
+Directory/Replace/Rollback operation, transfers neither permit nor
+`LaunchPreparation`, and is Planned rather than implemented.
+
+If the linked `Directory.Start` path returns a definitive cancellation or error
+before Owner claim, it signals `StartNoClaim` to the original pending Stop call
+stack. That claimant alone terminalizes its Stop satisfied without invoking
+section 17. An indeterminate return or lost signal yields `Blocked`, not
+`StartNoClaim`.
+
 ## 17. Stop
 
 After successful validation, routing, and authorization, Stop invokes only:
@@ -543,6 +574,12 @@ the candidate durable management command idempotency contract for section
 lifecycle delegation and defines non-mutating replay. As a non-normative Draft
 it does not remove the section 19(2) or 19(3) gates or activate implementation.
 
+Draft [DP-016](DP-016-runtime-activation-replacement-rollback.md) now proposes
+the candidate activation, replacement, and explicit rollback ordering contract
+for section 19(4). It preserves exact-version attempts and Stop-to-proven-release
+before any replacement or rollback Start. As a non-normative Draft it does not
+remove the section 19(2), 19(3), or 19(4) gates or activate implementation.
+
 ## 27. Future implementation proofs
 
 After every prerequisite in section 26 is resolved, a future implementation
@@ -619,10 +656,10 @@ or activation path exists as a result of this document.
 
 Implementation Readiness is Blocked. Neither an isolated package nor local
 proof code is authorized until every mandatory focused design in section 26
-exists. DP-015 is the candidate section 19(3) design, not an implementation
-task; the section 19(2) and 19(3) approval gates remain. By dependency ordering
-the next design recommendation may address activation, replacement, and
-rollback ordering in section 19(4).
+exists. DP-015 and DP-016 are the candidate section 19(3) and 19(4) designs,
+not implementation tasks; the section 19(2), 19(3), and 19(4) approval gates
+remain. By dependency ordering the next design recommendation may address
+recovery and reconciliation after Control Service termination in section 19(5).
 
 ## 30. Decision
 

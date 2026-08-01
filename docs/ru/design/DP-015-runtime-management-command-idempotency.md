@@ -31,7 +31,7 @@ lifecycle mutation или Launch Attempt.
   aggregate identity, conditional revision и publication lifecycle facts.
 
 Принятые ADR и Active или Frozen architecture остаются authoritative. Draft
-DP-013–DP-015 не разрешают implementation.
+DP-013–DP-016 не разрешают implementation.
 
 ## 4. Область
 
@@ -70,6 +70,15 @@ scope с одним immutable intent, command state, observed lifecycle facts, �
 возвращаемая только path, который commit новый claim. Она разрешает один exact
 invocation DP-013. Это не durable identity, lifecycle ownership или proof
 начала mutation.
+
+Focused downstream orchestration design может определить один **parent
+orchestration permit** и durable linked **phase claims**. Parent permit
+разрешает только конечные phase-claim transitions, объявленные этим design; он
+не разрешает invocation DP-013. Каждый newly committed phase claim возвращает
+собственный non-transferable phase permit не более чем для одного exact
+invocation DP-013. Phase identity выводится из parent command identity и
+immutable kind/ordinal phase, не выбирается caller и не может replay как другая
+phase.
 
 **Replay-equivalent outcome** — стабильный semantic result, необходимый для
 ответа на same-intent repeat без повторной delegation lifecycle work. Это не
@@ -200,11 +209,35 @@ ARCH-004 convergence Stop-during-Starting; Owner захватывает тот �
 Attempt и остаётся authoritative. Другой Start или другой Stop после появления
 tracked Stop получает non-mutating in-progress conflict.
 
-Claimed record без exact live permit является **unresolved**. Он является
-durable barrier для каждого нового state-changing command до тех пор, пока
-future recovery не сделает предыдущий command Terminal. Observe остаётся
-read-only. Barrier также действует после restart process, потери claiming call
-stack или indeterminate terminal publication.
+Focused contract DP-016 уточняет то же single exception для tracked parent
+replacement или rollback; он не создаёт общий orchestration bypass barrier.
+Если replacement/rollback принимается во время tracked earlier Start, parent
+claim и его первый linked Stop phase claim атомарно занимают один Stop
+exception. Independent Stop не может занять его одновременно. После release
+old attempt tracked parent может claim только свой declared linked Start phase.
+На Continue gate DP-016 один independent Stop упорядочен против этого
+Start-phase claim: Stop либо terminalizes parent до появления phase, либо phase
+выигрывает. После победы phase ровно один distinct Stop может claim exception
+tracked-Start. До claim Owner он записывается pending, а его permit не может
+invoke Stop DP-013; continuation Start-claim DP-011/DP-013 только сигнализирует
+Owner claim original claiming path Stop. Тот же blocked call stack сохраняет
+non-transferable permit, проверяет собственную cancellation, выполняет свой один
+invocation Stop DP-013, публикует outcome и сигнализирует continuation.
+Continuation никогда не получает и не вызывает permit. После его return
+`Continue` то же exception делегирует Stop прямо already-claimed attempt. Другой
+Stop или lifecycle command получает non-mutating in-progress conflict.
+
+Pending claimant ждёт ровно один process-local signal: `OwnerClaimed` или
+`StartNoClaim`, когда linked Start path definitive возвращается до claim Owner.
+`StartNoClaim` позволяет тому же Stop path consume permit как terminal satisfied
+без Stop DP-013. Потеря signal является unresolved, а не implicit choice.
+
+Claimed primitive, parent или phase record без exact live permit является
+**unresolved**. Unresolved parent или любая его phase является durable barrier
+для каждого нового state-changing command и дальнейшей phase до тех пор, пока
+future recovery не сделает linked command set Terminal. Observe остаётся read-
+only. Ни один tracked exception не действует после restart process, потери
+claiming call stack или indeterminate claim/terminal publication.
 
 ## 14. Lifecycle delegation
 
@@ -212,6 +245,20 @@ stack или indeterminate terminal publication.
 делегировать command exact scope DP-013. Он делегирует не более одного раза в
 этом process execution и сохраняет существующие semantics cancellation,
 outcome и failure Flow и Owner.
+
+Parent orchestration path никогда не делегирует прямо в DP-013. Он может
+продвигаться только conditional commit следующей immutable linked phase,
+объявленной focused orchestration contract. Только path с newly issued permit
+этой phase может выполнить её один exact invocation DP-013. Outcomes parent и
+phase продвигаются монотонно; missing или indeterminate phase outcome закрывает
+barrier parent, а не разрешает другую phase или permit.
+
+Pending Stop claiming path остаётся synchronously blocked и сохраняет свой
+permit. Signal Owner claim только открывает downstream gate этого path и не
+передаёт authority. Только тот же path вызывает Stop DP-013, затем публикует и
+сигнализирует один definitive no-mutation, converged, failed или indeterminate
+outcome. Return без такого outcome теряет live permit и делает pending Stop и
+parent unresolved.
 
 Claimed command не доказывает, что lifecycle mutation началась. Caller
 cancellation после claim не удаляет record и не позволяет другому request
@@ -320,6 +367,15 @@ cancellation может прервать только wait этого caller, п
 сохраняет закрытым per-Instance barrier. Пока Start permit остаётся live,
 отдельно claimed exception Stop остаётся доступным и достигает того же Owner.
 
+Для pending Stop DP-016 cancellation до signal Owner claim проверяется и
+terminally публикуется original claiming path. Если она definitive выигрывает
+до delegation, permit consumes без mutation DP-013, а Start continuation может
+вернуть `Continue`. Cancellation, видимая только после signal Owner claim,
+управляется обычным gate Stop DP-010. Если pending caller возвращается, теряет
+permit, не может доказать no mutation или опубликовать definitive outcome, он
+сигнализирует `Blocked`; Flow не начинает Load, а linked set остаётся unresolved.
+Admission/Owner lock не удерживается, пока любой call stack ждёт signal/result.
+
 Cancellation никогда не удаляет command, не передаёт command ownership retry и
 не разрешает duplicate delegation.
 
@@ -359,8 +415,10 @@ Encoding command key, comparison intent, representation revision, storage,
 locking, transaction mechanics и serialization являются implementation
 choices. Observable requirements: durable claim-before-delegation, exact
 binding intent, один accepted claim, atomic per-Instance command admission,
-один non-transferable permit на accepted claim, exception tracked-Start Stop,
-barrier unresolved command, at-most-once delegation, monotonic command state,
+один non-transferable permit на accepted primitive или phase claim, отсутствие
+lifecycle delegation у parent permit, bounded phase/pending-Stop exceptions
+DP-016, Start-claim continuation до external preparation work, barrier
+unresolved command set, at-most-once phase delegation, monotonic command state,
 truthful inspection и replay без mutation.
 
 Generic CRUD repositories, distributed lock services, universal command buses,
@@ -408,9 +466,10 @@ Management implementation остаётся заблокированной:
 4. recovery и reconciliation, section 19(5);
 5. operational error reporting и redaction, section 19(6).
 
-По dependency ordering section 19(4) может проектироваться следующим. Этот
-Draft не активирует эту work и не разрешает isolated management
-implementation.
+Draft [DP-016](DP-016-runtime-activation-replacement-rollback.md) теперь
+предлагает candidate contract section 19(4). Он не снимает gates sections
+19(2), 19(3) или 19(4). По dependency ordering следующим может проектироваться
+section 19(5). Ни один Draft не разрешает isolated management implementation.
 
 ## 26. Явно отложено
 

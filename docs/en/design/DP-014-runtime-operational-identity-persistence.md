@@ -443,8 +443,11 @@ command idempotency. Inspecting an indeterminate write is not recovery or
 reconciliation. Terminal fact storage is not operational reporting. Draft
 [DP-015](DP-015-runtime-management-command-idempotency.md) proposes the
 candidate section 19(3) contract, but it neither removes the section 19(2) or
-19(3) gates nor activates implementation. Section 19(4) may be designed next
-by dependency ordering.
+19(3) gates nor activates implementation. Draft
+[DP-016](DP-016-runtime-activation-replacement-rollback.md) now proposes the
+candidate section 19(4) contract, but it does not remove the section 19(2),
+19(3), or 19(4) gates. Section 19(5) may be designed next by dependency
+ordering.
 
 ## 24. Explicit Deferrals
 

@@ -25,9 +25,9 @@
   изолированно, а persistence и production routing operational сущностей
   отсутствуют.
 - ARCH-005 определяет Configuration Loader, Snapshot provenance и loading boundary.
-- Draft DP-007–DP-015 являются implementation/design contracts и не
+- Draft DP-007–DP-016 являются implementation/design contracts и не
   повышаются до нормативного статуса реализацией или commit. DP-012 реализован
-  изолированно; DP-013, DP-014 и DP-015 сохраняют Implementation Status
+  изолированно; DP-013, DP-014, DP-015 и DP-016 сохраняют Implementation Status
   Planned.
 
 ## Ожидающие отдельного решения
@@ -65,9 +65,19 @@ truthful indeterminate outcome. Он не создаёт command store, schema, 
 recovery или production wiring и не снимает
 formal gates §19(2) или §19(3) до отдельных approval/status decisions.
 
-По dependency ordering следующей рекомендуемой design work после DP-015 может
-быть activation/replacement/rollback ordering ARCH-004 §19(4). Рекомендация не
-активирует task или implementation.
+Non-normative Draft DP-016 предлагает candidate focused contract ARCH-004
+§19(4): exact-version activation, ordered replacement через
+Stop-to-proven-release, fresh-attempt explicit rollback, zero Host overlap и
+phase-specific concurrency/cancellation. Для обязательного Stop-during-Starting
+он требует planned private Start-claim continuation DP-011/DP-013 после sole
+Owner claim и до Load; current isolated Flow этот seam не реализует. DP-016 не
+создаёт lifecycle implementation, API, recovery или production wiring и не
+снимает formal gates §19(2)–(4) до отдельных approval/status decisions.
 
-Package `internal/runtimelaunchflow` реализует DP-011 изолированно без
-изменения этих ожидающих решения production boundaries.
+По dependency ordering следующей рекомендуемой design work после DP-016 может
+быть recovery/reconciliation после termination Control Service ARCH-004
+§19(5). Рекомендация не активирует task или implementation.
+
+Package `internal/runtimelaunchflow` реализует base DP-011 изолированно без
+private Start-claim continuation DP-016 и без изменения этих ожидающих решения
+production boundaries.
