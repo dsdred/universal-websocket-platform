@@ -6,7 +6,7 @@ Universal WebSocket Platform is an open-source platform for creating, configurin
 
 ## Status
 
-The project is in early alpha and is not production-ready. The repository contains the Control Service, in-memory domain APIs, and an implemented single-node Runtime vertical with Manager-aware shutdown. The Configuration Loader boundary is implemented but is not yet connected to the Snapshot Builder or a production Runtime launch pipeline.
+The project is in early alpha and is not production-ready. The repository contains the Control Service, in-memory domain APIs, and an implemented single-node Runtime vertical with Manager-aware shutdown. The Configuration Loader is connected to the Snapshot Builder through the isolated in-process Runtime Launch Flow, and the repository proves isolated `Source -> Loader -> Flow` construction over a concrete in-memory Source adapter. Application and Control Service wiring and Production Activation remain absent.
 
 ## Current release
 

@@ -6,7 +6,7 @@ Universal WebSocket Platform — open-source платформа для созд�
 
 ## Статус
 
-Проект находится на ранней alpha-стадии и не готов к production-эксплуатации. Репозиторий содержит Control Service, in-memory доменные API и реализованную single-node Runtime vertical с Manager-aware shutdown. Граница Configuration Loader реализована, но ещё не связана со Snapshot Builder и production pipeline запуска Runtime.
+Проект находится на ранней alpha-стадии и не готов к production-эксплуатации. Репозиторий содержит Control Service, in-memory доменные API и реализованную single-node Runtime vertical с Manager-aware shutdown. Configuration Loader связан со Snapshot Builder через изолированный in-process Runtime Launch Flow, а репозиторий доказывает изолированную конструкцию `Source -> Loader -> Flow` поверх конкретного in-memory Source adapter. Application wiring, интеграция с Control Service и Production Activation отсутствуют.
 
 ## Текущий релиз
 
