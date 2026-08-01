@@ -5,14 +5,14 @@
 ## 1. Статус
 
 - **Design Status:** Draft
-- **Implementation Status:** Planned
-- **Implementation Readiness:** Ready для bounded isolated implementation
-  slice; full integration и Production Activation остаются blocked
+- **Implementation Status:** Implemented in isolation
+- **Integration Readiness:** Blocked; full integration и Production Activation
+  требуют planned dependencies и wiring ниже
 
-До утверждения proposal не является нормативным. Он определяет планируемую
-изолированную in-process management command boundary. Package, production
-routing Control Service, authorization policy, persistence, recovery и
-Production Activation не появляются в результате этого документа.
+До утверждения proposal остаётся ненормативным. Его изолированная in-process
+management command boundary реализована в `internal/runtimemanagement`.
+Production routing Control Service, authorization policy, persistence,
+recovery и Production Activation остаются отсутствующими.
 
 ## 2. Назначение
 
@@ -47,7 +47,7 @@ failures, composition audit и требования к будущим изоли
 
 ## 5. Package и ответственность
 
-Планируемый package — `internal/runtimemanagement`.
+Изолированный package — `internal/runtimemanagement`.
 
 Он владеет только:
 
@@ -561,11 +561,11 @@ future management composition
 
 ## 26. Обязательные prerequisites implementation
 
-Draft design contract валиден и Ready для bounded isolated implementation
-slice. Approved DP-014–DP-018 закрывают все focused design gates ARCH-004
-sections 19(2)–(6). Full integration остаётся blocked до появления required
-implementations persistence, command, activation, recovery и reporting и их
-композиции через explicit Control Service boundary.
+Draft design contract реализован в bounded isolated slice. Approved
+DP-014–DP-018 закрывают все focused design gates ARCH-004 sections 19(2)–(6).
+Full integration остаётся blocked до появления required implementations
+persistence, command, activation, recovery и reporting и их композиции через
+explicit Control Service boundary.
 
 Loader, provenance Snapshot и schema compatibility уже разрешены ARCH-005 и
 DP-007 — DP-012. Прецедент isolated implementation DP-010 — DP-012 не создаёт
@@ -573,10 +573,11 @@ DP-007 — DP-012. Прецедент isolated implementation DP-010 — DP-012 
 определяют dependency-ordered contracts без предоставления их packages,
 adapters, schemas или wiring.
 
-## 27. Будущие implementation proofs
+## 27. Proofs изолированной реализации
 
-После разрешения каждого prerequisite section 26 будущая implementation task
-должна доказать:
+Bounded isolated implementation доказывает следующий local contract. Full
+integration должна повторить применимые composition proofs после реализации
+каждой required dependency section 26:
 
 1. exact exported surface и sentinel strings;
 2. validation Target и immutable accessors;
@@ -646,18 +647,18 @@ Flow.
 
 ## 29. Implementation boundary
 
-Implementation Status остаётся Planned. Package
-`internal/runtimemanagement`, test, binding Control Service, endpoint, policy,
-persistence adapter или activation path не появляются в результате этого
-документа.
+Implementation Status — Implemented in isolation. Package
+`internal/runtimemanagement` предоставляет exact Target, Binding, Directory,
+authorization seam, routing и local proof tests этого design. Binding Control
+Service, endpoint, concrete policy, persistence adapter, recovery path и
+activation path отсутствуют.
 
-Implementation Readiness — Ready для одного bounded isolated package и local
-proof slice. Approved DP-014–DP-018 закрывают focused design gates ARCH-004
-sections 19(2)–(6), но не реализуют persistence, idempotency, activation,
-recovery, reporting, integration Control Service или Production Activation.
-Любой integration slice сначала должен предоставить exact required
-dependencies, включая planned private Start-claim continuation и
-execution-generation binding/load gate.
+Approved DP-014–DP-018 закрывают focused design gates ARCH-004 sections
+19(2)–(6), но не реализуют persistence, idempotency, activation, recovery,
+reporting, integration Control Service или Production Activation. Любой
+integration slice сначала должен предоставить exact required dependencies,
+включая planned private Start-claim continuation и execution-generation
+binding/load gate.
 
 ## 30. Решение
 
@@ -670,6 +671,5 @@ Runtime Instance, авторизует Start, Stop и Observe до lifecycle del
 Он не добавляет второй lifecycle owner, dynamic registry, service locator,
 симуляцию persistence, retry, transport API или Production Activation.
 
-Draft/Planned design готов для bounded isolated implementation slice. Full
-integration и Production Activation остаются blocked отсутствующими
-dependencies и wiring, перечисленными выше.
+Draft design реализован изолированно. Full integration и Production Activation
+остаются blocked отсутствующими dependencies и wiring, перечисленными выше.

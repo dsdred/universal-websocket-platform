@@ -281,15 +281,15 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   [DP-012](../design/DP-012-runtime-source-composition.md), with Implementation
   Status Implemented in isolation, defines the confined exact in-memory Source
   adapter. The adapter, local proof tests, Loader integration, and isolated
-  `Source -> Loader -> Flow` construction proof exist. Management routing,
-  persistence, application wiring, and Production Activation remain absent.
-  Design-only TASK-015 adds Draft
+  `Source -> Loader -> Flow` construction proof exist. Persistence,
+  application wiring, and Production Activation remain absent. Design-only
+  TASK-015 adds Draft
   [DP-013](../design/DP-013-runtime-management-routing.md), with Implementation
-  Status Planned, for one immutable process-local Start/Stop/Observe directory,
-  exact Runtime Instance routing, authorization before lifecycle delegation,
-  and static Owner-to-Flow binding. No management package, HTTP API,
-  persistence, or activation exists. The design contract is ready, but
-  implementation readiness is Ready for a bounded isolated slice; integration
+  Status Implemented in isolation, for one immutable process-local
+  Start/Stop/Observe directory, exact Runtime Instance routing, authorization
+  before lifecycle delegation, and static Owner-to-Flow binding. TASK-023
+  implements the isolated package and local proofs. No HTTP API, concrete
+  policy, persistence, management wiring, or activation exists; integration
   and Production Activation remain blocked by absent dependencies and wiring.
   Design-only TASK-016 adds Approved
   [DP-014](../design/DP-014-runtime-operational-identity-persistence.md), with
@@ -335,12 +335,10 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   Approved status closes section 19(6) at the design level and creates no
   reporting or management implementation. TASK-021 completed the section
   19(2)–(6) status decision with Coordinator Acceptance: DP-014 through DP-018
-  are Approved/Planned and Draft/Planned DP-013 is Ready for a bounded isolated
-  implementation slice. No implementation was activated. The next Ready but
-  inactive candidate is a documentation-only correction of the root README
-  mirrors for pre-existing Loader-to-Builder implemented-state drift; a bounded
-  isolated DP-013 implementation is recommended only after that correction and
-  is also not active.
+  are Approved/Planned. TASK-022 corrected the root README mirrors, and
+  TASK-023 then implemented Draft DP-013 in isolation. Integration and
+  Production Activation remain inactive and blocked by the dependencies and
+  wiring above.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Persistence, Delivery, and Plugin contracts still require focused design.

@@ -518,14 +518,14 @@ conceptual operations.
 
 ## 25. Implementation Boundary
 
-Implementation Status is Planned. The repository has only the isolated
-process-local Lifecycle Owner and related launch flow/source components.
+Implementation Status is Planned. The repository has the isolated process-local
+Lifecycle Owner, launch flow/source components, and DP-013 management routing.
 
 No durable operational identity repository, schema, package, adapter, API,
 hydration, recovery, management wiring, or Production Activation exists.
-Approval does not create or authorize any of them. DP-013 is Ready only for a
-bounded isolated implementation slice; integration remains blocked until the
-required persistence and downstream dependencies exist.
+Approval does not create or authorize any of them. The isolated DP-013 package
+does not change this boundary; integration remains blocked until the required
+persistence and downstream dependencies exist.
 
 ## 26. Decision
 
