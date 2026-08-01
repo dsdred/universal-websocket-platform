@@ -25,10 +25,10 @@
   изолированно, а persistence и production routing operational сущностей
   отсутствуют.
 - ARCH-005 определяет Configuration Loader, Snapshot provenance и loading boundary.
-- Draft DP-007–DP-016 являются implementation/design contracts и не
+- Draft DP-007–DP-017 являются implementation/design contracts и не
   повышаются до нормативного статуса реализацией или commit. DP-012 реализован
-  изолированно; DP-013, DP-014, DP-015 и DP-016 сохраняют Implementation Status
-  Planned.
+  изолированно; DP-013, DP-014, DP-015, DP-016 и DP-017 сохраняют
+  Implementation Status Planned.
 
 ## Ожидающие отдельного решения
 
@@ -74,9 +74,21 @@ Owner claim и до Load; current isolated Flow этот seam не реализ�
 создаёт lifecycle implementation, API, recovery или production wiring и не
 снимает formal gates §19(2)–(4) до отдельных approval/status decisions.
 
-По dependency ordering следующей рекомендуемой design work после DP-016 может
-быть recovery/reconciliation после termination Control Service ARCH-004
-§19(5). Рекомендация не активирует task или implementation.
+Non-normative Draft DP-017 предлагает candidate focused contract ARCH-004
+§19(5): exact fail-closed restart assessment, durable recovery claim,
+DP-014-owned execution binding после attempt claim и до Load, разделение
+last-confirmed durable facts и attempt/generation-bound execution evidence,
+phase-sensitive reconciliation primitive/linked commands без lifecycle replay
+и reopening admission только после coherent fully terminal verification.
+Resource absence даёт Failed/interrupted; Stopped требует exact proof
+Host-owned shutdown completion. Persisted Running, PID, address, time или probe
+отдельно не восстанавливают ownership. DP-017 не создаёт recovery store/schema, adapter,
+executor, API, automatic restart или production wiring и не снимает formal
+gates §19(2)–(5) до отдельных approval/status decisions.
+
+По dependency ordering следующей рекомендуемой design work после DP-017 может
+быть operational error reporting и redaction ARCH-004 §19(6). Рекомендация не
+активирует task или implementation.
 
 Package `internal/runtimelaunchflow` реализует base DP-011 изолированно без
 private Start-claim continuation DP-016 и без изменения этих ожидающих решения

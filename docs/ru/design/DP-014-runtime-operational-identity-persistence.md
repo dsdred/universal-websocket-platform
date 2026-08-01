@@ -117,6 +117,9 @@ Aggregate сохраняет только facts, требуемые ARCH-004:
 - полную append-only history Launch Attempt;
 - для каждого attempt immutable identity и exact pin Published
   ConfigurationVersion;
+- для claimed attempt, который может войти в external preparation, optional
+  immutable opaque execution-generation binding, требуемый candidate
+  [DP-017](DP-017-runtime-recovery-reconciliation.md);
 - committed phase и terminal outcome facts, необходимые для различения
   claimed, running, stop-claimed, stopped и failed attempts.
 
@@ -182,6 +185,56 @@ Claim launch атомарно:
 подтверждён как committed. Retry или replacement создаёт distinct candidate
 attempt identity только после того, как outcome предыдущего claim известен.
 
+### Execution generation binding
+
+Control Service composition allocate одну opaque execution generation для
+своей process-containment boundary. Persistence не allocate её и не infer из
+PID, time, address или caller identity.
+
+После launch claim и до любого Load, Build, Launcher или Host work original
+tracked Start path через planned continuation DP-011 может conditionally bind
+exact active attempt к этой generation. Publication:
+
+- проверяет aggregate identity и exact expected revision;
+- проверяет exact active non-terminal attempt и immutable version pin;
+- проверяет отсутствие binding к другой generation;
+- сохраняет immutable correlation attempt-to-generation;
+- один раз продвигает aggregate revision.
+
+Exact already-present same-generation binding — zero-mutation satisfied
+observation. Любой conditional rejection выполняет zero mutation и не разрешает
+external preparation, но сам rejection не доказывает absence binding. Different
+generation, stale revision, inactive/terminal attempt, conflicting fact или
+unavailable store требует coherent exact re-read. Exact existing terminal
+outcome converges; different binding/unresolved conflict даёт `Blocked` и не
+входит в resource-free failure path.
+
+Только coherent read, доказывающий отсутствие binding у exact still-active
+attempt на expected revision, разрешает `BindingFailed`. Сам attempt claim уже
+является durable lifecycle mutation. Тот же Start path затем обязан converge
+process-local attempt через existing Owner.Start с authentic token и
+`FailedPreparation(bindingFailure)`. Mutex Owner упорядочивает failure и
+concurrent Stop. Только exact returned Owner outcome может запросить conditional
+durable terminal publication: preparation failure публикует resource-free
+Failed; выигравший Stop публикует exact Owner-confirmed stopped-before-running
+fact. Terminalization command/phase следует только после confirmed publication.
+
+После indeterminate binding publication path coherently inspect exact aggregate,
+attempt, candidate generation и expected/new revision. Exact same-generation
+presence подтверждает binding; coherently proven absence для exact still-active
+attempt/expected revision разрешает Owner-owned failure convergence path, а не
+direct persistence mutation, новую generation или blind binding retry;
+different generation, stale/conflicting/inactive facts, unavailable state или
+unknown остаётся unresolved, если exact existing terminal outcome нельзя
+converge. Concurrent Stop сначала
+упорядочивается final continuation gate DP-011/DP-016, затем, если winning
+binding-failure path, existing mutex Owner против failure acceptance.
+Absent/indeterminate Owner/durable terminal outcome остаётся unresolved.
+
+Binding сохраняется в attempt history после terminalization. Он доказывает
+только correlation, но не liveness, readiness, preparation, ownership или
+graceful shutdown.
+
 ## 11. Publication Running
 
 Только Runtime Lifecycle Owner может запросить publication Running после
@@ -242,10 +295,11 @@ Persisted actual `Running`, `Stopping`, `Stopped` или `Failed` являетс
 historical operational knowledge. После потери Owner или process Control
 Service он не доказывает текущую liveness Host, process, socket или ресурсов.
 
-Только будущий утверждённый recovery и reconciliation contract может сравнить
-durable facts с external execution evidence и опубликовать reconciled state.
-Этот design не выводит liveness из stored PID, address, time или более раннего
-Running fact.
+Только утверждённый recovery и reconciliation contract может сравнить durable
+facts с external execution evidence и опубликовать reconciled state. Draft
+[DP-017](DP-017-runtime-recovery-reconciliation.md) предлагает такой candidate
+contract, но не разрешает его. Этот design не выводит liveness из stored PID,
+address, time или более раннего Running fact.
 
 ## 14. Atomicity
 
@@ -384,6 +438,7 @@ CreateRuntimeInstance
 ReadRuntimeInstance
 ReadLaunchAttemptHistory
 ConditionalClaimLaunchAttempt
+ConditionalBindExecutionGeneration
 ConditionalPublishRunning
 ConditionalClaimStop
 ConditionalPublishTerminal
@@ -405,18 +460,21 @@ manager или service locator не разрешены.
 3. atomic claim единственного active attempt с exact version pin;
 4. uniqueness child key и non-reuse внутри полной history Instance;
 5. append-only history после start failure, stop и последующих attempts;
-6. exact conditional publications Running, Stop и terminal;
-7. stale и mismatched operations выполняют zero mutation;
-8. concurrent claims одного Instance создают не более одной accepted mutation;
-9. разные Instances выполняются независимо;
-10. coherent reads соответствуют одной committed revision;
-11. definitive failure ничего не публикует;
-12. indeterminate outcomes разрешаются inspection exact identity/revision без
+6. exact immutable execution-generation binding после claim и до Load;
+7. binding mismatch, stale revision или indeterminate inspection не разрешает
+   external preparation;
+8. exact conditional publications Running, Stop и terminal;
+9. stale и mismatched operations выполняют zero mutation;
+10. concurrent claims одного Instance создают не более одной accepted mutation;
+11. разные Instances выполняются независимо;
+12. coherent reads соответствуют одной committed revision;
+13. definitive failure ничего не публикует;
+14. indeterminate outcomes разрешаются inspection exact identity/revision без
     blind retry с новым ID;
-13. persisted actual state никогда не используется как liveness proof после
-    потери Owner;
-14. redaction и domain isolation предотвращают cross-scope disclosure;
-15. не появляется второй lifecycle owner, ownership Host, schema promise или
+15. persisted actual state или execution binding никогда не используется как
+    liveness proof после потери Owner;
+16. redaction и domain isolation предотвращают cross-scope disclosure;
+17. не появляется второй lifecycle owner, ownership Host, schema promise или
     hidden service locator.
 
 Proofs включают технически доступные concurrency, race, failure-injection,
@@ -445,8 +503,10 @@ reporting. Draft [DP-015](DP-015-runtime-management-command-idempotency.md)
 или 19(3) и не активирует implementation. Draft
 [DP-016](DP-016-runtime-activation-replacement-rollback.md) теперь предлагает
 candidate contract section 19(4), но не снимает gates sections 19(2), 19(3)
-или 19(4). По dependency ordering следующим может проектироваться section
-19(5).
+или 19(4). Draft [DP-017](DP-017-runtime-recovery-reconciliation.md) теперь
+предлагает candidate contract section 19(5), но не снимает ни один gate
+sections 19(2)–(5). По dependency ordering следующим может проектироваться
+section 19(6).
 
 ## 24. Явно отложено
 
@@ -486,6 +546,11 @@ revision, последними подтверждёнными Owner desired и a
 ConfigurationVersion и никогда не переиспользует child identity внутри
 history Instance. RuntimeInstanceID уникален внутри operational management
 domain.
+
+До external preparation claimed attempt может conditionally получить один
+immutable opaque execution-generation binding через planned gate DP-011/
+DP-017. Binding сохраняется как correlation history и никогда не доказывает
+liveness или shutdown.
 
 Runtime Lifecycle Owner остаётся единственным lifecycle и live Host owner.
 Atomic persistence фиксирует правдивые facts, но не доказывает liveness после

@@ -219,13 +219,29 @@ against that Start-phase claim: Stop either terminalizes the parent before the
 phase exists, or the phase wins. After the phase wins, exactly one distinct Stop
 may claim the tracked-Start exception. Before Owner claim it is recorded as
 pending and its permit cannot invoke DP-013 Stop; the DP-011/DP-013 Start-claim
-continuation only signals Owner claim to the original Stop claiming path. That
+continuation first signals Owner claim to the original Stop claiming path. That
 same blocked call stack retains the non-transferable permit, checks its own
 cancellation, performs its one DP-013 Stop invocation, publishes the outcome,
-and signals the continuation. The continuation never receives or invokes the
-permit. After it returns `Continue`, the same exception delegates Stop directly
-to the already-claimed attempt. Another Stop or lifecycle command receives a
-non-mutating in-progress conflict.
+and signals the continuation. The continuation never receives or invokes that
+permit.
+
+If no pending Stop remains, the continuation coordinates the exact DP-014
+execution-generation binding. The same per-Instance admission boundary then
+atomically orders a final Stop claim against either `Continue` for confirmed
+same-generation binding or `BindingFailed` for coherently proven absence on the
+exact still-active attempt/expected revision. A different generation,
+stale/conflicting/inactive facts, unavailable state, or unknown is re-read and
+converges to an exact terminal outcome or remains `Blocked`; it never receives a
+permit or BindingFailed. Stop winning is converged by
+its original claimant; `Continue` winning permits preparation, after which a
+later Stop may claim the ordinary tracked-Start exception. `BindingFailed`
+terminalizes no command directly: Flow converges the
+exact token through Owner.Start with `FailedPreparation`, and the command/phase
+terminalizes only from the exact Owner outcome after confirmed DP-014 terminal
+publication. A Stop winning Owner's mutex yields the stopped-before-running
+outcome instead. Binding, Owner convergence, or terminal-publication
+indeterminacy is `Blocked` and unresolved.
+Another Stop or lifecycle command receives a non-mutating in-progress conflict.
 
 The pending claimant waits for exactly one process-local signal:
 `OwnerClaimed`, or `StartNoClaim` when the linked Start path definitively returns
@@ -236,9 +252,11 @@ implicit choice.
 A Claimed primitive, parent, or phase record without its exact live permit is
 **unresolved**. An unresolved parent or any one of its phases is a durable
 barrier against every new state-changing command and every further phase until
-future recovery makes the linked command set Terminal. Observe remains read-
-only. No tracked exception applies after process restart, after loss of the
-claiming call stack, or when a claim or terminal publication is indeterminate.
+an approved recovery contract makes the linked command set Terminal. Draft
+[DP-017](DP-017-runtime-recovery-reconciliation.md) proposes fail-closed exact-
+fact resolution but does not authorize it. Observe remains read-only. No
+tracked exception applies after process restart, after loss of the claiming
+call stack, or when a claim or terminal publication is indeterminate.
 
 ## 14. Lifecycle Delegation
 
@@ -284,9 +302,9 @@ There is deliberately no promise of an atomic commit spanning the current
 DP-013 call and the command record. If lifecycle mutation may have occurred but
 terminal command publication is absent or indeterminate, the record remains
 Claimed. Once its execution permit is gone, it is unresolved and closes the
-per-Instance barrier. No retry or different key may delegate lifecycle work. A
-future section 19(5) recovery contract must inspect exact command and lifecycle
-facts and resolve the barrier truthfully.
+per-Instance barrier. No retry or different key may delegate lifecycle work.
+DP-017 proposes the candidate section 19(5) contract for exact command,
+lifecycle, and execution-evidence inspection and truthful barrier resolution.
 
 ## 16. Command States
 
@@ -370,7 +388,8 @@ claimed Stop exception remains available and reaches the same Owner.
 For a DP-016 pending Stop, cancellation before the Owner-claim signal is checked
 and terminally published by the original claiming path. If it definitively wins
 before delegation, the permit is consumed without DP-013 mutation and the
-Start continuation may return `Continue`. Cancellation visible only after the
+Start continuation may proceed to execution binding and its final gate.
+Cancellation visible only after the
 Owner-claim signal is governed by the ordinary DP-010 Stop gate. If the pending
 caller returns, loses its permit, cannot prove no mutation, or cannot publish a
 definitive outcome, it signals `Blocked`; Flow begins no Load and the linked set
@@ -471,8 +490,11 @@ Management implementation remains blocked by:
 
 Draft [DP-016](DP-016-runtime-activation-replacement-rollback.md) now proposes
 the candidate section 19(4) contract. It does not remove the section 19(2),
-19(3), or 19(4) gates. By dependency ordering, section 19(5) may be designed
-next. Neither Draft permits isolated management implementation.
+19(3), or 19(4) gates. Draft
+[DP-017](DP-017-runtime-recovery-reconciliation.md) now proposes the candidate
+section 19(5) contract and removes no section 19(2)–(5) gate. By dependency
+ordering, section 19(6) may be designed next. None of these Drafts permits
+isolated management implementation.
 
 ## 26. Explicit Deferrals
 

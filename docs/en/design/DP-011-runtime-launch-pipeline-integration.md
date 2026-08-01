@@ -240,41 +240,101 @@ When `PrepareStart` returns an error, the Flow:
 - does not call Loader, Builder, Owner.Start, or Launcher;
 - returns the exact error to the caller.
 
-DP-016 management orchestration requires one future private **Start-claim
-continuation gate**. It does not move claim authority out of Owner. Immediately
-after `Owner.PrepareStart` returns a successful preparation and before Load,
-Build, or Launcher work begins, Flow must synchronously offer that exact claim
-to the management continuation associated with the linked Start phase.
+DP-016 management orchestration and DP-017 recovery require one future private
+**Start-claim continuation gate**. It does not move claim authority out of
+Owner. Immediately after `Owner.PrepareStart` returns a successful preparation
+and before Load, Build, or Launcher work begins, Flow must synchronously offer
+an immutable view of that exact claim to the management continuation associated
+with the primitive or linked Start command. The Flow-provided view contains
+only the exact Runtime Instance and Launch Attempt claimed by Owner. The exact
+management continuation is already bound immutably to the expected aggregate
+revision and composition-owned execution generation required for DP-014
+binding and rejects a mismatched claim view.
 
-The continuation atomically orders a pending Stop against permission to
-continue preparation:
+The exact Control Service composition creates one opaque execution generation
+for its process-containment boundary. DP-014 owns conditional durable
+Attempt-to-generation binding. The management continuation coordinates that
+binding; Flow, Owner, DP-013 Directory, and Runtime Host neither allocate a
+generation nor persist the binding.
 
-- `Continue` means no pending Stop exists, or its original claimant definitively
-  terminalized cancelled before delegation; Flow may begin Load and Build;
+The continuation follows this order without holding an Owner or admission lock
+across persistence:
+
+1. an already pending Stop is signalled and converged before binding;
+2. otherwise the continuation conditionally binds the exact active attempt to
+   the exact generation using its expected aggregate revision;
+3. after confirmed binding, one final per-Instance gate atomically orders a
+   Stop claim against release of `Continue` to Flow;
+4. Stop winning that gate is converged before Load; `Continue` winning permits
+   Load, and a later Stop reaches the already claimed attempt normally.
+
+The decision meanings are:
+
+- `Continue` means the exact execution binding is confirmed and the final gate
+  released preparation before any pending Stop; Flow may begin Load and Build;
 - `StopConverged` means the original Stop claiming path used its own permit to
   invoke exact DP-013 Stop and converged that Owner attempt; Flow begins no Load
   or Build and returns the Owner-equivalent stopped-before-running outcome;
+- `BindingFailed` means one coherent exact read proves that the binding did not
+  commit for the still-active exact attempt at the expected revision and that
+  no external preparation began. The continuation terminalizes nothing. Flow
+  begins no Load or Build and submits `FailedPreparation(bindingFailure)` with
+  the original authentic token to Owner.Start;
 - `Blocked` means the pending claimant lost its permit, returned without a
-  definitive result, reported unproven Stop convergence, or the rendezvous was
-  indeterminate; Flow begins no external preparation work and the linked set
-  remains unresolved or truthfully failed.
+  definitive result, reported unproven Stop convergence, binding or terminal
+  publication was indeterminate, exact binding inspection remained unknown, or
+  the rendezvous was indeterminate; Flow begins no external preparation work
+  and the linked set remains unresolved.
 
-The continuation carries no mutable Host, Snapshot, lifecycle ownership, permit,
-or caller-selected identity. It only signals the original pending Stop call
-stack that Owner claim succeeded, then waits for that same claimant's durable
-outcome. It runs outside Owner's mutex; neither the command-admission nor Owner
-lock is held across either wait or Stop convergence. Process loss makes the
-rendezvous and linked command set unresolved for future recovery.
+Binding publication uses the exact attempt and expected DP-014 aggregate
+revision. Definitive failure performs zero external preparation. After an
+indeterminate outcome the same path inspects the exact attempt/generation and
+revision: exact same-generation presence permits the final gate; coherently
+proven absence for the still-active attempt and expected revision enters a final
+gate that orders pending Stop against `BindingFailed`; different generation,
+stale revision, conflicting or inactive facts, unavailable state, or still-
+unknown is re-read and then converges to an exact existing terminal outcome or
+returns `Blocked`. None of those conflicts becomes BindingFailed. Caller
+cancellation after the existing Caller Cancellation Gate does not cancel or
+detach this binding duty.
+
+If `BindingFailed` wins its final gate, Flow uses the same internal non-caller-
+cancelled wait context as other preparation convergence and calls the existing
+Owner-owned operation exactly once:
+
+```go
+owner.Start(waitContext, preparation, FailedPreparation(bindingFailure))
+```
+
+Owner's mutex orders this failure acceptance against a later ordinary Stop. If
+failure acceptance wins, Owner returns `StartPreparationFailed`; if Stop wins,
+the same token converges to `StartStoppedBeforeRunning`. Only the returned exact
+Owner outcome may drive DP-014 terminal publication and later command/phase
+terminalization. An absent or indeterminate durable terminal publication is
+unresolved. The continuation never publishes lifecycle or command outcomes.
+
+The continuation carries no mutable Host, Snapshot, lifecycle ownership,
+permit, or caller-selected identity. It only signals the original pending Stop
+call stack that Owner claim succeeded, then waits for that same claimant's
+durable outcome. It runs outside Owner's mutex; neither the command-admission
+nor Owner lock is held across persistence, either wait, or Stop convergence.
+Process loss makes the rendezvous and linked command set unresolved for DP-017
+recovery. If process loss occurs after Owner claim but before a confirmed
+binding, the durable attempt already exists and is Starting; recovery may prove
+only that no external preparation began, not that no lifecycle mutation
+occurred.
 
 Because Flow and management routing are separate Go packages, the future
 extension is an internal-package-callable construction capability: Flow is
 bound immutably at construction to one `StartClaimContinuation` implemented by
 the exact management binding. The capability exposes one synchronous
-`AfterOwnerClaim` decision with `Continue`, `StopConverged`, or `Blocked`; it
-exposes no `LaunchPreparation` or permit. A Go symbol may be exported across
-the repository's `internal/` package boundary, but it is not a public management
-or HTTP API. The exact current `New` and `Start` implementation remains
-unchanged and has no such seam, so it does not implement DP-016 orchestration.
+`AfterOwnerClaim` decision with `Continue`, `StopConverged`, `BindingFailed`, or
+`Blocked`; it exposes no mutable `LaunchPreparation`, command permit, recovery
+permit, or persistence implementation. A Go symbol may be exported across the
+repository's `internal/` package boundary, but it is not a public management or
+HTTP API. The exact current `New` and `Start` implementation remains unchanged
+and has no such seam, so it implements neither the DP-016 continuation nor the
+DP-017 binding gate.
 
 ## 11. Synchronous Operation and Caller Lifetime
 
@@ -407,6 +467,11 @@ stored `StartStoppedBeforeRunning` without changing the Stop terminal fact.
 
 If Stop races with `Owner.Start`, winner semantics, Host cleanup, and
 `StartStoppedBeforeRunning` remain exactly as defined by DP-010.
+
+The same rule applies when `Owner.Start` carries the binding-failure
+`FailedPreparation`: a Stop winning Owner's mutex supplies the stored stopped-
+before-running outcome; failure winning supplies the Owner-confirmed preparation
+failure. Flow and continuation never pre-publish either result.
 
 ## 18. Owner.Start Wait Context
 

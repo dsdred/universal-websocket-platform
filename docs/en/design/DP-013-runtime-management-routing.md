@@ -344,30 +344,48 @@ The exact requested version is preserved. Directory does not call
 
 The returned `StartOutcome` and error are returned unchanged.
 
-The future DP-016 implementation keeps this exported `Directory.Start` surface
-unchanged but requires one private management-only Start-claim continuation
-seam in the stored Flow. After Owner claims the exact attempt and before Flow
-begins Load, the seam atomically resolves a Stop already admitted against the
-linked Start phase:
+The future DP-016/DP-017 implementation keeps this exported `Directory.Start`
+surface unchanged but requires one private management-only Start-claim
+continuation seam in the stored Flow. The exact management composition supplies
+that continuation with borrowed capabilities for DP-015 pending-Stop
+coordination and DP-014 conditional execution binding. It also supplies the
+opaque Control Service execution generation. Directory does not allocate the
+generation, access persistence directly, or expose either capability.
 
-- no pending Stop returns `Continue` and releases Flow;
-- a pending Stop causes the continuation to signal Owner claim to the original
-  blocked Stop call stack; that claimant alone invokes this binding's exact
-  `scope.owner.Stop`, publishes its result, and returns `StopConverged`;
-- claimant cancellation definitively observed before delegation returns
-  `Continue` with a terminal no-mutation Stop outcome;
-- permit loss, return without a definitive outcome, unproven convergence, or an
-  indeterminate rendezvous returns `Blocked`, releases no preparation work, and
-  closes the linked DP-015 barrier.
+After Owner claims the exact attempt and before Flow begins Load, the seam:
 
-The command-admission decision occurs before either call stack waits. The
-continuation carries neither permit nor caller context, and no admission or
-Owner lock is held across the signal, result wait, or Owner convergence. A Stop
-arriving after `Continue` uses the ordinary section 17 route and reaches the
-already-claimed attempt. The DP-013 binding supplies the internal-package-
-callable `StartClaimContinuation` when constructing Flow; this adds no exported
-Directory/Replace/Rollback operation, transfers neither permit nor
-`LaunchPreparation`, and is Planned rather than implemented.
+1. resolves an already admitted pending Stop first;
+2. otherwise conditionally binds the exact attempt and expected aggregate
+   revision to the exact generation through DP-014;
+3. after confirmed binding, atomically orders one final Stop claim against
+   release of `Continue` to Flow.
+
+A pending Stop signals Owner claim to the original blocked Stop call stack;
+that claimant alone invokes this binding's exact `scope.owner.Stop`, publishes
+its result, and returns `StopConverged`. A confirmed binding plus final release
+returns `Continue`. Only coherently proven binding absence for the exact still-
+active attempt at the expected revision enters the same final gate against
+pending Stop and may return `BindingFailed` without publishing any lifecycle or
+command fact. Different generation, stale/conflicting/inactive facts,
+unavailable state, or unknown is re-read and converges to an exact existing
+terminal outcome or returns `Blocked`; it never becomes BindingFailed. Flow then
+uses the authentic preparation token to
+call existing Owner.Start with `FailedPreparation`; Owner's mutex orders that
+failure against a later Stop. Only the exact returned Owner outcome, followed
+by confirmed DP-014 terminal publication, permits command/phase terminalization.
+Permit loss, unproven Stop convergence, binding/terminal-publication
+indeterminacy, or unknown exact inspection returns `Blocked`, releases no
+preparation work, and closes the linked DP-015 barrier.
+
+The command-admission decisions occur before either call stack waits. The
+continuation carries no command/recovery permit or caller context, and no
+admission or Owner lock is held across persistence, signal, result wait, or
+Owner convergence. A Stop losing the final release gate uses the ordinary
+section 17 route and reaches the already-claimed attempt. The DP-013 binding
+supplies the internal-package-callable `StartClaimContinuation` when
+constructing Flow; this adds no exported Directory/Replace/Rollback operation,
+transfers no mutable `LaunchPreparation`, and is Planned rather than
+implemented.
 
 If the linked `Directory.Start` path returns a definitive cancellation or error
 before Owner claim, it signals `StartNoClaim` to the original pending Stop call
@@ -656,10 +674,12 @@ or activation path exists as a result of this document.
 
 Implementation Readiness is Blocked. Neither an isolated package nor local
 proof code is authorized until every mandatory focused design in section 26
-exists. DP-015 and DP-016 are the candidate section 19(3) and 19(4) designs,
-not implementation tasks; the section 19(2), 19(3), and 19(4) approval gates
-remain. By dependency ordering the next design recommendation may address
-recovery and reconciliation after Control Service termination in section 19(5).
+exists. DP-015, DP-016, and
+[DP-017](DP-017-runtime-recovery-reconciliation.md) are the candidate section
+19(3), 19(4), and 19(5) designs, not implementation tasks; the section
+19(2)–(5) approval gates remain. By dependency ordering the next design
+recommendation may address operational error reporting and redaction in
+section 19(6).
 
 ## 30. Decision
 

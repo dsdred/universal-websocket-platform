@@ -236,41 +236,98 @@ Owner.
 - не вызывает Loader, Builder, Owner.Start или Launcher;
 - возвращает exact error caller.
 
-Management orchestration DP-016 требует один future private **Start-claim
-continuation gate**. Он не переносит claim authority из Owner. Сразу после
-successful return preparation из `Owner.PrepareStart` и до начала Load, Build
-или Launcher work Flow должен синхронно предложить exact claim management
-continuation, связанному с linked Start phase.
+Management orchestration DP-016 и recovery DP-017 требуют один future private
+**Start-claim continuation gate**. Он не переносит claim authority из Owner.
+Сразу после successful return preparation из `Owner.PrepareStart` и до начала
+Load, Build или Launcher work Flow должен синхронно предложить immutable view
+exact claim management continuation, связанному с primitive или linked Start
+command. Flow-provided view содержит только exact Runtime Instance и Launch
+Attempt, claimed Owner. Exact management continuation уже immutable bound к
+expected aggregate revision и composition-owned execution generation для
+binding DP-014 и rejects mismatched claim view.
 
-Continuation атомарно упорядочивает pending Stop и permission продолжить
-preparation:
+Exact Control Service composition создаёт одну opaque execution generation для
+своей process-containment boundary. DP-014 владеет conditional durable binding
+Attempt-to-generation. Management continuation координирует binding; Flow,
+Owner, Directory DP-013 и Runtime Host не allocate generation и не persist
+binding.
 
-- `Continue` означает отсутствие pending Stop или definitive terminal cancelled
-  его original claimant до delegation; Flow может начать Load и Build;
+Continuation выполняет следующий порядок без удержания Owner/admission lock во
+время persistence:
+
+1. уже pending Stop signal/converge до binding;
+2. иначе continuation conditionally bind exact active attempt к exact
+   generation с expected aggregate revision;
+3. после confirmed binding один final per-Instance gate атомарно упорядочивает
+   Stop claim и release `Continue` в Flow;
+4. выигравший Stop converge до Load; выигравший `Continue` разрешает Load, а
+   более поздний Stop достигает already claimed attempt обычным путём.
+
+Значения decision:
+
+- `Continue` означает confirmed exact execution binding и release preparation
+  final gate до pending Stop; Flow может начать Load и Build;
 - `StopConverged` означает, что original claiming path Stop своим permit вызвал
   exact Stop DP-013 и converge этот Owner attempt; Flow не начинает Load/Build и
   возвращает Owner-equivalent outcome stopped-before-running;
+- `BindingFailed` означает, что один coherent exact read доказывает отсутствие
+  commit binding для still-active exact attempt на expected revision и
+  отсутствие external preparation. Continuation ничего не terminalize. Flow не
+  начинает Load/Build и передаёт `FailedPreparation(bindingFailure)` с original
+  authentic token в Owner.Start;
 - `Blocked` означает потерю permit pending claimant, return без definitive
-  result, unproven convergence Stop или indeterminate rendezvous; Flow не
-  начинает external preparation work, а linked set остаётся unresolved или
-  truthfully failed.
+  result, unproven convergence Stop, indeterminate binding/terminal publication,
+  unknown exact binding inspection или indeterminate rendezvous; Flow не
+  начинает external preparation work, а linked set остаётся unresolved.
+
+Binding publication использует exact attempt и expected aggregate revision
+DP-014. Definitive failure выполняет zero external preparation. После
+indeterminate outcome тот же path inspect exact attempt/generation/revision:
+exact same-generation presence разрешает final gate; coherently proven absence
+для still-active attempt/expected revision входит в final gate, упорядочивающий
+pending Stop и `BindingFailed`; different generation, stale revision,
+conflicting/inactive facts, unavailable state или still-unknown перечитываются и
+затем converge к exact existing terminal outcome либо возвращают `Blocked`.
+Ни один такой conflict не становится BindingFailed. Caller cancellation
+после existing Caller Cancellation Gate не отменяет и не detach binding duty.
+
+Если `BindingFailed` выигрывает final gate, Flow использует тот же internal
+non-caller-cancelled wait context, что и другая preparation convergence, и ровно
+один раз вызывает existing Owner-owned operation:
+
+```go
+owner.Start(waitContext, preparation, FailedPreparation(bindingFailure))
+```
+
+Mutex Owner упорядочивает acceptance failure и later ordinary Stop. Если
+failure acceptance выигрывает, Owner возвращает `StartPreparationFailed`; если
+Stop выигрывает, тот же token converge к `StartStoppedBeforeRunning`. Только
+returned exact Owner outcome может вести к DP-014 terminal publication и
+последующей terminalization command/phase. Absent/indeterminate durable terminal
+publication остаётся unresolved. Continuation никогда не публикует lifecycle
+или command outcomes.
 
 Continuation не несёт mutable Host, Snapshot, lifecycle ownership, permit или
 caller-selected identity. Он только сигнализирует original pending Stop call
 stack о successful Owner claim и затем ждёт durable outcome того же claimant.
 Он выполняется вне mutex Owner; command-admission и Owner locks не удерживаются
-во время wait или convergence Stop. Process loss делает rendezvous и linked
-command set unresolved для future recovery.
+во время persistence, wait или convergence Stop. Process loss делает rendezvous
+и linked command set unresolved для recovery DP-017. Если process loss
+возникает после Owner claim, но до confirmed binding, durable attempt уже
+существует и находится Starting; recovery может доказать лишь отсутствие
+external preparation, а не отсутствие lifecycle mutation.
 
 Поскольку Flow и management routing являются разными Go packages, future
 extension является internal-package-callable construction capability: Flow при
 construction immutable связывается с одним `StartClaimContinuation`,
 реализованным exact management binding. Capability предоставляет одно
-synchronous decision `AfterOwnerClaim`: `Continue`, `StopConverged` или
-`Blocked`; он не раскрывает `LaunchPreparation` или permit. Go symbol может быть
-exported через repository boundary `internal/`, но не является public
+synchronous decision `AfterOwnerClaim`: `Continue`, `StopConverged`,
+`BindingFailed` или `Blocked`; он не раскрывает mutable `LaunchPreparation`,
+command permit, recovery permit или persistence implementation. Go symbol может
+быть exported через repository boundary `internal/`, но не является public
 management/HTTP API. Exact current implementation `New` и `Start` остаётся без
-изменения и не имеет этого seam, поэтому не реализует orchestration DP-016.
+изменения и не имеет этого seam, поэтому не реализует continuation DP-016 или
+binding gate DP-017.
 
 ## 11. Synchronous operation и caller lifetime
 
@@ -400,6 +457,11 @@ non-cancelled wait context. По same-token convergence DP-010 поздний re
 
 Если Stop конкурирует с `Owner.Start`, winner semantics, Host cleanup и
 `StartStoppedBeforeRunning` остаются ровно DP-010.
+
+То же правило действует, когда `Owner.Start` получает binding-failure
+`FailedPreparation`: Stop, выигравший mutex Owner, даёт stored
+stopped-before-running outcome; выигравший failure даёт Owner-confirmed
+preparation failure. Flow/continuation не pre-publish ни один result.
 
 ## 18. Owner.Start wait context
 

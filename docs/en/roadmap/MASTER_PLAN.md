@@ -315,9 +315,21 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   or automatic fallback. It requires a private DP-011/DP-013 Start-claim
   continuation after Owner claim and before Load; the current isolated Flow
   does not implement that seam. As a non-normative Draft it removes none of the
-  section 19(2)–(4) gates and creates no implementation. The next dependency-ordered
-  design recommendation may address recovery and reconciliation in section
-  19(5).
+  section 19(2)–(4) gates and creates no implementation. Design-only TASK-019
+  adds Draft
+  [DP-017](../design/DP-017-runtime-recovery-reconciliation.md), with
+  Implementation Status Planned, as the candidate section 19(5) contract. It
+  defines exact fail-closed restart assessment, one durable recovery claim,
+  DP-014-owned attempt-to-generation binding after claim and before Load,
+  attempt-and-generation-bound execution evidence, phase-sensitive terminal
+  reconciliation, crash-resumable publication, and admission reopening only
+  for a coherent fully terminal command/lifecycle set. Resource absence yields
+  Failed/interrupted; Stopped requires exact Host shutdown-completion proof. It
+  performs no
+  lifecycle replay, Host adoption, or automatic restart. As a non-normative
+  Draft it removes none of the section 19(2)–(5) gates and creates no recovery
+  implementation. The next dependency-ordered design recommendation may
+  address operational error reporting and redaction in section 19(6).
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Persistence, Delivery, and Plugin contracts still require focused design.
