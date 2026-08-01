@@ -4,10 +4,10 @@
 
 ## 1. Status
 
-- **Design Status:** Draft
+- **Design Status:** Approved
 - **Implementation Status:** Planned
 
-This proposal is non-normative until approved. It defines a planned durable
+This approved design defines a planned durable
 boundary for Runtime Instance and Launch Attempt identity and history. No
 repository, schema, storage technology, API, package, recovery path, or
 production wiring exists as a result of this document.
@@ -37,9 +37,9 @@ This proposal refines, without overriding:
 - [DP-012](DP-012-runtime-source-composition.md);
 - [DP-013](DP-013-runtime-management-routing.md).
 
-Active ARCH-004 takes precedence over this Draft. DP-010 remains the contract
+Active ARCH-004 takes precedence over this Approved design. DP-010 remains the contract
 for the process-local Owner and live Host ownership. DP-013 remains
-Draft/Planned and implementation-blocked.
+Draft/Planned and Ready only for bounded isolated implementation.
 
 ## 4. Scope and Non-goals
 
@@ -118,7 +118,7 @@ The aggregate preserves only the facts required by ARCH-004:
 - for each attempt, immutable identity and exact Published
   ConfigurationVersion pin;
 - for a claimed attempt that may enter external preparation, the optional
-  immutable opaque execution-generation binding required by candidate
+  immutable opaque execution-generation binding required by Approved
   [DP-017](DP-017-runtime-recovery-reconciliation.md);
 - committed phase and terminal outcome facts required to distinguish claimed,
   running, stop-claimed, stopped, and failed attempts.
@@ -298,10 +298,10 @@ operational knowledge. After loss of the Owner or Control Service process it
 is not proof of present Host, process, socket, or resource liveness.
 
 Only an approved recovery and reconciliation contract may compare durable
-facts with external execution evidence and publish a reconciled state. Draft
-[DP-017](DP-017-runtime-recovery-reconciliation.md) proposes that candidate
-contract but does not authorize it. This design does not infer liveness from
-stored PID, address, time, or an earlier Running fact.
+facts with external execution evidence and publish a reconciled state. Approved
+[DP-017](DP-017-runtime-recovery-reconciliation.md) defines that recovery
+contract; its Planned implementation remains absent. This design does not infer
+liveness from stored PID, address, time, or an earlier Running fact.
 
 ## 14. Atomicity
 
@@ -309,9 +309,10 @@ The following are separate required atomic publications:
 
 1. initial Runtime Instance aggregate;
 2. one active Launch Attempt claim and history append;
-3. Running publication;
-4. Stop claim;
-5. phase-sensitive terminal publication.
+3. `ConditionalBindExecutionGeneration` for the exact claimed attempt;
+4. Running publication;
+5. Stop claim;
+6. phase-sensitive terminal publication.
 
 Each publication commits all specified aggregate and attempt facts with one
 new revision or commits none. No observer may see a partial identity binding,
@@ -486,32 +487,19 @@ production activation.
 
 ## 23. Formal and Downstream ARCH-004 Section 19 Gates
 
-This Draft proposes the candidate focused architecture contract for ARCH-004
-section 19(2). Because a Draft is non-normative, section 19(2) remains a
-formal implementation blocker until a separate approval/status decision.
-Management implementation remains blocked by:
-
-1. approval/status decision for the section 19(2) candidate contract;
-2. durable management command idempotency, section 19(3);
-3. activation, replacement, and rollback ordering, section 19(4);
-4. recovery and reconciliation after Control Service termination,
-   section 19(5);
-5. operational error reporting and redaction, section 19(6).
+This Approved design closes the focused architecture design gate for ARCH-004
+section 19(2). Approved DP-015 through DP-018 close the downstream focused
+design gates in sections 19(3)–(6). These status decisions authorize no
+implementation by themselves.
 
 Conditional aggregate revision prevents stale mutation but is not client
 command idempotency. Inspecting an indeterminate write is not recovery or
-reconciliation. Terminal fact storage is not operational reporting. Draft
-[DP-015](DP-015-runtime-management-command-idempotency.md) proposes the
-candidate section 19(3) contract, but it neither removes the section 19(2) or
-19(3) gates nor activates implementation. Draft
-[DP-016](DP-016-runtime-activation-replacement-rollback.md) now proposes the
-candidate section 19(4) contract, but it does not remove the section 19(2),
-19(3), or 19(4) gates. Draft
-[DP-017](DP-017-runtime-recovery-reconciliation.md) now proposes the candidate
-section 19(5) contract, but it does not remove any section 19(2)–(5) gate.
-[DP-018](DP-018-runtime-operational-error-reporting-redaction.md) now proposes
-the candidate section 19(6) contract and removes no section 19 gate. The full
-candidate set still requires separate status decisions before implementation.
+reconciliation. Terminal fact storage is not operational reporting. Approved
+[DP-015](DP-015-runtime-management-command-idempotency.md),
+[DP-016](DP-016-runtime-activation-replacement-rollback.md),
+[DP-017](DP-017-runtime-recovery-reconciliation.md), and
+[DP-018](DP-018-runtime-operational-error-reporting-redaction.md) define those
+separate responsibilities without implementing them.
 
 ## 24. Explicit Deferrals
 
@@ -535,9 +523,9 @@ process-local Lifecycle Owner and related launch flow/source components.
 
 No durable operational identity repository, schema, package, adapter, API,
 hydration, recovery, management wiring, or Production Activation exists.
-Creating this Draft does not authorize any of them or formally satisfy
-ARCH-004 section 19(2). DP-013 implementation remains Blocked by section
-19(2) pending a separate approval/status decision and by sections 19(3)-(6).
+Approval does not create or authorize any of them. DP-013 is Ready only for a
+bounded isolated implementation slice; integration remains blocked until the
+required persistence and downstream dependencies exist.
 
 ## 26. Decision
 
@@ -552,9 +540,11 @@ ConfigurationVersion, and never reuses its child identity within the Instance
 history. RuntimeInstanceID is unique within the operational management domain.
 
 Before external preparation, a claimed attempt may conditionally receive one
-immutable opaque execution-generation binding through the planned DP-011/
-DP-017 gate. The binding is retained as correlation history and never proves
-liveness or shutdown.
+immutable opaque execution-generation binding owned by DP-014. The planned
+DP-011 continuation coordinates the binding capability, DP-016 defines the
+final binding/load gate, and DP-017 consumes the binding during recovery. The
+binding is retained as correlation history and never proves liveness or
+shutdown.
 
 The Runtime Lifecycle Owner remains the sole lifecycle and live Host owner.
 Atomic persistence records truthful facts but does not prove liveness after

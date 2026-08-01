@@ -6,8 +6,8 @@
 
 - **Design Status:** Draft
 - **Implementation Status:** Planned
-- **Implementation Readiness:** Blocked оставшимися обязательными focused
-  designs ARCH-004 section 19
+- **Implementation Readiness:** Ready для bounded isolated implementation
+  slice; full integration и Production Activation остаются blocked
 
 До утверждения proposal не является нормативным. Он определяет планируемую
 изолированную in-process management command boundary. Package, production
@@ -561,42 +561,17 @@ future management composition
 
 ## 26. Обязательные prerequisites implementation
 
-Design contract валиден, но Implementation Readiness заблокирована.
-ARCH-004 section 19 имеет Active status и приоритет над этим Draft. Package
-`internal/runtimemanagement` и local proof implementation не начинаются, пока
-focused designs не разрешат все оставшиеся обязательные prerequisites:
-
-1. approval/status decision для candidate persistence contract section 19(2);
-2. durable idempotency management command;
-3. ordering activation, replacement и rollback;
-4. recovery и reconciliation после termination Control Service;
-5. operational error reporting и redaction.
+Draft design contract валиден и Ready для bounded isolated implementation
+slice. Approved DP-014–DP-018 закрывают все focused design gates ARCH-004
+sections 19(2)–(6). Full integration остаётся blocked до появления required
+implementations persistence, command, activation, recovery и reporting и их
+композиции через explicit Control Service boundary.
 
 Loader, provenance Snapshot и schema compatibility уже разрешены ARCH-005 и
 DP-007 — DP-012. Прецедент isolated implementation DP-010 — DP-012 не создаёт
-исключение из gate ARCH-004 с более высоким status.
-
-Draft [DP-014](DP-014-runtime-operational-identity-persistence.md) предлагает
-candidate contract persistence Runtime Instance и Launch Attempt, требуемый
-ARCH-004 section 19(2). Он определяет durable aggregate, identity, history,
-conditional revision и indeterminate-outcome semantics без создания
-implementation persistence. Поскольку он остаётся non-normative Draft,
-section 19(2) остаётся formal implementation blocker до отдельного
-approval/status decision.
-
-Draft [DP-015](DP-015-runtime-management-command-idempotency.md) теперь
-предлагает candidate contract durable idempotency management commands для
-section 19(3). Он связывает одну authorized command identity с immutable intent
-до lifecycle delegation и определяет non-mutating replay. Как non-normative
-Draft он не снимает gates section 19(2) или 19(3) и не активирует
-implementation.
-
-Draft [DP-016](DP-016-runtime-activation-replacement-rollback.md) теперь
-предлагает candidate contract ordering activation, replacement и explicit
-rollback для section 19(4). Он сохраняет exact-version attempts и
-Stop-to-proven-release перед любым replacement или rollback Start. Как
-non-normative Draft он не снимает gates section 19(2), 19(3) или 19(4) и не
-активирует implementation.
+исключение из gate ARCH-004 с более высоким status. Approved DP-014–DP-018
+определяют dependency-ordered contracts без предоставления их packages,
+adapters, schemas или wiring.
 
 ## 27. Будущие implementation proofs
 
@@ -643,11 +618,12 @@ Tests могут использовать local fakes или package-private sea
 
 ## 28. Явно отложено
 
-Оставшиеся блокирующие architecture prerequisites до любой implementation:
+Focused design gates section 19 закрыты. До integration требуются следующие
+implementations:
 
-- approval/status decision для candidate persistence contract section 19(2);
+- durable operational identity persistence;
 - durable idempotency management command;
-- ordering activation, replacement и rollback;
+- orchestration activation, replacement и rollback;
 - recovery и reconciliation;
 - operational error reporting и redaction.
 
@@ -675,15 +651,13 @@ Implementation Status остаётся Planned. Package
 persistence adapter или activation path не появляются в результате этого
 документа.
 
-Implementation Readiness — Blocked. Ни isolated package, ни local proof code
-не разрешены, пока не существуют все обязательные focused designs section 26.
-DP-015, DP-016 и [DP-017](DP-017-runtime-recovery-reconciliation.md) являются
-candidate designs sections 19(3), 19(4) и 19(5), а не implementation tasks;
-approval gates sections 19(2)–(5) сохраняются. Draft
-[DP-018](DP-018-runtime-operational-error-reporting-redaction.md) теперь
-предлагает candidate contract reporting/redaction section 19(6). Он не снимает
-ни один gate section 19 и не разрешает implementation до отдельных status
-decisions.
+Implementation Readiness — Ready для одного bounded isolated package и local
+proof slice. Approved DP-014–DP-018 закрывают focused design gates ARCH-004
+sections 19(2)–(6), но не реализуют persistence, idempotency, activation,
+recovery, reporting, integration Control Service или Production Activation.
+Любой integration slice сначала должен предоставить exact required
+dependencies, включая planned private Start-claim continuation и
+execution-generation binding/load gate.
 
 ## 30. Решение
 
@@ -696,5 +670,6 @@ Runtime Instance, авторизует Start, Stop и Observe до lifecycle del
 Он не добавляет второй lifecycle owner, dynamic registry, service locator,
 симуляцию persistence, retry, transport API или Production Activation.
 
-Design готов к review и возможному принятию как Draft/Planned. Implementation
-остаётся заблокированной ARCH-004 section 19(2)-(6).
+Draft/Planned design готов для bounded isolated implementation slice. Full
+integration и Production Activation остаются blocked отсутствующими
+dependencies и wiring, перечисленными выше.

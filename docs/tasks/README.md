@@ -25,6 +25,7 @@ operational документы ведутся на русском языке и 
 - [TASK-018 — Runtime Activation, Replacement, and Rollback Design](TASK-018-RUNTIME-ACTIVATION-REPLACEMENT-ROLLBACK-DESIGN.md)
 - [TASK-019 — Runtime Recovery and Reconciliation Design](TASK-019-RUNTIME-RECOVERY-RECONCILIATION-DESIGN.md)
 - [TASK-020 — Runtime Operational Error Reporting and Redaction Design](TASK-020-RUNTIME-OPERATIONAL-ERROR-REPORTING-REDACTION-DESIGN.md)
+- [TASK-021 — Runtime Management Readiness Assessment](TASK-021-RUNTIME-MANAGEMENT-READINESS-ASSESSMENT.md) — Completed, Coordinator Accepted
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

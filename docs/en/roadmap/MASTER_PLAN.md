@@ -289,34 +289,32 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   exact Runtime Instance routing, authorization before lifecycle delegation,
   and static Owner-to-Flow binding. No management package, HTTP API,
   persistence, or activation exists. The design contract is ready, but
-  implementation readiness is blocked by the remaining mandatory focused
-  designs and status decisions in ARCH-004 section 19(2)–(6). Design-only
-  TASK-016 adds Draft
+  implementation readiness is Ready for a bounded isolated slice; integration
+  and Production Activation remain blocked by absent dependencies and wiring.
+  Design-only TASK-016 adds Approved
   [DP-014](../design/DP-014-runtime-operational-identity-persistence.md), with
   Implementation Status Planned, which proposes the candidate durable Runtime
   Instance aggregate, append-only Launch Attempt membership and monotonic
   child facts, opaque identity namespaces, conditional revision, atomic
   lifecycle-fact publication, and inspect-after-indeterminate boundary for
-  section 19(2). As a non-normative Draft it does not remove that formal gate
-  before a separate approval/status decision. No persistence package, schema,
-  API, recovery, or production wiring exists. Design-only TASK-017 adds Draft
+  section 19(2). Its design gate is closed, but no persistence package, schema,
+  API, recovery, or production wiring exists. Design-only TASK-017 adds Approved
   [DP-015](../design/DP-015-runtime-management-command-idempotency.md), with
   Implementation Status Planned, as the candidate section 19(3) contract. It
   defines authorized command scope, immutable intent binding, durable claim
   before lifecycle delegation, same-intent non-mutating replay, a durable
   per-Instance barrier while outcome remains unresolved, the required tracked-
   Start Stop exception, and truthful indeterminate outcomes. As a
-  non-normative Draft it removes neither the section 19(2) nor 19(3) gate and
-  creates no command store, API, recovery, or wiring. Design-only TASK-018 adds
-  Draft [DP-016](../design/DP-016-runtime-activation-replacement-rollback.md),
+  Approved status closes section 19(3) at the design level and creates no
+  command store, API, recovery, or wiring. Design-only TASK-018 adds Approved
+  [DP-016](../design/DP-016-runtime-activation-replacement-rollback.md),
   with Implementation Status Planned, as the candidate section 19(4) contract.
   It orders exact-version initial activation, replacement, and explicit rollback
   around Stop-to-proven-release and a fresh Launch Attempt, without Host overlap
   or automatic fallback. It requires a private DP-011/DP-013 Start-claim
   continuation after Owner claim and before Load; the current isolated Flow
-  does not implement that seam. As a non-normative Draft it removes none of the
-  section 19(2)–(4) gates and creates no implementation. Design-only TASK-019
-  adds Draft
+  does not implement that seam. Approved status closes section 19(4) at the
+  design level and creates no implementation. Design-only TASK-019 adds Approved
   [DP-017](../design/DP-017-runtime-recovery-reconciliation.md), with
   Implementation Status Planned, as the candidate section 19(5) contract. It
   defines exact fail-closed restart assessment, one durable recovery claim,
@@ -326,18 +324,23 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   for a coherent fully terminal command/lifecycle set. Resource absence yields
   Failed/interrupted; Stopped requires exact Host shutdown-completion proof. It
   performs no
-  lifecycle replay, Host adoption, or automatic restart. As a non-normative
-  Draft it removes none of the section 19(2)–(5) gates and creates no recovery
-  implementation. Design-only TASK-020 adds Draft
+  lifecycle replay, Host adoption, or automatic restart. Approved status closes
+  section 19(5) at the design level and creates no recovery implementation.
+  Design-only TASK-020 adds Approved
   [DP-018](../design/DP-018-runtime-operational-error-reporting-redaction.md),
   with Implementation Status Planned, as the candidate section 19(6)
   contract. It preserves owner error identity while projecting only
   authoritative facts into scoped, allowlisted, replay-stable operator reports;
   delivery remains downstream and cannot mutate lifecycle or command truth.
-  As a non-normative Draft it removes no section 19 gate and creates no
-  reporting or management implementation. The next dependency step is a
-  separate formal status/readiness assessment of the complete section
-  19(2)–(6) candidate set, not automatic implementation.
+  Approved status closes section 19(6) at the design level and creates no
+  reporting or management implementation. TASK-021 completed the section
+  19(2)–(6) status decision with Coordinator Acceptance: DP-014 through DP-018
+  are Approved/Planned and Draft/Planned DP-013 is Ready for a bounded isolated
+  implementation slice. No implementation was activated. The next Ready but
+  inactive candidate is a documentation-only correction of the root README
+  mirrors for pre-existing Loader-to-Builder implemented-state drift; a bounded
+  isolated DP-013 implementation is recommended only after that correction and
+  is also not active.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Persistence, Delivery, and Plugin contracts still require focused design.

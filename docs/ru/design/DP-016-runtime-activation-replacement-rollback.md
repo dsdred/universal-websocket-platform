@@ -4,10 +4,10 @@
 
 ## 1. Статус
 
-- **Design Status:** Draft
+- **Design Status:** Approved
 - **Implementation Status:** Planned
 
-До утверждения proposal не является нормативным. Он определяет candidate
+Этот approved design определяет planned
 ordering contract activation, replacement и explicit rollback одного Runtime
 Instance. Этот документ не создаёт management operation, orchestrator,
 persistence implementation, API, recovery worker или production wiring.
@@ -33,11 +33,11 @@ Proposal уточняет, но не переопределяет:
   command identity, execution permits, replay и unresolved barriers.
 - [DP-011](DP-011-runtime-launch-pipeline-integration.md) для Owner-owned Start
   claim и planned private extension claim-continuation.
-- [DP-017](DP-017-runtime-recovery-reconciliation.md) для planned
-  execution-generation binding и process-loss reconciliation boundary.
+- [DP-017](DP-017-runtime-recovery-reconciliation.md) для recovery boundary,
+  которая требует и использует DP-014-owned execution-generation binding.
 
-Принятые ADR и Active/Frozen architecture остаются authoritative. Draft
-DP-013–DP-017 не разрешают implementation.
+Принятые ADR и Active/Frozen architecture остаются authoritative. DP-013
+остаётся Draft; Approved DP-014–DP-017 не реализуют свои contracts.
 
 ## 4. Область
 
@@ -128,9 +128,9 @@ facts, identity active attempt, когда она существует, exact ve
 
 Persisted Running или Stopping fact после потери Owner не является liveness
 proof. Если live ownership не установлена, activation, replacement или rollback
-не продолжается; authoritative остаётся unresolved barrier DP-015, а Draft
-[DP-017](DP-017-runtime-recovery-reconciliation.md) предлагает candidate
-recovery contract section 19(5).
+не продолжается; authoritative остаётся unresolved barrier DP-015, а Approved
+[DP-017](DP-017-runtime-recovery-reconciliation.md) определяет planned recovery
+contract section 19(5); его implementation остаётся отсутствующей.
 
 ## 10. Initial activation
 
@@ -142,7 +142,7 @@ authorize exact target
     -> claim durable command and execution permit
     -> revalidate aggregate identity and revision
     -> claim one new Launch Attempt with exact target pin
-    -> подтвердить execution-generation binding DP-017
+    -> подтвердить DP-014-owned execution-generation binding, required DP-017
     -> Load -> Build -> Start through the existing Flow and Owner
     -> publish Running only after Host readiness
     -> publish replay-equivalent command outcome
@@ -181,7 +181,7 @@ claim exact parent replacement command and orchestration permit
     -> claim linked Start-target phase and its one DP-013 Start permit
     -> invoke DP-013 Start; Owner claims the exact new Launch Attempt
     -> resolve pending Stop at the private Start-claim continuation before Load
-    -> подтвердить execution-generation binding DP-017 до Load
+    -> подтвердить DP-014-owned execution-generation binding, required DP-017, до Load
     -> publish Start-phase and parent outcomes truthfully
 ```
 
@@ -385,7 +385,8 @@ indeterminate publication parent/phase/attempt оставляет linked command
 unresolved. New activation, replacement или rollback не проходят admission
 этого Runtime Instance, пока coherent inspection и утверждённый recovery
 contract section 19(5) не разрешат parent, каждую phase и truth live resources.
-DP-017 предлагает fail-closed reconciliation exact facts без lifecycle replay.
+DP-017 имеет status Approved и определяет fail-closed reconciliation exact
+facts без lifecycle replay; его Planned implementation остаётся отсутствующей.
 
 Design не hydrate Owner, не inspect process, не probe socket, не reconcile
 persisted Running и не выбирает, завершилась ли orphan operation. Это mandatory
@@ -435,8 +436,9 @@ mechanics должны доказать contract без его расширен�
 14. same-target rollback/activation является zero-mutation satisfied;
 15. cancellation на каждой phase сохраняет truthful state и ownership;
 16. indeterminate outcomes закрывают admission DP-015 до recovery;
-17. exact execution-generation binding DP-017 commit после attempt claim и до
-    Load, иначе preparation не начинается;
+17. exact DP-014-owned execution-generation binding, required и consumed
+    DP-017, commit после attempt claim и до Load, иначе preparation не
+    начинается;
 18. разные Instances выполняются независимо;
 19. EN/RU contract, failure matrix, gates и planned status aligned.
 
@@ -445,23 +447,11 @@ storage-client-restart scenarios. Они не разрешают production acti
 
 ## 26. Formal и последующие gates ARCH-004 section 19
 
-Draft предлагает candidate focused contract section 19(4). Поскольку он
-non-normative, section 19(4) остаётся formal blocker до отдельного
-approval/status decision. Sections 19(2) и 19(3) также blocked до status
-decisions DP-014 и DP-015.
-
-Management implementation остаётся заблокированной:
-
-1. approval/status decisions candidate sections 19(2), 19(3) и 19(4);
-2. recovery и reconciliation после termination Control Service, section 19(5);
-3. operational error reporting и redaction, section 19(6).
-
-Draft [DP-017](DP-017-runtime-recovery-reconciliation.md) теперь предлагает
-candidate contract section 19(5) и не снимает ни один gate sections 19(2)–(5).
-Draft [DP-018](DP-018-runtime-operational-error-reporting-redaction.md) теперь
-предлагает candidate contract section 19(6) и не снимает ни один gate section
-19. Эти Draft не разрешают isolated management implementation до отдельных
-status decisions.
+Этот Approved design закрывает focused architecture design gate ARCH-004
+section 19(4). Approved DP-014, DP-015, DP-017 и DP-018 закрывают остальные
+focused design gates sections 19(2), 19(3), 19(5) и 19(6). Полный approved set
+определяет ordering, но не создаёт orchestrator, persistence, recovery,
+reporting, integration или Production Activation.
 
 ## 27. Явно отложено
 
@@ -478,12 +468,13 @@ status decisions.
 ## 28. Implementation boundary
 
 Implementation Status — Planned. Repository содержит isolated Lifecycle Owner,
-launch flow и source adapter плюс candidate management designs. Activation/
-replacement orchestrator, durable command или aggregate store, public
-management API, recovery executor и production wiring отсутствуют.
+launch flow и source adapter плюс Draft DP-013 и Approved/Planned DP-014–
+DP-018. Activation/replacement orchestrator, durable command или aggregate
+store, public management API, recovery executor и production wiring
+отсутствуют.
 
-Draft формально не удовлетворяет section 19(4) и не снимает ни один gate
-section 19.
+Approval закрывает design gate section 19(4), но не реализует и не подключает
+contract.
 
 ## 29. Решение
 

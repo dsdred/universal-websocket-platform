@@ -17,18 +17,12 @@
   continuation и execution-binding/load gate DP-016/DP-017 запланированы и
   отсутствуют; Draft DP-012 и
   `internal/configurationloadsource.MemorySource` реализуют concrete Source
-  adapter изолированно; Completed Design-only TASK-015 и Draft/Planned DP-013
-  определяют management routing contract; Completed Design-only TASK-016 и
-  non-normative Draft/Planned DP-014 предлагают durable operational identity
-  persistence candidate contract; Completed Design-only TASK-017 и
-  non-normative Draft/Planned DP-015 предлагают durable management command
-  idempotency candidate contract; Completed Design-only TASK-018 и
-  non-normative Draft/Planned DP-016 предлагают activation, replacement и
-  explicit rollback ordering candidate contract; Completed Design-only TASK-019
-  и non-normative Draft/Planned DP-017 предлагают fail-closed recovery и
-  reconciliation candidate contract; Completed Design-only TASK-020 и
-  non-normative Draft/Planned DP-018 предлагают scoped allowlist operational
-  error reporting/redaction candidate contract. Implementation, HTTP,
+  adapter изолированно; Draft/Planned DP-013 определяет management routing и
+  Ready для bounded isolated implementation slice. Approved/Planned DP-014–
+  DP-018 закрывают focused design gates ARCH-004 §19(2)–(6) для operational
+  identity persistence, command idempotency, activation/replacement/rollback,
+  recovery/reconciliation и operational error reporting/redaction.
+  Implementation, HTTP,
   persistence/command/recovery/reporting package/schema, management wiring и
   Production Activation отсутствуют**
 - Последняя завершённая development task: **TASK-014 — Runtime Source
@@ -36,8 +30,8 @@
 - Последняя завершённая operational task: **TASK-012 — Engineering Process
   Hardening; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
-- Последняя завершённая architecture task: **TASK-020 — Runtime Operational
-  Error Reporting and Redaction Design; Completed — Coordinator Accepted**
+- Последняя завершённая architecture task: **TASK-021 — Runtime Management
+  Readiness Assessment; Completed — Coordinator Accepted**
 - Текущая architecture task: **отсутствует**
 - Текущая development task: **отсутствует**
 - Trusted baseline TASK-009: **clean synchronized
@@ -232,10 +226,16 @@
   Closure Review Approved 0/0; PROCESS-002 Synchronized. Reporting
   model/projector/adapter, management implementation и Production Activation
   отсутствуют**
-- Следующая рекомендация после TASK-020: **отдельная Design-update task для
-  formal status/readiness assessment полного candidate set ARCH-004
-  §19(2)–(6); candidate не активирован, implementation автоматически не
-  разрешена**
+- TASK-021: **Completed — Coordinator Accepted; DP-014–DP-018 имеют Design
+  Status Approved и Implementation Status Planned; focused design gates
+  ARCH-004 §19(2)–(6) закрыты; Draft/Planned DP-013 Ready для bounded isolated
+  implementation slice. Tester PASS; independent Reviewer Approved 0/0;
+  PROCESS-002 Synchronized; Scope Audit 21/0/0. Commit и publication не
+  выполнялись**
+- Следующая рекомендация после TASK-021: **Ready, но не активирована отдельная
+  Documentation-only correction root `README.md` и `README.ru.md` для
+  pre-existing Loader-to-Builder implemented-state drift; после неё
+  рекомендуется bounded isolated DP-013 implementation, также не активирована**
 - Stage 2 task-before-work ordering выполнен для TASK-003, TASK-004, TASK-005, TASK-006 и TASK-007: task record создан первым content change, а task index обновлён только после initial gate
 - Publication history: **TASK-005 commit `99e0d3d`, TASK-006 commit `fd0f80a` и TASK-007 commit `2e6d221` merged через PR #6/#7/#8; transient pre-commit/Publisher blockers не являются durable project-state instructions**
 - Design Status DP-009 остаётся **Draft**; Bootstrap и Runtime Launcher
@@ -253,21 +253,21 @@
   composition отсутствует
 - Design Status DP-013 — **Draft**, Implementation Status — **Planned**;
   management routing определён только на design level; Implementation
-  Readiness **Blocked** prerequisites ARCH-004 §19(2)–(6),
-  implementation и production wiring отсутствуют
-- Design Status DP-014 — **Draft**, Implementation Status — **Planned**;
+  Readiness **Ready для bounded isolated implementation slice**, full
+  integration и production wiring отсутствуют
+- Design Status DP-014 — **Approved**, Implementation Status — **Planned**;
   durable operational identity определена только на design level; repository,
   schema, API, recovery и production wiring отсутствуют
-- Design Status DP-015 — **Draft**, Implementation Status — **Planned**;
+- Design Status DP-015 — **Approved**, Implementation Status — **Planned**;
   durable management command idempotency определена только на design level;
   command store, schema, API, recovery и production wiring отсутствуют
-- Design Status DP-016 — **Draft**, Implementation Status — **Planned**;
+- Design Status DP-016 — **Approved**, Implementation Status — **Planned**;
   activation/replacement/rollback ordering определён только на design level;
   implementation, API, recovery и production wiring отсутствуют
-- Design Status DP-017 — **Draft**, Implementation Status — **Planned**;
+- Design Status DP-017 — **Approved**, Implementation Status — **Planned**;
   recovery/reconciliation определены только на design level; recovery store,
   execution-evidence adapter, executor, API и production wiring отсутствуют
-- Design Status DP-018 — **Draft**, Implementation Status — **Planned**;
+- Design Status DP-018 — **Approved**, Implementation Status — **Planned**;
   operational reporting/redaction определены только на design level; report
   model, projector, delivery adapter, API и production wiring отсутствуют
 - Design Status DP-008 остаётся **Draft**, Implementation Status — **Implemented in isolation**

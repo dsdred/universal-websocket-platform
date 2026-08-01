@@ -4,14 +4,14 @@
 
 ## 1. Статус
 
-- **Design Status:** Draft
+- **Design Status:** Approved
 - **Implementation Status:** Planned
 - **Target Milestone:** Beta — Complete the Single-Node Runtime
-- **Scope:** candidate contract ARCH-004 section 19(6) для безопасной
+- **Scope:** Approved contract ARCH-004 section 19(6) для безопасной
   operational failure projection через management, activation и recovery Runtime
 
-Этот документ non-normative до отдельного approval. Он предлагает focused
-contract и не разрешает management implementation или Production Activation.
+Этот approved документ определяет focused contract, но не реализует его и не
+активирует management integration или Production Activation.
 
 ## 2. Назначение
 
@@ -28,7 +28,7 @@ adapters.
 
 ## 3. Источники
 
-Этот Draft подчиняется:
+Этот Approved design подчиняется:
 
 - [ARCH-001](../architecture/ARCH-001-runtime-architectural-pattern.md), который
   различает valid decisions и operational errors и запрещает потерю lifecycle
@@ -425,15 +425,11 @@ Production Activation.
 
 ## 23. Gates ARCH-004 section 19
 
-Этот Draft предлагает candidate focused contract section 19(6). Поскольку он
-non-normative, section 19(6) остаётся formal blocker до отдельного
-approval/status decision. Sections 19(2)–(5) также blocked до собственных
-status decisions DP-014–DP-017.
-
-Dependency-ordered candidate design set теперь documented, но management
-implementation не становится Ready только из-за существования этого Draft.
-Отдельная task должна оценить и записать formal status decisions полного set,
-затем выбрать smallest implementation slice по repository evidence.
+Этот Approved design закрывает focused architecture design gate ARCH-004
+section 19(6). Approved DP-014–DP-017 закрывают predecessor focused design
+gates sections 19(2)–(5). Dependency-ordered design set approved, но reporting,
+management integration и Production Activation отсутствуют. DP-013 Ready
+только для bounded isolated implementation slice.
 
 ## 24. Явно отложенное
 
@@ -455,8 +451,8 @@ Implementation Status — Planned. Репозиторий не содержит 
 projector, redaction implementation, delivery adapter, management API,
 durable management store, recovery executor или production wiring.
 
-Этот Draft не удовлетворяет section 19(6) формально, не повышает predecessor
-DP и не снимает ни один implementation gate section 19.
+Approval закрывает design gate section 19(6), но не реализует и не подключает
+contract и не меняет отдельный status DP-013.
 
 ## 26. Решение
 
