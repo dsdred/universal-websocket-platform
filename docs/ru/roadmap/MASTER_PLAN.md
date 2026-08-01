@@ -306,9 +306,17 @@ Architectural debt относится к границам, которые ост
   per-Instance barrier при unresolved outcome, обязательный exception
   tracked-Start Stop и truthful indeterminate outcomes. Как non-normative
   Draft он не снимает gates section 19(2) или 19(3) и не создаёт command store,
-  API, recovery или wiring. Следующая design-рекомендация по dependency
-  ordering может определить ordering activation, replacement и rollback
-  section 19(4).
+  API, recovery или wiring. Design-only TASK-018 добавляет Draft
+  [DP-016](../design/DP-016-runtime-activation-replacement-rollback.md) с
+  Implementation Status Planned как candidate contract section 19(4). Он
+  упорядочивает exact-version initial activation, replacement и explicit
+  rollback через Stop-to-proven-release и fresh Launch Attempt без Host overlap
+  или automatic fallback. Он требует private Start-claim continuation
+  DP-011/DP-013 после claim Owner и до Load; current isolated Flow не реализует
+  этот seam. Как non-normative Draft он не снимает ни один gate sections
+  19(2)–(4) и не создаёт implementation. Следующая design-рекомендация
+  по dependency ordering может определить recovery и reconciliation section
+  19(5).
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Persistence, Delivery и Plugin всё ещё требуют focused design.

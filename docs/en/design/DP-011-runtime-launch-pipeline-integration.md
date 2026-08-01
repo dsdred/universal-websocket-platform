@@ -6,7 +6,8 @@
 
 **Design Status:** Draft
 
-**Implementation Status:** Implemented in isolation
+**Implementation Status:** Implemented in isolation; the private DP-016
+Start-claim continuation extension is Planned
 
 **Architecture Status:** focused integration contract over approved ARCH-004
 and ARCH-005 and the existing Draft DP-007 through DP-010.
@@ -14,7 +15,9 @@ and ARCH-005 and the existing Draft DP-007 through DP-010.
 The `internal/runtimelaunchflow` package implements this contract in isolation.
 Concrete Source composition, management routing, and Production Activation are
 absent. Implementation does not claim that the production launch capability
-is implemented and does not raise the status of any related Draft DP.
+is implemented and does not raise the status of any related Draft DP. The
+current package does not implement the private claim-continuation gate required
+by DP-016; that extension requires a separate implementation task.
 
 ## 2. Purpose
 
@@ -180,8 +183,10 @@ func (f *BuildFailure) Error() string
 func (f *BuildFailure) Diagnostics() []runtimeconfig.Diagnostic
 ```
 
-No additional exported interface, callback, registry, option, stage enum,
-result union, or lifecycle state is introduced.
+The implemented isolated surface introduces no additional exported interface,
+callback, registry, option, stage enum, result union, or lifecycle state. The
+private continuation described in section 10 is a planned management
+integration seam, not part of the current exported API.
 
 `New` rejects nil Flow dependencies with `ErrInvalidFlow`. `Start` rejects a
 nil context with `ErrInvalidStartContext`. Owner, Loader, and context errors
@@ -234,6 +239,42 @@ When `PrepareStart` returns an error, the Flow:
 - begins no Load or Build;
 - does not call Loader, Builder, Owner.Start, or Launcher;
 - returns the exact error to the caller.
+
+DP-016 management orchestration requires one future private **Start-claim
+continuation gate**. It does not move claim authority out of Owner. Immediately
+after `Owner.PrepareStart` returns a successful preparation and before Load,
+Build, or Launcher work begins, Flow must synchronously offer that exact claim
+to the management continuation associated with the linked Start phase.
+
+The continuation atomically orders a pending Stop against permission to
+continue preparation:
+
+- `Continue` means no pending Stop exists, or its original claimant definitively
+  terminalized cancelled before delegation; Flow may begin Load and Build;
+- `StopConverged` means the original Stop claiming path used its own permit to
+  invoke exact DP-013 Stop and converged that Owner attempt; Flow begins no Load
+  or Build and returns the Owner-equivalent stopped-before-running outcome;
+- `Blocked` means the pending claimant lost its permit, returned without a
+  definitive result, reported unproven Stop convergence, or the rendezvous was
+  indeterminate; Flow begins no external preparation work and the linked set
+  remains unresolved or truthfully failed.
+
+The continuation carries no mutable Host, Snapshot, lifecycle ownership, permit,
+or caller-selected identity. It only signals the original pending Stop call
+stack that Owner claim succeeded, then waits for that same claimant's durable
+outcome. It runs outside Owner's mutex; neither the command-admission nor Owner
+lock is held across either wait or Stop convergence. Process loss makes the
+rendezvous and linked command set unresolved for future recovery.
+
+Because Flow and management routing are separate Go packages, the future
+extension is an internal-package-callable construction capability: Flow is
+bound immutably at construction to one `StartClaimContinuation` implemented by
+the exact management binding. The capability exposes one synchronous
+`AfterOwnerClaim` decision with `Continue`, `StopConverged`, or `Blocked`; it
+exposes no `LaunchPreparation` or permit. A Go symbol may be exported across
+the repository's `internal/` package boundary, but it is not a public management
+or HTTP API. The exact current `New` and `Start` implementation remains
+unchanged and has no such seam, so it does not implement DP-016 orchestration.
 
 ## 11. Synchronous Operation and Caller Lifetime
 

@@ -442,8 +442,11 @@ client command idempotency. Inspection indeterminate write не является
 recovery или reconciliation. Хранение terminal facts не является operational
 reporting. Draft [DP-015](DP-015-runtime-management-command-idempotency.md)
 предлагает candidate contract section 19(3), но не снимает gates section 19(2)
-или 19(3) и не активирует implementation. По dependency ordering следующим
-может проектироваться section 19(4).
+или 19(3) и не активирует implementation. Draft
+[DP-016](DP-016-runtime-activation-replacement-rollback.md) теперь предлагает
+candidate contract section 19(4), но не снимает gates sections 19(2), 19(3)
+или 19(4). По dependency ordering следующим может проектироваться section
+19(5).
 
 ## 24. Явно отложено
 

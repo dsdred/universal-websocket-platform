@@ -8,15 +8,18 @@ DP-008, Runtime Bootstrap contract DP-009, stateless Runtime Launcher и
 Runtime Lifecycle Owner DP-010 реализованы изолированно. Production pipeline
 Loader-to-Builder-to-Launcher и persistent operational identity entities не
 реализованы. Draft DP-011 и package `internal/runtimelaunchflow`
-реализуют integration contract этого pipeline изолированно. Draft DP-012 и
+реализуют base integration contract этого pipeline изолированно; private
+Start-claim continuation DP-016 запланирован и отсутствует. Draft DP-012 и
 package `internal/configurationloadsource` реализуют concrete Source adapter
 изолированно. Completed Design-only TASK-015 и Draft/Planned DP-013 определяют
 management routing contract. Completed Design-only TASK-016 и non-normative
 Draft/Planned DP-014 предлагают durable operational identity persistence
 candidate contract. Completed Design-only TASK-017 и non-normative Draft/Planned
-DP-015 предлагают durable management command idempotency candidate contract;
-package, schema, HTTP API, persistence/idempotency implementation, recovery,
-management wiring и Control Service activation отсутствуют.
+DP-015 предлагают durable management command idempotency candidate contract.
+Completed Design-only TASK-018 и non-normative Draft/Planned DP-016 предлагают
+activation, replacement и explicit rollback ordering candidate contract;
+package, schema, HTTP API, persistence/idempotency/lifecycle implementation,
+recovery, management wiring и Control Service activation отсутствуют.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
@@ -28,8 +31,8 @@ Hardening; `Completed — Coordinator Accepted`.
 
 **Текущая operational task:** отсутствует.
 
-**Последняя завершённая architecture task:** TASK-017 — Runtime Management
-Command Idempotency Design; `Completed — Coordinator Accepted`.
+**Последняя завершённая architecture task:** TASK-018 — Runtime Activation,
+Replacement, and Rollback Design; `Completed — Coordinator Accepted`.
 
 **Текущая architecture task:** отсутствует.
 
@@ -298,8 +301,26 @@ Formal gates §19(2) и §19(3),
 downstream designs §19(4)–(6), command store, schema, API, recovery, management
 wiring и Production Activation остаются открытыми.
 
-**Следующая рекомендация после TASK-017:** не активирована. Отдельный
-Design-only activation/replacement/rollback ordering contract ARCH-004 §19(4).
+**Candidate после TASK-017:** активирован как Design-only TASK-018 — Runtime
+Activation, Replacement, and Rollback Design.
+
+**TASK-018:** `Completed — Coordinator Accepted`. Зеркальный
+non-normative Draft DP-016 с Implementation Status `Planned` предлагает
+candidate contract ARCH-004 §19(4): exact Published ConfigurationVersion,
+fresh Launch Attempt для activation/replacement/rollback,
+Stop-to-proven-release до нового Start, zero Host overlap, explicit rollback
+без automatic fallback и phase-specific concurrency/cancellation. Обязательный
+Stop-during-Starting использует planned private Start-claim continuation
+DP-011/DP-013 после Owner claim и до Load; current Flow seam не реализует.
+Review rework B-001–B-005 завершён; terminal Reviewer — `Approved`, 0 blocking
+и 0 nonblocking; full Go regression, vet, parity, links и diff checks — PASS;
+Scope Audit 19/0/0; PROCESS-002 `Synchronized`; Process Health Review complete.
+Formal gates §19(2)–(4), downstream §19(5)–(6), implementation и Production
+Activation остаются открытыми.
+
+**Следующая рекомендация после TASK-018:** предварительно focused recovery и
+reconciliation после termination Control Service ARCH-004 §19(5); не
+активирована.
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task
