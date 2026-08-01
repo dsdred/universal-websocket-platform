@@ -440,9 +440,10 @@ implementation остаётся заблокированной:
 Conditional aggregate revision предотвращает stale mutation, но не является
 client command idempotency. Inspection indeterminate write не является
 recovery или reconciliation. Хранение terminal facts не является operational
-reporting. Section 19(3) может проектироваться следующим по dependency
-ordering, но эта работа не снимает gate section 19(2) и не активирует
-implementation.
+reporting. Draft [DP-015](DP-015-runtime-management-command-idempotency.md)
+предлагает candidate contract section 19(3), но не снимает gates section 19(2)
+или 19(3) и не активирует implementation. По dependency ordering следующим
+может проектироваться section 19(4).
 
 ## 24. Явно отложено
 

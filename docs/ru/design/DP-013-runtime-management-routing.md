@@ -537,10 +537,12 @@ implementation persistence. Поскольку он остаётся non-normati
 section 19(2) остаётся formal implementation blocker до отдельного
 approval/status decision.
 
-По dependency ordering следующей design-рекомендацией может быть отдельный
-Design-only contract durable idempotency management commands для section
-19(3). Он рекомендован, но не активирован, не снимает gate section 19(2) и не
-активирует implementation.
+Draft [DP-015](DP-015-runtime-management-command-idempotency.md) теперь
+предлагает candidate contract durable idempotency management commands для
+section 19(3). Он связывает одну authorized command identity с immutable intent
+до lifecycle delegation и определяет non-mutating replay. Как non-normative
+Draft он не снимает gates section 19(2) или 19(3) и не активирует
+implementation.
 
 ## 27. Будущие implementation proofs
 
@@ -621,9 +623,10 @@ persistence adapter или activation path не появляются в резу
 
 Implementation Readiness — Blocked. Ни isolated package, ни local proof code
 не разрешены, пока не существуют все обязательные focused designs section 26.
-Следующая рекомендация — отдельный design durable idempotency management
-commands, а не implementation task; она не снимает approval gate section
-19(2).
+DP-015 является candidate design section 19(3), а не implementation task;
+approval gates section 19(2) и 19(3) сохраняются. По dependency ordering
+следующая design-рекомендация может определить ordering activation,
+replacement и rollback section 19(4).
 
 ## 30. Решение
 

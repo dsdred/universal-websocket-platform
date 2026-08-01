@@ -1,0 +1,453 @@
+# DP-015: Runtime Management Command Idempotency
+
+[English version](../../en/design/DP-015-runtime-management-command-idempotency.md)
+
+## 1. Статус
+
+- **Design Status:** Draft
+- **Implementation Status:** Planned
+
+До утверждения это proposal не является нормативным. Он определяет candidate
+durable idempotency boundary для state-changing management commands Runtime.
+Этот документ не создаёт management package, command store, schema, API,
+recovery worker или production wiring.
+
+## 2. Назначение
+
+Определить, как повторные, concurrent и неоднозначно завершившиеся submissions
+одного авторизованного state-changing management intent Runtime сходятся на
+одном durable command execution и одном replayable outcome без создания второй
+lifecycle mutation или Launch Attempt.
+
+## 3. Authority
+
+Этот proposal уточняет, но не переопределяет:
+
+- [ARCH-004](../architecture/ARCH-004-runtime-deployment-and-identity-model.md),
+  особенно section 19(3);
+- [DP-013](DP-013-runtime-management-routing.md) для exact routing и
+  authorization-before-mutation;
+- [DP-014](DP-014-runtime-operational-identity-persistence.md) для durable
+  aggregate identity, conditional revision и publication lifecycle facts.
+
+Принятые ADR и Active или Frozen architecture остаются authoritative. Draft
+DP-013–DP-015 не разрешают implementation.
+
+## 4. Область
+
+Design охватывает:
+
+- opaque client-supplied command identity;
+- immutable binding command intent;
+- ordering validation, authorization, durable claim и lifecycle delegation;
+- same-key replay и different-intent conflict;
+- concurrent submission, in-progress observation и terminal replay;
+- observation lifecycle outcome и barrier unresolved command;
+- definitive и indeterminate outcomes;
+- ограничения retention, isolation и redaction.
+
+Design не определяет HTTP headers, DTO, status codes, SDK behavior, database
+schema, storage technology, activation, replacement, rollback, recovery,
+reconciliation или operational reporting.
+
+## 5. Термины
+
+**Command key** — opaque значение, предоставленное caller для identity одного
+state-changing management intent в одном exact command scope.
+
+**Command scope** — tuple operational management domain, Workspace,
+Configuration, Runtime Instance и kind management operation.
+
+**Immutable intent** — полный normalized semantic input, способный повлиять на
+авторизованную lifecycle mutation. Он исключает transport representation,
+credentials, request context, tracing metadata и mutable observation data.
+
+**Command record** — durable idempotency fact, связывающий один command key и
+scope с одним immutable intent, command state, observed lifecycle facts, когда
+они известны, и replayable outcome при terminal state.
+
+**Execution permit** — одна non-transferable process-local capability,
+возвращаемая только path, который commit новый claim. Она разрешает один exact
+invocation DP-013. Это не durable identity, lifecycle ownership или proof
+начала mutation.
+
+**Replay-equivalent outcome** — стабильный semantic result, необходимый для
+ответа на same-intent repeat без повторной delegation lifecycle work. Это не
+сохранённый HTTP response и не raw internal error.
+
+## 6. Граница ответственности
+
+Command idempotency boundary владеет только command claim, equality intent,
+command state, barrier unresolved command, observed outcome facts и replay
+facts. Он не владеет lifecycle решениями Runtime, live Host resources,
+authorization policy, transport mapping или recovery.
+
+Runtime Lifecycle Owner остаётся единственным lifecycle decision maker и
+owner live Host. DP-014 остаётся candidate owner durable facts Runtime Instance
+и Launch Attempt. Idempotency boundary не может выводить текущую liveness,
+выбирать version, повторять lifecycle work или становиться service locator.
+
+## 7. Охватываемые commands
+
+Этот contract применяется только к state-changing management operations,
+semantics которых определены authoritative design. В текущем planned surface
+DP-013 это Start и Stop. Observe является read-only и не создаёт durable
+command record.
+
+Contract не вводит Create, Delete, Restart, Replace, Rollback или другую
+operation. Future operation должна сначала определить lifecycle semantics и
+immutable intent, прежде чем использовать эту boundary.
+
+## 8. Command identity и namespace
+
+Command identity является парой:
+
+```text
+(CommandScope, CommandKey)
+```
+
+Representation и allocation CommandKey являются implementation decisions. Key
+никогда не является RuntimeInstanceID, LaunchAttemptID, aggregate revision,
+ConfigurationVersionID, Principal, credential, timestamp, PID, pointer или
+transport request identity.
+
+Один raw key может существовать в другом command scope без collision. В одном
+scope committed key никогда не перепривязывается к другому intent. Cross-scope
+lookup или replay запрещены.
+
+## 9. Immutable intent
+
+Equality intent является semantic и exact. Intent включает verified Target и
+каждый operation input, способный изменить lifecycle mutation:
+
+- Start включает exact identity Published ConfigurationVersion, запрошенную
+  command;
+- Stop включает exact Target без inferred version или latest attempt;
+- future commands включают только inputs, определённые их approved lifecycle
+  contract.
+
+Intent исключает Principal, credential, authorization result, deadline,
+cancellation state, trace ID, transport encoding, retry count и aggregate
+observations после submission. Mechanics canonicalization или fingerprint
+должны обеспечивать deterministic collision-safe equality, но design не
+требует hashing или wire format.
+
+## 10. Ordering validation и authorization
+
+Каждый submission следует этому порядку:
+
+1. validate command key, exact Target, operation и operation inputs;
+2. resolve exact Runtime Instance scope без mutation;
+3. authorize текущего caller для exact action и Target;
+4. выполнить final caller-cancellation gate, требуемый command contract;
+5. inspect или claim durable command record;
+6. только newly committed claim может перейти к lifecycle delegation.
+
+Invalid, missing, mismatched, canceled-before-claim, denied или failed
+authorization выполняет zero command и lifecycle mutation. Authorization
+выполняется для каждого submission, включая replay. Его result не сохраняется
+как durable authority и не используется повторно для другого caller.
+
+## 11. Durable claim
+
+Новый command claim атомарно публикует:
+
+- exact command identity;
+- immutable binding intent;
+- state `Claimed`;
+- отсутствие terminal outcome;
+- отсутствие fabricated lifecycle mutation;
+- monotonic command revision или equivalent conditional token.
+
+Complete claim commit происходит до вызова любого lifecycle method Flow или
+Owner. Definitive claim failure ничего не делегирует. Allocation candidate key
+или private representation intent до commit не доказывает существование
+command.
+
+## 12. Матрица решений same-key
+
+После validation и authorization inspection одной command identity имеет ровно
+такие semantic outcomes:
+
+| Existing record | Submitted intent | Result | Lifecycle delegation |
+| --- | --- | --- | --- |
+| absent | valid intent | atomic claim нового command | разрешена один раз после confirmed claim |
+| non-terminal | same intent | truthful non-terminal observation | запрещена |
+| terminal | same intent | replay-equivalent terminal outcome | запрещена |
+| любой | different intent | conflict command key с zero mutation | запрещена |
+
+Same-intent repeat никогда не обновляет authority, не меняет intent, не
+продвигает lifecycle phase, не создаёт Launch Attempt и не ожидает completion
+неявно. Waiting или polling behavior является future API concern.
+
+## 13. Concurrency и serialization
+
+Concurrent submissions одной command identity используют одну conditional
+serialization boundary. Не более одного submission создаёт claim. Каждый
+остальной same-intent submission наблюдает этот claim или более поздний state;
+каждый different-intent submission получает conflict.
+
+Commands разных Runtime Instances могут продвигаться независимо. Для одного
+Runtime Instance evaluation каждого non-terminal record, permitted exception
+tracked Start и insertion нового claim имеют одну atomic linearization point
+command admission. Concurrent different keys не могут оба пройти stale barrier
+check.
+
+Claimed record с exact live execution permit является **tracked** в текущем
+process. Пока tracked Start выполняется, ровно один distinct Stop command может
+claim собственный permit и делегироваться в тот же scope DP-013. Это требуемая
+ARCH-004 convergence Stop-during-Starting; Owner захватывает тот же Launch
+Attempt и остаётся authoritative. Другой Start или другой Stop после появления
+tracked Stop получает non-mutating in-progress conflict.
+
+Claimed record без exact live permit является **unresolved**. Он является
+durable barrier для каждого нового state-changing command до тех пор, пока
+future recovery не сделает предыдущий command Terminal. Observe остаётся
+read-only. Barrier также действует после restart process, потери claiming call
+stack или indeterminate terminal publication.
+
+## 14. Lifecycle delegation
+
+Только execution path, подтвердивший создание нового durable claim, может
+делегировать command exact scope DP-013. Он делегирует не более одного раза в
+этом process execution и сохраняет существующие semantics cancellation,
+outcome и failure Flow и Owner.
+
+Claimed command не доказывает, что lifecycle mutation началась. Caller
+cancellation после claim не удаляет record и не позволяет другому request
+делегировать его снова. Существующий gate Flow или Owner решает, начинается ли
+mutation; command outcome должен правдиво различать отсутствие mutation и
+начатую или завершённую mutation.
+
+## 15. Lifecycle outcome и barrier unresolved command
+
+Design не меняет exact surface Start или Stop DP-013 и не передаёт command
+identity в Flow, Owner или aggregate publication DP-014. После durable command
+claim только path с execution permit один раз вызывает exact operation DP-013.
+Same-key replay никогда не получает этот permit.
+
+Если этот synchronous invocation возвращает definitive outcome, command
+boundary может опубликовать его replay-equivalent Terminal outcome. Любые
+Launch Attempt, version, Stop origin или aggregate fact из этого outcome
+сохраняются только как observed immutable facts; boundary не создаёт identity,
+которую существующий outcome не раскрывает.
+
+Promise atomic commit между текущим call DP-013 и command record намеренно
+отсутствует. Если lifecycle mutation могла произойти, но terminal command
+publication отсутствует или indeterminate, record остаётся Claimed. После
+исчезновения execution permit он является unresolved и закрывает per-Instance
+barrier. Ни retry, ни другой key не могут делегировать lifecycle work. Future
+recovery contract section 19(5) должен inspect exact command и lifecycle facts
+и правдиво разрешить barrier.
+
+## 16. Состояния command
+
+Минимальные semantic states:
+
+```text
+Claimed -> Terminal
+```
+
+`Claimed` означает durable command ownership, но replay-equivalent terminal
+outcome ещё не является durable. Matching live execution permit отличает
+tracked execution от unresolved Claim без изменения durable identity.
+Lifecycle mutation может отсутствовать, выполняться, быть завершённой или
+indeterminate; Claim сам не выбирает одно из этих состояний. `Terminal`
+означает durable replay-equivalent outcome, после которого per-Instance barrier
+может открыться для следующего command.
+
+Implementation может использовать private substates, но не может выполнять
+regression, пропускать обязательную truth или представлять Claimed как
+successful terminal completion.
+
+## 17. Terminal outcome
+
+Terminal publication conditionally проверяет command identity, immutable
+intent, current command state, command revision и definitive operation outcome.
+Затем она сохраняет один immutable replay-equivalent outcome и один раз
+продвигает command state в Terminal.
+
+Outcome фиксирует stable domain categories и identities, нужные для semantic
+replay. Он не сохраняет credentials, Principal, raw internal error, stack
+trace, Host pointer, context, transport response или mutable live observation.
+Replay terminal outcome выполняет zero lifecycle и aggregate mutation.
+
+## 18. Definitive failures
+
+Failures validation, lookup, authorization или pre-claim cancellation не
+создают command record. Definitive claim failure ничего не создаёт и не
+делегирует.
+
+После существования claim definitive no-mutation lifecycle rejection может
+быть опубликован как terminal command outcome. Definitive committed lifecycle
+outcome должен быть linked, затем опубликован terminal. Wording failure или
+transport mapping могут меняться; stored semantic category и identity facts
+должны оставаться replay-equivalent.
+
+## 19. Indeterminate outcomes
+
+Если claim, lifecycle invocation, command observation или terminal publication
+имеет indeterminate outcome, caller не должен:
+
+- создавать replacement command key для того же intent;
+- повторно делегировать lifecycle work;
+- создавать другой Launch Attempt;
+- предполагать отсутствие, failure или terminal command;
+- создавать replay result из stale in-memory state.
+
+Caller инспектирует exact command identity и доступные exact Runtime Instance,
+revision, Observation и facts Launch Attempt. Coherent read может установить
+absent, tracked Claimed, unresolved Claimed, Terminal или still unknown в
+текущем process. Durable state сам по себе никогда не создаёт live permit.
+Unresolved record блокирует каждый новый state-changing command этого Runtime
+Instance. Restart-time resolution и convergence orphan commands относятся к
+ARCH-004 section 19(5), а не к этому design.
+
+## 20. Caller cancellation и retry
+
+Cancellation, видимая до durable claim, выполняет zero mutation. Между claim и
+downstream gate Flow или Owner видимая cancellation ещё может выиграть этот
+существующий gate и дать definitive result без lifecycle mutation.
+
+Для Start после победы Caller Cancellation Gate DP-011 тот же synchronous
+invocation Flow больше не проверяет caller context и ожидает один exact Owner
+outcome или operation error. Idempotency boundary не может вернуть управление
+раньше или detach эту work. Для Stop locked cancellation gate DP-010 решает,
+начинается ли mutation; после победы nil check и locked mutation поздняя
+cancellation может прервать только wait этого caller, пока convergence Owner
+продолжается. Если definitive terminal outcome недоступен и caller Stop
+возвращается, его permit исчезает; command остаётся unresolved Claimed и
+сохраняет закрытым per-Instance barrier. Пока Start permit остаётся live,
+отдельно claimed exception Stop остаётся доступным и достигает того же Owner.
+
+Cancellation никогда не удаляет command, не передаёт command ownership retry и
+не разрешает duplicate delegation.
+
+Retry обязан использовать ту же command identity и immutable intent. Новый key
+является новым command, а не retry, и остаётся subject текущим lifecycle
+preconditions. SDK retry counts, backoff, deadlines, polling и transport status
+находятся вне design.
+
+## 21. Retention и reuse key
+
+Safe forgetting зависит от retry horizons caller, indeterminate outcomes,
+audit requirements и recovery semantics, которые ещё не утверждены. Поэтому
+в рамках этого candidate contract command record нельзя удалять, а command
+identity нельзя использовать повторно.
+
+Будущий focused retention contract может разрешить bounded expiry только если
+докажет, что expired key не приведёт к повторному выполнению старого intent
+или смешению старого terminal result с новым command. Один time-to-live не
+является таким proof.
+
+## 22. Security и redaction
+
+Каждый inspection, claim, conflict, in-progress observation и replay происходит
+только после current authorization для exact Target и action. Responses не
+раскрывают существование того же raw key в другом scope или для unauthorized
+target.
+
+Durable command records содержат opaque identity, normalized intent facts,
+state, bounded observed lifecycle facts и redacted semantic outcomes. Они не содержат credential,
+Secret, authentication material, raw Configuration payload, Snapshot, raw
+error, stack trace, Host reference или process-local capability. Concrete
+reporting и redaction policy остаются обязательными в section 19(6).
+
+## 23. Technology Neutrality
+
+Encoding command key, comparison intent, representation revision, storage,
+locking, transaction mechanics и serialization являются implementation
+choices. Observable requirements: durable claim-before-delegation, exact
+binding intent, один accepted claim, atomic per-Instance command admission,
+один non-transferable permit на accepted claim, exception tracked-Start Stop,
+barrier unresolved command, at-most-once delegation, monotonic command state,
+truthful inspection и replay без mutation.
+
+Generic CRUD repositories, distributed lock services, universal command buses,
+dynamic registries и service locators не требуются и не разрешаются.
+
+## 24. Acceptance proofs
+
+Будущая implementation должна доказать минимум:
+
+1. один same-key/same-intent claim при concurrent submission;
+2. same-key/different-intent conflict с zero mutation;
+3. authorization на каждом initial и replay submission;
+4. отсутствие command claim и lifecycle mutation до authorization;
+5. durable claim до lifecycle delegation;
+6. at-most-once delegation для concurrent и repeated submissions;
+7. evaluation barrier и different-key claim имеют одну per-Instance atomic
+   linearization point;
+8. tracked Start разрешает ровно один distinct Stop claim и делегирует его тому
+   же Owner, тогда как unresolved Claim блокирует каждую новую mutation;
+9. non-terminal replay никогда не сообщает terminal success;
+10. terminal replay возвращает тот же semantic outcome с zero mutation;
+11. caller cancellation после claim не разрешает duplicate delegation;
+12. definitive failures сохраняют specified zero-mutation boundary;
+13. indeterminate outcomes требуют exact inspection и запрещают blind retry;
+14. разные command identities сохраняют one-Instance lifecycle serialization;
+15. restart storage client сохраняет claim и terminal replay facts;
+16. domain isolation и redaction предотвращают cross-scope disclosure.
+
+Proofs включают технически доступные concurrency, race, failure-injection,
+durability и storage-client-restart scenarios. Они не разрешают Production
+Activation.
+
+## 25. Formal и последующие gates ARCH-004 section 19
+
+Этот Draft предлагает candidate focused architecture contract для ARCH-004
+section 19(3). Поскольку он non-normative, section 19(3) остаётся formal
+implementation blocker до отдельного approval/status decision. Section 19(2)
+также остаётся blocked до собственного status decision candidate DP-014.
+
+Management implementation остаётся заблокированной:
+
+1. approval/status decision candidate persistence section 19(2);
+2. approval/status decision этого candidate section 19(3);
+3. ordering activation, replacement и rollback, section 19(4);
+4. recovery и reconciliation, section 19(5);
+5. operational error reporting и redaction, section 19(6).
+
+По dependency ordering section 19(4) может проектироваться следующим. Этот
+Draft не активирует эту work и не разрешает isolated management
+implementation.
+
+## 26. Явно отложено
+
+До focused designs или implementation tasks отложены:
+
+- transport idempotency field, DTO, status code и behavior client SDK;
+- command record schema, storage, migration и private API;
+- activation, replacement, rollback и policy version selection;
+- recovery после restart process, resolution orphan commands и reconciliation;
+- taxonomy diagnostics, reporting, audit, metrics и redaction policy;
+- safe command retention и deletion;
+- concrete authorization policy и Production Activation.
+
+## 27. Implementation boundary
+
+Implementation Status — Planned. Repository содержит только isolated
+process-local Lifecycle Owner, launch flow, source adapter и candidate designs
+management routing и persistence.
+
+Durable command store, idempotency package, API, recovery executor, management
+wiring и production activation отсутствуют. Этот Draft формально не
+удовлетворяет ARCH-004 section 19(3) и не снимает ни один implementation gate
+section 19.
+
+## 28. Решение
+
+UWP будет идентифицировать один state-changing management intent Runtime через
+opaque command key внутри exact authorized command scope. Complete durable
+claim связывает эту identity с одним immutable intent до lifecycle delegation.
+Same-intent repeats наблюдают или replay тот же command без delegation;
+different intent с тем же key конфликтует с zero mutation.
+
+Один immutable replay-equivalent terminal outcome сохраняется. Live execution
+permit отслеживает claiming path и сохраняет mandatory exception
+Stop-during-Start. Claimed record без exact permit является unresolved и
+блокирует каждый новый state-changing command того же Runtime Instance.
+Cancellation или indeterminate outcome никогда не разрешают blind
+re-execution. Runtime Lifecycle Owner остаётся единственным lifecycle decision
+maker, а truthful barrier resolution, recovery, retention, API mapping и
+production wiring остаются отдельной work.

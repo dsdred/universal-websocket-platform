@@ -440,9 +440,11 @@ Management implementation remains blocked by:
 
 Conditional aggregate revision prevents stale mutation but is not client
 command idempotency. Inspecting an indeterminate write is not recovery or
-reconciliation. Terminal fact storage is not operational reporting. Section
-19(3) may be designed next by dependency ordering, but that work neither
-removes the section 19(2) gate nor activates implementation.
+reconciliation. Terminal fact storage is not operational reporting. Draft
+[DP-015](DP-015-runtime-management-command-idempotency.md) proposes the
+candidate section 19(3) contract, but it neither removes the section 19(2) or
+19(3) gates nor activates implementation. Section 19(4) may be designed next
+by dependency ordering.
 
 ## 24. Explicit Deferrals
 

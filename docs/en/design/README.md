@@ -20,3 +20,4 @@ This directory contains focused Runtime design documents. A design document expl
 | [DP-012: Runtime Source Composition](DP-012-runtime-source-composition.md) | Draft; implemented in isolation |
 | [DP-013: Runtime Management Routing](DP-013-runtime-management-routing.md) | Draft; planned |
 | [DP-014: Runtime Operational Identity Persistence](DP-014-runtime-operational-identity-persistence.md) | Draft; planned |
+| [DP-015: Runtime Management Command Idempotency](DP-015-runtime-management-command-idempotency.md) | Draft; planned |

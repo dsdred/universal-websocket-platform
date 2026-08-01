@@ -25,9 +25,10 @@
   изолированно, а persistence и production routing operational сущностей
   отсутствуют.
 - ARCH-005 определяет Configuration Loader, Snapshot provenance и loading boundary.
-- Draft DP-007–DP-014 являются implementation/design contracts и не
+- Draft DP-007–DP-015 являются implementation/design contracts и не
   повышаются до нормативного статуса реализацией или commit. DP-012 реализован
-  изолированно; DP-013 и DP-014 сохраняют Implementation Status Planned.
+  изолированно; DP-013, DP-014 и DP-015 сохраняют Implementation Status
+  Planned.
 
 ## Ожидающие отдельного решения
 
@@ -56,9 +57,17 @@ activation/replacement/rollback, recovery/reconciliation и operational
 reporting/redaction (§19(3)–(6)). Concrete authorization policy, management
 implementation/API и Production Activation также отсутствуют.
 
-По dependency ordering следующей рекомендуемой design work после DP-014 может
-быть durable management command idempotency ARCH-004 §19(3). Рекомендация не
-активирует task или implementation и не снимает formal gate §19(2).
+Non-normative Draft DP-015 предлагает candidate focused contract ARCH-004
+§19(3): opaque command identity в exact authorized scope, immutable intent,
+durable claim до lifecycle delegation, same-intent replay без mutation,
+per-Instance barrier для unresolved command, mandatory tracked-Start Stop и
+truthful indeterminate outcome. Он не создаёт command store, schema, API,
+recovery или production wiring и не снимает
+formal gates §19(2) или §19(3) до отдельных approval/status decisions.
+
+По dependency ordering следующей рекомендуемой design work после DP-015 может
+быть activation/replacement/rollback ordering ARCH-004 §19(4). Рекомендация не
+активирует task или implementation.
 
 Package `internal/runtimelaunchflow` реализует DP-011 изолированно без
 изменения этих ожидающих решения production boundaries.

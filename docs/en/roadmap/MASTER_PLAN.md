@@ -299,10 +299,17 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   lifecycle-fact publication, and inspect-after-indeterminate boundary for
   section 19(2). As a non-normative Draft it does not remove that formal gate
   before a separate approval/status decision. No persistence package, schema,
-  API, recovery, or production wiring exists. By dependency ordering the next
-  design recommendation may be a separate durable management command
-  idempotency contract for section 19(3); it neither activates implementation
-  nor removes the section 19(2) gate.
+  API, recovery, or production wiring exists. Design-only TASK-017 adds Draft
+  [DP-015](../design/DP-015-runtime-management-command-idempotency.md), with
+  Implementation Status Planned, as the candidate section 19(3) contract. It
+  defines authorized command scope, immutable intent binding, durable claim
+  before lifecycle delegation, same-intent non-mutating replay, a durable
+  per-Instance barrier while outcome remains unresolved, the required tracked-
+  Start Stop exception, and truthful indeterminate outcomes. As a
+  non-normative Draft it removes neither the section 19(2) nor 19(3) gate and
+  creates no command store, API, recovery, or wiring. The next dependency-
+  ordered design recommendation may address activation, replacement, and
+  rollback ordering in section 19(4).
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Persistence, Delivery, and Plugin contracts still require focused design.

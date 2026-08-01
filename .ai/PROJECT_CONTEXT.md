@@ -18,15 +18,18 @@
   adapter изолированно; Completed Design-only TASK-015 и Draft/Planned DP-013
   определяют management routing contract; Completed Design-only TASK-016 и
   non-normative Draft/Planned DP-014 предлагают durable operational identity
-  persistence candidate contract. Implementation, HTTP, persistence
-  package/schema, management wiring и Production Activation отсутствуют**
+  persistence candidate contract; Completed Design-only TASK-017 и
+  non-normative Draft/Planned DP-015 предлагают durable management command
+  idempotency candidate contract. Implementation, HTTP, persistence/command
+  package/schema, recovery, management wiring и Production Activation
+  отсутствуют**
 - Последняя завершённая development task: **TASK-014 — Runtime Source
   Implementation; Completed — Coordinator Accepted**
 - Последняя завершённая operational task: **TASK-012 — Engineering Process
   Hardening; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
-- Последняя завершённая architecture task: **TASK-016 — Runtime Operational
-  Identity Persistence Design; Completed — Coordinator Accepted**
+- Последняя завершённая architecture task: **TASK-017 — Runtime Management
+  Command Idempotency Design; Completed — Coordinator Accepted**
 - Текущая architecture task: **отсутствует**
 - Текущая development task: **отсутствует**
 - Trusted baseline TASK-009: **clean synchronized
@@ -160,9 +163,25 @@
   approval/status decision вместе с §19(3)–(6). Persistence
   package/schema/API, recovery и production wiring отсутствуют; commit и
   publication не авторизованы и не выполнялись**
-- Следующая рекомендация после TASK-016: **не активирована; отдельный
-  Design-only durable management command idempotency contract ARCH-004
-  §19(3). Он не снимает formal implementation gate §19(2)**
+- Candidate после TASK-016: **активирован как Design-only TASK-017 — Runtime
+  Management Command Idempotency Design**
+- TASK-017: **Completed — Coordinator Accepted; зеркальный non-normative Draft
+  DP-015 с
+  Implementation Status Planned предлагает candidate contract ARCH-004
+  §19(3): exact authorized command scope, opaque key, immutable intent, durable
+  claim до lifecycle delegation, same-intent non-mutating replay, durable
+  per-Instance barrier при unresolved outcome, mandatory tracked-Start Stop и
+  truthful indeterminate outcomes. Initial Reviewer Needs Revision B-001/B-002;
+  first rework; Repeat Reviewer Needs Revision B-003; second rework; Final
+  Reviewer Approved with Findings, blocking 0; closure bookkeeping; terminal
+  Reviewer Approved 0/0. Full `go test ./... -count=1`, `go vet ./...`, EN/RU
+  29/29 headings, links 770/0 и diff checks PASS; Scope Audit 15/0/0;
+  PROCESS-002 Synchronized. Formal gates §19(2) и §19(3),
+  downstream designs §19(4)–(6), implementation и production wiring остаются
+  открытыми**
+- Следующая рекомендация после TASK-017: **не активирована; отдельный
+  Design-only activation/replacement/rollback ordering contract ARCH-004
+  §19(4)**
 - Stage 2 task-before-work ordering выполнен для TASK-003, TASK-004, TASK-005, TASK-006 и TASK-007: task record создан первым content change, а task index обновлён только после initial gate
 - Publication history: **TASK-005 commit `99e0d3d`, TASK-006 commit `fd0f80a` и TASK-007 commit `2e6d221` merged через PR #6/#7/#8; transient pre-commit/Publisher blockers не являются durable project-state instructions**
 - Design Status DP-009 остаётся **Draft**; Bootstrap и Runtime Launcher
@@ -184,6 +203,9 @@
 - Design Status DP-014 — **Draft**, Implementation Status — **Planned**;
   durable operational identity определена только на design level; repository,
   schema, API, recovery и production wiring отсутствуют
+- Design Status DP-015 — **Draft**, Implementation Status — **Planned**;
+  durable management command idempotency определена только на design level;
+  command store, schema, API, recovery и production wiring отсутствуют
 - Design Status DP-008 остаётся **Draft**, Implementation Status — **Implemented in isolation**
 - Содержимое репозитория: документация, спецификации, инженерные соглашения, исполняемый Control Service и изолированные Runtime-компоненты с тестами
 
