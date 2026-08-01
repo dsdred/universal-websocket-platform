@@ -12,17 +12,11 @@ Loader-to-Builder-to-Launcher и persistent operational identity entities не
 Start-claim continuation и execution-binding/load gate DP-016/DP-017
 запланированы и отсутствуют. Draft DP-012 и
 package `internal/configurationloadsource` реализуют concrete Source adapter
-изолированно. Completed Design-only TASK-015 и Draft/Planned DP-013 определяют
-management routing contract. Completed Design-only TASK-016 и non-normative
-Draft/Planned DP-014 предлагают durable operational identity persistence
-candidate contract. Completed Design-only TASK-017 и non-normative Draft/Planned
-DP-015 предлагают durable management command idempotency candidate contract.
-Completed Design-only TASK-018 и non-normative Draft/Planned DP-016 предлагают
-activation, replacement и explicit rollback ordering candidate contract.
-Completed Design-only TASK-019 и non-normative Draft/Planned DP-017 предлагают
-fail-closed recovery и reconciliation candidate contract. Completed
-Design-only TASK-020 и non-normative Draft/Planned DP-018 предлагают scoped allowlist
-operational error reporting/redaction candidate contract; package, schema,
+изолированно. Draft/Planned DP-013 определяет management routing и Ready для
+bounded isolated implementation slice. Approved/Planned DP-014–DP-018
+закрывают focused design gates ARCH-004 §19(2)–(6) для operational identity
+persistence, command idempotency, activation/replacement/rollback,
+recovery/reconciliation и operational error reporting/redaction; package, schema,
 HTTP API, persistence/idempotency/lifecycle/recovery/reporting implementation,
 management wiring и Control Service activation отсутствуют.
 **Release:** v0.1.0-alpha
@@ -36,8 +30,8 @@ Hardening; `Completed — Coordinator Accepted`.
 
 **Текущая operational task:** отсутствует.
 
-**Последняя завершённая architecture task:** TASK-020 — Runtime Operational
-Error Reporting and Redaction Design; `Completed — Coordinator Accepted`.
+**Последняя завершённая architecture task:** TASK-021 — Runtime Management
+Readiness Assessment; `Completed — Coordinator Accepted`.
 
 **Текущая architecture task:** отсутствует.
 
@@ -363,9 +357,18 @@ vet, EN/RU parity, repository links и diff checks — PASS; Scope Audit accepte
 отдельных status decisions. Report model/projector/adapter, public API,
 management implementation и Production Activation отсутствуют.
 
-**Следующая рекомендация после TASK-020:** отдельная Design-update task для
-formal status/readiness assessment полного candidate set ARCH-004 §19(2)–(6);
-candidate не активирован и implementation автоматически не разрешена.
+**TASK-021:** `Completed — Coordinator Accepted`. DP-014–DP-018 имеют Design
+Status `Approved` и Implementation Status `Planned`; focused design gates
+ARCH-004 §19(2)–(6) закрыты. Draft/Planned DP-013 имеет Implementation
+Readiness `Ready for a bounded isolated implementation slice`; full integration
+и Production Activation остаются blocked. Tester PASS; independent Reviewer
+Approved 0/0; PROCESS-002 `Synchronized`; Scope Audit 21/0/0. Commit и
+publication не выполнялись.
+
+**Следующая рекомендация после TASK-021:** Ready, но не активирована отдельная
+Documentation-only correction root `README.md` и `README.ru.md` для
+pre-existing Loader-to-Builder implemented-state drift. После неё рекомендуется
+bounded isolated DP-013 implementation; она также не активирована.
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task

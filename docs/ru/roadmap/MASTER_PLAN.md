@@ -288,33 +288,32 @@ Architectural debt относится к границам, которые ост
   Start/Stop/Observe, exact routing Runtime Instance,
   authorization до lifecycle delegation и static binding Owner-to-Flow.
   Management package, HTTP API, persistence и activation отсутствуют. Design
-  contract готов, но Implementation Readiness заблокирована оставшимися
-  mandatory focused designs и status decisions ARCH-004 section 19(2)–(6).
-  Design-only TASK-016 добавляет Draft
+  contract готов, а Implementation Readiness — Ready для bounded isolated
+  slice; integration и Production Activation остаются blocked отсутствующими
+  dependencies и wiring. Design-only TASK-016 добавляет Approved
   [DP-014](../design/DP-014-runtime-operational-identity-persistence.md) с
   Implementation Status Planned, который предлагает candidate durable
   aggregate Runtime Instance, append-only membership Launch Attempt и
   monotonic child facts, namespaces opaque identity, conditional revision,
   atomic publication lifecycle facts и boundary inspect-after-indeterminate
-  для section 19(2). Как non-normative Draft он не снимает этот formal gate до
-  отдельного approval/status decision. Persistence package, schema, API,
+  для section 19(2). Design gate закрыт, но persistence package, schema, API,
   recovery и production wiring отсутствуют. Design-only TASK-017 добавляет
-  Draft [DP-015](../design/DP-015-runtime-management-command-idempotency.md) с
+  Approved [DP-015](../design/DP-015-runtime-management-command-idempotency.md) с
   Implementation Status Planned как candidate contract section 19(3). Он
   определяет authorized command scope, binding immutable intent, durable claim
   до lifecycle delegation, same-intent non-mutating replay, durable
   per-Instance barrier при unresolved outcome, обязательный exception
-  tracked-Start Stop и truthful indeterminate outcomes. Как non-normative
-  Draft он не снимает gates section 19(2) или 19(3) и не создаёт command store,
-  API, recovery или wiring. Design-only TASK-018 добавляет Draft
+  tracked-Start Stop и truthful indeterminate outcomes. Approved status
+  закрывает section 19(3) на design level и не создаёт command store,
+  API, recovery или wiring. Design-only TASK-018 добавляет Approved
   [DP-016](../design/DP-016-runtime-activation-replacement-rollback.md) с
   Implementation Status Planned как candidate contract section 19(4). Он
   упорядочивает exact-version initial activation, replacement и explicit
   rollback через Stop-to-proven-release и fresh Launch Attempt без Host overlap
   или automatic fallback. Он требует private Start-claim continuation
   DP-011/DP-013 после claim Owner и до Load; current isolated Flow не реализует
-  этот seam. Как non-normative Draft он не снимает ни один gate sections
-  19(2)–(4) и не создаёт implementation. Design-only TASK-019 добавляет Draft
+  этот seam. Approved status закрывает section 19(4) на design level и не
+  создаёт implementation. Design-only TASK-019 добавляет Approved
   [DP-017](../design/DP-017-runtime-recovery-reconciliation.md) с
   Implementation Status Planned как candidate contract section 19(5). Он
   определяет exact fail-closed restart assessment, один durable recovery claim,
@@ -323,18 +322,23 @@ Architectural debt относится к границам, которые ост
   reconciliation, crash-resumable publication и reopening admission только для coherent fully
   terminal command/lifecycle set. Resource absence даёт Failed/interrupted;
   Stopped требует exact Host shutdown-completion proof. Он не выполняет lifecycle
-  replay, Host adoption или automatic restart. Как non-normative Draft он не
-  снимает ни один gate sections 19(2)–(5) и не создаёт recovery implementation.
-  Design-only TASK-020 добавляет Draft
+  replay, Host adoption или automatic restart. Approved status закрывает
+  section 19(5) на design level и не создаёт recovery implementation.
+  Design-only TASK-020 добавляет Approved
   [DP-018](../design/DP-018-runtime-operational-error-reporting-redaction.md) с
   Implementation Status Planned как candidate contract section 19(6). Он
   сохраняет error identity owners и проецирует только authoritative facts в
   scoped, allowlisted и replay-stable operator reports; delivery остаётся
-  downstream и не может менять lifecycle или command truth. Как non-normative
-  Draft он не снимает ни один gate section 19 и не создаёт reporting или
-  management implementation. Следующий dependency step — отдельная formal
-  status/readiness assessment полного candidate set sections 19(2)–(6), а не
-  автоматическая implementation.
+  downstream и не может менять lifecycle или command truth. Approved status
+  закрывает section 19(6) на design level и не создаёт reporting или management
+  implementation. TASK-021 завершила status decision полного set sections
+  19(2)–(6) с Coordinator Acceptance: DP-014–DP-018 имеют status
+  Approved/Planned, а Draft/Planned DP-013 Ready для bounded isolated
+  implementation slice. Implementation не активирована. Следующий Ready, но
+  неактивный candidate — Documentation-only correction root README mirrors для
+  pre-existing Loader-to-Builder implemented-state drift; bounded isolated
+  DP-013 implementation рекомендуется только после этой correction и также не
+  активирована.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Persistence, Delivery и Plugin всё ещё требуют focused design.

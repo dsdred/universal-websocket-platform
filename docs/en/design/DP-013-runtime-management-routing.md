@@ -6,8 +6,8 @@
 
 - **Design Status:** Draft
 - **Implementation Status:** Planned
-- **Implementation Readiness:** Blocked by the remaining mandatory focused
-  designs in ARCH-004 section 19
+- **Implementation Readiness:** Ready for a bounded isolated implementation
+  slice; full integration and Production Activation remain blocked
 
 This proposal is non-normative until approved. It defines a planned isolated
 in-process management command boundary. The package, production Control
@@ -561,42 +561,18 @@ a generic dependency container.
 
 ## 26. Mandatory implementation prerequisites
 
-The design contract is valid, but implementation readiness is blocked.
-ARCH-004 section 19 is Active and takes precedence over this Draft. No
-`internal/runtimemanagement` package or local proof implementation may begin
-until focused designs resolve all remaining mandatory prerequisites:
-
-1. approval/status decision for the section 19(2) candidate persistence
-   contract;
-2. management command durable idempotency;
-3. activation, replacement, and rollback ordering;
-4. recovery and reconciliation after Control Service termination;
-5. operational error reporting and redaction.
+The Draft design contract is valid and Ready for a bounded isolated
+implementation slice. Approved DP-014 through DP-018 close all focused design
+gates required by ARCH-004 section 19(2)–(6). Full integration remains blocked
+until the required persistence, command, activation, recovery, and reporting
+implementations exist and are composed through an explicit Control Service
+boundary.
 
 Loader, Snapshot provenance, and schema compatibility are already resolved by
 ARCH-005 and DP-007 through DP-012. The isolated implementation precedent of
 DP-010 through DP-012 does not create an exception to the higher-status
-ARCH-004 gate.
-
-Draft [DP-014](DP-014-runtime-operational-identity-persistence.md) proposes the
-candidate Runtime Instance and Launch Attempt persistence contract required by
-ARCH-004 section 19(2). It defines durable aggregate, identity, history,
-conditional revision, and indeterminate-outcome semantics without creating
-persistence implementation. Because it remains non-normative Draft, section
-19(2) remains a formal implementation blocker until a separate
-approval/status decision.
-
-Draft [DP-015](DP-015-runtime-management-command-idempotency.md) now proposes
-the candidate durable management command idempotency contract for section
-19(3). It binds one authorized command identity to immutable intent before
-lifecycle delegation and defines non-mutating replay. As a non-normative Draft
-it does not remove the section 19(2) or 19(3) gates or activate implementation.
-
-Draft [DP-016](DP-016-runtime-activation-replacement-rollback.md) now proposes
-the candidate activation, replacement, and explicit rollback ordering contract
-for section 19(4). It preserves exact-version attempts and Stop-to-proven-release
-before any replacement or rollback Start. As a non-normative Draft it does not
-remove the section 19(2), 19(3), or 19(4) gates or activate implementation.
+ARCH-004 gate. Approved DP-014 through DP-018 define the dependency-ordered
+contracts without providing their packages, adapters, schemas, or wiring.
 
 ## 27. Future implementation proofs
 
@@ -641,12 +617,12 @@ Control Service wiring or Runtime activation.
 
 ## 28. Explicit deferrals
 
-Remaining blocking architecture prerequisites before any implementation:
+The section 19 focused design gates are closed. The following implementations
+remain required before integration:
 
-- approval/status decision for the section 19(2) candidate persistence
-  contract;
+- durable operational identity persistence;
 - durable management command idempotency;
-- activation, replacement, and rollback ordering;
+- activation, replacement, and rollback orchestration;
 - recovery and reconciliation;
 - operational error reporting and redaction.
 
@@ -672,15 +648,13 @@ Implementation Status remains Planned. No `internal/runtimemanagement`
 package, test, Control Service binding, endpoint, policy, persistence adapter,
 or activation path exists as a result of this document.
 
-Implementation Readiness is Blocked. Neither an isolated package nor local
-proof code is authorized until every mandatory focused design in section 26
-exists. DP-015, DP-016, and
-[DP-017](DP-017-runtime-recovery-reconciliation.md) are the candidate section
-19(3), 19(4), and 19(5) designs, not implementation tasks; the section
-19(2)–(5) approval gates remain. Draft
-[DP-018](DP-018-runtime-operational-error-reporting-redaction.md) now proposes
-the candidate section 19(6) reporting/redaction contract. It does not remove
-any section 19 gate or permit implementation before separate status decisions.
+Implementation Readiness is Ready for one bounded isolated package and local
+proof slice. Approved DP-014 through DP-018 close the focused design gates in
+ARCH-004 section 19(2)–(6), but do not implement persistence, idempotency,
+activation, recovery, reporting, Control Service integration, or Production
+Activation. Any integration slice must first provide its exact required
+dependencies, including the planned private Start-claim continuation and
+execution-generation binding/load gate.
 
 ## 30. Decision
 
@@ -693,5 +667,6 @@ all downstream lifecycle outcomes.
 It adds no second lifecycle owner, dynamic registry, service locator,
 persistence simulation, retry, transport API, or Production Activation.
 
-The design is ready for review and possible acceptance as Draft/Planned.
-Implementation remains blocked by ARCH-004 section 19(2)-(6).
+The Draft/Planned design is ready for a bounded isolated implementation slice.
+Full integration and Production Activation remain blocked by the unimplemented
+dependencies and wiring identified above.

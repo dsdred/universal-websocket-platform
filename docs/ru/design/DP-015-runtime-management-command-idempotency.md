@@ -4,10 +4,10 @@
 
 ## 1. Статус
 
-- **Design Status:** Draft
+- **Design Status:** Approved
 - **Implementation Status:** Planned
 
-До утверждения это proposal не является нормативным. Он определяет candidate
+Этот approved design определяет planned
 durable idempotency boundary для state-changing management commands Runtime.
 Этот документ не создаёт management package, command store, schema, API,
 recovery worker или production wiring.
@@ -30,8 +30,8 @@ lifecycle mutation или Launch Attempt.
 - [DP-014](DP-014-runtime-operational-identity-persistence.md) для durable
   aggregate identity, conditional revision и publication lifecycle facts.
 
-Принятые ADR и Active или Frozen architecture остаются authoritative. Draft
-DP-013–DP-016 не разрешают implementation.
+Принятые ADR и Active или Frozen architecture остаются authoritative. DP-013
+остаётся Draft; Approved DP-014–DP-016 не реализуют свои contracts.
 
 ## 4. Область
 
@@ -92,7 +92,7 @@ facts. Он не владеет lifecycle решениями Runtime, live Host 
 authorization policy, transport mapping или recovery.
 
 Runtime Lifecycle Owner остаётся единственным lifecycle decision maker и
-owner live Host. DP-014 остаётся candidate owner durable facts Runtime Instance
+owner live Host. DP-014 остаётся owner durable facts Runtime Instance
 и Launch Attempt. Idempotency boundary не может выводить текущую liveness,
 выбирать version, повторять lifecycle work или становиться service locator.
 
@@ -251,9 +251,10 @@ Pending claimant ждёт ровно один process-local signal: `OwnerClaime
 Claimed primitive, parent или phase record без exact live permit является
 **unresolved**. Unresolved parent или любая его phase является durable barrier
 для каждого нового state-changing command и дальнейшей phase до тех пор, пока
-утверждённый recovery contract не сделает linked command set Terminal. Draft
-[DP-017](DP-017-runtime-recovery-reconciliation.md) предлагает fail-closed
-resolution exact facts, но не разрешает его. Observe остаётся read-only. Ни
+утверждённый recovery contract не сделает linked command set Terminal. Approved
+[DP-017](DP-017-runtime-recovery-reconciliation.md) определяет fail-closed
+resolution exact facts; его Planned implementation остаётся отсутствующей.
+Observe остаётся read-only. Ни
 один tracked exception не действует после restart process, потери claiming
 call stack или indeterminate claim/terminal publication.
 
@@ -301,9 +302,10 @@ Promise atomic commit между текущим call DP-013 и command record н
 отсутствует. Если lifecycle mutation могла произойти, но terminal command
 publication отсутствует или indeterminate, record остаётся Claimed. После
 исчезновения execution permit он является unresolved и закрывает per-Instance
-barrier. Ни retry, ни другой key не могут делегировать lifecycle work. DP-017
-предлагает candidate contract section 19(5) для inspection exact command,
-lifecycle и execution-evidence facts и truthful barrier resolution.
+barrier. Ни retry, ни другой key не могут делегировать lifecycle work. Approved
+DP-017 определяет contract section 19(5) для inspection exact command,
+lifecycle и execution-evidence facts и truthful barrier resolution; его
+Planned implementation остаётся отсутствующей.
 
 ## 16. Состояния command
 
@@ -406,9 +408,10 @@ preconditions. SDK retry counts, backoff, deadlines, polling и transport status
 ## 21. Retention и reuse key
 
 Safe forgetting зависит от retry horizons caller, indeterminate outcomes,
-audit requirements и recovery semantics, которые ещё не утверждены. Поэтому
-в рамках этого candidate contract command record нельзя удалять, а command
-identity нельзя использовать повторно.
+audit requirements и Approved recovery semantics, Planned implementation
+которых остаётся отсутствующей. Поэтому в рамках этого Approved contract
+command record нельзя удалять, а command identity нельзя использовать
+повторно.
 
 Будущий focused retention contract может разрешить bounded expiry только если
 докажет, что expired key не приведёт к повторному выполнению старого intent
@@ -472,28 +475,11 @@ Activation.
 
 ## 25. Formal и последующие gates ARCH-004 section 19
 
-Этот Draft предлагает candidate focused architecture contract для ARCH-004
-section 19(3). Поскольку он non-normative, section 19(3) остаётся formal
-implementation blocker до отдельного approval/status decision. Section 19(2)
-также остаётся blocked до собственного status decision candidate DP-014.
-
-Management implementation остаётся заблокированной:
-
-1. approval/status decision candidate persistence section 19(2);
-2. approval/status decision этого candidate section 19(3);
-3. ordering activation, replacement и rollback, section 19(4);
-4. recovery и reconciliation, section 19(5);
-5. operational error reporting и redaction, section 19(6).
-
-Draft [DP-016](DP-016-runtime-activation-replacement-rollback.md) теперь
-предлагает candidate contract section 19(4). Он не снимает gates sections
-19(2), 19(3) или 19(4). Draft
-[DP-017](DP-017-runtime-recovery-reconciliation.md) теперь предлагает candidate
-contract section 19(5) и не снимает ни один gate sections 19(2)–(5).
-[DP-018](DP-018-runtime-operational-error-reporting-redaction.md) теперь
-предлагает candidate contract section 19(6) и не снимает ни один gate section
-19. Ни один Draft не разрешает isolated management implementation до отдельных
-status decisions.
+Этот Approved design закрывает focused architecture design gate ARCH-004
+section 19(3). Approved DP-014 и DP-016–DP-018 закрывают остальные focused
+design gates sections 19(2) и 19(4)–(6). Полный approved set определяет
+dependency ordering, но не создаёт command store, persistence, recovery,
+reporting, integration или Production Activation.
 
 ## 26. Явно отложено
 
@@ -510,13 +496,12 @@ status decisions.
 ## 27. Implementation boundary
 
 Implementation Status — Planned. Repository содержит только isolated
-process-local Lifecycle Owner, launch flow, source adapter и candidate designs
-management routing и persistence.
+process-local Lifecycle Owner, launch flow, source adapter, Draft DP-013 и
+Approved/Planned DP-014–DP-018.
 
 Durable command store, idempotency package, API, recovery executor, management
-wiring и production activation отсутствуют. Этот Draft формально не
-удовлетворяет ARCH-004 section 19(3) и не снимает ни один implementation gate
-section 19.
+wiring и production activation отсутствуют. Approval закрывает design gate
+section 19(3), но не реализует и не подключает contract.
 
 ## 28. Решение
 

@@ -4,15 +4,14 @@
 
 ## 1. Status
 
-- **Design Status:** Draft
+- **Design Status:** Approved
 - **Implementation Status:** Planned
 - **Target Milestone:** Beta — Complete the Single-Node Runtime
-- **Scope:** candidate ARCH-004 section 19(6) contract for safe operational
+- **Scope:** Approved ARCH-004 section 19(6) contract for safe operational
   failure projection across Runtime management, activation, and recovery
 
-This document is non-normative until separately approved. It proposes a
-focused contract and does not authorize management implementation or
-Production Activation.
+This approved document defines the focused contract but does not implement it
+or activate management integration or Production Activation.
 
 ## 2. Purpose
 
@@ -28,7 +27,7 @@ traces, audit storage, alerting, and public transports as replaceable adapters.
 
 ## 3. Authority
 
-This Draft is subordinate to:
+This Approved design is subordinate to:
 
 - [ARCH-001](../architecture/ARCH-001-runtime-architectural-pattern.md), which
   distinguishes valid decisions from operational errors and forbids discarded
@@ -44,7 +43,7 @@ This Draft is subordinate to:
   [DP-016](DP-016-runtime-activation-replacement-rollback.md), and
   [DP-017](DP-017-runtime-recovery-reconciliation.md).
 
-If this Draft conflicts with those sources, the higher source wins.
+If this Approved design conflicts with those sources, the higher source wins.
 
 ## 4. Scope
 
@@ -431,15 +430,11 @@ authorize production activation.
 
 ## 23. ARCH-004 Section 19 Gates
 
-This Draft proposes the candidate focused contract for section 19(6). Because
-it is non-normative, section 19(6) remains a formal blocker until a separate
-approval/status decision. Sections 19(2)–(5) also remain blocked pending their
-own DP-014–DP-017 status decisions.
-
-The dependency-ordered candidate design set is now documented, but no
-management implementation is Ready merely because this Draft exists. A
-separate task must assess and record formal status decisions for the complete
-set, then select the smallest implementation slice from repository evidence.
+This Approved design closes the focused architecture design gate for ARCH-004
+section 19(6). Approved DP-014 through DP-017 close the predecessor focused
+design gates in sections 19(2)–(5). The dependency-ordered design set is
+approved, but no reporting, management integration, or Production Activation
+exists. DP-013 is Ready only for a bounded isolated implementation slice.
 
 ## 24. Explicit Deferrals
 
@@ -461,8 +456,8 @@ Implementation Status is Planned. The repository contains no report model,
 projector, redaction implementation, delivery adapter, management API,
 durable management store, recovery executor, or production wiring.
 
-This Draft does not satisfy section 19(6) formally, does not promote any
-predecessor DP, and removes no section 19 implementation gate.
+Approval closes the section 19(6) design gate but does not implement or wire
+the contract and does not change the separate status of DP-013.
 
 ## 26. Decision
 

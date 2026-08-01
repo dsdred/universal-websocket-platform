@@ -4,10 +4,10 @@
 
 ## 1. Status
 
-- **Design Status:** Draft
+- **Design Status:** Approved
 - **Implementation Status:** Planned
 
-This proposal is non-normative until approved. It defines a candidate
+This approved design defines a planned
 recovery and reconciliation boundary after loss of Control Service
 process-local Runtime ownership. No recovery package, store, schema, execution
 adapter, API, scanner, or production wiring exists as a result of this
@@ -36,8 +36,8 @@ This proposal refines, without overriding:
 - [DP-016](DP-016-runtime-activation-replacement-rollback.md) for phase order,
   proven release, and process-loss cut points.
 
-Accepted ADRs and Active or Frozen architecture remain authoritative. Draft
-DP-013 through DP-017 do not authorize implementation.
+Accepted ADRs and Active or Frozen architecture remain authoritative. DP-013
+remains Draft; Approved DP-014 through DP-017 do not implement their contracts.
 
 ## 4. Scope
 
@@ -511,20 +511,11 @@ authorize production activation.
 
 ## 26. Formal and Downstream ARCH-004 Section 19 Gates
 
-This Draft proposes the candidate focused contract for section 19(5). Because
-it is non-normative, section 19(5) remains a formal blocker until a separate
-approval/status decision. Sections 19(2), 19(3), and 19(4) also remain blocked
-pending their own DP-014, DP-015, and DP-016 status decisions.
-
-Management implementation remains blocked by:
-
-1. approval/status decisions for candidate sections 19(2)–(5);
-2. operational error reporting and redaction, section 19(6).
-
-Draft [DP-018](DP-018-runtime-operational-error-reporting-redaction.md) now
-proposes the candidate section 19(6) contract and removes no section 19 gate.
-Neither Draft permits isolated recovery or management implementation before
-separate status decisions.
+This Approved design closes the focused architecture design gate for ARCH-004
+section 19(5). Approved DP-014 through DP-016 and DP-018 close the other
+focused design gates in sections 19(2)–(4) and 19(6). The complete approved
+set defines fail-closed recovery ordering but creates no store, execution
+adapter, recovery executor, reporting, integration, or Production Activation.
 
 ## 27. Explicit Deferrals
 
@@ -547,8 +538,8 @@ recovery executor, public management API, or production wiring.
 
 The current in-process Runtime components do not survive Control Service
 process termination and expose no restart-time recovery capability. Creating
-this Draft does not satisfy section 19(5) formally and removes no section 19
-gate.
+approval closes the section 19(5) design gate but does not implement or wire
+the contract.
 
 ## 29. Decision
 

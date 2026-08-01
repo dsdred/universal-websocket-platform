@@ -4,11 +4,10 @@
 
 ## 1. Статус
 
-- **Статус проекта:** Draft
-- **Статус реализации:** Planned
+- **Design Status:** Approved
+- **Implementation Status:** Planned
 
-Это предложение ненормативно до отдельного утверждения. Оно определяет
-candidate boundary восстановления и сверки после потери process-local Runtime
+Этот approved design определяет planned boundary восстановления и сверки после потери process-local Runtime
 ownership Control Service. Этот документ не создаёт recovery package, store,
 schema, execution adapter, API, scanner или production wiring.
 
@@ -36,8 +35,8 @@ authoritative execution evidence, публикует только доказан
 - [DP-016](DP-016-runtime-activation-replacement-rollback.md) для phase order,
   proven release и process-loss cut points.
 
-Accepted ADR и Active/Frozen architecture остаются authoritative. Draft
-DP-013–DP-017 не разрешают implementation.
+Accepted ADR и Active/Frozen architecture остаются authoritative. DP-013
+остаётся Draft; Approved DP-014–DP-017 не реализуют свои contracts.
 
 ## 4. Область действия
 
@@ -499,20 +498,11 @@ production activation.
 
 ## 26. Formal и downstream gates ARCH-004 section 19
 
-Этот Draft предлагает candidate focused contract section 19(5). Поскольку он
-non-normative, section 19(5) остаётся formal blocker до отдельного
-approval/status decision. Sections 19(2), 19(3) и 19(4) также blocked до
-собственных status decisions DP-014, DP-015 и DP-016.
-
-Management implementation остаётся blocked:
-
-1. approval/status decisions candidate sections 19(2)–(5);
-2. operational error reporting и redaction section 19(6).
-
-Draft [DP-018](DP-018-runtime-operational-error-reporting-redaction.md) теперь
-предлагает candidate contract section 19(6) и не снимает ни один gate section
-19. Ни один Draft не разрешает isolated recovery/management implementation до
-отдельных status decisions.
+Этот Approved design закрывает focused architecture design gate ARCH-004
+section 19(5). Approved DP-014–DP-016 и DP-018 закрывают остальные focused
+design gates sections 19(2)–(4) и 19(6). Полный approved set определяет
+fail-closed recovery ordering, но не создаёт store, execution adapter,
+recovery executor, reporting, integration или Production Activation.
 
 ## 27. Явно отложенные вопросы
 
@@ -535,8 +525,8 @@ executor, public management API или production wiring.
 
 Текущие in-process Runtime components не переживают Control Service process
 termination и не предоставляют restart-time recovery capability. Создание
-этого Draft формально не удовлетворяет section 19(5) и не снимает ни один gate
-section 19.
+approval закрывает design gate section 19(5), но не реализует и не подключает
+contract.
 
 ## 29. Решение
 

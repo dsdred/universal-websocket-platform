@@ -18,9 +18,9 @@ This directory contains focused Runtime design documents. A design document expl
 | [DP-010: Runtime Lifecycle Owner Contract](DP-010-runtime-lifecycle-owner-contract.md) | Draft; implemented in isolation |
 | [DP-011: Runtime Launch Pipeline Integration](DP-011-runtime-launch-pipeline-integration.md) | Draft; base implemented in isolation, DP-016/DP-017 continuation and binding gate planned |
 | [DP-012: Runtime Source Composition](DP-012-runtime-source-composition.md) | Draft; implemented in isolation |
-| [DP-013: Runtime Management Routing](DP-013-runtime-management-routing.md) | Draft; planned |
-| [DP-014: Runtime Operational Identity Persistence](DP-014-runtime-operational-identity-persistence.md) | Draft; planned |
-| [DP-015: Runtime Management Command Idempotency](DP-015-runtime-management-command-idempotency.md) | Draft; planned |
-| [DP-016: Runtime Activation, Replacement, and Rollback](DP-016-runtime-activation-replacement-rollback.md) | Draft; planned |
-| [DP-017: Runtime Recovery and Reconciliation](DP-017-runtime-recovery-reconciliation.md) | Draft; planned |
-| [DP-018: Runtime Operational Error Reporting and Redaction](DP-018-runtime-operational-error-reporting-redaction.md) | Draft; planned |
+| [DP-013: Runtime Management Routing](DP-013-runtime-management-routing.md) | Draft; planned; ready for bounded isolated implementation |
+| [DP-014: Runtime Operational Identity Persistence](DP-014-runtime-operational-identity-persistence.md) | Approved; planned |
+| [DP-015: Runtime Management Command Idempotency](DP-015-runtime-management-command-idempotency.md) | Approved; planned |
+| [DP-016: Runtime Activation, Replacement, and Rollback](DP-016-runtime-activation-replacement-rollback.md) | Approved; planned |
+| [DP-017: Runtime Recovery and Reconciliation](DP-017-runtime-recovery-reconciliation.md) | Approved; planned |
+| [DP-018: Runtime Operational Error Reporting and Redaction](DP-018-runtime-operational-error-reporting-redaction.md) | Approved; planned |
