@@ -219,13 +219,29 @@ old attempt tracked parent может claim только свой declared linke
 Start-phase claim: Stop либо terminalizes parent до появления phase, либо phase
 выигрывает. После победы phase ровно один distinct Stop может claim exception
 tracked-Start. До claim Owner он записывается pending, а его permit не может
-invoke Stop DP-013; continuation Start-claim DP-011/DP-013 только сигнализирует
+invoke Stop DP-013; continuation Start-claim DP-011/DP-013 сначала сигнализирует
 Owner claim original claiming path Stop. Тот же blocked call stack сохраняет
 non-transferable permit, проверяет собственную cancellation, выполняет свой один
 invocation Stop DP-013, публикует outcome и сигнализирует continuation.
-Continuation никогда не получает и не вызывает permit. После его return
-`Continue` то же exception делегирует Stop прямо already-claimed attempt. Другой
-Stop или lifecycle command получает non-mutating in-progress conflict.
+Continuation никогда не получает и не вызывает этот permit.
+
+Если pending Stop не остаётся, continuation координирует exact
+execution-generation binding DP-014. Та же per-Instance admission boundary затем
+атомарно упорядочивает final Stop claim против `Continue` для confirmed binding
+или `BindingFailed` только для coherently proven absence у exact still-active
+attempt/expected revision. Different generation, stale/conflicting/inactive
+facts, unavailable state или unknown перечитывается и converge к exact terminal
+outcome либо остаётся `Blocked`; он никогда не получает permit или BindingFailed.
+Выигравший Stop converge original
+claimant; выигравший `Continue` разрешает preparation, после чего later Stop
+может claim ordinary tracked-Start exception. `BindingFailed` не terminalize
+command напрямую: Flow
+converge exact token через Owner.Start с `FailedPreparation`, а command/phase
+terminalizes только из exact Owner outcome после confirmed DP-014 terminal
+publication. Stop, выигравший mutex Owner, вместо этого даёт
+stopped-before-running outcome. Indeterminate binding, Owner convergence или
+terminal publication даёт `Blocked` и unresolved. Другой Stop/lifecycle command
+получает non-mutating in-progress conflict.
 
 Pending claimant ждёт ровно один process-local signal: `OwnerClaimed` или
 `StartNoClaim`, когда linked Start path definitive возвращается до claim Owner.
@@ -235,9 +251,11 @@ Pending claimant ждёт ровно один process-local signal: `OwnerClaime
 Claimed primitive, parent или phase record без exact live permit является
 **unresolved**. Unresolved parent или любая его phase является durable barrier
 для каждого нового state-changing command и дальнейшей phase до тех пор, пока
-future recovery не сделает linked command set Terminal. Observe остаётся read-
-only. Ни один tracked exception не действует после restart process, потери
-claiming call stack или indeterminate claim/terminal publication.
+утверждённый recovery contract не сделает linked command set Terminal. Draft
+[DP-017](DP-017-runtime-recovery-reconciliation.md) предлагает fail-closed
+resolution exact facts, но не разрешает его. Observe остаётся read-only. Ни
+один tracked exception не действует после restart process, потери claiming
+call stack или indeterminate claim/terminal publication.
 
 ## 14. Lifecycle delegation
 
@@ -283,9 +301,9 @@ Promise atomic commit между текущим call DP-013 и command record н
 отсутствует. Если lifecycle mutation могла произойти, но terminal command
 publication отсутствует или indeterminate, record остаётся Claimed. После
 исчезновения execution permit он является unresolved и закрывает per-Instance
-barrier. Ни retry, ни другой key не могут делегировать lifecycle work. Future
-recovery contract section 19(5) должен inspect exact command и lifecycle facts
-и правдиво разрешить barrier.
+barrier. Ни retry, ни другой key не могут делегировать lifecycle work. DP-017
+предлагает candidate contract section 19(5) для inspection exact command,
+lifecycle и execution-evidence facts и truthful barrier resolution.
 
 ## 16. Состояния command
 
@@ -370,7 +388,8 @@ cancellation может прервать только wait этого caller, п
 Для pending Stop DP-016 cancellation до signal Owner claim проверяется и
 terminally публикуется original claiming path. Если она definitive выигрывает
 до delegation, permit consumes без mutation DP-013, а Start continuation может
-вернуть `Continue`. Cancellation, видимая только после signal Owner claim,
+перейти к execution binding и final gate. Cancellation, видимая только после
+signal Owner claim,
 управляется обычным gate Stop DP-010. Если pending caller возвращается, теряет
 permit, не может доказать no mutation или опубликовать definitive outcome, он
 сигнализирует `Blocked`; Flow не начинает Load, а linked set остаётся unresolved.
@@ -468,8 +487,11 @@ Management implementation остаётся заблокированной:
 
 Draft [DP-016](DP-016-runtime-activation-replacement-rollback.md) теперь
 предлагает candidate contract section 19(4). Он не снимает gates sections
-19(2), 19(3) или 19(4). По dependency ordering следующим может проектироваться
-section 19(5). Ни один Draft не разрешает isolated management implementation.
+19(2), 19(3) или 19(4). Draft
+[DP-017](DP-017-runtime-recovery-reconciliation.md) теперь предлагает candidate
+contract section 19(5) и не снимает ни один gate sections 19(2)–(5). По
+dependency ordering следующим может проектироваться section 19(6). Ни один
+Draft не разрешает isolated management implementation.
 
 ## 26. Явно отложено
 

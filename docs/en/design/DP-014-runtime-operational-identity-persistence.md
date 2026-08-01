@@ -117,6 +117,9 @@ The aggregate preserves only the facts required by ARCH-004:
 - complete append-only Launch Attempt history;
 - for each attempt, immutable identity and exact Published
   ConfigurationVersion pin;
+- for a claimed attempt that may enter external preparation, the optional
+  immutable opaque execution-generation binding required by candidate
+  [DP-017](DP-017-runtime-recovery-reconciliation.md);
 - committed phase and terminal outcome facts required to distinguish claimed,
   running, stop-claimed, stopped, and failed attempts.
 
@@ -183,6 +186,57 @@ No Loader, Builder, Launcher, or Host work begins from a claim that was not
 confirmed committed. A retry or replacement creates a distinct candidate
 attempt identity only after the outcome of any preceding claim is known.
 
+### Execution Generation Binding
+
+The Control Service composition allocates one opaque execution generation for
+its process-containment boundary. Persistence does not allocate it or infer it
+from PID, time, address, or caller identity.
+
+After launch claim and before any Load, Build, Launcher, or Host work, the
+original tracked Start path through the planned DP-011 continuation may
+conditionally bind the exact active attempt to that generation. Publication:
+
+- validates aggregate identity and exact expected revision;
+- validates the exact active non-terminal attempt and its immutable version pin;
+- validates that no different generation is already bound;
+- stores the immutable attempt-to-generation correlation;
+- advances aggregate revision once.
+
+An exact already-present same-generation binding is a zero-mutation satisfied
+observation. Any conditional rejection performs zero mutation and permits no
+external preparation, but rejection alone does not prove binding absence. A
+different generation, stale revision, inactive/terminal attempt, conflicting
+fact, or unavailable store requires a coherent exact re-read. An exact existing
+terminal outcome is converged; a different binding or unresolved conflict is
+`Blocked` and must never enter the resource-free failure path.
+
+Only a coherent read proving no binding for the exact still-active attempt at
+the expected revision permits `BindingFailed`. The attempt claim itself remains
+a durable lifecycle mutation. The same Start path must then converge the
+process-local attempt through existing Owner.Start with the authentic token and
+`FailedPreparation(bindingFailure)`. Owner's mutex orders that failure against
+concurrent Stop. Only the exact returned Owner outcome may request conditional
+durable terminal publication: preparation failure publishes resource-free
+Failed; a Stop-winning outcome publishes the exact Owner-confirmed stopped-
+before-running fact. Command/phase terminalization follows only after that
+durable publication is confirmed.
+
+After an indeterminate binding publication, the path coherently inspects the
+exact aggregate, attempt, candidate generation, and expected/new revision.
+Exact same-generation presence confirms binding; coherently proven absence for
+the exact still-active attempt/expected revision permits the Owner-owned
+failure-convergence path, not direct persistence mutation, a new generation, or
+blind binding retry; different generation, stale/conflicting/inactive facts,
+unavailable state, or unknown remains unresolved unless an exact existing
+terminal outcome can be converged. A concurrent Stop
+is ordered first by the DP-011/DP-016 final continuation gate and then, if the
+binding-failure path wins, by Owner's existing mutex against failure acceptance.
+An absent or indeterminate Owner/durable terminal outcome remains unresolved.
+
+The binding is retained with attempt history after terminalization. It proves
+correlation only and never proves liveness, readiness, preparation, ownership,
+or graceful shutdown.
+
 ## 11. Running Publication
 
 Only the Runtime Lifecycle Owner may request Running publication after the
@@ -243,10 +297,11 @@ Persisted actual `Running`, `Stopping`, `Stopped`, or `Failed` is historical
 operational knowledge. After loss of the Owner or Control Service process it
 is not proof of present Host, process, socket, or resource liveness.
 
-Only a future approved recovery and reconciliation contract may compare
-durable facts with external execution evidence and publish a reconciled
-state. This design does not infer liveness from stored PID, address, time, or
-an earlier Running fact.
+Only an approved recovery and reconciliation contract may compare durable
+facts with external execution evidence and publish a reconciled state. Draft
+[DP-017](DP-017-runtime-recovery-reconciliation.md) proposes that candidate
+contract but does not authorize it. This design does not infer liveness from
+stored PID, address, time, or an earlier Running fact.
 
 ## 14. Atomicity
 
@@ -386,6 +441,7 @@ CreateRuntimeInstance
 ReadRuntimeInstance
 ReadLaunchAttemptHistory
 ConditionalClaimLaunchAttempt
+ConditionalBindExecutionGeneration
 ConditionalPublishRunning
 ConditionalClaimStop
 ConditionalPublishTerminal
@@ -407,17 +463,21 @@ A future implementation must prove at minimum:
 3. atomic single-active-attempt claim with exact version pin;
 4. child-key uniqueness and non-reuse within complete Instance history;
 5. append-only history across start failure, stop, and later attempts;
-6. exact conditional Running, Stop, and terminal publications;
-7. stale and mismatched operations perform zero mutation;
-8. concurrent same-Instance claims produce at most one accepted mutation;
-9. different Instances can progress independently;
-10. coherent reads correspond to one committed revision;
-11. definitive failure publishes nothing;
-12. indeterminate outcomes are resolved by exact identity/revision inspection,
+6. exact immutable execution-generation binding after claim and before Load;
+7. binding mismatch, stale revision, or indeterminate inspection permits no
+   external preparation;
+8. exact conditional Running, Stop, and terminal publications;
+9. stale and mismatched operations perform zero mutation;
+10. concurrent same-Instance claims produce at most one accepted mutation;
+11. different Instances can progress independently;
+12. coherent reads correspond to one committed revision;
+13. definitive failure publishes nothing;
+14. indeterminate outcomes are resolved by exact identity/revision inspection,
     without blind new-ID retry;
-13. persisted actual state is never used as liveness proof after Owner loss;
-14. redaction and domain isolation prevent cross-scope disclosure;
-15. no second lifecycle owner, Host ownership, schema promise, or hidden
+15. persisted actual state or execution binding is never used as liveness proof
+    after Owner loss;
+16. redaction and domain isolation prevent cross-scope disclosure;
+17. no second lifecycle owner, Host ownership, schema promise, or hidden
     service locator appears.
 
 Proofs must include technically available concurrency, race, failure-injection,
@@ -446,8 +506,10 @@ candidate section 19(3) contract, but it neither removes the section 19(2) or
 19(3) gates nor activates implementation. Draft
 [DP-016](DP-016-runtime-activation-replacement-rollback.md) now proposes the
 candidate section 19(4) contract, but it does not remove the section 19(2),
-19(3), or 19(4) gates. Section 19(5) may be designed next by dependency
-ordering.
+19(3), or 19(4) gates. Draft
+[DP-017](DP-017-runtime-recovery-reconciliation.md) now proposes the candidate
+section 19(5) contract, but it does not remove any section 19(2)–(5) gate. By
+dependency ordering, section 19(6) may be designed next.
 
 ## 24. Explicit Deferrals
 
@@ -486,6 +548,11 @@ Each Launch Attempt is an owned child keyed by
 `(RuntimeInstanceID, LaunchAttemptID)`, pins exactly one Published
 ConfigurationVersion, and never reuses its child identity within the Instance
 history. RuntimeInstanceID is unique within the operational management domain.
+
+Before external preparation, a claimed attempt may conditionally receive one
+immutable opaque execution-generation binding through the planned DP-011/
+DP-017 gate. The binding is retained as correlation history and never proves
+liveness or shutdown.
 
 The Runtime Lifecycle Owner remains the sole lifecycle and live Host owner.
 Atomic persistence records truthful facts but does not prove liveness after

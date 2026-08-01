@@ -33,9 +33,11 @@ This proposal refines, without overriding:
   command identity, execution permits, replay, and unresolved barriers.
 - [DP-011](DP-011-runtime-launch-pipeline-integration.md) for the Owner-owned
   Start claim and the planned private claim-continuation extension.
+- [DP-017](DP-017-runtime-recovery-reconciliation.md) for the planned
+  execution-generation binding and process-loss reconciliation boundary.
 
 Accepted ADRs and Active or Frozen architecture remain authoritative. Draft
-DP-013 through DP-016 do not authorize implementation.
+DP-013 through DP-017 do not authorize implementation.
 
 ## 4. Scope
 
@@ -125,8 +127,9 @@ pin, and whether the current process owns the corresponding live operation.
 
 A persisted Running or Stopping fact after loss of the Owner is not liveness
 proof. If live ownership cannot be established, no activation, replacement, or
-rollback proceeds; DP-015 unresolved barrier and future section 19(5) recovery
-remain authoritative.
+rollback proceeds; the DP-015 unresolved barrier remains authoritative, and
+Draft [DP-017](DP-017-runtime-recovery-reconciliation.md) proposes the candidate
+section 19(5) recovery contract.
 
 ## 10. Initial Activation
 
@@ -138,6 +141,7 @@ authorize exact target
     -> claim durable command and execution permit
     -> revalidate aggregate identity and revision
     -> claim one new Launch Attempt with exact target pin
+    -> confirm the DP-017 execution-generation binding
     -> Load -> Build -> Start through the existing Flow and Owner
     -> publish Running only after Host readiness
     -> publish replay-equivalent command outcome
@@ -176,6 +180,7 @@ claim exact parent replacement command and orchestration permit
     -> claim linked Start-target phase and its one DP-013 Start permit
     -> invoke DP-013 Start; Owner claims the exact new Launch Attempt
     -> resolve pending Stop at the private Start-claim continuation before Load
+    -> confirm the DP-017 execution-generation binding before Load
     -> publish Start-phase and parent outcomes truthfully
 ```
 
@@ -234,11 +239,26 @@ The planned private DP-011/DP-013 Start-claim continuation runs synchronously
 after Owner claim and before Load. If a pending Stop exists, the continuation
 signals the original blocked Stop claimant. That call stack retains its permit,
 checks cancellation, alone invokes exact DP-013 Stop, publishes its outcome,
-and signals `StopConverged`, `Continue`, or `Blocked` back. The continuation
-never receives the permit or caller context. If no Stop exists it returns
-`Continue`; a later Stop reaches the already-claimed attempt normally. No
-admission or Owner lock is held across either wait or Stop convergence. The
-current isolated Flow does not implement this continuation, so DP-016 remains
+and signals the result back. The continuation never receives the Stop permit or
+caller context.
+
+If no pending Stop remains, the continuation conditionally publishes the exact
+DP-014 execution-generation binding. Exact same-generation presence proceeds.
+Only absence proven by a coherent exact read for the exact still-active attempt
+at the expected revision enters a final Stop-ordering gate and may return
+`BindingFailed` without terminal publication. A different generation, stale
+revision, conflicting or inactive state, unavailable store, or unknown result
+requires an exact re-read and then either convergence to an exact terminal
+outcome or `Blocked`; none of those cases becomes `BindingFailed`. Flow submits
+that failure through existing
+Owner.Start with the authentic preparation token. Owner's mutex orders failure
+acceptance against a later Stop, and only the exact returned outcome may drive
+DP-014 and command/phase terminal publication. After confirmed
+binding, a final per-Instance gate orders a new Stop claim against `Continue`.
+Stop winning converges before Load; `Continue` winning releases Flow, and a
+later Stop reaches the claimed attempt normally. No admission or Owner lock is
+held across persistence, wait, or Stop convergence. The current isolated Flow
+implements neither this continuation nor the binding gate, so DP-016 remains
 Planned.
 
 ## 16. Explicit Rollback
@@ -277,9 +297,12 @@ The required semantic linearization points are:
    claim;
 5. one DP-013 invocation by the newly issued Start-phase permit, followed by
    Owner's exact new Launch Attempt claim/version pin;
-6. Start-claim continuation ordering pending Stop before external preparation;
-7. Running or terminal failure publication;
-8. linked phase and replay-equivalent parent terminal publication.
+6. DP-014 conditional binding of that exact attempt to the composition-owned
+   execution generation, including exact inspection after indeterminate;
+7. final Start-claim continuation gate ordering pending Stop against release of
+   confirmed binding to external preparation;
+8. Running or terminal failure publication;
+9. linked phase and replay-equivalent parent terminal publication.
 
 Each DP-014 publication uses exact expected aggregate revision. Long Load,
 Build, Start, Stop, or wait work never executes under a command-admission or
@@ -297,9 +320,16 @@ aggregate lock.
 | proven release, Start-phase claim definitive failure | aggregate remains Stopped with old attempt historical | resurrect old Host |
 | Start-phase claim indeterminate | linked command set remains unresolved | Start, Stop exception, or another claim |
 | phase claimed, DP-013 Start cancelled before Owner claim | parent and phase terminalize without new attempt | fabricate Starting or Running |
-| pending Stop claimant cancellation before delegation | Stop terminal no-mutation; continuation may Continue | transfer or invoke its permit |
+| pending Stop claimant cancellation before delegation | Stop terminal no-mutation; continuation may proceed to binding | transfer or invoke its permit |
 | pending Stop caller return or permit loss | linked command set remains unresolved before Load | second permit or preparation work |
-| Owner claim, continuation indeterminate | linked command set remains unresolved before Load | preparation work or second Stop permit |
+| Owner claim, coherent exact binding absence | final gate may return BindingFailed; Flow converges exact token through Owner.Start | continuation publishes lifecycle/command facts or begins Load |
+| different generation, stale/conflicting/inactive, unavailable, or unknown binding facts | exact re-read; converge to an exact terminal outcome or Blocked | BindingFailed or resource-free inference |
+| Owner claim, binding or inspection indeterminate | linked command set remains unresolved before Load | preparation work, new generation, or blind retry |
+| BindingFailed, Owner failure acceptance wins | Owner returns preparation failure; then persist Failed and command/phase outcome | publish before Owner outcome |
+| BindingFailed, later Stop wins Owner mutex | Owner returns stopped-before-running; persist that exact outcome | overwrite with binding failure |
+| binding confirmed, final Stop gate wins | original Stop claimant converges exact attempt before Load | return Continue or transfer Stop permit |
+| binding confirmed, final release gate wins | Flow may begin Load; later Stop uses ordinary tracked route | bypass exact attempt or second permit |
+| Owner/durable terminal publication indeterminate | linked command set remains unresolved before Load | terminal command or preparation work |
 | new startup failure | new attempt becomes historical failure when resources are released | automatic rollback or Running |
 | Running/terminal publication indeterminate | exact command remains unresolved | another replacement or fabricated success |
 | command terminal publication indeterminate | inspect exact command and aggregate facts | re-execute with another key |
@@ -328,8 +358,8 @@ parent terminalize without an attempt and the Stop terminalizes satisfied; its
 permit never invokes DP-013.
 
 Pending Stop caller cancellation before the Owner-claim signal is published by
-that original claimant as terminal no-mutation and lets the continuation return
-`Continue`. After the signal, ordinary DP-010 cancellation ordering applies. A
+that original claimant as terminal no-mutation and lets the continuation proceed
+to binding and its final gate. After the signal, ordinary DP-010 cancellation ordering applies. A
 caller return, permit loss, unproven convergence, or indeterminate result sends
 `Blocked`; Flow starts no Load and the linked command set remains unresolved.
 If linked Start definitively returns before Owner claim, its path signals
@@ -358,8 +388,9 @@ Any loss of an exact parent or phase permit, Control Service termination, or
 indeterminate parent/phase/attempt publication leaves the linked command set
 unresolved. No new
 activation, replacement, or rollback may pass admission for that Runtime
-Instance until coherent inspection and future section 19(5) recovery resolve
-the parent, every phase, and live-resource truth.
+Instance until coherent inspection and an approved section 19(5) recovery
+contract resolve the parent, every phase, and live-resource truth. DP-017
+proposes fail-closed exact-fact reconciliation without lifecycle replay.
 
 This design does not hydrate an Owner, inspect a process, probe a socket,
 reconcile persisted Running, or choose whether an orphan operation completed.
@@ -410,8 +441,10 @@ A future implementation must prove at minimum:
 14. same-target rollback/activation is zero-mutation satisfied;
 15. cancellation at every phase preserves truthful state and ownership;
 16. indeterminate outcomes close DP-015 admission until recovery;
-17. different Instances progress independently;
-18. EN/RU contract, failure matrix, gates, and planned status remain aligned.
+17. an exact DP-017 execution-generation binding commits after attempt claim
+    and before Load, or preparation does not begin;
+18. different Instances progress independently;
+19. EN/RU contract, failure matrix, gates, and planned status remain aligned.
 
 Proofs include technically available concurrency, race, failure injection, and
 storage-client-restart scenarios. They do not authorize production activation.
@@ -430,8 +463,10 @@ Management implementation remains blocked by:
    19(5);
 3. operational error reporting and redaction, section 19(6).
 
-By dependency ordering, section 19(5) may be designed next. This Draft neither
-activates that work nor permits isolated management implementation.
+Draft [DP-017](DP-017-runtime-recovery-reconciliation.md) now proposes the
+candidate section 19(5) contract and removes no section 19(2)–(5) gate. By
+dependency ordering, section 19(6) may be designed next. Neither Draft permits
+isolated management implementation.
 
 ## 27. Explicit Deferrals
 

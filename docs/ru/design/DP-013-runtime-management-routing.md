@@ -343,31 +343,47 @@ Exact requested version сохраняется. Directory не вызывает 
 
 Возвращённые `StartOutcome` и error возвращаются без изменения.
 
-Future implementation DP-016 сохраняет этот exported surface
+Future implementation DP-016/DP-017 сохраняет exported surface
 `Directory.Start` без изменения, но требует один private management-only seam
-Start-claim continuation в stored Flow. После claim exact attempt Owner и до
-начала Load seam атомарно разрешает Stop, уже admitted против linked Start
-phase:
+Start-claim continuation в stored Flow. Exact management composition снабжает
+continuation borrowed capabilities coordination pending Stop DP-015 и
+conditional execution binding DP-014, а также opaque Control Service execution
+generation. Directory не allocate generation, не обращается прямо к
+persistence и не exposes capabilities.
 
-- отсутствие pending Stop возвращает `Continue` и разрешает Flow продолжение;
-- pending Stop заставляет continuation сигнализировать Owner claim original
-  blocked call stack Stop; только тот claimant вызывает exact
-  `scope.owner.Stop` этого binding, публикует result и возвращает
-  `StopConverged`;
-- cancellation claimant, definitive наблюдаемая до delegation, возвращает
-  `Continue` с terminal no-mutation outcome Stop;
-- permit loss, return без definitive outcome, unproven convergence или
-  indeterminate rendezvous возвращает `Blocked`, не разрешает preparation work
-  и закрывает linked barrier DP-015.
+После claim exact attempt Owner и до Load Flow seam:
 
-Command-admission decision происходит до wait обоих call stacks. Continuation
-не несёт permit или caller context, и admission/Owner lock не удерживается во
-время signal, result wait или convergence Owner. Stop после `Continue`
-использует обычный route section 17 и достигает already-claimed attempt. Binding
-DP-013 передаёт internal-package-callable `StartClaimContinuation` при
-construction Flow; seam не добавляет exported operation Directory/Replace/
-Rollback, не передаёт permit или `LaunchPreparation` и является Planned, а не
-implemented.
+1. сначала resolves already admitted pending Stop;
+2. иначе conditionally bind exact attempt/expected aggregate revision к exact
+   generation через DP-014;
+3. после confirmed binding атомарно упорядочивает final Stop claim и release
+   `Continue` в Flow.
+
+Pending Stop сигнализирует Owner claim original blocked Stop call stack; только
+тот claimant вызывает exact `scope.owner.Stop` этого binding, публикует result
+и возвращает `StopConverged`. Confirmed binding с final release возвращает
+`Continue`. Только coherently proven absence binding для exact still-active
+attempt на expected revision входит в тот же final gate против pending Stop и
+может вернуть `BindingFailed` без publication lifecycle/command fact. Different
+generation, stale/conflicting/inactive facts, unavailable state или unknown
+перечитывается и converge к exact existing terminal outcome либо возвращает
+`Blocked`; это никогда не становится BindingFailed. Flow затем с authentic
+preparation token вызывает existing Owner.Start с
+`FailedPreparation`; mutex Owner упорядочивает failure и later Stop. Только
+exact returned Owner outcome и confirmed terminal publication DP-014 разрешают
+terminalization command/phase. Permit loss, unproven Stop convergence,
+indeterminate binding/terminal publication или unknown exact inspection
+возвращает `Blocked`, не разрешает preparation work и закрывает linked barrier
+DP-015.
+
+Command-admission decisions происходят до wait обоих call stacks. Continuation
+не несёт command/recovery permit или caller context, и admission/Owner lock не
+удерживается во время persistence, signal, result wait или convergence Owner.
+Stop, проигравший final release gate, использует обычный route section 17 и
+достигает already-claimed attempt. Binding DP-013 передаёт internal-package-
+callable `StartClaimContinuation` при construction Flow; seam не добавляет
+exported operation Directory/Replace/Rollback, не передаёт mutable
+`LaunchPreparation` и является Planned, а не implemented.
 
 Если linked path `Directory.Start` возвращает definitive cancellation/error до
 claim Owner, он сигнализирует `StartNoClaim` original pending Stop call stack.
@@ -661,11 +677,11 @@ persistence adapter или activation path не появляются в резу
 
 Implementation Readiness — Blocked. Ни isolated package, ни local proof code
 не разрешены, пока не существуют все обязательные focused designs section 26.
-DP-015 и DP-016 являются candidate designs sections 19(3) и 19(4), а не
-implementation tasks; approval gates sections 19(2), 19(3) и 19(4)
-сохраняются. По dependency ordering следующая design-рекомендация может
-определить recovery и reconciliation после termination Control Service
-section 19(5).
+DP-015, DP-016 и [DP-017](DP-017-runtime-recovery-reconciliation.md) являются
+candidate designs sections 19(3), 19(4) и 19(5), а не implementation tasks;
+approval gates sections 19(2)–(5) сохраняются. По dependency ordering следующая
+design-рекомендация может определить operational error reporting и redaction
+section 19(6).
 
 ## 30. Решение
 

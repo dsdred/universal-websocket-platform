@@ -14,7 +14,8 @@
   Bootstrap, stateless Runtime Launcher и DP-010 Runtime Lifecycle Owner
   реализованы изолированно; Draft DP-011 и `internal/runtimelaunchflow`
   реализуют base integration contract изолированно, private Start-claim
-  continuation DP-016 запланирован и отсутствует; Draft DP-012 и
+  continuation и execution-binding/load gate DP-016/DP-017 запланированы и
+  отсутствуют; Draft DP-012 и
   `internal/configurationloadsource.MemorySource` реализуют concrete Source
   adapter изолированно; Completed Design-only TASK-015 и Draft/Planned DP-013
   определяют management routing contract; Completed Design-only TASK-016 и
@@ -23,16 +24,18 @@
   non-normative Draft/Planned DP-015 предлагают durable management command
   idempotency candidate contract; Completed Design-only TASK-018 и
   non-normative Draft/Planned DP-016 предлагают activation, replacement и
-  explicit rollback ordering candidate contract. Implementation, HTTP,
-  persistence/command package/schema, recovery, management wiring и Production
+  explicit rollback ordering candidate contract; Completed Design-only TASK-019
+  и non-normative Draft/Planned DP-017 предлагают fail-closed recovery и
+  reconciliation candidate contract. Implementation, HTTP,
+  persistence/command/recovery package/schema, management wiring и Production
   Activation отсутствуют**
 - Последняя завершённая development task: **TASK-014 — Runtime Source
   Implementation; Completed — Coordinator Accepted**
 - Последняя завершённая operational task: **TASK-012 — Engineering Process
   Hardening; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
-- Последняя завершённая architecture task: **TASK-018 — Runtime Activation,
-  Replacement, and Rollback Design; Completed — Coordinator Accepted**
+- Последняя завершённая architecture task: **TASK-019 — Runtime Recovery and
+  Reconciliation Design; Completed — Coordinator Accepted**
 - Текущая architecture task: **отсутствует**
 - Текущая development task: **отсутствует**
 - Trusted baseline TASK-009: **clean synchronized
@@ -196,7 +199,25 @@
   §19(2)–(4), downstream §19(5)–(6), implementation и Production Activation
   остаются открытыми**
 - Следующая рекомендация после TASK-018: **предварительно §19(5) recovery и
-  reconciliation после termination Control Service; не активирована**
+  reconciliation после termination Control Service; активирована как
+  Design-only TASK-019**
+- TASK-018 publication: **task commit `64e1fe7` опубликован через PR #19 и
+  merged в clean `main` commit `d083957`; task branch удалена после exact OID
+  verification**
+- TASK-019: **Completed — Coordinator Accepted; зеркальный non-normative
+  Draft/Planned DP-017
+  предлагает candidate contract ARCH-004 §19(5): exact fail-closed assessment,
+  durable recovery claim, DP-014-owned attempt/generation binding до Load,
+  attempt/generation-bound execution evidence, phase-sensitive reconciliation
+  без lifecycle replay и reopening admission только для coherent fully terminal
+  set. Resource absence даёт Failed/interrupted; Stopped требует exact Host
+  shutdown-completion proof. Review rework B-001–B-005 и residual wording
+  завершён; Final Confirmation Reviewer Approved 0/0; full Go regression, vet,
+  parity, 247/0 links и diff checks PASS; Scope Audit accepted 21/0/0;
+  PROCESS-002 Synchronized; на момент Coordinator closure commit и publication
+  не выполнялись; последующая commit permission фиксируется task record**
+- Следующая рекомендация после TASK-019: **operational error reporting и
+  redaction ARCH-004 §19(6); candidate не активирован**
 - Stage 2 task-before-work ordering выполнен для TASK-003, TASK-004, TASK-005, TASK-006 и TASK-007: task record создан первым content change, а task index обновлён только после initial gate
 - Publication history: **TASK-005 commit `99e0d3d`, TASK-006 commit `fd0f80a` и TASK-007 commit `2e6d221` merged через PR #6/#7/#8; transient pre-commit/Publisher blockers не являются durable project-state instructions**
 - Design Status DP-009 остаётся **Draft**; Bootstrap и Runtime Launcher
@@ -206,8 +227,8 @@
   **Implemented in isolation**; status не утверждает production wiring,
   persistence или management capability
 - Design Status DP-011 остаётся **Draft**, Implementation Status —
-  **Implemented in isolation для base contract; private DP-016 Start-claim
-  continuation Planned**; Flow package не утверждает concrete Source
+  **Implemented in isolation для base contract; private DP-016/DP-017
+  Start-claim continuation и execution-binding/load gate Planned**; Flow package не утверждает concrete Source
   composition, management routing или Production Activation
 - Design Status DP-012 — **Draft**, Implementation Status — **Implemented in
   isolation**; repository-backed Source adapter реализован, production
@@ -225,6 +246,9 @@
 - Design Status DP-016 — **Draft**, Implementation Status — **Planned**;
   activation/replacement/rollback ordering определён только на design level;
   implementation, API, recovery и production wiring отсутствуют
+- Design Status DP-017 — **Draft**, Implementation Status — **Planned**;
+  recovery/reconciliation определены только на design level; recovery store,
+  execution-evidence adapter, executor, API и production wiring отсутствуют
 - Design Status DP-008 остаётся **Draft**, Implementation Status — **Implemented in isolation**
 - Содержимое репозитория: документация, спецификации, инженерные соглашения, исполняемый Control Service и изолированные Runtime-компоненты с тестами
 

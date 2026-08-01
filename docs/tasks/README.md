@@ -23,6 +23,7 @@ operational документы ведутся на русском языке и 
 - [TASK-016 — Runtime Operational Identity Persistence Design](TASK-016-RUNTIME-OPERATIONAL-IDENTITY-PERSISTENCE-DESIGN.md)
 - [TASK-017 — Runtime Management Command Idempotency Design](TASK-017-RUNTIME-MANAGEMENT-COMMAND-IDEMPOTENCY-DESIGN.md)
 - [TASK-018 — Runtime Activation, Replacement, and Rollback Design](TASK-018-RUNTIME-ACTIVATION-REPLACEMENT-ROLLBACK-DESIGN.md)
+- [TASK-019 — Runtime Recovery and Reconciliation Design](TASK-019-RUNTIME-RECOVERY-RECONCILIATION-DESIGN.md)
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

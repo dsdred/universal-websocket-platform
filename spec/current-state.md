@@ -9,7 +9,8 @@ Runtime Lifecycle Owner DP-010 реализованы изолированно. 
 Loader-to-Builder-to-Launcher и persistent operational identity entities не
 реализованы. Draft DP-011 и package `internal/runtimelaunchflow`
 реализуют base integration contract этого pipeline изолированно; private
-Start-claim continuation DP-016 запланирован и отсутствует. Draft DP-012 и
+Start-claim continuation и execution-binding/load gate DP-016/DP-017
+запланированы и отсутствуют. Draft DP-012 и
 package `internal/configurationloadsource` реализуют concrete Source adapter
 изолированно. Completed Design-only TASK-015 и Draft/Planned DP-013 определяют
 management routing contract. Completed Design-only TASK-016 и non-normative
@@ -17,9 +18,11 @@ Draft/Planned DP-014 предлагают durable operational identity persisten
 candidate contract. Completed Design-only TASK-017 и non-normative Draft/Planned
 DP-015 предлагают durable management command idempotency candidate contract.
 Completed Design-only TASK-018 и non-normative Draft/Planned DP-016 предлагают
-activation, replacement и explicit rollback ordering candidate contract;
-package, schema, HTTP API, persistence/idempotency/lifecycle implementation,
-recovery, management wiring и Control Service activation отсутствуют.
+activation, replacement и explicit rollback ordering candidate contract.
+Completed Design-only TASK-019 и non-normative Draft/Planned DP-017 предлагают
+fail-closed recovery и reconciliation candidate contract; package, schema,
+HTTP API, persistence/idempotency/lifecycle/recovery implementation, management
+wiring и Control Service activation отсутствуют.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
@@ -31,8 +34,8 @@ Hardening; `Completed — Coordinator Accepted`.
 
 **Текущая operational task:** отсутствует.
 
-**Последняя завершённая architecture task:** TASK-018 — Runtime Activation,
-Replacement, and Rollback Design; `Completed — Coordinator Accepted`.
+**Последняя завершённая architecture task:** TASK-019 — Runtime Recovery and
+Reconciliation Design; `Completed — Coordinator Accepted`.
 
 **Текущая architecture task:** отсутствует.
 
@@ -319,8 +322,29 @@ Formal gates §19(2)–(4), downstream §19(5)–(6), implementation и Producti
 Activation остаются открытыми.
 
 **Следующая рекомендация после TASK-018:** предварительно focused recovery и
-reconciliation после termination Control Service ARCH-004 §19(5); не
-активирована.
+reconciliation после termination Control Service ARCH-004 §19(5); активирована
+как Design-only TASK-019.
+
+**Publication TASK-018:** task commit `64e1fe7` опубликован через PR #19 и
+merged в clean `main` commit `d083957`; task branch удалена после exact OID
+verification.
+
+**TASK-019:** `Completed — Coordinator Accepted`. Зеркальный non-normative Draft DP-017 с
+Implementation Status `Planned` предлагает candidate contract ARCH-004 §19(5):
+exact fail-closed restart assessment, один durable recovery claim,
+DP-014-owned attempt/generation binding до Load, attempt/generation-bound
+execution evidence, phase-sensitive reconciliation primitive/linked commands
+без lifecycle replay и reopening admission только после coherent fully terminal
+verification. Resource absence даёт Failed/interrupted; Stopped требует exact
+Host shutdown-completion proof. Review rework B-001–B-005 и residual wording
+завершён; Final Confirmation Reviewer — `Approved`, 0 blocking и 0
+nonblocking; full Go regression, vet, EN/RU parity, 247/0 links и diff checks —
+PASS; Scope Audit accepted 21/0/0; PROCESS-002 `Synchronized`. Formal gates
+§19(2)–(5) и последующий §19(6) остаются открытыми. Recovery store/schema,
+execution-evidence adapter, executor, API и production wiring отсутствуют.
+
+**Следующая рекомендация после TASK-019:** operational error reporting и
+redaction ARCH-004 §19(6); candidate не активирован.
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task
