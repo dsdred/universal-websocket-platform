@@ -464,9 +464,11 @@ Management implementation remains blocked by:
 3. operational error reporting and redaction, section 19(6).
 
 Draft [DP-017](DP-017-runtime-recovery-reconciliation.md) now proposes the
-candidate section 19(5) contract and removes no section 19(2)–(5) gate. By
-dependency ordering, section 19(6) may be designed next. Neither Draft permits
-isolated management implementation.
+candidate section 19(5) contract and removes no section 19(2)–(5) gate. Draft
+[DP-018](DP-018-runtime-operational-error-reporting-redaction.md) now proposes
+the candidate section 19(6) contract and removes no section 19 gate. These
+Drafts do not permit isolated management implementation before separate status
+decisions.
 
 ## 27. Explicit Deferrals
 

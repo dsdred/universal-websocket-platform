@@ -492,9 +492,11 @@ Draft [DP-016](DP-016-runtime-activation-replacement-rollback.md) now proposes
 the candidate section 19(4) contract. It does not remove the section 19(2),
 19(3), or 19(4) gates. Draft
 [DP-017](DP-017-runtime-recovery-reconciliation.md) now proposes the candidate
-section 19(5) contract and removes no section 19(2)–(5) gate. By dependency
-ordering, section 19(6) may be designed next. None of these Drafts permits
-isolated management implementation.
+section 19(5) contract and removes no section 19(2)–(5) gate.
+[DP-018](DP-018-runtime-operational-error-reporting-redaction.md) now proposes
+the candidate section 19(6) contract and removes no section 19 gate. None of
+these Drafts permits isolated management implementation before separate status
+decisions.
 
 ## 26. Explicit Deferrals
 

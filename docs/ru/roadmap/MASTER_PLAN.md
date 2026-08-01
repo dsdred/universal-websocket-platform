@@ -325,8 +325,16 @@ Architectural debt относится к границам, которые ост
   Stopped требует exact Host shutdown-completion proof. Он не выполняет lifecycle
   replay, Host adoption или automatic restart. Как non-normative Draft он не
   снимает ни один gate sections 19(2)–(5) и не создаёт recovery implementation.
-  Следующая design-рекомендация по dependency ordering может определить
-  operational error reporting и redaction section 19(6).
+  Design-only TASK-020 добавляет Draft
+  [DP-018](../design/DP-018-runtime-operational-error-reporting-redaction.md) с
+  Implementation Status Planned как candidate contract section 19(6). Он
+  сохраняет error identity owners и проецирует только authoritative facts в
+  scoped, allowlisted и replay-stable operator reports; delivery остаётся
+  downstream и не может менять lifecycle или command truth. Как non-normative
+  Draft он не снимает ни один gate section 19 и не создаёт reporting или
+  management implementation. Следующий dependency step — отдельная formal
+  status/readiness assessment полного candidate set sections 19(2)–(6), а не
+  автоматическая implementation.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Persistence, Delivery и Plugin всё ещё требуют focused design.

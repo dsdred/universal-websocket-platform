@@ -509,9 +509,10 @@ Management implementation остаётся blocked:
 1. approval/status decisions candidate sections 19(2)–(5);
 2. operational error reporting и redaction section 19(6).
 
-По dependency ordering section 19(6) может проектироваться следующим. Этот
-Draft не активирует такую work и не разрешает isolated recovery/management
-implementation.
+Draft [DP-018](DP-018-runtime-operational-error-reporting-redaction.md) теперь
+предлагает candidate contract section 19(6) и не снимает ни один gate section
+19. Ни один Draft не разрешает isolated recovery/management implementation до
+отдельных status decisions.
 
 ## 27. Явно отложенные вопросы
 

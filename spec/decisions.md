@@ -25,9 +25,9 @@
   изолированно, а persistence и production routing operational сущностей
   отсутствуют.
 - ARCH-005 определяет Configuration Loader, Snapshot provenance и loading boundary.
-- Draft DP-007–DP-017 являются implementation/design contracts и не
+- Draft DP-007–DP-018 являются implementation/design contracts и не
   повышаются до нормативного статуса реализацией или commit. DP-012 реализован
-  изолированно; DP-013, DP-014, DP-015, DP-016 и DP-017 сохраняют
+  изолированно; DP-013, DP-014, DP-015, DP-016, DP-017 и DP-018 сохраняют
   Implementation Status Planned.
 
 ## Ожидающие отдельного решения
@@ -86,9 +86,19 @@ Host-owned shutdown completion. Persisted Running, PID, address, time или pro
 executor, API, automatic restart или production wiring и не снимает formal
 gates §19(2)–(5) до отдельных approval/status decisions.
 
-По dependency ordering следующей рекомендуемой design work после DP-017 может
-быть operational error reporting и redaction ARCH-004 §19(6). Рекомендация не
-активирует task или implementation.
+Non-normative Draft DP-018 предлагает candidate focused contract ARCH-004
+§19(6): exact failure ownership сохраняется у component boundary; только
+authoritative fact проецируется в scoped allowlist operator report; valid
+negative outcomes не relabel как errors; exact owner/phase precedence задаёт
+stable category; unknown content fails closed; replay scoped projection version;
+delivery failure не меняет lifecycle/command truth и не повторяет work. DP-018
+не создаёт report model/projector/adapter, API или production wiring и не
+снимает formal gate §19(6) либо predecessor gates §19(2)–(5).
+
+Следующая dependency-рекомендация после принятой TASK-020 — отдельная
+Design-update task для formal status/readiness assessment полного candidate set
+ARCH-004 §19(2)–(6). Она не активирована и не разрешает implementation
+автоматически.
 
 Package `internal/runtimelaunchflow` реализует base DP-011 изолированно без
 private Start-claim continuation DP-016 и без изменения этих ожидающих решения

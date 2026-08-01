@@ -508,8 +508,10 @@ candidate section 19(3) contract, but it neither removes the section 19(2) or
 candidate section 19(4) contract, but it does not remove the section 19(2),
 19(3), or 19(4) gates. Draft
 [DP-017](DP-017-runtime-recovery-reconciliation.md) now proposes the candidate
-section 19(5) contract, but it does not remove any section 19(2)–(5) gate. By
-dependency ordering, section 19(6) may be designed next.
+section 19(5) contract, but it does not remove any section 19(2)–(5) gate.
+[DP-018](DP-018-runtime-operational-error-reporting-redaction.md) now proposes
+the candidate section 19(6) contract and removes no section 19 gate. The full
+candidate set still requires separate status decisions before implementation.
 
 ## 24. Explicit Deferrals
 

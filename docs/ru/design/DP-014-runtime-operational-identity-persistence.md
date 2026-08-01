@@ -505,8 +505,10 @@ reporting. Draft [DP-015](DP-015-runtime-management-command-idempotency.md)
 candidate contract section 19(4), но не снимает gates sections 19(2), 19(3)
 или 19(4). Draft [DP-017](DP-017-runtime-recovery-reconciliation.md) теперь
 предлагает candidate contract section 19(5), но не снимает ни один gate
-sections 19(2)–(5). По dependency ordering следующим может проектироваться
-section 19(6).
+sections 19(2)–(5). [DP-018](DP-018-runtime-operational-error-reporting-redaction.md)
+теперь предлагает candidate contract section 19(6) и не снимает ни один gate
+section 19. Полный candidate set всё ещё требует отдельных status decisions до
+implementation.
 
 ## 24. Явно отложено
 

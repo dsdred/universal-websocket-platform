@@ -20,9 +20,11 @@ DP-015 предлагают durable management command idempotency candidate con
 Completed Design-only TASK-018 и non-normative Draft/Planned DP-016 предлагают
 activation, replacement и explicit rollback ordering candidate contract.
 Completed Design-only TASK-019 и non-normative Draft/Planned DP-017 предлагают
-fail-closed recovery и reconciliation candidate contract; package, schema,
-HTTP API, persistence/idempotency/lifecycle/recovery implementation, management
-wiring и Control Service activation отсутствуют.
+fail-closed recovery и reconciliation candidate contract. Completed
+Design-only TASK-020 и non-normative Draft/Planned DP-018 предлагают scoped allowlist
+operational error reporting/redaction candidate contract; package, schema,
+HTTP API, persistence/idempotency/lifecycle/recovery/reporting implementation,
+management wiring и Control Service activation отсутствуют.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
@@ -34,8 +36,8 @@ Hardening; `Completed — Coordinator Accepted`.
 
 **Текущая operational task:** отсутствует.
 
-**Последняя завершённая architecture task:** TASK-019 — Runtime Recovery and
-Reconciliation Design; `Completed — Coordinator Accepted`.
+**Последняя завершённая architecture task:** TASK-020 — Runtime Operational
+Error Reporting and Redaction Design; `Completed — Coordinator Accepted`.
 
 **Текущая architecture task:** отсутствует.
 
@@ -344,7 +346,26 @@ PASS; Scope Audit accepted 21/0/0; PROCESS-002 `Synchronized`. Formal gates
 execution-evidence adapter, executor, API и production wiring отсутствуют.
 
 **Следующая рекомендация после TASK-019:** operational error reporting и
-redaction ARCH-004 §19(6); candidate не активирован.
+redaction ARCH-004 §19(6); активирована и завершена как Design-only TASK-020.
+
+**TASK-020:** `Completed — Coordinator Accepted`. Зеркальный non-normative
+Draft DP-018 с Implementation Status `Planned` предлагает candidate contract
+ARCH-004 §19(6): exact owner сохраняет raw error/cause, а report projected
+только после authoritative fact; valid negative outcomes не становятся errors;
+exact owner/phase precedence выбирает одну stable category; correlation opaque
+и authorized; redaction строится fail-closed allowlist; replay детерминирован в
+projection version; delivery failure не меняет domain truth и не повторяет
+lifecycle work. Review B-001–B-005 и matrix clarity rework завершён; Terminal
+Design Reviewer — `Approved`, 0 blocking и 0 nonblocking; final Go regression,
+vet, EN/RU parity, repository links и diff checks — PASS; Scope Audit accepted
+21/0/0; Repeat terminal Closure Review — `Approved`, 0/0; PROCESS-002
+`Synchronized`. Formal gates §19(2)–(6) остаются до
+отдельных status decisions. Report model/projector/adapter, public API,
+management implementation и Production Activation отсутствуют.
+
+**Следующая рекомендация после TASK-020:** отдельная Design-update task для
+formal status/readiness assessment полного candidate set ARCH-004 §19(2)–(6);
+candidate не активирован и implementation автоматически не разрешена.
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task

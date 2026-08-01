@@ -23,3 +23,4 @@
 | [DP-015: Идемпотентность management commands Runtime](DP-015-runtime-management-command-idempotency.md) | Draft; запланирован |
 | [DP-016: Activation, replacement и rollback Runtime](DP-016-runtime-activation-replacement-rollback.md) | Draft; запланирован |
 | [DP-017: Восстановление и сверка Runtime](DP-017-runtime-recovery-reconciliation.md) | Draft; запланирован |
+| [DP-018: Operational error reporting и redaction Runtime](DP-018-runtime-operational-error-reporting-redaction.md) | Draft; запланирован |

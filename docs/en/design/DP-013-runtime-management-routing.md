@@ -677,9 +677,10 @@ proof code is authorized until every mandatory focused design in section 26
 exists. DP-015, DP-016, and
 [DP-017](DP-017-runtime-recovery-reconciliation.md) are the candidate section
 19(3), 19(4), and 19(5) designs, not implementation tasks; the section
-19(2)–(5) approval gates remain. By dependency ordering the next design
-recommendation may address operational error reporting and redaction in
-section 19(6).
+19(2)–(5) approval gates remain. Draft
+[DP-018](DP-018-runtime-operational-error-reporting-redaction.md) now proposes
+the candidate section 19(6) reporting/redaction contract. It does not remove
+any section 19 gate or permit implementation before separate status decisions.
 
 ## 30. Decision
 
