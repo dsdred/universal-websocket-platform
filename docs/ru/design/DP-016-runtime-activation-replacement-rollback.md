@@ -458,8 +458,10 @@ Management implementation остаётся заблокированной:
 
 Draft [DP-017](DP-017-runtime-recovery-reconciliation.md) теперь предлагает
 candidate contract section 19(5) и не снимает ни один gate sections 19(2)–(5).
-По dependency ordering section 19(6) может проектироваться следующим. Ни один
-Draft не разрешает isolated management implementation.
+Draft [DP-018](DP-018-runtime-operational-error-reporting-redaction.md) теперь
+предлагает candidate contract section 19(6) и не снимает ни один gate section
+19. Эти Draft не разрешают isolated management implementation до отдельных
+status decisions.
 
 ## 27. Явно отложено
 

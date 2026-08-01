@@ -26,16 +26,18 @@
   non-normative Draft/Planned DP-016 предлагают activation, replacement и
   explicit rollback ordering candidate contract; Completed Design-only TASK-019
   и non-normative Draft/Planned DP-017 предлагают fail-closed recovery и
-  reconciliation candidate contract. Implementation, HTTP,
-  persistence/command/recovery package/schema, management wiring и Production
-  Activation отсутствуют**
+  reconciliation candidate contract; Completed Design-only TASK-020 и
+  non-normative Draft/Planned DP-018 предлагают scoped allowlist operational
+  error reporting/redaction candidate contract. Implementation, HTTP,
+  persistence/command/recovery/reporting package/schema, management wiring и
+  Production Activation отсутствуют**
 - Последняя завершённая development task: **TASK-014 — Runtime Source
   Implementation; Completed — Coordinator Accepted**
 - Последняя завершённая operational task: **TASK-012 — Engineering Process
   Hardening; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
-- Последняя завершённая architecture task: **TASK-019 — Runtime Recovery and
-  Reconciliation Design; Completed — Coordinator Accepted**
+- Последняя завершённая architecture task: **TASK-020 — Runtime Operational
+  Error Reporting and Redaction Design; Completed — Coordinator Accepted**
 - Текущая architecture task: **отсутствует**
 - Текущая development task: **отсутствует**
 - Trusted baseline TASK-009: **clean synchronized
@@ -217,7 +219,23 @@
   PROCESS-002 Synchronized; на момент Coordinator closure commit и publication
   не выполнялись; последующая commit permission фиксируется task record**
 - Следующая рекомендация после TASK-019: **operational error reporting и
-  redaction ARCH-004 §19(6); candidate не активирован**
+  redaction ARCH-004 §19(6); активирована и завершена как Design-only
+  TASK-020**
+- TASK-020: **Completed — Coordinator Accepted; зеркальный non-normative
+  Draft/Planned DP-018 предлагает candidate contract ARCH-004 §19(6): exact
+  failure ownership, authoritative-fact-first projection, valid-negative/error
+  separation, owner/phase category precedence, scoped opaque correlation,
+  fail-closed allowlist redaction, projection-version replay и downstream
+  delivery failure isolation. Review B-001–B-005 и matrix clarity rework
+  завершён; Terminal Design Reviewer Approved 0/0; final regression, vet,
+  parity, links и diff checks PASS; Scope Audit accepted 21/0/0; Repeat terminal
+  Closure Review Approved 0/0; PROCESS-002 Synchronized. Reporting
+  model/projector/adapter, management implementation и Production Activation
+  отсутствуют**
+- Следующая рекомендация после TASK-020: **отдельная Design-update task для
+  formal status/readiness assessment полного candidate set ARCH-004
+  §19(2)–(6); candidate не активирован, implementation автоматически не
+  разрешена**
 - Stage 2 task-before-work ordering выполнен для TASK-003, TASK-004, TASK-005, TASK-006 и TASK-007: task record создан первым content change, а task index обновлён только после initial gate
 - Publication history: **TASK-005 commit `99e0d3d`, TASK-006 commit `fd0f80a` и TASK-007 commit `2e6d221` merged через PR #6/#7/#8; transient pre-commit/Publisher blockers не являются durable project-state instructions**
 - Design Status DP-009 остаётся **Draft**; Bootstrap и Runtime Launcher
@@ -249,6 +267,9 @@
 - Design Status DP-017 — **Draft**, Implementation Status — **Planned**;
   recovery/reconciliation определены только на design level; recovery store,
   execution-evidence adapter, executor, API и production wiring отсутствуют
+- Design Status DP-018 — **Draft**, Implementation Status — **Planned**;
+  operational reporting/redaction определены только на design level; report
+  model, projector, delivery adapter, API и production wiring отсутствуют
 - Design Status DP-008 остаётся **Draft**, Implementation Status — **Implemented in isolation**
 - Содержимое репозитория: документация, спецификации, инженерные соглашения, исполняемый Control Service и изолированные Runtime-компоненты с тестами
 

@@ -23,3 +23,4 @@ This directory contains focused Runtime design documents. A design document expl
 | [DP-015: Runtime Management Command Idempotency](DP-015-runtime-management-command-idempotency.md) | Draft; planned |
 | [DP-016: Runtime Activation, Replacement, and Rollback](DP-016-runtime-activation-replacement-rollback.md) | Draft; planned |
 | [DP-017: Runtime Recovery and Reconciliation](DP-017-runtime-recovery-reconciliation.md) | Draft; planned |
+| [DP-018: Runtime Operational Error Reporting and Redaction](DP-018-runtime-operational-error-reporting-redaction.md) | Draft; planned |

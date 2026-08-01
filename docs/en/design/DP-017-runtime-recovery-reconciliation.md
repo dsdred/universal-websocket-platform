@@ -521,8 +521,10 @@ Management implementation remains blocked by:
 1. approval/status decisions for candidate sections 19(2)–(5);
 2. operational error reporting and redaction, section 19(6).
 
-By dependency ordering, section 19(6) may be designed next. This Draft neither
-activates that work nor permits isolated recovery or management implementation.
+Draft [DP-018](DP-018-runtime-operational-error-reporting-redaction.md) now
+proposes the candidate section 19(6) contract and removes no section 19 gate.
+Neither Draft permits isolated recovery or management implementation before
+separate status decisions.
 
 ## 27. Explicit Deferrals
 

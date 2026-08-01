@@ -679,9 +679,11 @@ Implementation Readiness — Blocked. Ни isolated package, ни local proof co
 не разрешены, пока не существуют все обязательные focused designs section 26.
 DP-015, DP-016 и [DP-017](DP-017-runtime-recovery-reconciliation.md) являются
 candidate designs sections 19(3), 19(4) и 19(5), а не implementation tasks;
-approval gates sections 19(2)–(5) сохраняются. По dependency ordering следующая
-design-рекомендация может определить operational error reporting и redaction
-section 19(6).
+approval gates sections 19(2)–(5) сохраняются. Draft
+[DP-018](DP-018-runtime-operational-error-reporting-redaction.md) теперь
+предлагает candidate contract reporting/redaction section 19(6). Он не снимает
+ни один gate section 19 и не разрешает implementation до отдельных status
+decisions.
 
 ## 30. Решение
 

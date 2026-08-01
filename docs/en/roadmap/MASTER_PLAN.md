@@ -328,8 +328,16 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   performs no
   lifecycle replay, Host adoption, or automatic restart. As a non-normative
   Draft it removes none of the section 19(2)–(5) gates and creates no recovery
-  implementation. The next dependency-ordered design recommendation may
-  address operational error reporting and redaction in section 19(6).
+  implementation. Design-only TASK-020 adds Draft
+  [DP-018](../design/DP-018-runtime-operational-error-reporting-redaction.md),
+  with Implementation Status Planned, as the candidate section 19(6)
+  contract. It preserves owner error identity while projecting only
+  authoritative facts into scoped, allowlisted, replay-stable operator reports;
+  delivery remains downstream and cannot mutate lifecycle or command truth.
+  As a non-normative Draft it removes no section 19 gate and creates no
+  reporting or management implementation. The next dependency step is a
+  separate formal status/readiness assessment of the complete section
+  19(2)–(6) candidate set, not automatic implementation.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Persistence, Delivery, and Plugin contracts still require focused design.
