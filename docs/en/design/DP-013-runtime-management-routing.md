@@ -537,10 +537,11 @@ persistence implementation. Because it remains non-normative Draft, section
 19(2) remains a formal implementation blocker until a separate
 approval/status decision.
 
-By dependency ordering, the deterministic next design recommendation may be a
-separate Design-only durable management command idempotency contract for
-section 19(3). It is recommended, not activated, and does not remove the
-section 19(2) gate or activate implementation.
+Draft [DP-015](DP-015-runtime-management-command-idempotency.md) now proposes
+the candidate durable management command idempotency contract for section
+19(3). It binds one authorized command identity to immutable intent before
+lifecycle delegation and defines non-mutating replay. As a non-normative Draft
+it does not remove the section 19(2) or 19(3) gates or activate implementation.
 
 ## 27. Future implementation proofs
 
@@ -618,9 +619,10 @@ or activation path exists as a result of this document.
 
 Implementation Readiness is Blocked. Neither an isolated package nor local
 proof code is authorized until every mandatory focused design in section 26
-exists. The next recommendation is the separate durable management command
-idempotency design, not an implementation task; it does not remove the
-section 19(2) approval gate.
+exists. DP-015 is the candidate section 19(3) design, not an implementation
+task; the section 19(2) and 19(3) approval gates remain. By dependency ordering
+the next design recommendation may address activation, replacement, and
+rollback ordering in section 19(4).
 
 ## 30. Decision
 

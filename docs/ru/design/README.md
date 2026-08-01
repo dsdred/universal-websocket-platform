@@ -20,3 +20,4 @@
 | [DP-012: Композиция Runtime Source](DP-012-runtime-source-composition.md) | Draft; реализован изолированно |
 | [DP-013: Маршрутизация управления Runtime](DP-013-runtime-management-routing.md) | Draft; запланирован |
 | [DP-014: Персистентность operational identity Runtime](DP-014-runtime-operational-identity-persistence.md) | Draft; запланирован |
+| [DP-015: Идемпотентность management commands Runtime](DP-015-runtime-management-command-idempotency.md) | Draft; запланирован |

@@ -13,7 +13,9 @@ package `internal/configurationloadsource` реализуют concrete Source ad
 изолированно. Completed Design-only TASK-015 и Draft/Planned DP-013 определяют
 management routing contract. Completed Design-only TASK-016 и non-normative
 Draft/Planned DP-014 предлагают durable operational identity persistence
-candidate contract; package, schema, HTTP API, persistence implementation,
+candidate contract. Completed Design-only TASK-017 и non-normative Draft/Planned
+DP-015 предлагают durable management command idempotency candidate contract;
+package, schema, HTTP API, persistence/idempotency implementation, recovery,
 management wiring и Control Service activation отсутствуют.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
@@ -26,8 +28,8 @@ Hardening; `Completed — Coordinator Accepted`.
 
 **Текущая operational task:** отсутствует.
 
-**Последняя завершённая architecture task:** TASK-016 — Runtime Operational
-Identity Persistence Design; `Completed — Coordinator Accepted`.
+**Последняя завершённая architecture task:** TASK-017 — Runtime Management
+Command Idempotency Design; `Completed — Coordinator Accepted`.
 
 **Текущая architecture task:** отсутствует.
 
@@ -276,9 +278,28 @@ formal implementation blocker до отдельного approval/status decision
 с §19(3)–(6). Persistence package, schema, API, recovery и production wiring
 отсутствуют. Commit и publication не авторизованы и не выполнялись.
 
-**Следующая рекомендация после TASK-016:** не активирована. Отдельный
-Design-only durable management command idempotency contract ARCH-004 §19(3);
-он не снимает formal implementation gate §19(2).
+**Candidate после TASK-016:** активирован как Design-only TASK-017 — Runtime
+Management Command Idempotency Design.
+
+**TASK-017:** `Completed — Coordinator Accepted`. Зеркальный non-normative
+Draft DP-015 с
+Implementation Status `Planned` предлагает candidate contract ARCH-004
+§19(3): opaque command key внутри exact authorized command scope, immutable
+intent, durable claim до lifecycle delegation, same-intent non-mutating replay,
+durable per-Instance barrier при unresolved outcome, mandatory tracked-Start
+Stop и truthful indeterminate outcome. Initial Reviewer — `Needs Revision`
+B-001/B-002; first bounded rework; Repeat Reviewer — `Needs Revision` B-003;
+second bounded rework; Final Architecture Reviewer — `Approved with Findings`,
+blocking 0; closure bookkeeping; Terminal Reviewer — `Approved`, 0 blocking и
+0 nonblocking findings. Full `go test ./... -count=1`, `go vet ./...`, EN/RU
+29/29 headings, repository links 770/0 и diff checks — PASS. Scope Audit —
+15 Required / 0 Questionable / 0 Removable; PROCESS-002 — `Synchronized`.
+Formal gates §19(2) и §19(3),
+downstream designs §19(4)–(6), command store, schema, API, recovery, management
+wiring и Production Activation остаются открытыми.
+
+**Следующая рекомендация после TASK-017:** не активирована. Отдельный
+Design-only activation/replacement/rollback ordering contract ARCH-004 §19(4).
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task
