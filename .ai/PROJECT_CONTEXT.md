@@ -17,16 +17,15 @@
   continuation и execution-binding/load gate DP-016/DP-017 запланированы и
   отсутствуют; Draft DP-012 и
   `internal/configurationloadsource.MemorySource` реализуют concrete Source
-  adapter изолированно; Draft/Planned DP-013 определяет management routing и
-  Ready для bounded isolated implementation slice. Approved/Planned DP-014–
+  adapter изолированно; Draft DP-013 и `internal/runtimemanagement` реализуют
+  management routing изолированно. Approved/Planned DP-014–
   DP-018 закрывают focused design gates ARCH-004 §19(2)–(6) для operational
   identity persistence, command idempotency, activation/replacement/rollback,
   recovery/reconciliation и operational error reporting/redaction.
-  Implementation, HTTP,
-  persistence/command/recovery/reporting package/schema, management wiring и
-  Production Activation отсутствуют**
-- Последняя завершённая development task: **TASK-014 — Runtime Source
-  Implementation; Completed — Coordinator Accepted**
+  HTTP, concrete policy, persistence/command/recovery/reporting
+  package/schema, management wiring и Production Activation отсутствуют**
+- Последняя завершённая development task: **TASK-023 — Runtime Management
+  Routing Implementation; Completed — Coordinator Accepted**
 - Последняя завершённая operational task: **TASK-012 — Engineering Process
   Hardening; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
@@ -244,6 +243,15 @@
   Reviewer Approved 0/0; PROCESS-002 Synchronized; Scope Audit 6/0/0. На
   момент closure commit и publication не выполнялись. Bounded isolated DP-013
   implementation Ready/recommended, но не активирована**
+- TASK-023: **Completed — Coordinator Accepted;
+  `internal/runtimemanagement` реализует exact
+  Target/Binding/Directory surface Draft DP-013, authorization-before-mutation
+  и immutable routing Start к Flow, а Stop/Observe к exact Owner. Focused/full
+  tests, focused stress и vet PASS; race detector недоступен без C compiler;
+  independent Reviewer Approved 0/0; PROCESS-002 Synchronized; Scope Audit
+  23/0/0. Production Control Service routing, concrete policy, persistence,
+  recovery, management wiring и Production Activation отсутствуют. Следующий
+  DP-014 readiness candidate не активирован**
 - Stage 2 task-before-work ordering выполнен для TASK-003, TASK-004, TASK-005, TASK-006 и TASK-007: task record создан первым content change, а task index обновлён только после initial gate
 - Publication history: **TASK-005 commit `99e0d3d`, TASK-006 commit `fd0f80a` и TASK-007 commit `2e6d221` merged через PR #6/#7/#8; transient pre-commit/Publisher blockers не являются durable project-state instructions**
 - Design Status DP-009 остаётся **Draft**; Bootstrap и Runtime Launcher
@@ -259,10 +267,9 @@
 - Design Status DP-012 — **Draft**, Implementation Status — **Implemented in
   isolation**; repository-backed Source adapter реализован, production
   composition отсутствует
-- Design Status DP-013 — **Draft**, Implementation Status — **Planned**;
-  management routing определён только на design level; Implementation
-  Readiness **Ready для bounded isolated implementation slice**, full
-  integration и production wiring отсутствуют
+- Design Status DP-013 — **Draft**, Implementation Status — **Implemented in
+  isolation**; exact management routing package и local proofs существуют,
+  concrete policy, full integration и production wiring отсутствуют
 - Design Status DP-014 — **Approved**, Implementation Status — **Planned**;
   durable operational identity определена только на design level; repository,
   schema, API, recovery и production wiring отсутствуют

@@ -474,8 +474,9 @@ Deferred to focused designs or implementation tasks:
 ## 28. Implementation Boundary
 
 Implementation Status is Planned. The repository contains isolated Lifecycle
-Owner, launch flow, and source adapter plus Draft DP-013 and Approved/Planned
-DP-014 through DP-018. It contains no activation/replacement orchestrator,
+Owner, launch flow, and source adapter plus Draft DP-013 implemented in
+isolation and Approved/Planned DP-014 through DP-018. It contains no
+activation/replacement orchestrator,
 durable command or aggregate store, public management API, recovery executor,
 or production wiring.
 

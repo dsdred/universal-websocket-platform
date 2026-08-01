@@ -468,8 +468,8 @@ reporting, integration или Production Activation.
 ## 28. Implementation boundary
 
 Implementation Status — Planned. Repository содержит isolated Lifecycle Owner,
-launch flow и source adapter плюс Draft DP-013 и Approved/Planned DP-014–
-DP-018. Activation/replacement orchestrator, durable command или aggregate
+launch flow и source adapter плюс реализованный изолированно Draft DP-013 и
+Approved/Planned DP-014–DP-018. Activation/replacement orchestrator, durable command или aggregate
 store, public management API, recovery executor и production wiring
 отсутствуют.
 

@@ -26,9 +26,9 @@
   отсутствуют.
 - ARCH-005 определяет Configuration Loader, Snapshot provenance и loading boundary.
 - DP-007–DP-013 сохраняют Design Status Draft; DP-014–DP-018 имеют Design
-  Status Approved. Статус не повышается реализацией или commit. DP-012
-  реализован изолированно; DP-013–DP-018 сохраняют Implementation Status
-  Planned.
+  Status Approved. Статус не повышается реализацией или commit. DP-012 и
+  DP-013 реализованы изолированно; DP-014–DP-018 сохраняют Implementation
+  Status Planned.
 
 ## Ожидающие отдельного решения
 
@@ -40,9 +40,9 @@ deployment boundaries.
 Draft DP-011 определяет in-process integration
 `PrepareStart -> Load -> Build -> Start`. Draft DP-012 определяет
 repository-backed Source composition и реализован изолированно. Draft DP-013
-определяет planned process-local management routing и
-authorization-before-mutation; он Ready для bounded isolated implementation
-slice. Approved DP-014 определяет focused contract ARCH-004 §19(2): durable aggregate Runtime Instance,
+определяет process-local management routing и authorization-before-mutation;
+package `internal/runtimemanagement` реализует этот contract изолированно.
+Approved DP-014 определяет focused contract ARCH-004 §19(2): durable aggregate Runtime Instance,
 append-only membership Launch Attempt с immutable parent/ID/version pin и
 monotonic child lifecycle facts, opaque identity namespaces, conditional
 revision, atomic phase-sensitive lifecycle publication и
@@ -50,7 +50,7 @@ inspect-after-indeterminate boundary. Он не создаёт persistence
 implementation, schema, API, recovery или production wiring. Design gate
 §19(2) закрыт.
 
-DP-013 разрешает только bounded isolated implementation slice. Approved
+Изолированная реализация DP-013 не разрешает integration. Approved
 DP-014–DP-018 закрывают focused design gates ARCH-004 §19(2)–(6), но concrete
 authorization policy, persistence и command implementations, private
 Start-claim continuation, execution-generation binding/load gate, management
@@ -95,13 +95,12 @@ delivery failure не меняет lifecycle/command truth и не повтор�
 DP-018 закрывает design gate §19(6), а Approved predecessor set DP-014–DP-017
 уже закрывает design gates §19(2)–(5); implementation остаётся отсутствующей.
 
-TASK-021 завершена со статусом `Completed — Coordinator Accepted`. Architect
-verdict закрывает design gates ARCH-004 §19(2)–(6) и делает DP-013 Ready для
-bounded isolated implementation slice; implementation автоматически не
-активирована. Следующий Ready, но не активированный candidate — отдельная
-Documentation-only correction root README mirrors для pre-existing
-Loader-to-Builder implemented-state drift; после неё рекомендуется bounded
-isolated DP-013 implementation, также не активированная.
+TASK-021 закрыла design gates ARCH-004 §19(2)–(6), TASK-022 исправила root
+README drift, а TASK-023 со статусом `Completed — Coordinator Accepted`
+реализовала bounded isolated DP-013 package. Concrete policy, persistence,
+management integration/API и Production Activation не активированы и остаются
+отсутствующими. Следующий candidate — отдельный bounded readiness intake
+implementation prerequisites DP-014; он не активирован.
 
 Package `internal/runtimelaunchflow` реализует base DP-011 изолированно без
 private Start-claim continuation DP-016 и без изменения этих ожидающих решения

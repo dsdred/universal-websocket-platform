@@ -5,14 +5,14 @@
 ## 1. Status
 
 - **Design Status:** Draft
-- **Implementation Status:** Planned
-- **Implementation Readiness:** Ready for a bounded isolated implementation
-  slice; full integration and Production Activation remain blocked
+- **Implementation Status:** Implemented in isolation
+- **Integration Readiness:** Blocked; full integration and Production
+  Activation require the planned dependencies and wiring below
 
-This proposal is non-normative until approved. It defines a planned isolated
-in-process management command boundary. The package, production Control
-Service routing, authorization policy, persistence, recovery, and Production
-Activation do not exist as a result of this document.
+This proposal remains non-normative until approved. Its isolated in-process
+management command boundary is implemented in `internal/runtimemanagement`.
+Production Control Service routing, an authorization policy, persistence,
+recovery, and Production Activation remain absent.
 
 ## 2. Purpose
 
@@ -48,7 +48,7 @@ It does not define transport resources or data transfer objects.
 
 ## 5. Package and responsibility
 
-The planned package is `internal/runtimemanagement`.
+The isolated package is `internal/runtimemanagement`.
 
 It owns only:
 
@@ -561,12 +561,11 @@ a generic dependency container.
 
 ## 26. Mandatory implementation prerequisites
 
-The Draft design contract is valid and Ready for a bounded isolated
-implementation slice. Approved DP-014 through DP-018 close all focused design
-gates required by ARCH-004 section 19(2)–(6). Full integration remains blocked
-until the required persistence, command, activation, recovery, and reporting
-implementations exist and are composed through an explicit Control Service
-boundary.
+The Draft design contract is implemented in a bounded isolated slice. Approved
+DP-014 through DP-018 close all focused design gates required by ARCH-004
+section 19(2)–(6). Full integration remains blocked until the required
+persistence, command, activation, recovery, and reporting implementations
+exist and are composed through an explicit Control Service boundary.
 
 Loader, Snapshot provenance, and schema compatibility are already resolved by
 ARCH-005 and DP-007 through DP-012. The isolated implementation precedent of
@@ -574,10 +573,11 @@ DP-010 through DP-012 does not create an exception to the higher-status
 ARCH-004 gate. Approved DP-014 through DP-018 define the dependency-ordered
 contracts without providing their packages, adapters, schemas, or wiring.
 
-## 27. Future implementation proofs
+## 27. Isolated implementation proofs
 
-After every prerequisite in section 26 is resolved, a future implementation
-task must prove:
+The bounded isolated implementation proves the following local contract. Full
+integration must repeat the applicable composition proofs after every required
+dependency in section 26 is implemented:
 
 1. exact exported surface and sentinel strings;
 2. Target validation and immutable accessors;
@@ -644,16 +644,17 @@ None may be hidden inside Directory, Binding, Authorize, Owner, or Flow.
 
 ## 29. Implementation boundary
 
-Implementation Status remains Planned. No `internal/runtimemanagement`
-package, test, Control Service binding, endpoint, policy, persistence adapter,
-or activation path exists as a result of this document.
+Implementation Status is Implemented in isolation. Package
+`internal/runtimemanagement` provides the exact Target, Binding, Directory,
+authorization seam, routing, and local proof tests from this design. It has no
+Control Service binding, endpoint, concrete policy, persistence adapter,
+recovery path, or activation path.
 
-Implementation Readiness is Ready for one bounded isolated package and local
-proof slice. Approved DP-014 through DP-018 close the focused design gates in
-ARCH-004 section 19(2)–(6), but do not implement persistence, idempotency,
-activation, recovery, reporting, Control Service integration, or Production
-Activation. Any integration slice must first provide its exact required
-dependencies, including the planned private Start-claim continuation and
+Approved DP-014 through DP-018 close the focused design gates in ARCH-004
+section 19(2)–(6), but do not implement persistence, idempotency, activation,
+recovery, reporting, Control Service integration, or Production Activation.
+Any integration slice must first provide its exact required dependencies,
+including the planned private Start-claim continuation and
 execution-generation binding/load gate.
 
 ## 30. Decision
@@ -667,6 +668,6 @@ all downstream lifecycle outcomes.
 It adds no second lifecycle owner, dynamic registry, service locator,
 persistence simulation, retry, transport API, or Production Activation.
 
-The Draft/Planned design is ready for a bounded isolated implementation slice.
-Full integration and Production Activation remain blocked by the unimplemented
-dependencies and wiring identified above.
+The Draft design is implemented in isolation. Full integration and Production
+Activation remain blocked by the unimplemented dependencies and wiring
+identified above.

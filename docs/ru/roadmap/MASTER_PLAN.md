@@ -280,17 +280,17 @@ Architectural debt относится к границам, которые ост
   [DP-012](../design/DP-012-runtime-source-composition.md) с Implementation
   Status Implemented in isolation определяет confined exact in-memory Source
   adapter. Adapter, local proof tests, Loader integration и изолированный
-  construction proof `Source -> Loader -> Flow` существуют. Management
-  routing, persistence, application wiring и Production Activation
-  отсутствуют. Design-only TASK-015 добавляет Draft
+  construction proof `Source -> Loader -> Flow` существуют. Persistence,
+  application wiring и Production Activation отсутствуют. Design-only
+  TASK-015 добавляет Draft
   [DP-013](../design/DP-013-runtime-management-routing.md) с Implementation
-  Status Planned для одного immutable process-local directory
-  Start/Stop/Observe, exact routing Runtime Instance,
-  authorization до lifecycle delegation и static binding Owner-to-Flow.
-  Management package, HTTP API, persistence и activation отсутствуют. Design
-  contract готов, а Implementation Readiness — Ready для bounded isolated
-  slice; integration и Production Activation остаются blocked отсутствующими
-  dependencies и wiring. Design-only TASK-016 добавляет Approved
+  Status Implemented in isolation для одного immutable process-local directory
+  Start/Stop/Observe, exact routing Runtime Instance, authorization до
+  lifecycle delegation и static binding Owner-to-Flow. TASK-023 реализует
+  isolated package и local proofs. HTTP API, concrete policy, persistence,
+  management wiring и activation отсутствуют; integration и Production
+  Activation остаются blocked отсутствующими dependencies и wiring.
+  Design-only TASK-016 добавляет Approved
   [DP-014](../design/DP-014-runtime-operational-identity-persistence.md) с
   Implementation Status Planned, который предлагает candidate durable
   aggregate Runtime Instance, append-only membership Launch Attempt и
@@ -333,12 +333,9 @@ Architectural debt относится к границам, которые ост
   закрывает section 19(6) на design level и не создаёт reporting или management
   implementation. TASK-021 завершила status decision полного set sections
   19(2)–(6) с Coordinator Acceptance: DP-014–DP-018 имеют status
-  Approved/Planned, а Draft/Planned DP-013 Ready для bounded isolated
-  implementation slice. Implementation не активирована. Следующий Ready, но
-  неактивный candidate — Documentation-only correction root README mirrors для
-  pre-existing Loader-to-Builder implemented-state drift; bounded isolated
-  DP-013 implementation рекомендуется только после этой correction и также не
-  активирована.
+  Approved/Planned. TASK-022 исправила root README mirrors, после чего TASK-023
+  реализовала Draft DP-013 изолированно. Integration и Production Activation
+  остаются неактивными и blocked перечисленными выше dependencies и wiring.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Persistence, Delivery и Plugin всё ещё требуют focused design.

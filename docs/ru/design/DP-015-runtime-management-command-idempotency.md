@@ -496,8 +496,8 @@ reporting, integration или Production Activation.
 ## 27. Implementation boundary
 
 Implementation Status — Planned. Repository содержит только isolated
-process-local Lifecycle Owner, launch flow, source adapter, Draft DP-013 и
-Approved/Planned DP-014–DP-018.
+process-local Lifecycle Owner, launch flow, source adapter, реализованный
+изолированно Draft DP-013 и Approved/Planned DP-014–DP-018.
 
 Durable command store, idempotency package, API, recovery executor, management
 wiring и production activation отсутствуют. Approval закрывает design gate
