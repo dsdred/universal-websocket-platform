@@ -34,6 +34,9 @@
   Readiness Assessment; Completed — Coordinator Accepted**
 - Текущая architecture task: **отсутствует**
 - Текущая development task: **отсутствует**
+- Последняя завершённая documentation task: **TASK-022 — Root README Runtime
+  Status Synchronization; Completed — Coordinator Accepted**
+- Текущая documentation task: **отсутствует**
 - Trusted baseline TASK-009: **clean synchronized
   `main@63b961eeb59af9205c3c3d0b68d3f4bd7b8ac25c`; локальная ветка
   `feature/task-009-runtime-lifecycle-owner`; task record создан первым
@@ -232,10 +235,15 @@
   implementation slice. Tester PASS; independent Reviewer Approved 0/0;
   PROCESS-002 Synchronized; Scope Audit 21/0/0. Commit и publication не
   выполнялись**
-- Следующая рекомендация после TASK-021: **Ready, но не активирована отдельная
-  Documentation-only correction root `README.md` и `README.ru.md` для
-  pre-existing Loader-to-Builder implemented-state drift; после неё
-  рекомендуется bounded isolated DP-013 implementation, также не активирована**
+- TASK-022: **Completed — Coordinator Accepted; root `README.md` и
+  `README.ru.md` теперь правдиво отражают связь Configuration Loader со
+  Snapshot Builder через isolated in-process Runtime Launch Flow и
+  доказанную isolated конструкцию `Source -> Loader -> Flow` поверх concrete
+  in-memory Source adapter. Application/Control Service wiring и Production
+  Activation остаются отсутствующими. Tester PASS 0 findings; independent
+  Reviewer Approved 0/0; PROCESS-002 Synchronized; Scope Audit 6/0/0. На
+  момент closure commit и publication не выполнялись. Bounded isolated DP-013
+  implementation Ready/recommended, но не активирована**
 - Stage 2 task-before-work ordering выполнен для TASK-003, TASK-004, TASK-005, TASK-006 и TASK-007: task record создан первым content change, а task index обновлён только после initial gate
 - Publication history: **TASK-005 commit `99e0d3d`, TASK-006 commit `fd0f80a` и TASK-007 commit `2e6d221` merged через PR #6/#7/#8; transient pre-commit/Publisher blockers не являются durable project-state instructions**
 - Design Status DP-009 остаётся **Draft**; Bootstrap и Runtime Launcher
