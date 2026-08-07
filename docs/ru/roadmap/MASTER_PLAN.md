@@ -292,12 +292,14 @@ Architectural debt относится к границам, которые ост
   Activation остаются blocked отсутствующими dependencies и wiring.
   Design-only TASK-016 добавляет Approved
   [DP-014](../design/DP-014-runtime-operational-identity-persistence.md) с
-  Implementation Status Planned, который предлагает candidate durable
+  Implementation Status Implemented in isolation, который определяет durable
   aggregate Runtime Instance, append-only membership Launch Attempt и
   monotonic child facts, namespaces opaque identity, conditional revision,
   atomic publication lifecycle facts и boundary inspect-after-indeterminate
-  для section 19(2). Design gate закрыт, но persistence package, schema, API,
-  recovery и production wiring отсутствуют. Design-only TASK-017 добавляет
+  для section 19(2). TASK-024 реализует isolated in-memory package
+  `internal/runtimeidentity` со всеми девятью conceptual operations §21 и
+  proof tests для всех семнадцати acceptance proofs §22. External storage,
+  HTTP API, recovery и production wiring отсутствуют. Design-only TASK-017 добавляет
   Approved [DP-015](../design/DP-015-runtime-management-command-idempotency.md) с
   Implementation Status Planned как candidate contract section 19(3). Он
   определяет authorized command scope, binding immutable intent, durable claim

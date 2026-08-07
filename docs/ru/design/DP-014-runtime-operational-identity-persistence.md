@@ -5,12 +5,13 @@
 ## 1. Статус
 
 - **Design Status:** Approved
-- **Implementation Status:** Planned
+- **Implementation Status:** Implemented in isolation
 
-Этот approved design определяет планируемую
-durable boundary identity и history Runtime Instance и Launch Attempt. Этот
-документ не создаёт repository, schema, storage technology, API, package,
-recovery path или production wiring.
+Этот approved design определяет durable boundary identity и history Runtime
+Instance и Launch Attempt. Package `internal/runtimeidentity` реализует все
+девять conceptual operations из §21 и удовлетворяет всем acceptance proofs из
+§22 как изолированный in-process in-memory store. Внешний storage, HTTP API,
+production wiring и второй lifecycle owner отсутствуют.
 
 ## 2. Назначение
 

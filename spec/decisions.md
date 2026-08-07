@@ -27,8 +27,8 @@
 - ARCH-005 определяет Configuration Loader, Snapshot provenance и loading boundary.
 - DP-007–DP-013 сохраняют Design Status Draft; DP-014–DP-018 имеют Design
   Status Approved. Статус не повышается реализацией или commit. DP-012 и
-  DP-013 реализованы изолированно; DP-014–DP-018 сохраняют Implementation
-  Status Planned.
+  DP-013 реализованы изолированно; DP-014 реализован изолированно;
+  DP-015–DP-018 сохраняют Implementation Status Planned.
 
 ## Ожидающие отдельного решения
 

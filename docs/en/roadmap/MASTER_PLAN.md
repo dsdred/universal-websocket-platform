@@ -293,12 +293,14 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   and Production Activation remain blocked by absent dependencies and wiring.
   Design-only TASK-016 adds Approved
   [DP-014](../design/DP-014-runtime-operational-identity-persistence.md), with
-  Implementation Status Planned, which proposes the candidate durable Runtime
-  Instance aggregate, append-only Launch Attempt membership and monotonic
+  Implementation Status Implemented in isolation, which defines the durable
+  Runtime Instance aggregate, append-only Launch Attempt membership and monotonic
   child facts, opaque identity namespaces, conditional revision, atomic
   lifecycle-fact publication, and inspect-after-indeterminate boundary for
-  section 19(2). Its design gate is closed, but no persistence package, schema,
-  API, recovery, or production wiring exists. Design-only TASK-017 adds Approved
+  section 19(2). TASK-024 implements the isolated in-memory package
+  `internal/runtimeidentity` with all nine conceptual operations from §21 and
+  proof tests for all seventeen acceptance proofs from §22. No external storage,
+  HTTP API, recovery, or production wiring exists. Design-only TASK-017 adds Approved
   [DP-015](../design/DP-015-runtime-management-command-idempotency.md), with
   Implementation Status Planned, as the candidate section 19(3) contract. It
   defines authorized command scope, immutable intent binding, durable claim

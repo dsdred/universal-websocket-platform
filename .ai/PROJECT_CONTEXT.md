@@ -18,14 +18,15 @@
   отсутствуют; Draft DP-012 и
   `internal/configurationloadsource.MemorySource` реализуют concrete Source
   adapter изолированно; Draft DP-013 и `internal/runtimemanagement` реализуют
-  management routing изолированно. Approved/Planned DP-014–
-  DP-018 закрывают focused design gates ARCH-004 §19(2)–(6) для operational
-  identity persistence, command idempotency, activation/replacement/rollback,
+  management routing изолированно; Approved DP-014 и `internal/runtimeidentity`
+  реализуют in-memory Runtime Instance aggregate store изолированно.
+  Approved/Planned DP-015–DP-018 закрывают focused design gates ARCH-004
+  §19(3)–(6) для command idempotency, activation/replacement/rollback,
   recovery/reconciliation и operational error reporting/redaction.
-  HTTP, concrete policy, persistence/command/recovery/reporting
+  HTTP, concrete policy, command/recovery/reporting
   package/schema, management wiring и Production Activation отсутствуют**
-- Последняя завершённая development task: **TASK-023 — Runtime Management
-  Routing Implementation; Completed — Coordinator Accepted**
+- Последняя завершённая development task: **TASK-024 — Runtime Operational
+  Identity Persistence Implementation; Completed — Coordinator Accepted**
 - Последняя завершённая operational task: **TASK-012 — Engineering Process
   Hardening; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
@@ -252,6 +253,14 @@
   23/0/0. Production Control Service routing, concrete policy, persistence,
   recovery, management wiring и Production Activation отсутствуют. Следующий
   DP-014 readiness candidate не активирован**
+- TASK-024: **Completed — Coordinator Accepted;
+  `internal/runtimeidentity` реализует все девять conceptual operations
+  Approved DP-014 §21 и удовлетворяет всем семнадцати acceptance proofs §22
+  как isolated in-process in-memory store; 35 proof/regression tests и focused
+  stress -count=100 PASS; race detector недоступен без C compiler; full
+  regression, vet, gofmt и diff checks PASS; PROCESS-002 Synchronized; Scope
+  Audit 9/0/0. External storage, HTTP API, production wiring и Production
+  Activation отсутствуют**
 - Stage 2 task-before-work ordering выполнен для TASK-003, TASK-004, TASK-005, TASK-006 и TASK-007: task record создан первым content change, а task index обновлён только после initial gate
 - Publication history: **TASK-005 commit `99e0d3d`, TASK-006 commit `fd0f80a` и TASK-007 commit `2e6d221` merged через PR #6/#7/#8; transient pre-commit/Publisher blockers не являются durable project-state instructions**
 - Design Status DP-009 остаётся **Draft**; Bootstrap и Runtime Launcher
@@ -270,9 +279,10 @@
 - Design Status DP-013 — **Draft**, Implementation Status — **Implemented in
   isolation**; exact management routing package и local proofs существуют,
   concrete policy, full integration и production wiring отсутствуют
-- Design Status DP-014 — **Approved**, Implementation Status — **Planned**;
-  durable operational identity определена только на design level; repository,
-  schema, API, recovery и production wiring отсутствуют
+- Design Status DP-014 — **Approved**, Implementation Status — **Implemented in
+  isolation**; in-memory Runtime Instance aggregate store `internal/runtimeidentity`
+  реализован изолированно; external storage, HTTP API, recovery и production
+  wiring отсутствуют
 - Design Status DP-015 — **Approved**, Implementation Status — **Planned**;
   durable management command idempotency определена только на design level;
   command store, schema, API, recovery и production wiring отсутствуют
