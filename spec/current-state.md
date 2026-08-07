@@ -23,8 +23,8 @@ concrete authorization policy, management wiring и Control Service activation
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
-**Последняя завершённая development task:** TASK-023 — Runtime Management
-Routing Implementation; `Completed — Coordinator Accepted`.
+**Последняя завершённая development task:** TASK-024 — Runtime Operational
+Identity Persistence Implementation; `Completed — Coordinator Accepted`.
 
 **Последняя завершённая operational task:** TASK-012 — Engineering Process
 Hardening; `Completed — Coordinator Accepted`.
@@ -392,6 +392,21 @@ concrete policy, persistence, recovery, management wiring и Production
 Activation отсутствуют. Следующий candidate — отдельный bounded readiness
 intake implementation prerequisites Approved/Planned DP-014; не активирован.
 
+**TASK-024:** `Completed — Coordinator Accepted`. Bounded isolated package
+`internal/runtimeidentity` реализует все девять conceptual operations
+Approved DP-014 §21 — `AllocateCandidateIdentity`, `CreateRuntimeInstance`,
+`ReadRuntimeInstance`, `ReadLaunchAttemptHistory`,
+`ConditionalClaimLaunchAttempt`, `ConditionalBindExecutionGeneration`,
+`ConditionalPublishRunning`, `ConditionalClaimStop`,
+`ConditionalPublishTerminal` — и удовлетворяет всем семнадцати acceptance
+proofs §22 как isolated in-process in-memory store. 35 proof/regression tests
+и focused stress `-count=100` PASS; race detector недоступен без C compiler.
+Full regression, vet, gofmt и diff checks PASS; Independent Reviewer Approved
+0/0; PROCESS-002 Synchronized; Scope Audit 12/0/0. Design Status DP-014
+остаётся Approved. External storage, HTTP API, production wiring и Production
+Activation отсутствуют. Следующий candidate — bounded isolated DP-015
+implementation; не активирован.
+
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task
 branch, а task index обновлён только после initial gate; task-before-work
@@ -430,6 +445,12 @@ Runtime Management Routing DP-013 имеет Design Status Draft и Implementati
 Status Implemented in isolation. Immutable Directory, exact Target/Binding,
 policy-neutral authorization seam и local proofs существуют; concrete policy,
 HTTP API, persistence, application wiring и Production Activation отсутствуют.
+
+Runtime Operational Identity Persistence DP-014 имеет Design Status Approved и
+Implementation Status Implemented in isolation. Package `internal/runtimeidentity`
+реализует все девять conceptual operations §21 и удовлетворяет всем acceptance
+proofs §22 как in-memory store изолированно; external storage, HTTP API,
+production wiring и Production Activation отсутствуют.
 
 ## Архитектурные решения
 

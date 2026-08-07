@@ -5,12 +5,14 @@
 ## 1. Status
 
 - **Design Status:** Approved
-- **Implementation Status:** Planned
+- **Implementation Status:** Implemented in isolation
 
-This approved design defines a planned durable
-boundary for Runtime Instance and Launch Attempt identity and history. No
-repository, schema, storage technology, API, package, recovery path, or
-production wiring exists as a result of this document.
+This approved design defines a durable boundary for Runtime Instance and
+Launch Attempt identity and history. Package `internal/runtimeidentity`
+implements all nine conceptual operations from §21 and satisfies all
+acceptance proofs from §22 as an isolated in-process in-memory store. No
+external storage, HTTP API, production wiring, or second lifecycle owner
+exists as a result of this implementation.
 
 ## 2. Purpose
 
