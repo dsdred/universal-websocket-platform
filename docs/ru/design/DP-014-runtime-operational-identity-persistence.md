@@ -40,7 +40,8 @@ Proposal уточняет, но не переопределяет:
 
 Active ARCH-004 имеет приоритет над этим Approved design. DP-010 остаётся
 contract process-local Owner и ownership live Host. DP-013 остаётся
-Draft/Planned и Ready только для bounded isolated implementation.
+Draft по Design Status и реализован изолированно
+`internal/runtimemanagement`; production integration отсутствует.
 
 ## 4. Scope и non-goals
 
@@ -455,7 +456,7 @@ manager или service locator не разрешены.
 
 ## 22. Acceptance proofs
 
-Будущая implementation должна доказать минимум:
+Implementation должна доказать минимум:
 
 1. atomic complete creation Instance и immutable binding;
 2. uniqueness RuntimeInstanceID внутри management domain;
@@ -497,13 +498,15 @@ reporting. Approved [DP-015](DP-015-runtime-management-command-idempotency.md),
 [DP-016](DP-016-runtime-activation-replacement-rollback.md),
 [DP-017](DP-017-runtime-recovery-reconciliation.md) и
 [DP-018](DP-018-runtime-operational-error-reporting-redaction.md) определяют
-эти отдельные ответственности без их implementation.
+эти отдельные ответственности. DP-015 реализован изолированно
+`internal/runtimecommandidempotency`; DP-016–DP-018 остаются Planned.
 
 ## 24. Явно отложено
 
-До focused designs или implementation tasks отложены:
+За пределы isolated implementations DP-014/DP-015 отложены:
 
-- command keys, deduplication windows, replay results и caller retry policy;
+- transport command-key fields, retention/deduplication windows, caller retry
+  policy и integrated replay delivery;
 - выбор, activation, replacement или rollback version;
 - hydration Owner после restart и reconciliation с execution evidence;
 - diagnostic taxonomy, redaction policy, audit, metrics и alerting;
@@ -516,15 +519,15 @@ revision, history или conceptual operations.
 
 ## 25. Implementation boundary
 
-Implementation Status — Planned. В repository существуют isolated
-process-local Lifecycle Owner, launch flow/source components и management
-routing DP-013.
+Implementation Status — Implemented in isolation. Package
+`internal/runtimeidentity` реализует девять conceptual operations §21 как
+process-local in-memory Runtime Instance aggregate store с proof conditional
+revision и append-only history Launch Attempt. Он не подключён к management
+routing DP-013 или production composition.
 
-Durable operational identity repository, schema, package, adapter, API,
-hydration, recovery, management wiring и Production Activation отсутствуют.
-Approval не создаёт и не разрешает их. Изолированный package DP-013 не меняет
-эту boundary; integration остаётся blocked до появления required persistence и
-downstream dependencies.
+External durable storage, schema, adapter, API, hydration, recovery, management
+wiring и Production Activation отсутствуют. Изолированный package не заявляет
+persistence через restart процесса и не меняет downstream integration gates.
 
 ## 26. Решение
 
@@ -550,4 +553,6 @@ Runtime Lifecycle Owner остаётся единственным lifecycle и l
 Atomic persistence фиксирует правдивые facts, но не доказывает liveness после
 потери Owner. Stale operations выполняют zero mutation; indeterminate outcomes
 требуют inspection exact identity и revision без blind retry с новым ID.
-Design не выбирает schema, technology, API или implementation.
+Design не выбирает external durable schema, storage technology, integration
+API или production composition. Isolated process-local in-memory
+implementation остаётся package, описанным в §25.

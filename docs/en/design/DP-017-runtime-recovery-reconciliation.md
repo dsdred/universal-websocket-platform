@@ -37,7 +37,8 @@ This proposal refines, without overriding:
   proven release, and process-loss cut points.
 
 Accepted ADRs and Active or Frozen architecture remain authoritative. DP-013
-remains Draft; Approved DP-014 through DP-017 do not implement their contracts.
+remains Draft and is implemented in isolation. Approved DP-014 and DP-015 are
+implemented in isolation; Approved DP-016 and DP-017 remain Planned.
 
 ## 4. Scope
 
@@ -514,8 +515,9 @@ authorize production activation.
 This Approved design closes the focused architecture design gate for ARCH-004
 section 19(5). Approved DP-014 through DP-016 and DP-018 close the other
 focused design gates in sections 19(2)–(4) and 19(6). The complete approved
-set defines fail-closed recovery ordering but creates no store, execution
-adapter, recovery executor, reporting, integration, or Production Activation.
+set defines fail-closed recovery ordering. Isolated process-local DP-014/DP-015
+stores exist, but no process-restart recovery store, execution adapter,
+recovery executor, reporting, integration, or Production Activation exists.
 
 ## 27. Explicit Deferrals
 
@@ -532,9 +534,10 @@ Deferred to focused designs or implementation tasks:
 
 ## 28. Implementation Boundary
 
-Implementation Status is Planned. The repository contains no durable Runtime
-aggregate or command store, recovery claim, execution-evidence adapter,
-recovery executor, public management API, or production wiring.
+Implementation Status is Planned. The repository contains isolated
+process-local Runtime aggregate and command stores, but no external durable or
+process-restart store, recovery claim, execution-evidence adapter, recovery
+executor, public management API, or production wiring.
 
 The current in-process Runtime components do not survive Control Service
 process termination and expose no restart-time recovery capability. Creating

@@ -19,20 +19,58 @@
   `internal/configurationloadsource.MemorySource` реализуют concrete Source
   adapter изолированно; Draft DP-013 и `internal/runtimemanagement` реализуют
   management routing изолированно; Approved DP-014 и `internal/runtimeidentity`
-  реализуют in-memory Runtime Instance aggregate store изолированно.
-  Approved/Planned DP-015–DP-018 закрывают focused design gates ARCH-004
-  §19(3)–(6) для command idempotency, activation/replacement/rollback,
+  реализуют in-memory Runtime Instance aggregate store изолированно; Approved
+  DP-015 и `internal/runtimecommandidempotency` реализуют command claim/replay
+  boundary изолированно. Approved/Planned DP-016–DP-018 закрывают focused
+  design gates ARCH-004 §19(4)–(6) для activation/replacement/rollback,
   recovery/reconciliation и operational error reporting/redaction.
-  HTTP, concrete policy, command/recovery/reporting
+  HTTP, concrete policy, external command storage, recovery/reporting
   package/schema, management wiring и Production Activation отсутствуют**
-- Последняя завершённая development task: **TASK-024 — Runtime Operational
-  Identity Persistence Implementation; Completed — Coordinator Accepted**
+- Последняя завершённая development task: **TASK-025 — Runtime Management
+  Command Idempotency Implementation; Completed — Coordinator Accepted**
 - Последняя завершённая operational task: **TASK-012 — Engineering Process
   Hardening; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
 - Последняя завершённая architecture task: **TASK-021 — Runtime Management
   Readiness Assessment; Completed — Coordinator Accepted**
 - Текущая architecture task: **отсутствует**
+- TASK-025 acceptance evidence: **Runtime Management Command Idempotency
+  Implementation; Completed — Coordinator Accepted;
+  initial independent
+  Reviewer: 4 blocking findings — abandoned permit tracking, stale Boundary
+  claim after reconstruction, critical DP-014 §25 drift и incomplete
+  post-claim/lost-permit/stale-client proofs; rework B-001–B-004 завершён:
+  synchronous private permit, atomic stale-client admission, DP-014 EN/RU sync
+  и новые regression proofs; repeat Reviewer подтвердил B-001–B-004 resolved,
+  но вернул RR-B-001–RR-B-003 по stale DP-013 EN/RU, exported permit godoc и
+  отсутствующей README applicability record; Acceptance/closure запрещены до
+  second rework и нового Approved independent review; second rework завершён:
+  DP-013 EN/RU synchronized, godoc corrected, README applicability recorded,
+  Verification/PROCESS-002 PASS WITH LIMITATION и provisional Scope Audit
+  16/0/0; third Independent Reviewer подтвердил code/proofs, но вернул Critical
+  IR3-B-001 по residual stale status contradictions в earlier sections
+  DP-013/DP-014/DP-015 EN/RU и `spec/decisions.md`, плюс Low IR3-N-001 grammar
+  MASTER_PLAN EN; final documentation cleanup синхронизировал все live
+  DP-013/014/015 EN/RU sections, MASTER_PLAN и project-state sources, исправил
+  grammar и добавил актуальную DP-015 summary; links 852/0, parity/status,
+  full/stress/vet/gofmt/module/diff checks и Scope Audit 16/0/0 PASS; race
+  unavailable без `gcc`; fourth Independent Reviewer вынес Needs Revision:
+  FIR-B-001 — `runtime.Goexit` сохраняет lost permit falsely tracked,
+  FIR-B-002 — stale design indexes и live DP-016/DP-017 status wording вне
+  16-file sync, FIR-B-003 — residual `spec/decisions.md` contradiction;
+  fifth rework устранил FIR-B-001 defer-based cleanup и добавил
+  `runtime.Goexit` proof; repository-wide sweep 32 documents/22 live/10
+  historical синхронизировал design indexes, DP-013/016/017/018 EN/RU,
+  `spec/decisions.md` и bookkeeping; Verification/PROCESS-002/status assertions
+  PASS; два interrupted read-only reviews нашли и same-slice rework устранил
+  generic drift в `spec/current-state` и DP-011 EN/RU; current Scope Audit
+  26/0/0, race limited без `gcc`; задача передаётся новому independent
+  Reviewer вынес Approved, blocking 0: FIR-B-001, DP-015 proofs, 32/37-document
+  status sweep, PROCESS-002, Verification Matrix и Scope Audit 26/0/0 PASS;
+  задача передана Coordinator для отдельного Closure Audit / Acceptance;
+  Coordinator Closure Audit PASS; Task Contract, exact scope 26/0/0,
+  Verification Matrix, PROCESS-002, status consistency и repository-state
+  audit подтверждены; Commit Gate, commit, push и publication не выполнялись**
 - Текущая development task: **отсутствует**
 - Последняя завершённая documentation task: **TASK-022 — Root README Runtime
   Status Synchronization; Completed — Coordinator Accepted**
@@ -259,7 +297,7 @@
   как isolated in-process in-memory store; 35 proof/regression tests и focused
   stress -count=100 PASS; race detector недоступен без C compiler; full
   regression, vet, gofmt и diff checks PASS; PROCESS-002 Synchronized; Scope
-  Audit 9/0/0. External storage, HTTP API, production wiring и Production
+  Audit 12/0/0. External storage, HTTP API, production wiring и Production
   Activation отсутствуют**
 - Stage 2 task-before-work ordering выполнен для TASK-003, TASK-004, TASK-005, TASK-006 и TASK-007: task record создан первым content change, а task index обновлён только после initial gate
 - Publication history: **TASK-005 commit `99e0d3d`, TASK-006 commit `fd0f80a` и TASK-007 commit `2e6d221` merged через PR #6/#7/#8; transient pre-commit/Publisher blockers не являются durable project-state instructions**
@@ -283,9 +321,10 @@
   isolation**; in-memory Runtime Instance aggregate store `internal/runtimeidentity`
   реализован изолированно; external storage, HTTP API, recovery и production
   wiring отсутствуют
-- Design Status DP-015 — **Approved**, Implementation Status — **Planned**;
-  durable management command idempotency определена только на design level;
-  command store, schema, API, recovery и production wiring отсутствуют
+- Design Status DP-015 — **Approved**, Implementation Status — **Implemented
+  in isolation**; process-local `internal/runtimecommandidempotency` реализует
+  claim/replay storage и one-shot permits; external schema, API, recovery,
+  integration и production wiring отсутствуют
 - Design Status DP-016 — **Approved**, Implementation Status — **Planned**;
   activation/replacement/rollback ordering определён только на design level;
   implementation, API, recovery и production wiring отсутствуют

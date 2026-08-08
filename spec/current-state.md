@@ -6,25 +6,26 @@
 pipeline. Configuration Loader contract DP-007, Snapshot Builder contract
 DP-008, Runtime Bootstrap contract DP-009, stateless Runtime Launcher и
 Runtime Lifecycle Owner DP-010 реализованы изолированно. Production pipeline
-Loader-to-Builder-to-Launcher и persistent operational identity entities не
+Loader-to-Builder-to-Launcher и production persistent operational entities не
 реализованы. Draft DP-011 и package `internal/runtimelaunchflow`
 реализуют base integration contract этого pipeline изолированно; private
 Start-claim continuation и execution-binding/load gate DP-016/DP-017
 запланированы и отсутствуют. Draft DP-012 и
 package `internal/configurationloadsource` реализуют concrete Source adapter
 изолированно. Draft DP-013 и package `internal/runtimemanagement` реализуют
-management routing изолированно. Approved/Planned DP-014–DP-018
-закрывают focused design gates ARCH-004 §19(2)–(6) для operational identity
-persistence, command idempotency, activation/replacement/rollback,
-recovery/reconciliation и operational error reporting/redaction; package, schema,
-HTTP API, persistence/idempotency/lifecycle/recovery/reporting implementation,
-concrete authorization policy, management wiring и Control Service activation
-отсутствуют.
+management routing изолированно. Together Approved DP-014–DP-018 закрывают
+focused design gates ARCH-004 §19(2)–(6): DP-014 — §19(2), DP-015 — §19(3),
+DP-016 — §19(4), DP-017 — §19(5), DP-018 — §19(6). DP-014 и DP-015 реализованы
+изолированно package `internal/runtimeidentity` и
+`internal/runtimecommandidempotency`; DP-016–DP-018 имеют Implementation Status
+Planned. Packages DP-016–DP-018, external schema/HTTP API/persistence,
+orchestration/recovery/reporting implementation, concrete authorization policy,
+management wiring и Control Service activation отсутствуют.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
-**Последняя завершённая development task:** TASK-024 — Runtime Operational
-Identity Persistence Implementation; `Completed — Coordinator Accepted`.
+**Последняя завершённая development task:** TASK-025 — Runtime Management
+Command Idempotency Implementation; `Completed — Coordinator Accepted`.
 
 **Последняя завершённая operational task:** TASK-012 — Engineering Process
 Hardening; `Completed — Coordinator Accepted`.
@@ -405,7 +406,70 @@ Full regression, vet, gofmt и diff checks PASS; Independent Reviewer Approved
 0/0; PROCESS-002 Synchronized; Scope Audit 12/0/0. Design Status DP-014
 остаётся Approved. External storage, HTTP API, production wiring и Production
 Activation отсутствуют. Следующий candidate — bounded isolated DP-015
-implementation; не активирован.
+implementation; активирован как TASK-025.
+
+**TASK-025:** `Completed — Coordinator Accepted`. Isolated package
+`internal/runtimecommandidempotency` реализует exact Scope/CommandKey identity,
+immutable Start/Stop intent, authorization-before-claim, atomic per-Instance
+admission, claim-before-delegation, one-shot process-local execution permit,
+tracked-Start Stop exception, unresolved barrier и terminal semantic replay.
+`MemoryStorage` сохраняет claim/replay facts при reconstruction `Boundary`, но
+не обещает persistence через restart процесса и не восстанавливает live
+permits. Focused stress, full regression, vet, gofmt и diff checks PASS; race
+detector недоступен без `gcc`. Independent review и Coordinator Acceptance ещё
+не выполнены. Independent Reviewer вернул 4 blocking findings: abandoned
+permit ошибочно остаётся tracked; stale Boundary может commit Claim после
+client reconstruction; pre-existing DP-014 §25 EN/RU противоречит factual
+Implementation Status; post-claim cancellation/lost-permit/stale-client proofs
+неполны. Rework устранил returned-permit gap через synchronous private permit,
+атомарно сериализовал stale-client admission, исправил DP-014 §25 EN/RU и
+добавил post-claim cancellation/abandoned-permit/stale-client proofs. Repeat
+Verification PASS WITH LIMITATION (`gcc`/race unavailable); repeat independent
+review ожидается. Integration, API, recovery и Production Activation
+отсутствуют. Repeat Reviewer подтвердил исходные B-001–B-004 resolved, но
+вернул новые blocking RR-B-001–RR-B-003: stale DP-013 EN/RU, exported godoc о
+returned permit и отсутствующий README applicability record. Acceptance и
+closure запрещены до second rework и нового Approved independent review.
+Second rework синхронизировал DP-013 EN/RU, исправил exported private-permit
+godoc и добавил root README applicability record. Verification/PROCESS-002 и
+16/0/0 provisional Scope Audit завершены. Third Independent Reviewer подтвердил
+code/proofs, но вернул Critical IR3-B-001: earlier normative sections
+DP-013/DP-014/DP-015 EN/RU и `spec/decisions.md` содержат residual stale status
+contradictions; Low IR3-N-001 отмечает grammar MASTER_PLAN EN. Acceptance и
+closure запрещены до documentation rework и нового Approved review. Final
+documentation cleanup устранил live contradictions во всех DP-013/014/015
+EN/RU sections, MASTER_PLAN и project-state sources, исправил grammar и
+дополнил актуальную сводку DP-015. Links 852/0, parity, status validation,
+full/stress tests, vet, gofmt, module/diff checks и Scope Audit 16/0/0 PASS;
+race остаётся недоступен без `gcc`. Задача передана новому независимому
+Reviewer; Acceptance остаётся запрещённым до verdict Approved.
+Fourth Independent Reviewer вынес `Needs Revision`: FIR-B-001 обнаружил
+`runtime.Goexit` path, сохраняющий lost permit falsely tracked; FIR-B-002
+обнаружил stale design indexes и live DP-016/DP-017 status wording вне
+16-file sync; FIR-B-003 подтвердил residual contradiction в
+`spec/decisions.md`. Defensible rework scope — 22 Required files. Coordinator
+Acceptance, Closure, commit и publication запрещены до bounded rework и нового
+Approved independent review.
+Fifth rework устранил FIR-B-001 defer-based cleanup для `runtime.Goexit` и
+добавил regression proof. Полный status sweep классифицировал 32 документа как
+22 live и 10 historical, синхронизировал design indexes, DP-013/016/017/018
+EN/RU, `spec/decisions.md` и project bookkeeping. Verification Matrix,
+PROCESS-002 и 19 status assertions PASS; два interrupted read-only reviews
+дополнительно нашли generic drift в sections `Что существует`/`Чего не
+существует` и DP-011 EN/RU. Same-slice corrections устранили его, exact Scope
+Audit расширен до 26/0/0; race ограничен отсутствием `gcc`. Задача передаётся
+новому independent Reviewer; Acceptance остаётся запрещённым до Approved
+verdict.
+Post-terminal Independent Reviewer вынес `Approved`, blocking findings 0:
+FIR-B-001, DP-015 §24 isolated proofs, 32/37-document status sweep,
+PROCESS-002, 25/25 status assertions, Verification Matrix и Scope Audit 26/0/0
+PASS. Задача передана Coordinator для отдельного Closure Audit / Coordinator
+Acceptance; Commit Gate, commit, push и publication не выполнялись.
+Coordinator Closure Audit повторно подтвердил Task Contract, exact scope
+26/0/0, Verification Matrix, PROCESS-002, status consistency, Approved review
+0 blocking и отсутствие unexpected/staged changes. Coordinator Acceptance —
+`Accepted`. Commit и publication не выполнялись; следующая development task не
+активирована.
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task
@@ -438,19 +502,27 @@ Builder, но не выбирает Source, management route или Production A
 
 Runtime Source Composition DP-012 имеет Design Status Draft и Implementation
 Status Implemented in isolation. In-memory Source adapter, local proofs,
-Loader integration и construction proof существуют; persistence и production
-composition отсутствуют.
+Loader integration и construction proof существуют; external Source
+persistence и production composition отсутствуют.
 
 Runtime Management Routing DP-013 имеет Design Status Draft и Implementation
 Status Implemented in isolation. Immutable Directory, exact Target/Binding,
 policy-neutral authorization seam и local proofs существуют; concrete policy,
-HTTP API, persistence, application wiring и Production Activation отсутствуют.
+HTTP API, external/process-restart persistence, application wiring и Production
+Activation отсутствуют.
 
 Runtime Operational Identity Persistence DP-014 имеет Design Status Approved и
 Implementation Status Implemented in isolation. Package `internal/runtimeidentity`
 реализует все девять conceptual operations §21 и удовлетворяет всем acceptance
 proofs §22 как in-memory store изолированно; external storage, HTTP API,
 production wiring и Production Activation отсутствуют.
+
+Runtime Management Command Idempotency DP-015 имеет Design Status Approved и
+Implementation Status Implemented in isolation. Package
+`internal/runtimecommandidempotency` реализует process-local in-memory
+claim/replay boundary и применимые isolated acceptance proofs §24; external
+durable storage, management integration/API, recovery, reporting и Production
+Activation отсутствуют.
 
 ## Архитектурные решения
 
@@ -650,12 +722,18 @@ production wiring и Production Activation отсутствуют.
 - Compiled Router хранит только enabled Routes, сортирует их один раз по возрастанию Priority, применяет exact case-sensitive Matchers и синхронно вызывает ровно один выбранный Handler
 - Default Handler используется только после отсутствия explicit match; No Match не вызывает Handler, возвращает nil и позволяет Session продолжить read loop без legacy fallback для явно заданной Routing-секции
 - Router переиспользуется всеми Session как единый immutable `message.Handler`; route compilation, sorting, normalization и Handler resolution на message hot path отсутствуют
-- Middleware, Message Queue, Broadcast, публичный Session Manager Registry API и Persistence отсутствуют
+- Middleware, Message Queue, Broadcast, публичный Session Manager Registry API и Message Persistence отсутствуют
 - Архитектура Runtime принята в ADR-003; pre-Upgrade Handshake, transactional production Session handoff, Manager-aware Runtime shutdown и изолированный Configuration Loader реализованы, а production launch pipeline, operational diagnostics и supervision ещё отсутствуют
 - Изолированный `internal/runtimelifecycle` реализует DP-010
   `PrepareStart`/`Start`/`Stop`/`Observe`, Owner-issued Launch Attempt,
   per-Instance serialization и truthful Host ownership без management или
   production integration
+- Изолированный `internal/runtimemanagement` реализует DP-013 exact routing и
+  authorization-before-mutation без Control Service integration
+- Изолированный `internal/runtimeidentity` реализует DP-014 process-local
+  in-memory Runtime Instance aggregate и append-only Launch Attempt history
+- Изолированный `internal/runtimecommandidempotency` реализует DP-015
+  process-local command claim/replay store и unresolved admission barriers
 
 ## Чего не существует
 
@@ -663,9 +741,10 @@ production wiring и Production Activation отсутствуют.
 - Персистентного хранения Configuration
 - Validation, Rollback и lifecycle Snapshot для Configuration Version
 - PostgreSQL
-- Управления WebSocket-серверами
+- User-facing/Control Service API управления WebSocket-серверами
 - Control Plane lifecycle управления экземплярами Runtime
-- Runtime Instance и Launch Attempt как operational entities
+- Production/external-durable Runtime Instance и Launch Attempt operational
+  entities; process-local isolated DP-014 store существует
 - Production integration Runtime Lifecycle Owner в Control Service
 - Интеграция Configuration Loader в production launch pipeline
 - Запуск Runtime и управление им из Control Service

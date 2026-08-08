@@ -434,7 +434,8 @@ This Approved design closes the focused architecture design gate for ARCH-004
 section 19(6). Approved DP-014 through DP-017 close the predecessor focused
 design gates in sections 19(2)–(5). The dependency-ordered design set is
 approved, but no reporting, management integration, or Production Activation
-exists. DP-013 is implemented only as a bounded isolated package.
+exists. DP-013, DP-014, and DP-015 are implemented only as bounded isolated
+packages; DP-016 and DP-017 remain Planned.
 
 ## 24. Explicit Deferrals
 
@@ -454,7 +455,8 @@ Deferred to focused decisions or implementation tasks:
 
 Implementation Status is Planned. The repository contains no report model,
 projector, redaction implementation, delivery adapter, management API,
-durable management store, recovery executor, or production wiring.
+external/process-restart management store, recovery executor, or production
+wiring. Isolated process-local DP-014/DP-015 stores remain separate.
 
 Approval closes the section 19(6) design gate but does not implement or wire
 the contract and does not change the separate status of DP-013.

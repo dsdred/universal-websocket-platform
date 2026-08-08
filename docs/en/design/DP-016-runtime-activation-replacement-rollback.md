@@ -9,7 +9,7 @@
 
 This approved design defines a planned ordering
 contract for activation, replacement, and explicit rollback of one Runtime
-Instance. No management operation, orchestrator, persistence implementation,
+Instance. No activation/replacement orchestrator or its workflow persistence,
 API, recovery worker, or production wiring exists as a result of this document.
 
 ## 2. Purpose
@@ -37,7 +37,8 @@ This proposal refines, without overriding:
   that requires and consumes the DP-014-owned execution-generation binding.
 
 Accepted ADRs and Active or Frozen architecture remain authoritative. DP-013
-remains Draft; Approved DP-014 through DP-017 do not implement their contracts.
+remains Draft and is implemented in isolation. Approved DP-014 and DP-015 are
+implemented in isolation; Approved DP-016 and DP-017 remain Planned.
 
 ## 4. Scope
 
@@ -456,8 +457,9 @@ storage-client-restart scenarios. They do not authorize production activation.
 This Approved design closes the focused architecture design gate for ARCH-004
 section 19(4). Approved DP-014, DP-015, DP-017, and DP-018 close the other
 focused design gates in sections 19(2), 19(3), 19(5), and 19(6). The complete
-approved set defines ordering but creates no orchestrator, persistence,
-recovery, reporting, integration, or Production Activation.
+approved set defines ordering. Isolated process-local DP-014/DP-015 stores
+exist, but no activation orchestrator, external durable workflow persistence,
+recovery, reporting, integration, or Production Activation exists.
 
 ## 27. Explicit Deferrals
 
@@ -474,11 +476,11 @@ Deferred to focused designs or implementation tasks:
 ## 28. Implementation Boundary
 
 Implementation Status is Planned. The repository contains isolated Lifecycle
-Owner, launch flow, and source adapter plus Draft DP-013 implemented in
-isolation and Approved/Planned DP-014 through DP-018. It contains no
-activation/replacement orchestrator,
-durable command or aggregate store, public management API, recovery executor,
-or production wiring.
+Owner, launch flow, source adapter, Draft DP-013 routing, Approved DP-014
+aggregate storage, and Approved DP-015 command storage. DP-016 through DP-018
+remain Planned. It contains no activation/replacement orchestrator, external
+durable command/aggregate/workflow storage, public management API, recovery
+executor, or production wiring.
 
 Approval closes the section 19(4) design gate but does not implement or wire
 the contract.

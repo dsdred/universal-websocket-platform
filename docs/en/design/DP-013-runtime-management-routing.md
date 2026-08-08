@@ -11,8 +11,9 @@
 
 This proposal remains non-normative until approved. Its isolated in-process
 management command boundary is implemented in `internal/runtimemanagement`.
-Production Control Service routing, an authorization policy, persistence,
-recovery, and Production Activation remain absent.
+Production Control Service routing, a concrete authorization policy,
+external/process-restart persistence, recovery, and Production Activation
+remain absent.
 
 ## 2. Purpose
 
@@ -41,8 +42,7 @@ Accepted ADR, Frozen foundation, and Active architecture remain authoritative.
 The design covers one process-local command directory, immutable Runtime
 Instance bindings, exact identity routing, a policy-neutral authorization
 seam, authorization-before-mutation ordering, concurrency, cancellation,
-failure preservation, composition audit, and future isolated proof
-requirements.
+failure preservation, composition audit, and isolated proof evidence.
 
 It does not define transport resources or data transfer objects.
 
@@ -85,7 +85,7 @@ The single focused management command boundary. Its private map is immutable
 after construction and resolves only Runtime Instance scopes. It is not a
 dynamic registry, generic resolver, or service locator.
 
-## 7. Exact planned public surface
+## 7. Exact public surface
 
 ```go
 package runtimemanagement
@@ -564,14 +564,17 @@ a generic dependency container.
 The Draft design contract is implemented in a bounded isolated slice. Approved
 DP-014 through DP-018 close all focused design gates required by ARCH-004
 section 19(2)–(6). Full integration remains blocked until the required
-persistence, command, activation, recovery, and reporting implementations
-exist and are composed through an explicit Control Service boundary.
+external durability, activation, recovery, and reporting implementations exist
+and the isolated routing, identity, and command packages are composed through
+an explicit Control Service boundary.
 
 Loader, Snapshot provenance, and schema compatibility are already resolved by
 ARCH-005 and DP-007 through DP-012. The isolated implementation precedent of
 DP-010 through DP-012 does not create an exception to the higher-status
 ARCH-004 gate. Approved DP-014 through DP-018 define the dependency-ordered
-contracts without providing their packages, adapters, schemas, or wiring.
+contracts. DP-014 and DP-015 now provide isolated process-local packages;
+external adapters, schemas, wiring, and DP-016 through DP-018 implementations
+remain absent.
 
 ## 27. Isolated implementation proofs
 
@@ -617,11 +620,13 @@ Control Service wiring or Runtime activation.
 
 ## 28. Explicit deferrals
 
-The section 19 focused design gates are closed. The following implementations
-remain required before integration:
+The section 19 focused design gates are closed. DP-014 operational identity and
+DP-015 command idempotency now have isolated process-local in-memory
+implementations. The following production dependencies remain required before
+integration:
 
-- durable operational identity persistence;
-- durable management command idempotency;
+- external durable operational identity storage and its integration adapter;
+- external durable management command storage and its integration adapter;
 - activation, replacement, and rollback orchestration;
 - recovery and reconciliation;
 - operational error reporting and redaction.
@@ -651,15 +656,17 @@ Control Service binding, endpoint, concrete policy, persistence adapter,
 recovery path, or activation path.
 
 Approved DP-014 through DP-018 close the focused design gates in ARCH-004
-section 19(2)–(6), but do not implement persistence, idempotency, activation,
-recovery, reporting, Control Service integration, or Production Activation.
-Any integration slice must first provide its exact required dependencies,
-including the planned private Start-claim continuation and
+section 19(2)–(6). Packages `internal/runtimeidentity` and
+`internal/runtimecommandidempotency` implement DP-014 and DP-015 in isolation
+over process-local in-memory storage. External durability, activation,
+recovery, reporting, Control Service integration, and Production Activation
+remain absent. Any integration slice must first provide its exact required
+dependencies, including the planned private Start-claim continuation and
 execution-generation binding/load gate.
 
 ## 30. Decision
 
-The planned Runtime Management Directory is one immutable process-local
+The Runtime Management Directory is one immutable process-local
 command boundary. It validates and routes exact Runtime Instance identity,
 authorizes Start, Stop, and Observe before lifecycle delegation, constructs
 one Flow from the same Owner and Loader for each accepted scope, and preserves

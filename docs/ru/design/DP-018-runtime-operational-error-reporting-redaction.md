@@ -428,8 +428,9 @@ Production Activation.
 Этот Approved design закрывает focused architecture design gate ARCH-004
 section 19(6). Approved DP-014–DP-017 закрывают predecessor focused design
 gates sections 19(2)–(5). Dependency-ordered design set approved, но reporting,
-management integration и Production Activation отсутствуют. DP-013 реализован
-только как bounded isolated package.
+management integration и Production Activation отсутствуют. DP-013, DP-014 и
+DP-015 реализованы только как bounded isolated packages; DP-016 и DP-017
+остаются Planned.
 
 ## 24. Явно отложенное
 
@@ -449,7 +450,8 @@ management integration и Production Activation отсутствуют. DP-013 �
 
 Implementation Status — Planned. Репозиторий не содержит report model,
 projector, redaction implementation, delivery adapter, management API,
-durable management store, recovery executor или production wiring.
+external/process-restart management store, recovery executor или production
+wiring. Isolated process-local stores DP-014/DP-015 остаются отдельными.
 
 Approval закрывает design gate section 19(6), но не реализует и не подключает
 contract и не меняет отдельный status DP-013.

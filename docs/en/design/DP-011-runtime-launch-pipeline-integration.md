@@ -13,11 +13,13 @@ Start-claim continuation extension is Planned
 and ARCH-005 and the existing Draft DP-007 through DP-010.
 
 The `internal/runtimelaunchflow` package implements this contract in isolation.
-Concrete Source composition, management routing, and Production Activation are
-absent. Implementation does not claim that the production launch capability
-is implemented and does not raise the status of any related Draft DP. The
-current package does not implement the private claim-continuation gate required
-by DP-016; that extension requires a separate implementation task.
+Concrete Source composition and management routing also exist as isolated
+packages under DP-012 and DP-013. Their production composition, Control Service
+routing, and Production Activation remain absent. Implementation does not claim
+that the production launch capability is implemented and does not raise the
+status of any related Draft DP. The current package does not implement the
+private claim-continuation gate required by DP-016; that extension requires a
+separate implementation task.
 
 ## 2. Purpose
 
@@ -600,16 +602,20 @@ that no bypassing production path exists.
 ## 24. Production Activation Gates
 
 Before the capability is described as production-integrated, separate tasks
-must define and verify:
+must compose and verify:
 
-- concrete Source composition;
-- the single management command boundary and authorization before mutation;
-- routing of exactly one Owner/Flow scope per Runtime Instance;
-- persistence of Runtime Instance, Launch Attempt, desired/actual facts, and
-  idempotency under ARCH-004;
-- recovery/reconciliation or explicit startup rejection while those contracts
-  are absent;
-- operational reporting and redaction of preparation/launch failures.
+- the existing isolated DP-012 Source composition in the production path;
+- the existing isolated DP-013 command boundary, authorization-before-mutation
+  seam, and exact Owner/Flow routing in the production path;
+- the existing isolated DP-014/DP-015 aggregate and command stores together
+  with the required external/process-restart durability;
+- the Planned DP-016 activation/replacement/rollback orchestrator, including
+  the private DP-011/DP-013 Start-claim continuation and DP-017-required
+  execution-binding/load gate;
+- implementation of the Approved/Planned DP-017 recovery/reconciliation
+  contract, or explicit startup rejection while that implementation is absent;
+- implementation of the Approved/Planned DP-018 operational reporting and
+  redaction contract for preparation/launch failures.
 
 DP-011 does not select the order or API of those tasks. The isolated package
 implementation is an independently verified prerequisite, but by itself it
@@ -620,11 +626,13 @@ the Control Service is implemented.
 
 Deferred:
 
-- Source adapters for in-memory repositories, PostgreSQL, YAML, or remote
-  transport;
+- additional Source adapters beyond the existing isolated in-memory adapter,
+  including PostgreSQL, YAML, or remote transport;
 - HTTP/CLI/API surface and authorization;
-- persistence schema and transactions;
-- durable command/result identity;
+- external durable persistence schema and transactions;
+- process-restart command/result persistence, retention, and recovery;
+- activation/replacement/rollback orchestration, private Start-claim
+  continuation, and execution-binding/load gate;
 - retry, backoff, restart, replacement, rollback policy, and reconciliation;
 - terminal Host supervision and unexpected failure;
 - timeout/force policy for a blocking Source;
@@ -668,7 +676,8 @@ Costs:
   forbidden;
 - package implementation still does not create a user-facing management
   capability;
-- persistence and authorization still require separate designs.
+- external persistence, concrete authorization, and production integration
+  still require separate tasks.
 
 ## 28. Conclusion
 

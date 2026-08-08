@@ -280,15 +280,16 @@ Architectural debt относится к границам, которые ост
   [DP-012](../design/DP-012-runtime-source-composition.md) с Implementation
   Status Implemented in isolation определяет confined exact in-memory Source
   adapter. Adapter, local proof tests, Loader integration и изолированный
-  construction proof `Source -> Loader -> Flow` существуют. Persistence,
-  application wiring и Production Activation отсутствуют. Design-only
+  construction proof `Source -> Loader -> Flow` существуют. External Source
+  persistence, application wiring и Production Activation отсутствуют. Design-only
   TASK-015 добавляет Draft
   [DP-013](../design/DP-013-runtime-management-routing.md) с Implementation
   Status Implemented in isolation для одного immutable process-local directory
   Start/Stop/Observe, exact routing Runtime Instance, authorization до
   lifecycle delegation и static binding Owner-to-Flow. TASK-023 реализует
-  isolated package и local proofs. HTTP API, concrete policy, persistence,
-  management wiring и activation отсутствуют; integration и Production
+  isolated package и local proofs. HTTP API, concrete policy,
+  external/process-restart persistence, management wiring и activation
+  отсутствуют; integration и Production
   Activation остаются blocked отсутствующими dependencies и wiring.
   Design-only TASK-016 добавляет Approved
   [DP-014](../design/DP-014-runtime-operational-identity-persistence.md) с
@@ -301,13 +302,16 @@ Architectural debt относится к границам, которые ост
   proof tests для всех семнадцати acceptance proofs §22. External storage,
   HTTP API, recovery и production wiring отсутствуют. Design-only TASK-017 добавляет
   Approved [DP-015](../design/DP-015-runtime-management-command-idempotency.md) с
-  Implementation Status Planned как candidate contract section 19(3). Он
+  Implementation Status Implemented in isolation как contract section 19(3).
+  TASK-025 реализует process-local claim/replay storage с atomic per-Instance
+  admission, one-shot execution permits, exception tracked-Start Stop,
+  unresolved barriers и proof reconstruction storage client. Он
   определяет authorized command scope, binding immutable intent, durable claim
   до lifecycle delegation, same-intent non-mutating replay, durable
   per-Instance barrier при unresolved outcome, обязательный exception
   tracked-Start Stop и truthful indeterminate outcomes. Approved status
-  закрывает section 19(3) на design level и не создаёт command store,
-  API, recovery или wiring. Design-only TASK-018 добавляет Approved
+  закрывает section 19(3) на design level; external storage, API, recovery,
+  integration и wiring отсутствуют. Design-only TASK-018 добавляет Approved
   [DP-016](../design/DP-016-runtime-activation-replacement-rollback.md) с
   Implementation Status Planned как candidate contract section 19(4). Он
   упорядочивает exact-version initial activation, replacement и explicit
@@ -334,13 +338,14 @@ Architectural debt относится к границам, которые ост
   downstream и не может менять lifecycle или command truth. Approved status
   закрывает section 19(6) на design level и не создаёт reporting или management
   implementation. TASK-021 завершила status decision полного set sections
-  19(2)–(6) с Coordinator Acceptance: DP-014–DP-018 имеют status
-  Approved/Planned. TASK-022 исправила root README mirrors, после чего TASK-023
-  реализовала Draft DP-013 изолированно. Integration и Production Activation
+  19(2)–(6) с Coordinator Acceptance: DP-014–DP-018 имеют Design Status
+  Approved. TASK-022 исправила root README mirrors, TASK-023 реализовала Draft
+  DP-013 изолированно, TASK-024 реализовала DP-014 изолированно, а TASK-025
+  реализует DP-015 изолированно. Integration и Production Activation
   остаются неактивными и blocked перечисленными выше dependencies и wiring.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
-- **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Persistence, Delivery и Plugin всё ещё требуют focused design.
+- **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Message Persistence, Delivery и Plugin всё ещё требуют focused design.
 
 TASK-001 реализует и независимо проверяет изолированный уточнённый контракт
 Draft DP-008: exact support `uwp.configuration` v1, полную private detached

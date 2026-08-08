@@ -5,12 +5,13 @@
 ## 1. Статус
 
 - **Design Status:** Approved
-- **Implementation Status:** Planned
+- **Implementation Status:** Implemented in isolation
 
-Этот approved design определяет planned
-durable idempotency boundary для state-changing management commands Runtime.
-Этот документ не создаёт management package, command store, schema, API,
-recovery worker или production wiring.
+Этот approved design определяет durable idempotency boundary для
+state-changing management commands Runtime. Package
+`internal/runtimecommandidempotency` реализует boundary изолированно на
+process-local in-memory storage без management integration, external schema,
+API, recovery worker или production wiring.
 
 ## 2. Назначение
 
@@ -31,7 +32,8 @@ lifecycle mutation или Launch Attempt.
   aggregate identity, conditional revision и publication lifecycle facts.
 
 Принятые ADR и Active или Frozen architecture остаются authoritative. DP-013
-остаётся Draft; Approved DP-014–DP-016 не реализуют свои contracts.
+остаётся Draft; Approved DP-014 и DP-015 реализованы изолированно, а Approved
+DP-016 сохраняет Implementation Status Planned.
 
 ## 4. Область
 
@@ -99,7 +101,7 @@ owner live Host. DP-014 остаётся owner durable facts Runtime Instance
 ## 7. Охватываемые commands
 
 Этот contract применяется только к state-changing management operations,
-semantics которых определены authoritative design. В текущем planned surface
+semantics которых определены authoritative design. В текущем isolated surface
 DP-013 это Start и Stop. Observe является read-only и не создаёт durable
 command record.
 
@@ -448,7 +450,7 @@ dynamic registries и service locators не требуются и не разр�
 
 ## 24. Acceptance proofs
 
-Будущая implementation должна доказать минимум:
+Implementation должна доказать минимум:
 
 1. один same-key/same-intent claim при concurrent submission;
 2. same-key/different-intent conflict с zero mutation;
@@ -478,15 +480,18 @@ Activation.
 Этот Approved design закрывает focused architecture design gate ARCH-004
 section 19(3). Approved DP-014 и DP-016–DP-018 закрывают остальные focused
 design gates sections 19(2) и 19(4)–(6). Полный approved set определяет
-dependency ordering, но не создаёт command store, persistence, recovery,
-reporting, integration или Production Activation.
+dependency ordering. Сами status decisions не создают implementation; current
+isolated package предоставляет process-local in-memory command storage, а
+external persistence, recovery, reporting, integration и Production Activation
+остаются отсутствующими.
 
 ## 26. Явно отложено
 
-До focused designs или implementation tasks отложены:
+За пределы isolated command implementation отложены:
 
 - transport idempotency field, DTO, status code и behavior client SDK;
-- command record schema, storage, migration и private API;
+- external durable command schema, migration, storage adapter и production
+  integration API;
 - activation, replacement, rollback и policy version selection;
 - recovery после restart process, resolution orphan commands и reconciliation;
 - taxonomy diagnostics, reporting, audit, metrics и redaction policy;
@@ -495,13 +500,21 @@ reporting, integration или Production Activation.
 
 ## 27. Implementation boundary
 
-Implementation Status — Planned. Repository содержит только isolated
-process-local Lifecycle Owner, launch flow, source adapter, реализованный
-изолированно Draft DP-013 и Approved/Planned DP-014–DP-018.
+Implementation Status — Implemented in isolation. Package
+`internal/runtimecommandidempotency` реализует exact Scope/CommandKey identity,
+immutable Start/Stop intent, authorization-before-claim, atomic per-Instance
+admission, claim-before-delegation, one-shot process-local execution permit,
+tracked-Start Stop exception, unresolved barrier и terminal semantic replay.
+Отдельный `MemoryStorage` сохраняет claim/replay facts при reconstruction
+`Boundary`, но не обещает persistence через restart процесса и не
+восстанавливает live permits. `Boundary.Execute` сохраняет primitive permit
+private на synchronous claiming call stack, поэтому caller не может потерять
+его между claim и delegation. Client-generation transition атомарно
+сериализован с admission; stale Boundary не может создать новый Claim.
 
-Durable command store, idempotency package, API, recovery executor, management
-wiring и production activation отсутствуют. Approval закрывает design gate
-section 19(3), но не реализует и не подключает contract.
+External durable storage/schema, API, DP-016 orchestration, DP-017 recovery,
+management wiring и Production Activation отсутствуют. Isolated package не
+изменяет lifecycle contracts и не подключён к DP-013 Directory.
 
 ## 28. Решение
 

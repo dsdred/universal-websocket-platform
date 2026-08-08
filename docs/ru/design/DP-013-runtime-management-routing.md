@@ -11,8 +11,9 @@
 
 До утверждения proposal остаётся ненормативным. Его изолированная in-process
 management command boundary реализована в `internal/runtimemanagement`.
-Production routing Control Service, authorization policy, persistence,
-recovery и Production Activation остаются отсутствующими.
+Production routing Control Service, concrete authorization policy,
+external/process-restart persistence, recovery и Production Activation
+остаются отсутствующими.
 
 ## 2. Назначение
 
@@ -41,7 +42,7 @@ Accepted ADR, Frozen foundation и Active architecture сохраняют при
 Design охватывает один process-local command directory, immutable bindings
 Runtime Instance, exact identity routing, policy-neutral authorization seam,
 порядок authorization-before-mutation, concurrency, cancellation, сохранение
-failures, composition audit и требования к будущим изолированным proofs.
+failures, composition audit и isolated proof evidence.
 
 Он не определяет transport resources или data transfer objects.
 
@@ -82,7 +83,7 @@ Private accepted entry Directory, содержащая один Target, Owner и
 после construction и разрешает только scopes Runtime Instance. Она не
 является dynamic registry, generic resolver или service locator.
 
-## 7. Точная планируемая public surface
+## 7. Точная public surface
 
 ```go
 package runtimemanagement
@@ -564,14 +565,15 @@ future management composition
 Draft design contract реализован в bounded isolated slice. Approved
 DP-014–DP-018 закрывают все focused design gates ARCH-004 sections 19(2)–(6).
 Full integration остаётся blocked до появления required implementations
-persistence, command, activation, recovery и reporting и их композиции через
-explicit Control Service boundary.
+external durability, activation, recovery и reporting и композиции isolated
+routing, identity и command packages через explicit Control Service boundary.
 
 Loader, provenance Snapshot и schema compatibility уже разрешены ARCH-005 и
 DP-007 — DP-012. Прецедент isolated implementation DP-010 — DP-012 не создаёт
 исключение из gate ARCH-004 с более высоким status. Approved DP-014–DP-018
-определяют dependency-ordered contracts без предоставления их packages,
-adapters, schemas или wiring.
+определяют dependency-ordered contracts. DP-014 и DP-015 теперь предоставляют
+isolated process-local packages; external adapters, schemas, wiring и
+implementations DP-016–DP-018 отсутствуют.
 
 ## 27. Proofs изолированной реализации
 
@@ -619,11 +621,12 @@ Tests могут использовать local fakes или package-private sea
 
 ## 28. Явно отложено
 
-Focused design gates section 19 закрыты. До integration требуются следующие
-implementations:
+Focused design gates section 19 закрыты. Для operational identity DP-014 и
+command idempotency DP-015 теперь существуют isolated process-local in-memory
+implementations. До integration требуются следующие production dependencies:
 
-- durable operational identity persistence;
-- durable idempotency management command;
+- external durable operational identity storage и его integration adapter;
+- external durable management command storage и его integration adapter;
 - orchestration activation, replacement и rollback;
 - recovery и reconciliation;
 - operational error reporting и redaction.
@@ -654,15 +657,17 @@ Service, endpoint, concrete policy, persistence adapter, recovery path и
 activation path отсутствуют.
 
 Approved DP-014–DP-018 закрывают focused design gates ARCH-004 sections
-19(2)–(6), но не реализуют persistence, idempotency, activation, recovery,
-reporting, integration Control Service или Production Activation. Любой
-integration slice сначала должен предоставить exact required dependencies,
-включая planned private Start-claim continuation и execution-generation
-binding/load gate.
+19(2)–(6). Packages `internal/runtimeidentity` и
+`internal/runtimecommandidempotency` реализуют DP-014 и DP-015 изолированно на
+process-local in-memory storage. External durability, activation, recovery,
+reporting, integration Control Service и Production Activation отсутствуют.
+Любой integration slice сначала должен предоставить exact required
+dependencies, включая planned private Start-claim continuation и
+execution-generation binding/load gate.
 
 ## 30. Решение
 
-Планируемый Runtime Management Directory является одной immutable
+Runtime Management Directory является одной immutable
 process-local command boundary. Он проверяет и маршрутизирует exact identity
 Runtime Instance, авторизует Start, Stop и Observe до lifecycle delegation,
 конструирует один Flow из того же Owner и Loader для каждого принятого scope и
