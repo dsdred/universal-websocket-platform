@@ -36,7 +36,8 @@ authoritative execution evidence, публикует только доказан
   proven release и process-loss cut points.
 
 Accepted ADR и Active/Frozen architecture остаются authoritative. DP-013
-остаётся Draft; Approved DP-014–DP-017 не реализуют свои contracts.
+остаётся Draft и реализован изолированно. Approved DP-014 и DP-015 реализованы
+изолированно; Approved DP-016 и DP-017 остаются Planned.
 
 ## 4. Область действия
 
@@ -501,8 +502,9 @@ production activation.
 Этот Approved design закрывает focused architecture design gate ARCH-004
 section 19(5). Approved DP-014–DP-016 и DP-018 закрывают остальные focused
 design gates sections 19(2)–(4) и 19(6). Полный approved set определяет
-fail-closed recovery ordering, но не создаёт store, execution adapter,
-recovery executor, reporting, integration или Production Activation.
+fail-closed recovery ordering. Isolated process-local stores DP-014/DP-015
+существуют, но process-restart recovery store, execution adapter, recovery
+executor, reporting, integration и Production Activation отсутствуют.
 
 ## 27. Явно отложенные вопросы
 
@@ -519,8 +521,9 @@ recovery executor, reporting, integration или Production Activation.
 
 ## 28. Граница реализации
 
-Implementation Status — Planned. Repository не содержит durable Runtime
-aggregate/command store, recovery claim, execution-evidence adapter, recovery
+Implementation Status — Planned. Repository содержит isolated process-local
+Runtime aggregate и command stores, но не содержит external durable или
+process-restart store, recovery claim, execution-evidence adapter, recovery
 executor, public management API или production wiring.
 
 Текущие in-process Runtime components не переживают Control Service process

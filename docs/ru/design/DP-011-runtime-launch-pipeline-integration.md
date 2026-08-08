@@ -13,11 +13,12 @@ Start-claim continuation DP-016 — Planned
 утверждённых ARCH-004 и ARCH-005 и существующих Draft DP-007–DP-010.
 
 Package `internal/runtimelaunchflow` реализует этот contract изолированно.
-Concrete Source composition, management routing и Production Activation
-отсутствуют. Implementation не объявляет production launch capability
-реализованной и не повышает статусы связанных Draft DP. Текущий package не
-реализует private claim-continuation gate, требуемый DP-016; extension требует
-отдельной implementation task.
+Concrete Source composition и management routing также существуют как
+isolated packages DP-012 и DP-013. Их production composition, routing Control
+Service и Production Activation отсутствуют. Implementation не объявляет
+production launch capability реализованной и не повышает статусы связанных
+Draft DP. Текущий package не реализует private claim-continuation gate,
+требуемый DP-016; extension требует отдельной implementation task.
 
 ## 2. Назначение
 
@@ -590,16 +591,20 @@ failures.
 ## 24. Production Activation gates
 
 До объявления capability production-integrated отдельные tasks должны
-определить и проверить:
+скомпоновать и проверить:
 
-- concrete Source composition;
-- единственную management command boundary и authorization до mutation;
-- routing ровно одного Owner/Flow scope на Runtime Instance;
-- persistence Runtime Instance, Launch Attempt, desired/actual facts и
-  idempotency согласно ARCH-004;
-- recovery/reconciliation либо явный startup rejection при отсутствии этих
-  contracts;
-- operational reporting и redaction preparation/launch failures.
+- существующую isolated Source composition DP-012 в production path;
+- существующие isolated command boundary DP-013, seam
+  authorization-before-mutation и exact Owner/Flow routing в production path;
+- существующие isolated aggregate/command stores DP-014/DP-015 вместе с
+  требуемой external/process-restart durability;
+- Planned orchestrator activation/replacement/rollback DP-016, включая private
+  Start-claim continuation DP-011/DP-013 и требуемый DP-017
+  execution-binding/load gate;
+- implementation Approved/Planned recovery/reconciliation contract DP-017 либо
+  явный startup rejection, пока эта implementation отсутствует;
+- implementation Approved/Planned operational reporting/redaction contract
+  DP-018 для preparation/launch failures.
 
 DP-011 не выбирает порядок или API этих tasks. Изолированная package
 implementation является отдельно проверенным prerequisite, но сама по себе не
@@ -610,10 +615,13 @@ implementation является отдельно проверенным prerequi
 
 Отложены:
 
-- Source adapter in-memory repositories, PostgreSQL, YAML или remote transport;
+- дополнительные Source adapters сверх существующего isolated in-memory
+  adapter, включая PostgreSQL, YAML или remote transport;
 - HTTP/CLI/API surface и authorization;
-- persistence schema и transactions;
-- durable command/result identity;
+- external durable persistence schema и transactions;
+- process-restart command/result persistence, retention и recovery;
+- orchestration activation/replacement/rollback, private Start-claim
+  continuation и execution-binding/load gate;
 - retry, backoff, restart, replacement, rollback policy и reconciliation;
 - terminal supervision Host и unexpected failure;
 - timeout/force policy для blocking Source;
@@ -655,7 +663,8 @@ Implementation не повышает Design Status автоматически.
   запрещён;
 - package implementation ещё не создаёт пользовательскую management
   capability;
-- persistence и authorization по-прежнему требуют отдельных designs.
+- external persistence, concrete authorization и production integration
+  по-прежнему требуют отдельных tasks.
 
 ## 28. Итог
 

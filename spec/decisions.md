@@ -21,18 +21,18 @@
 
 - ADR-0003 определяет component boundaries Runtime и Provider-based composition.
 - ARCH-004 определяет Runtime Instance, Launch Attempt и deployment identity
-  model; минимальный in-process Runtime Lifecycle Owner реализован
-  изолированно, а persistence и production routing operational сущностей
-  отсутствуют.
+  model; минимальный in-process Runtime Lifecycle Owner и process-local
+  isolated operational identity/command stores реализованы, а external durable
+  persistence и production routing operational сущностей отсутствуют.
 - ARCH-005 определяет Configuration Loader, Snapshot provenance и loading boundary.
 - DP-007–DP-013 сохраняют Design Status Draft; DP-014–DP-018 имеют Design
   Status Approved. Статус не повышается реализацией или commit. DP-012 и
-  DP-013 реализованы изолированно; DP-014 реализован изолированно;
-  DP-015–DP-018 сохраняют Implementation Status Planned.
+  DP-013 реализованы изолированно; DP-014 и DP-015 реализованы изолированно;
+  DP-016–DP-018 сохраняют Implementation Status Planned.
 
 ## Ожидающие отдельного решения
 
-Delivery, Persistence, Plugin ABI, production deployment adapters, operational
+Delivery, Message Persistence, Plugin ABI, production deployment adapters, operational
 diagnostics и supervision требуют сфокусированных решений в соответствующих
 вехах. Их отсутствие не отменяет уже определённые component, configuration и
 deployment boundaries.
@@ -47,12 +47,15 @@ append-only membership Launch Attempt с immutable parent/ID/version pin и
 monotonic child lifecycle facts, opaque identity namespaces, conditional
 revision, atomic phase-sensitive lifecycle publication и
 inspect-after-indeterminate boundary. Он не создаёт persistence
-implementation, schema, API, recovery или production wiring. Design gate
-§19(2) закрыт.
+implementation сам по себе; package `internal/runtimeidentity` реализует этот
+contract изолированно на process-local in-memory storage. External durable
+schema, API, recovery и production wiring отсутствуют. Design gate §19(2)
+закрыт.
 
 Изолированная реализация DP-013 не разрешает integration. Approved
-DP-014–DP-018 закрывают focused design gates ARCH-004 §19(2)–(6), но concrete
-authorization policy, persistence и command implementations, private
+DP-014–DP-018 закрывают focused design gates ARCH-004 §19(2)–(6). DP-014 и
+DP-015 реализованы изолированно, но concrete authorization policy, external
+persistence, private
 Start-claim continuation, execution-generation binding/load gate, management
 integration/API и Production Activation отсутствуют.
 
@@ -60,8 +63,10 @@ Approved DP-015 определяет focused contract ARCH-004
 §19(3): opaque command identity в exact authorized scope, immutable intent,
 durable claim до lifecycle delegation, same-intent replay без mutation,
 per-Instance barrier для unresolved command, mandatory tracked-Start Stop и
-truthful indeterminate outcome. Он не создаёт command store, schema, API,
-recovery или production wiring. Design gate §19(3) закрыт.
+truthful indeterminate outcome. Package `internal/runtimecommandidempotency`
+реализует claim/replay store изолированно на process-local in-memory storage;
+external schema, API, recovery и production wiring отсутствуют. Design gate
+§19(3) закрыт.
 
 Approved DP-016 определяет focused contract ARCH-004
 §19(4): exact-version activation, ordered replacement через
@@ -96,11 +101,12 @@ DP-018 закрывает design gate §19(6), а Approved predecessor set DP-01
 уже закрывает design gates §19(2)–(5); implementation остаётся отсутствующей.
 
 TASK-021 закрыла design gates ARCH-004 §19(2)–(6), TASK-022 исправила root
-README drift, а TASK-023 со статусом `Completed — Coordinator Accepted`
-реализовала bounded isolated DP-013 package. Concrete policy, persistence,
-management integration/API и Production Activation не активированы и остаются
-отсутствующими. Следующий candidate — отдельный bounded readiness intake
-implementation prerequisites DP-014; он не активирован.
+README drift, TASK-023 реализовала bounded isolated DP-013 package, а TASK-024
+реализовала bounded isolated DP-014 package. TASK-025 реализовала DP-015
+package изолированно и завершена как `Completed — Coordinator Accepted`.
+Concrete policy, external
+persistence, management integration/API и Production Activation не
+активированы и остаются отсутствующими.
 
 Package `internal/runtimelaunchflow` реализует base DP-011 изолированно без
 private Start-claim continuation DP-016 и без изменения этих ожидающих решения
