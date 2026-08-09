@@ -302,9 +302,9 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   `internal/runtimeidentity` with all nine conceptual operations from §21 and
   proof tests for all seventeen acceptance proofs from §22. No external storage,
   HTTP API, recovery, or production wiring exists. Design-only TASK-017 adds Approved
-  [DP-015](../design/DP-015-runtime-management-command-idempotency.md), with
-  Implementation Status Implemented in isolation, as the section 19(3)
-  contract. TASK-025 implements process-local claim/replay storage with atomic
+  [DP-015](../design/DP-015-runtime-management-command-idempotency.md), whose
+  primitive Start/Stop boundary is Implemented in isolation, as the section
+  19(3) contract. TASK-025 implements process-local claim/replay storage with atomic
   per-Instance admission, one-shot execution permits, the tracked-Start Stop
   exception, unresolved barriers, and storage-client reconstruction proofs. It
   defines authorized command scope, immutable intent binding, durable claim
@@ -343,9 +343,17 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   19(2)–(6) status decision with Coordinator Acceptance: DP-014 through DP-018
   are Approved. TASK-022 corrected the root README mirrors, TASK-023
   implemented Draft DP-013 in isolation, TASK-024 implemented DP-014 in
-  isolation, and TASK-025 implements DP-015 in isolation. Integration and
-  Production Activation remain inactive and blocked by the dependencies and
-  wiring above.
+  isolation, and TASK-025 implemented the primitive DP-015 boundary in
+  isolation. TASK-026 then proved DP-016 implementation architecture-blocked:
+  the repository lacks an implementable parent/phase claim API, exact
+  activation/replacement/rollback authorization, and the private Owner-claim-
+  to-Load continuation. Design-only TASK-027 adds Approved
+  [DP-019](../design/DP-019-runtime-activation-orchestration-prerequisites.md)
+  with Implementation Status Planned. DP-019 chooses a bounded DP-015
+  parent/phase API, exact authorization tuple, and synchronous DP-011/DP-013
+  continuation without changing DP-016 ordering or Owner semantics. TASK-026
+  remains Blocked until these prerequisites are implemented and accepted;
+  Integration and Production Activation remain inactive.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Message Persistence, Delivery, and Plugin contracts still require focused design.

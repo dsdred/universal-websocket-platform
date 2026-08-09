@@ -5,7 +5,8 @@
 ## 1. Status
 
 - **Design Status:** Approved
-- **Implementation Status:** Implemented in isolation
+- **Implementation Status:** Primitive Start/Stop boundary implemented in
+  isolation; the Approved DP-019 parent/phase extension is Planned
 
 This approved design defines the durable idempotency boundary for state-changing
 Runtime management commands. Package `internal/runtimecommandidempotency`
@@ -30,10 +31,13 @@ This proposal refines, without overriding:
   authorization-before-mutation;
 - [DP-014](DP-014-runtime-operational-identity-persistence.md) for durable
   aggregate identity, conditional revision, and lifecycle-fact publication.
+- [DP-019](DP-019-runtime-activation-orchestration-prerequisites.md) for the
+  exact planned callback-scoped parent/phase API and authorization integration.
 
 Accepted ADRs and Active or Frozen architecture remain authoritative. DP-013
-remains Draft; Approved DP-014 and DP-015 are implemented in isolation, while
-Approved DP-016 retains Implementation Status Planned.
+remains Draft; Approved DP-014 and the primitive DP-015 boundary are
+implemented in isolation, while the DP-019 parent/phase extension and Approved
+DP-016 retain Implementation Status Planned.
 
 ## 4. Scope
 
@@ -501,7 +505,8 @@ Deferred beyond the isolated command implementation:
 
 ## 27. Implementation Boundary
 
-Implementation Status is Implemented in isolation. Package
+The primitive Start/Stop Implementation Status is Implemented in isolation;
+the DP-019 parent/phase extension remains Planned. Package
 `internal/runtimecommandidempotency` implements exact Scope/CommandKey identity,
 immutable Start/Stop intent, authorization-before-claim, atomic per-Instance
 admission, claim-before-delegation, a one-shot process-local execution permit,
@@ -514,7 +519,8 @@ it between claim and delegation. Client-generation transition is atomically
 serialized with admission; a stale Boundary cannot create a new Claim.
 
 External durable storage/schema, API, DP-016 orchestration, DP-017 recovery,
-management wiring, and Production Activation remain absent. The isolated
+the DP-019 parent/phase and continuation prerequisites, management wiring, and
+Production Activation remain absent. The isolated
 package changes no lifecycle contract and is not connected to the DP-013
 Directory.
 

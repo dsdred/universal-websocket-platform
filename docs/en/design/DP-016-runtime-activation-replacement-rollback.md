@@ -11,6 +11,9 @@ This approved design defines a planned ordering
 contract for activation, replacement, and explicit rollback of one Runtime
 Instance. No activation/replacement orchestrator or its workflow persistence,
 API, recovery worker, or production wiring exists as a result of this document.
+Implementation is architecture-blocked until the Approved/Planned DP-019
+parent/phase, authorization, and Start-claim continuation prerequisites are
+implemented and independently accepted.
 
 ## 2. Purpose
 
@@ -35,10 +38,14 @@ This proposal refines, without overriding:
   Start claim and the planned private claim-continuation extension.
 - [DP-017](DP-017-runtime-recovery-reconciliation.md) for the recovery boundary
   that requires and consumes the DP-014-owned execution-generation binding.
+- [DP-019](DP-019-runtime-activation-orchestration-prerequisites.md) for the
+  exact internal API that joins authorization, parent/phase admission, Owner
+  claim, durable attempt publication, generation binding, and Continue.
 
 Accepted ADRs and Active or Frozen architecture remain authoritative. DP-013
-remains Draft and is implemented in isolation. Approved DP-014 and DP-015 are
-implemented in isolation; Approved DP-016 and DP-017 remain Planned.
+remains Draft and is implemented in isolation. Approved DP-014 and the
+primitive DP-015 boundary are implemented in isolation; the DP-019 parent/phase
+extension and Approved DP-016 and DP-017 remain Planned.
 
 ## 4. Scope
 
@@ -483,7 +490,8 @@ durable command/aggregate/workflow storage, public management API, recovery
 executor, or production wiring.
 
 Approval closes the section 19(4) design gate but does not implement or wire
-the contract.
+the contract. TASK-026 remains Blocked until DP-019 is implemented; no reduced
+DP-016 slice is permitted.
 
 ## 29. Decision
 

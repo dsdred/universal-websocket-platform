@@ -7,7 +7,7 @@
 **Design Status:** Draft
 
 **Implementation Status:** Implemented in isolation; private extension
-Start-claim continuation DP-016 — Planned
+Start-claim continuation DP-016, определённый Approved DP-019, — Planned
 
 **Статус архитектуры:** сфокусированный integration contract поверх
 утверждённых ARCH-004 и ARCH-005 и существующих Draft DP-007–DP-010.
@@ -319,16 +319,25 @@ stack о successful Owner claim и затем ждёт durable outcome того 
 external preparation, а не отсутствие lifecycle mutation.
 
 Поскольку Flow и management routing являются разными Go packages, future
-extension является internal-package-callable construction capability: Flow при
-construction immutable связывается с одним `StartClaimContinuation`,
-реализованным exact management binding. Capability предоставляет одно
-synchronous decision `AfterOwnerClaim`: `Continue`, `StopConverged`,
-`BindingFailed` или `Blocked`; он не раскрывает mutable `LaunchPreparation`,
-command permit, recovery permit или persistence implementation. Go symbol может
-быть exported через repository boundary `internal/`, но не является public
-management/HTTP API. Exact current implementation `New` и `Start` остаётся без
+extension использует internal-package-callable managed surface. Один long-lived
+Flow при construction immutable связывается со stateless
+`StartClaimContinuation`; каждый managed Start invocation отдельно получает
+exact per-call `StartExecutionBinding`, определённый DP-019. Capability
+предоставляет одно synchronous decision `AfterOwnerClaim`: `Continue`,
+`StopConverged`, `BindingFailed` или `Blocked`; он не раскрывает mutable
+`LaunchPreparation`, command permit, recovery permit или persistence
+implementation. Go symbol может быть exported через repository boundary
+`internal/`, но не является public management/HTTP API. Exact current
+implementation `New` и `Start` остаётся без
 изменения и не имеет этого seam, поэтому не реализует continuation DP-016 или
 binding gate DP-017.
+
+Approved [DP-019](DP-019-runtime-activation-orchestration-prerequisites.md)
+определяет exact per-call binding и claim view, callback-scoped parent/phase
+authority, порядок attempt publication/binding и закрытые outcomes
+continuation. Он не меняет Owner-first claim и synchronous preparation
+semantics Flow. Prerequisite остаётся Planned и должен быть реализован до
+возобновления DP-016 orchestration.
 
 ## 11. Synchronous operation и caller lifetime
 

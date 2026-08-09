@@ -301,8 +301,9 @@ Architectural debt относится к границам, которые ост
   `internal/runtimeidentity` со всеми девятью conceptual operations §21 и
   proof tests для всех семнадцати acceptance proofs §22. External storage,
   HTTP API, recovery и production wiring отсутствуют. Design-only TASK-017 добавляет
-  Approved [DP-015](../design/DP-015-runtime-management-command-idempotency.md) с
-  Implementation Status Implemented in isolation как contract section 19(3).
+  Approved [DP-015](../design/DP-015-runtime-management-command-idempotency.md),
+  чья primitive boundary Start/Stop Implemented in isolation, как contract
+  section 19(3).
   TASK-025 реализует process-local claim/replay storage с atomic per-Instance
   admission, one-shot execution permits, exception tracked-Start Stop,
   unresolved barriers и proof reconstruction storage client. Он
@@ -341,8 +342,17 @@ Architectural debt относится к границам, которые ост
   19(2)–(6) с Coordinator Acceptance: DP-014–DP-018 имеют Design Status
   Approved. TASK-022 исправила root README mirrors, TASK-023 реализовала Draft
   DP-013 изолированно, TASK-024 реализовала DP-014 изолированно, а TASK-025
-  реализует DP-015 изолированно. Integration и Production Activation
-  остаются неактивными и blocked перечисленными выше dependencies и wiring.
+  реализовала primitive boundary DP-015 изолированно. Затем TASK-026 доказала,
+  что implementation DP-016 architecture-blocked: repository не содержит
+  implementable parent/phase claim API, exact authorization
+  activation/replacement/rollback и private continuation между Owner claim и
+  Load. Design-only TASK-027 добавляет Approved
+  [DP-019](../design/DP-019-runtime-activation-orchestration-prerequisites.md)
+  с Implementation Status Planned. DP-019 выбирает bounded DP-015
+  parent/phase API, exact authorization tuple и synchronous DP-011/DP-013
+  continuation без изменения DP-016 ordering или Owner semantics. TASK-026
+  остаётся Blocked до implementation и acceptance prerequisites; Integration и
+  Production Activation остаются неактивными.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Message Persistence, Delivery и Plugin всё ещё требуют focused design.

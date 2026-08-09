@@ -5,7 +5,8 @@
 ## 1. Статус
 
 - **Design Status:** Approved
-- **Implementation Status:** Implemented in isolation
+- **Implementation Status:** Primitive boundary Start/Stop реализована
+  изолированно; parent/phase extension Approved DP-019 — Planned
 
 Этот approved design определяет durable idempotency boundary для
 state-changing management commands Runtime. Package
@@ -30,10 +31,13 @@ lifecycle mutation или Launch Attempt.
   authorization-before-mutation;
 - [DP-014](DP-014-runtime-operational-identity-persistence.md) для durable
   aggregate identity, conditional revision и publication lifecycle facts.
+- [DP-019](DP-019-runtime-activation-orchestration-prerequisites.md) для exact
+  planned callback-scoped parent/phase API и authorization integration.
 
 Принятые ADR и Active или Frozen architecture остаются authoritative. DP-013
-остаётся Draft; Approved DP-014 и DP-015 реализованы изолированно, а Approved
-DP-016 сохраняет Implementation Status Planned.
+остаётся Draft; Approved DP-014 и primitive boundary DP-015 реализованы
+изолированно, а parent/phase extension DP-019 и Approved DP-016 сохраняют
+Implementation Status Planned.
 
 ## 4. Область
 
@@ -500,7 +504,8 @@ external persistence, recovery, reporting, integration и Production Activation
 
 ## 27. Implementation boundary
 
-Implementation Status — Implemented in isolation. Package
+Implementation Status primitive Start/Stop — Implemented in isolation;
+parent/phase extension DP-019 остаётся Planned. Package
 `internal/runtimecommandidempotency` реализует exact Scope/CommandKey identity,
 immutable Start/Stop intent, authorization-before-claim, atomic per-Instance
 admission, claim-before-delegation, one-shot process-local execution permit,
@@ -513,7 +518,8 @@ private на synchronous claiming call stack, поэтому caller не мож�
 сериализован с admission; stale Boundary не может создать новый Claim.
 
 External durable storage/schema, API, DP-016 orchestration, DP-017 recovery,
-management wiring и Production Activation отсутствуют. Isolated package не
+parent/phase и continuation prerequisites DP-019, management wiring и
+Production Activation отсутствуют. Isolated package не
 изменяет lifecycle contracts и не подключён к DP-013 Directory.
 
 ## 28. Решение

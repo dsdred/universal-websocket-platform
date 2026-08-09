@@ -7,7 +7,7 @@
 **Design Status:** Draft
 
 **Implementation Status:** Implemented in isolation; the private DP-016
-Start-claim continuation extension is Planned
+Start-claim continuation extension defined by Approved DP-019 is Planned
 
 **Architecture Status:** focused integration contract over approved ARCH-004
 and ARCH-005 and the existing Draft DP-007 through DP-010.
@@ -327,16 +327,25 @@ only that no external preparation began, not that no lifecycle mutation
 occurred.
 
 Because Flow and management routing are separate Go packages, the future
-extension is an internal-package-callable construction capability: Flow is
-bound immutably at construction to one `StartClaimContinuation` implemented by
-the exact management binding. The capability exposes one synchronous
-`AfterOwnerClaim` decision with `Continue`, `StopConverged`, `BindingFailed`, or
-`Blocked`; it exposes no mutable `LaunchPreparation`, command permit, recovery
-permit, or persistence implementation. A Go symbol may be exported across the
-repository's `internal/` package boundary, but it is not a public management or
-HTTP API. The exact current `New` and `Start` implementation remains unchanged
+extension uses an internal-package-callable managed surface. One long-lived
+Flow is bound immutably at construction to a stateless
+`StartClaimContinuation`; each managed Start invocation separately receives
+the exact per-call `StartExecutionBinding` defined by DP-019. The capability
+exposes one synchronous `AfterOwnerClaim` decision with `Continue`,
+`StopConverged`, `BindingFailed`, or `Blocked`; it exposes no mutable
+`LaunchPreparation`, command permit, recovery permit, or persistence
+implementation. A Go symbol may be exported across the repository's
+`internal/` package boundary, but it is not a public management or HTTP API.
+The exact current `New` and `Start` implementation remains unchanged
 and has no such seam, so it implements neither the DP-016 continuation nor the
 DP-017 binding gate.
+
+Approved [DP-019](DP-019-runtime-activation-orchestration-prerequisites.md)
+defines the exact per-call binding and claim view, callback-scoped parent/phase
+authority, attempt-publication/binding order, and closed continuation outcomes.
+It does not change this Flow's Owner-first claim or synchronous preparation
+semantics. That prerequisite remains Planned and must be implemented before
+DP-016 orchestration work resumes.
 
 ## 11. Synchronous Operation and Caller Lifetime
 
