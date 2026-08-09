@@ -1,6 +1,8 @@
-// Package runtimecommandidempotency implements the isolated command claim and
-// replay boundary defined by Approved DP-015. It does not provide transport,
-// lifecycle integration, recovery, or persistence across process restart.
+// Package runtimecommandidempotency implements the isolated primitive command
+// boundary defined by Approved DP-015 and the partial parent/phase sequential
+// core defined by Approved DP-019. It does not provide the Continue or pending-
+// Stop protocol, transport, lifecycle integration, recovery, or persistence
+// across process restart.
 package runtimecommandidempotency
 
 import (
@@ -20,6 +22,9 @@ var (
 	// ErrInstanceBlocked reports a non-terminal command that does not permit the
 	// requested tracked-Start Stop exception.
 	ErrInstanceBlocked = errors.New("runtime instance has an unresolved command")
+	// ErrIllegalPhaseOrder reports a linked phase request outside the finite
+	// optional StopOld followed by StartTarget sequence.
+	ErrIllegalPhaseOrder = errors.New("runtime command parent phase order is invalid")
 	// ErrBoundaryExpired reports an operation attempted through a Boundary that
 	// is no longer the active storage-client generation.
 	ErrBoundaryExpired = errors.New("runtime command boundary client expired")
@@ -39,6 +44,10 @@ const (
 	OperationStart Operation = "start"
 	// OperationStop identifies Stop for one exact Runtime Instance target.
 	OperationStop Operation = "stop"
+	// OperationReplace identifies replacement with one exact target version.
+	OperationReplace Operation = "replace"
+	// OperationRollback identifies rollback to one exact target version.
+	OperationRollback Operation = "rollback"
 )
 
 // Scope is the exact authorization and command-identity namespace.
@@ -91,7 +100,16 @@ func (s Scope) Operation() Operation { return s.operation }
 func (s Scope) valid() bool {
 	return s.domain != "" && s.workspaceID != 0 && s.configurationID != 0 &&
 		s.runtimeInstanceID != "" &&
-		(s.operation == OperationStart || s.operation == OperationStop)
+		(s.operation == OperationStart || s.operation == OperationStop ||
+			s.operation == OperationReplace || s.operation == OperationRollback)
+}
+
+func (s Scope) validPrimitive() bool {
+	return s.valid() && (s.operation == OperationStart || s.operation == OperationStop)
+}
+
+func (s Scope) validParent() bool {
+	return s.valid() && (s.operation == OperationReplace || s.operation == OperationRollback)
 }
 
 type instanceScope struct {
@@ -111,8 +129,9 @@ func (s Scope) instanceScope() instanceScope {
 }
 
 // Intent is the immutable normalized semantic input bound to a command key.
-// Start carries an exact Published ConfigurationVersion identity; Stop carries
-// no inferred version or mutable observation.
+// Start, Replace, and Rollback carry one exact Configuration Version identity;
+// Stop carries no inferred version or mutable observation. Publication,
+// Configuration membership, and rollback eligibility are upstream checks.
 type Intent struct {
 	operation              Operation
 	configurationVersionID uint64
@@ -132,10 +151,32 @@ func NewStartIntent(configurationVersionID uint64) (Intent, error) {
 // NewStopIntent constructs a Stop intent for the exact target in Scope.
 func NewStopIntent() Intent { return Intent{operation: OperationStop} }
 
+// NewReplaceIntent constructs a replacement intent for one exact target
+// Configuration Version. Publication and Configuration membership are
+// upstream preconditions and are not inferred by this package.
+func NewReplaceIntent(configurationVersionID uint64) (Intent, error) {
+	return newParentIntent(OperationReplace, configurationVersionID)
+}
+
+// NewRollbackIntent constructs a rollback intent for one exact target
+// Configuration Version. Historical-target policy is an upstream precondition.
+func NewRollbackIntent(configurationVersionID uint64) (Intent, error) {
+	return newParentIntent(OperationRollback, configurationVersionID)
+}
+
+func newParentIntent(operation Operation, configurationVersionID uint64) (Intent, error) {
+	if configurationVersionID == 0 ||
+		(operation != OperationReplace && operation != OperationRollback) {
+		return Intent{}, ErrInvalidSubmission
+	}
+	return Intent{operation: operation, configurationVersionID: configurationVersionID}, nil
+}
+
 // Operation returns the intent operation.
 func (i Intent) Operation() Operation { return i.operation }
 
-// ConfigurationVersionID returns the Start version identity, or zero for Stop.
+// ConfigurationVersionID returns the exact Start, Replace, or Rollback target
+// version identity, or zero for Stop.
 func (i Intent) ConfigurationVersionID() uint64 { return i.configurationVersionID }
 
 func (i Intent) validFor(scope Scope) bool {
@@ -146,6 +187,11 @@ func (i Intent) validFor(scope Scope) bool {
 		return i.configurationVersionID != 0
 	}
 	return i.operation == OperationStop && i.configurationVersionID == 0
+}
+
+func (i Intent) validParentFor(scope Scope) bool {
+	return scope.validParent() && i.operation == scope.operation &&
+		i.configurationVersionID != 0
 }
 
 // Authorize checks the current caller for the exact action, Target, and intent.

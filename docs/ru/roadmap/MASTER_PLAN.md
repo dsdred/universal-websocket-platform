@@ -343,15 +343,20 @@ Architectural debt относится к границам, которые ост
   Approved. TASK-022 исправила root README mirrors, TASK-023 реализовала Draft
   DP-013 изолированно, TASK-024 реализовала DP-014 изолированно, а TASK-025
   реализовала primitive boundary DP-015 изолированно. Затем TASK-026 доказала,
-  что implementation DP-016 architecture-blocked: repository не содержит
+  что implementation DP-016 architecture-blocked: на том baseline repository не содержал
   implementable parent/phase claim API, exact authorization
   activation/replacement/rollback и private continuation между Owner claim и
   Load. Design-only TASK-027 добавляет Approved
   [DP-019](../design/DP-019-runtime-activation-orchestration-prerequisites.md)
-  с Implementation Status Planned. DP-019 выбирает bounded DP-015
+  с Implementation Status Planned в целом. DP-019 выбирает bounded DP-015
   parent/phase API, exact authorization tuple и synchronous DP-011/DP-013
-  continuation без изменения DP-016 ordering или Owner semantics. TASK-026
-  остаётся Blocked до implementation и acceptance prerequisites; Integration и
+  continuation без изменения DP-016 ordering или Owner semantics. TASK-028
+  реализует изолированно durable parent/derived-phase storage, callback
+  capability и strict sequential core; этот partial slice независимо принят.
+  Replay, barriers и reconstruction invalidation реализованы.
+  Continue/pending-Stop, managed continuation, authorization
+  policy и attempt binding остаются Planned. TASK-026 остаётся Blocked до
+  implementation и acceptance всех prerequisites; Integration и
   Production Activation остаются неактивными.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.

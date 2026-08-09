@@ -6,7 +6,8 @@
 
 - **Design Status:** Approved
 - **Implementation Status:** Primitive Start/Stop boundary implemented in
-  isolation; the Approved DP-019 parent/phase extension is Planned
+  isolation; the Approved DP-019 parent/phase sequential core is implemented
+  in isolation while Continue/pending-Stop semantics remain Planned
 
 This approved design defines the durable idempotency boundary for state-changing
 Runtime management commands. Package `internal/runtimecommandidempotency`
@@ -35,9 +36,10 @@ This proposal refines, without overriding:
   exact planned callback-scoped parent/phase API and authorization integration.
 
 Accepted ADRs and Active or Frozen architecture remain authoritative. DP-013
-remains Draft; Approved DP-014 and the primitive DP-015 boundary are
-implemented in isolation, while the DP-019 parent/phase extension and Approved
-DP-016 retain Implementation Status Planned.
+remains Draft; Approved DP-014, the primitive DP-015 boundary, and the partial
+DP-019 parent/phase sequential core are implemented in isolation, while the
+Continue/pending-Stop extension and Approved DP-016 retain Implementation
+Status Planned.
 
 ## 4. Scope
 
@@ -505,8 +507,9 @@ Deferred beyond the isolated command implementation:
 
 ## 27. Implementation Boundary
 
-The primitive Start/Stop Implementation Status is Implemented in isolation;
-the DP-019 parent/phase extension remains Planned. Package
+The primitive Start/Stop Implementation Status is Implemented in isolation.
+The DP-019 parent/phase sequential core is also Implemented in isolation, while
+the complete extension remains Planned. Package
 `internal/runtimecommandidempotency` implements exact Scope/CommandKey identity,
 immutable Start/Stop intent, authorization-before-claim, atomic per-Instance
 admission, claim-before-delegation, a one-shot process-local execution permit,
@@ -517,9 +520,14 @@ and restores no live permits. `Boundary.Execute` keeps the primitive permit
 private on the synchronous claiming call stack, so caller code cannot abandon
 it between claim and delegation. Client-generation transition is atomically
 serialized with admission; a stale Boundary cannot create a new Claim.
+`ExecuteParent` adds exact Replace/Rollback intent, durable parent/derived-phase
+records, generation-bound callback capability, strict optional `StopOld` then
+`StartTarget` order, phase replay, parent terminal gating, and the same
+unresolved barrier. Its StartTarget claim foundation remains package-private.
 
 External durable storage/schema, API, DP-016 orchestration, DP-017 recovery,
-the DP-019 parent/phase and continuation prerequisites, management wiring, and
+the DP-019 Continue/pending-Stop, continuation, and binding prerequisites,
+management wiring, and
 Production Activation remain absent. The isolated
 package changes no lifecycle contract and is not connected to the DP-013
 Directory.

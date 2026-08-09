@@ -32,6 +32,7 @@ operational документы ведутся на русском языке и 
 - [TASK-025 — Runtime Management Command Idempotency Implementation](TASK-025-RUNTIME-COMMAND-IDEMPOTENCY.md) — Completed, Coordinator Accepted
 - [TASK-026 — Runtime Activation, Replacement, and Rollback Implementation](TASK-026-RUNTIME-ACTIVATION-REPLACEMENT-ROLLBACK.md) — Blocked by Architecture; no Acceptance/commit/publication
 - [TASK-027 — Runtime Activation Orchestration Prerequisites Design](TASK-027-RUNTIME-ACTIVATION-ORCHESTRATION-PREREQUISITES-DESIGN.md) — Completed, Coordinator Accepted
+- [TASK-028 — Runtime Command Parent/Phase Prerequisites Implementation](TASK-028-RUNTIME-COMMAND-PARENT-PHASE-PREREQUISITES.md) — Completed, Coordinator Accepted; TASK-026 remains Blocked
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

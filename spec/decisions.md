@@ -27,10 +27,10 @@
 - ARCH-005 определяет Configuration Loader, Snapshot provenance и loading boundary.
 - DP-007–DP-013 сохраняют Design Status Draft; DP-014–DP-019 имеют Design
   Status Approved. Статус не повышается реализацией или commit. DP-012 и
-  DP-013 реализованы изолированно; DP-014 и primitive boundary DP-015
-  реализованы изолированно;
-  DP-015 parent/phase extension и DP-016–DP-019 сохраняют Implementation
-  Status Planned.
+  DP-013 реализованы изолированно; DP-014, primitive boundary DP-015 и partial
+  DP-019 parent/phase sequential core реализованы изолированно. Полный DP-015
+  parent/phase extension и DP-016–DP-019 сохраняют Implementation Status
+  Planned overall.
 
 ## Ожидающие отдельного решения
 
@@ -56,8 +56,9 @@ schema, API, recovery и production wiring отсутствуют. Design gate �
 
 Изолированная реализация DP-013 не разрешает integration. Approved
 DP-014–DP-018 закрывают focused design gates ARCH-004 §19(2)–(6). DP-014 и
-primitive boundary DP-015 реализованы изолированно, но parent/phase extension
-DP-019, concrete authorization policy, external
+primitive boundary DP-015 и partial DP-019 parent/phase sequential core
+реализованы изолированно, но Continue/pending-Stop extension, concrete
+authorization policy, external
 persistence, private
 Start-claim continuation, execution-generation binding/load gate, management
 integration/API и Production Activation отсутствуют.
@@ -87,7 +88,9 @@ OperationalDomain/Workspace/Configuration/Runtime Instance/action/target
 version; callback-scoped DP-015 parent/phase claims для replacement/rollback;
 private DP-011/DP-013 Start-claim continuation; publication exact Owner-issued
 attempt и execution-generation binding до Load. Implementation Status DP-019 —
-Planned. Он не меняет Owner lifecycle semantics, не создаёт orchestrator/API и
+Planned overall; durable parent/derived-phase storage, callback capability и
+strict sequential core реализованы изолированно в TASK-028. Он не меняет Owner
+lifecycle semantics, не создаёт orchestrator/API и
 не снимает TASK-026 blocker до отдельной implementation/acceptance.
 
 Approved DP-017 определяет focused contract ARCH-004
@@ -132,3 +135,14 @@ TASK-027 завершена как `Completed — Coordinator Accepted` посл
 review `Approved` с blocking findings 0. DP-019 остаётся Approved/Planned;
 Acceptance design task не снимает TASK-026 blocker и не авторизует
 implementation, commit или publication.
+
+TASK-028 реализует только independently testable partial DP-019 core в
+`internal/runtimecommandidempotency`: exact Replace/Rollback intent, durable
+parent/derived-phase records, callback-scoped generation-bound capabilities,
+strict optional StopOld затем StartTarget order, replay, unresolved barriers и
+reconstruction invalidation. StartTarget foundation остаётся package-private;
+Continue/pending-Stop, private managed-Flow continuation, attempt binding и
+production composition остаются Planned. TASK-026 остаётся Blocked.
+Repeat Independent Review TASK-028 — `Approved`, blocking/non-blocking 0;
+Coordinator Closure Audit — PASS, Coordinator Acceptance — `Accepted`. Commit
+и publication не выполнялись.

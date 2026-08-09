@@ -6,7 +6,8 @@
 
 - **Design Status:** Approved
 - **Implementation Status:** Primitive boundary Start/Stop реализована
-  изолированно; parent/phase extension Approved DP-019 — Planned
+  изолированно; parent/phase sequential core Approved DP-019 реализован
+  изолированно, а Continue/pending-Stop semantics остаются Planned
 
 Этот approved design определяет durable idempotency boundary для
 state-changing management commands Runtime. Package
@@ -35,9 +36,10 @@ lifecycle mutation или Launch Attempt.
   planned callback-scoped parent/phase API и authorization integration.
 
 Принятые ADR и Active или Frozen architecture остаются authoritative. DP-013
-остаётся Draft; Approved DP-014 и primitive boundary DP-015 реализованы
-изолированно, а parent/phase extension DP-019 и Approved DP-016 сохраняют
-Implementation Status Planned.
+остаётся Draft; Approved DP-014, primitive boundary DP-015 и partial
+parent/phase sequential core DP-019 реализованы изолированно, а
+Continue/pending-Stop extension и Approved DP-016 сохраняют Implementation
+Status Planned.
 
 ## 4. Область
 
@@ -504,8 +506,9 @@ external persistence, recovery, reporting, integration и Production Activation
 
 ## 27. Implementation boundary
 
-Implementation Status primitive Start/Stop — Implemented in isolation;
-parent/phase extension DP-019 остаётся Planned. Package
+Implementation Status primitive Start/Stop — Implemented in isolation.
+Parent/phase sequential core DP-019 также Implemented in isolation, а полное
+extension остаётся Planned. Package
 `internal/runtimecommandidempotency` реализует exact Scope/CommandKey identity,
 immutable Start/Stop intent, authorization-before-claim, atomic per-Instance
 admission, claim-before-delegation, one-shot process-local execution permit,
@@ -516,9 +519,15 @@ tracked-Start Stop exception, unresolved barrier и terminal semantic replay.
 private на synchronous claiming call stack, поэтому caller не может потерять
 его между claim и delegation. Client-generation transition атомарно
 сериализован с admission; stale Boundary не может создать новый Claim.
+`ExecuteParent` добавляет exact Replace/Rollback intent, durable
+parent/derived-phase records, generation-bound callback capability, strict
+порядок optional `StopOld` затем `StartTarget`, phase replay, parent terminal
+gating и тот же unresolved barrier. StartTarget claim foundation остаётся
+package-private.
 
 External durable storage/schema, API, DP-016 orchestration, DP-017 recovery,
-parent/phase и continuation prerequisites DP-019, management wiring и
+Continue/pending-Stop, continuation и binding prerequisites DP-019, management
+wiring и
 Production Activation отсутствуют. Isolated package не
 изменяет lifecycle contracts и не подключён к DP-013 Directory.
 

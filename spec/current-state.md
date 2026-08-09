@@ -17,16 +17,18 @@ management routing изолированно. Together Approved DP-014–DP-018 �
 focused design gates ARCH-004 §19(2)–(6): DP-014 — §19(2), DP-015 — §19(3),
 DP-016 — §19(4), DP-017 — §19(5), DP-018 — §19(6). DP-014 и primitive
 Start/Stop boundary DP-015 реализованы изолированно packages `internal/runtimeidentity` и
-`internal/runtimecommandidempotency`; parent/phase extension DP-015 остаётся
-Planned в DP-019; DP-016–DP-019 имеют Implementation Status Planned. Packages
-DP-016–DP-019, external schema/HTTP API/persistence,
+`internal/runtimecommandidempotency`; partial parent/phase sequential core
+DP-019 также реализован там изолированно, а полный extension остаётся Planned;
+DP-016–DP-019 имеют Implementation Status Planned overall. Packages
+Dedicated DP-016 orchestration, DP-017 recovery, DP-018 reporting и DP-019
+continuation/binding packages, external schema/HTTP API/persistence,
 orchestration/recovery/reporting implementation, concrete authorization policy,
 management wiring и Control Service activation отсутствуют.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
-**Последняя завершённая development task:** TASK-025 — Runtime Management
-Command Idempotency Implementation; `Completed — Coordinator Accepted`.
+**Последняя завершённая development task:** TASK-028 — Runtime Command
+Parent/Phase Prerequisites Implementation; `Completed — Coordinator Accepted`.
 
 **Последняя завершённая operational task:** TASK-012 — Engineering Process
 Hardening; `Completed — Coordinator Accepted`.
@@ -44,9 +46,8 @@ Verification Matrix, PROCESS-002, status consistency и Scope Audit 24/0/0 —
 PASS. Acceptance не реализует prerequisites и не снимает TASK-026 blocker;
 commit и publication не выполнялись.
 
-**Текущая development task:** TASK-026 — Runtime Activation, Replacement, and
-Rollback Implementation; `Blocked by Architecture`. Coordinator Acceptance,
-commit и publication запрещены.
+**Текущая development task:** отсутствует. TASK-026 остаётся `Blocked by
+Architecture`; Coordinator Acceptance, commit и publication TASK-026 запрещены.
 
 **Последняя завершённая documentation task:** TASK-022 — Root README Runtime
 Status Synchronization; `Completed — Coordinator Accepted`.
@@ -482,8 +483,8 @@ Coordinator Closure Audit повторно подтвердил Task Contract, e
 `751577e839cdea3a0f35032b1339d1d9f74d28ec`; branches удалены, synchronized
 `main` подтверждён.
 
-**TASK-026:** `Blocked by Architecture`. Architecture Blocking Discovery
-подтвердил отсутствие implementable DP-015 parent/phase API, private
+**TASK-026:** `Blocked by Architecture`. Architecture Blocking Discovery на
+своём baseline подтвердил отсутствие implementable DP-015 parent/phase API, private
 DP-011/DP-013 Start-claim continuation, coordination exact Owner-issued attempt
 с DP-014 publication/binding и authorization tuple для replacement/rollback.
 Simplified Variant B отклонён; implementation scope DP-016 не уменьшен;
@@ -498,6 +499,19 @@ Approved, blocking и non-blocking findings 0; Verification Matrix,
 PROCESS-002, Status Consistency Validation и Scope Audit 24/0/0 — PASS.
 TASK-026 остаётся Blocked после design acceptance — до отдельной реализации
 DP-019; commit и publication не выполнялись.
+
+**TASK-028:** `Completed — Coordinator Accepted`. После Architect handoff исходное
+утверждение полного parent/phase admission boundary с Continue/Stop race
+отклонено как нецелостное без pending-Stop rendezvous. Принят independently
+testable partial core: durable parent/derived-phase records, callback-scoped
+capabilities, strict optional `StopOld` -> `StartTarget` order, replay,
+unresolved barriers и reconstruction invalidation. Continue gate, independent
+Stop coexistence, tracked-Start exception, pending-Stop rendezvous, private
+managed-Flow continuation и attempt binding остаются отдельными prerequisites.
+Repeat Independent Review подтвердил `Approved`, blocking/non-blocking 0;
+Verification Matrix, PROCESS-002, Status Consistency Validation и Scope Audit
+24/0/0 — PASS. TASK-026 остаётся Blocked; commit и publication TASK-028 не
+выполнялись.
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task
@@ -546,8 +560,9 @@ proofs §22 как in-memory store изолированно; external storage, H
 production wiring и Production Activation отсутствуют.
 
 Runtime Management Command Idempotency DP-015 имеет Design Status Approved;
-primitive Start/Stop boundary имеет Implementation Status Implemented in
-isolation, parent/phase extension DP-019 — Planned. Package
+primitive Start/Stop boundary и partial parent/phase sequential core DP-019
+имеют Implementation Status Implemented in isolation, полный parent/phase
+extension DP-019 — Planned. Package
 `internal/runtimecommandidempotency` реализует process-local in-memory
 claim/replay boundary и применимые isolated acceptance proofs §24; external
 durable storage, management integration/API, recovery, reporting и Production
