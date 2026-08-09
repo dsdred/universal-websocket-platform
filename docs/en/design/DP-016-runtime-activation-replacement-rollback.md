@@ -11,9 +11,10 @@ This approved design defines a planned ordering
 contract for activation, replacement, and explicit rollback of one Runtime
 Instance. No activation/replacement orchestrator or its workflow persistence,
 API, recovery worker, or production wiring exists as a result of this document.
-Implementation is architecture-blocked until the Approved/Planned DP-019
-parent/phase, authorization, and Start-claim continuation prerequisites are
-implemented and independently accepted.
+Implementation is architecture-blocked until the remaining Approved/Planned
+DP-019 exact authorization, private managed Start-claim continuation,
+Owner-claim view, and DP-014 binding prerequisites are implemented and
+independently accepted.
 
 ## 2. Purpose
 
@@ -44,9 +45,9 @@ This proposal refines, without overriding:
 
 Accepted ADRs and Active or Frozen architecture remain authoritative. DP-013
 remains Draft and is implemented in isolation. Approved DP-014 and the
-primitive DP-015 boundary and partial DP-019 parent/phase sequential core are
-implemented in isolation; the Continue/pending-Stop extension and Approved
-DP-016 and DP-017 remain Planned.
+primitive DP-015 boundary, partial DP-019 parent/phase sequential core, and
+command-boundary Continue/pending-Stop rendezvous are implemented in isolation;
+managed continuation and Approved DP-016/DP-017 remain Planned.
 
 ## 4. Scope
 
@@ -485,14 +486,15 @@ Deferred to focused designs or implementation tasks:
 
 Implementation Status is Planned. The repository contains isolated Lifecycle
 Owner, launch flow, source adapter, Draft DP-013 routing, Approved DP-014
-aggregate storage, and Approved DP-015 command storage. DP-016 through DP-018
-remain Planned. It contains no activation/replacement orchestrator, external
+aggregate storage, and Approved DP-015 command storage including the isolated
+parent/phase Continue/pending-Stop rendezvous. DP-016 through DP-018 remain
+Planned. It contains no activation/replacement orchestrator, external
 durable command/aggregate/workflow storage, public management API, recovery
 executor, or production wiring.
 
 Approval closes the section 19(4) design gate but does not implement or wire
-the contract. TASK-026 remains Blocked until DP-019 is implemented; no reduced
-DP-016 slice is permitted.
+the contract. TASK-026 remains Blocked until all remaining DP-019 prerequisites
+are implemented and accepted; no reduced DP-016 slice is permitted.
 
 ## 29. Decision
 

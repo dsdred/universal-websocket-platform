@@ -504,8 +504,9 @@ reconciliation. Terminal fact storage is not operational reporting. Approved
 [DP-018](DP-018-runtime-operational-error-reporting-redaction.md) define those
 separate responsibilities. The primitive DP-015 boundary is Implemented in
 isolation by `internal/runtimecommandidempotency`; its partial DP-019
-parent/phase sequential core is also implemented there in isolation, while the
-Continue/pending-Stop extension and DP-016 through DP-018 remain Planned.
+parent/phase sequential core and command-boundary Continue/pending-Stop
+rendezvous are also implemented there in isolation. DP-014 attempt/generation
+binding and DP-016 through DP-018 remain Planned.
 
 ## 24. Explicit Deferrals
 

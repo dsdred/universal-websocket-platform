@@ -26,13 +26,14 @@
   recovery/reconciliation и operational error reporting/redaction. Approved/
   Planned overall DP-019 определяет parent/phase, authorization и private
   Start-claim continuation prerequisites DP-016. TASK-028 реализует partial
-  parent/phase sequential core изолированно; Continue/pending-Stop,
-  authorization policy, managed continuation и binding остаются Planned, а
+  parent/phase sequential core, а TASK-029 — command-boundary Continue и
+  pending-Stop rendezvous изолированно; authorization policy, private invoker,
+  managed Flow/OwnerClaimView continuation и DP-014 binding остаются Planned, а
   TASK-026 — Blocked by Architecture до их implementation.
   HTTP, concrete policy, external command storage, recovery/reporting
   package/schema, management wiring и Production Activation отсутствуют**
-- Последняя завершённая development task: **TASK-028 — Runtime Command
-  Parent/Phase Prerequisites Implementation; Completed — Coordinator Accepted**
+- Последняя завершённая development task: **TASK-029 — Runtime Command
+  Continue and Pending-Stop Prerequisite; Completed — Coordinator Accepted**
 - Последняя завершённая operational task: **TASK-012 — Engineering Process
   Hardening; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
@@ -43,8 +44,10 @@
   parent/phase, exact authorization and private per-call managed Start seams
   defined; repeat Independent Review Approved with blocking 0 and non-blocking
   0; Verification Matrix, PROCESS-002, status consistency and Scope Audit
-  24/0/0 PASS; TASK-026 remains Blocked by Architecture; no commit or
-  publication performed**
+  24/0/0 PASS; TASK-026 remains Blocked by Architecture; at Coordinator
+  closure commit and publication had not yet been performed. Subsequently task
+  commit `7ac0a6b372d9e54c73d024703e6d3ee4b06e15cd` was published through PR #27
+  and merged as `2c017aace7e56a4747d3cecbe8ff3f6cf53e009f`**
 - TASK-025 acceptance evidence: **Runtime Management Command Idempotency
   Implementation; Completed — Coordinator Accepted;
   initial independent
@@ -84,13 +87,32 @@
   audit подтверждены; Commit Gate, commit, push и publication не выполнялись**
 - Текущая development task: **отсутствует. TASK-026 остаётся Blocked by
   Architecture; Acceptance/commit/publish TASK-026 запрещены**
+- TASK-029 acceptance evidence: **Completed — Coordinator Accepted;
+  Architecture PASS, blocking 0; Size Guard ACCEPT,
+  `DO NOT SPLIT`, net production `+680`; Independent Tester PASS WITH
+  ENVIRONMENT LIMITATION, blocking/non-blocking 0; focused coverage 85.9%,
+  focused/package/shuffled `-count=100`, full tests, vet, GoDoc и diff checks
+  PASS; race build unavailable без CGO/gcc; Independent Review APPROVED 0/0;
+  PROCESS-002/status/parity PASS, links 886/0, Scope Audit 25/0/0,
+  staged/unexpected 0; Coordinator Closure Audit PASS and Acceptance
+  `Accepted`; branch baseline
+  `ba75e54e00c3cf1d0d87ca2a985acc9699698efd`; no task commit, push, or
+  publication. Exact authorization/private
+  invoker, managed Flow/OwnerClaimView, DP-014 binding, orchestrator и
+  production composition остаются Planned; TASK-026 remains Blocked**
+- Следующая рекомендация: **отдельный bounded readiness/intake для lowest
+  remaining DP-019 prerequisite — exact orchestration authorization, private
+  managed invocation и OwnerClaim-to-DP-014 binding sequence; не активирована**
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы
   изолированно; Repeat Independent Review Approved, blocking/non-blocking 0;
   Verification Matrix PASS WITH ENVIRONMENT LIMITATION, PROCESS-002/status
-  consistency PASS, Scope Audit 24/0/0; Continue/pending-Stop, managed Flow
-  continuation, binding и production wiring остаются Planned; commit и
-  publication не выполнялись**
+  consistency PASS, Scope Audit 24/0/0; на closure-time Continue/pending-Stop,
+  managed Flow continuation, binding и production wiring оставались Planned;
+  TASK-029 впоследствии реализует только первый prerequisite; at Coordinator
+  closure commit и publication ещё не выполнялись. Subsequently task commit
+  `d28efa4e88e02ef528c78c3ca88b3f91945069ce` was published through PR #28
+  and merged as `ba75e54e00c3cf1d0d87ca2a985acc9699698efd`**
 - Последняя завершённая documentation task: **TASK-022 — Root README Runtime
   Status Synchronization; Completed — Coordinator Accepted**
 - Текущая documentation task: **отсутствует**
@@ -340,9 +362,9 @@
   isolation**; in-memory Runtime Instance aggregate store `internal/runtimeidentity`
   реализован изолированно; external storage, HTTP API, recovery и production
   wiring отсутствуют
-- Design Status DP-015 — **Approved**, primitive Start/Stop boundary и partial
-  parent/phase sequential core DP-019 — **Implemented in isolation**, полный
-  parent/phase extension — **Planned**;
+- Design Status DP-015 — **Approved**, primitive Start/Stop boundary, partial
+  parent/phase sequential core DP-019 и command-boundary Continue/pending-Stop
+  rendezvous — **Implemented in isolation**, полный extension — **Planned**;
   process-local `internal/runtimecommandidempotency` реализует claim/replay
   storage и one-shot permits; external schema, API, recovery, integration и
   production wiring отсутствуют
@@ -357,9 +379,10 @@
   operational reporting/redaction определены только на design level; report
   model, projector, delivery adapter, API и production wiring отсутствуют
 - Design Status DP-019 — **Approved**, Implementation Status — **Planned
-  overall**; parent/phase durable storage, callback capability и sequential
-  core реализованы изолированно, а Continue/pending-Stop, exact orchestration
-  authorization policy и private Start-claim continuation не реализованы
+  overall**; parent/phase durable storage, callback capability, sequential core
+  и command-boundary Continue/pending-Stop rendezvous реализованы изолированно,
+  а exact orchestration authorization/private invoker, managed Flow/
+  OwnerClaimView continuation, DP-014 binding и orchestrator не реализованы
 - Design Status DP-008 остаётся **Draft**, Implementation Status — **Implemented in isolation**
 - Содержимое репозитория: документация, спецификации, инженерные соглашения, исполняемый Control Service и изолированные Runtime-компоненты с тестами
 

@@ -57,9 +57,8 @@ func (r phaseRecord) view() PhaseRecordView {
 
 // ExecuteParent validates and authorizes one exact replacement or rollback
 // submission, then synchronously delegates a newly committed parent claim to
-// one callback-scoped ParentExecution. It implements only the sequential
-// parent/phase core; Continue and pending-Stop semantics remain outside this
-// boundary.
+// one callback-scoped ParentExecution. The callback may execute the finite
+// StopOld then gated StartTarget sequence; replay receives no capability.
 func (b *Boundary) ExecuteParent(
 	ctx context.Context,
 	scope Scope,
@@ -113,6 +112,7 @@ func (b *Boundary) ExecuteParent(
 	state := &permitState{generation: b.generation, revision: record.revision}
 	ledger.parents[identity] = record
 	ledger.liveParents[identity] = state
+	ledger.rendezvous[identity] = newStartRendezvous(b.generation)
 	execution := &ParentExecution{
 		boundary: b, ledger: ledger, identity: identity, state: state,
 		usage: &parentUsage{},
@@ -215,13 +215,111 @@ func (p *ParentExecution) InspectOrExecuteStopOld(
 	return p.inspectOrExecutePhase(PhaseStopOld, invoke)
 }
 
-// inspectOrExecuteStartTarget is deliberately package-private until DP-019's
-// Continue gate exists. Exporting it would create a permanent bypass around
-// the required Stop-versus-Continue winner.
-func (p *ParentExecution) inspectOrExecuteStartTarget(
-	invoke func() (TerminalOutcome, error),
-) (PhaseAdmission, error) {
-	return p.inspectOrExecutePhase(PhaseStartTarget, invoke)
+// ContinueOrExecuteStartTarget atomically orders one StartTarget phase against
+// an independent Stop on the same Runtime Instance. A new phase invokes the
+// callback synchronously with callback-scoped OwnerClaimed and StartNoClaim
+// signals. A true bool with nil error means Stop won before phase creation and
+// terminalized satisfied without lifecycle work. A true bool with a context
+// error means caller cancellation or a pre-phase Stop cancellation won. Both
+// return a zero PhaseAdmission. A false bool with an error means fail-closed
+// indeterminacy or expiry; after a phase claim its Admission remains returned.
+// A Stop admitted after the phase claim keeps its permit on its original
+// Boundary.Execute stack and rendezvous there.
+func (p *ParentExecution) ContinueOrExecuteStartTarget(
+	ctx context.Context,
+	invoke func(*StartTargetExecution) (TerminalOutcome, error),
+) (PhaseAdmission, bool, error) {
+	if p == nil || p.boundary == nil || p.ledger == nil || p.state == nil ||
+		ctx == nil || invoke == nil {
+		return PhaseAdmission{}, false, ErrInvalidSubmission
+	}
+	if !p.beginUse() {
+		return PhaseAdmission{}, false, ErrBoundaryExpired
+	}
+	defer p.endUse()
+	identity, _ := newPhaseIdentity(p.identity, PhaseStartTarget)
+	p.boundary.storage.clientMu.RLock()
+	p.ledger.mu.Lock()
+	if !p.liveLocked() {
+		p.ledger.mu.Unlock()
+		p.boundary.storage.clientMu.RUnlock()
+		return PhaseAdmission{}, false, ErrBoundaryExpired
+	}
+	if existing := p.ledger.phases[identity]; existing != nil {
+		view := existing.view()
+		kind := AdmissionInProgress
+		if existing.state == CommandStateTerminal {
+			kind = AdmissionReplay
+		}
+		p.ledger.mu.Unlock()
+		p.boundary.storage.clientMu.RUnlock()
+		return PhaseAdmission{kind: kind, record: view}, false, nil
+	}
+	if !p.phaseOrderAllowsLocked(PhaseStartTarget) {
+		p.ledger.mu.Unlock()
+		p.boundary.storage.clientMu.RUnlock()
+		return PhaseAdmission{}, false, ErrIllegalPhaseOrder
+	}
+	rendezvous := p.ledger.rendezvous[p.identity]
+	if rendezvous == nil || rendezvous.generation != p.boundary.generation ||
+		rendezvous.signal == startSignalBlocked {
+		p.ledger.mu.Unlock()
+		p.boundary.storage.clientMu.RUnlock()
+		return PhaseAdmission{}, false, ErrBoundaryExpired
+	}
+	if rendezvous.continueCancelled {
+		p.ledger.mu.Unlock()
+		p.boundary.storage.clientMu.RUnlock()
+		return PhaseAdmission{}, true, context.Canceled
+	}
+	if rendezvous.stopCancelledBeforePhase {
+		p.ledger.mu.Unlock()
+		p.boundary.storage.clientMu.RUnlock()
+		return PhaseAdmission{}, true, context.Canceled
+	}
+	if err := ctx.Err(); err != nil {
+		rendezvous.continueCancelled = true
+		waitForStop := rendezvous.stopState != nil
+		if waitForStop {
+			rendezvous.signal = startSignalNoClaim
+			rendezvous.notifyLocked()
+		}
+		p.ledger.mu.Unlock()
+		p.boundary.storage.clientMu.RUnlock()
+		if waitForStop {
+			_, _ = p.waitForStopFirst(rendezvous)
+		}
+		return PhaseAdmission{}, true, err
+	}
+	if rendezvous.stopState != nil {
+		if rendezvous.signal != startSignalNone {
+			p.ledger.mu.Unlock()
+			p.boundary.storage.clientMu.RUnlock()
+			return PhaseAdmission{}, false, ErrIndeterminateExecution
+		}
+		rendezvous.signal = startSignalNoClaim
+		rendezvous.notifyLocked()
+		p.ledger.mu.Unlock()
+		p.boundary.storage.clientMu.RUnlock()
+		prevented, err := p.waitForStopFirst(rendezvous)
+		return PhaseAdmission{}, prevented, err
+	}
+	record := &phaseRecord{identity: identity, state: CommandStateClaimed, revision: 1}
+	state := &permitState{generation: p.boundary.generation, revision: record.revision}
+	p.ledger.phases[identity] = record
+	p.ledger.livePhases[identity] = state
+	rendezvous.startPhaseClaimed = true
+	permit := &phasePermit{parent: p, identity: identity, state: state}
+	claimed := PhaseAdmission{kind: AdmissionClaimed, record: record.view()}
+	p.ledger.mu.Unlock()
+	p.boundary.storage.clientMu.RUnlock()
+
+	terminal, err := permit.executeStartTarget(invoke)
+	if err != nil {
+		return claimed, false, err
+	}
+	claimed.record = terminal
+	return claimed, false, nil
 }
 
 func (p *ParentExecution) inspectOrExecutePhase(
@@ -305,7 +403,11 @@ func (p *ParentExecution) phaseOrderAllowsLocked(kind PhaseKind) bool {
 
 // PublishTerminal publishes one definitive parent result. It cannot supply or
 // replace child facts: if any phase exists, StartTarget and every existing
-// phase must already be terminal.
+// phase must already be terminal. A cancellation winner permits only Cancelled;
+// an exact converged rendezvous Stop or pre-phase Stop-first winner permits only
+// Stopped. Post-phase StartNoClaim maps its immutable explicit
+// Cancelled/Rejected/Failed cause without treating the satisfied Stop as
+// converged.
 func (p *ParentExecution) PublishTerminal(
 	outcome ParentTerminalOutcome,
 ) (ParentRecordView, error) {
@@ -327,6 +429,34 @@ func (p *ParentExecution) PublishTerminal(
 	startID, _ := newPhaseIdentity(p.identity, PhaseStartTarget)
 	stop := p.ledger.phases[stopID]
 	start := p.ledger.phases[startID]
+	rendezvous := p.ledger.rendezvous[p.identity]
+	if rendezvous != nil {
+		if (rendezvous.continueCancelled || rendezvous.stopCancelledBeforePhase) &&
+			outcome.category != ParentOutcomeCancelled {
+			return ParentRecordView{}, ErrInstanceBlocked
+		} else if !rendezvous.continueCancelled && !rendezvous.stopCancelledBeforePhase &&
+			(rendezvous.stopConverged || rendezvous.stopFirstWon) &&
+			outcome.category != ParentOutcomeStopped {
+			return ParentRecordView{}, ErrInstanceBlocked
+		} else if start != nil && start.state == CommandStateTerminal &&
+			rendezvous.signal == startSignalNoClaim {
+			want := ParentOutcomeRejected
+			switch rendezvous.startNoClaimCause {
+			case StartNoClaimCancelled:
+				want = ParentOutcomeCancelled
+			case StartNoClaimFailed:
+				want = ParentOutcomeFailed
+			}
+			if outcome.category != want {
+				return ParentRecordView{}, ErrInstanceBlocked
+			}
+		}
+	}
+	if rendezvous != nil && rendezvous.stopState != nil &&
+		rendezvous.resolution != stopResolutionConverged &&
+		rendezvous.resolution != stopResolutionSatisfiedNoClaim {
+		return ParentRecordView{}, ErrInstanceBlocked
+	}
 	if stop != nil || start != nil {
 		if start == nil || start.state != CommandStateTerminal ||
 			(stop != nil && stop.state != CommandStateTerminal) {
@@ -350,6 +480,11 @@ func (p *ParentExecution) expire() {
 	defer p.ledger.mu.Unlock()
 	if p.ledger.liveParents[p.identity] == p.state {
 		delete(p.ledger.liveParents, p.identity)
+	}
+	if rendezvous := p.ledger.rendezvous[p.identity]; rendezvous != nil &&
+		rendezvous.resolution == stopResolutionNone && rendezvous.stopState != nil {
+		rendezvous.signal = startSignalBlocked
+		rendezvous.notifyLocked()
 	}
 }
 

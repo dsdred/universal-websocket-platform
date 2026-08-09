@@ -45,28 +45,35 @@ type commandLedger struct {
 	phases       map[phaseIdentity]*phaseRecord
 	liveParents  map[commandIdentity]*permitState
 	livePhases   map[phaseIdentity]*permitState
+	rendezvous   map[commandIdentity]*startRendezvous
 }
 
 // MemoryStorage owns process-lifetime command facts independently from one
 // Boundary client. Constructing a new Boundary preserves records but expires
 // all permits issued by the previous client generation.
 type MemoryStorage struct {
-	clientMu   sync.RWMutex
-	generation uint64
-	mu         sync.Mutex
-	ledgers    map[instanceScope]*commandLedger
+	clientMu       sync.RWMutex
+	generation     uint64
+	generationDone chan struct{}
+	mu             sync.Mutex
+	ledgers        map[instanceScope]*commandLedger
 }
 
 // NewMemoryStorage constructs empty process-local command storage.
 func NewMemoryStorage() *MemoryStorage {
-	return &MemoryStorage{ledgers: make(map[instanceScope]*commandLedger)}
+	return &MemoryStorage{
+		generationDone: make(chan struct{}),
+		ledgers:        make(map[instanceScope]*commandLedger),
+	}
 }
 
-func (s *MemoryStorage) nextGeneration() uint64 {
+func (s *MemoryStorage) nextGeneration() (uint64, <-chan struct{}) {
 	s.clientMu.Lock()
 	defer s.clientMu.Unlock()
+	close(s.generationDone)
+	s.generationDone = make(chan struct{})
 	s.generation++
-	return s.generation
+	return s.generation, s.generationDone
 }
 
 func (s *MemoryStorage) ledger(scope instanceScope) *commandLedger {
@@ -82,6 +89,7 @@ func (s *MemoryStorage) ledger(scope instanceScope) *commandLedger {
 			phases:       make(map[phaseIdentity]*phaseRecord),
 			liveParents:  make(map[commandIdentity]*permitState),
 			livePhases:   make(map[phaseIdentity]*permitState),
+			rendezvous:   make(map[commandIdentity]*startRendezvous),
 		}
 		s.ledgers[scope] = ledger
 	}
@@ -92,8 +100,9 @@ func (s *MemoryStorage) ledger(scope instanceScope) *commandLedger {
 // Reconstructing it over the same MemoryStorage preserves durable facts while
 // making every earlier live permit unusable.
 type Boundary struct {
-	storage    *MemoryStorage
-	generation uint64
+	storage        *MemoryStorage
+	generation     uint64
+	generationDone <-chan struct{}
 }
 
 // NewBoundary constructs the only active client generation for storage.
@@ -101,14 +110,18 @@ func NewBoundary(storage *MemoryStorage) (*Boundary, error) {
 	if storage == nil {
 		return nil, ErrInvalidSubmission
 	}
-	return &Boundary{storage: storage, generation: storage.nextGeneration()}, nil
+	generation, generationDone := storage.nextGeneration()
+	return &Boundary{storage: storage, generation: generation, generationDone: generationDone}, nil
 }
 
-// Execute validates and authorizes one exact submission, then atomically
-// inspects or claims its command identity. A new claim invokes lifecycle work
-// synchronously on the same call stack through one private permit. The permit
-// is never returned to caller code, so it cannot be abandoned between claim
-// and delegation. Authorization runs on every call, including replay.
+// Execute validates and authorizes one exact primitive submission, then
+// atomically inspects or claims its command identity. A new claim keeps one
+// private permit on this synchronous call stack. Ordinary claims invoke the
+// callback immediately; a Stop admitted against gated StartTarget waits here
+// for OwnerClaimed or StartNoClaim. Cancellation before a phase claim is an
+// irreversible Stop-first cancellation; cancellation after the phase claim
+// removes the active wait but still consumes the Stop slot. Neither invokes
+// the callback. Authorization runs on replay.
 func (b *Boundary) Execute(
 	ctx context.Context,
 	scope Scope,
@@ -157,7 +170,7 @@ func (b *Boundary) Execute(
 		return Admission{kind: AdmissionInProgress, record: view}, nil
 	}
 
-	allowed, trackedStart := b.mayClaimLocked(ledger, scope.operation)
+	allowed, trackedStart, pending := b.mayClaimLocked(ledger, scope.operation)
 	if !allowed {
 		ledger.mu.Unlock()
 		b.storage.clientMu.RUnlock()
@@ -181,13 +194,23 @@ func (b *Boundary) Execute(
 		ledger:   ledger,
 		identity: identity,
 		state:    state,
+		pending:  pending,
+	}
+	if pending != nil {
+		pending.stop = identity
+		pending.stopState = state
+		pending.stopConsumed = true
+		pending.notifyLocked()
 	}
 	claimed := Admission{kind: AdmissionClaimed, record: record.view()}
 	ledger.mu.Unlock()
 	b.storage.clientMu.RUnlock()
 
-	terminal, err := permit.execute(invoke)
+	terminal, err := permit.execute(ctx, invoke)
 	if err != nil {
+		if terminal.state == CommandStateTerminal {
+			claimed.record = terminal
+		}
 		return claimed, err
 	}
 	claimed.record = terminal
@@ -197,9 +220,12 @@ func (b *Boundary) Execute(
 func (b *Boundary) mayClaimLocked(
 	ledger *commandLedger,
 	operation Operation,
-) (bool, *commandIdentity) {
+) (bool, *commandIdentity, *startRendezvous) {
+	if pending := b.pendingStopRendezvousLocked(ledger, operation); pending != nil {
+		return true, nil, pending
+	}
 	if ledger.hasNonterminalParentOrPhaseLocked() {
-		return false, nil
+		return false, nil, nil
 	}
 	var trackedStart *commandIdentity
 	for identity, record := range ledger.records {
@@ -213,18 +239,18 @@ func (b *Boundary) mayClaimLocked(
 			trackedStart = &candidate
 			continue
 		}
-		return false, nil
+		return false, nil, nil
 	}
 	if trackedStart == nil {
-		return true, nil
+		return true, nil, nil
 	}
 	if operation != OperationStop {
-		return false, nil
+		return false, nil, nil
 	}
 	if _, consumed := ledger.stopForStart[*trackedStart]; consumed {
-		return false, nil
+		return false, nil, nil
 	}
-	return true, trackedStart
+	return true, trackedStart, nil
 }
 
 // executionPermit is a private non-replayable process-local capability for one
@@ -234,6 +260,7 @@ type executionPermit struct {
 	ledger   *commandLedger
 	identity commandIdentity
 	state    *permitState
+	pending  *startRendezvous
 }
 
 // execute invokes lifecycle work at most once. A nil callback error requires a
@@ -241,6 +268,7 @@ type executionPermit struct {
 // callback error is treated as indeterminate, expires the permit, and leaves
 // the durable record Claimed.
 func (p *executionPermit) execute(
+	ctx context.Context,
 	invoke func() (TerminalOutcome, error),
 ) (RecordView, error) {
 	if p == nil || p.boundary == nil || p.ledger == nil || p.state == nil || invoke == nil {
@@ -252,6 +280,9 @@ func (p *executionPermit) execute(
 	// Successful terminal publication removes the live entry first, making this
 	// deferred cleanup a no-op.
 	defer p.expire()
+	if p.pending != nil {
+		return p.executePendingStop(ctx, invoke)
+	}
 
 	p.boundary.storage.clientMu.RLock()
 	p.ledger.mu.Lock()

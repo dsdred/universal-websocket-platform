@@ -5,9 +5,9 @@
 ## 1. Статус
 
 - **Design Status:** Approved
-- **Implementation Status:** Primitive boundary Start/Stop реализована
-  изолированно; parent/phase sequential core Approved DP-019 реализован
-  изолированно, а Continue/pending-Stop semantics остаются Planned
+- **Implementation Status:** Primitive boundary Start/Stop, parent/phase
+  sequential core Approved DP-019 и command-boundary Continue/pending-Stop
+  rendezvous реализованы изолированно; полное extension DP-019 остаётся Planned
 
 Этот approved design определяет durable idempotency boundary для
 state-changing management commands Runtime. Package
@@ -37,9 +37,9 @@ lifecycle mutation или Launch Attempt.
 
 Принятые ADR и Active или Frozen architecture остаются authoritative. DP-013
 остаётся Draft; Approved DP-014, primitive boundary DP-015 и partial
-parent/phase sequential core DP-019 реализованы изолированно, а
-Continue/pending-Stop extension и Approved DP-016 сохраняют Implementation
-Status Planned.
+parent/phase sequential core DP-019 и command-boundary Continue/pending-Stop
+rendezvous реализованы изолированно. Managed continuation, binding и Approved
+DP-016 сохраняют Implementation Status Planned.
 
 ## 4. Область
 
@@ -522,11 +522,13 @@ private на synchronous claiming call stack, поэтому caller не мож�
 `ExecuteParent` добавляет exact Replace/Rollback intent, durable
 parent/derived-phase records, generation-bound callback capability, strict
 порядок optional `StopOld` затем `StartTarget`, phase replay, parent terminal
-gating и тот же unresolved barrier. StartTarget claim foundation остаётся
-package-private.
+gating и тот же unresolved barrier. `ContinueOrExecuteStartTarget` добавляет
+non-bypassable pre-phase Continue gate и synchronous pending-Stop rendezvous с
+immutable signal cause и fail-closed callback/reconstruction behavior.
 
 External durable storage/schema, API, DP-016 orchestration, DP-017 recovery,
-Continue/pending-Stop, continuation и binding prerequisites DP-019, management
+exact authorization DP-019, private managed continuation, Owner claim view и
+binding DP-014, management
 wiring и
 Production Activation отсутствуют. Isolated package не
 изменяет lifecycle contracts и не подключён к DP-013 Directory.
