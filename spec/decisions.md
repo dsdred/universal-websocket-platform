@@ -25,10 +25,12 @@
   isolated operational identity/command stores реализованы, а external durable
   persistence и production routing operational сущностей отсутствуют.
 - ARCH-005 определяет Configuration Loader, Snapshot provenance и loading boundary.
-- DP-007–DP-013 сохраняют Design Status Draft; DP-014–DP-018 имеют Design
+- DP-007–DP-013 сохраняют Design Status Draft; DP-014–DP-019 имеют Design
   Status Approved. Статус не повышается реализацией или commit. DP-012 и
-  DP-013 реализованы изолированно; DP-014 и DP-015 реализованы изолированно;
-  DP-016–DP-018 сохраняют Implementation Status Planned.
+  DP-013 реализованы изолированно; DP-014 и primitive boundary DP-015
+  реализованы изолированно;
+  DP-015 parent/phase extension и DP-016–DP-019 сохраняют Implementation
+  Status Planned.
 
 ## Ожидающие отдельного решения
 
@@ -54,7 +56,8 @@ schema, API, recovery и production wiring отсутствуют. Design gate �
 
 Изолированная реализация DP-013 не разрешает integration. Approved
 DP-014–DP-018 закрывают focused design gates ARCH-004 §19(2)–(6). DP-014 и
-DP-015 реализованы изолированно, но concrete authorization policy, external
+primitive boundary DP-015 реализованы изолированно, но parent/phase extension
+DP-019, concrete authorization policy, external
 persistence, private
 Start-claim continuation, execution-generation binding/load gate, management
 integration/API и Production Activation отсутствуют.
@@ -76,7 +79,16 @@ phase-specific concurrency/cancellation. Для обязательного Stop-
 Owner claim и до Load; current isolated Flow этот seam не реализует. DP-016 не
 создаёт lifecycle implementation, API, recovery или production wiring.
 Approved DP-016 закрывает design gate §19(4); implementation остаётся
-отсутствующей.
+отсутствующей и architecture-blocked prerequisites DP-019.
+
+Approved DP-019 определяет focused internal integration contract, необходимый
+для реализации DP-016 без ослабления proofs: exact authorization tuple
+OperationalDomain/Workspace/Configuration/Runtime Instance/action/target
+version; callback-scoped DP-015 parent/phase claims для replacement/rollback;
+private DP-011/DP-013 Start-claim continuation; publication exact Owner-issued
+attempt и execution-generation binding до Load. Implementation Status DP-019 —
+Planned. Он не меняет Owner lifecycle semantics, не создаёт orchestrator/API и
+не снимает TASK-026 blocker до отдельной implementation/acceptance.
 
 Approved DP-017 определяет focused contract ARCH-004
 §19(5): exact fail-closed restart assessment, durable recovery claim,
@@ -111,3 +123,12 @@ persistence, management integration/API и Production Activation не
 Package `internal/runtimelaunchflow` реализует base DP-011 изолированно без
 private Start-claim continuation DP-016 и без изменения этих ожидающих решения
 production boundaries.
+
+TASK-026 зафиксирована как `Blocked by Architecture`; упрощённый adapter
+Variant B отклонён, Coordinator Acceptance/commit/publication запрещены.
+Design-only TASK-027 устраняет только design ambiguity через DP-019; следующая
+implementation prerequisites не активируется автоматически.
+TASK-027 завершена как `Completed — Coordinator Accepted` после независимого
+review `Approved` с blocking findings 0. DP-019 остаётся Approved/Planned;
+Acceptance design task не снимает TASK-026 blocker и не авторизует
+implementation, commit или publication.

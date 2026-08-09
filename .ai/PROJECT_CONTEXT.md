@@ -20,10 +20,13 @@
   adapter изолированно; Draft DP-013 и `internal/runtimemanagement` реализуют
   management routing изолированно; Approved DP-014 и `internal/runtimeidentity`
   реализуют in-memory Runtime Instance aggregate store изолированно; Approved
-  DP-015 и `internal/runtimecommandidempotency` реализуют command claim/replay
-  boundary изолированно. Approved/Planned DP-016–DP-018 закрывают focused
+  DP-015 и `internal/runtimecommandidempotency` реализуют primitive command
+  claim/replay boundary изолированно. Approved/Planned DP-016–DP-018 закрывают focused
   design gates ARCH-004 §19(4)–(6) для activation/replacement/rollback,
-  recovery/reconciliation и operational error reporting/redaction.
+  recovery/reconciliation и operational error reporting/redaction. Approved/
+  Planned DP-019 определяет отсутствующие parent/phase, authorization и
+  private Start-claim continuation prerequisites DP-016; TASK-026 Blocked by
+  Architecture до их implementation.
   HTTP, concrete policy, external command storage, recovery/reporting
   package/schema, management wiring и Production Activation отсутствуют**
 - Последняя завершённая development task: **TASK-025 — Runtime Management
@@ -31,9 +34,15 @@
 - Последняя завершённая operational task: **TASK-012 — Engineering Process
   Hardening; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
-- Последняя завершённая architecture task: **TASK-021 — Runtime Management
-  Readiness Assessment; Completed — Coordinator Accepted**
+- Последняя завершённая architecture task: **TASK-027 — Runtime Activation
+  Orchestration Prerequisites Design; Completed — Coordinator Accepted**
 - Текущая architecture task: **отсутствует**
+- TASK-027 acceptance evidence: **DP-019 Approved/Planned; implementable
+  parent/phase, exact authorization and private per-call managed Start seams
+  defined; repeat Independent Review Approved with blocking 0 and non-blocking
+  0; Verification Matrix, PROCESS-002, status consistency and Scope Audit
+  24/0/0 PASS; TASK-026 remains Blocked by Architecture; no commit or
+  publication performed**
 - TASK-025 acceptance evidence: **Runtime Management Command Idempotency
   Implementation; Completed — Coordinator Accepted;
   initial independent
@@ -71,7 +80,9 @@
   Coordinator Closure Audit PASS; Task Contract, exact scope 26/0/0,
   Verification Matrix, PROCESS-002, status consistency и repository-state
   audit подтверждены; Commit Gate, commit, push и publication не выполнялись**
-- Текущая development task: **отсутствует**
+- Текущая development task: **TASK-026 — Runtime Activation, Replacement, and
+  Rollback Implementation; Blocked by Architecture; Acceptance/commit/publish
+  запрещены**
 - Последняя завершённая documentation task: **TASK-022 — Root README Runtime
   Status Synchronization; Completed — Coordinator Accepted**
 - Текущая documentation task: **отсутствует**
@@ -300,7 +311,7 @@
   Audit 12/0/0. External storage, HTTP API, production wiring и Production
   Activation отсутствуют**
 - Stage 2 task-before-work ordering выполнен для TASK-003, TASK-004, TASK-005, TASK-006 и TASK-007: task record создан первым content change, а task index обновлён только после initial gate
-- Publication history: **TASK-005 commit `99e0d3d`, TASK-006 commit `fd0f80a` и TASK-007 commit `2e6d221` merged через PR #6/#7/#8; transient pre-commit/Publisher blockers не являются durable project-state instructions**
+- Publication history: **TASK-005 commit `99e0d3d`, TASK-006 commit `fd0f80a` и TASK-007 commit `2e6d221` merged через PR #6/#7/#8; TASK-025 commit `06c80265` merged через PR #26 в `751577e8`; transient pre-commit/Publisher blockers не являются durable project-state instructions**
 - Design Status DP-009 остаётся **Draft**; Bootstrap и Runtime Launcher
   Implementation Status — **Implemented in isolation**; production launch
   pipeline не реализован, AP-003 и AP-011 остаются integration-gated
@@ -308,7 +319,7 @@
   **Implemented in isolation**; status не утверждает production wiring,
   persistence или management capability
 - Design Status DP-011 остаётся **Draft**, Implementation Status —
-  **Implemented in isolation для base contract; private DP-016/DP-017
+  **Implemented in isolation для base contract; private DP-019
   Start-claim continuation и execution-binding/load gate Planned**; Flow package не утверждает concrete Source
   composition, management routing или Production Activation
 - Design Status DP-012 — **Draft**, Implementation Status — **Implemented in
@@ -321,19 +332,24 @@
   isolation**; in-memory Runtime Instance aggregate store `internal/runtimeidentity`
   реализован изолированно; external storage, HTTP API, recovery и production
   wiring отсутствуют
-- Design Status DP-015 — **Approved**, Implementation Status — **Implemented
-  in isolation**; process-local `internal/runtimecommandidempotency` реализует
-  claim/replay storage и one-shot permits; external schema, API, recovery,
-  integration и production wiring отсутствуют
+- Design Status DP-015 — **Approved**, primitive Start/Stop boundary
+  **Implemented in isolation**, parent/phase extension DP-019 — **Planned**;
+  process-local `internal/runtimecommandidempotency` реализует claim/replay
+  storage и one-shot permits; external schema, API, recovery, integration и
+  production wiring отсутствуют
 - Design Status DP-016 — **Approved**, Implementation Status — **Planned**;
   activation/replacement/rollback ordering определён только на design level;
-  implementation, API, recovery и production wiring отсутствуют
+  implementation architecture-blocked unimplemented prerequisites DP-019;
+  API, recovery и production wiring отсутствуют
 - Design Status DP-017 — **Approved**, Implementation Status — **Planned**;
   recovery/reconciliation определены только на design level; recovery store,
   execution-evidence adapter, executor, API и production wiring отсутствуют
 - Design Status DP-018 — **Approved**, Implementation Status — **Planned**;
   operational reporting/redaction определены только на design level; report
   model, projector, delivery adapter, API и production wiring отсутствуют
+- Design Status DP-019 — **Approved**, Implementation Status — **Planned**;
+  exact orchestration authorization, parent/phase claim API и private
+  Start-claim continuation определены, но не реализованы
 - Design Status DP-008 остаётся **Draft**, Implementation Status — **Implemented in isolation**
 - Содержимое репозитория: документация, спецификации, инженерные соглашения, исполняемый Control Service и изолированные Runtime-компоненты с тестами
 

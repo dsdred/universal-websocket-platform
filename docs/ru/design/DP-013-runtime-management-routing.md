@@ -7,7 +7,7 @@
 - **Design Status:** Draft
 - **Implementation Status:** Implemented in isolation
 - **Integration Readiness:** Blocked; full integration и Production Activation
-  требуют planned dependencies и wiring ниже
+  требуют Approved/Planned prerequisites DP-019 и wiring ниже
 
 До утверждения proposal остаётся ненормативным. Его изолированная in-process
 management command boundary реализована в `internal/runtimemanagement`.
@@ -386,6 +386,16 @@ callable `StartClaimContinuation` при construction Flow; seam не добав
 exported operation Directory/Replace/Rollback, не передаёт mutable
 `LaunchPreparation` и является Planned, а не implemented.
 
+Approved [DP-019](DP-019-runtime-activation-orchestration-prerequisites.md)
+закрывает design ambiguity этой seam. Он добавляет отдельный exact
+orchestration authorization tuple и private composition-only lifecycle invoker,
+используемый только original primitive/phase permit holder. Invoker передаёт
+один per-call immutable `StartExecutionBinding` в managed Start surface одного
+уже stored Flow; revision, generation, authorization, linked execution и
+rendezvous facts никогда не являются Flow-construction state или mutable slot
+Directory. Existing public `Start`, `Stop`, `Observe` и их authorization
+behavior не меняются. Surfaces DP-019 Planned и отсутствуют в current package.
+
 Если linked path `Directory.Start` возвращает definitive cancellation/error до
 claim Owner, он сигнализирует `StartNoClaim` original pending Stop call stack.
 Только тот claimant terminalizes свой Stop satisfied без invocation section 17.
@@ -663,7 +673,7 @@ process-local in-memory storage. External durability, activation, recovery,
 reporting, integration Control Service и Production Activation отсутствуют.
 Любой integration slice сначала должен предоставить exact required
 dependencies, включая planned private Start-claim continuation и
-execution-generation binding/load gate.
+execution-generation binding/load gate, определённые Approved DP-019.
 
 ## 30. Решение
 

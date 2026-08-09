@@ -36,8 +36,9 @@ authoritative execution evidence, публикует только доказан
   proven release и process-loss cut points.
 
 Accepted ADR и Active/Frozen architecture остаются authoritative. DP-013
-остаётся Draft и реализован изолированно. Approved DP-014 и DP-015 реализованы
-изолированно; Approved DP-016 и DP-017 остаются Planned.
+остаётся Draft и реализован изолированно. Approved DP-014 и primitive boundary
+DP-015 реализованы изолированно; parent/phase extension DP-019 и Approved
+DP-016/DP-017 остаются Planned.
 
 ## 4. Область действия
 

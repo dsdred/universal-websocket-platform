@@ -11,6 +11,9 @@
 ordering contract activation, replacement и explicit rollback одного Runtime
 Instance. Этот документ не создаёт activation/replacement orchestrator или
 его workflow persistence, API, recovery worker или production wiring.
+Implementation architecture-blocked, пока parent/phase, authorization и
+Start-claim continuation prerequisites Approved/Planned DP-019 не реализованы
+и независимо не приняты.
 
 ## 2. Назначение
 
@@ -35,10 +38,14 @@ Proposal уточняет, но не переопределяет:
   claim и planned private extension claim-continuation.
 - [DP-017](DP-017-runtime-recovery-reconciliation.md) для recovery boundary,
   которая требует и использует DP-014-owned execution-generation binding.
+- [DP-019](DP-019-runtime-activation-orchestration-prerequisites.md) для exact
+  internal API, связывающего authorization, parent/phase admission, Owner
+  claim, durable attempt publication, generation binding и Continue.
 
 Принятые ADR и Active/Frozen architecture остаются authoritative. DP-013
-остаётся Draft и реализован изолированно. Approved DP-014 и DP-015 реализованы
-изолированно; Approved DP-016 и DP-017 остаются Planned.
+остаётся Draft и реализован изолированно. Approved DP-014 и primitive boundary
+DP-015 реализованы изолированно; parent/phase extension DP-019 и Approved
+DP-016/DP-017 остаются Planned.
 
 ## 4. Область
 
@@ -477,7 +484,8 @@ command/aggregate/workflow storage, public management API, recovery executor и
 production wiring отсутствуют.
 
 Approval закрывает design gate section 19(4), но не реализует и не подключает
-contract.
+contract. TASK-026 остаётся Blocked до implementation DP-019; reduced slice
+DP-016 запрещён.
 
 ## 29. Решение
 

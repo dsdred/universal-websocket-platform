@@ -7,7 +7,7 @@
 - **Design Status:** Draft
 - **Implementation Status:** Implemented in isolation
 - **Integration Readiness:** Blocked; full integration and Production
-  Activation require the planned dependencies and wiring below
+  Activation require the Approved/Planned DP-019 prerequisites and wiring below
 
 This proposal remains non-normative until approved. Its isolated in-process
 management command boundary is implemented in `internal/runtimemanagement`.
@@ -387,6 +387,17 @@ constructing Flow; this adds no exported Directory/Replace/Rollback operation,
 transfers no mutable `LaunchPreparation`, and is Planned rather than
 implemented.
 
+Approved [DP-019](DP-019-runtime-activation-orchestration-prerequisites.md)
+closes the design ambiguity around this seam. It adds a separate exact
+orchestration authorization tuple and a private composition-only lifecycle
+invoker used only by the original primitive/phase permit holder. That invoker
+passes one per-call immutable `StartExecutionBinding` to the managed Start
+surface of the one already stored Flow; revision, generation, authorization,
+linked execution, and rendezvous facts are never Flow-construction state or a
+mutable Directory slot. Existing public `Start`, `Stop`, `Observe`, and their
+authorization behavior remain unchanged. The DP-019 surfaces are Planned and
+absent from the current package.
+
 If the linked `Directory.Start` path returns a definitive cancellation or error
 before Owner claim, it signals `StartNoClaim` to the original pending Stop call
 stack. That claimant alone terminalizes its Stop satisfied without invoking
@@ -662,7 +673,7 @@ over process-local in-memory storage. External durability, activation,
 recovery, reporting, Control Service integration, and Production Activation
 remain absent. Any integration slice must first provide its exact required
 dependencies, including the planned private Start-claim continuation and
-execution-generation binding/load gate.
+execution-generation binding/load gate defined by Approved DP-019.
 
 ## 30. Decision
 

@@ -502,8 +502,9 @@ reconciliation. Terminal fact storage is not operational reporting. Approved
 [DP-016](DP-016-runtime-activation-replacement-rollback.md),
 [DP-017](DP-017-runtime-recovery-reconciliation.md), and
 [DP-018](DP-018-runtime-operational-error-reporting-redaction.md) define those
-separate responsibilities. DP-015 is Implemented in isolation by
-`internal/runtimecommandidempotency`; DP-016 through DP-018 remain Planned.
+separate responsibilities. The primitive DP-015 boundary is Implemented in
+isolation by `internal/runtimecommandidempotency`; its DP-019 parent/phase
+extension and DP-016 through DP-018 remain Planned.
 
 ## 24. Explicit Deferrals
 
