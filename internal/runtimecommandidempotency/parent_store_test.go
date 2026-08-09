@@ -141,7 +141,7 @@ func TestConcurrentSameParentAndPhaseDelegateAtMostOnce(t *testing.T) {
 						wg.Add(1)
 						go func() {
 							defer wg.Done()
-							_, phaseErr := execution.inspectOrExecuteStartTarget(func() (TerminalOutcome, error) {
+							_, phaseErr := executeStartTarget(execution, func() (TerminalOutcome, error) {
 								phaseCalls.Add(1)
 								return terminalOutcome(t, OutcomeSucceeded, "parent-concurrency-attempt"), nil
 							})
@@ -190,13 +190,13 @@ func TestParentPhaseFiniteOrderReplayAndTerminalGate(t *testing.T) {
 			if _, publishErr := execution.PublishTerminal(parentOutcome(t, ParentOutcomeSucceeded)); !errors.Is(publishErr, ErrInstanceBlocked) {
 				t.Fatalf("parent terminalized before StartTarget: %v", publishErr)
 			}
-			start, startErr := execution.inspectOrExecuteStartTarget(func() (TerminalOutcome, error) {
+			start, startErr := executeStartTarget(execution, func() (TerminalOutcome, error) {
 				return terminalOutcome(t, OutcomeSucceeded, "target-attempt"), nil
 			})
 			if startErr != nil || start.Record().Ordinal() != 1 || start.Record().Kind() != PhaseStartTarget {
 				t.Fatalf("StartTarget = %#v, %v", start, startErr)
 			}
-			if _, replayErr := execution.inspectOrExecuteStartTarget(func() (TerminalOutcome, error) {
+			if _, replayErr := executeStartTarget(execution, func() (TerminalOutcome, error) {
 				t.Fatal("phase replay invoked lifecycle")
 				return TerminalOutcome{}, nil
 			}); replayErr != nil {
@@ -216,7 +216,7 @@ func TestParentPhaseFiniteOrderReplayAndTerminalGate(t *testing.T) {
 	secondScope := testScope(t, "management", "parent-order-2", OperationRollback)
 	_, err = boundary.ExecuteParent(context.Background(), secondScope, "start-first", rollbackIntent(t, 12), allow,
 		func(execution *ParentExecution) error {
-			if _, phaseErr := execution.inspectOrExecuteStartTarget(success(t)); phaseErr != nil {
+			if _, phaseErr := executeStartTarget(execution, success(t)); phaseErr != nil {
 				return phaseErr
 			}
 			if _, phaseErr := execution.InspectOrExecuteStopOld(success(t)); !errors.Is(phaseErr, ErrIllegalPhaseOrder) {
@@ -236,7 +236,7 @@ func TestIndeterminatePhaseAndAbandonedParentLeaveDurableBarrier(t *testing.T) {
 	intent := replaceIntent(t, 13)
 	claimed, err := boundary.ExecuteParent(context.Background(), scope, "parent", intent, allow,
 		func(execution *ParentExecution) error {
-			_, phaseErr := execution.inspectOrExecuteStartTarget(func() (TerminalOutcome, error) {
+			_, phaseErr := executeStartTarget(execution, func() (TerminalOutcome, error) {
 				return TerminalOutcome{}, errors.New("raw lifecycle error")
 			})
 			return phaseErr
@@ -297,7 +297,7 @@ func TestParentCapabilityRejectsUseAfterCallbackReturn(t *testing.T) {
 		t.Fatalf("callback return error = %v", err)
 	}
 	var invoked atomic.Int32
-	if _, err := retained.inspectOrExecuteStartTarget(func() (TerminalOutcome, error) {
+	if _, err := executeStartTarget(retained, func() (TerminalOutcome, error) {
 		invoked.Add(1)
 		return terminalOutcome(t, OutcomeSucceeded, "escaped-attempt"), nil
 	}); !errors.Is(err, ErrBoundaryExpired) {
@@ -306,7 +306,7 @@ func TestParentCapabilityRejectsUseAfterCallbackReturn(t *testing.T) {
 	if _, err := retained.PublishTerminal(parentOutcome(t, ParentOutcomeSatisfied)); !errors.Is(err, ErrBoundaryExpired) {
 		t.Fatalf("post-return parent publication error = %v", err)
 	}
-	if _, err := copied.inspectOrExecuteStartTarget(success(t)); !errors.Is(err, ErrBoundaryExpired) {
+	if _, err := executeStartTarget(&copied, success(t)); !errors.Is(err, ErrBoundaryExpired) {
 		t.Fatalf("copied post-return capability error = %v", err)
 	}
 	if invoked.Load() != 0 {
@@ -326,7 +326,7 @@ func TestExecuteParentWaitsForInFlightPhaseAtCallbackReturn(t *testing.T) {
 		_, err := boundary.ExecuteParent(context.Background(), scope, "parent", intent, allow,
 			func(execution *ParentExecution) error {
 				go func() {
-					_, phaseErr := execution.inspectOrExecuteStartTarget(func() (TerminalOutcome, error) {
+					_, phaseErr := executeStartTarget(execution, func() (TerminalOutcome, error) {
 						close(phaseEntered)
 						<-releasePhase
 						return terminalOutcome(t, OutcomeSucceeded, "joined-attempt"), nil
@@ -363,7 +363,7 @@ func TestPostClaimCancellationCannotDuplicateParentOrPhase(t *testing.T) {
 	go func() {
 		_, err := boundary.ExecuteParent(ctx, scope, "parent", intent, allow,
 			func(execution *ParentExecution) error {
-				_, phaseErr := execution.inspectOrExecuteStartTarget(func() (TerminalOutcome, error) {
+				_, phaseErr := executeStartTarget(execution, func() (TerminalOutcome, error) {
 					close(phaseEntered)
 					<-ctx.Done()
 					return TerminalOutcome{}, ctx.Err()
@@ -397,7 +397,7 @@ func TestParentAndPhaseStoredFactsAreRedacted(t *testing.T) {
 	wantParent := parentOutcome(t, ParentOutcomeFailed)
 	admission, err := boundary.ExecuteParent(context.Background(), scope, "parent", intent, allow,
 		func(execution *ParentExecution) error {
-			if _, phaseErr := execution.inspectOrExecuteStartTarget(func() (TerminalOutcome, error) {
+			if _, phaseErr := executeStartTarget(execution, func() (TerminalOutcome, error) {
 				return wantPhase, nil
 			}); phaseErr != nil {
 				return phaseErr
@@ -459,7 +459,7 @@ func TestPhaseGoexitExpiresBothCapabilitiesAndLeavesUnresolved(t *testing.T) {
 		defer close(done)
 		_, _ = boundary.ExecuteParent(context.Background(), scope, "parent", intent, allow,
 			func(execution *ParentExecution) error {
-				_, _ = execution.inspectOrExecuteStartTarget(func() (TerminalOutcome, error) {
+				_, _ = executeStartTarget(execution, func() (TerminalOutcome, error) {
 					runtime.Goexit()
 					return TerminalOutcome{}, nil
 				})
@@ -489,7 +489,7 @@ func TestParentReconstructionPreservesFactsAndExpiresCapabilities(t *testing.T) 
 	go func() {
 		_, err := first.ExecuteParent(context.Background(), scope, "parent", intent, allow,
 			func(execution *ParentExecution) error {
-				_, phaseErr := execution.inspectOrExecuteStartTarget(func() (TerminalOutcome, error) {
+				_, phaseErr := executeStartTarget(execution, func() (TerminalOutcome, error) {
 					close(entered)
 					<-release
 					return terminalOutcome(t, OutcomeSucceeded, "stale-attempt"), nil
@@ -528,7 +528,7 @@ func TestParentDifferentInstancesProgressIndependently(t *testing.T) {
 			scope := testScope(t, "management", instance, OperationReplace)
 			_, err := boundary.ExecuteParent(context.Background(), scope, "parent", replaceIntent(t, 17), allow,
 				func(execution *ParentExecution) error {
-					if _, phaseErr := execution.inspectOrExecuteStartTarget(success(t)); phaseErr != nil {
+					if _, phaseErr := executeStartTarget(execution, success(t)); phaseErr != nil {
 						return phaseErr
 					}
 					_, publishErr := execution.PublishTerminal(parentOutcome(t, ParentOutcomeSucceeded))
@@ -571,4 +571,37 @@ func parentOutcome(t *testing.T, category ParentOutcomeCategory) ParentTerminalO
 		t.Fatal(err)
 	}
 	return outcome
+}
+
+func executeStartTarget(
+	execution *ParentExecution,
+	invoke func() (TerminalOutcome, error),
+) (PhaseAdmission, error) {
+	admission, _, err := execution.ContinueOrExecuteStartTarget(
+		context.Background(),
+		func(start *StartTargetExecution) (TerminalOutcome, error) {
+			outcome, invokeErr := invoke()
+			if invokeErr != nil || !outcome.valid() {
+				return outcome, invokeErr
+			}
+			if outcome.launchAttemptID != "" {
+				stopped, signalErr := start.OwnerClaimed(outcome.launchAttemptID)
+				if signalErr != nil || stopped {
+					return TerminalOutcome{}, signalErr
+				}
+			} else if outcome.category == OutcomeSucceeded {
+				return TerminalOutcome{}, ErrIndeterminateExecution
+			} else {
+				cause := StartNoClaimRejected
+				if outcome.category == OutcomeFailed {
+					cause = StartNoClaimFailed
+				}
+				if signalErr := start.StartNoClaim(cause); signalErr != nil {
+					return TerminalOutcome{}, signalErr
+				}
+			}
+			return outcome, nil
+		},
+	)
+	return admission, err
 }

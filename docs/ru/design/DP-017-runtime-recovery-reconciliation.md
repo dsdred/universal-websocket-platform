@@ -37,8 +37,9 @@ authoritative execution evidence, публикует только доказан
 
 Accepted ADR и Active/Frozen architecture остаются authoritative. DP-013
 остаётся Draft и реализован изолированно. Approved DP-014 и primitive boundary
-DP-015 и partial parent/phase sequential core DP-019 реализованы изолированно;
-Continue/pending-Stop extension и Approved DP-016/DP-017 остаются Planned.
+DP-015, partial parent/phase sequential core DP-019 и command-boundary
+Continue/pending-Stop rendezvous реализованы изолированно; managed continuation
+и Approved DP-016/DP-017 остаются Planned.
 
 ## 4. Область действия
 

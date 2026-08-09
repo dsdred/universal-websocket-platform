@@ -11,9 +11,9 @@
 ordering contract activation, replacement и explicit rollback одного Runtime
 Instance. Этот документ не создаёт activation/replacement orchestrator или
 его workflow persistence, API, recovery worker или production wiring.
-Implementation architecture-blocked, пока parent/phase, authorization и
-Start-claim continuation prerequisites Approved/Planned DP-019 не реализованы
-и независимо не приняты.
+Implementation architecture-blocked, пока оставшиеся exact authorization,
+private managed Start-claim continuation, Owner-claim view и binding DP-014 из
+Approved/Planned DP-019 не реализованы и независимо не приняты.
 
 ## 2. Назначение
 
@@ -44,8 +44,9 @@ Proposal уточняет, но не переопределяет:
 
 Принятые ADR и Active/Frozen architecture остаются authoritative. DP-013
 остаётся Draft и реализован изолированно. Approved DP-014 и primitive boundary
-DP-015 и partial parent/phase sequential core DP-019 реализованы изолированно;
-Continue/pending-Stop extension и Approved DP-016/DP-017 остаются Planned.
+DP-015, partial parent/phase sequential core DP-019 и command-boundary
+Continue/pending-Stop rendezvous реализованы изолированно; managed continuation
+и Approved DP-016/DP-017 остаются Planned.
 
 ## 4. Область
 
@@ -478,14 +479,15 @@ reporting, integration и Production Activation отсутствуют.
 
 Implementation Status — Planned. Repository содержит isolated Lifecycle Owner,
 launch flow, source adapter, routing Draft DP-013, aggregate storage Approved
-DP-014 и command storage Approved DP-015. DP-016–DP-018 остаются Planned.
+DP-014 и command storage Approved DP-015, включая isolated parent/phase
+Continue/pending-Stop rendezvous. DP-016–DP-018 остаются Planned.
 Activation/replacement orchestrator, external durable
 command/aggregate/workflow storage, public management API, recovery executor и
 production wiring отсутствуют.
 
 Approval закрывает design gate section 19(4), но не реализует и не подключает
-contract. TASK-026 остаётся Blocked до implementation DP-019; reduced slice
-DP-016 запрещён.
+contract. TASK-026 остаётся Blocked до implementation и acceptance всех
+оставшихся prerequisites DP-019; reduced slice DP-016 запрещён.
 
 ## 29. Решение
 

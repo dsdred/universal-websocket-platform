@@ -5,9 +5,10 @@
 ## 1. Status
 
 - **Design Status:** Approved
-- **Implementation Status:** Primitive Start/Stop boundary implemented in
-  isolation; the Approved DP-019 parent/phase sequential core is implemented
-  in isolation while Continue/pending-Stop semantics remain Planned
+- **Implementation Status:** Primitive Start/Stop boundary, Approved DP-019
+  parent/phase sequential core, and command-boundary Continue/pending-Stop
+  rendezvous implemented in isolation; the complete DP-019 extension remains
+  Planned
 
 This approved design defines the durable idempotency boundary for state-changing
 Runtime management commands. Package `internal/runtimecommandidempotency`
@@ -37,9 +38,9 @@ This proposal refines, without overriding:
 
 Accepted ADRs and Active or Frozen architecture remain authoritative. DP-013
 remains Draft; Approved DP-014, the primitive DP-015 boundary, and the partial
-DP-019 parent/phase sequential core are implemented in isolation, while the
-Continue/pending-Stop extension and Approved DP-016 retain Implementation
-Status Planned.
+DP-019 parent/phase sequential core and command-boundary Continue/pending-Stop
+rendezvous are implemented in isolation. Managed continuation, binding, and
+Approved DP-016 retain Implementation Status Planned.
 
 ## 4. Scope
 
@@ -523,11 +524,13 @@ serialized with admission; a stale Boundary cannot create a new Claim.
 `ExecuteParent` adds exact Replace/Rollback intent, durable parent/derived-phase
 records, generation-bound callback capability, strict optional `StopOld` then
 `StartTarget` order, phase replay, parent terminal gating, and the same
-unresolved barrier. Its StartTarget claim foundation remains package-private.
+unresolved barrier. `ContinueOrExecuteStartTarget` adds the non-bypassable
+pre-phase Continue gate and synchronous pending-Stop rendezvous, with immutable
+signal cause and fail-closed callback/reconstruction behavior.
 
 External durable storage/schema, API, DP-016 orchestration, DP-017 recovery,
-the DP-019 Continue/pending-Stop, continuation, and binding prerequisites,
-management wiring, and
+the DP-019 exact authorization, private managed continuation, Owner claim view,
+and DP-014 binding prerequisites, management wiring, and
 Production Activation remain absent. The isolated
 package changes no lifecycle contract and is not connected to the DP-013
 Directory.

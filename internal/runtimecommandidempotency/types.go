@@ -1,8 +1,8 @@
 // Package runtimecommandidempotency implements the isolated primitive command
 // boundary defined by Approved DP-015 and the partial parent/phase sequential
-// core defined by Approved DP-019. It does not provide the Continue or pending-
-// Stop protocol, transport, lifecycle integration, recovery, or persistence
-// across process restart.
+// core and Continue/pending-Stop command rendezvous defined by Approved DP-019.
+// It does not provide managed Flow continuation, lifecycle integration,
+// recovery, or persistence across process restart.
 package runtimecommandidempotency
 
 import (
