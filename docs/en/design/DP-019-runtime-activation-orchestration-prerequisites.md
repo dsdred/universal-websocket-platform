@@ -5,12 +5,14 @@
 ## 1. Status
 
 - **Design Status:** Approved
-- **Implementation Status:** Planned
+- **Implementation Status:** Planned overall; parent/phase storage, callback
+  capability, and sequential phase core implemented in isolation
 
 This focused design closes only the integration-contract ambiguity discovered
-by TASK-026. No parent/phase API, private Start-claim continuation,
+by TASK-026. The repository implements a partial isolated parent/phase core,
+but no final Continue/pending-Stop API, private Start-claim continuation,
 orchestration authorizer, activation orchestrator, external persistence, API,
-recovery worker, or production wiring exists as a result of this document.
+recovery worker, or production wiring exists.
 TASK-026 remains Blocked until the prerequisites defined here are implemented
 and independently accepted.
 
@@ -205,8 +207,11 @@ reused by another parent, and remains retained with the parent.
 
 ## 11. Parent/Phase Claim API
 
-The planned DP-015 extension is callback-scoped and preserves the existing
-non-transferable permit invariant.
+The DP-015 extension is callback-scoped and preserves the existing
+non-transferable permit invariant. Its durable parent/phase storage,
+generation-bound callback capability, and strict sequential core are
+implemented in isolation; the final Continue/pending-Stop surface remains
+Planned.
 
 Conceptually it provides:
 
@@ -448,15 +453,22 @@ These proofs do not prove DP-016 orchestration itself.
 
 ## 22. Implementation Boundary
 
-Implementation Status is Planned. The repository currently has only primitive
-DP-015 Start/Stop claims, the unmanaged isolated Flow, and the public
-Start/Stop/Observe Directory. It has none of the parent/phase extension,
-orchestration authorizer, private scoped invoker, managed Flow constructor,
-continuation, rendezvous, or composition audit required here.
+Implementation Status remains Planned overall. Package
+`internal/runtimecommandidempotency` now implements in isolation exact
+Replace/Rollback intent, durable parent and derived `StopOld`/`StartTarget`
+records, generation-bound callback capabilities, strict optional-StopOld-then-
+StartTarget ordering, phase replay, parent terminal gating, unresolved
+barriers, and reconstruction invalidation. The StartTarget claim foundation is
+package-private so it cannot bypass the still-Planned Continue gate.
 
-TASK-026 therefore remains Blocked. A successor implementation must first
-implement and independently verify this prerequisite contract. Only then may
-TASK-026 be reconsidered against the complete unmodified DP-016 proofs.
+The repository still lacks the pre-Start Stop-versus-Continue winner,
+post-Start pending-Stop admission and rendezvous, orchestration authorizer,
+private scoped invoker, managed Flow constructor, attempt publication/binding
+composition, and production composition audit required by the complete design.
+
+TASK-026 therefore remains Blocked. Successor tasks must implement and
+independently verify the remaining prerequisites before TASK-026 may be
+reconsidered against the complete unmodified DP-016 proofs.
 
 ## 23. Consequences
 

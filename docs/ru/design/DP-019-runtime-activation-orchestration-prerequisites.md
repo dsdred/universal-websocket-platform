@@ -5,13 +5,15 @@
 ## 1. Статус
 
 - **Статус проектирования:** Approved
-- **Статус реализации:** Planned
+- **Статус реализации:** Planned в целом; parent/phase storage, callback
+  capability и sequential phase core реализованы изолированно
 
 Этот focused design закрывает только неоднозначность integration-contract,
-обнаруженную TASK-026. Parent/phase API, private Start-claim continuation,
+обнаруженную TASK-026. Репозиторий реализует partial isolated parent/phase
+core, но final Continue/pending-Stop API, private Start-claim continuation,
 orchestration authorizer, activation orchestrator, external persistence, API,
-recovery worker и production wiring в результате этого документа не
-существуют. TASK-026 остаётся Blocked, пока определённые здесь prerequisites
+recovery worker и production wiring отсутствуют. TASK-026 остаётся Blocked,
+пока определённые здесь prerequisites
 не реализованы и независимо не приняты.
 
 ## 2. Назначение
@@ -203,8 +205,10 @@ kind и fixed ordinal. Она immutable, не выбирается caller, не 
 
 ## 11. Parent/phase claim API
 
-Planned DP-015 extension callback-scoped и сохраняет existing
-non-transferable permit invariant.
+DP-015 extension callback-scoped и сохраняет existing non-transferable permit
+invariant. Durable parent/phase storage, generation-bound callback capability и
+strict sequential core реализованы изолированно; final Continue/pending-Stop
+surface остаётся Planned.
 
 Conceptually он предоставляет:
 
@@ -439,16 +443,22 @@ Prerequisite implementation обязана доказать минимум:
 
 ## 22. Граница реализации
 
-Implementation Status — Planned. Репозиторий содержит только primitive DP-015
-Start/Stop claims, unmanaged isolated Flow и public Start/Stop/Observe
-Directory. Parent/phase extension, orchestration authorizer, private scoped
-invoker, managed Flow constructor, continuation, rendezvous и composition audit
-отсутствуют.
+Implementation Status остаётся Planned в целом. Package
+`internal/runtimecommandidempotency` теперь реализует изолированно exact
+Replace/Rollback intent, durable parent и derived `StopOld`/`StartTarget`
+records, generation-bound callback capabilities, strict порядок optional
+StopOld затем StartTarget, phase replay, parent terminal gating, unresolved
+barriers и reconstruction invalidation. StartTarget claim foundation остаётся
+package-private и не может обойти всё ещё Planned Continue gate.
 
-Поэтому TASK-026 остаётся Blocked. Следующая implementation task сначала
-реализует и независимо проверяет этот prerequisite contract. Только после
-этого TASK-026 может быть повторно оценена против полного неизменённого набора
-DP-016 proofs.
+Репозиторий всё ещё не содержит pre-Start Stop-versus-Continue winner,
+post-Start pending-Stop admission/rendezvous, orchestration authorizer, private
+scoped invoker, managed Flow constructor, attempt publication/binding
+composition и production composition audit полного design.
+
+Поэтому TASK-026 остаётся Blocked. Следующие tasks должны реализовать и
+независимо проверить оставшиеся prerequisites. Только после этого TASK-026
+может быть повторно оценена против полного неизменённого набора DP-016 proofs.
 
 ## 23. Последствия
 

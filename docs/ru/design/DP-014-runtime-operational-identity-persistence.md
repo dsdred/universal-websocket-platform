@@ -499,8 +499,9 @@ reporting. Approved [DP-015](DP-015-runtime-management-command-idempotency.md),
 [DP-017](DP-017-runtime-recovery-reconciliation.md) и
 [DP-018](DP-018-runtime-operational-error-reporting-redaction.md) определяют
 эти отдельные ответственности. Primitive boundary DP-015 реализован
-изолированно `internal/runtimecommandidempotency`; его parent/phase extension
-DP-019 и DP-016–DP-018 остаются Planned.
+изолированно `internal/runtimecommandidempotency`; partial parent/phase
+sequential core DP-019 также реализован там изолированно, а
+Continue/pending-Stop extension и DP-016–DP-018 остаются Planned.
 
 ## 24. Явно отложено
 

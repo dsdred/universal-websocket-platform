@@ -345,14 +345,19 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   implemented Draft DP-013 in isolation, TASK-024 implemented DP-014 in
   isolation, and TASK-025 implemented the primitive DP-015 boundary in
   isolation. TASK-026 then proved DP-016 implementation architecture-blocked:
-  the repository lacks an implementable parent/phase claim API, exact
+  at that baseline the repository lacked an implementable parent/phase claim API, exact
   activation/replacement/rollback authorization, and the private Owner-claim-
   to-Load continuation. Design-only TASK-027 adds Approved
   [DP-019](../design/DP-019-runtime-activation-orchestration-prerequisites.md)
-  with Implementation Status Planned. DP-019 chooses a bounded DP-015
+  with Implementation Status Planned overall. DP-019 chooses a bounded DP-015
   parent/phase API, exact authorization tuple, and synchronous DP-011/DP-013
-  continuation without changing DP-016 ordering or Owner semantics. TASK-026
-  remains Blocked until these prerequisites are implemented and accepted;
+  continuation without changing DP-016 ordering or Owner semantics. TASK-028
+  implements the durable parent/derived-phase storage, callback capability, and
+  strict sequential core in isolation; that partial slice is independently
+  accepted. Replay, barriers, and reconstruction invalidation are implemented.
+  Continue/pending-Stop, managed continuation, authorization policy,
+  and attempt binding remain Planned. TASK-026 remains Blocked until all these
+  prerequisites are implemented and accepted;
   Integration and Production Activation remain inactive.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.

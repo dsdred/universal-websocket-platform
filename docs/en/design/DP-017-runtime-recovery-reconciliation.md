@@ -38,8 +38,9 @@ This proposal refines, without overriding:
 
 Accepted ADRs and Active or Frozen architecture remain authoritative. DP-013
 remains Draft and is implemented in isolation. Approved DP-014 and the
-primitive DP-015 boundary are implemented in isolation; the DP-019 parent/phase
-extension and Approved DP-016 and DP-017 remain Planned.
+primitive DP-015 boundary and partial DP-019 parent/phase sequential core are
+implemented in isolation; the Continue/pending-Stop extension and Approved
+DP-016 and DP-017 remain Planned.
 
 ## 4. Scope
 

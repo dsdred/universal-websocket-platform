@@ -33,6 +33,7 @@ func (r commandRecord) view() RecordView {
 
 type permitState struct {
 	generation uint64
+	revision   Revision
 }
 
 type commandLedger struct {
@@ -40,6 +41,10 @@ type commandLedger struct {
 	records      map[commandIdentity]*commandRecord
 	live         map[commandIdentity]*permitState
 	stopForStart map[commandIdentity]commandIdentity
+	parents      map[commandIdentity]*parentRecord
+	phases       map[phaseIdentity]*phaseRecord
+	liveParents  map[commandIdentity]*permitState
+	livePhases   map[phaseIdentity]*permitState
 }
 
 // MemoryStorage owns process-lifetime command facts independently from one
@@ -73,6 +78,10 @@ func (s *MemoryStorage) ledger(scope instanceScope) *commandLedger {
 			records:      make(map[commandIdentity]*commandRecord),
 			live:         make(map[commandIdentity]*permitState),
 			stopForStart: make(map[commandIdentity]commandIdentity),
+			parents:      make(map[commandIdentity]*parentRecord),
+			phases:       make(map[phaseIdentity]*phaseRecord),
+			liveParents:  make(map[commandIdentity]*permitState),
+			livePhases:   make(map[phaseIdentity]*permitState),
 		}
 		s.ledgers[scope] = ledger
 	}
@@ -108,7 +117,7 @@ func (b *Boundary) Execute(
 	authorize Authorize,
 	invoke func() (TerminalOutcome, error),
 ) (Admission, error) {
-	if b == nil || b.storage == nil || ctx == nil || !scope.valid() || key == "" ||
+	if b == nil || b.storage == nil || ctx == nil || !scope.validPrimitive() || key == "" ||
 		!intent.validFor(scope) || authorize == nil || invoke == nil {
 		return Admission{}, ErrInvalidSubmission
 	}
@@ -161,7 +170,7 @@ func (b *Boundary) Execute(
 		state:    CommandStateClaimed,
 		revision: 1,
 	}
-	state := &permitState{generation: b.generation}
+	state := &permitState{generation: b.generation, revision: record.revision}
 	ledger.records[identity] = record
 	ledger.live[identity] = state
 	if trackedStart != nil {
@@ -189,6 +198,9 @@ func (b *Boundary) mayClaimLocked(
 	ledger *commandLedger,
 	operation Operation,
 ) (bool, *commandIdentity) {
+	if ledger.hasNonterminalParentOrPhaseLocked() {
+		return false, nil
+	}
 	var trackedStart *commandIdentity
 	for identity, record := range ledger.records {
 		if record.state == CommandStateTerminal {
