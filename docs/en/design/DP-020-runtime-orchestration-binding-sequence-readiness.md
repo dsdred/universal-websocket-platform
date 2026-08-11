@@ -7,10 +7,15 @@
 - **Design Status:** Draft
 - **Implementation Status:** Planned
 
-Implementation progress: Slices 1 and 2 are implemented in isolation and
-Coordinator Accepted through TASK-031 and TASK-032. Slice 3 remains Planned;
-Slice 4 has not started. The overall status remains Planned because the
-OwnerClaim-to-DP-014 binding and orchestrator readiness work are incomplete.
+Implementation progress: TASK-031 and TASK-032 produced Coordinator-Accepted
+isolated partial implementations of Slices 1 and 2. TASK-034 conformance
+inspection found that they do not yet form the complete DP-019 prerequisite:
+the authorization value omits `OperationalDomain`, the managed binding omits
+the authorization and optional linked-execution identities, and its
+`StartRendezvous` is not an identity for command-owned rendezvous state. The
+Slice 2R conformance repair below is therefore Planned and unactivated. Slice
+3 remains Planned and blocked by Slice 2R; Slice 4 has not started. The overall
+status remains Planned.
 
 This focused design decomposes the remaining Approved DP-019 prerequisites —
 exact orchestration authorization, private managed invocation, and
@@ -100,21 +105,25 @@ This design does not define:
 
 ## 6. Decision Summary
 
-The remaining DP-019 prerequisites are recordable as three ordered
-implementation slices plus one gated re-assessment:
+The remaining DP-019 prerequisites are recordable as three original ordered
+implementation slices, one conformance-repair slice inserted before Slice 3,
+and one gated re-assessment:
 
 1. the exact orchestration authorizer surface at the existing DP-013 / DP-019
    command boundary;
 2. the private managed invoker and the managed Flow per-call seam with the
    per-invocation `StartExecutionBinding`;
-3. the OwnerClaimView-to-DP-014 conditional attempt publication and
+3. Slice 2R, the authoritative binding and primitive managed-adapter
+   conformance repair;
+4. the OwnerClaimView-to-DP-014 conditional attempt publication and
    same-generation binding before Load, integrated with the existing
    pending-Stop rendezvous;
-4. re-assessment of DP-016 orchestrator readiness after slices 1–3 are
-   implemented and independently accepted.
+5. re-assessment of DP-016 orchestrator readiness after Slices 1, 2, 2R, and 3
+   are implemented and independently accepted.
 
-No slice bypasses another. Slice 1 may be implemented, verified, and accepted
-without slices 2–4, but slices 2 and 3 each depend on all earlier slices.
+No slice bypasses another. Slice 1 may stand independently; Slice 2 depends on
+Slice 1; Slice 2R repairs the accepted partial Slices 1 and 2; Slice 3 depends
+on Slice 2R; Slice 4 depends on independent acceptance of Slice 3.
 
 ## 7. Deferred Decision: Orchestration Authorizer and Request Representations
 
@@ -124,6 +133,7 @@ One immutable, validated value is the only authorization input:
 
 ```text
 OrchestrationAuthorizationRequest {
+    OperationalDomain           string
     WorkspaceID                  uint64
     ConfigurationID              uint64
     RuntimeInstanceID            runtimeconfigload.RuntimeInstanceID
@@ -138,25 +148,16 @@ Validation failure, authorization denial/failure/panic, absent scope, or
 pre-claim cancellation performs zero command, aggregate, and lifecycle
 mutation.
 
-### 7.2 Dropping the `OperationalDomain` field
+### 7.2 Retaining the `OperationalDomain` field
 
-The Approved DP-019 §7 tuple lists `OperationalDomain`. For the single-node
-milestone baseline of ARCH-004 and all Approved DPs, the operational aggregate
-model already scopes each Runtime Instance to its exact Workspace +
-Configuration pair:
-
-- `runtimeidentity.RuntimeInstanceView` etc. bind one Runtime Instance to one
-  Workspace and one Configuration (DP-014 aggregate facts);
-- `runtimemanagement.Target` binds Workspace, Configuration, and Runtime
-  Instance without a domain field;
-- `runtimecommandidempotency.Scope.domain` is an opaque string with no
-  operational meaning and is already validated along with the remaining scope.
-
-Adding a hidden default domain constant would hide a decision and violate the
-no-hidden-default and no-magic constraints. Therefore the authorization request
-intentionally drops `OperationalDomain`; domain scope remains a documented
-single-node simplification pending a future milestone, not an implemented
-capability. The five remaining fields carry the complete authorization input.
+Approved DP-019 §7 requires `OperationalDomain`; this Draft cannot remove it.
+The value is the exact non-empty opaque domain already present in the accepted
+DP-015 command `Scope`. It is carried into every initial and replay
+authorization request and into the same per-invocation binding. It is not
+inferred from Workspace, Configuration, Runtime Instance, process locality, or
+a default constant. `runtimemanagement.Target` remains unchanged; a private
+managed invoker receives its domain as a separate immutable composition input
+and validates it together with that Target.
 
 ### 7.3 Authorizer representation
 
@@ -180,18 +181,80 @@ exact orchestration authorization.
 - The private managed invoker lives at the DP-013 composition side and
   validates the binding against its immutable scope and the `StartRequest`
   before calling the stored Flow.
+- The authoritative immutable cross-layer values live in dependency-leaf
+  `internal/runtimeorchestrationbinding`. It may import `runtimeconfigload`
+  identity types, but imports neither `runtimecommandidempotency`,
+  `runtimeidentity`, `runtimemanagement`, nor `runtimelaunchflow`.
 - The managed Flow seam lives in `internal/runtimelaunchflow`. The existing
   unmanaged `New(owner, loader)` constructor and its `Start(ctx, request)`
   semantics remain unchanged.
 - The invocation is one synchronous per-invocation call
   `Flow.StartManaged(context, StartRequest, StartExecutionBinding)`.
-- `runtimelaunchflow` does not import `internal/runtimecommandidempotency` or
-  `internal/runtimeidentity`.
+- The four higher packages may depend on the neutral binding package; the
+  neutral package depends on none of them. `runtimelaunchflow` imports neither
+  `internal/runtimecommandidempotency` nor `internal/runtimeidentity`.
+
+#### 8.1.1 Primitive managed adapter seam
+
+`runtimecommandidempotency.Boundary` owns one additive internal-repository
+primitive adapter, conceptually:
+
+```text
+ExecuteManagedStart(
+    context,
+    Start Scope,
+    CommandKey,
+    Start Intent,
+    ExpectedAggregateRevision,
+    ExecutionGeneration,
+    AuthorizeOrchestration,
+    invoke(StartExecutionBinding) -> TerminalOutcome, error,
+) -> Admission, error
+```
+
+It accepts only an exact primitive Start scope/intent. It validates every
+input, derives the six-field `ActivateExactTarget` authorization request, runs
+authorization and the pre-claim cancellation gate, and only then enters the
+same command admission linearization point used by `Execute`. Authorization is
+performed on every initial, in-progress, and replay submission before command
+inspection; denial, panic, cancellation, or invalid input performs zero
+mutation.
+
+Only a newly committed primitive claim receives the callback. In the same
+locked claim transaction, before releasing admission locks, Boundary commits
+the command record and live permit, allocates a unique generation-bound
+`StartRendezvous` identity, installs its private lookup entry, and determines
+the complete primitive `StartExecutionBinding`. All caller-supplied binding
+facts are validated before claim, so deterministic binding construction cannot
+fail after command mutation. The callback then runs once, synchronously and
+outside all command locks, with no parent/phase identity.
+
+In-progress and replay submissions return their normal Admission and receive
+no callback, binding, rendezvous allocation, or permit. A record originally
+claimed through legacy `Execute` is likewise only observed; the managed seam
+never adopts or recreates its execution authority.
+
+The binding and rendezvous lookup authority expire when the callback/permit
+returns, panics, executes `runtime.Goexit`, or loses its Boundary generation.
+A valid terminal outcome is published by the existing primitive permit rules.
+A callback error, panic, invalid outcome, missing terminal publication, or
+indeterminate return leaves the command Claimed/unresolved, expires live
+authority, blocks rendezvous resolution, and returns the existing truthful
+indeterminate error; no callback is retried or detached.
+
+Existing `Boundary.Execute` remains unchanged as an isolated legacy primitive
+surface for current non-orchestration callers and tests. Production activation
+orchestration must use `ExecuteManagedStart`; it may not call `Execute` and
+then synthesize a binding, invoke the private managed invoker directly, or
+fall back to legacy execution after any managed failure. The DP-013 public
+`Directory.Start/Stop/Observe` and existing DP-015 surfaces remain unchanged;
+the new method is repository-internal and creates no transport/API path.
 
 ### 8.2 Immutable per-invocation `StartExecutionBinding`
 
-`StartExecutionBinding` is an immutable value constructed by the
-permit-holding stack and passed inward. It contains the validated
+`StartExecutionBinding` is the single authoritative immutable value owned by
+`runtimeorchestrationbinding`, constructed by the permit-holding stack and
+passed inward. It contains the validated six-field
 `OrchestrationAuthorizationRequest`, the expected aggregate revision, the
 composition-owned exact `ExecutionGeneration`, the parent and phase identity
 when applicable, and the opaque `StartRendezvous` for this live primitive or
@@ -201,6 +264,15 @@ no mutable Owner state. It is validated before any Owner mutation, retained
 only on that synchronous call stack, invoked at most once, and invalidated on
 return; it is never stored as a Flow field.
 
+Linked execution identity is an explicit all-or-none variant: primitive Start
+has neither parent nor phase; Replace/Rollback `StartTarget` has both the exact
+parent command identity and its command-boundary-derived `StartTarget`, ordinal
+one phase identity. A lone parent, lone phase, caller-selected phase, or an
+action/variant mismatch is invalid. Store-owned `Revision` and
+`ExecutionGeneration` remain authoritative persistence concepts; the leaf
+package carries validated lossless values converted explicitly at the
+`runtimeidentity` boundary.
+
 The managed construction binds the existing stateless private
 `StartClaimContinuation` exactly once. The binding creates no Registry entry,
 mutable slot, goroutine, detached callback, or new lifecycle state.
@@ -209,18 +281,25 @@ mutable slot, goroutine, detached callback, or new lifecycle state.
 
 The existing pending-Stop rendezvous primitive in
 `internal/runtimecommandidempotency` remains the sole owner of its signals and
-its locks, per DP-019 §13 and §17. The cross-package seam is an opaque,
-exported-but-internal handle type with no exported methods, defined in the
-lowest-dependency package on the Flow import chain (the `runtimelifecycle`
-adjacent launch chain), so:
+its locks, per DP-019 §13 and §17. The cross-package seam is an opaque identity
+value with no signaling or waiting methods, defined in
+`runtimeorchestrationbinding`, so:
 
-- the DP-015 command boundary constructs the concrete rendezvous and exposes
-  it only as the opaque handle;
+- the DP-015 command boundary allocates one collision-safe identity for each
+  live primitive Start or `StartTarget` execution and indexes its private
+  concrete rendezvous by that identity plus the active Boundary generation;
+- it exposes only the opaque identity in the binding;
 - `StartExecutionBinding` holds the opaque handle;
 - `runtimemanagement` and `runtimelaunchflow` pass it through without
   importing the command-boundary package.
 
-The handle carries no capability, no permit, and no mutable state.
+The handle carries no pointer, channel, function, capability, permit, or
+mutable state. Only `runtimecommandidempotency` resolves it, and only while the
+original callback-scoped execution and Boundary generation are live. Missing,
+forged, reused, cross-generation, or identity-mismatched handles yield
+`Blocked`; they never mean no pending Stop. Callback return and Boundary
+replacement expire resolution authority but do not erase durable unresolved
+facts. No global rendezvous registry exists outside the command boundary.
 
 ### 8.4 Failed private-invocation error contract
 
@@ -353,8 +432,8 @@ the orchestrator.
 
 ### Slice 1 — Orchestration authorizer surface
 
-Current slice status: implemented in isolation and Coordinator Accepted by
-TASK-031.
+Current slice status: partial isolated implementation accepted historically by
+TASK-031; its missing `OperationalDomain` is repaired only by Slice 2R.
 
 - Introduce the `OrchestrationAuthorizationRequest` validated value, the
   named policy-neutral `AuthorizeOrchestration` function type, the
@@ -368,8 +447,8 @@ TASK-031.
 
 ### Slice 2 — Private managed invoker and managed Flow seam
 
-Current slice status: implemented in isolation and Coordinator Accepted after
-rework by TASK-032.
+Current slice status: partial isolated implementation accepted historically by
+TASK-032; it is not the complete DP-019 prerequisite until Slice 2R.
 
 - Add the managed construction and `StartManaged` per-call seam and the
   `StartExecutionBinding` / `OwnerClaimView` immutable values, the opaque
@@ -380,14 +459,36 @@ rework by TASK-032.
   `Start`; no goroutine, registry entry, or detached callback.
 - No DP-014 binding logic yet.
 
-### Slice 3 — OwnerClaim-to-DP-014 binding sequence
+### Slice 2R — Managed binding conformance repair
 
 Current slice status: Planned; recommended next, not activated.
+
+- Introduce the dependency-leaf authoritative binding values, restore
+  `OperationalDomain`, carry the complete authorization tuple and the
+  all-or-none linked identity, replace the constant token with a unique
+  command-owned rendezvous identity, remove the Flow-to-`runtimeidentity`
+  import, provide the composition-private invoker validation path, and add
+  `Boundary.ExecuteManagedStart` as the sole primitive orchestration claim-to-
+  binding adapter while leaving `Execute` unchanged.
+- Prove constructor and cross-field validation, exact command-to-binding and
+  Owner-request mapping, unique/stale/forged rendezvous rejection, synchronous
+  call-stack lifetime, unchanged unmanaged Flow and DP-013 public behavior,
+  acyclic imports, and zero mutation on every validation failure.
+- Prove authorization-before-inspection on initial/replay, callback only for a
+  new claim, atomic claim/permit/rendezvous installation, no replay adoption,
+  callback lifetime expiry, unresolved-on-panic/error/indeterminate behavior,
+  and no orchestration fallback to legacy `Execute`.
+- Do not implement DP-014 publication/binding, continuation outcomes, an
+  orchestrator, policy, persistence, API, or production wiring.
+
+### Slice 3 — OwnerClaim-to-DP-014 binding sequence
+
+Current slice status: Planned and blocked by Slice 2R; not activated.
 
 - Implement `StartClaimContinuation.AfterOwnerClaim` using the existing
   `runtimeidentity.Store` conditional publication/binding operations, the
   existing pending-Stop rendezvous, and the final Stop-versus-Continue gate,
-  using Slices 1 and 2.
+  using Slices 1, 2, and 2R.
 - Prove: attempt membership and same-generation binding before Load,
   stale/different/unknown facts yield `Blocked` without preparation,
   definitive binding absence converges through the authentic Owner outcome,
@@ -398,7 +499,8 @@ Current slice status: Planned; recommended next, not activated.
 Current slice status: not started; it remains gated by Slice 3 implementation
 and independent acceptance.
 
-- Only after Slices 1–3 are implemented and independently accepted, re-assess
+- Only after Slices 1–3, including Slice 2R, are implemented and independently
+  accepted, re-assess
   whether TASK-026 can be unblocked against the unmodified DP-016 §25 proofs.
 - This slice is not started by TASK-030 and may conclude that TASK-026 remains
   Blocked.
@@ -413,9 +515,11 @@ This design itself proves:
 1. the chosen decomposition preserves every Approved DP-019 §21 acceptance
    proof obligation and maps each remaining proof to exactly one slice;
 2. the existing DP-013, DP-014, DP-015, and DP-016 surfaces require no
-   semantic change to host the three implementation slices;
-3. activation stays on the primitive immutable Start path with zero
-   continuation;
+   semantic change to host the original three implementation slices and the
+   Slice 2R conformance repair;
+3. activation stays on the primitive immutable Start command path, uses no
+   synthetic parent/phase identity, and cannot bypass the same managed
+   continuation prerequisite required by Approved DP-019;
 4. locks are provably not held across the forbidden boundaries;
 5. EN and RU mirrors are semantically equal, with equal headings and equal
    code-fence counts, and every relative link resolves.
@@ -426,14 +530,15 @@ regression checks and by the fresh Independent Review of this proposal.
 ## 14. Implementation Boundary
 
 Implementation Status remains Planned overall. This design task itself
-implemented no slice; successor TASK-031 implemented Slice 1 in isolation and
-TASK-032 implemented Slice 2 in isolation after rework, and both are
-Coordinator Accepted. The repository still lacks Slice 3 attempt
-publication/binding composition, the activation orchestrator, external
-persistence, API, recovery worker, and production wiring. TASK-026 therefore
-remains Blocked; Slice 3 must be separately implemented and independently
-accepted before orchestrator readiness may be reconsidered against the complete
-unchanged DP-016 proofs.
+implemented no slice; successor TASK-031 and TASK-032 produced historically
+Coordinator-Accepted partial isolated implementations of Slices 1 and 2.
+TASK-034 identified the remaining conformance gap and defined Slice 2R as the
+next Planned, unactivated repair. The repository still lacks that repair,
+Slice 3 attempt publication/binding composition, the activation orchestrator,
+external persistence, API, recovery worker, and production wiring. TASK-026
+therefore remains Blocked; Slice 3 is blocked by Slice 2R, and both require
+separate implementation and independent acceptance before orchestrator
+readiness may be reconsidered against the complete unchanged DP-016 proofs.
 
 ## 15. Consequences
 
@@ -447,7 +552,7 @@ Positive:
 
 Costs:
 
-- three implementation slices precede any DP-016 readiness re-assessment;
+- Slice 2R and Slice 3 still precede any DP-016 readiness re-assessment;
 - the synchronous pending-Stop rendezvous may block callers;
 - process restart still requires Planned DP-017 implementation;
 - production integration still requires external durability and a composition
@@ -457,8 +562,10 @@ Costs:
 
 UWP records the readiness decomposition of the remaining Approved DP-019
 prerequisites in this Draft/Planned proposal and implements each slice only
-through a separate, individually reviewed task. Slices 1 and 2 now satisfy
-that rule; Slice 3 remains Planned and unactivated. This proposal does not approximate DP-016
+through a separate, individually reviewed task. Slices 1 and 2 remain
+historically accepted partial implementations; Slice 2R is the next Planned,
+unactivated repair, and Slice 3 remains Planned and blocked by it. This
+proposal does not approximate DP-016
 with an adapter, does not add replacement/rollback operations to the Owner,
 does not transfer permits, does not change any Approved status or semantic,
 and does not treat planned capability as implemented.
