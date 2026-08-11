@@ -27,11 +27,15 @@
   Planned overall DP-019 определяет parent/phase, authorization и private
   Start-claim continuation prerequisites DP-016. TASK-028 реализует partial
   parent/phase sequential core, а TASK-029 — command-boundary Continue и
-  pending-Stop rendezvous изолированно; TASK-031 реализует policy-neutral
-  authorization surface, а TASK-032 — private managed invoker и managed
-  Flow/OwnerClaimView continuation изолированно. Concrete authorization policy
-  и DP-014 binding остаются Planned, а TASK-026 — Blocked by Architecture до
-  implementation remaining prerequisites.
+  pending-Stop rendezvous изолированно; TASK-031 и TASK-032 дали исторически
+  принятые partial isolated authorization и managed Flow/OwnerClaimView seams.
+  TASK-034 установила, что полный managed-binding prerequisite DP-019 ещё не
+  выполнен: следующий Planned, неактивированный Slice 2R восстанавливает
+  `OperationalDomain`, полный binding/linked identity, command-owned rendezvous
+  identity, dependency-leaf package и sole primitive
+  `Boundary.ExecuteManagedStart` adapter; Slice 3 заблокирован Slice 2R. Concrete
+  authorization policy и DP-014 binding остаются Planned, а TASK-026 — Blocked
+  by Architecture до implementation remaining prerequisites.
   HTTP, concrete policy, external command storage, recovery/reporting
   package/schema, management wiring и Production Activation отсутствуют**
 - Последняя завершённая development task: **TASK-032 — Runtime Private Managed
@@ -40,8 +44,9 @@
 - Последняя завершённая operational task: **TASK-012 — Engineering Process
   Hardening; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
-- Последняя завершённая architecture task: **TASK-027 — Runtime Activation
-  Orchestration Prerequisites Design; Completed — Coordinator Accepted**
+- Последняя завершённая architecture task: **TASK-034 — Managed Binding
+  Contract Reconciliation; Completed — Coordinator Accepted; repeat
+  Independent Review Approved 0/0; B-001/N-001 resolved**
 - Текущая architecture task: **отсутствует**
 - TASK-027 acceptance evidence: **DP-019 Approved/Planned; implementable
   parent/phase, exact authorization and private per-call managed Start seams
@@ -90,8 +95,10 @@
   audit подтверждены; Commit Gate, commit, push и publication не выполнялись**
 - Текущая development task: **отсутствует. Последняя завершённая development
   task — TASK-032 — Runtime Private Managed Invoker and Managed Flow Seam;
-  `Completed — Coordinator Accepted` после rework. TASK-026 остаётся Blocked by
-  Architecture; Acceptance/commit/publish TASK-026 запрещены**
+  `Completed — Coordinator Accepted` после rework. Это исторически принятая
+  partial prerequisite; TASK-034 не переписывает acceptance, но устраняет live
+  conformance interpretation. TASK-026 остаётся Blocked by Architecture;
+  Acceptance/commit/publish TASK-026 запрещены**
 - TASK-032 acceptance evidence: **Completed — Coordinator Accepted после
   rework; DP-020 deferred slice 2 реализован изолированно в
   `internal/runtimelaunchflow`: ManagedFlow/NewManaged/StartManaged, immutable
@@ -109,9 +116,9 @@
   `main@07b27ce`; на момент Coordinator closure commit, push и publication не
   выполнялись. Впоследствии task commit
   `577e1ced0a984952396238cc94bdcbec80c2a6d4` опубликован через PR #32 и merged
-  как `74e55a6d9a14502f134cbf20eb53359fd9abc995`. Следующая
-  рекомендация — DP-020 deferred slice 3 (OwnerClaim-to-DP-014 binding
-  sequence); не активирована**
+  как `74e55a6d9a14502f134cbf20eb53359fd9abc995`. Closure-time рекомендация
+  Slice 3 сохранена как исторический факт; TASK-034 позднее установила, что до
+  неё требуется отдельный Slice 2R conformance repair**
 - TASK-031 acceptance evidence: **Completed — Coordinator Accepted; DP-020
   deferred slice 1 реализован изолированно в
   `internal/runtimecommandidempotency`: immutable validated
@@ -151,10 +158,11 @@
   publication. Exact authorization/private
   invoker, managed Flow/OwnerClaimView, DP-014 binding, orchestrator и
   production composition остаются Planned; TASK-026 remains Blocked**
-- Следующая рекомендация: **DP-020 deferred slice 3 — OwnerClaim-to-DP-014
-  conditional attempt publication and same-generation binding sequence (DP-019
-  §16–§17, DP-020 §12.3) — не активирована; требует нового task intake от clean
-  baseline**
+- Следующая рекомендация: **DP-020 Slice 2R — complete dependency-safe managed
+  binding и primitive `ExecuteManagedStart` adapter conformance repair,
+  определённый TASK-034; Planned и не активирован.
+  Slice 3 OwnerClaim-to-DP-014 binding остаётся Planned и заблокирован Slice
+  2R**
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы
   изолированно; Repeat Independent Review Approved, blocking/non-blocking 0;
@@ -165,9 +173,10 @@
   closure commit и publication ещё не выполнялись. Subsequently task commit
   `d28efa4e88e02ef528c78c3ca88b3f91945069ce` was published through PR #28
   and merged as `ba75e54e00c3cf1d0d87ca2a985acc9699698efd`**
-- Последняя завершённая documentation task: **TASK-033 — TASK-032 Closure
-  Synchronization; Completed — Coordinator Accepted; Independent Review
-  Approved 0/0; Scope Audit 10/0/0; DP-020 slice 3 не активирована**
+- Последняя завершённая documentation task: **TASK-034 — Managed Binding
+  Contract Reconciliation; Completed — Coordinator Accepted; repeat
+  Independent Review Approved 0/0; Scope Audit 9/0/0; Slice 2R определён, но не
+  активирован, Slice 3 заблокирован им, TASK-026 остаётся Blocked**
 - Текущая documentation task: **отсутствует**
 - Trusted baseline TASK-009: **clean synchronized
   `main@63b961eeb59af9205c3c3d0b68d3f4bd7b8ac25c`; локальная ветка
@@ -435,8 +444,9 @@
   overall**; parent/phase durable storage, callback capability, sequential core
   и command-boundary Continue/pending-Stop rendezvous реализованы изолированно,
   exact orchestration authorization surface, private invoker и managed Flow/
-  OwnerClaimView continuation реализованы изолированно TASK-031/TASK-032, а
-  concrete policy, DP-014 binding и orchestrator не реализованы
+  OwnerClaimView seams частично реализованы изолированно TASK-031/TASK-032;
+  полный managed binding, Slice 2R repair, concrete policy, DP-014 binding и
+  orchestrator не реализованы
 - Design Status DP-008 остаётся **Draft**, Implementation Status — **Implemented in isolation**
 - Содержимое репозитория: документация, спецификации, инженерные соглашения, исполняемый Control Service и изолированные Runtime-компоненты с тестами
 

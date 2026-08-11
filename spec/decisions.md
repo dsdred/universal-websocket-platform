@@ -174,9 +174,14 @@ managed invocation и OwnerClaim-to-DP-014 binding sequence. Она активи
 как design-only TASK-030, создавшая зеркальный Draft/Planned
 [DP-020: Готовность последовательности связывания оркестрации Runtime](../docs/ru/design/DP-020-runtime-orchestration-binding-sequence-readiness.md).
 DP-020 фиксирует упорядоченное implementable разложение и закрывает отложенные
-design-решения. Deferred slice 1 (orchestration authorizer surface) и
-deferred slice 2 (private managed invoker plus managed Flow/OwnerClaimView
-continuation) реализованы изолированно TASK-031 и TASK-032 и завершены как
-`Completed — Coordinator Accepted` после rework. TASK-026 остаётся Blocked до
-реализации и независимой приёмки deferred slice 3; следующая рекомендация —
-OwnerClaim-to-DP-014 conditional binding sequence (не активирована).
+design-решения. Deferred slice 1 (orchestration authorizer surface) и deferred
+slice 2 (private managed invoker plus managed Flow/OwnerClaimView continuation)
+получили исторически принятые partial isolated реализации TASK-031/TASK-032.
+TASK-034 не меняет их acceptance или Approved DP-019, но исправляет live
+conformance interpretation: полный prerequisite требует следующего Planned,
+неактивированного Slice 2R с exact six-field authorization, dependency-leaf
+binding values, all-or-none linked identity и unique command-owned rendezvous
+identity, а sole primitive `Boundary.ExecuteManagedStart` adapter не допускает
+синтез binding после legacy claim. Deferred slice 3 OwnerClaim-to-DP-014
+остаётся Planned и заблокирован Slice 2R. TASK-026 остаётся Blocked до
+реализации и независимой приёмки обоих remaining prerequisites.

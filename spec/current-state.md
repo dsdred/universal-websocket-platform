@@ -36,8 +36,9 @@ Hardening; `Completed — Coordinator Accepted`.
 
 **Текущая operational task:** отсутствует.
 
-**Последняя завершённая architecture task:** TASK-027 — Runtime Activation
-Orchestration Prerequisites Design; `Completed — Coordinator Accepted`.
+**Последняя завершённая architecture task:** TASK-034 — Managed Binding
+Contract Reconciliation; `Completed — Coordinator Accepted`; repeat
+Independent Review `Approved` 0/0; B-001/N-001 resolved.
 
 **Текущая architecture task:** отсутствует.
 
@@ -52,8 +53,11 @@ PASS. Acceptance не реализует prerequisites и не снимает TA
 
 **Текущая development task:** отсутствует; последняя завершённая development
 task — TASK-032 — Runtime Private Managed Invoker and Managed Flow Seam,
-`Completed — Coordinator Accepted` после rework. TASK-026 остаётся `Blocked by
-Architecture`; Coordinator Acceptance, commit и publication TASK-026 запрещены.
+`Completed — Coordinator Accepted` после rework. TASK-031/032 остаются
+исторически принятыми partial isolated prerequisites; TASK-034 не переписывает
+их acceptance, но установила, что полный managed-binding prerequisite DP-019
+ещё не выполнен. TASK-026 остаётся `Blocked by Architecture`; Coordinator
+Acceptance, commit и publication TASK-026 запрещены.
 
 **TASK-031:** `Completed — Coordinator Accepted`. Bounded isolated DP-020
 deferred slice 1 реализован в `internal/runtimecommandidempotency` на branch
@@ -68,9 +72,10 @@ CGO/gcc, substitute stress `-count=100` PASS); Independent Review Approved with
 Findings 0/2 (resolved); Verification Matrix, PROCESS-002, Scope Audit 7/0/0
 PASS. Commit, push, PR, merge и publication не выполнялись.
 
-**Последняя завершённая documentation task:** TASK-033 — TASK-032 Closure
-Synchronization; `Completed — Coordinator Accepted`; Independent Review
-`Approved` 0/0; Scope Audit 10/0/0; DP-020 slice 3 не активирована.
+**Последняя завершённая documentation task:** TASK-034 — Managed Binding
+Contract Reconciliation; `Completed — Coordinator Accepted`; repeat
+Independent Review `Approved` 0/0; Scope Audit 9/0/0. Slice 2R остаётся
+Planned и не активирован; Slice 3 заблокирован им; TASK-026 остаётся Blocked.
 
 **Текущая documentation task:** отсутствует.
 
@@ -561,13 +566,17 @@ managed invocation и OwnerClaim-to-DP-014 binding sequence. Она активи
 как design-only TASK-030, создавшая зеркальный Draft/Planned
 [DP-020](../docs/ru/design/DP-020-runtime-orchestration-binding-sequence-readiness.md).
 DP-020 фиксирует упорядоченное implementable разложение и закрывает отложенные
-design-решения, но не реализует ни один срез. Следующая рекомендация после
-TASK-030 — отдельный intake для deferred slice 1 (orchestration authorizer
-surface) — активирована и завершена как TASK-031. Следующая после TASK-031 —
-аналогичная intake deferred slice 2 — активирована и завершена как TASK-032
-после rework; slice 2 реализован. Следующая рекомендация — deferred slice 3
-(OwnerClaim-to-DP-014 conditional binding sequence); не активирована. TASK-026
-остаётся Blocked до реализации и независимой приёмки оставшихся срезов.
+design-решения, но TASK-030 не реализовала ни один срез. TASK-031 и TASK-032
+исторически приняты как partial isolated реализации Срезов 1 и 2. TASK-034
+установила, что они ещё не образуют полный prerequisite DP-019, и определила
+следующей рекомендацией отдельный bounded Slice 2R: dependency-leaf binding
+values, exact six-field authorization с `OperationalDomain`, all-or-none linked
+identity, unique command-owned rendezvous identity и composition-private
+validation path через sole primitive `Boundary.ExecuteManagedStart` adapter.
+Slice 2R Planned и не активирован. Deferred Slice 3
+(OwnerClaim-to-DP-014 conditional binding sequence) остаётся Planned и
+заблокирован Slice 2R. TASK-026 остаётся Blocked до реализации и независимой
+приёмки оставшихся prerequisites.
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task

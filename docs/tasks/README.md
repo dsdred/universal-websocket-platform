@@ -35,9 +35,10 @@ operational документы ведутся на русском языке и 
 - [TASK-028 — Runtime Command Parent/Phase Prerequisites Implementation](TASK-028-RUNTIME-COMMAND-PARENT-PHASE-PREREQUISITES.md) — Completed, Coordinator Accepted; TASK-026 remains Blocked
 - [TASK-029 — Runtime Command Continue and Pending-Stop Prerequisite](TASK-029-RUNTIME-COMMAND-CONTINUE-PENDING-STOP.md) — Completed, Coordinator Accepted; TASK-026 remains Blocked
 - [TASK-030 — Runtime Orchestration Binding Sequence Design](TASK-030-RUNTIME-ORCHESTRATION-BINDING-SEQUENCE-DESIGN.md) — Completed, Coordinator Accepted; DP-020 Draft/Planned, no implementation slice started; TASK-026 remains Blocked
-- [TASK-031 — Runtime Orchestration Authorization Surface](TASK-031-RUNTIME-ORCHESTRATION-AUTHORIZATION-SURFACE.md) — Completed, Coordinator Accepted; DP-020 slice 1 implemented in isolation; TASK-026 remains Blocked
-- [TASK-032 — Runtime Private Managed Invoker and Managed Flow Seam](TASK-032-RUNTIME-PRIVATE-MANAGED-INVOKER.md) — Completed, Coordinator Accepted after rework; DP-020 slice 2 implemented in isolation; TASK-026 remains Blocked
+- [TASK-031 — Runtime Orchestration Authorization Surface](TASK-031-RUNTIME-ORCHESTRATION-AUTHORIZATION-SURFACE.md) — Completed, Coordinator Accepted; historically accepted partial isolated DP-020 slice 1 prerequisite; TASK-026 remains Blocked
+- [TASK-032 — Runtime Private Managed Invoker and Managed Flow Seam](TASK-032-RUNTIME-PRIVATE-MANAGED-INVOKER.md) — Completed, Coordinator Accepted after rework; historically accepted partial isolated DP-020 slice 2 prerequisite; TASK-026 remains Blocked
 - [TASK-033 — TASK-032 Closure Synchronization](TASK-033-TASK-032-CLOSURE-SYNCHRONIZATION.md) — Completed, Coordinator Accepted; documentation drift corrected; DP-020 slice 3 is not activated
+- [TASK-034 — Managed Binding Contract Reconciliation](TASK-034-MANAGED-BINDING-CONTRACT-RECONCILIATION.md) — Completed, Coordinator Accepted; repeat review Approved 0/0; Slice 2R remains unactivated and Slice 3 blocked
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

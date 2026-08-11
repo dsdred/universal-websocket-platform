@@ -7,10 +7,15 @@
 - **Статус проектирования:** Draft
 - **Статус реализации:** Planned
 
-Прогресс реализации: Срезы 1 и 2 реализованы изолированно и приняты
-Coordinator через TASK-031 и TASK-032. Срез 3 остаётся Planned; Срез 4 не
-начат. Общий статус остаётся Planned, потому что связывание
-OwnerClaim-to-DP-014 и работа по готовности оркестратора не завершены.
+Прогресс реализации: TASK-031 и TASK-032 создали изолированные частичные
+реализации Срезов 1 и 2, исторически принятые Coordinator. Проверка
+соответствия TASK-034 установила, что вместе они ещё не образуют полный
+prerequisite DP-019: значение авторизации пропускает `OperationalDomain`,
+managed binding пропускает authorization и optional linked-execution identity,
+а его `StartRendezvous` не является identity command-owned состояния
+rendezvous. Поэтому repair соответствия Среза 2R ниже остаётся Planned и не
+активирован. Срез 3 остаётся Planned и заблокирован Срезом 2R; Срез 4 не начат.
+Общий статус остаётся Planned.
 
 Этот focused design разделяет оставшиеся prerequisites Approved DP-019 — точную
 авторизацию оркестрации, private managed invocation и связывание
@@ -98,20 +103,24 @@ Accepted ADR и Active/Frozen architecture остаются authoritative. Эт�
 
 ## 6. Краткое решение
 
-Оставшиеся prerequisites DP-019 фиксируются как три упорядоченных
-implementation-среза плюс одна gated переоценка:
+Оставшиеся prerequisites DP-019 фиксируются как три исходных упорядоченных
+implementation-среза, один repair-срез соответствия перед Срезом 3 и одна
+gated переоценка:
 
 1. exact поверхность orchestration authorizer на существующей границе команд
    DP-013 / DP-019;
 2. private managed invoker и managed Flow per-call seam с per-invocation
    `StartExecutionBinding`;
-3. conditional публикация попытки OwnerClaim-to-DP-014 и same-generation binding
+3. Срез 2R — repair соответствия authoritative binding и primitive managed
+   adapter;
+4. conditional публикация попытки OwnerClaim-to-DP-014 и same-generation binding
    до Load, интегрированные с существующим rendezvous pending-Stop;
-4. переоценка готовности оркестратора DP-016 после того, как срезы 1–3
-   реализованы и независимо приняты.
+5. переоценка готовности оркестратора DP-016 после того, как Срезы 1, 2, 2R и
+   3 реализованы и независимо приняты.
 
-Ни один срез не обходит другой. Срез 1 может быть реализован, проверен и принят
-без срезов 2–4, но срезы 2 и 3 зависят от всех предыдущих.
+Ни один срез не обходит другой. Срез 1 может существовать независимо; Срез 2
+зависит от Среза 1; Срез 2R исправляет принятые partial Срезы 1 и 2; Срез 3
+зависит от Среза 2R; Срез 4 зависит от независимой приёмки Среза 3.
 
 ## 7. Отложенное решение: Представления Orchestration Authorizer и Request
 
@@ -121,6 +130,7 @@ implementation-среза плюс одна gated переоценка:
 
 ```text
 OrchestrationAuthorizationRequest {
+    OperationalDomain           string
     WorkspaceID                  uint64
     ConfigurationID              uint64
     RuntimeInstanceID            runtimeconfigload.RuntimeInstanceID
@@ -134,25 +144,16 @@ Validation требует, чтобы каждая identity была ненул�
 Validation failure, denial/failure/panic авторизации, absent scope или pre-claim
 cancellation выполняют нулевую mutation command, aggregate и lifecycle.
 
-### 7.2 Исключение поля `OperationalDomain`
+### 7.2 Сохранение поля `OperationalDomain`
 
-Tuple Approved DP-019 §7 перечисляет `OperationalDomain`. Для single-node
-baseline milestone ARCH-004 и всех Approved DP операционная aggregate-модель уже
-ограничивает каждый Runtime Instance своей exact парой Workspace + Configuration:
-
-- `runtimeidentity.RuntimeInstanceView` и родственные факты связывают один
-  Runtime Instance с одним Workspace и одной Configuration (aggregate facts
-  DP-014);
-- `runtimemanagement.Target` связывает Workspace, Configuration и Runtime
-  Instance без поля domain;
-- `runtimecommandidempotency.Scope.domain` — opaque string без операционного
-  смысла и уже валидируется вместе с остальным scope.
-
-Добавление скрытой константы domain по умолчанию скрывало бы решение и нарушало
-бы ограничения no-hidden-default и no-magic. Поэтому authorization request
-намеренно исключает `OperationalDomain`; scope domain остаётся задокументированным
-single-node упрощением до будущего milestone, а не реализованной capability.
-Оставшиеся пять полей несут полный вход авторизации.
+Approved DP-019 §7 требует `OperationalDomain`; этот Draft не может его
+удалить. Значение является exact непустым opaque domain, уже присутствующим в
+принятом command `Scope` DP-015. Оно переносится в каждый initial и replay
+authorization request и в тот же per-invocation binding. Оно не выводится из
+Workspace, Configuration, Runtime Instance, process locality или default
+константы. `runtimemanagement.Target` остаётся неизменным; private managed
+invoker получает domain как отдельный immutable composition input и валидирует
+его вместе с Target.
 
 ### 7.3 Представление authorizer
 
@@ -176,18 +177,80 @@ exported поверхность авторизации DP-013 для `Directory.
 - Private managed invoker находится на стороне composition DP-013 и валидирует
   binding против своего immutable scope и `StartRequest` перед вызовом stored
   Flow.
+- Authoritative immutable cross-layer значения находятся в dependency-leaf
+  package `internal/runtimeorchestrationbinding`. Он может импортировать типы
+  identity `runtimeconfigload`, но не импортирует `runtimecommandidempotency`,
+  `runtimeidentity`, `runtimemanagement` или `runtimelaunchflow`.
 - Managed Flow seam находится в `internal/runtimelaunchflow`. Существующий
   unmanaged конструктор `New(owner, loader)` и его семантика
   `Start(ctx, request)` остаются неизменными.
 - Invocation — один synchronous per-invocation вызов
   `Flow.StartManaged(context, StartRequest, StartExecutionBinding)`.
-- `runtimelaunchflow` не импортирует `internal/runtimecommandidempotency` или
-  `internal/runtimeidentity`.
+- Четыре вышестоящих package могут зависеть от neutral binding package;
+  neutral package не зависит ни от одного из них. `runtimelaunchflow` не
+  импортирует `internal/runtimecommandidempotency` или `internal/runtimeidentity`.
+
+#### 8.1.1 Seam primitive managed adapter
+
+`runtimecommandidempotency.Boundary` владеет одним additive internal-repository
+primitive adapter, концептуально:
+
+```text
+ExecuteManagedStart(
+    context,
+    Start Scope,
+    CommandKey,
+    Start Intent,
+    ExpectedAggregateRevision,
+    ExecutionGeneration,
+    AuthorizeOrchestration,
+    invoke(StartExecutionBinding) -> TerminalOutcome, error,
+) -> Admission, error
+```
+
+Он принимает только exact primitive Start scope/intent. Он валидирует каждый
+input, выводит шестипольный authorization request `ActivateExactTarget`,
+выполняет authorization и pre-claim cancellation gate и только затем входит в
+ту же command admission linearization point, что и `Execute`. Authorization
+выполняется для каждой initial, in-progress и replay submission до inspection
+команды; denial, panic, cancellation или invalid input дают zero mutation.
+
+Callback получает только newly committed primitive claim. В той же locked
+claim transaction, до освобождения admission locks, Boundary коммитит command
+record и live permit, выделяет уникальную generation-bound identity
+`StartRendezvous`, устанавливает её private lookup entry и определяет полный
+primitive `StartExecutionBinding`. Все caller-supplied binding facts
+валидируются до claim, поэтому deterministic construction binding не может
+сломаться после command mutation. Затем callback выполняется один раз,
+синхронно и вне всех command locks, без parent/phase identity.
+
+In-progress и replay submission возвращают обычный Admission и не получают
+callback, binding, allocation rendezvous или permit. Record, изначально claimed
+через legacy `Execute`, также только наблюдается; managed seam никогда не
+перенимает и не пересоздаёт его execution authority.
+
+Binding и rendezvous lookup authority истекают при возврате callback/permit,
+panic, `runtime.Goexit` или потере generation Boundary. Valid terminal outcome
+публикуется существующими primitive permit rules. Callback error, panic,
+invalid outcome, missing terminal publication или indeterminate return
+оставляет команду Claimed/unresolved, прекращает live authority, блокирует
+resolution rendezvous и возвращает существующую truthful indeterminate error;
+callback не повторяется и не отделяется.
+
+Существующий `Boundary.Execute` остаётся неизменным isolated legacy primitive
+surface для текущих non-orchestration callers и тестов. Production activation
+orchestration обязана использовать `ExecuteManagedStart`; она не может вызвать
+`Execute`, затем синтезировать binding, вызвать private managed invoker напрямую
+или fallback на legacy execution после managed failure. Public
+`Directory.Start/Stop/Observe` DP-013 и существующие surfaces DP-015 остаются
+неизменными; новый метод является repository-internal и не создаёт transport/API
+path.
 
 ### 8.2 Immutable per-invocation `StartExecutionBinding`
 
-`StartExecutionBinding` — immutable значение, сконструированное
-permit-holding stack и переданное внутрь. Оно содержит validated
+`StartExecutionBinding` — единственное authoritative immutable значение во
+владении `runtimeorchestrationbinding`, сконструированное permit-holding stack
+и переданное внутрь. Оно содержит validated шестипольный
 `OrchestrationAuthorizationRequest`, expected aggregate revision,
 composition-owned exact `ExecutionGeneration`, identity parent и phase, когда
 применимо, и opaque `StartRendezvous` для этого live primitive или phase
@@ -196,6 +259,15 @@ preparation token, ни Host или Snapshot, ни полномочие cancella
 mutable состояние Owner. Оно валидируется до любой mutation Owner, удерживается
 только на том synchronous call stack, вызывается не более одного раза и
 инвалидируется при возврате; оно никогда не сохраняется как поле Flow.
+
+Linked execution identity является явным all-or-none вариантом: primitive
+Start не имеет ни parent, ни phase; `StartTarget` Replace/Rollback имеет и
+exact parent command identity, и его command-boundary-derived phase identity
+`StartTarget` с ordinal один. Одинокий parent, одинокая phase,
+caller-selected phase или несовпадение action/variant невалидны. Store-owned
+`Revision` и `ExecutionGeneration` остаются authoritative persistence
+concepts; leaf package переносит validated lossless значения, явно
+конвертируемые на границе `runtimeidentity`.
 
 Managed construction связывает существующий stateless private
 `StartClaimContinuation` ровно один раз. Binding не создаёт запись Registry,
@@ -206,17 +278,24 @@ mutable slot, goroutine, detached callback или новое состояние 
 Существующий primitive rendezvous pending-Stop в
 `internal/runtimecommandidempotency` остаётся единственным владельцем своих
 сигналов и своих lock, согласно DP-019 §13 и §17. Seam через границу package —
-opaque, exported-but-internal тип handle без exported методов, определённый в
-package с наименьшей зависимостью в цепочке import Flow (соседняя цепочка
-запуска `runtimelifecycle`), поэтому:
+opaque identity value без методов signal или wait, определённый в
+`runtimeorchestrationbinding`, поэтому:
 
-- граница команд DP-015 конструирует concrete rendezvous и выставляет его только
-  как opaque handle;
+- граница команд DP-015 выделяет одну collision-safe identity для каждого live
+  primitive Start или `StartTarget` execution и индексирует свой private
+  concrete rendezvous этой identity вместе с активной generation Boundary;
+- наружу в binding она выставляет только opaque identity;
 - `StartExecutionBinding` хранит opaque handle;
 - `runtimemanagement` и `runtimelaunchflow` передают его, не импортируя package
   границы команд.
 
-Handle не несёт capability, permit или mutable состояние.
+Handle не несёт pointer, channel, function, capability, permit или mutable
+состояние. Только `runtimecommandidempotency` разрешает эту identity и только
+пока живы исходный callback-scoped execution и generation Boundary. Missing,
+forged, reused, cross-generation или identity-mismatched handle дают
+`Blocked`; они никогда не означают отсутствие pending Stop. Возврат callback и
+замена Boundary прекращают resolution authority, но не стирают durable
+unresolved facts. Global registry rendezvous вне command boundary отсутствует.
 
 ### 8.4 Exact failed private-invocation error contract
 
@@ -345,7 +424,8 @@ Host; DP-013 остаётся exact composition routing/private-invocation; DP-0
 
 ### Срез 1 — поверхность orchestration authorizer
 
-Текущий статус среза: реализован изолированно и принят Coordinator в TASK-031.
+Текущий статус среза: partial isolated implementation, исторически принятая
+TASK-031; отсутствующий `OperationalDomain` исправляет только Срез 2R.
 
 - Ввести validated значение `OrchestrationAuthorizationRequest`, named
   policy-neutral тип функции `AuthorizeOrchestration`, набор
@@ -358,8 +438,8 @@ Host; DP-013 остаётся exact composition routing/private-invocation; DP-0
 
 ### Срез 2 — private managed invoker и managed Flow seam
 
-Текущий статус среза: реализован изолированно и принят Coordinator после
-rework в TASK-032.
+Текущий статус среза: partial isolated implementation, исторически принятая
+TASK-032; это не полный prerequisite DP-019 до Среза 2R.
 
 - Добавить managed construction и per-call seam `StartManaged` и immutable
   значения `StartExecutionBinding` / `OwnerClaimView`, opaque handle
@@ -370,14 +450,37 @@ rework в TASK-032.
   `Start`; никакого goroutine, записи registry или detached callback.
 - Ещё никакой логики binding DP-014.
 
-### Срез 3 — последовательность связывания OwnerClaim-to-DP-014
+### Срез 2R — repair соответствия managed binding
 
 Текущий статус среза: Planned; рекомендован следующим, но не активирован.
+
+- Ввести dependency-leaf authoritative binding values, восстановить
+  `OperationalDomain`, перенести полный authorization tuple и all-or-none
+  linked identity, заменить constant token уникальной command-owned identity
+  rendezvous, удалить import Flow-to-`runtimeidentity` и предоставить путь
+  validation composition-private invoker, а также добавить
+  `Boundary.ExecuteManagedStart` как единственный primitive orchestration
+  claim-to-binding adapter при неизменном `Execute`.
+- Доказать constructor и cross-field validation, exact command-to-binding и
+  Owner-request mapping, отклонение unique/stale/forged rendezvous,
+  synchronous call-stack lifetime, неизменность unmanaged Flow и public
+  поведения DP-013, acyclic imports и zero mutation при каждом validation
+  failure.
+- Доказать authorization-before-inspection для initial/replay, callback только
+  для new claim, atomic installation claim/permit/rendezvous, отсутствие replay
+  adoption, expiry callback lifetime, unresolved при panic/error/indeterminate
+  и отсутствие orchestration fallback на legacy `Execute`.
+- Не реализовывать publication/binding DP-014, continuation outcomes,
+  orchestrator, policy, persistence, API или production wiring.
+
+### Срез 3 — последовательность связывания OwnerClaim-to-DP-014
+
+Текущий статус среза: Planned и заблокирован Срезом 2R; не активирован.
 
 - Реализовать `StartClaimContinuation.AfterOwnerClaim` с использованием
   существующих conditional операций публикации/binding `runtimeidentity.Store`,
   существующего rendezvous pending-Stop и final gate Stop-versus-Continue,
-  используя Slices 1 и 2.
+  используя Срезы 1, 2 и 2R.
 - Доказать: membership попытки и same-generation binding до Load; stale/different/
   unknown facts дают `Blocked` без подготовки; definitive отсутствие binding
   сходится через authentic исход Owner; Stop, admitted после ранней проверки,
@@ -388,7 +491,8 @@ rework в TASK-032.
 Текущий статус среза: не начат; он по-прежнему gated реализацией и независимой
 приёмкой Среза 3.
 
-- Только после того, как Slices 1–3 реализованы и независимо приняты, переоценить,
+- Только после того, как Slices 1–3, включая Срез 2R, реализованы и независимо
+  приняты, переоценить,
   может ли TASK-026 быть разблокирована против неизменных proofs §25 DP-016.
 - Этот срез не запускается TASK-030 и может заключить, что TASK-026 остаётся
   Blocked.
@@ -403,8 +507,11 @@ Verification Matrix, Independent Review, PROCESS-002 и Coordinator Acceptance.
 1. выбранное разложение сохраняет каждое обязательство acceptance proof Approved
    DP-019 §21 и отображает каждое оставшееся proof ровно на один срез;
 2. существующие поверхности DP-013, DP-014, DP-015 и DP-016 не требуют semantic
-   изменения для размещения трёх implementation срезов;
-3. активация остаётся на primitive immutable пути Start с нулевым continuation;
+   изменения для размещения трёх исходных implementation-срезов и repair
+   соответствия Среза 2R;
+3. активация остаётся на primitive immutable command path Start, не использует
+   synthetic parent/phase identity и не может обойти тот же managed
+   continuation prerequisite, который требует Approved DP-019;
 4. locks доказуемо не удерживаются через forbidden границы;
 5. зеркала EN и RU семантически равны, с равными заголовками и равными количествами
    code-fence, и каждая relative ссылка разрешается.
@@ -415,14 +522,15 @@ regression, а также свежим Independent Review этого предл�
 ## 14. Граница реализации
 
 Implementation Status остаётся Planned overall. Сама design-задача не
-реализовала ни один срез; successor TASK-031 реализовала Срез 1 изолированно, а
-TASK-032 после rework реализовала Срез 2 изолированно, и оба приняты
-Coordinator. Репозиторий всё ещё не содержит composition публикации/binding
-попытки Среза 3, оркестратор активации, external persistence, API, worker
-recovery и production wiring. Поэтому TASK-026 остаётся Blocked; Срез 3 должен
-быть отдельно реализован и независимо принят, прежде чем готовность
-оркестратора можно будет пересмотреть против полного неизменного набора proofs
-DP-016.
+реализовала ни один срез; successor TASK-031 и TASK-032 создали исторически
+принятые Coordinator частичные изолированные реализации Срезов 1 и 2. TASK-034
+обнаружила оставшийся gap соответствия и определила Срез 2R как следующий
+Planned, неактивированный repair. Репозиторий всё ещё не содержит этот repair,
+composition публикации/binding попытки Среза 3, оркестратор активации, external
+persistence, API, worker recovery и production wiring. Поэтому TASK-026
+остаётся Blocked; Срез 3 заблокирован Срезом 2R, и оба требуют отдельной
+реализации и независимой приёмки, прежде чем готовность оркестратора можно
+будет пересмотреть против полного неизменного набора proofs DP-016.
 
 ## 15. Последствия
 
@@ -436,7 +544,7 @@ DP-016.
 
 Стоимость:
 
-- три implementation среза предшествуют любой переоценке готовности DP-016;
+- Срез 2R и Срез 3 всё ещё предшествуют любой переоценке готовности DP-016;
 - synchronous rendezvous pending-Stop может блокировать callers;
 - restart процесса по-прежнему требует Planned реализации DP-017;
 - production integration по-прежнему требует external durability и аудита
@@ -446,8 +554,9 @@ DP-016.
 
 UWP фиксирует разложение готовности оставшихся prerequisites Approved DP-019 в
 этом Draft/Planned предложении и реализует каждый срез только через отдельную,
-индивидуально reviewed задачу. Срезы 1 и 2 теперь соблюдают это правило; Срез 3
-остаётся Planned и не активирован. Proposal не approximates DP-016 adapter-ом,
+индивидуально reviewed задачу. Срезы 1 и 2 остаются исторически принятыми
+частичными реализациями; Срез 2R — следующий Planned, неактивированный repair,
+а Срез 3 остаётся Planned и заблокирован им. Proposal не approximates DP-016 adapter-ом,
 не добавляет операции replacement/rollback Owner, не передаёт permits, не меняет
 ни один Approved статус или семантику и не выдаёт planned capability за
 реализованную.
