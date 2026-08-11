@@ -29,18 +29,18 @@
   parent/phase sequential core, а TASK-029 — command-boundary Continue и
   pending-Stop rendezvous изолированно; TASK-031 и TASK-032 дали исторически
   принятые partial isolated authorization и managed Flow/OwnerClaimView seams.
-  TASK-034 установила, что полный managed-binding prerequisite DP-019 ещё не
-  выполнен: следующий Planned, неактивированный Slice 2R восстанавливает
-  `OperationalDomain`, полный binding/linked identity, command-owned rendezvous
-  identity, dependency-leaf package и sole primitive
-  `Boundary.ExecuteManagedStart` adapter; Slice 3 заблокирован Slice 2R. Concrete
-  authorization policy и DP-014 binding остаются Planned, а TASK-026 — Blocked
+  TASK-034 определила managed-binding conformance repair, а TASK-035 реализует
+  Slice 2R изолированно: `OperationalDomain`, полный binding/linked identity,
+  unique callback-scoped command-owned rendezvous identity, dependency-leaf
+  package и sole primitive `Boundary.ExecuteManagedStart` adapter; TASK-035
+  независимо принята, concrete private composition invoker отсутствует, Slice
+  3 является следующим неактивированным срезом. Concrete authorization policy и DP-014 binding остаются
+  Planned, а TASK-026 — Blocked
   by Architecture до implementation remaining prerequisites.
   HTTP, concrete policy, external command storage, recovery/reporting
   package/schema, management wiring и Production Activation отсутствуют**
-- Последняя завершённая development task: **TASK-032 — Runtime Private Managed
-  Invoker and Managed Flow Seam; Completed — Coordinator Accepted after
-  rework**
+- Последняя завершённая development task: **TASK-035 — Managed Binding Repair;
+  Completed — Coordinator Accepted; repeat Independent Review Approved 0/0**
 - Последняя завершённая operational task: **TASK-012 — Engineering Process
   Hardening; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
@@ -93,12 +93,9 @@
   Coordinator Closure Audit PASS; Task Contract, exact scope 26/0/0,
   Verification Matrix, PROCESS-002, status consistency и repository-state
   audit подтверждены; Commit Gate, commit, push и publication не выполнялись**
-- Текущая development task: **отсутствует. Последняя завершённая development
-  task — TASK-032 — Runtime Private Managed Invoker and Managed Flow Seam;
-  `Completed — Coordinator Accepted` после rework. Это исторически принятая
-  partial prerequisite; TASK-034 не переписывает acceptance, но устраняет live
-  conformance interpretation. TASK-026 остаётся Blocked by Architecture;
-  Acceptance/commit/publish TASK-026 запрещены**
+- Текущая development task: **отсутствует. TASK-035 реализовала и независимо
+  приняла Slice 2R изолированно. Concrete private composition invoker и Slice
+  3 отсутствуют; TASK-026 остаётся Blocked by Architecture**
 - TASK-032 acceptance evidence: **Completed — Coordinator Accepted после
   rework; DP-020 deferred slice 2 реализован изолированно в
   `internal/runtimelaunchflow`: ManagedFlow/NewManaged/StartManaged, immutable
@@ -158,11 +155,10 @@
   publication. Exact authorization/private
   invoker, managed Flow/OwnerClaimView, DP-014 binding, orchestrator и
   production composition остаются Planned; TASK-026 remains Blocked**
-- Следующая рекомендация: **DP-020 Slice 2R — complete dependency-safe managed
-  binding и primitive `ExecuteManagedStart` adapter conformance repair,
-  определённый TASK-034; Planned и не активирован.
-  Slice 3 OwnerClaim-to-DP-014 binding остаётся Planned и заблокирован Slice
-  2R**
+- Следующая рекомендация: **DP-020 Slice 3 OwnerClaim-to-DP-014 binding;
+  Planned и не активирован. Конкретный
+  private composition invoker, orchestration и production wiring также
+  остаются Planned**
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы
   изолированно; Repeat Independent Review Approved, blocking/non-blocking 0;
@@ -175,9 +171,9 @@
   and merged as `ba75e54e00c3cf1d0d87ca2a985acc9699698efd`**
 - Последняя завершённая documentation task: **TASK-034 — Managed Binding
   Contract Reconciliation; Completed — Coordinator Accepted; repeat
-  Independent Review Approved 0/0; Scope Audit 9/0/0; Slice 2R определён, но не
-  активирован, Slice 3 заблокирован им, TASK-026 остаётся Blocked**
-- Текущая documentation task: **отсутствует**
+  Independent Review Approved 0/0; Scope Audit 9/0/0**
+- Текущая documentation task: **отсутствует; TASK-035 synchronization
+  завершена с PROCESS-002 Synchronized**
 - Trusted baseline TASK-009: **clean synchronized
   `main@63b961eeb59af9205c3c3d0b68d3f4bd7b8ac25c`; локальная ветка
   `feature/task-009-runtime-lifecycle-owner`; task record создан первым
@@ -445,8 +441,9 @@
   и command-boundary Continue/pending-Stop rendezvous реализованы изолированно,
   exact orchestration authorization surface, private invoker и managed Flow/
   OwnerClaimView seams частично реализованы изолированно TASK-031/TASK-032;
-  полный managed binding, Slice 2R repair, concrete policy, DP-014 binding и
-  orchestrator не реализованы
+  полный managed binding и Slice 2R repair реализованы и независимо приняты
+  изолированно TASK-035; concrete private invoker, policy, DP-014
+  binding и orchestrator не реализованы
 - Design Status DP-008 остаётся **Draft**, Implementation Status — **Implemented in isolation**
 - Содержимое репозитория: документация, спецификации, инженерные соглашения, исполняемый Control Service и изолированные Runtime-компоненты с тестами
 

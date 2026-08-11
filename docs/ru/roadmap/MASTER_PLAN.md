@@ -357,11 +357,12 @@ Architectural debt относится к границам, которые ост
   TASK-029 реализует изолированно command-boundary Continue gate и synchronous
   pending-Stop rendezvous. TASK-031 и TASK-032 дали исторически принятые
   partial isolated authorization и managed Flow/OwnerClaimView seams. TASK-034
-  определяет следующий Planned, неактивированный repair соответствия Среза 2R:
-  восстановить exact six-field authorization, dependency-leaf binding values,
-  all-or-none linked identity и unique command-owned rendezvous identity через
-  sole primitive adapter `Boundary.ExecuteManagedStart`. Срез 3 binding attempt
-  DP-014 остаётся Planned и заблокирован Срезом 2R;
+  определила repair соответствия Среза 2R, а TASK-035 реализует его
+  изолированно и независимо принимает: exact six-field authorization,
+  dependency-leaf binding values, all-or-none linked identity и unique
+  command-owned rendezvous identity через sole primitive adapter
+  `Boundary.ExecuteManagedStart`. Срез 3 binding attempt DP-014 остаётся Planned
+  и является следующим Planned, неактивированным срезом; concrete private-invoker wiring,
   orchestration и production composition также остаются Planned. TASK-026
   остаётся Blocked до implementation и acceptance всех оставшихся
   prerequisites; Integration и Production Activation остаются неактивными.

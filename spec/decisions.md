@@ -178,10 +178,11 @@ design-решения. Deferred slice 1 (orchestration authorizer surface) и de
 slice 2 (private managed invoker plus managed Flow/OwnerClaimView continuation)
 получили исторически принятые partial isolated реализации TASK-031/TASK-032.
 TASK-034 не меняет их acceptance или Approved DP-019, но исправляет live
-conformance interpretation: полный prerequisite требует следующего Planned,
-неактивированного Slice 2R с exact six-field authorization, dependency-leaf
-binding values, all-or-none linked identity и unique command-owned rendezvous
-identity, а sole primitive `Boundary.ExecuteManagedStart` adapter не допускает
-синтез binding после legacy claim. Deferred slice 3 OwnerClaim-to-DP-014
-остаётся Planned и заблокирован Slice 2R. TASK-026 остаётся Blocked до
-реализации и независимой приёмки обоих remaining prerequisites.
+conformance interpretation. TASK-035 реализует Slice 2R изолированно: exact
+six-field authorization, dependency-leaf binding values, all-or-none linked
+identity и unique callback-scoped command-owned rendezvous identity; sole
+primitive `Boundary.ExecuteManagedStart` adapter не допускает синтез binding
+после legacy claim. TASK-035 независимо принята. Deferred Slice 3
+OwnerClaim-to-DP-014 остаётся следующим Planned и неактивированным срезом; concrete
+private composition invoker и production wiring отсутствуют. TASK-026 остаётся
+Blocked до реализации и независимой приёмки remaining prerequisites.

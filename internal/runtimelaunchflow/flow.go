@@ -78,7 +78,12 @@ func (f *Flow) Start(
 	if preparation.Context().Err() != nil {
 		return convergeStoppedPreparation(f.owner, preparation)
 	}
+	return f.startPrepared(preparation)
+}
 
+func (f *Flow) startPrepared(
+	preparation runtimelifecycle.LaunchPreparation,
+) (runtimelifecycle.StartOutcome, error) {
 	loadResult, err := f.loader.Load(preparation.LoadRequest())
 	if preparation.Context().Err() != nil {
 		return convergeStoppedPreparation(f.owner, preparation)

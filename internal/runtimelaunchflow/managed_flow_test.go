@@ -9,8 +9,9 @@ import (
 	"github.com/dsdred/universal-websocket-platform/internal/configurationloader"
 	"github.com/dsdred/universal-websocket-platform/internal/runtime"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfigload"
-	"github.com/dsdred/universal-websocket-platform/internal/runtimeidentity"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimelifecycle"
+	"github.com/dsdred/universal-websocket-platform/internal/runtimeorchestrationbinding"
+	"github.com/dsdred/universal-websocket-platform/internal/secretresolver"
 )
 
 const (
@@ -19,19 +20,43 @@ const (
 	testVersionID     uint64 = 33
 	testInstanceID           = runtimeconfigload.RuntimeInstanceID("instance-a")
 	testAttemptID            = runtimeconfigload.LaunchAttemptID("attempt-a")
-	testGeneration           = runtimeidentity.ExecutionGeneration("gen-a")
+	testGeneration           = runtimeorchestrationbinding.ExecutionGeneration("gen-a")
 )
 
-func validStartRendezvous() runtimeconfigload.StartRendezvous {
-	return runtimeconfigload.NewStartRendezvous()
+func validAuthorization(t *testing.T) runtimeorchestrationbinding.OrchestrationAuthorizationRequest {
+	return validAuthorizationFor(t, testInstanceID)
+}
+
+func validAuthorizationFor(
+	t *testing.T,
+	instanceID runtimeconfigload.RuntimeInstanceID,
+) runtimeorchestrationbinding.OrchestrationAuthorizationRequest {
+	t.Helper()
+	request, err := runtimeorchestrationbinding.NewOrchestrationAuthorizationRequest(
+		"domain-a", testWorkspaceID, testConfiguration, instanceID,
+		runtimeorchestrationbinding.OrchestrationActionActivateExactTarget, testVersionID,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return request
+}
+
+func validStartRendezvous(t *testing.T) runtimeorchestrationbinding.StartRendezvous {
+	t.Helper()
+	rendezvous, err := runtimeorchestrationbinding.NewStartRendezvous("rendezvous-a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return rendezvous
 }
 
 func testBinding(t *testing.T) ManagedStartBinding {
 	t.Helper()
 	binding, err := NewManagedStartBinding(
-		runtimeidentity.Revision(1),
+		validAuthorization(t), runtimeorchestrationbinding.AggregateRevision(1),
 		testGeneration,
-		validStartRendezvous(),
+		validStartRendezvous(t),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -58,26 +83,26 @@ func (r *recordingContinuation) AfterOwnerClaim(
 }
 
 func TestManagedStartBindingIsImmutableAndValidated(t *testing.T) {
-	rendezvous := validStartRendezvous()
+	rendezvous := validStartRendezvous(t)
 
 	valid, err := NewManagedStartBinding(
-		runtimeidentity.Revision(1), testGeneration, rendezvous,
+		validAuthorization(t), runtimeorchestrationbinding.AggregateRevision(1), testGeneration, rendezvous,
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if valid.ExpectedRevision() != 1 || valid.ExecutionGeneration() != testGeneration {
+	if valid.ExpectedAggregateRevision() != 1 || valid.ExecutionGeneration() != testGeneration {
 		t.Fatalf("unexpected binding contents: %#v", valid)
 	}
 	_ = valid.Rendezvous()
 
-	if _, err := NewManagedStartBinding(0, testGeneration, rendezvous); !errors.Is(err, ErrInvalidManagedBinding) {
+	if _, err := NewManagedStartBinding(validAuthorization(t), 0, testGeneration, rendezvous); !errors.Is(err, ErrInvalidManagedBinding) {
 		t.Fatalf("zero revision must fail: %v", err)
 	}
-	if _, err := NewManagedStartBinding(runtimeidentity.Revision(1), runtimeidentity.ExecutionGeneration(""), rendezvous); !errors.Is(err, ErrInvalidManagedBinding) {
+	if _, err := NewManagedStartBinding(validAuthorization(t), 1, "", rendezvous); !errors.Is(err, ErrInvalidManagedBinding) {
 		t.Fatalf("empty generation must fail: %v", err)
 	}
-	if _, err := NewManagedStartBinding(runtimeidentity.Revision(1), testGeneration, runtimeconfigload.StartRendezvous{}); !errors.Is(err, ErrInvalidManagedBinding) {
+	if _, err := NewManagedStartBinding(validAuthorization(t), 1, testGeneration, runtimeorchestrationbinding.StartRendezvous{}); !errors.Is(err, ErrInvalidManagedBinding) {
 		t.Fatalf("zero rendezvous must fail: %v", err)
 	}
 }
@@ -166,14 +191,19 @@ func TestStartManagedInvokesContinuationOnceAfterPrepareStartAndBeforeLoad(t *te
 	continuation := &recordingContinuation{}
 	managed := mustManagedFlow(t, continuation)
 
-	_, err := managed.StartManaged(
+	outcome, err := managed.StartManaged(
 		context.Background(),
 		runtimelifecycle.NewStartRequest(testWorkspaceID, testConfiguration, testVersionID),
 		testBinding(t),
 	)
-	_ = err
+	if err != nil || outcome.Kind() != runtimelifecycle.StartRunning {
+		t.Fatalf("managed start = %q/%v", outcome.Kind(), err)
+	}
 	if continuation.calls.Load() != 1 {
 		t.Fatalf("continuation calls = %d, want 1", continuation.calls.Load())
+	}
+	if _, err := managed.flow.owner.Stop(context.Background()); err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -241,8 +271,8 @@ func TestStartManagedContinuationErrorConvergesThroughAuthenticOwnerPreparation(
 		runtimelifecycle.NewStartRequest(testWorkspaceID, testConfiguration, testVersionID),
 		testBinding(t),
 	)
-	if err == nil {
-		t.Fatal("continuation failure must surface as non-nil")
+	if err != want {
+		t.Fatalf("continuation failure = %v, want exact %v", err, want)
 	}
 	if continuation.calls.Load() != 1 {
 		t.Fatalf("continuation calls = %d, want 1", continuation.calls.Load())
@@ -277,7 +307,7 @@ func TestStartManagedDifferentInstancesProgressIndependently(t *testing.T) {
 			func() (runtimeconfigload.LaunchAttemptID, error) {
 				return attemptID, nil
 			},
-			&runtime.DependencyBindings{},
+			managedDependencies(t),
 		)
 		if err != nil {
 			t.Fatal(err)
@@ -287,22 +317,92 @@ func TestStartManagedDifferentInstancesProgressIndependently(t *testing.T) {
 			t.Fatal(err)
 		}
 		binding, err := NewManagedStartBinding(
-			runtimeidentity.Revision(uint64(i+1)),
+			validAuthorizationFor(t, instanceID), runtimeorchestrationbinding.AggregateRevision(uint64(i+1)),
 			testGeneration,
-			validStartRendezvous(),
+			validStartRendezvous(t),
 		)
 		if err != nil {
 			t.Fatal(err)
 		}
-		_, err = managed.StartManaged(
+		outcome, err := managed.StartManaged(
 			context.Background(),
 			runtimelifecycle.NewStartRequest(testWorkspaceID, testConfiguration, testVersionID),
 			binding,
 		)
-		_ = err
+		if err != nil || outcome.Kind() != runtimelifecycle.StartRunning {
+			t.Fatalf("instance %d managed start = %q/%v", i, outcome.Kind(), err)
+		}
 		if continuation.calls.Load() != 1 {
 			t.Fatalf("instance %d continuation calls = %d, want 1", i, continuation.calls.Load())
 		}
+		if _, err := owner.Stop(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestStartManagedRejectsBindingRequestMismatchBeforeOwnerMutation(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		workspace uint64
+		config    uint64
+		version   uint64
+	}{
+		{"workspace", testWorkspaceID + 1, testConfiguration, testVersionID},
+		{"configuration", testWorkspaceID, testConfiguration + 1, testVersionID},
+		{"version", testWorkspaceID, testConfiguration, testVersionID + 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			continuation := &recordingContinuation{}
+			managed := mustManagedFlow(t, continuation)
+			authorization, err := runtimeorchestrationbinding.NewOrchestrationAuthorizationRequest(
+				"domain-a", tc.workspace, tc.config, testInstanceID,
+				runtimeorchestrationbinding.OrchestrationActionActivateExactTarget, tc.version,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+			binding, err := NewManagedStartBinding(
+				authorization, 1, testGeneration, validStartRendezvous(t),
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, err = managed.StartManaged(
+				context.Background(),
+				runtimelifecycle.NewStartRequest(testWorkspaceID, testConfiguration, testVersionID),
+				binding,
+			)
+			if !errors.Is(err, ErrInvalidManagedBinding) || continuation.calls.Load() != 0 {
+				t.Fatalf("error=%v continuation=%d", err, continuation.calls.Load())
+			}
+			if _, active := managed.flow.owner.Observe().ActiveAttempt(); active {
+				t.Fatal("mismatch mutated Owner")
+			}
+		})
+	}
+}
+
+func TestStartManagedConvergesRuntimeInstanceMismatch(t *testing.T) {
+	continuation := &recordingContinuation{}
+	managed := mustManagedFlow(t, continuation)
+	authorization := validAuthorizationFor(t, "foreign-instance")
+	binding, err := NewManagedStartBinding(
+		authorization, 1, testGeneration, validStartRendezvous(t),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = managed.StartManaged(
+		context.Background(),
+		runtimelifecycle.NewStartRequest(testWorkspaceID, testConfiguration, testVersionID),
+		binding,
+	)
+	if !errors.Is(err, ErrInvalidManagedBinding) || continuation.calls.Load() != 0 {
+		t.Fatalf("error=%v continuation=%d", err, continuation.calls.Load())
+	}
+	if _, active := managed.flow.owner.Observe().ActiveAttempt(); active {
+		t.Fatal("instance mismatch left active attempt")
 	}
 }
 
@@ -315,12 +415,21 @@ func itoa(n int) string {
 
 func mustManagedOwner(t *testing.T) *runtimelifecycle.Owner {
 	t.Helper()
-	return mustOwner(t, testInstanceID, testAttemptID, &runtime.DependencyBindings{})
+	return mustOwner(t, testInstanceID, testAttemptID, managedDependencies(t))
 }
 
 func mustManagedLoader(t *testing.T) *configurationloader.Loader {
 	t.Helper()
-	return configurationloader.New(staticSource(0))
+	return configurationloader.New(staticSource(availablePort(t)))
+}
+
+func managedDependencies(t *testing.T) *runtime.DependencyBindings {
+	t.Helper()
+	resolver, err := secretresolver.NewMemory(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return &runtime.DependencyBindings{SecretResolver: resolver}
 }
 
 func mustManagedFlow(t *testing.T, continuation StartClaimContinuation) *ManagedFlow {
