@@ -471,7 +471,10 @@ by the complete design.
 
 TASK-026 therefore remains Blocked. Successor tasks must implement and
 independently verify the remaining prerequisites before TASK-026 may be
-reconsidered against the complete unmodified DP-016 proofs.
+reconsidered against the complete unmodified DP-016 proofs. The focused
+readiness decomposition of those prerequisites is recorded in the mirrored
+[DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), with
+Design Status Draft and Implementation Status Planned.
 
 ## 23. Consequences
 

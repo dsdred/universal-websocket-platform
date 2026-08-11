@@ -50,8 +50,26 @@ PASS. Acceptance не реализует prerequisites и не снимает TA
 опубликован через PR #27 и merged как
 `2c017aace7e56a4747d3cecbe8ff3f6cf53e009f`.
 
-**Текущая development task:** отсутствует. TASK-026 остаётся `Blocked by
+**Текущая development task:** отсутствует; TASK-030 — Runtime Orchestration
+Binding Sequence Design завершена `Completed — Coordinator Accepted`. TASK-026
+остаётся `Blocked by
 Architecture`; Coordinator Acceptance, commit и publication TASK-026 запрещены.
+
+**TASK-030:** `Completed — Coordinator Accepted`. Design-only readiness task
+на branch `docs/task-030-runtime-orchestration-binding-readiness` от clean
+synchronized `main@4a66fa3354900baafc5ee4e555bd9d2ad947f424` (merge PR #29)
+создала зеркальный Draft/Planned
+[DP-020](../docs/ru/design/DP-020-runtime-orchestration-binding-sequence-readiness.md)
+как focused readiness decomposition оставшихся prerequisites Approved DP-019:
+три упорядоченных implementation-среза плюс gated переоценка готовности
+оркестратора DP-016. Зафиксировала design-level решения по authorizer
+representation/ownership, mapping `ActivateExactTarget`, accessor
+`OwnerClaimView`/`LaunchAttemptID`, opaque cross-package handle
+`StartRendezvous`, threading expected-revision и доказуемому исключению
+`OperationalDomain` для single-node baseline без изменения Approved
+статуса/семантики. Independent Review — Approved 0/1 (R-001 resolved);
+Verification Matrix — PASS по применимым строкам; Scope Audit — 11/0/0.
+Commit, push, PR, merge и publication не выполнялись.
 
 **Последняя завершённая documentation task:** TASK-022 — Root README Runtime
 Status Synchronization; `Completed — Coordinator Accepted`.
@@ -541,7 +559,14 @@ TASK-026 остаётся Blocked.
 
 Следующая рекомендация — отдельный bounded readiness/intake для lowest
 remaining DP-019 prerequisite: exact orchestration authorization, private
-managed invocation и OwnerClaim-to-DP-014 binding sequence. Она не активирована.
+managed invocation и OwnerClaim-to-DP-014 binding sequence. Она активирована
+как design-only TASK-030, создавшая зеркальный Draft/Planned
+[DP-020](../docs/ru/design/DP-020-runtime-orchestration-binding-sequence-readiness.md).
+DP-020 фиксирует упорядоченное implementable разложение и закрывает отложенные
+design-решения, но не реализует ни один срез. Следующая рекомендация после
+TASK-030 — отдельный intake для deferred slice 1 (orchestration authorizer
+surface); не активирована. TASK-026 остаётся Blocked до реализации и
+независимой приёмки срезов.
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task

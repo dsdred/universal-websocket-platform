@@ -169,4 +169,9 @@ orchestrator и остальных remaining prerequisites.
 
 Следующая рекомендация — отдельный bounded readiness/intake для lowest
 remaining DP-019 prerequisite: exact orchestration authorization, private
-managed invocation и OwnerClaim-to-DP-014 binding sequence. Она не активирована.
+managed invocation и OwnerClaim-to-DP-014 binding sequence. Она активирована
+как design-only TASK-030, создавшая зеркальный Draft/Planned
+[DP-020: Готовность последовательности связывания оркестрации Runtime](../docs/ru/design/DP-020-runtime-orchestration-binding-sequence-readiness.md).
+DP-020 фиксирует упорядоченное implementable разложение и закрывает отложенные
+design-решения, но не реализует ни один срез. TASK-026 остаётся Blocked до
+реализации и независимой приёмки срезов.
