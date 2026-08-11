@@ -8,13 +8,13 @@
 - **Статус реализации:** Planned
 
 Прогресс реализации: TASK-031 и TASK-032 создали изолированные частичные
-реализации Срезов 1 и 2, исторически принятые Coordinator. Проверка
-соответствия TASK-034 установила, что вместе они ещё не образуют полный
-prerequisite DP-019: значение авторизации пропускает `OperationalDomain`,
-managed binding пропускает authorization и optional linked-execution identity,
-а его `StartRendezvous` не является identity command-owned состояния
-rendezvous. Поэтому repair соответствия Среза 2R ниже остаётся Planned и не
-активирован. Срез 3 остаётся Planned и заблокирован Срезом 2R; Срез 4 не начат.
+реализации Срезов 1 и 2, исторически принятые Coordinator, а TASK-034 определила
+обязательный repair соответствия. TASK-035 реализует Срез 2R изолированно:
+six-field authorization и полный binding теперь принадлежат dependency-leaf
+package, primitive managed claims используют sole `ExecuteManagedStart`
+adapter, а command-owned rendezvous identities уникальны и callback-scoped.
+Concrete DP-013 composition-private invoker и production wiring отсутствуют.
+Срез 3 является следующим Planned, неактивированным срезом; Срез 4 не начат.
 Общий статус остаётся Planned.
 
 Этот focused design разделяет оставшиеся prerequisites Approved DP-019 — точную
@@ -425,7 +425,8 @@ Host; DP-013 остаётся exact composition routing/private-invocation; DP-0
 ### Срез 1 — поверхность orchestration authorizer
 
 Текущий статус среза: partial isolated implementation, исторически принятая
-TASK-031; отсутствующий `OperationalDomain` исправляет только Срез 2R.
+TASK-031; отсутствующий `OperationalDomain` исправлен изолированно Срезом 2R
+TASK-035.
 
 - Ввести validated значение `OrchestrationAuthorizationRequest`, named
   policy-neutral тип функции `AuthorizeOrchestration`, набор
@@ -439,7 +440,8 @@ TASK-031; отсутствующий `OperationalDomain` исправляет т
 ### Срез 2 — private managed invoker и managed Flow seam
 
 Текущий статус среза: partial isolated implementation, исторически принятая
-TASK-032; это не полный prerequisite DP-019 до Среза 2R.
+TASK-032; Срез 2R TASK-035 предоставляет полный authoritative binding repair,
+не переписывая историю acceptance TASK-032.
 
 - Добавить managed construction и per-call seam `StartManaged` и immutable
   значения `StartExecutionBinding` / `OwnerClaimView`, opaque handle
@@ -452,7 +454,8 @@ TASK-032; это не полный prerequisite DP-019 до Среза 2R.
 
 ### Срез 2R — repair соответствия managed binding
 
-Текущий статус среза: Planned; рекомендован следующим, но не активирован.
+Текущий статус среза: реализован и независимо принят изолированно TASK-035.
+Production composition/private-invoker wiring не входит в этот срез.
 
 - Ввести dependency-leaf authoritative binding values, восстановить
   `OperationalDomain`, перенести полный authorization tuple и all-or-none
@@ -475,7 +478,8 @@ TASK-032; это не полный prerequisite DP-019 до Среза 2R.
 
 ### Срез 3 — последовательность связывания OwnerClaim-to-DP-014
 
-Текущий статус среза: Planned и заблокирован Срезом 2R; не активирован.
+Текущий статус среза: следующий Planned срез после принятого Среза 2R TASK-035;
+не активирован.
 
 - Реализовать `StartClaimContinuation.AfterOwnerClaim` с использованием
   существующих conditional операций публикации/binding `runtimeidentity.Store`,
@@ -524,13 +528,14 @@ regression, а также свежим Independent Review этого предл�
 Implementation Status остаётся Planned overall. Сама design-задача не
 реализовала ни один срез; successor TASK-031 и TASK-032 создали исторически
 принятые Coordinator частичные изолированные реализации Срезов 1 и 2. TASK-034
-обнаружила оставшийся gap соответствия и определила Срез 2R как следующий
-Planned, неактивированный repair. Репозиторий всё ещё не содержит этот repair,
-composition публикации/binding попытки Среза 3, оркестратор активации, external
-persistence, API, worker recovery и production wiring. Поэтому TASK-026
-остаётся Blocked; Срез 3 заблокирован Срезом 2R, и оба требуют отдельной
-реализации и независимой приёмки, прежде чем готовность оркестратора можно
-будет пересмотреть против полного неизменного набора proofs DP-016.
+обнаружила оставшийся gap соответствия, а TASK-035 реализует и независимо
+принимает его repair Среза 2R изолированно. Репозиторий всё ещё не
+содержит composition публикации/binding попытки Среза 3, concrete private
+composition invoker, оркестратор активации, external persistence, API, worker
+recovery и production wiring. Поэтому TASK-026 остаётся Blocked; Срез 3
+является следующим неактивированным срезом, а последующие prerequisites всё
+ещё требуют отдельной реализации и acceptance до переоценки готовности против
+неизменённого DP-016.
 
 ## 15. Последствия
 
@@ -544,7 +549,8 @@ persistence, API, worker recovery и production wiring. Поэтому TASK-026
 
 Стоимость:
 
-- Срез 2R и Срез 3 всё ещё предшествуют любой переоценке готовности DP-016;
+- независимая приёмка Среза 2R и Срез 3 всё ещё предшествуют любой переоценке
+  готовности DP-016;
 - synchronous rendezvous pending-Stop может блокировать callers;
 - restart процесса по-прежнему требует Planned реализации DP-017;
 - production integration по-прежнему требует external durability и аудита
@@ -555,8 +561,9 @@ persistence, API, worker recovery и production wiring. Поэтому TASK-026
 UWP фиксирует разложение готовности оставшихся prerequisites Approved DP-019 в
 этом Draft/Planned предложении и реализует каждый срез только через отдельную,
 индивидуально reviewed задачу. Срезы 1 и 2 остаются исторически принятыми
-частичными реализациями; Срез 2R — следующий Planned, неактивированный repair,
-а Срез 3 остаётся Planned и заблокирован им. Proposal не approximates DP-016 adapter-ом,
+частичными реализациями; TASK-035 реализует и независимо принимает Срез 2R
+изолированно, а Срез 3 становится следующим Planned, неактивированным срезом.
+Proposal не approximates DP-016 adapter-ом,
 не добавляет операции replacement/rollback Owner, не передаёт permits, не меняет
 ни один Approved статус или семантику и не выдаёт planned capability за
 реализованную.

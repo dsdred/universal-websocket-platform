@@ -6,8 +6,8 @@ import (
 
 	"github.com/dsdred/universal-websocket-platform/internal/configurationloader"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfigload"
-	"github.com/dsdred/universal-websocket-platform/internal/runtimeidentity"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimelifecycle"
+	"github.com/dsdred/universal-websocket-platform/internal/runtimeorchestrationbinding"
 )
 
 var (
@@ -28,61 +28,27 @@ var (
 	)
 )
 
-// ManagedStartBinding is the immutable per-invocation evidence that one exact
-// authorized orchestration submission and one exact Owner-issued Launch
-// Attempt claim are being managed through one composition-owned execution
-// generation and one opaque rendezvous. It carries no primitive, parent,
-// phase, or Stop permit, no preparation token, no Host or Snapshot, no
-// context cancellation authority, and no mutable Owner state. It is validated
-// before any Owner mutation, is retained only on the synchronous call stack
-// that invokes it, is invoked at most once, and is invalidated on return.
-//
-// The zero value is never valid. Construct it with NewManagedStartBinding.
-type ManagedStartBinding struct {
-	expectedRevision runtimeidentity.Revision
-	generation       runtimeidentity.ExecutionGeneration
-	rendezvous       runtimeconfigload.StartRendezvous
-}
+// ManagedStartBinding retains the historical internal name during migration.
+// The authoritative value belongs to runtimeorchestrationbinding.
+type ManagedStartBinding = runtimeorchestrationbinding.StartExecutionBinding
 
-// NewManagedStartBinding validates and constructs one immutable binding. The
-// expected revision and generation must be non-zero and the rendezvous must
-// be non-zero. The composition-owned execution generation is never allocated
-// or derived here; it is supplied by composition.
+// NewManagedStartBinding validates and constructs one primitive immutable
+// binding. Authorization must be exact ActivateExactTarget; expected revision,
+// generation, and rendezvous must be non-zero. The composition-owned execution
+// generation is never allocated or derived here.
 func NewManagedStartBinding(
-	expectedRevision runtimeidentity.Revision,
-	generation runtimeidentity.ExecutionGeneration,
-	rendezvous runtimeconfigload.StartRendezvous,
+	authorization runtimeorchestrationbinding.OrchestrationAuthorizationRequest,
+	expectedRevision runtimeorchestrationbinding.AggregateRevision,
+	generation runtimeorchestrationbinding.ExecutionGeneration,
+	rendezvous runtimeorchestrationbinding.StartRendezvous,
 ) (ManagedStartBinding, error) {
-	binding := ManagedStartBinding{
-		expectedRevision: expectedRevision,
-		generation:       generation,
-		rendezvous:       rendezvous,
-	}
-	if !binding.valid() {
+	binding, err := runtimeorchestrationbinding.NewPrimitiveStartExecutionBinding(
+		authorization, expectedRevision, generation, rendezvous,
+	)
+	if err != nil {
 		return ManagedStartBinding{}, ErrInvalidManagedBinding
 	}
 	return binding, nil
-}
-
-// ExpectedRevision returns the expected aggregate revision proof.
-func (b ManagedStartBinding) ExpectedRevision() runtimeidentity.Revision {
-	return b.expectedRevision
-}
-
-// ExecutionGeneration returns the composition-owned execution generation.
-func (b ManagedStartBinding) ExecutionGeneration() runtimeidentity.ExecutionGeneration {
-	return b.generation
-}
-
-// Rendezvous returns the opaque Start rendezvous handle.
-func (b ManagedStartBinding) Rendezvous() runtimeconfigload.StartRendezvous {
-	return b.rendezvous
-}
-
-func (b ManagedStartBinding) valid() bool {
-	return b.expectedRevision != 0 &&
-		b.generation != "" &&
-		b.rendezvous != (runtimeconfigload.StartRendezvous{})
 }
 
 // OwnerClaimView is one immutable five-identity claim view extracted from
@@ -204,7 +170,7 @@ func (m *ManagedFlow) StartManaged(
 	if err := ctx.Err(); err != nil {
 		return runtimelifecycle.StartOutcome{}, err
 	}
-	if !binding.valid() {
+	if !managedBindingMatchesRequest(binding, request) {
 		return runtimelifecycle.StartOutcome{}, ErrInvalidManagedBinding
 	}
 
@@ -218,6 +184,16 @@ func (m *ManagedFlow) StartManaged(
 	claimView, err := NewOwnerClaimView(preparation.LoadRequest())
 	if err != nil {
 		return convergeStoppedPreparation(m.flow.owner, preparation)
+	}
+	if claimView.RuntimeInstanceID() != binding.Authorization().RuntimeInstanceID() {
+		_, convergenceErr := m.flow.owner.Start(
+			context.Background(), preparation,
+			runtimelifecycle.FailedPreparation(ErrInvalidManagedBinding),
+		)
+		if convergenceErr != nil {
+			return runtimelifecycle.StartOutcome{}, convergenceErr
+		}
+		return runtimelifecycle.StartOutcome{}, ErrInvalidManagedBinding
 	}
 	if err := m.continuation.AfterOwnerClaim(ctx, binding, claimView); err != nil {
 		// Converge the claimed attempt through the authentic Owner preparation:
@@ -233,5 +209,21 @@ func (m *ManagedFlow) StartManaged(
 		}
 		return runtimelifecycle.StartOutcome{}, err
 	}
-	return m.flow.Start(ctx, request)
+	return m.flow.startPrepared(preparation)
+}
+
+func managedBindingMatchesRequest(
+	binding runtimeorchestrationbinding.StartExecutionBinding,
+	request runtimelifecycle.StartRequest,
+) bool {
+	if !binding.Valid() {
+		return false
+	}
+	authorization := binding.Authorization()
+	_, linked := binding.LinkedExecutionIdentity()
+	return !linked &&
+		authorization.Action() == runtimeorchestrationbinding.OrchestrationActionActivateExactTarget &&
+		authorization.WorkspaceID() == request.WorkspaceID() &&
+		authorization.ConfigurationID() == request.ConfigurationID() &&
+		authorization.TargetConfigurationVersionID() == request.ConfigurationVersionID()
 }

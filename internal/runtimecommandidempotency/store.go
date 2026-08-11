@@ -3,6 +3,9 @@ package runtimecommandidempotency
 import (
 	"context"
 	"sync"
+	"sync/atomic"
+
+	"github.com/dsdred/universal-websocket-platform/internal/runtimeorchestrationbinding"
 )
 
 type commandIdentity struct {
@@ -46,6 +49,7 @@ type commandLedger struct {
 	liveParents  map[commandIdentity]*permitState
 	livePhases   map[phaseIdentity]*permitState
 	rendezvous   map[commandIdentity]*startRendezvous
+	managedStart map[runtimeorchestrationbinding.StartRendezvous]managedStartRendezvous
 }
 
 // MemoryStorage owns process-lifetime command facts independently from one
@@ -90,10 +94,17 @@ func (s *MemoryStorage) ledger(scope instanceScope) *commandLedger {
 			liveParents:  make(map[commandIdentity]*permitState),
 			livePhases:   make(map[phaseIdentity]*permitState),
 			rendezvous:   make(map[commandIdentity]*startRendezvous),
+			managedStart: make(map[runtimeorchestrationbinding.StartRendezvous]managedStartRendezvous),
 		}
 		s.ledgers[scope] = ledger
 	}
 	return ledger
+}
+
+func (s *MemoryStorage) existingLedger(scope instanceScope) *commandLedger {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.ledgers[scope]
 }
 
 // Boundary is one active storage client and process-local permit issuer.
@@ -103,6 +114,7 @@ type Boundary struct {
 	storage        *MemoryStorage
 	generation     uint64
 	generationDone <-chan struct{}
+	rendezvousSeq  atomic.Uint64
 }
 
 // NewBoundary constructs the only active client generation for storage.
@@ -261,6 +273,7 @@ type executionPermit struct {
 	identity commandIdentity
 	state    *permitState
 	pending  *startRendezvous
+	managed  runtimeorchestrationbinding.StartRendezvous
 }
 
 // execute invokes lifecycle work at most once. A nil callback error requires a
@@ -356,4 +369,12 @@ func (p *executionPermit) expire() {
 	if p.identity.scope.operation == OperationStart {
 		delete(p.ledger.stopForStart, p.identity)
 	}
+	if p.managed != (runtimeorchestrationbinding.StartRendezvous{}) {
+		delete(p.ledger.managedStart, p.managed)
+	}
+}
+
+type managedStartRendezvous struct {
+	identity   commandIdentity
+	generation uint64
 }

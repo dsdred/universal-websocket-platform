@@ -10,19 +10,6 @@ type RuntimeInstanceID string
 // LaunchAttemptID is the opaque execution identity of one Launch Attempt.
 type LaunchAttemptID string
 
-// StartRendezvous is an opaque coordination handle for one live Runtime start
-// claim. It is defined in the lowest-dependency Flow-chain package so that
-// command-boundary implementations construct it and management and flow
-// packages pass it through without gaining command imports. It carries no
-// capability, no permit, and no exported behavior; the empty value is invalid.
-type StartRendezvous struct{ token uint8 }
-
-// NewStartRendezvous constructs one non-zero opaque coordination handle. It is
-// published only after a live exact rendezvous exists and carries no permit.
-func NewStartRendezvous() StartRendezvous {
-	return StartRendezvous{token: 1}
-}
-
 // LoadRequest identifies one exact configuration source and its launch provenance.
 // Its fields are immutable after construction.
 type LoadRequest struct {

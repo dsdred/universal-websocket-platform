@@ -8,14 +8,14 @@
 - **Implementation Status:** Planned
 
 Implementation progress: TASK-031 and TASK-032 produced Coordinator-Accepted
-isolated partial implementations of Slices 1 and 2. TASK-034 conformance
-inspection found that they do not yet form the complete DP-019 prerequisite:
-the authorization value omits `OperationalDomain`, the managed binding omits
-the authorization and optional linked-execution identities, and its
-`StartRendezvous` is not an identity for command-owned rendezvous state. The
-Slice 2R conformance repair below is therefore Planned and unactivated. Slice
-3 remains Planned and blocked by Slice 2R; Slice 4 has not started. The overall
-status remains Planned.
+isolated partial implementations of Slices 1 and 2, and TASK-034 defined their
+required conformance repair. TASK-035 implements Slice 2R in isolation: the
+six-field authorization and complete binding now live in the dependency-leaf
+package, primitive managed claims use the sole `ExecuteManagedStart` adapter,
+and command-owned rendezvous identities are unique and callback-scoped. The
+concrete DP-013 composition-private invoker and production wiring remain
+absent. Slice 3 is the next Planned, unactivated slice; Slice 4 has not started.
+The overall status remains Planned.
 
 This focused design decomposes the remaining Approved DP-019 prerequisites —
 exact orchestration authorization, private managed invocation, and
@@ -433,7 +433,8 @@ the orchestrator.
 ### Slice 1 — Orchestration authorizer surface
 
 Current slice status: partial isolated implementation accepted historically by
-TASK-031; its missing `OperationalDomain` is repaired only by Slice 2R.
+TASK-031; its missing `OperationalDomain` is repaired in isolation by TASK-035
+Slice 2R.
 
 - Introduce the `OrchestrationAuthorizationRequest` validated value, the
   named policy-neutral `AuthorizeOrchestration` function type, the
@@ -448,7 +449,8 @@ TASK-031; its missing `OperationalDomain` is repaired only by Slice 2R.
 ### Slice 2 — Private managed invoker and managed Flow seam
 
 Current slice status: partial isolated implementation accepted historically by
-TASK-032; it is not the complete DP-019 prerequisite until Slice 2R.
+TASK-032; TASK-035 Slice 2R supplies the complete authoritative binding repair
+without rewriting TASK-032 acceptance history.
 
 - Add the managed construction and `StartManaged` per-call seam and the
   `StartExecutionBinding` / `OwnerClaimView` immutable values, the opaque
@@ -461,7 +463,9 @@ TASK-032; it is not the complete DP-019 prerequisite until Slice 2R.
 
 ### Slice 2R — Managed binding conformance repair
 
-Current slice status: Planned; recommended next, not activated.
+Current slice status: implemented and independently accepted in isolation by
+TASK-035. Production composition/private-invoker wiring is not part of this
+slice.
 
 - Introduce the dependency-leaf authoritative binding values, restore
   `OperationalDomain`, carry the complete authorization tuple and the
@@ -483,7 +487,8 @@ Current slice status: Planned; recommended next, not activated.
 
 ### Slice 3 — OwnerClaim-to-DP-014 binding sequence
 
-Current slice status: Planned and blocked by Slice 2R; not activated.
+Current slice status: next Planned slice after accepted TASK-035 Slice 2R; not
+activated.
 
 - Implement `StartClaimContinuation.AfterOwnerClaim` using the existing
   `runtimeidentity.Store` conditional publication/binding operations, the
@@ -532,13 +537,14 @@ regression checks and by the fresh Independent Review of this proposal.
 Implementation Status remains Planned overall. This design task itself
 implemented no slice; successor TASK-031 and TASK-032 produced historically
 Coordinator-Accepted partial isolated implementations of Slices 1 and 2.
-TASK-034 identified the remaining conformance gap and defined Slice 2R as the
-next Planned, unactivated repair. The repository still lacks that repair,
-Slice 3 attempt publication/binding composition, the activation orchestrator,
-external persistence, API, recovery worker, and production wiring. TASK-026
-therefore remains Blocked; Slice 3 is blocked by Slice 2R, and both require
-separate implementation and independent acceptance before orchestrator
-readiness may be reconsidered against the complete unchanged DP-016 proofs.
+TASK-034 identified the remaining conformance gap, and TASK-035 implements and
+independently accepts its Slice 2R repair in isolation. The
+repository still lacks Slice 3 attempt publication/binding composition, the
+concrete private composition invoker, activation orchestrator, external
+persistence, API, recovery worker, and production wiring. TASK-026 therefore
+remains Blocked; Slice 3 is the next unactivated slice, and later prerequisites
+still require separate implementation and
+acceptance before readiness may be reconsidered against unchanged DP-016.
 
 ## 15. Consequences
 
@@ -552,7 +558,8 @@ Positive:
 
 Costs:
 
-- Slice 2R and Slice 3 still precede any DP-016 readiness re-assessment;
+- independent Slice 2R acceptance and Slice 3 still precede any DP-016
+  readiness re-assessment;
 - the synchronous pending-Stop rendezvous may block callers;
 - process restart still requires Planned DP-017 implementation;
 - production integration still requires external durability and a composition
@@ -563,8 +570,9 @@ Costs:
 UWP records the readiness decomposition of the remaining Approved DP-019
 prerequisites in this Draft/Planned proposal and implements each slice only
 through a separate, individually reviewed task. Slices 1 and 2 remain
-historically accepted partial implementations; Slice 2R is the next Planned,
-unactivated repair, and Slice 3 remains Planned and blocked by it. This
+historically accepted partial implementations; TASK-035 implements and
+independently accepts Slice 2R in isolation, and Slice 3 becomes the next
+Planned, unactivated slice. This
 proposal does not approximate DP-016
 with an adapter, does not add replacement/rollback operations to the Owner,
 does not transfer permits, does not change any Approved status or semantic,

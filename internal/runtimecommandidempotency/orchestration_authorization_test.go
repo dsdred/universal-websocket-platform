@@ -3,8 +3,6 @@ package runtimecommandidempotency
 import (
 	"context"
 	"errors"
-	"reflect"
-	"strings"
 	"sync/atomic"
 	"testing"
 
@@ -16,12 +14,12 @@ var errAuthzDenied = errors.New("orchestration authorization denied")
 func TestOrchestrationAuthorizationRequestIsImmutableAndValidated(t *testing.T) {
 	identity := runtimeconfigload.RuntimeInstanceID("instance-a")
 	request, err := NewOrchestrationAuthorizationRequest(
-		1, 2, identity, OrchestrationActionActivateExactTarget, 41,
+		"domain-a", 1, 2, identity, OrchestrationActionActivateExactTarget, 41,
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if request.WorkspaceID() != 1 || request.ConfigurationID() != 2 ||
+	if request.OperationalDomain() != "domain-a" || request.WorkspaceID() != 1 || request.ConfigurationID() != 2 ||
 		request.RuntimeInstanceID() != identity ||
 		request.Action() != OrchestrationActionActivateExactTarget ||
 		request.TargetConfigurationVersionID() != 41 {
@@ -30,23 +28,25 @@ func TestOrchestrationAuthorizationRequestIsImmutableAndValidated(t *testing.T) 
 
 	cases := []struct {
 		name      string
+		domain    string
 		workspace uint64
 		config    uint64
 		instance  runtimeconfigload.RuntimeInstanceID
 		action    OrchestrationAction
 		version   uint64
 	}{
-		{"zero workspace", 0, 2, identity, OrchestrationActionActivateExactTarget, 41},
-		{"zero configuration", 1, 0, identity, OrchestrationActionActivateExactTarget, 41},
-		{"empty instance", 1, 2, "", OrchestrationActionActivateExactTarget, 41},
-		{"unknown action", 1, 2, identity, OrchestrationAction("unknown"), 41},
-		{"empty action", 1, 2, identity, OrchestrationAction(""), 41},
-		{"zero version", 1, 2, identity, OrchestrationActionActivateExactTarget, 0},
+		{"empty domain", "", 1, 2, identity, OrchestrationActionActivateExactTarget, 41},
+		{"zero workspace", "domain-a", 0, 2, identity, OrchestrationActionActivateExactTarget, 41},
+		{"zero configuration", "domain-a", 1, 0, identity, OrchestrationActionActivateExactTarget, 41},
+		{"empty instance", "domain-a", 1, 2, "", OrchestrationActionActivateExactTarget, 41},
+		{"unknown action", "domain-a", 1, 2, identity, OrchestrationAction("unknown"), 41},
+		{"empty action", "domain-a", 1, 2, identity, OrchestrationAction(""), 41},
+		{"zero version", "domain-a", 1, 2, identity, OrchestrationActionActivateExactTarget, 0},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			if _, err := NewOrchestrationAuthorizationRequest(
-				tc.workspace, tc.config, tc.instance, tc.action, tc.version,
+				tc.domain, tc.workspace, tc.config, tc.instance, tc.action, tc.version,
 			); !errors.Is(err, ErrInvalidSubmission) {
 				t.Fatalf("expected ErrInvalidSubmission, got %v", err)
 			}
@@ -59,52 +59,23 @@ func TestOrchestrationAuthorizationRequestIsImmutableAndValidated(t *testing.T) 
 		OrchestrationActionRollbackExactTarget,
 	} {
 		if _, err := NewOrchestrationAuthorizationRequest(
-			1, 2, identity, action, 41,
+			"domain-a", 1, 2, identity, action, 41,
 		); err != nil {
 			t.Fatalf("valid action %q rejected: %v", action, err)
 		}
 	}
 }
 
-func TestOrchestrationAuthorizationRequestOmitsOperationalDomain(t *testing.T) {
+func TestOrchestrationAuthorizationRequestCarriesOperationalDomain(t *testing.T) {
 	request, err := NewOrchestrationAuthorizationRequest(
-		1, 2, runtimeconfigload.RuntimeInstanceID("instance-a"),
+		"domain-a", 1, 2, runtimeconfigload.RuntimeInstanceID("instance-a"),
 		OrchestrationActionReplaceExactTarget, 41,
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Compile-time structural proof: the request type has exactly the five
-	// DP-020 single-node fields and no OperationalDomain field or accessor.
-	assertRequestShape(t, request)
-}
-
-func assertRequestShape(t *testing.T, request OrchestrationAuthorizationRequest) {
-	t.Helper()
-	value := reflect.ValueOf(request)
-	if value.Kind() != reflect.Struct {
-		t.Fatalf("request kind = %v, want struct", value.Kind())
-	}
-	fields := value.NumField()
-	if fields != 5 {
-		t.Fatalf("request field count = %d, want exactly 5", fields)
-	}
-	names := []string{}
-	for i := 0; i < fields; i++ {
-		names = append(names, value.Type().Field(i).Name)
-	}
-	joined := strings.Join(names, ",")
-	if strings.Contains(joined, "domain") || strings.Contains(joined, "Domain") {
-		t.Fatalf("request carries an operational domain field: %v", names)
-	}
-	want := map[string]bool{
-		"workspaceID": true, "configurationID": true, "runtimeInstanceID": true,
-		"action": true, "targetConfigurationVersionID": true,
-	}
-	for _, name := range names {
-		if !want[name] {
-			t.Fatalf("unexpected request field %q in %v", name, names)
-		}
+	if request.OperationalDomain() != "domain-a" {
+		t.Fatalf("operational domain = %q", request.OperationalDomain())
 	}
 }
 
@@ -116,7 +87,7 @@ func TestOrchestrationActionSetIsExact(t *testing.T) {
 	}
 	seen := make(map[OrchestrationAction]bool, len(actions))
 	for _, action := range actions {
-		if !action.valid() {
+		if !action.Valid() {
 			t.Fatalf("defined action %q reports invalid", action)
 		}
 		if seen[action] {
@@ -131,7 +102,7 @@ func TestOrchestrationActionSetIsExact(t *testing.T) {
 		"", "start", "stop", "observe", "activate", "replace", "rollback",
 		"ActivateExactTarget", "StopExactTarget",
 	} {
-		if foreign.valid() {
+		if foreign.Valid() {
 			t.Fatalf("foreign action %q reports valid", foreign)
 		}
 	}
@@ -184,6 +155,7 @@ func TestAuthorizeCommandMapsExactActionsWithoutFallback(t *testing.T) {
 			}
 			if request.Action() != tc.want ||
 				request.TargetConfigurationVersionID() != tc.version ||
+				request.OperationalDomain() != "domain-a" ||
 				request.WorkspaceID() != 1 || request.ConfigurationID() != 2 ||
 				request.RuntimeInstanceID() != instance {
 				t.Fatalf("unexpected mapping: %#v", request)
@@ -400,6 +372,7 @@ func TestPrimitiveStartAuthorizationAdaptsToActivateExactTarget(t *testing.T) {
 		t.Fatalf("adapter authorization calls = %d, want 1", calls.Load())
 	}
 	if gotRequest.Action() != OrchestrationActionActivateExactTarget ||
+		gotRequest.OperationalDomain() != scope.Domain() ||
 		gotRequest.TargetConfigurationVersionID() != 41 ||
 		gotRequest.WorkspaceID() != scope.WorkspaceID() ||
 		gotRequest.ConfigurationID() != scope.ConfigurationID() ||
