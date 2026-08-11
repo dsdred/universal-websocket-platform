@@ -86,9 +86,24 @@
   Verification Matrix, PROCESS-002, status consistency и repository-state
   audit подтверждены; Commit Gate, commit, push и publication не выполнялись**
 - Текущая development task: **отсутствует. Последняя завершённая development
-  task — TASK-030 — Runtime Orchestration Binding Sequence Design; `Completed —
+  task — TASK-031 — Runtime Orchestration Authorization Surface; `Completed —
   Coordinator Accepted`. TASK-026 остаётся Blocked by Architecture;
   Acceptance/commit/publish TASK-026 запрещены**
+- TASK-031 acceptance evidence: **Completed — Coordinator Accepted; DP-020
+  deferred slice 1 реализован изолированно в
+  `internal/runtimecommandidempotency`: immutable validated
+  `OrchestrationAuthorizationRequest`, exact `OrchestrationAction` set и
+  policy-neutral `AuthorizeOrchestration` function type с per-call evaluation
+  без кэша, fixed Start→`ActivateExactTarget` adaptation и fail-closed
+  error semantics. Independent Tester — PASS WITH ENVIRONMENT LIMITATION
+  (race недоступен без CGO/gcc, substitute stress `-count=100` PASS);
+  Independent Review — Approved with Findings 0 blocking / 2 non-blocking
+  (resolved by R-001/R-002). Verification Matrix, PROCESS-002 и Scope Audit
+  7 Required / 0 Questionable / 0 Removable — PASS. On branch
+  `feature/task-031-runtime-orchestration-authorization-surface` от baseline
+  `main@0bfbca3`; commit, push, publication и branch cleanup не выполнялись.
+  Следующая рекомендация — intake DP-020 deferred slice 2 (private managed
+  invoker plus managed Flow/OwnerClaimView continuation); не активирована**
 - TASK-030 acceptance evidence: **Completed — Coordinator Accepted; design-only
   task создала зеркальный Draft/Planned DP-020, закрыла отложенные design
   decisions, не меняла Approved статусы/семантики и не реализовала ни один
@@ -113,11 +128,9 @@
   publication. Exact authorization/private
   invoker, managed Flow/OwnerClaimView, DP-014 binding, orchestrator и
   production composition остаются Planned; TASK-026 remains Blocked**
-- Следующая рекомендация: **DP-020 deferred slice 1 — exact orchestration
-  authorizer surface (bounded implementation of the validated
-  `OrchestrationAuthorizationRequest`, `OrchestrationAction`, and named
-  policy-neutral `AuthorizeOrchestration` seam) — не активирована; требует
-  нового task intake от clean baseline**
+- Следующая рекомендация: **DP-020 deferred slice 2 — private managed invoker
+  plus managed Flow/OwnerClaimView continuation (DP-019 §8, §14) — не
+  активирована; требует нового task intake от clean baseline**
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы
   изолированно; Repeat Independent Review Approved, blocking/non-blocking 0;

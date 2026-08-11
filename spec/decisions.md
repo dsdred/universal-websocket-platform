@@ -173,5 +173,8 @@ managed invocation и OwnerClaim-to-DP-014 binding sequence. Она активи
 как design-only TASK-030, создавшая зеркальный Draft/Planned
 [DP-020: Готовность последовательности связывания оркестрации Runtime](../docs/ru/design/DP-020-runtime-orchestration-binding-sequence-readiness.md).
 DP-020 фиксирует упорядоченное implementable разложение и закрывает отложенные
-design-решения, но не реализует ни один срез. TASK-026 остаётся Blocked до
-реализации и независимой приёмки срезов.
+design-решения. Deferred slice 1 (orchestration authorizer surface) реализован
+изолированно TASK-031 и завершён как `Completed — Coordinator Accepted`; TASK-026
+остаётся Blocked до реализации и независимой приёмки оставшихся срезов.
+Следующая рекомендация — deferred slice 2 (private managed invoker plus managed
+Flow/OwnerClaimView continuation); не активирована.
