@@ -7,6 +7,11 @@
 - **Design Status:** Draft
 - **Implementation Status:** Planned
 
+Implementation progress: Slices 1 and 2 are implemented in isolation and
+Coordinator Accepted through TASK-031 and TASK-032. Slice 3 remains Planned;
+Slice 4 has not started. The overall status remains Planned because the
+OwnerClaim-to-DP-014 binding and orchestrator readiness work are incomplete.
+
 This focused design decomposes the remaining Approved DP-019 prerequisites —
 exact orchestration authorization, private managed invocation, and
 OwnerClaim-to-DP-014 binding — into ordered, independently testable
@@ -348,6 +353,9 @@ the orchestrator.
 
 ### Slice 1 — Orchestration authorizer surface
 
+Current slice status: implemented in isolation and Coordinator Accepted by
+TASK-031.
+
 - Introduce the `OrchestrationAuthorizationRequest` validated value, the
   named policy-neutral `AuthorizeOrchestration` function type, the
   `OrchestrationAction` set, and the failed-authorization error contract at
@@ -360,6 +368,9 @@ the orchestrator.
 
 ### Slice 2 — Private managed invoker and managed Flow seam
 
+Current slice status: implemented in isolation and Coordinator Accepted after
+rework by TASK-032.
+
 - Add the managed construction and `StartManaged` per-call seam and the
   `StartExecutionBinding` / `OwnerClaimView` immutable values, the opaque
   `StartRendezvous` handle, and the failed private-invocation error contract,
@@ -371,6 +382,8 @@ the orchestrator.
 
 ### Slice 3 — OwnerClaim-to-DP-014 binding sequence
 
+Current slice status: Planned; recommended next, not activated.
+
 - Implement `StartClaimContinuation.AfterOwnerClaim` using the existing
   `runtimeidentity.Store` conditional publication/binding operations, the
   existing pending-Stop rendezvous, and the final Stop-versus-Continue gate,
@@ -381,6 +394,9 @@ the orchestrator.
   and a Stop admitted after the early check is ordered by the final gate.
 
 ### Slice 4 — DP-016 orchestrator readiness re-assessment
+
+Current slice status: not started; it remains gated by Slice 3 implementation
+and independent acceptance.
 
 - Only after Slices 1–3 are implemented and independently accepted, re-assess
   whether TASK-026 can be unblocked against the unmodified DP-016 §25 proofs.
@@ -409,14 +425,15 @@ regression checks and by the fresh Independent Review of this proposal.
 
 ## 14. Implementation Boundary
 
-Implementation Status remains Planned. DEFERRED outputs are the ordered slices
-of section 12; none is implemented by this task. The repository still lacks the
-orchestration authorizer, the private scoped invoker, the managed
-Flow/OwnerClaimView continuation, the attempt publication/binding composition,
-the activation orchestrator, external persistence, API, recovery worker, and
-production wiring. TASK-026 therefore remains Blocked; successor tasks must
-implement and independently verify those slices before TASK-026 may be
-reconsidered against the complete unchanged DP-016 proofs.
+Implementation Status remains Planned overall. This design task itself
+implemented no slice; successor TASK-031 implemented Slice 1 in isolation and
+TASK-032 implemented Slice 2 in isolation after rework, and both are
+Coordinator Accepted. The repository still lacks Slice 3 attempt
+publication/binding composition, the activation orchestrator, external
+persistence, API, recovery worker, and production wiring. TASK-026 therefore
+remains Blocked; Slice 3 must be separately implemented and independently
+accepted before orchestrator readiness may be reconsidered against the complete
+unchanged DP-016 proofs.
 
 ## 15. Consequences
 
@@ -439,8 +456,9 @@ Costs:
 ## 16. Decision
 
 UWP records the readiness decomposition of the remaining Approved DP-019
-prerequisites in this Draft/Planned proposal and will implement the slices only
-through separate, individually reviewed tasks. It does not approximate DP-016
+prerequisites in this Draft/Planned proposal and implements each slice only
+through a separate, individually reviewed task. Slices 1 and 2 now satisfy
+that rule; Slice 3 remains Planned and unactivated. This proposal does not approximate DP-016
 with an adapter, does not add replacement/rollback operations to the Owner,
 does not transfer permits, does not change any Approved status or semantic,
 and does not treat planned capability as implemented.

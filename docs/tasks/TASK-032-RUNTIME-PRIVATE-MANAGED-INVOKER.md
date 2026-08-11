@@ -2,7 +2,7 @@
 
 ## Status
 
-`In Progress`.
+`Completed — Coordinator Accepted`.
 
 ## Task Contract
 
@@ -349,8 +349,34 @@ Not applicable:
 - Required process gates pass: Verification Matrix (with environment-limited
   race), Independent Review, Tester, Scope Audit, PROCESS-002, and diff checks.
 - `main` merged baseline is `07b27cef9bc1ec47dc0c32810e9f45f63c2eb377`
-  (unchanged by this rework); only work-tree modifications staged.
-- No commit, push, PR, merge, publication, or branch cleanup has been
-  performed; both permission gates are still required.
+  (unchanged by this rework); at Coordinator closure only the accepted task
+  changes were staged on
+  `feature/task-032-runtime-private-managed-invoker`.
+- At Coordinator closure no commit, push, PR, merge, publication, or branch
+  cleanup had been performed. This is retained as historical closure-time
+  evidence, not as a live commit or publication gate.
+
+## Publication Outcome
+
+- The accepted task diff was committed as
+  `577e1ced0a984952396238cc94bdcbec80c2a6d4`.
+- The task commit was published through PR #32 and merged to `main` as
+  `74e55a6d9a14502f134cbf20eb53359fd9abc995`.
+- These durable Git facts supersede the closure-time no-publication statement
+  only for current repository state; they do not rewrite what was true when
+  Coordinator Acceptance was recorded.
 
 ## Next Candidate
+
+- DP-020 deferred slice 3 — OwnerClaim-to-DP-014 conditional attempt
+  publication and same-generation binding sequence (DP-019 §§16–17,
+  DP-020 §12.3).
+- The recommendation is not activated by TASK-032 completion or publication;
+  it requires a separate task intake from a clean baseline.
+
+## Closure
+
+- Final status: `Completed — Coordinator Accepted` after rework.
+- TASK-026 remains `Blocked by Architecture`; its Acceptance, commit, and
+  publication remain forbidden until the remaining prerequisites are
+  implemented and independently accepted.

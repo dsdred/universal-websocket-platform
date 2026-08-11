@@ -27,13 +27,16 @@
   Planned overall DP-019 определяет parent/phase, authorization и private
   Start-claim continuation prerequisites DP-016. TASK-028 реализует partial
   parent/phase sequential core, а TASK-029 — command-boundary Continue и
-  pending-Stop rendezvous изолированно; authorization policy, private invoker,
-  managed Flow/OwnerClaimView continuation и DP-014 binding остаются Planned, а
-  TASK-026 — Blocked by Architecture до их implementation.
+  pending-Stop rendezvous изолированно; TASK-031 реализует policy-neutral
+  authorization surface, а TASK-032 — private managed invoker и managed
+  Flow/OwnerClaimView continuation изолированно. Concrete authorization policy
+  и DP-014 binding остаются Planned, а TASK-026 — Blocked by Architecture до
+  implementation remaining prerequisites.
   HTTP, concrete policy, external command storage, recovery/reporting
   package/schema, management wiring и Production Activation отсутствуют**
-- Последняя завершённая development task: **TASK-029 — Runtime Command
-  Continue and Pending-Stop Prerequisite; Completed — Coordinator Accepted**
+- Последняя завершённая development task: **TASK-032 — Runtime Private Managed
+  Invoker and Managed Flow Seam; Completed — Coordinator Accepted after
+  rework**
 - Последняя завершённая operational task: **TASK-012 — Engineering Process
   Hardening; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
@@ -103,7 +106,10 @@
   mod-tidy, diff-check) — PASS; race ограничен отсутствием CGO/gcc.
   Scope Audit — 7 Required / 0 Questionable / 0 Removable. On branch
   `feature/task-032-runtime-private-managed-invoker` от baseline
-  `main@07b27ce`; commit, push, publication не выполнялись. Следующая
+  `main@07b27ce`; на момент Coordinator closure commit, push и publication не
+  выполнялись. Впоследствии task commit
+  `577e1ced0a984952396238cc94bdcbec80c2a6d4` опубликован через PR #32 и merged
+  как `74e55a6d9a14502f134cbf20eb53359fd9abc995`. Следующая
   рекомендация — DP-020 deferred slice 3 (OwnerClaim-to-DP-014 binding
   sequence); не активирована**
 - TASK-031 acceptance evidence: **Completed — Coordinator Accepted; DP-020
@@ -159,8 +165,9 @@
   closure commit и publication ещё не выполнялись. Subsequently task commit
   `d28efa4e88e02ef528c78c3ca88b3f91945069ce` was published through PR #28
   and merged as `ba75e54e00c3cf1d0d87ca2a985acc9699698efd`**
-- Последняя завершённая documentation task: **TASK-022 — Root README Runtime
-  Status Synchronization; Completed — Coordinator Accepted**
+- Последняя завершённая documentation task: **TASK-033 — TASK-032 Closure
+  Synchronization; Completed — Coordinator Accepted; Independent Review
+  Approved 0/0; Scope Audit 10/0/0; DP-020 slice 3 не активирована**
 - Текущая documentation task: **отсутствует**
 - Trusted baseline TASK-009: **clean synchronized
   `main@63b961eeb59af9205c3c3d0b68d3f4bd7b8ac25c`; локальная ветка
@@ -427,8 +434,9 @@
 - Design Status DP-019 — **Approved**, Implementation Status — **Planned
   overall**; parent/phase durable storage, callback capability, sequential core
   и command-boundary Continue/pending-Stop rendezvous реализованы изолированно,
-  а exact orchestration authorization/private invoker, managed Flow/
-  OwnerClaimView continuation, DP-014 binding и orchestrator не реализованы
+  exact orchestration authorization surface, private invoker и managed Flow/
+  OwnerClaimView continuation реализованы изолированно TASK-031/TASK-032, а
+  concrete policy, DP-014 binding и orchestrator не реализованы
 - Design Status DP-008 остаётся **Draft**, Implementation Status — **Implemented in isolation**
 - Содержимое репозитория: документация, спецификации, инженерные соглашения, исполняемый Control Service и изолированные Runtime-компоненты с тестами
 
