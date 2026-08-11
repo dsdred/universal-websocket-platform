@@ -462,6 +462,9 @@ design.
 Поэтому TASK-026 остаётся Blocked. Следующие tasks должны реализовать и
 независимо проверить оставшиеся prerequisites. Только после этого TASK-026
 может быть повторно оценена против полного неизменённого набора DP-016 proofs.
+Focused readiness decomposition этих prerequisites зафиксирована в зеркальном
+[DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), со
+статусом Design Status Draft и Implementation Status Planned.
 
 ## 23. Последствия
 
