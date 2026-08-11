@@ -33,8 +33,9 @@
   Slice 2R изолированно: `OperationalDomain`, полный binding/linked identity,
   unique callback-scoped command-owned rendezvous identity, dependency-leaf
   package и sole primitive `Boundary.ExecuteManagedStart` adapter; TASK-035
-  независимо принята, concrete private composition invoker отсутствует, Slice
-  3 является следующим неактивированным срезом. Concrete authorization policy и DP-014 binding остаются
+  независимо принята, concrete private composition invoker отсутствует. TASK-036
+  уточняет единый primitive/linked command-gate и continuation protocol; Slice
+  3 остаётся следующим неактивированным срезом. Concrete authorization policy и DP-014 binding остаются
   Planned, а TASK-026 — Blocked
   by Architecture до implementation remaining prerequisites.
   HTTP, concrete policy, external command storage, recovery/reporting
@@ -44,9 +45,9 @@
 - Последняя завершённая operational task: **TASK-012 — Engineering Process
   Hardening; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
-- Последняя завершённая architecture task: **TASK-034 — Managed Binding
-  Contract Reconciliation; Completed — Coordinator Accepted; repeat
-  Independent Review Approved 0/0; B-001/N-001 resolved**
+- Последняя завершённая architecture task: **TASK-036 — Slice 3 Readiness
+  Reconciliation; Completed — Coordinator Accepted; Independent Review
+  Approved 0/0; Scope Audit 13/0/0**
 - Текущая architecture task: **отсутствует**
 - TASK-027 acceptance evidence: **DP-019 Approved/Planned; implementable
   parent/phase, exact authorization and private per-call managed Start seams
@@ -169,11 +170,10 @@
   closure commit и publication ещё не выполнялись. Subsequently task commit
   `d28efa4e88e02ef528c78c3ca88b3f91945069ce` was published through PR #28
   and merged as `ba75e54e00c3cf1d0d87ca2a985acc9699698efd`**
-- Последняя завершённая documentation task: **TASK-034 — Managed Binding
-  Contract Reconciliation; Completed — Coordinator Accepted; repeat
-  Independent Review Approved 0/0; Scope Audit 9/0/0**
-- Текущая documentation task: **отсутствует; TASK-035 synchronization
-  завершена с PROCESS-002 Synchronized**
+- Последняя завершённая documentation task: **TASK-036 — Slice 3 Readiness
+  Reconciliation; Completed — Coordinator Accepted; PROCESS-002 Synchronized;
+  Independent Review Approved 0/0; Scope Audit 13/0/0**
+- Текущая documentation task: **отсутствует**
 - Trusted baseline TASK-009: **clean synchronized
   `main@63b961eeb59af9205c3c3d0b68d3f4bd7b8ac25c`; локальная ветка
   `feature/task-009-runtime-lifecycle-owner`; task record создан первым

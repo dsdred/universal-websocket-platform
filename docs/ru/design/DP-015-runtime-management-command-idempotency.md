@@ -38,8 +38,11 @@ lifecycle mutation или Launch Attempt.
 Принятые ADR и Active или Frozen architecture остаются authoritative. DP-013
 остаётся Draft; Approved DP-014, primitive boundary DP-015 и partial
 parent/phase sequential core DP-019 и command-boundary Continue/pending-Stop
-rendezvous реализованы изолированно. Managed continuation, binding и Approved
-DP-016 сохраняют Implementation Status Planned.
+rendezvous реализованы изолированно. TASK-031/TASK-032/TASK-035 также реализуют
+изолированно exact authorization value, dependency-leaf binding, primitive
+managed adapter и seam managed Flow/OwnerClaimView. Concrete continuation,
+managed parent/phase adapter, binding sequence DP-014 и Approved DP-016
+сохраняют Implementation Status Planned.
 
 ## 4. Область
 
@@ -526,11 +529,12 @@ gating и тот же unresolved barrier. `ContinueOrExecuteStartTarget` доб�
 non-bypassable pre-phase Continue gate и synchronous pending-Stop rendezvous с
 immutable signal cause и fail-closed callback/reconstruction behavior.
 
-External durable storage/schema, API, DP-016 orchestration, DP-017 recovery,
-exact authorization DP-019, private managed continuation, Owner claim view и
-binding DP-014, management
-wiring и
-Production Activation отсутствуют. Isolated package не
+TASK-031/TASK-032/TASK-035 добавляют изолированно exact authorization value,
+dependency-leaf binding, primitive adapter `ExecuteManagedStart` и seam managed
+Flow/OwnerClaimView. External durable storage/schema, API, DP-016 orchestration,
+DP-017 recovery, concrete private continuation, managed parent/phase adapter,
+binding sequence DP-014, management wiring и Production Activation отсутствуют.
+Isolated package не
 изменяет lifecycle contracts и не подключён к DP-013 Directory.
 
 ## 28. Решение

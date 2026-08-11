@@ -14,8 +14,9 @@ six-field authorization and complete binding now live in the dependency-leaf
 package, primitive managed claims use the sole `ExecuteManagedStart` adapter,
 and command-owned rendezvous identities are unique and callback-scoped. The
 concrete DP-013 composition-private invoker and production wiring remain
-absent. Slice 3 is the next Planned, unactivated slice; Slice 4 has not started.
-The overall status remains Planned.
+absent. TASK-036 resolves the remaining Slice-3 command-gate and continuation
+API ambiguity without implementing it. Slice 3 is the next Planned,
+unactivated slice; Slice 4 has not started. The overall status remains Planned.
 
 This focused design decomposes the remaining Approved DP-019 prerequisites —
 exact orchestration authorization, private managed invocation, and
@@ -250,6 +251,42 @@ fall back to legacy execution after any managed failure. The DP-013 public
 `Directory.Start/Stop/Observe` and existing DP-015 surfaces remain unchanged;
 the new method is repository-internal and creates no transport/API path.
 
+#### 8.1.2 Managed parent and StartTarget adapter seam
+
+Replacement and rollback use one additive managed parent path. Conceptually,
+the surfaces are:
+
+```text
+Boundary.ExecuteManagedParent(
+    context, Replace|Rollback Scope, CommandKey, matching Intent,
+    AuthorizeOrchestration,
+    invoke(*ManagedParentExecution) error,
+) -> ParentAdmission, error
+
+ManagedParentExecution.ContinueOrExecuteManagedStartTarget(
+    context, ExpectedAggregateRevision, ExecutionGeneration,
+    invoke(StartExecutionBinding) -> TerminalOutcome, error,
+) -> PhaseAdmission, prevented bool, error
+```
+
+`ExecuteManagedParent` accepts only exact Replace or Rollback,
+uses `AuthorizeOrchestration` on every initial, in-progress, and replay
+submission, and is the only source of a `ManagedParentExecution`. A parent
+admitted through legacy `ExecuteParent` cannot be adopted or upgraded.
+
+`ManagedParentExecution.ContinueOrExecuteManagedStartTarget(...)` preserves the
+existing pre-phase Continue ordering. Only a newly committed `StartTarget`
+phase receives a callback. In the phase-claim transaction it derives the exact
+parent identity and ordinal-one StartTarget identity, commits the phase and its
+permit, allocates and indexes a unique generation-bound rendezvous identity,
+constructs the complete linked `StartExecutionBinding`, and then invokes the
+callback once outside command locks. In-progress and replay observations
+receive no binding or execution authority.
+
+The existing `ExecuteParent`, `ParentExecution`, and
+`ContinueOrExecuteStartTarget` remain unchanged compatibility surfaces. The
+managed path does not synthesize authority from their records.
+
 ### 8.2 Immutable per-invocation `StartExecutionBinding`
 
 `StartExecutionBinding` is the single authoritative immutable value owned by
@@ -301,6 +338,52 @@ forged, reused, cross-generation, or identity-mismatched handles yield
 replacement expire resolution authority but do not erase durable unresolved
 facts. No global rendezvous registry exists outside the command boundary.
 
+The command boundary exposes only three repository-internal operations over a
+complete binding; their result types are closed, not booleans:
+
+```text
+ResolveManagedStartEarly(binding, launchAttemptID)
+    -> GateClear | GateStopConverged | GateBlocked
+
+ResolveManagedStartFinal(binding, FinalContinue | FinalBindingFailed)
+    -> FinalContinue | FinalBindingFailed | GateStopConverged | GateBlocked
+
+SignalManagedStartNoClaim(binding, Cancelled | Rejected | Failed)
+```
+
+`ManagedStartGateOutcome`, `ManagedStartFinalDisposition`, and their constants
+belong to `runtimecommandidempotency`. The neutral immutable
+`StartNoClaimCause` and its three constants belong to
+`runtimeorchestrationbinding`; the existing command-package names may remain
+aliases for compatibility. `StartClaimOutcome` and its four constants belong
+to `runtimelaunchflow`. This placement avoids every reverse import.
+
+Each operation resolves the opaque handle together with the complete
+authorization tuple, primitive-or-linked identity, exact command or phase,
+live permit, and active Boundary generation. The caller supplies no command
+key: the private lookup entry owns the exact command identity. Missing, forged,
+reused, mismatched, cross-generation, or expired handles return `GateBlocked`
+with the existing indeterminate-execution error; they never mean clear.
+
+One managed primitive or StartTarget rendezvous starts in `PreOwner`. A Stop
+admitted there occupies the single tracked-Start exception on its original
+`Boundary.Execute` stack and waits. The early operation stores the exact Owner
+attempt and moves to `Binding`; an already pending Stop is signalled and only
+its original claimant may invoke Stop and publish its result. Exact convergence
+returns `GateStopConverged`; cancellation before delegation clears the gate;
+lost or conflicting evidence blocks it. During `Binding`, one later Stop may
+claim and wait. The final operation is the single admission linearization point
+between that Stop and `FinalContinue` or `FinalBindingFailed`. Stop-first must
+converge on its original stack; disposition-first seals the result. After
+Continue, a later Stop uses the ordinary tracked-Start behavior. No second Stop
+or unrelated lifecycle mutation bypasses either gate.
+
+Callback return, panic, `runtime.Goexit`, or Boundary generation replacement
+expires the handle and wakes every waiter as Blocked while durable command or
+phase facts remain Claimed. Command locks are held only to validate, transition,
+and capture a notification; no command lock is held while waiting or calling
+identity, continuation, Flow, Owner, or external work.
+
 ### 8.4 Failed private-invocation error contract
 
 Binding validation failure before Owner mutation returns an exact,
@@ -332,10 +415,25 @@ which carries `LaunchAttemptID()`. The claim view is sourced from that
 Owner-issued `LoadRequest`; no `runtimelifecycle.StartRequest` shape change is
 needed.
 
-### 9.2 Closed continuation outcome
+### 9.2 Closed continuation contract and outcome
 
-`StartClaimContinuation.AfterOwnerClaim(StartExecutionBinding, OwnerClaimView)`
-returns exactly one closed outcome:
+`runtimelaunchflow` owns the interface and lifecycle adaptation so it keeps no
+dependency on command or identity packages:
+
+```text
+StartNoClaim(context, StartExecutionBinding, StartNoClaimCause) error
+AfterOwnerClaim(context, StartExecutionBinding, OwnerClaimView)
+    -> StartClaimOutcome, error
+```
+
+The new focused `internal/runtimeorchestrationcontinuation` package owns the
+long-lived stateless implementation. It depends on
+`runtimeorchestrationbinding`, `runtimecommandidempotency`, `runtimeidentity`,
+and `runtimelaunchflow`; none depends back on it. It retains command-boundary
+and narrow identity-boundary dependencies only, never a per-call binding,
+Owner preparation, permit, mutable rendezvous, goroutine, or registry entry.
+
+`AfterOwnerClaim` returns exactly one closed outcome:
 
 - `Continue`: the already-admitted pending-Stop rendezvous is definitively
   absent; the exact durable attempt membership and the same-generation binding
@@ -352,6 +450,32 @@ returns exactly one closed outcome:
   generation, unavailable or unknown facts, unproven Stop convergence, or an
   indeterminate publication; Flow begins no Load and the linked set remains
   unresolved.
+
+`Continue` and `StopConverged` require a nil error. `BindingFailed` and
+`Blocked` require one exact non-nil cause. An invalid combination or panic is
+`Blocked` with the managed continuation validation error.
+
+Caller cancellation is observed only at the existing DP-011 gate before the
+Owner claim. After successful `PrepareStart`, Flow derives a non-cancelable
+continuation context (equivalent to `context.WithoutCancel(ctx)`, preserving
+values but not cancellation or deadline) and uses it for `AfterOwnerClaim`.
+Every same-preparation Owner convergence call uses a local non-cancelable
+context as well. `StartNoClaim` is also signalled with a local non-cancelable
+context after a definitive pre-claim outcome, so caller cancellation cannot
+erase the command signal. Dependency failure or unavailable identity/gate
+state remains Blocked; it is not reclassified as caller cancellation.
+
+Flow maps the outcomes without letting the continuation receive its
+preparation token: Continue calls the existing prepared-start path;
+StopConverged calls `Owner.Start` with the same authentic preparation and an
+empty result, retrieving the stored `StartStoppedBeforeRunning` outcome without
+Load; BindingFailed passes `FailedPreparation(cause)` through the authentic
+Owner preparation and returns the semantic Owner outcome; Blocked also
+converges the in-memory Owner claim locally to avoid a leaked preparation but
+returns the exact Blocked cause so the command or phase remains unresolved.
+Owner convergence failure supersedes the continuation cause. A definitive
+pre-Owner cancellation, rejection, or failure calls `StartNoClaim`; a signal
+failure makes the execution Blocked.
 
 The continuation never publishes a lifecycle, phase, or parent terminal
 outcome itself; only the exact Owner result followed by the DP-014 and DP-015
@@ -377,6 +501,34 @@ The fixed order, after the sole Owner claim and before Load, is:
    early rendezvous check, then release `Continue` only under confirmed, exact
    same-generation binding.
 
+The continuation depends on a narrow `IdentityStore` interface matching the
+existing Store operations so unavailable and indeterminate behavior is
+testable; `runtimeidentity.Store` itself remains unchanged. Conversion at this
+boundary is explicit and lossless:
+`runtimeidentity.Revision(uint64(binding.ExpectedAggregateRevision()))` and
+`runtimeidentity.ExecutionGeneration(string(binding.ExecutionGeneration()))`.
+Zero or round-trip mismatch is Blocked; no value is allocated or inferred.
+
+The revision returned by a committed attempt claim is the only expected
+revision accepted by the generation bind. No stale write is retried. After any
+error or non-commit, exact inspection uses a revision sandwich:
+`ReadRuntimeInstance A -> ReadLaunchAttemptHistory -> ReadRuntimeInstance B`.
+The result is coherent only when A and B have equal revisions and identical
+immutable identity and active-attempt facts. Exact active attempt, version,
+Claimed phase, and generation may prove satisfied convergence. A coherent
+absence at the still-current relevant expected revision, with no conflicting
+history, active attempt, or generation and no external preparation, may yield
+BindingFailed. Stale revision, changed sandwich, different or reused attempt,
+different version or generation, inactive or terminal attempt, read failure,
+unavailability, or unknown facts is Blocked. Neither outcome permits a blind
+retry or repair.
+
+The interface contains exactly the operations needed by this sequence:
+`ConditionalClaimLaunchAttempt`, `ConditionalBindExecutionGeneration`,
+`ReadRuntimeInstance`, and `ReadLaunchAttemptHistory`, with the existing
+`runtimeidentity` parameter and result types. It has no terminal-publication,
+recovery, allocation, or mutation method beyond claim and bind.
+
 Same-attempt/same-version membership and same-generation binding already
 present are zero-mutation satisfied convergence observations. Different
 attempt, different version, different generation, stale revision, inactive
@@ -384,10 +536,11 @@ fact, or unknown state is never auto-repaired or auto-replaced.
 
 ## 10. Activation Adaptation Invariant
 
-Initial activation uses the existing primitive Start path unchanged:
+Initial activation preserves the primitive Start identity and intent:
 
-- `Boundary.Execute` remains the sole command admission for the primitive
-  Start submission;
+- orchestration uses `Boundary.ExecuteManagedStart` as its sole primitive
+  managed admission; legacy `Boundary.Execute` remains unchanged only for
+  isolated compatibility callers and cannot be adopted by orchestration;
 - `runtimelifecycle.StartRequest` remains the immutable existing shape
   `(WorkspaceID, ConfigurationID, ConfigurationVersionID)` and carries no
   parent, phase, or authorization authority;
@@ -487,17 +640,23 @@ slice.
 
 ### Slice 3 — OwnerClaim-to-DP-014 binding sequence
 
-Current slice status: next Planned slice after accepted TASK-035 Slice 2R; not
-activated.
+Current slice status: next Planned slice after accepted TASK-035 Slice 2R and
+TASK-036 readiness reconciliation; not activated.
 
-- Implement `StartClaimContinuation.AfterOwnerClaim` using the existing
-  `runtimeidentity.Store` conditional publication/binding operations, the
-  existing pending-Stop rendezvous, and the final Stop-versus-Continue gate,
-  using Slices 1, 2, and 2R.
+- Implement the managed parent/StartTarget adapter, the common command-owned
+  early/final rendezvous gates, and the stateless
+  `StartClaimContinuation.AfterOwnerClaim` using a narrow identity-store
+  boundary over existing `runtimeidentity.Store` operations, using Slices 1,
+  2, and 2R.
 - Prove: attempt membership and same-generation binding before Load,
   stale/different/unknown facts yield `Blocked` without preparation,
   definitive binding absence converges through the authentic Owner outcome,
-  and a Stop admitted after the early check is ordered by the final gate.
+  and a Stop admitted after the early check is ordered by the final gate for
+  primitive and linked execution.
+- Do not claim DP-014 terminal publication or DP-015 command/phase
+  terminalization: the later orchestration callback may publish those only
+  after the exact Owner outcome. Isolated Blocked and BindingFailed paths may
+  intentionally leave command or phase Claimed.
 
 ### Slice 4 — DP-016 orchestrator readiness re-assessment
 
@@ -537,12 +696,13 @@ regression checks and by the fresh Independent Review of this proposal.
 Implementation Status remains Planned overall. This design task itself
 implemented no slice; successor TASK-031 and TASK-032 produced historically
 Coordinator-Accepted partial isolated implementations of Slices 1 and 2.
-TASK-034 identified the remaining conformance gap, and TASK-035 implements and
-independently accepts its Slice 2R repair in isolation. The
+TASK-034 identified the remaining conformance gap, TASK-035 implements and
+independently accepts its Slice 2R repair in isolation, and TASK-036 resolves
+the remaining Slice-3 command-gate and continuation API ambiguity. The
 repository still lacks Slice 3 attempt publication/binding composition, the
 concrete private composition invoker, activation orchestrator, external
 persistence, API, recovery worker, and production wiring. TASK-026 therefore
-remains Blocked; Slice 3 is the next unactivated slice, and later prerequisites
+remains Blocked; Slice 3 is the next unactivated implementation slice, and later prerequisites
 still require separate implementation and
 acceptance before readiness may be reconsidered against unchanged DP-016.
 
@@ -571,8 +731,9 @@ UWP records the readiness decomposition of the remaining Approved DP-019
 prerequisites in this Draft/Planned proposal and implements each slice only
 through a separate, individually reviewed task. Slices 1 and 2 remain
 historically accepted partial implementations; TASK-035 implements and
-independently accepts Slice 2R in isolation, and Slice 3 becomes the next
-Planned, unactivated slice. This
+independently accepts Slice 2R in isolation; TASK-036 fixes the exact Slice-3
+protocol without implementing it; and Slice 3 remains the next Planned,
+unactivated implementation slice. This
 proposal does not approximate DP-016
 with an adapter, does not add replacement/rollback operations to the Owner,
 does not transfer permits, does not change any Approved status or semantic,

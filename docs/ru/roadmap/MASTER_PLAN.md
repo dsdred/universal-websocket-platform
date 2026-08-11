@@ -361,8 +361,11 @@ Architectural debt относится к границам, которые ост
   изолированно и независимо принимает: exact six-field authorization,
   dependency-leaf binding values, all-or-none linked identity и unique
   command-owned rendezvous identity через sole primitive adapter
-  `Boundary.ExecuteManagedStart`. Срез 3 binding attempt DP-014 остаётся Planned
-  и является следующим Planned, неактивированным срезом; concrete private-invoker wiring,
+  `Boundary.ExecuteManagedStart`. TASK-036 определяет оставшийся общий
+  primitive/linked early/final gate, managed parent/StartTarget adapter, closed
+  continuation outcomes и contract revision-sandwich DP-014 без implementation.
+  Срез 3 binding attempt DP-014 остаётся Planned и является следующим Planned,
+  неактивированным implementation-срезом; concrete private-invoker wiring,
   orchestration и production composition также остаются Planned. TASK-026
   остаётся Blocked до implementation и acceptance всех оставшихся
   prerequisites; Integration и Production Activation остаются неактивными.

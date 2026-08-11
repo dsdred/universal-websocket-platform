@@ -186,3 +186,14 @@ primitive `Boundary.ExecuteManagedStart` adapter не допускает син�
 OwnerClaim-to-DP-014 остаётся следующим Planned и неактивированным срезом; concrete
 private composition invoker и production wiring отсутствуют. TASK-026 остаётся
 Blocked до реализации и независимой приёмки remaining prerequisites.
+
+TASK-036 завершена и принята как bounded design-update перед Slice 3 после
+read-only readiness inspection. Draft DP-020 теперь фиксирует единый primitive/linked
+managed protocol: managed parent/StartTarget adapter, command-owned opaque
+early/final gates, stateless `runtimeorchestrationcontinuation`, четыре закрытых
+исхода Flow и DP-014 revision-sandwich после неоднозначного результата. Approved
+DP-014/DP-015/DP-019 semantics и statuses не меняются; production code, Slice 3
+implementation и TASK-026 activation не выполняются.
+Independent Review — Approved 0/0; PROCESS-002, Verification Matrix, Size Guard
+и Scope Audit 13/0/0 — PASS. Slice 3 остаётся следующим Planned,
+неактивированным implementation-срезом.

@@ -39,8 +39,11 @@ This proposal refines, without overriding:
 Accepted ADRs and Active or Frozen architecture remain authoritative. DP-013
 remains Draft; Approved DP-014, the primitive DP-015 boundary, and the partial
 DP-019 parent/phase sequential core and command-boundary Continue/pending-Stop
-rendezvous are implemented in isolation. Managed continuation, binding, and
-Approved DP-016 retain Implementation Status Planned.
+rendezvous are implemented in isolation. TASK-031/TASK-032/TASK-035 also
+implement the exact authorization value, dependency-leaf binding, primitive
+managed adapter, and managed Flow/OwnerClaimView seam in isolation. The
+concrete continuation, managed parent/phase adapter, DP-014 binding sequence,
+and Approved DP-016 retain Implementation Status Planned.
 
 ## 4. Scope
 
@@ -528,9 +531,11 @@ unresolved barrier. `ContinueOrExecuteStartTarget` adds the non-bypassable
 pre-phase Continue gate and synchronous pending-Stop rendezvous, with immutable
 signal cause and fail-closed callback/reconstruction behavior.
 
-External durable storage/schema, API, DP-016 orchestration, DP-017 recovery,
-the DP-019 exact authorization, private managed continuation, Owner claim view,
-and DP-014 binding prerequisites, management wiring, and
+TASK-031/TASK-032/TASK-035 add the exact authorization value, dependency-leaf
+binding, primitive `ExecuteManagedStart` adapter, and managed
+Flow/OwnerClaimView seam in isolation. External durable storage/schema, API,
+DP-016 orchestration, DP-017 recovery, the concrete private continuation,
+managed parent/phase adapter, DP-014 binding sequence, management wiring, and
 Production Activation remain absent. The isolated
 package changes no lifecycle contract and is not connected to the DP-013
 Directory.

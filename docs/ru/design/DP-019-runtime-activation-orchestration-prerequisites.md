@@ -10,11 +10,13 @@
   rendezvous реализованы изолированно
 
 Этот focused design закрывает только неоднозначность integration-contract,
-обнаруженную TASK-026. Репозиторий реализует isolated parent/phase core DP-015 и
-command-boundary Continue/pending-Stop rendezvous, но exact orchestration
-authorizer, private scoped invoker, managed Flow/OwnerClaimView continuation,
-binding attempt/generation DP-014, activation orchestrator, external
-persistence, API, recovery worker и production wiring отсутствуют. TASK-026 остаётся Blocked,
+обнаруженную TASK-026. Репозиторий реализует isolated parent/phase core DP-015,
+command-boundary Continue/pending-Stop rendezvous, exact authorization и
+dependency-leaf binding values, primitive managed adapter и seam managed
+Flow/OwnerClaimView. Concrete private scoped invoker и continuation, managed
+parent/phase adapter, binding attempt/generation DP-014, activation orchestrator,
+external persistence, API, recovery worker и production wiring отсутствуют.
+TASK-026 остаётся Blocked,
 пока определённые здесь prerequisites
 не реализованы и независимо не приняты.
 
@@ -454,10 +456,11 @@ StopOld затем StartTarget, phase replay, parent terminal gating, unresolved
 barriers, reconstruction invalidation, non-bypassable StartTarget Continue gate
 и synchronous pending-Stop rendezvous с immutable signal cause.
 
-Репозиторий всё ещё не содержит orchestration authorizer, private scoped
-invoker, managed Flow/OwnerClaimView continuation, attempt publication/binding
-composition, activation orchestrator и production composition audit полного
-design.
+TASK-031/TASK-032/TASK-035 реализуют изолированно exact authorization и binding
+values, primitive managed adapter и seam managed Flow/OwnerClaimView.
+Репозиторий всё ещё не содержит concrete private scoped invoker и continuation,
+managed parent/phase adapter, attempt publication/binding composition,
+activation orchestrator и production composition audit полного design.
 
 Поэтому TASK-026 остаётся Blocked. Следующие tasks должны реализовать и
 независимо проверить оставшиеся prerequisites. Только после этого TASK-026
