@@ -388,6 +388,7 @@ func TestProductionFlowHasNoDirectRuntimeDependency(t *testing.T) {
 		"github.com/dsdred/universal-websocket-platform/internal/configurationloader",
 		"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig",
 		"github.com/dsdred/universal-websocket-platform/internal/runtimeconfigload",
+		"github.com/dsdred/universal-websocket-platform/internal/runtimeidentity",
 		"github.com/dsdred/universal-websocket-platform/internal/runtimelifecycle",
 	}
 	slices.Sort(want)

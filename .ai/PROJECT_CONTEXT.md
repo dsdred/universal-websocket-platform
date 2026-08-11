@@ -86,9 +86,26 @@
   Verification Matrix, PROCESS-002, status consistency и repository-state
   audit подтверждены; Commit Gate, commit, push и publication не выполнялись**
 - Текущая development task: **отсутствует. Последняя завершённая development
-  task — TASK-031 — Runtime Orchestration Authorization Surface; `Completed —
-  Coordinator Accepted`. TASK-026 остаётся Blocked by Architecture;
-  Acceptance/commit/publish TASK-026 запрещены**
+  task — TASK-032 — Runtime Private Managed Invoker and Managed Flow Seam;
+  `Completed — Coordinator Accepted` после rework. TASK-026 остаётся Blocked by
+  Architecture; Acceptance/commit/publish TASK-026 запрещены**
+- TASK-032 acceptance evidence: **Completed — Coordinator Accepted после
+  rework; DP-020 deferred slice 2 реализован изолированно в
+  `internal/runtimelaunchflow`: ManagedFlow/NewManaged/StartManaged, immutable
+  ManagedStartBinding и OwnerClaimView, stateless StartClaimContinuation и
+  neutral opaque `runtimeconfigload.StartRendezvous` handle. Rework устранил
+  blocking findings: (R-001) убран импорт `runtimecommandidempotency` в пользу
+  `runtimeidentity` Revision/ExecutionGeneration, теперь DP-020 §8.1 соблюдён;
+  (R-002) при ошибке continuation claimed LaunchPreparation корректно
+  конвергируется через `Owner.Start(FailedPreparation(err))`, и exact error
+  возвращается unchanged. Independent Review rework: Approved 0 blocking /
+  4 non-blocking. Verification Matrix (focused/full/stress/shuffled, vet,
+  mod-tidy, diff-check) — PASS; race ограничен отсутствием CGO/gcc.
+  Scope Audit — 7 Required / 0 Questionable / 0 Removable. On branch
+  `feature/task-032-runtime-private-managed-invoker` от baseline
+  `main@07b27ce`; commit, push, publication не выполнялись. Следующая
+  рекомендация — DP-020 deferred slice 3 (OwnerClaim-to-DP-014 binding
+  sequence); не активирована**
 - TASK-031 acceptance evidence: **Completed — Coordinator Accepted; DP-020
   deferred slice 1 реализован изолированно в
   `internal/runtimecommandidempotency`: immutable validated
@@ -128,9 +145,10 @@
   publication. Exact authorization/private
   invoker, managed Flow/OwnerClaimView, DP-014 binding, orchestrator и
   production composition остаются Planned; TASK-026 remains Blocked**
-- Следующая рекомендация: **DP-020 deferred slice 2 — private managed invoker
-  plus managed Flow/OwnerClaimView continuation (DP-019 §8, §14) — не
-  активирована; требует нового task intake от clean baseline**
+- Следующая рекомендация: **DP-020 deferred slice 3 — OwnerClaim-to-DP-014
+  conditional attempt publication and same-generation binding sequence (DP-019
+  §16–§17, DP-020 §12.3) — не активирована; требует нового task intake от clean
+  baseline**
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы
   изолированно; Repeat Independent Review Approved, blocking/non-blocking 0;

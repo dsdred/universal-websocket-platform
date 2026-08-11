@@ -36,6 +36,7 @@ operational документы ведутся на русском языке и 
 - [TASK-029 — Runtime Command Continue and Pending-Stop Prerequisite](TASK-029-RUNTIME-COMMAND-CONTINUE-PENDING-STOP.md) — Completed, Coordinator Accepted; TASK-026 remains Blocked
 - [TASK-030 — Runtime Orchestration Binding Sequence Design](TASK-030-RUNTIME-ORCHESTRATION-BINDING-SEQUENCE-DESIGN.md) — Completed, Coordinator Accepted; DP-020 Draft/Planned, no implementation slice started; TASK-026 remains Blocked
 - [TASK-031 — Runtime Orchestration Authorization Surface](TASK-031-RUNTIME-ORCHESTRATION-AUTHORIZATION-SURFACE.md) — Completed, Coordinator Accepted; DP-020 slice 1 implemented in isolation; TASK-026 remains Blocked
+- [TASK-032 — Runtime Private Managed Invoker and Managed Flow Seam](TASK-032-RUNTIME-PRIVATE-MANAGED-INVOKER.md) — Completed, Coordinator Accepted after rework; DP-020 slice 2 implemented in isolation; TASK-026 remains Blocked
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

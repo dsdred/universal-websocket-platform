@@ -562,10 +562,11 @@ managed invocation и OwnerClaim-to-DP-014 binding sequence. Она активи
 DP-020 фиксирует упорядоченное implementable разложение и закрывает отложенные
 design-решения, но не реализует ни один срез. Следующая рекомендация после
 TASK-030 — отдельный intake для deferred slice 1 (orchestration authorizer
-surface) — активирована и завершена как TASK-031. Следующая рекомендация после
-TASK-031 — отдельный intake для deferred slice 2 (private managed invoker plus
-managed Flow/OwnerClaimView continuation); не активирована. TASK-026 остаётся
-Blocked до реализации и независимой приёмки оставшихся срезов.
+surface) — активирована и завершена как TASK-031. Следующая после TASK-031 —
+аналогичная intake deferred slice 2 — активирована и завершена как TASK-032
+после rework; slice 2 реализован. Следующая рекомендация — deferred slice 3
+(OwnerClaim-to-DP-014 conditional binding sequence); не активирована. TASK-026
+остаётся Blocked до реализации и независимой приёмки оставшихся срезов.
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task
