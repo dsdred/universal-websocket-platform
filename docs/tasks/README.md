@@ -40,6 +40,7 @@ operational документы ведутся на русском языке и 
 - [TASK-033 — TASK-032 Closure Synchronization](TASK-033-TASK-032-CLOSURE-SYNCHRONIZATION.md) — Completed, Coordinator Accepted; documentation drift corrected; DP-020 slice 3 is not activated
 - [TASK-034 — Managed Binding Contract Reconciliation](TASK-034-MANAGED-BINDING-CONTRACT-RECONCILIATION.md) — Completed, Coordinator Accepted; repeat review Approved 0/0; at TASK-034 closure Slice 2R remained unactivated and Slice 3 blocked
 - [TASK-035 — Managed Binding Repair](TASK-035-MANAGED-BINDING-REPAIR.md) — Completed, Coordinator Accepted; repeat review Approved 0/0; Slice 2R implemented in isolation and Slice 3 remains unactivated
+- [TASK-036 — Slice 3 Readiness Reconciliation](TASK-036-SLICE-3-READINESS-RECONCILIATION.md) — Completed, Coordinator Accepted; Independent Review Approved 0/0; Slice 3 implementation remains unactivated
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

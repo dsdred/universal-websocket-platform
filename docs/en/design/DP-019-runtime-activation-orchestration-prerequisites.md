@@ -10,11 +10,13 @@
   rendezvous implemented in isolation
 
 This focused design closes only the integration-contract ambiguity discovered
-by TASK-026. The repository implements the isolated DP-015 parent/phase core and
-command-boundary Continue/pending-Stop rendezvous, but no exact orchestration
-authorizer, private scoped invoker, managed Flow/OwnerClaimView continuation,
-DP-014 attempt/generation binding, activation orchestrator, external
-persistence, API, recovery worker, or production wiring exists.
+by TASK-026. The repository implements the isolated DP-015 parent/phase core,
+command-boundary Continue/pending-Stop rendezvous, exact authorization and
+dependency-leaf binding values, primitive managed adapter, and managed
+Flow/OwnerClaimView seam. The concrete private scoped invoker and continuation,
+managed parent/phase adapter, DP-014 attempt/generation binding, activation
+orchestrator, external persistence, API, recovery worker, and production wiring
+remain absent.
 TASK-026 remains Blocked until the prerequisites defined here are implemented
 and independently accepted.
 
@@ -464,8 +466,10 @@ StartTarget ordering, phase replay, parent terminal gating, unresolved
 barriers, reconstruction invalidation, the non-bypassable StartTarget Continue
 gate, and the synchronous pending-Stop rendezvous with immutable signal cause.
 
-The repository still lacks the orchestration authorizer, private scoped
-invoker, managed Flow/OwnerClaimView continuation, attempt publication/binding
+TASK-031/TASK-032/TASK-035 implement the exact authorization and binding values,
+primitive managed adapter, and managed Flow/OwnerClaimView seam in isolation.
+The repository still lacks the concrete private scoped invoker and
+continuation, managed parent/phase adapter, attempt publication/binding
 composition, activation orchestrator, and production composition audit required
 by the complete design.
 

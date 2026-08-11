@@ -37,9 +37,9 @@ Hardening; `Completed — Coordinator Accepted`.
 
 **Текущая operational task:** отсутствует.
 
-**Последняя завершённая architecture task:** TASK-034 — Managed Binding
-Contract Reconciliation; `Completed — Coordinator Accepted`; repeat
-Independent Review `Approved` 0/0; B-001/N-001 resolved.
+**Последняя завершённая architecture task:** TASK-036 — Slice 3 Readiness
+Reconciliation; `Completed — Coordinator Accepted`; Independent Review
+`Approved` 0/0; Scope Audit 13/0/0.
 
 **Текущая architecture task:** отсутствует.
 
@@ -72,11 +72,10 @@ CGO/gcc, substitute stress `-count=100` PASS); Independent Review Approved with
 Findings 0/2 (resolved); Verification Matrix, PROCESS-002, Scope Audit 7/0/0
 PASS. Commit, push, PR, merge и publication не выполнялись.
 
-**Последняя завершённая documentation task:** TASK-034 — Managed Binding
-Contract Reconciliation; `Completed — Coordinator Accepted`; repeat
-Independent Review `Approved` 0/0; Scope Audit 9/0/0. TASK-035 впоследствии
-реализовала и независимо приняла определённый ею Slice 2R изолированно; Slice 3
-является следующим неактивированным срезом; TASK-026 остаётся Blocked.
+**Последняя завершённая documentation task:** TASK-036 — Slice 3 Readiness
+Reconciliation; `Completed — Coordinator Accepted`; PROCESS-002 Synchronized;
+Independent Review `Approved` 0/0; Scope Audit 13/0/0. Slice 3 является
+следующим неактивированным implementation-срезом; TASK-026 остаётся Blocked.
 
 **Текущая documentation task:** отсутствует.
 
@@ -572,8 +571,10 @@ DP-020 фиксирует упорядоченное implementable разлож�
 изолированно: dependency-leaf binding values, exact six-field authorization с
 `OperationalDomain`, all-or-none linked identity, unique callback-scoped
 command-owned rendezvous identity и sole primitive
-`Boundary.ExecuteManagedStart` adapter; TASK-035 независимо принята. Concrete
-composition-private invoker и production wiring отсутствуют. Deferred Slice 3
+`Boundary.ExecuteManagedStart` adapter; TASK-035 независимо принята. TASK-036
+уточняет общий primitive/linked managed adapter, command-owned early/final gate,
+closed continuation outcomes и revision-sandwich convergence без production
+implementation. Concrete composition-private invoker и production wiring отсутствуют. Deferred Slice 3
 (OwnerClaim-to-DP-014 conditional binding sequence) является следующим Planned,
 неактивированным срезом. TASK-026 остаётся Blocked до реализации и
 независимой приёмки оставшихся prerequisites.

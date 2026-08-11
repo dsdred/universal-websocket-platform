@@ -362,8 +362,11 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   and TASK-035 implements and independently accepts it in isolation:
   exact six-field authorization, dependency-leaf binding values, all-or-none
   linked identity, and unique command-owned rendezvous identity through the
-  sole primitive `Boundary.ExecuteManagedStart` adapter. Slice 3 DP-014 attempt
-  binding is the next Planned, unactivated slice; concrete
+  sole primitive `Boundary.ExecuteManagedStart` adapter. TASK-036 defines the
+  remaining shared primitive/linked early/final gate, managed parent/StartTarget
+  adapter, closed continuation outcomes, and DP-014 revision-sandwich contract
+  without implementation. Slice 3 DP-014 attempt binding is the next Planned,
+  unactivated implementation slice; concrete
   private-invoker wiring, orchestration, and production composition
   also remain Planned. TASK-026 remains Blocked until all remaining
   prerequisites are implemented and accepted;

@@ -14,8 +14,9 @@ six-field authorization и полный binding теперь принадлеж�
 package, primitive managed claims используют sole `ExecuteManagedStart`
 adapter, а command-owned rendezvous identities уникальны и callback-scoped.
 Concrete DP-013 composition-private invoker и production wiring отсутствуют.
-Срез 3 является следующим Planned, неактивированным срезом; Срез 4 не начат.
-Общий статус остаётся Planned.
+TASK-036 устраняет оставшуюся неоднозначность command-gate и continuation API
+Среза 3, не реализуя их. Срез 3 является следующим Planned,
+неактивированным срезом; Срез 4 не начат. Общий статус остаётся Planned.
 
 Этот focused design разделяет оставшиеся prerequisites Approved DP-019 — точную
 авторизацию оркестрации, private managed invocation и связывание
@@ -246,6 +247,43 @@ orchestration обязана использовать `ExecuteManagedStart`; о�
 неизменными; новый метод является repository-internal и не создаёт transport/API
 path.
 
+#### 8.1.2 Seam managed parent и StartTarget adapter
+
+Replacement и rollback используют один additive managed parent path.
+Концептуальные surfaces:
+
+```text
+Boundary.ExecuteManagedParent(
+    context, Replace|Rollback Scope, CommandKey, matching Intent,
+    AuthorizeOrchestration,
+    invoke(*ManagedParentExecution) error,
+) -> ParentAdmission, error
+
+ManagedParentExecution.ContinueOrExecuteManagedStartTarget(
+    context, ExpectedAggregateRevision, ExecutionGeneration,
+    invoke(StartExecutionBinding) -> TerminalOutcome, error,
+) -> PhaseAdmission, prevented bool, error
+```
+
+`ExecuteManagedParent` принимает только exact
+Replace или Rollback, использует `AuthorizeOrchestration` для каждой initial,
+in-progress и replay submission и является единственным источником
+`ManagedParentExecution`. Parent, admitted через legacy `ExecuteParent`, нельзя
+adopt или upgrade.
+
+`ManagedParentExecution.ContinueOrExecuteManagedStartTarget(...)` сохраняет
+существующий pre-phase Continue ordering. Callback получает только newly
+committed phase `StartTarget`. В transaction claim phase метод выводит exact
+parent identity и ordinal-one identity StartTarget, коммитит phase и её permit,
+выделяет и индексирует уникальную generation-bound rendezvous identity,
+конструирует полный linked `StartExecutionBinding`, а затем вызывает callback
+один раз вне command locks. In-progress и replay observations не получают
+binding или execution authority.
+
+Существующие `ExecuteParent`, `ParentExecution` и
+`ContinueOrExecuteStartTarget` остаются неизменными compatibility surfaces.
+Managed path не синтезирует authority из их records.
+
 ### 8.2 Immutable per-invocation `StartExecutionBinding`
 
 `StartExecutionBinding` — единственное authoritative immutable значение во
@@ -297,6 +335,54 @@ forged, reused, cross-generation или identity-mismatched handle дают
 замена Boundary прекращают resolution authority, но не стирают durable
 unresolved facts. Global registry rendezvous вне command boundary отсутствует.
 
+Command boundary выставляет только три repository-internal operation над
+полным binding; их типы результата закрытые, не boolean:
+
+```text
+ResolveManagedStartEarly(binding, launchAttemptID)
+    -> GateClear | GateStopConverged | GateBlocked
+
+ResolveManagedStartFinal(binding, FinalContinue | FinalBindingFailed)
+    -> FinalContinue | FinalBindingFailed | GateStopConverged | GateBlocked
+
+SignalManagedStartNoClaim(binding, Cancelled | Rejected | Failed)
+```
+
+`ManagedStartGateOutcome`, `ManagedStartFinalDisposition` и их constants
+принадлежат `runtimecommandidempotency`. Neutral immutable
+`StartNoClaimCause` и три его constants принадлежат
+`runtimeorchestrationbinding`; существующие имена command package могут
+остаться aliases для compatibility. `StartClaimOutcome` и четыре его constants
+принадлежат `runtimelaunchflow`. Такое размещение избегает каждого reverse
+import.
+
+Каждая operation разрешает opaque handle вместе с полным authorization tuple,
+primitive-or-linked identity, exact command или phase, live permit и active
+generation Boundary. Caller не передаёт command key: private lookup entry
+владеет exact command identity. Missing, forged, reused, mismatched,
+cross-generation или expired handles возвращают `GateBlocked` с существующей
+indeterminate-execution error; они никогда не означают clear.
+
+Один managed primitive или StartTarget rendezvous начинается в `PreOwner`.
+Stop, admitted в этом состоянии, занимает single tracked-Start exception на
+своём original stack `Boundary.Execute` и ждёт. Early operation сохраняет exact
+attempt Owner и переходит в `Binding`; уже pending Stop получает signal, и
+только его original claimant может вызвать Stop и опубликовать результат. Exact
+convergence возвращает `GateStopConverged`; cancellation до delegation очищает
+gate; lost или conflicting evidence блокирует его. Во время `Binding` один
+более поздний Stop может claim и ждать. Final operation является единственной
+admission linearization point между этим Stop и `FinalContinue` или
+`FinalBindingFailed`. Stop-first обязан converge на своём original stack;
+disposition-first запечатывает результат. После Continue более поздний Stop
+использует ordinary tracked-Start behavior. Второй Stop или unrelated lifecycle
+mutation не обходят ни один gate.
+
+Возврат callback, panic, `runtime.Goexit` или замена generation Boundary
+истекают handle и будят всех waiters как Blocked, пока durable command или phase
+facts остаются Claimed. Command locks удерживаются только для validation,
+transition и захвата notification; ни один command lock не удерживается во
+время wait или вызова identity, continuation, Flow, Owner или external work.
+
 ### 8.4 Exact failed private-invocation error contract
 
 Validation failure binding до mutation Owner возвращает exact, distinguishable
@@ -326,10 +412,26 @@ OwnerClaimView {
 который несёт `LaunchAttemptID()`. Claim view источён из этого Owner-issued
 `LoadRequest`; изменение формы `runtimelifecycle.StartRequest` не требуется.
 
-### 9.2 Закрытый исход continuation
+### 9.2 Закрытый contract и исход continuation
 
-`StartClaimContinuation.AfterOwnerClaim(StartExecutionBinding, OwnerClaimView)`
-возвращает ровно один закрытый исход:
+`runtimelaunchflow` владеет interface и lifecycle adaptation, поэтому сохраняет
+отсутствие dependency на packages command или identity:
+
+```text
+StartNoClaim(context, StartExecutionBinding, StartNoClaimCause) error
+AfterOwnerClaim(context, StartExecutionBinding, OwnerClaimView)
+    -> StartClaimOutcome, error
+```
+
+Новый focused package `internal/runtimeorchestrationcontinuation` владеет
+long-lived stateless implementation. Он зависит от
+`runtimeorchestrationbinding`, `runtimecommandidempotency`, `runtimeidentity` и
+`runtimelaunchflow`; ни один из них не зависит обратно от него. Он хранит только
+command-boundary и narrow identity-boundary dependencies, но никогда не хранит
+per-call binding, Owner preparation, permit, mutable rendezvous, goroutine или
+registry entry.
+
+`AfterOwnerClaim` возвращает ровно один закрытый исход:
 
 - `Continue`: already-admitted rendezvous pending-Stop окончательно отсутствует;
   exact durable membership попытки и same-generation binding закоммичены при
@@ -345,6 +447,32 @@ OwnerClaimView {
   generation, unavailable или unknown facts, недоказанная convergence Stop или
   indeterminate публикация; Flow не начинает Load, и связанный набор остаётся
   unresolved.
+
+`Continue` и `StopConverged` требуют nil error. `BindingFailed` и `Blocked`
+требуют одну exact non-nil cause. Invalid combination или panic даёт `Blocked`
+с managed continuation validation error.
+
+Caller cancellation наблюдается только в существующем gate DP-011 до claim
+Owner. После успешного `PrepareStart` Flow выводит non-cancelable continuation
+context (эквивалент `context.WithoutCancel(ctx)`, сохраняющий values, но не
+cancellation или deadline) и использует его для `AfterOwnerClaim`. Каждый вызов
+convergence Owner с той же preparation также использует local non-cancelable
+context. `StartNoClaim` после definitive pre-claim outcome также получает local
+non-cancelable context, поэтому caller cancellation не может стереть command
+signal. Dependency failure или unavailable состояние identity/gate остаётся
+Blocked и не переклассифицируется в caller cancellation.
+
+Flow отображает исходы, не передавая continuation свой preparation token:
+Continue вызывает существующий prepared-start path; StopConverged вызывает
+`Owner.Start` с той же authentic preparation и empty result, получая сохранённый
+outcome `StartStoppedBeforeRunning` без Load; BindingFailed
+передаёт `FailedPreparation(cause)` через authentic Owner preparation и
+возвращает semantic Owner outcome; Blocked также локально сводит in-memory
+Owner claim, чтобы не оставить leaked preparation, но возвращает exact Blocked
+cause, поэтому command или phase остаётся unresolved. Failure convergence Owner
+имеет приоритет над continuation cause. Definitive pre-Owner cancellation,
+rejection или failure вызывает `StartNoClaim`; failure signal делает execution
+Blocked.
 
 Continuation никогда сам не публикует terminal исход lifecycle, phase или
 parent; terminal их могут только exact результат Owner, за которым следуют
@@ -370,6 +498,35 @@ conditional публикации DP-014 и DP-015.
    проверки rendezvous, затем выпустить `Continue` только при confirmed, exact
    same-generation binding.
 
+Continuation зависит от narrow interface `IdentityStore`, соответствующего
+существующим operations Store, чтобы unavailable и indeterminate behavior были
+тестируемы; сам `runtimeidentity.Store` остаётся неизменным. Конверсия на этой
+границе явная и lossless:
+`runtimeidentity.Revision(uint64(binding.ExpectedAggregateRevision()))` и
+`runtimeidentity.ExecutionGeneration(string(binding.ExecutionGeneration()))`.
+Zero или round-trip mismatch дают Blocked; значение не выделяется и не
+выводится.
+
+Revision, возвращённый committed claim attempt, является единственным expected
+revision для binding generation. Stale write никогда не retry. После любой
+error или non-commit exact inspection использует revision sandwich:
+`ReadRuntimeInstance A -> ReadLaunchAttemptHistory -> ReadRuntimeInstance B`.
+Результат coherent только когда A и B имеют равные revision и одинаковые
+immutable identity и active-attempt facts. Exact active attempt, version,
+Claimed phase и generation могут доказать satisfied convergence. Coherent
+absence при всё ещё current relevant expected revision, без conflicting
+history, active attempt или generation и без external preparation, может дать
+BindingFailed. Stale revision, changed sandwich, different или reused attempt,
+different version или generation, inactive или terminal attempt, read failure,
+unavailability или unknown facts дают Blocked. Ни один исход не разрешает blind
+retry или repair.
+
+Interface содержит ровно operations, нужные этой последовательности:
+`ConditionalClaimLaunchAttempt`, `ConditionalBindExecutionGeneration`,
+`ReadRuntimeInstance` и `ReadLaunchAttemptHistory` с существующими parameter и
+result types `runtimeidentity`. У него нет terminal-publication, recovery,
+allocation или mutation method кроме claim и bind.
+
 Уже присутствующие same-attempt/same-version membership и same-generation
 binding являются zero-mutation satisfied наблюдениями convergence. Другая
 попытка, другая версия, другой generation, stale revision, inactive факт или
@@ -377,10 +534,12 @@ unknown состояние никогда не auto-repaired или auto-replace
 
 ## 10. Инвариант адаптации активации
 
-Initial activation использует существующий primitive путь Start неизменённым:
+Initial activation сохраняет primitive identity и intent Start:
 
-- `Boundary.Execute` остаётся единственным admission команды для primitive
-  submission Start;
+- orchestration использует `Boundary.ExecuteManagedStart` как свой единственный
+  primitive managed admission; legacy `Boundary.Execute` остаётся неизменным
+  только для isolated compatibility callers и не может быть adopted
+  orchestration;
 - `runtimelifecycle.StartRequest` остаётся immutable существующей формой
   `(WorkspaceID, ConfigurationID, ConfigurationVersionID)` и не несёт authority
   parent, phase или authorization;
@@ -478,17 +637,21 @@ Production composition/private-invoker wiring не входит в этот ср
 
 ### Срез 3 — последовательность связывания OwnerClaim-to-DP-014
 
-Текущий статус среза: следующий Planned срез после принятого Среза 2R TASK-035;
-не активирован.
+Текущий статус среза: следующий Planned срез после принятого Среза 2R TASK-035
+и readiness reconciliation TASK-036; не активирован.
 
-- Реализовать `StartClaimContinuation.AfterOwnerClaim` с использованием
-  существующих conditional операций публикации/binding `runtimeidentity.Store`,
-  существующего rendezvous pending-Stop и final gate Stop-versus-Continue,
-  используя Срезы 1, 2 и 2R.
+- Реализовать managed parent/StartTarget adapter, общие command-owned early/final
+  rendezvous gates и stateless `StartClaimContinuation.AfterOwnerClaim` через
+  narrow identity-store boundary над существующими operations
+  `runtimeidentity.Store`, используя Срезы 1, 2 и 2R.
 - Доказать: membership попытки и same-generation binding до Load; stale/different/
   unknown facts дают `Blocked` без подготовки; definitive отсутствие binding
   сходится через authentic исход Owner; Stop, admitted после ранней проверки,
-  упорядочен final gate.
+  упорядочен final gate для primitive и linked execution.
+- Не заявлять terminal publication DP-014 или terminalization command/phase
+  DP-015: более поздний orchestration callback может опубликовать их только
+  после exact Owner outcome. Изолированные Blocked и BindingFailed paths могут
+  намеренно оставить command или phase Claimed.
 
 ### Срез 4 — переоценка готовности оркестратора DP-016
 
@@ -528,12 +691,13 @@ regression, а также свежим Independent Review этого предл�
 Implementation Status остаётся Planned overall. Сама design-задача не
 реализовала ни один срез; successor TASK-031 и TASK-032 создали исторически
 принятые Coordinator частичные изолированные реализации Срезов 1 и 2. TASK-034
-обнаружила оставшийся gap соответствия, а TASK-035 реализует и независимо
-принимает его repair Среза 2R изолированно. Репозиторий всё ещё не
+обнаружила оставшийся gap соответствия, TASK-035 реализует и независимо
+принимает его repair Среза 2R изолированно, а TASK-036 устраняет оставшуюся
+неоднозначность command-gate и continuation API Среза 3. Репозиторий всё ещё не
 содержит composition публикации/binding попытки Среза 3, concrete private
 composition invoker, оркестратор активации, external persistence, API, worker
 recovery и production wiring. Поэтому TASK-026 остаётся Blocked; Срез 3
-является следующим неактивированным срезом, а последующие prerequisites всё
+является следующим неактивированным implementation-срезом, а последующие prerequisites всё
 ещё требуют отдельной реализации и acceptance до переоценки готовности против
 неизменённого DP-016.
 
@@ -562,7 +726,8 @@ UWP фиксирует разложение готовности оставши�
 этом Draft/Planned предложении и реализует каждый срез только через отдельную,
 индивидуально reviewed задачу. Срезы 1 и 2 остаются исторически принятыми
 частичными реализациями; TASK-035 реализует и независимо принимает Срез 2R
-изолированно, а Срез 3 становится следующим Planned, неактивированным срезом.
+изолированно; TASK-036 фиксирует exact протокол Среза 3, не реализуя его; а
+Срез 3 остаётся следующим Planned, неактивированным implementation-срезом.
 Proposal не approximates DP-016 adapter-ом,
 не добавляет операции replacement/rollback Owner, не передаёт permits, не меняет
 ни один Approved статус или семантику и не выдаёт planned capability за
