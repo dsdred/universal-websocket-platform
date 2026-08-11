@@ -356,10 +356,12 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   strict sequential core in isolation; that partial slice is independently
   accepted. Replay, barriers, and reconstruction invalidation are implemented.
   TASK-029 implements the command-boundary Continue gate and synchronous
-  pending-Stop rendezvous in isolation. Managed Flow/OwnerClaimView
-  continuation, exact authorization/private invocation, DP-014 attempt binding,
-  orchestration, and production composition remain Planned. TASK-026 remains
-  Blocked until all remaining prerequisites are implemented and accepted;
+  pending-Stop rendezvous in isolation. TASK-031 implements the exact
+  orchestration authorization surface, and TASK-032 implements the private
+  managed invocation plus managed Flow/OwnerClaimView continuation in
+  isolation. DP-014 attempt binding, orchestration, and production composition
+  remain Planned. TASK-026 remains Blocked until all remaining prerequisites
+  are implemented and accepted;
   Integration and Production Activation remain inactive.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.

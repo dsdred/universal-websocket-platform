@@ -28,8 +28,8 @@ management wiring и Control Service activation отсутствуют.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
-**Последняя завершённая development task:** TASK-029 — Runtime Command
-Continue and Pending-Stop Prerequisite; `Completed — Coordinator Accepted`.
+**Последняя завершённая development task:** TASK-032 — Runtime Private Managed
+Invoker and Managed Flow Seam; `Completed — Coordinator Accepted` after rework.
 
 **Последняя завершённая operational task:** TASK-012 — Engineering Process
 Hardening; `Completed — Coordinator Accepted`.
@@ -50,9 +50,9 @@ PASS. Acceptance не реализует prerequisites и не снимает TA
 опубликован через PR #27 и merged как
 `2c017aace7e56a4747d3cecbe8ff3f6cf53e009f`.
 
-**Текущая development task:** отсутствует; TASK-031 — Runtime Orchestration
-Authorization Surface завершена `Completed — Coordinator Accepted`. TASK-026
-остаётся `Blocked by
+**Текущая development task:** отсутствует; последняя завершённая development
+task — TASK-032 — Runtime Private Managed Invoker and Managed Flow Seam,
+`Completed — Coordinator Accepted` после rework. TASK-026 остаётся `Blocked by
 Architecture`; Coordinator Acceptance, commit и publication TASK-026 запрещены.
 
 **TASK-031:** `Completed — Coordinator Accepted`. Bounded isolated DP-020
@@ -68,8 +68,9 @@ CGO/gcc, substitute stress `-count=100` PASS); Independent Review Approved with
 Findings 0/2 (resolved); Verification Matrix, PROCESS-002, Scope Audit 7/0/0
 PASS. Commit, push, PR, merge и publication не выполнялись.
 
-**Последняя завершённая documentation task:** TASK-022 — Root README Runtime
-Status Synchronization; `Completed — Coordinator Accepted`.
+**Последняя завершённая documentation task:** TASK-033 — TASK-032 Closure
+Synchronization; `Completed — Coordinator Accepted`; Independent Review
+`Approved` 0/0; Scope Audit 10/0/0; DP-020 slice 3 не активирована.
 
 **Текущая documentation task:** отсутствует.
 

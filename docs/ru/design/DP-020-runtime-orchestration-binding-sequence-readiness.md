@@ -7,6 +7,11 @@
 - **Статус проектирования:** Draft
 - **Статус реализации:** Planned
 
+Прогресс реализации: Срезы 1 и 2 реализованы изолированно и приняты
+Coordinator через TASK-031 и TASK-032. Срез 3 остаётся Planned; Срез 4 не
+начат. Общий статус остаётся Planned, потому что связывание
+OwnerClaim-to-DP-014 и работа по готовности оркестратора не завершены.
+
 Этот focused design разделяет оставшиеся prerequisites Approved DP-019 — точную
 авторизацию оркестрации, private managed invocation и связывание
 OwnerClaim-to-DP-014 — на упорядоченные, независимо проверяемые
@@ -340,6 +345,8 @@ Host; DP-013 остаётся exact composition routing/private-invocation; DP-0
 
 ### Срез 1 — поверхность orchestration authorizer
 
+Текущий статус среза: реализован изолированно и принят Coordinator в TASK-031.
+
 - Ввести validated значение `OrchestrationAuthorizationRequest`, named
   policy-neutral тип функции `AuthorizeOrchestration`, набор
   `OrchestrationAction` и exact failed-authorization error contract на
@@ -350,6 +357,9 @@ Host; DP-013 остаётся exact composition routing/private-invocation; DP-0
 - Никакого binding DP-014, никакого изменения Flow, никакого оркестратора.
 
 ### Срез 2 — private managed invoker и managed Flow seam
+
+Текущий статус среза: реализован изолированно и принят Coordinator после
+rework в TASK-032.
 
 - Добавить managed construction и per-call seam `StartManaged` и immutable
   значения `StartExecutionBinding` / `OwnerClaimView`, opaque handle
@@ -362,6 +372,8 @@ Host; DP-013 остаётся exact composition routing/private-invocation; DP-0
 
 ### Срез 3 — последовательность связывания OwnerClaim-to-DP-014
 
+Текущий статус среза: Planned; рекомендован следующим, но не активирован.
+
 - Реализовать `StartClaimContinuation.AfterOwnerClaim` с использованием
   существующих conditional операций публикации/binding `runtimeidentity.Store`,
   существующего rendezvous pending-Stop и final gate Stop-versus-Continue,
@@ -372,6 +384,9 @@ Host; DP-013 остаётся exact composition routing/private-invocation; DP-0
   упорядочен final gate.
 
 ### Срез 4 — переоценка готовности оркестратора DP-016
+
+Текущий статус среза: не начат; он по-прежнему gated реализацией и независимой
+приёмкой Среза 3.
 
 - Только после того, как Slices 1–3 реализованы и независимо приняты, переоценить,
   может ли TASK-026 быть разблокирована против неизменных proofs §25 DP-016.
@@ -399,14 +414,15 @@ regression, а также свежим Independent Review этого предл�
 
 ## 14. Граница реализации
 
-Implementation Status остаётся Planned. ОТЛОЖЕННЫЕ выходы — упорядоченные срезы
-раздела 12; ни один не реализован этой задачей. Репозиторий всё ещё не содержит
-orchestration authorizer, private scoped invoker, managed continuation
-Flow/OwnerClaimView, composition публикации/binding попытки, оркестратор
-активации, external persistence, API, worker recovery и production wiring. Поэтому
-TASK-026 остаётся Blocked; successor-задачи должны реализовать и независимо
-проверить эти срезы, прежде чем TASK-026 сможет быть пересмотрена против полного
-неизменного набора proofs DP-016.
+Implementation Status остаётся Planned overall. Сама design-задача не
+реализовала ни один срез; successor TASK-031 реализовала Срез 1 изолированно, а
+TASK-032 после rework реализовала Срез 2 изолированно, и оба приняты
+Coordinator. Репозиторий всё ещё не содержит composition публикации/binding
+попытки Среза 3, оркестратор активации, external persistence, API, worker
+recovery и production wiring. Поэтому TASK-026 остаётся Blocked; Срез 3 должен
+быть отдельно реализован и независимо принят, прежде чем готовность
+оркестратора можно будет пересмотреть против полного неизменного набора proofs
+DP-016.
 
 ## 15. Последствия
 
@@ -429,8 +445,9 @@ TASK-026 остаётся Blocked; successor-задачи должны реал�
 ## 16. Решение
 
 UWP фиксирует разложение готовности оставшихся prerequisites Approved DP-019 в
-этом Draft/Planned предложении и будет реализовывать срезы только через
-отдельные, индивидуально reviewed задачи. Она не approximates DP-016 adapter-ом,
+этом Draft/Planned предложении и реализует каждый срез только через отдельную,
+индивидуально reviewed задачу. Срезы 1 и 2 теперь соблюдают это правило; Срез 3
+остаётся Planned и не активирован. Proposal не approximates DP-016 adapter-ом,
 не добавляет операции replacement/rollback Owner, не передаёт permits, не меняет
 ни один Approved статус или семантику и не выдаёт planned capability за
 реализованную.

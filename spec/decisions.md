@@ -57,10 +57,11 @@ schema, API, recovery и production wiring отсутствуют. Design gate �
 Изолированная реализация DP-013 не разрешает integration. Approved
 DP-014–DP-018 закрывают focused design gates ARCH-004 §19(2)–(6). DP-014 и
 primitive boundary DP-015, partial DP-019 parent/phase sequential core и
-command-boundary Continue/pending-Stop rendezvous реализованы изолированно, но
-concrete authorization policy/private invoker, external persistence, managed
-Start-claim continuation/OwnerClaimView, execution-generation binding/load gate, management
-integration/API и Production Activation отсутствуют.
+command-boundary Continue/pending-Stop rendezvous, policy-neutral orchestration
+authorization surface и private managed invoker/managed
+Start-claim continuation/OwnerClaimView реализованы изолированно, но concrete
+authorization policy, external persistence, execution-generation binding/load
+gate, management integration/API и Production Activation отсутствуют.
 
 Approved DP-015 определяет focused contract ARCH-004
 §19(3): opaque command identity в exact authorized scope, immutable intent,
