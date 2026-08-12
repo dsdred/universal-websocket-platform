@@ -103,6 +103,25 @@ func (r OrchestrationAuthorizationRequest) Valid() bool {
 // AuthorizeOrchestration checks current caller authority for one exact request.
 type AuthorizeOrchestration func(context.Context, OrchestrationAuthorizationRequest) error
 
+// StartNoClaimCause is the exact definitive reason a managed Start ended
+// before an Owner claim. It is dependency-neutral so Flow and command
+// coordination can share the closed vocabulary without owning each other.
+type StartNoClaimCause string
+
+const (
+	// StartNoClaimCancelled records caller cancellation before Owner claim.
+	StartNoClaimCancelled StartNoClaimCause = "cancelled"
+	// StartNoClaimRejected records a definitive pre-claim rejection.
+	StartNoClaimRejected StartNoClaimCause = "rejected"
+	// StartNoClaimFailed records a definitive pre-claim dependency failure.
+	StartNoClaimFailed StartNoClaimCause = "failed"
+)
+
+// Valid reports whether the cause belongs to the closed no-claim set.
+func (c StartNoClaimCause) Valid() bool {
+	return c == StartNoClaimCancelled || c == StartNoClaimRejected || c == StartNoClaimFailed
+}
+
 // AggregateRevision is a lossless neutral aggregate revision proof.
 type AggregateRevision uint64
 

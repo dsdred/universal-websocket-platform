@@ -197,3 +197,18 @@ implementation и TASK-026 activation не выполняются.
 Independent Review — Approved 0/0; PROCESS-002, Verification Matrix, Size Guard
 и Scope Audit 13/0/0 — PASS. Slice 3 остаётся следующим Planned,
 неактивированным implementation-срезом.
+
+TASK-037 активирует и реализует DP-020 Slice 3 изолированно: managed
+primitive/linked parent/StartTarget paths используют общий command-owned
+early/final/no-claim rendezvous protocol; новый stateless
+`runtimeorchestrationcontinuation` выполняет pre-mutation aggregate
+scope/revision proof, DP-014 conditional attempt claim, exact returned-revision
+threading в generation bind и fresh revision-sandwich convergence; managed Flow
+отображает четыре закрытых исхода и после Owner claim использует
+`context.WithoutCancel`. Independent code proof — PASS 0/0; Independent
+Reviewer — `APPROVED` 0/0; Coordinator Acceptance — `Accepted`, поэтому
+TASK-037 завершена как `Completed — Coordinator Accepted`. Approved
+DP-014/DP-015/DP-019 semantics не меняются; concrete private
+composition invoker, terminal publication, DP-015 terminalization,
+orchestration и production wiring отсутствуют. Slice 4 не активирован, TASK-026
+остаётся Blocked.

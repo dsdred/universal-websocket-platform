@@ -7,8 +7,9 @@
 - **Design Status:** Approved
 - **Implementation Status:** Primitive Start/Stop boundary, Approved DP-019
   parent/phase sequential core, and command-boundary Continue/pending-Stop
-  rendezvous implemented in isolation; the complete DP-019 extension remains
-  Planned
+  rendezvous implemented in isolation; Slice 3 managed gates and continuation
+  implemented and independently accepted in isolation; the complete
+  DP-019 extension remains Planned
 
 This approved design defines the durable idempotency boundary for state-changing
 Runtime management commands. Package `internal/runtimecommandidempotency`
@@ -41,9 +42,12 @@ remains Draft; Approved DP-014, the primitive DP-015 boundary, and the partial
 DP-019 parent/phase sequential core and command-boundary Continue/pending-Stop
 rendezvous are implemented in isolation. TASK-031/TASK-032/TASK-035 also
 implement the exact authorization value, dependency-leaf binding, primitive
-managed adapter, and managed Flow/OwnerClaimView seam in isolation. The
-concrete continuation, managed parent/phase adapter, DP-014 binding sequence,
-and Approved DP-016 retain Implementation Status Planned.
+managed adapter, and managed Flow/OwnerClaimView seam in isolation. TASK-037
+implements the managed parent/StartTarget adapter, common managed gates,
+concrete continuation, DP-014 attempt/generation binding sequence, and exact
+managed Flow outcome adaptation and are independently accepted in isolation.
+The concrete private composition invoker, later terminal publication,
+orchestrator, and Approved DP-016 retain Implementation Status Planned.
 
 ## 4. Scope
 
@@ -533,10 +537,14 @@ signal cause and fail-closed callback/reconstruction behavior.
 
 TASK-031/TASK-032/TASK-035 add the exact authorization value, dependency-leaf
 binding, primitive `ExecuteManagedStart` adapter, and managed
-Flow/OwnerClaimView seam in isolation. External durable storage/schema, API,
-DP-016 orchestration, DP-017 recovery, the concrete private continuation,
-managed parent/phase adapter, DP-014 binding sequence, management wiring, and
-Production Activation remain absent. The isolated
+Flow/OwnerClaimView seam in isolation. TASK-037 adds the managed
+parent/StartTarget adapter, common primitive/linked managed rendezvous gates,
+stateless OwnerClaim-to-DP-014 continuation, and managed Flow outcome mapping,
+implemented and independently accepted in isolation. External durable
+storage/schema, API, DP-016 orchestration, DP-017 recovery, the concrete private
+composition invoker, later DP-014 terminal publication and DP-015
+command/phase terminalization, management wiring, and Production Activation
+remain absent. The isolated
 package changes no lifecycle contract and is not connected to the DP-013
 Directory.
 

@@ -93,11 +93,12 @@ func (b *Boundary) ExecuteManagedStart(
 	state := &permitState{generation: b.generation, revision: record.revision}
 	ledger.records[identity] = record
 	ledger.live[identity] = state
-	ledger.managedStart[rendezvous] = managedStartRendezvous{
-		identity: identity, generation: b.generation,
-	}
 	permit := &executionPermit{
 		boundary: b, ledger: ledger, identity: identity, state: state, managed: rendezvous,
+	}
+	ledger.managedStart[rendezvous] = &managedStartRendezvous{
+		binding: binding, identity: identity, state: state, generation: b.generation,
+		bridge: newStartRendezvous(b.generation), stage: managedStagePreOwner,
 	}
 	claimed := Admission{kind: AdmissionClaimed, record: record.view()}
 	ledger.mu.Unlock()
@@ -140,8 +141,11 @@ func (b *Boundary) managedStartRendezvousLive(
 	ledger.mu.Lock()
 	defer ledger.mu.Unlock()
 	entry, exists := ledger.managedStart[rendezvous]
+	if !exists || entry == nil {
+		return false
+	}
 	live := ledger.live[entry.identity]
-	return exists && entry.generation == b.generation &&
+	return entry.generation == b.generation &&
 		entry.identity == (commandIdentity{scope: scope, key: key}) &&
 		live != nil && live.generation == b.generation
 }

@@ -8,6 +8,19 @@ import (
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfigload"
 )
 
+func TestStartNoClaimCauseIsClosedAndNeutral(t *testing.T) {
+	for _, cause := range []StartNoClaimCause{
+		StartNoClaimCancelled, StartNoClaimRejected, StartNoClaimFailed,
+	} {
+		if !cause.Valid() {
+			t.Fatalf("valid cause rejected: %q", cause)
+		}
+	}
+	if StartNoClaimCause("").Valid() || StartNoClaimCause("unknown").Valid() {
+		t.Fatal("open or empty cause accepted")
+	}
+}
+
 func TestAuthorizationRequestCarriesExactSixFields(t *testing.T) {
 	request := testAuthorization(t, OrchestrationActionActivateExactTarget)
 	if request.OperationalDomain() != "domain-a" || request.WorkspaceID() != 1 ||

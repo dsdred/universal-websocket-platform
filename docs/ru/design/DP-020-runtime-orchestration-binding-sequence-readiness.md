@@ -5,7 +5,8 @@
 ## 1. Статус
 
 - **Статус проектирования:** Draft
-- **Статус реализации:** Planned
+- **Статус реализации:** Planned overall; Срез 3 реализован и независимо
+  принят изолированно
 
 Прогресс реализации: TASK-031 и TASK-032 создали изолированные частичные
 реализации Срезов 1 и 2, исторически принятые Coordinator, а TASK-034 определила
@@ -15,8 +16,10 @@ package, primitive managed claims используют sole `ExecuteManagedStart
 adapter, а command-owned rendezvous identities уникальны и callback-scoped.
 Concrete DP-013 composition-private invoker и production wiring отсутствуют.
 TASK-036 устраняет оставшуюся неоднозначность command-gate и continuation API
-Среза 3, не реализуя их. Срез 3 является следующим Planned,
-неактивированным срезом; Срез 4 не начат. Общий статус остаётся Planned.
+Среза 3, а TASK-037 реализует этот протокол Среза 3 изолированно: managed
+primitive и linked gates, stateless continuation OwnerClaim-to-DP-014, exact
+threading revision и адаптацию outcomes managed Flow. TASK-037 независимо
+принята; Срез 4 не начат. Общий статус остаётся Planned.
 
 Этот focused design разделяет оставшиеся prerequisites Approved DP-019 — точную
 авторизацию оркестрации, private managed invocation и связывание
@@ -485,16 +488,20 @@ conditional публикации DP-014 и DP-015.
 1. разрешить already-admitted rendezvous pending-Stop только через original Stop
    claimant; `StopConverged` выходит без обеих записей, а `Blocked` оставляет
    связанный набор unresolved;
-2. только после definitive доказательства отсутствия pending Stop, conditionally
+2. только после definitive доказательства отсутствия pending Stop прочитать
+   exact Runtime Instance и до любой mutation доказать workspace,
+   configuration, instance identity и expected revision; read failure или
+   любое несоответствие дают `Blocked` с нулём записей;
+3. после этого pre-mutation proof conditionally
    опубликовать exact membership Launch Attempt и pin версии в DP-014 при
    expected aggregate revision;
-3. прочитать committed revision, возвращённый этой записью, и conditionally
+4. прочитать committed revision, возвращённый этой записью, и conditionally
    связать exact active попытку с composition-owned execution generation при
    этом новом expected revision;
-4. после любого indeterminate результата проверить exact aggregate facts через
+5. после любого indeterminate результата проверить exact aggregate facts через
    `ReadRuntimeInstance` и `ReadLaunchAttemptHistory` и свести к exact
    существующему terminal исходу или вернуть `Blocked`;
-5. выполнить final gate Stop-versus-Continue для Stop, admitted после ранней
+6. выполнить final gate Stop-versus-Continue для Stop, admitted после ранней
    проверки rendezvous, затем выпустить `Continue` только при confirmed, exact
    same-generation binding.
 
@@ -511,6 +518,8 @@ Revision, возвращённый committed claim attempt, является е�
 revision для binding generation. Stale write никогда не retry. После любой
 error или non-commit exact inspection использует revision sandwich:
 `ReadRuntimeInstance A -> ReadLaunchAttemptHistory -> ReadRuntimeInstance B`.
+Pre-mutation scope/revision read не является observation A для sandwich;
+inspection начинается со свежего чтения после ambiguous operation.
 Результат coherent только когда A и B имеют равные revision и одинаковые
 immutable identity и active-attempt facts. Exact active attempt, version,
 Claimed phase и generation могут доказать satisfied convergence. Coherent
@@ -637,8 +646,7 @@ Production composition/private-invoker wiring не входит в этот ср
 
 ### Срез 3 — последовательность связывания OwnerClaim-to-DP-014
 
-Текущий статус среза: следующий Planned срез после принятого Среза 2R TASK-035
-и readiness reconciliation TASK-036; не активирован.
+Текущий статус среза: реализован и независимо принят изолированно TASK-037.
 
 - Реализовать managed parent/StartTarget adapter, общие command-owned early/final
   rendezvous gates и stateless `StartClaimContinuation.AfterOwnerClaim` через
@@ -655,8 +663,8 @@ Production composition/private-invoker wiring не входит в этот ср
 
 ### Срез 4 — переоценка готовности оркестратора DP-016
 
-Текущий статус среза: не начат; он по-прежнему gated реализацией и независимой
-приёмкой Среза 3.
+Текущий статус среза: не начат. Acceptance TASK-037 удовлетворяет его entry
+prerequisite, но не активирует автоматически intake Среза 4.
 
 - Только после того, как Slices 1–3, включая Срез 2R, реализованы и независимо
   приняты, переоценить,
@@ -693,13 +701,13 @@ Implementation Status остаётся Planned overall. Сама design-зада
 принятые Coordinator частичные изолированные реализации Срезов 1 и 2. TASK-034
 обнаружила оставшийся gap соответствия, TASK-035 реализует и независимо
 принимает его repair Среза 2R изолированно, а TASK-036 устраняет оставшуюся
-неоднозначность command-gate и continuation API Среза 3. Репозиторий всё ещё не
-содержит composition публикации/binding попытки Среза 3, concrete private
-composition invoker, оркестратор активации, external persistence, API, worker
-recovery и production wiring. Поэтому TASK-026 остаётся Blocked; Срез 3
-является следующим неактивированным implementation-срезом, а последующие prerequisites всё
-ещё требуют отдельной реализации и acceptance до переоценки готовности против
-неизменённого DP-016.
+неоднозначность command-gate и continuation API Среза 3. TASK-037 реализует и
+независимо принимает Срез 3 изолированно. Репозиторий всё ещё не
+содержит concrete private composition invoker, последующую terminal publication
+DP-014 и terminalization command/phase DP-015 после результата Owner,
+оркестратор активации, external persistence, API, worker recovery и production
+wiring. Поэтому TASK-026 остаётся Blocked; Срез 4 не активирован и является
+лишь следующим отдельным candidate переоценки readiness.
 
 ## 15. Последствия
 
@@ -713,8 +721,8 @@ recovery и production wiring. Поэтому TASK-026 остаётся Blocked;
 
 Стоимость:
 
-- независимая приёмка Среза 2R и Срез 3 всё ещё предшествуют любой переоценке
-  готовности DP-016;
+- принятый Срез 3 TASK-037 теперь разрешает, но не активирует, отдельную
+  переоценку готовности DP-016;
 - synchronous rendezvous pending-Stop может блокировать callers;
 - restart процесса по-прежнему требует Planned реализации DP-017;
 - production integration по-прежнему требует external durability и аудита
@@ -726,8 +734,9 @@ UWP фиксирует разложение готовности оставши�
 этом Draft/Planned предложении и реализует каждый срез только через отдельную,
 индивидуально reviewed задачу. Срезы 1 и 2 остаются исторически принятыми
 частичными реализациями; TASK-035 реализует и независимо принимает Срез 2R
-изолированно; TASK-036 фиксирует exact протокол Среза 3, не реализуя его; а
-Срез 3 остаётся следующим Planned, неактивированным implementation-срезом.
+изолированно; TASK-036 фиксирует exact протокол Среза 3; а TASK-037 реализует и
+независимо принимает Срез 3 изолированно. Срез 4 остаётся
+неактивированным.
 Proposal не approximates DP-016 adapter-ом,
 не добавляет операции replacement/rollback Owner, не передаёт permits, не меняет
 ни один Approved статус или семантику и не выдаёт planned capability за

@@ -34,7 +34,7 @@ func TestExecuteManagedStartMapsCompleteBindingAndExpiresLookup(t *testing.T) {
 				) {
 				t.Fatal("rendezvous resolved for foreign identity")
 			}
-			return success(t)()
+			return completeManagedStart(t, boundary, binding)
 		},
 	)
 	if err != nil || claimed.Kind() != AdmissionClaimed ||
@@ -82,7 +82,7 @@ func TestExecuteManagedStartConcurrentSameKeyIssuesOneBinding(t *testing.T) {
 				callbacks.Add(1)
 				entered <- binding.Rendezvous()
 				<-release
-				return success(t)()
+				return completeManagedStart(t, boundary, binding)
 			},
 		)
 		completed <- err
@@ -119,7 +119,7 @@ func TestExecuteManagedStartAllocatesUniqueRendezvousPerNewClaim(t *testing.T) {
 			startIntent(t, uint64(41+index)), 1, "generation-a", allowOrchestration,
 			func(binding runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error) {
 				rendezvous[index] = binding.Rendezvous()
-				return success(t)()
+				return completeManagedStart(t, boundary, binding)
 			},
 		)
 		if err != nil || admission.Kind() != AdmissionClaimed {
@@ -143,9 +143,9 @@ func TestExecuteManagedStartAuthorizesEveryObservationWithoutAdoption(t *testing
 		authorizations.Add(1)
 		return nil
 	}
-	invoke := func(runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error) {
+	invoke := func(binding runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error) {
 		callbacks.Add(1)
-		return success(t)()
+		return completeManagedStart(t, boundary, binding)
 	}
 	claimed, err := boundary.ExecuteManagedStart(
 		context.Background(), scope, "managed", intent, 1, "generation-a", authorize, invoke,
@@ -257,8 +257,8 @@ func TestExecuteManagedStartValidationDenialAndCancellationCauseZeroMutation(t *
 	var nilBoundary *Boundary
 	if _, err := nilBoundary.ExecuteManagedStart(
 		context.Background(), scope, "nil-boundary", intent, 1, "generation-a",
-		allowOrchestration, func(runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error) {
-			return success(t)()
+		allowOrchestration, func(binding runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error) {
+			return completeManagedStart(t, boundary, binding)
 		},
 	); !errors.Is(err, ErrInvalidSubmission) {
 		t.Fatalf("nil boundary error = %v", err)
@@ -278,13 +278,28 @@ func TestExecuteManagedStartValidationDenialAndCancellationCauseZeroMutation(t *
 	}
 	claimed, err := boundary.ExecuteManagedStart(
 		context.Background(), scope, "cancelled", intent, 1, "generation-a",
-		allowOrchestration, func(runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error) {
-			return success(t)()
+		allowOrchestration, func(binding runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error) {
+			return completeManagedStart(t, boundary, binding)
 		},
 	)
 	if err != nil || claimed.Kind() != AdmissionClaimed {
 		t.Fatalf("later claim = %#v/%v", claimed, err)
 	}
+}
+
+func completeManagedStart(
+	t *testing.T,
+	boundary *Boundary,
+	binding runtimeorchestrationbinding.StartExecutionBinding,
+) (TerminalOutcome, error) {
+	t.Helper()
+	if gate, err := boundary.ResolveManagedStartEarly(binding, "attempt"); err != nil || gate != GateClear {
+		t.Fatalf("managed early gate = %v/%v", gate, err)
+	}
+	if gate, err := boundary.ResolveManagedStartFinal(binding, FinalContinue); err != nil || gate != GateClear {
+		t.Fatalf("managed final gate = %v/%v", gate, err)
+	}
+	return success(t)()
 }
 
 func TestExecuteManagedStartFailureAndGenerationLossExpireAuthority(t *testing.T) {

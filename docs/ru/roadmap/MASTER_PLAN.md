@@ -363,11 +363,14 @@ Architectural debt относится к границам, которые ост
   command-owned rendezvous identity через sole primitive adapter
   `Boundary.ExecuteManagedStart`. TASK-036 определяет оставшийся общий
   primitive/linked early/final gate, managed parent/StartTarget adapter, closed
-  continuation outcomes и contract revision-sandwich DP-014 без implementation.
-  Срез 3 binding attempt DP-014 остаётся Planned и является следующим Planned,
-  неактивированным implementation-срезом; concrete private-invoker wiring,
-  orchestration и production composition также остаются Planned. TASK-026
-  остаётся Blocked до implementation и acceptance всех оставшихся
+  continuation outcomes и contract revision-sandwich DP-014. TASK-037 реализует
+  этот protocol Среза 3 изолированно, включая no-claim gate, stateless
+  continuation, exact DP-014 attempt/generation revision threading и managed
+  Flow outcome adaptation; Independent Reviewer APPROVED 0/0 и Coordinator
+  Acceptance завершена. Concrete private-invoker wiring, terminal publication,
+  orchestration и production composition остаются Planned; reassessment
+  readiness Среза 4 является следующим отдельным candidate и не активирован.
+  TASK-026 остаётся Blocked до implementation и acceptance всех оставшихся
   prerequisites; Integration и Production Activation остаются неактивными.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
