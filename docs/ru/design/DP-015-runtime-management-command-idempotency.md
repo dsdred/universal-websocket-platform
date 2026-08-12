@@ -7,7 +7,9 @@
 - **Design Status:** Approved
 - **Implementation Status:** Primitive boundary Start/Stop, parent/phase
   sequential core Approved DP-019 и command-boundary Continue/pending-Stop
-  rendezvous реализованы изолированно; полное extension DP-019 остаётся Planned
+  rendezvous реализованы изолированно; managed gates и continuation Среза 3
+  реализованы и независимо приняты изолированно; полное extension
+  DP-019 остаётся Planned
 
 Этот approved design определяет durable idempotency boundary для
 state-changing management commands Runtime. Package
@@ -40,9 +42,12 @@ lifecycle mutation или Launch Attempt.
 parent/phase sequential core DP-019 и command-boundary Continue/pending-Stop
 rendezvous реализованы изолированно. TASK-031/TASK-032/TASK-035 также реализуют
 изолированно exact authorization value, dependency-leaf binding, primitive
-managed adapter и seam managed Flow/OwnerClaimView. Concrete continuation,
-managed parent/phase adapter, binding sequence DP-014 и Approved DP-016
-сохраняют Implementation Status Planned.
+managed adapter и seam managed Flow/OwnerClaimView. TASK-037 реализует
+изолированно managed parent/StartTarget adapter, общие managed gates, concrete
+continuation, binding sequence attempt/generation DP-014 и exact адаптацию
+outcomes managed Flow, реализованные и независимо принятые изолированно. Concrete private
+composition invoker, последующая terminal publication, orchestrator и Approved
+DP-016 сохраняют Implementation Status Planned.
 
 ## 4. Область
 
@@ -531,9 +536,13 @@ immutable signal cause и fail-closed callback/reconstruction behavior.
 
 TASK-031/TASK-032/TASK-035 добавляют изолированно exact authorization value,
 dependency-leaf binding, primitive adapter `ExecuteManagedStart` и seam managed
-Flow/OwnerClaimView. External durable storage/schema, API, DP-016 orchestration,
-DP-017 recovery, concrete private continuation, managed parent/phase adapter,
-binding sequence DP-014, management wiring и Production Activation отсутствуют.
+Flow/OwnerClaimView. TASK-037 добавляет изолированно managed
+parent/StartTarget adapter, общие primitive/linked managed rendezvous gates,
+stateless continuation OwnerClaim-to-DP-014 и отображение outcomes managed
+Flow, реализованные и независимо принятые изолированно. External durable storage/schema, API,
+DP-016 orchestration, DP-017 recovery, concrete private composition invoker,
+последующая terminal publication DP-014 и terminalization command/phase
+DP-015, management wiring и Production Activation отсутствуют.
 Isolated package не
 изменяет lifecycle contracts и не подключён к DP-013 Directory.
 

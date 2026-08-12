@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfigload"
+	"github.com/dsdred/universal-websocket-platform/internal/runtimeorchestrationbinding"
 )
 
 type startSignal uint8
@@ -25,22 +26,18 @@ const (
 	stopResolutionBlocked
 )
 
-// StartNoClaimCause is the exact definitive reason that StartTarget ended
-// before an Owner claim.
-type StartNoClaimCause string
+// StartNoClaimCause retains the historical command-package name while the
+// authoritative neutral value belongs to runtimeorchestrationbinding.
+type StartNoClaimCause = runtimeorchestrationbinding.StartNoClaimCause
 
 const (
 	// StartNoClaimCancelled records caller cancellation before Owner claim.
-	StartNoClaimCancelled StartNoClaimCause = "cancelled"
+	StartNoClaimCancelled = runtimeorchestrationbinding.StartNoClaimCancelled
 	// StartNoClaimRejected records a definitive no-mutation rejection.
-	StartNoClaimRejected StartNoClaimCause = "rejected"
+	StartNoClaimRejected = runtimeorchestrationbinding.StartNoClaimRejected
 	// StartNoClaimFailed records a definitive pre-claim failure.
-	StartNoClaimFailed StartNoClaimCause = "failed"
+	StartNoClaimFailed = runtimeorchestrationbinding.StartNoClaimFailed
 )
-
-func (c StartNoClaimCause) valid() bool {
-	return c == StartNoClaimCancelled || c == StartNoClaimRejected || c == StartNoClaimFailed
-}
 
 // startRendezvous is process-local coordination state. Durable ownership stays
 // in the existing parent, phase, and primitive command records.
@@ -299,7 +296,7 @@ func (e *StartTargetExecution) OwnerClaimed(
 // no Launch Attempt. Later context cancellation cannot change the recorded
 // cause.
 func (e *StartTargetExecution) StartNoClaim(cause StartNoClaimCause) error {
-	if e == nil || !cause.valid() {
+	if e == nil || !cause.Valid() {
 		return ErrInvalidSubmission
 	}
 	e.mu.Lock()

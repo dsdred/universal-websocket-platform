@@ -84,13 +84,20 @@ func (f *Flow) Start(
 func (f *Flow) startPrepared(
 	preparation runtimelifecycle.LaunchPreparation,
 ) (runtimelifecycle.StartOutcome, error) {
+	return f.startPreparedWithContext(context.Background(), preparation)
+}
+
+func (f *Flow) startPreparedWithContext(
+	ctx context.Context,
+	preparation runtimelifecycle.LaunchPreparation,
+) (runtimelifecycle.StartOutcome, error) {
 	loadResult, err := f.loader.Load(preparation.LoadRequest())
 	if preparation.Context().Err() != nil {
-		return convergeStoppedPreparation(f.owner, preparation)
+		return convergeStoppedPreparationWithContext(ctx, f.owner, preparation)
 	}
 	if err != nil {
 		return f.owner.Start(
-			context.Background(),
+			ctx,
 			preparation,
 			runtimelifecycle.FailedPreparation(err),
 		)
@@ -98,18 +105,18 @@ func (f *Flow) startPrepared(
 
 	snapshot, diagnostics := f.build(loadResult)
 	if preparation.Context().Err() != nil {
-		return convergeStoppedPreparation(f.owner, preparation)
+		return convergeStoppedPreparationWithContext(ctx, f.owner, preparation)
 	}
 	if len(diagnostics) != 0 {
 		return f.owner.Start(
-			context.Background(),
+			ctx,
 			preparation,
 			runtimelifecycle.FailedPreparation(newBuildFailure(diagnostics)),
 		)
 	}
 
 	return f.owner.Start(
-		context.Background(),
+		ctx,
 		preparation,
 		runtimelifecycle.PreparedSnapshot(snapshot),
 	)
@@ -119,8 +126,16 @@ func convergeStoppedPreparation(
 	owner *runtimelifecycle.Owner,
 	preparation runtimelifecycle.LaunchPreparation,
 ) (runtimelifecycle.StartOutcome, error) {
+	return convergeStoppedPreparationWithContext(context.Background(), owner, preparation)
+}
+
+func convergeStoppedPreparationWithContext(
+	ctx context.Context,
+	owner *runtimelifecycle.Owner,
+	preparation runtimelifecycle.LaunchPreparation,
+) (runtimelifecycle.StartOutcome, error) {
 	return owner.Start(
-		context.Background(),
+		ctx,
 		preparation,
 		runtimelifecycle.PreparationResult{},
 	)

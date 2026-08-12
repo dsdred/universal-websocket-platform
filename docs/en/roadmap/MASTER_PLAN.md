@@ -364,11 +364,15 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   linked identity, and unique command-owned rendezvous identity through the
   sole primitive `Boundary.ExecuteManagedStart` adapter. TASK-036 defines the
   remaining shared primitive/linked early/final gate, managed parent/StartTarget
-  adapter, closed continuation outcomes, and DP-014 revision-sandwich contract
-  without implementation. Slice 3 DP-014 attempt binding is the next Planned,
-  unactivated implementation slice; concrete
-  private-invoker wiring, orchestration, and production composition
-  also remain Planned. TASK-026 remains Blocked until all remaining
+  adapter, closed continuation outcomes, and DP-014 revision-sandwich
+  contract. TASK-037 implements that Slice 3 protocol in isolation, including
+  the no-claim gate, stateless continuation, exact DP-014 attempt/generation
+  revision threading, and managed Flow outcome adaptation; Independent Reviewer
+  APPROVED 0/0 and Coordinator Acceptance is complete. Concrete private
+  invoker wiring, terminal publication, orchestration, and production
+  composition remain Planned; Slice 4 readiness reassessment is the next
+  separate candidate and is not activated. TASK-026 remains
+  Blocked until all remaining
   prerequisites are implemented and accepted;
   Integration and Production Activation remain inactive.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.

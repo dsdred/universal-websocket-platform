@@ -49,7 +49,7 @@ type commandLedger struct {
 	liveParents  map[commandIdentity]*permitState
 	livePhases   map[phaseIdentity]*permitState
 	rendezvous   map[commandIdentity]*startRendezvous
-	managedStart map[runtimeorchestrationbinding.StartRendezvous]managedStartRendezvous
+	managedStart map[runtimeorchestrationbinding.StartRendezvous]*managedStartRendezvous
 }
 
 // MemoryStorage owns process-lifetime command facts independently from one
@@ -94,7 +94,7 @@ func (s *MemoryStorage) ledger(scope instanceScope) *commandLedger {
 			liveParents:  make(map[commandIdentity]*permitState),
 			livePhases:   make(map[phaseIdentity]*permitState),
 			rendezvous:   make(map[commandIdentity]*startRendezvous),
-			managedStart: make(map[runtimeorchestrationbinding.StartRendezvous]managedStartRendezvous),
+			managedStart: make(map[runtimeorchestrationbinding.StartRendezvous]*managedStartRendezvous),
 		}
 		s.ledgers[scope] = ledger
 	}
@@ -233,6 +233,9 @@ func (b *Boundary) mayClaimLocked(
 	ledger *commandLedger,
 	operation Operation,
 ) (bool, *commandIdentity, *startRendezvous) {
+	if pending, blocked := b.pendingManagedStopRendezvousLocked(ledger, operation); pending != nil || blocked {
+		return pending != nil, nil, pending
+	}
 	if pending := b.pendingStopRendezvousLocked(ledger, operation); pending != nil {
 		return true, nil, pending
 	}
@@ -335,6 +338,12 @@ func (p *executionPermit) execute(
 		p.ledger.live[p.identity] != p.state {
 		return RecordView{}, ErrBoundaryExpired
 	}
+	if p.managed != (runtimeorchestrationbinding.StartRendezvous{}) {
+		managed := p.ledger.managedStart[p.managed]
+		if managed == nil || !managed.terminalCompatible(outcome) {
+			return RecordView{}, ErrIndeterminateExecution
+		}
+	}
 	record.state = CommandStateTerminal
 	record.revision++
 	record.outcome = outcome
@@ -370,11 +379,9 @@ func (p *executionPermit) expire() {
 		delete(p.ledger.stopForStart, p.identity)
 	}
 	if p.managed != (runtimeorchestrationbinding.StartRendezvous{}) {
+		if managed := p.ledger.managedStart[p.managed]; managed != nil {
+			managed.blockLocked()
+		}
 		delete(p.ledger.managedStart, p.managed)
 	}
-}
-
-type managedStartRendezvous struct {
-	identity   commandIdentity
-	generation uint64
 }

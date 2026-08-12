@@ -111,16 +111,32 @@ func (v OwnerClaimView) valid() bool {
 		v.targetConfigurationVersionID != 0
 }
 
-// StartClaimContinuation is the stateless private synchronous service that a
-// managed Flow binds exactly once at construction. Its per-invocation
-// contract is one exact AfterOwnerClaim decision called on the original
-// synchronous call stack immediately after Owner.PrepareStart and before any
-// Load, Build, or Launcher work. It never receives a permit and never
-// publishes a lifecycle, phase, or parent terminal outcome. The DP-020
-// OwnerClaim-to-DP-014 binding sequence is the next slice.
+// StartClaimContinuation is the stateless private synchronous Slice-3 service
+// that a managed Flow binds exactly once at construction. StartNoClaim closes
+// the exact binding when cancellation, rejection, or failure occurs before an
+// Owner claim. AfterOwnerClaim resolves the exact Owner-issued claim to one
+// closed Continue, StopConverged, BindingFailed, or Blocked decision on the
+// original synchronous stack before any Load, Build, or Launcher work. The
+// service receives no permit and publishes no lifecycle, phase, or parent
+// terminal outcome.
 type StartClaimContinuation interface {
-	AfterOwnerClaim(context.Context, ManagedStartBinding, OwnerClaimView) error
+	StartNoClaim(context.Context, ManagedStartBinding, runtimeorchestrationbinding.StartNoClaimCause) error
+	AfterOwnerClaim(context.Context, ManagedStartBinding, OwnerClaimView) (StartClaimOutcome, error)
 }
+
+// StartClaimOutcome is the closed Flow-owned continuation decision.
+type StartClaimOutcome uint8
+
+const (
+	// StartClaimContinue permits Load, Build, and Owner.Start.
+	StartClaimContinue StartClaimOutcome = iota + 1
+	// StartClaimStopConverged reports exact Owner convergence by Stop.
+	StartClaimStopConverged
+	// StartClaimBindingFailed reports a definitive no-binding identity outcome.
+	StartClaimBindingFailed
+	// StartClaimBlocked reports indeterminate continuation evidence.
+	StartClaimBlocked
+)
 
 // ManagedFlow is one immutable Runtime launch Flow extension that validates
 // one per-invocation ManagedStartBinding before any Owner mutation, calls
@@ -152,10 +168,14 @@ func NewManaged(
 	return &ManagedFlow{flow: flow, continuation: continuation}, nil
 }
 
-// StartManaged performs one synchronous PrepareStart, Load, Build, and
-// Owner.Start operation under one per-invocation ManagedStartBinding. The
-// binding is validated before any Owner mutation and is never retained by
-// the Flow. Caller cancellation is observed exactly once before PrepareStart.
+// StartManaged validates one per-invocation ManagedStartBinding, prepares the
+// Owner claim, and resolves the closed continuation decision synchronously.
+// Only Continue enters Load, Build, and prepared Owner.Start. StopConverged,
+// BindingFailed, and Blocked perform zero Load and converge the authentic Owner
+// preparation through their exact non-Continue mapping. The binding is never
+// retained. Caller cancellation is consumed only before PrepareStart; after a
+// successful claim, continuation and Owner convergence preserve context values
+// while ignoring caller cancellation and deadlines.
 func (m *ManagedFlow) StartManaged(
 	ctx context.Context,
 	request runtimelifecycle.StartRequest,
@@ -168,48 +188,122 @@ func (m *ManagedFlow) StartManaged(
 		return runtimelifecycle.StartOutcome{}, ErrInvalidStartContext
 	}
 	if err := ctx.Err(); err != nil {
+		if binding.Valid() {
+			if signalErr := invokeStartNoClaimSafely(m.continuation,
+				context.WithoutCancel(ctx), binding, runtimeorchestrationbinding.StartNoClaimCancelled,
+			); signalErr != nil {
+				return runtimelifecycle.StartOutcome{}, signalErr
+			}
+		}
 		return runtimelifecycle.StartOutcome{}, err
 	}
 	if !managedBindingMatchesRequest(binding, request) {
+		if binding.Valid() {
+			if signalErr := invokeStartNoClaimSafely(m.continuation,
+				context.WithoutCancel(ctx), binding, runtimeorchestrationbinding.StartNoClaimRejected,
+			); signalErr != nil {
+				return runtimelifecycle.StartOutcome{}, signalErr
+			}
+		}
 		return runtimelifecycle.StartOutcome{}, ErrInvalidManagedBinding
 	}
 
 	preparation, err := m.flow.owner.PrepareStart(request)
 	if err != nil {
+		cause := runtimeorchestrationbinding.StartNoClaimRejected
+		if errors.Is(err, runtimelifecycle.ErrAttemptIDSourceFailed) {
+			cause = runtimeorchestrationbinding.StartNoClaimFailed
+		}
+		if signalErr := invokeStartNoClaimSafely(m.continuation, context.WithoutCancel(ctx), binding, cause); signalErr != nil {
+			return runtimelifecycle.StartOutcome{}, signalErr
+		}
 		return runtimelifecycle.StartOutcome{}, err
 	}
-	if preparation.Context().Err() != nil {
-		return convergeStoppedPreparation(m.flow.owner, preparation)
-	}
+	postClaimCtx := context.WithoutCancel(ctx)
 	claimView, err := NewOwnerClaimView(preparation.LoadRequest())
 	if err != nil {
-		return convergeStoppedPreparation(m.flow.owner, preparation)
+		return m.convergeBlocked(postClaimCtx, preparation, ErrInvalidOwnerClaimView)
 	}
 	if claimView.RuntimeInstanceID() != binding.Authorization().RuntimeInstanceID() {
-		_, convergenceErr := m.flow.owner.Start(
-			context.Background(), preparation,
-			runtimelifecycle.FailedPreparation(ErrInvalidManagedBinding),
-		)
-		if convergenceErr != nil {
-			return runtimelifecycle.StartOutcome{}, convergenceErr
-		}
-		return runtimelifecycle.StartOutcome{}, ErrInvalidManagedBinding
+		return m.convergeBlocked(postClaimCtx, preparation, ErrInvalidManagedBinding)
 	}
-	if err := m.continuation.AfterOwnerClaim(ctx, binding, claimView); err != nil {
-		// Converge the claimed attempt through the authentic Owner preparation:
-		// the failure reaches Owner.Start with its preparation token so that
-		// no claimed attempt is dropped and no lifecycle state is leaked. The
-		// exact continuation error is returned unchanged on success; only a
-		// failure of the Owner-side convergence itself replaces it.
-		outcome, ownerErr := m.flow.owner.Start(
-			context.Background(), preparation, runtimelifecycle.FailedPreparation(err),
-		)
-		if ownerErr != nil {
-			return outcome, ownerErr
-		}
-		return runtimelifecycle.StartOutcome{}, err
+	outcome, continuationErr := invokeContinuationSafely(
+		m.continuation, postClaimCtx, binding, claimView,
+	)
+	if !validContinuationResult(outcome, continuationErr) {
+		outcome = StartClaimBlocked
+		continuationErr = ErrInvalidContinuation
 	}
-	return m.flow.startPrepared(preparation)
+	switch outcome {
+	case StartClaimContinue:
+		return m.flow.startPreparedWithContext(postClaimCtx, preparation)
+	case StartClaimStopConverged:
+		return m.flow.owner.Start(postClaimCtx, preparation, runtimelifecycle.PreparationResult{})
+	case StartClaimBindingFailed:
+		return m.flow.owner.Start(
+			postClaimCtx, preparation, runtimelifecycle.FailedPreparation(continuationErr),
+		)
+	case StartClaimBlocked:
+		return m.convergeBlocked(postClaimCtx, preparation, continuationErr)
+	}
+	return m.convergeBlocked(postClaimCtx, preparation, ErrInvalidContinuation)
+}
+
+func invokeStartNoClaimSafely(
+	continuation StartClaimContinuation,
+	ctx context.Context,
+	binding ManagedStartBinding,
+	cause runtimeorchestrationbinding.StartNoClaimCause,
+) (err error) {
+	defer func() {
+		if recover() != nil {
+			err = ErrInvalidContinuation
+		}
+	}()
+	return continuation.StartNoClaim(ctx, binding, cause)
+}
+
+func invokeContinuationSafely(
+	continuation StartClaimContinuation,
+	ctx context.Context,
+	binding ManagedStartBinding,
+	view OwnerClaimView,
+) (outcome StartClaimOutcome, err error) {
+	defer func() {
+		if recover() != nil {
+			outcome = StartClaimBlocked
+			err = ErrInvalidContinuation
+		}
+	}()
+	return continuation.AfterOwnerClaim(ctx, binding, view)
+}
+
+func validContinuationResult(outcome StartClaimOutcome, err error) bool {
+	switch outcome {
+	case StartClaimContinue, StartClaimStopConverged:
+		return err == nil
+	case StartClaimBindingFailed, StartClaimBlocked:
+		return err != nil
+	default:
+		return false
+	}
+}
+
+func (m *ManagedFlow) convergeBlocked(
+	ctx context.Context,
+	preparation runtimelifecycle.LaunchPreparation,
+	cause error,
+) (runtimelifecycle.StartOutcome, error) {
+	if cause == nil {
+		cause = ErrInvalidContinuation
+	}
+	outcome, ownerErr := m.flow.owner.Start(
+		ctx, preparation, runtimelifecycle.FailedPreparation(cause),
+	)
+	if ownerErr != nil {
+		return outcome, ownerErr
+	}
+	return runtimelifecycle.StartOutcome{}, cause
 }
 
 func managedBindingMatchesRequest(
@@ -221,8 +315,12 @@ func managedBindingMatchesRequest(
 	}
 	authorization := binding.Authorization()
 	_, linked := binding.LinkedExecutionIdentity()
-	return !linked &&
-		authorization.Action() == runtimeorchestrationbinding.OrchestrationActionActivateExactTarget &&
+	actionValid := authorization.Action() == runtimeorchestrationbinding.OrchestrationActionActivateExactTarget
+	if linked {
+		actionValid = authorization.Action() == runtimeorchestrationbinding.OrchestrationActionReplaceExactTarget ||
+			authorization.Action() == runtimeorchestrationbinding.OrchestrationActionRollbackExactTarget
+	}
+	return actionValid &&
 		authorization.WorkspaceID() == request.WorkspaceID() &&
 		authorization.ConfigurationID() == request.ConfigurationID() &&
 		authorization.TargetConfigurationVersionID() == request.ConfigurationVersionID()

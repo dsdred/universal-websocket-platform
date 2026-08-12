@@ -7,16 +7,19 @@
 - **Design Status:** Approved
 - **Implementation Status:** Planned overall; parent/phase storage, callback
   capability, sequential phase core, and command-boundary Continue/pending-Stop
-  rendezvous implemented in isolation
+  rendezvous implemented in isolation; Slice 3 managed gates and continuation
+  implemented and independently accepted in isolation
 
 This focused design closes only the integration-contract ambiguity discovered
 by TASK-026. The repository implements the isolated DP-015 parent/phase core,
 command-boundary Continue/pending-Stop rendezvous, exact authorization and
 dependency-leaf binding values, primitive managed adapter, and managed
-Flow/OwnerClaimView seam. The concrete private scoped invoker and continuation,
-managed parent/phase adapter, DP-014 attempt/generation binding, activation
-orchestrator, external persistence, API, recovery worker, and production wiring
-remain absent.
+Flow/OwnerClaimView seam. TASK-037 implements the managed parent/StartTarget
+adapter, common managed gates, concrete stateless continuation, DP-014
+attempt/generation binding sequence, and exact managed Flow outcome adaptation,
+implemented and independently accepted in isolation. The concrete private
+scoped invoker, later terminal publication, activation orchestrator, external
+persistence, API, recovery worker, and production wiring remain absent.
 TASK-026 remains Blocked until the prerequisites defined here are implemented
 and independently accepted.
 
@@ -468,17 +471,21 @@ gate, and the synchronous pending-Stop rendezvous with immutable signal cause.
 
 TASK-031/TASK-032/TASK-035 implement the exact authorization and binding values,
 primitive managed adapter, and managed Flow/OwnerClaimView seam in isolation.
-The repository still lacks the concrete private scoped invoker and
-continuation, managed parent/phase adapter, attempt publication/binding
-composition, activation orchestrator, and production composition audit required
-by the complete design.
+TASK-037 implements the managed parent/StartTarget adapter, common managed
+gates, concrete stateless continuation, attempt membership/generation binding
+sequence, and managed Flow outcome mapping, implemented and independently
+accepted in isolation. The repository still lacks the concrete private scoped
+invoker, later terminal publication and command/phase terminalization,
+activation orchestrator, and production composition audit required by the
+complete design.
 
 TASK-026 therefore remains Blocked. Successor tasks must implement and
 independently verify the remaining prerequisites before TASK-026 may be
 reconsidered against the complete unmodified DP-016 proofs. The focused
 readiness decomposition of those prerequisites is recorded in the mirrored
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), with
-Design Status Draft and Implementation Status Planned.
+Design Status Draft and Implementation Status Planned overall, with Slice 3
+implemented and independently accepted in isolation.
 
 ## 23. Consequences
 

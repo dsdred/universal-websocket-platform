@@ -5,7 +5,8 @@
 ## 1. Status
 
 - **Design Status:** Draft
-- **Implementation Status:** Planned
+- **Implementation Status:** Planned overall; Slice 3 implemented and
+  independently accepted in isolation
 
 Implementation progress: TASK-031 and TASK-032 produced Coordinator-Accepted
 isolated partial implementations of Slices 1 and 2, and TASK-034 defined their
@@ -15,8 +16,11 @@ package, primitive managed claims use the sole `ExecuteManagedStart` adapter,
 and command-owned rendezvous identities are unique and callback-scoped. The
 concrete DP-013 composition-private invoker and production wiring remain
 absent. TASK-036 resolves the remaining Slice-3 command-gate and continuation
-API ambiguity without implementing it. Slice 3 is the next Planned,
-unactivated slice; Slice 4 has not started. The overall status remains Planned.
+API ambiguity, and TASK-037 implements that Slice 3 protocol in isolation:
+managed primitive and linked gates, the stateless OwnerClaim-to-DP-014
+continuation, exact revision threading and managed Flow outcome adaptation.
+TASK-037 is independently accepted; Slice 4 has not started. The overall status
+remains Planned.
 
 This focused design decomposes the remaining Approved DP-019 prerequisites —
 exact orchestration authorization, private managed invocation, and
@@ -488,16 +492,20 @@ The fixed order, after the sole Owner claim and before Load, is:
 1. resolve the already-admitted pending-Stop rendezvous through the original
    Stop claimant only; `StopConverged` exits without either write, and
    `Blocked` leaves the linked set unresolved;
-2. only after definitive proof that no pending Stop remains, conditionally
+2. only after definitive proof that no pending Stop remains, read the exact
+   Runtime Instance and prove workspace, configuration, instance identity, and
+   expected revision before any mutation; read failure or any mismatch is
+   `Blocked` with zero writes;
+3. after that pre-mutation proof, conditionally
    publish the exact Launch Attempt membership and version pin in DP-014 at the
    expected aggregate revision;
-3. read the committed revision returned by that write and conditionally bind
+4. read the committed revision returned by that write and conditionally bind
    the exact active attempt to the composition-owned execution generation at
    that new expected revision;
-4. after any indeterminate result, inspect exact aggregate facts by
+5. after any indeterminate result, inspect exact aggregate facts by
    `ReadRuntimeInstance` and `ReadLaunchAttemptHistory` and converge to an
    exact existing terminal outcome or return `Blocked`;
-5. execute the final Stop-versus-Continue gate for a Stop admitted after the
+6. execute the final Stop-versus-Continue gate for a Stop admitted after the
    early rendezvous check, then release `Continue` only under confirmed, exact
    same-generation binding.
 
@@ -513,6 +521,8 @@ The revision returned by a committed attempt claim is the only expected
 revision accepted by the generation bind. No stale write is retried. After any
 error or non-commit, exact inspection uses a revision sandwich:
 `ReadRuntimeInstance A -> ReadLaunchAttemptHistory -> ReadRuntimeInstance B`.
+The pre-mutation scope/revision read is not sandwich observation A; inspection
+starts with a fresh read after the ambiguous operation.
 The result is coherent only when A and B have equal revisions and identical
 immutable identity and active-attempt facts. Exact active attempt, version,
 Claimed phase, and generation may prove satisfied convergence. A coherent
@@ -640,8 +650,8 @@ slice.
 
 ### Slice 3 — OwnerClaim-to-DP-014 binding sequence
 
-Current slice status: next Planned slice after accepted TASK-035 Slice 2R and
-TASK-036 readiness reconciliation; not activated.
+Current slice status: implemented and independently accepted in isolation by
+TASK-037.
 
 - Implement the managed parent/StartTarget adapter, the common command-owned
   early/final rendezvous gates, and the stateless
@@ -660,8 +670,8 @@ TASK-036 readiness reconciliation; not activated.
 
 ### Slice 4 — DP-016 orchestrator readiness re-assessment
 
-Current slice status: not started; it remains gated by Slice 3 implementation
-and independent acceptance.
+Current slice status: not started. TASK-037 acceptance satisfies its entry
+prerequisite, but no Slice 4 intake is activated automatically.
 
 - Only after Slices 1–3, including Slice 2R, are implemented and independently
   accepted, re-assess
@@ -698,13 +708,13 @@ implemented no slice; successor TASK-031 and TASK-032 produced historically
 Coordinator-Accepted partial isolated implementations of Slices 1 and 2.
 TASK-034 identified the remaining conformance gap, TASK-035 implements and
 independently accepts its Slice 2R repair in isolation, and TASK-036 resolves
-the remaining Slice-3 command-gate and continuation API ambiguity. The
-repository still lacks Slice 3 attempt publication/binding composition, the
-concrete private composition invoker, activation orchestrator, external
-persistence, API, recovery worker, and production wiring. TASK-026 therefore
-remains Blocked; Slice 3 is the next unactivated implementation slice, and later prerequisites
-still require separate implementation and
-acceptance before readiness may be reconsidered against unchanged DP-016.
+the remaining Slice-3 command-gate and continuation API ambiguity. TASK-037
+implements and independently accepts Slice 3 in isolation. The
+repository still lacks the concrete private composition invoker, later DP-014
+terminal publication and DP-015 command/phase terminalization after the Owner
+result, activation orchestrator, external persistence, API, recovery worker,
+and production wiring. TASK-026 therefore remains Blocked; Slice 4 is not
+activated and is only the next separate readiness-reassessment candidate.
 
 ## 15. Consequences
 
@@ -718,8 +728,8 @@ Positive:
 
 Costs:
 
-- independent Slice 2R acceptance and Slice 3 still precede any DP-016
-  readiness re-assessment;
+- accepted TASK-037 Slice 3 now permits, but does not activate, a separate
+  DP-016 readiness re-assessment;
 - the synchronous pending-Stop rendezvous may block callers;
 - process restart still requires Planned DP-017 implementation;
 - production integration still requires external durability and a composition
@@ -732,8 +742,8 @@ prerequisites in this Draft/Planned proposal and implements each slice only
 through a separate, individually reviewed task. Slices 1 and 2 remain
 historically accepted partial implementations; TASK-035 implements and
 independently accepts Slice 2R in isolation; TASK-036 fixes the exact Slice-3
-protocol without implementing it; and Slice 3 remains the next Planned,
-unactivated implementation slice. This
+protocol; and TASK-037 implements and independently accepts Slice 3 in
+isolation. Slice 4 remains unactivated. This
 proposal does not approximate DP-016
 with an adapter, does not add replacement/rollback operations to the Owner,
 does not transfer permits, does not change any Approved status or semantic,

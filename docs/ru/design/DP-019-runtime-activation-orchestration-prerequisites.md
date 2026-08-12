@@ -7,15 +7,19 @@
 - **Статус проектирования:** Approved
 - **Статус реализации:** Planned в целом; parent/phase storage, callback
   capability, sequential phase core и command-boundary Continue/pending-Stop
-  rendezvous реализованы изолированно
+  rendezvous реализованы изолированно; managed gates и continuation Среза 3
+  реализованы и независимо приняты изолированно
 
 Этот focused design закрывает только неоднозначность integration-contract,
 обнаруженную TASK-026. Репозиторий реализует isolated parent/phase core DP-015,
 command-boundary Continue/pending-Stop rendezvous, exact authorization и
 dependency-leaf binding values, primitive managed adapter и seam managed
-Flow/OwnerClaimView. Concrete private scoped invoker и continuation, managed
-parent/phase adapter, binding attempt/generation DP-014, activation orchestrator,
-external persistence, API, recovery worker и production wiring отсутствуют.
+Flow/OwnerClaimView. TASK-037 реализует изолированно managed
+parent/StartTarget adapter, общие managed gates, concrete stateless
+continuation, binding sequence attempt/generation DP-014 и exact адаптацию
+outcomes managed Flow, реализованные и независимо принятые изолированно. Concrete private scoped
+invoker, последующая terminal publication, activation orchestrator, external
+persistence, API, recovery worker и production wiring отсутствуют.
 TASK-026 остаётся Blocked,
 пока определённые здесь prerequisites
 не реализованы и независимо не приняты.
@@ -457,17 +461,22 @@ barriers, reconstruction invalidation, non-bypassable StartTarget Continue gate
 и synchronous pending-Stop rendezvous с immutable signal cause.
 
 TASK-031/TASK-032/TASK-035 реализуют изолированно exact authorization и binding
-values, primitive managed adapter и seam managed Flow/OwnerClaimView.
-Репозиторий всё ещё не содержит concrete private scoped invoker и continuation,
-managed parent/phase adapter, attempt publication/binding composition,
-activation orchestrator и production composition audit полного design.
+values, primitive managed adapter и seam managed Flow/OwnerClaimView. TASK-037
+реализует изолированно managed parent/StartTarget adapter, общие managed gates,
+concrete stateless continuation, sequence membership/generation binding
+попытки и отображение outcomes managed Flow, реализованные и независимо
+принятые изолированно.
+Репозиторий всё ещё не содержит concrete private scoped invoker, последующую
+terminal publication и terminalization command/phase, activation orchestrator
+и production composition audit полного design.
 
 Поэтому TASK-026 остаётся Blocked. Следующие tasks должны реализовать и
 независимо проверить оставшиеся prerequisites. Только после этого TASK-026
 может быть повторно оценена против полного неизменённого набора DP-016 proofs.
 Focused readiness decomposition этих prerequisites зафиксирована в зеркальном
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), со
-статусом Design Status Draft и Implementation Status Planned.
+статусом Design Status Draft и Implementation Status Planned overall, где
+Срез 3 реализован и независимо принят изолированно.
 
 ## 23. Последствия
 
