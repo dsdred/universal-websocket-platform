@@ -70,6 +70,27 @@ text is not an implemented parent/phase API, and documenting DP-016 §25 proof 9
 as a limitation would violate the original Definition of Done. No production
 code or tests were created from that proposal.
 
+## TASK-038 Readiness Reassessment
+
+Accepted DP-020 Slices 1–3 now implement the original command authorization,
+parent/phase, rendezvous, managed Flow/Owner-claim continuation, and DP-014
+binding seams in isolation. Completed and Coordinator-Accepted TASK-038 records
+the exact verdict
+`TASK-026 REMAINS BLOCKED`: current `Owner.Stop(ctx)` cannot atomically select
+an expected Launch Attempt, while Observe-then-Stop and an invoker-level mutex
+cannot exclude a newer attempt without TOCTOU or violating lock/lifetime rules.
+
+The first bounded prerequisite candidate is a separate design-only DP-010
+atomic expected-attempt Stop contract; it remains unactivated pending separate
+intake. TASK-038 does not finalize its API or change Approved sources. The
+private exact-scope composition invoker remains a later prerequisite after the
+new contract is designed, implemented, and independently accepted.
+Post-Owner DP-014 terminal publication and DP-015 command/phase terminalization
+remain core TASK-026 orchestrator work, not a separate prerequisite. External
+API, persistence, recovery, reporting, production wiring, and Production
+Activation remain outside the bounded reassessment. This record stays
+`Blocked by Architecture`; no automatic reactivation or acceptance occurred.
+
 ## Sources of Truth
 
 - Active ARCH-004 §19(4);

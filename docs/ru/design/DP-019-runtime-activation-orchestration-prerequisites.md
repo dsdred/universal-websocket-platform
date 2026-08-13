@@ -17,12 +17,15 @@ dependency-leaf binding values, primitive managed adapter и seam managed
 Flow/OwnerClaimView. TASK-037 реализует изолированно managed
 parent/StartTarget adapter, общие managed gates, concrete stateless
 continuation, binding sequence attempt/generation DP-014 и exact адаптацию
-outcomes managed Flow, реализованные и независимо принятые изолированно. Concrete private scoped
-invoker, последующая terminal publication, activation orchestrator, external
-persistence, API, recovery worker и production wiring отсутствуют.
-TASK-026 остаётся Blocked,
-пока определённые здесь prerequisites
-не реализованы и независимо не приняты.
+outcomes managed Flow, реализованные и независимо принятые изолированно.
+TASK-038 определяет factual readiness gap: текущий Stop DP-010 не может
+атомарно выбрать ожидаемый Launch Attempt, поэтому до concrete private
+exact-scope composition invoker требуется отдельное design update. Это
+утверждение не изменяет данный Approved decision. Terminal publication после
+Owner относится к самому последующему orchestrator TASK-026; этот orchestrator,
+external persistence, API, recovery worker и production wiring отсутствуют.
+TASK-026 остаётся Blocked до отдельного design, implementation и последующей
+переоценки readiness.
 
 ## 2. Назначение
 
@@ -465,10 +468,11 @@ values, primitive managed adapter и seam managed Flow/OwnerClaimView. TASK-037
 реализует изолированно managed parent/StartTarget adapter, общие managed gates,
 concrete stateless continuation, sequence membership/generation binding
 попытки и отображение outcomes managed Flow, реализованные и независимо
-принятые изолированно.
-Репозиторий всё ещё не содержит concrete private scoped invoker, последующую
-terminal publication и terminalization command/phase, activation orchestrator
-и production composition audit полного design.
+принятые изолированно. TASK-038 дополнительно устанавливает, что отдельные
+design и implementation atomic expected-attempt Owner Stop должны предшествовать
+concrete private scoped invoker. Репозиторий всё ещё не содержит этот invoker,
+последующую terminal publication и terminalization command/phase, activation
+orchestrator и production composition audit полного design.
 
 Поэтому TASK-026 остаётся Blocked. Следующие tasks должны реализовать и
 независимо проверить оставшиеся prerequisites. Только после этого TASK-026
@@ -489,7 +493,8 @@ Focused readiness decomposition этих prerequisites зафиксирован�
 
 Стоимость:
 
-- минимум одна prerequisite implementation task предшествует TASK-026;
+- минимум одна prerequisite design task и её implementation предшествуют
+  TASK-026;
 - synchronous pending-Stop rendezvous может блокировать callers;
 - process restart всё ещё требует Planned DP-017 implementation;
 - production integration всё ещё требует external durability и composition

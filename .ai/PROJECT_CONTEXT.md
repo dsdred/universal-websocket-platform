@@ -41,7 +41,11 @@
   proof PASS 0/0, Independent Reviewer APPROVED 0/0, Coordinator Acceptance
   завершена. Concrete private
   composition invoker, terminal publication, orchestration и production wiring
-  отсутствуют; Slice 4 не активирован, TASK-026 остаётся Blocked by Architecture.
+  отсутствуют. Slice 4 активирован как design/readiness TASK-038; его verdict
+  `TASK-026 REMAINS BLOCKED` после Reviewer B-001/B-002 rework принят
+  Coordinator; repeat Reviewer APPROVED 0/0. Первый bounded candidate —
+  design-only atomic expected-attempt Owner Stop contract, не активирован;
+  private exact-scope invoker остаётся позже.
   HTTP, concrete policy, external command storage, recovery/reporting
   package/schema, management wiring и Production Activation отсутствуют**
 - Последняя завершённая development task: **TASK-037 — Runtime Owner Claim
@@ -49,9 +53,9 @@
 - Последняя завершённая operational task: **TASK-012 — Engineering Process
   Hardening; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
-- Последняя завершённая architecture task: **TASK-036 — Slice 3 Readiness
-  Reconciliation; Completed — Coordinator Accepted; Independent Review
-  Approved 0/0; Scope Audit 13/0/0**
+- Последняя завершённая architecture task: **TASK-038 — Slice 4 Orchestrator
+  Readiness Reassessment; Completed — Coordinator Accepted; repeat Reviewer
+  APPROVED 0/0; Scope Audit 14/0/0**
 - Текущая architecture task: **отсутствует**
 - TASK-027 acceptance evidence: **DP-019 Approved/Planned; implementable
   parent/phase, exact authorization and private per-call managed Start seams
@@ -100,8 +104,8 @@
   audit подтверждены; Commit Gate, commit, push и publication не выполнялись**
 - Текущая development task: **отсутствует. TASK-037 реализовала и независимо
   приняла Slice 3 изолированно. Concrete private composition invoker, terminal
-  publication, Slice 4 и production wiring отсутствуют; TASK-026 остаётся
-  Blocked by Architecture**
+  publication и production wiring отсутствуют; TASK-038 выполняет Slice 4
+  readiness reassessment, TASK-026 остаётся Blocked by Architecture**
 - TASK-032 acceptance evidence: **Completed — Coordinator Accepted после
   rework; DP-020 deferred slice 2 реализован изолированно в
   `internal/runtimelaunchflow`: ManagedFlow/NewManaged/StartManaged, immutable
@@ -161,10 +165,10 @@
   publication. Exact authorization/private
   invoker, managed Flow/OwnerClaimView, DP-014 binding, orchestrator и
   production composition остаются Planned; TASK-026 remains Blocked**
-- Следующая рекомендация: **отдельный intake DP-020 Slice 4
-  orchestration-readiness reassessment после принятой TASK-037; не активирован.
-  Concrete private composition invoker, terminal publication, orchestration и
-  production wiring остаются Planned**
+- Следующая рекомендация: **отдельный design-only intake atomic
+  expected-attempt Owner Stop contract; candidate не
+  активирован. Private exact-scope invoker остаётся последующей prerequisite;
+  terminal publication остаётся core work TASK-026**
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы
   изолированно; Repeat Independent Review Approved, blocking/non-blocking 0;
@@ -175,9 +179,9 @@
   closure commit и publication ещё не выполнялись. Subsequently task commit
   `d28efa4e88e02ef528c78c3ca88b3f91945069ce` was published through PR #28
   and merged as `ba75e54e00c3cf1d0d87ca2a985acc9699698efd`**
-- Последняя завершённая documentation task: **TASK-037 — Runtime Owner Claim
-  Binding; Completed — Coordinator Accepted; PROCESS-002 Synchronized;
-  Independent Reviewer APPROVED 0/0; Scope Audit 27/0/0**
+- Последняя завершённая documentation task: **TASK-038 — Slice 4 Orchestrator
+  Readiness Reassessment; Completed — Coordinator Accepted; PROCESS-002
+  Synchronized; repeat Reviewer APPROVED 0/0; Scope Audit 14/0/0**
 - Текущая documentation task: **отсутствует**
 - Trusted baseline TASK-009: **clean synchronized
   `main@63b961eeb59af9205c3c3d0b68d3f4bd7b8ac25c`; локальная ветка

@@ -11,9 +11,13 @@
 ordering contract activation, replacement и explicit rollback одного Runtime
 Instance. Этот документ не создаёт activation/replacement orchestrator или
 его workflow persistence, API, recovery worker или production wiring.
-Implementation architecture-blocked, пока оставшиеся exact authorization,
-private managed Start-claim continuation, Owner-claim view и binding DP-014 из
-Approved/Planned DP-019 не реализованы и независимо не приняты.
+Принятые Срезы 1–3 DP-020 теперь изолированно реализуют exact authorization,
+managed command/Flow/Owner-claim, continuation и binding DP-014 из DP-019.
+TASK-038 устанавливает, что implementation всё ещё architecture-blocked,
+поскольку текущий Stop DP-010 не может атомарно target ожидаемый Launch Attempt.
+До последующего private exact-scope invoker требуется отдельное design update.
+Terminal publication DP-014 и DP-015 после Owner остаётся частью этого planned
+orchestrator.
 
 ## 2. Назначение
 
@@ -486,8 +490,10 @@ command/aggregate/workflow storage, public management API, recovery executor и
 production wiring отсутствуют.
 
 Approval закрывает design gate section 19(4), но не реализует и не подключает
-contract. TASK-026 остаётся Blocked до implementation и acceptance всех
-оставшихся prerequisites DP-019; reduced slice DP-016 запрещён.
+contract. TASK-038 подтверждает, что TASK-026 остаётся Blocked прежде всего
+из-за отсутствующего design contract атомарного expected-attempt Owner Stop.
+Этот design candidate не активирован; private exact-scope invoker остаётся
+последующей prerequisite. Reduced slice DP-016 запрещён.
 
 ## 29. Решение
 

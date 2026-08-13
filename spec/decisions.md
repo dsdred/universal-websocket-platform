@@ -210,5 +210,16 @@ Reviewer — `APPROVED` 0/0; Coordinator Acceptance — `Accepted`, поэтом
 TASK-037 завершена как `Completed — Coordinator Accepted`. Approved
 DP-014/DP-015/DP-019 semantics не меняются; concrete private
 composition invoker, terminal publication, DP-015 terminalization,
-orchestration и production wiring отсутствуют. Slice 4 не активирован, TASK-026
-остаётся Blocked.
+orchestration и production wiring отсутствуют.
+
+TASK-038 активирует только design/readiness reassessment Среза 4. Матрица всех
+19 proofs §25 DP-016 после Reviewer B-001/B-002 rework классифицирована как
+7 Direct, 10 Compositional, 2 Missing, 0 Deferred; exact verdict —
+`TASK-026 REMAINS BLOCKED`. Первый bounded prerequisite candidate — отдельный
+design-only atomic expected-attempt Owner Stop contract; он не активирован и
+TASK-038 не финализирует его API. Private exact-scope composition invoker
+остаётся последующей prerequisite. Terminal publication DP-014 и
+terminalization DP-015 после Owner остаются core work TASK-026, а не отдельной
+prerequisite. Repeat Reviewer APPROVED 0/0 и Coordinator Acceptance завершены;
+TASK-038 имеет статус `Completed — Coordinator Accepted`. Approved/Planned
+DP-016 не меняется.
