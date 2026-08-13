@@ -11,10 +11,13 @@ This approved design defines a planned ordering
 contract for activation, replacement, and explicit rollback of one Runtime
 Instance. No activation/replacement orchestrator or its workflow persistence,
 API, recovery worker, or production wiring exists as a result of this document.
-Implementation is architecture-blocked until the remaining Approved/Planned
-DP-019 exact authorization, private managed Start-claim continuation,
-Owner-claim view, and DP-014 binding prerequisites are implemented and
-independently accepted.
+Accepted DP-020 Slices 1–3 now implement the DP-019 exact authorization,
+managed command/Flow/Owner-claim, continuation, and DP-014 binding seams in
+isolation. TASK-038 finds implementation still architecture-blocked because
+current DP-010 Stop cannot atomically target an expected Launch Attempt. A
+separate design update is required before the later private exact-scope
+invoker. Post-Owner DP-014 and DP-015 terminal publication remains part of this
+planned orchestrator.
 
 ## 2. Purpose
 
@@ -493,8 +496,10 @@ durable command/aggregate/workflow storage, public management API, recovery
 executor, or production wiring.
 
 Approval closes the section 19(4) design gate but does not implement or wire
-the contract. TASK-026 remains Blocked until all remaining DP-019 prerequisites
-are implemented and accepted; no reduced DP-016 slice is permitted.
+the contract. TASK-038 confirms TASK-026 remains Blocked first by the absent
+design contract for atomic expected-attempt Owner Stop. That design candidate
+is not activated; the private exact-scope invoker remains a later prerequisite.
+No reduced DP-016 slice is permitted.
 
 ## 29. Decision
 

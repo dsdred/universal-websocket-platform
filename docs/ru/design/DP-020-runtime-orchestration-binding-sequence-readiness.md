@@ -19,7 +19,9 @@ TASK-036 устраняет оставшуюся неоднозначность 
 Среза 3, а TASK-037 реализует этот протокол Среза 3 изолированно: managed
 primitive и linked gates, stateless continuation OwnerClaim-to-DP-014, exact
 threading revision и адаптацию outcomes managed Flow. TASK-037 независимо
-принята; Срез 4 не начат. Общий статус остаётся Planned.
+принята. Срез 4 завершён и Coordinator Accepted как TASK-038 с verdict
+`TASK-026 REMAINS BLOCKED`; его первый design-only следующий candidate не
+активирован. Общий статус остаётся Planned.
 
 Этот focused design разделяет оставшиеся prerequisites Approved DP-019 — точную
 авторизацию оркестрации, private managed invocation и связывание
@@ -663,14 +665,17 @@ Production composition/private-invoker wiring не входит в этот ср
 
 ### Срез 4 — переоценка готовности оркестратора DP-016
 
-Текущий статус среза: не начат. Acceptance TASK-037 удовлетворяет его entry
-prerequisite, но не активирует автоматически intake Среза 4.
+Текущий статус среза: завершён и Coordinator Accepted как TASK-038. Его reassessment из 19 строк
+фиксирует `TASK-026 REMAINS BLOCKED`: 7 Direct, 10 Compositional, 2 Missing и
+0 Deferred proofs после Reviewer rework и repeat Reviewer APPROVED 0/0.
+Принятый verdict не активирует implementation и не меняет статус TASK-026 автоматически.
 
 - Только после того, как Slices 1–3, включая Срез 2R, реализованы и независимо
   приняты, переоценить,
   может ли TASK-026 быть разблокирована против неизменных proofs §25 DP-016.
-- Этот срез не запускается TASK-030 и может заключить, что TASK-026 остаётся
-  Blocked.
+- TASK-038 определяет design-only contract атомарного expected-attempt Owner
+  Stop как первую bounded prerequisite. Он не активируется автоматически;
+  private exact-scope composition invoker остаётся последующим.
 
 Каждый срез требует собственного intake задачи, Existing Coverage Report,
 Verification Matrix, Independent Review, PROCESS-002 и Coordinator Acceptance.
@@ -702,12 +707,13 @@ Implementation Status остаётся Planned overall. Сама design-зада
 обнаружила оставшийся gap соответствия, TASK-035 реализует и независимо
 принимает его repair Среза 2R изолированно, а TASK-036 устраняет оставшуюся
 неоднозначность command-gate и continuation API Среза 3. TASK-037 реализует и
-независимо принимает Срез 3 изолированно. Репозиторий всё ещё не
-содержит concrete private composition invoker, последующую terminal publication
-DP-014 и terminalization command/phase DP-015 после результата Owner,
-оркестратор активации, external persistence, API, worker recovery и production
-wiring. Поэтому TASK-026 остаётся Blocked; Срез 4 не активирован и является
-лишь следующим отдельным candidate переоценки readiness.
+независимо принимает Срез 3 изолированно. Репозиторий всё ещё не содержит
+contract атомарного expected-attempt Owner Stop, последующий concrete private
+exact-scope composition invoker, оркестратор активации, external persistence,
+API, worker recovery и production wiring. Последующая
+terminal publication DP-014 и terminalization command/phase DP-015 после
+результата Owner принадлежат orchestrator TASK-026, а не отдельной prerequisite.
+Поэтому TASK-026 остаётся Blocked; Срез 4 завершён и принят как TASK-038.
 
 ## 15. Последствия
 
@@ -721,8 +727,8 @@ wiring. Поэтому TASK-026 остаётся Blocked; Срез 4 не акт
 
 Стоимость:
 
-- принятый Срез 3 TASK-037 теперь разрешает, но не активирует, отдельную
-  переоценку готовности DP-016;
+- TASK-038 выполняет разрешённую переоценку readiness, но не активирует её
+  design-only candidate atomic expected-attempt Stop;
 - synchronous rendezvous pending-Stop может блокировать callers;
 - restart процесса по-прежнему требует Planned реализации DP-017;
 - production integration по-прежнему требует external durability и аудита
@@ -735,9 +741,9 @@ UWP фиксирует разложение готовности оставши�
 индивидуально reviewed задачу. Срезы 1 и 2 остаются исторически принятыми
 частичными реализациями; TASK-035 реализует и независимо принимает Срез 2R
 изолированно; TASK-036 фиксирует exact протокол Среза 3; а TASK-037 реализует и
-независимо принимает Срез 3 изолированно. Срез 4 остаётся
-неактивированным.
-Proposal не approximates DP-016 adapter-ом,
+независимо принимает Срез 3 изолированно. Срез 4 завершён и принят как TASK-038
+с remains-Blocked verdict. Proposal не
+approximates DP-016 adapter-ом,
 не добавляет операции replacement/rollback Owner, не передаёт permits, не меняет
 ни один Approved статус или семантику и не выдаёт planned capability за
 реализованную.

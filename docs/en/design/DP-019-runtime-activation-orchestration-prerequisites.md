@@ -17,11 +17,14 @@ dependency-leaf binding values, primitive managed adapter, and managed
 Flow/OwnerClaimView seam. TASK-037 implements the managed parent/StartTarget
 adapter, common managed gates, concrete stateless continuation, DP-014
 attempt/generation binding sequence, and exact managed Flow outcome adaptation,
-implemented and independently accepted in isolation. The concrete private
-scoped invoker, later terminal publication, activation orchestrator, external
-persistence, API, recovery worker, and production wiring remain absent.
-TASK-026 remains Blocked until the prerequisites defined here are implemented
-and independently accepted.
+implemented and independently accepted in isolation. TASK-038 identifies a
+factual readiness gap: current DP-010 Stop cannot atomically select an expected
+Launch Attempt, so a separate design update is required before the concrete
+private exact-scope composition invoker. This statement does not amend this
+Approved decision. Post-Owner terminal publication belongs to the later
+TASK-026 orchestrator itself; that orchestrator, external persistence, API,
+recovery worker, and production wiring remain absent. TASK-026 remains Blocked
+pending the separate design, implementation, and later readiness reassessment.
 
 ## 2. Purpose
 
@@ -474,10 +477,11 @@ primitive managed adapter, and managed Flow/OwnerClaimView seam in isolation.
 TASK-037 implements the managed parent/StartTarget adapter, common managed
 gates, concrete stateless continuation, attempt membership/generation binding
 sequence, and managed Flow outcome mapping, implemented and independently
-accepted in isolation. The repository still lacks the concrete private scoped
-invoker, later terminal publication and command/phase terminalization,
-activation orchestrator, and production composition audit required by the
-complete design.
+accepted in isolation. TASK-038 additionally finds that a separate design and
+implementation of atomic expected-attempt Owner Stop must precede the concrete
+private scoped invoker. The repository still lacks that invoker, later terminal
+publication and command/phase terminalization, activation orchestrator, and
+production composition audit required by the complete design.
 
 TASK-026 therefore remains Blocked. Successor tasks must implement and
 independently verify the remaining prerequisites before TASK-026 may be
@@ -498,7 +502,8 @@ Positive:
 
 Costs:
 
-- at least one prerequisite implementation task precedes TASK-026;
+- at least one prerequisite design task and its implementation precede
+  TASK-026;
 - the synchronous pending-Stop rendezvous can block its callers;
 - process restart still requires Planned DP-017 implementation;
 - production integration still requires external durability and composition

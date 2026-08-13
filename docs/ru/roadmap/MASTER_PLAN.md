@@ -367,11 +367,14 @@ Architectural debt относится к границам, которые ост
   этот protocol Среза 3 изолированно, включая no-claim gate, stateless
   continuation, exact DP-014 attempt/generation revision threading и managed
   Flow outcome adaptation; Independent Reviewer APPROVED 0/0 и Coordinator
-  Acceptance завершена. Concrete private-invoker wiring, terminal publication,
-  orchestration и production composition остаются Planned; reassessment
-  readiness Среза 4 является следующим отдельным candidate и не активирован.
-  TASK-026 остаётся Blocked до implementation и acceptance всех оставшихся
-  prerequisites; Integration и Production Activation остаются неактивными.
+  Acceptance завершена. TASK-038 активирует только reassessment readiness
+  Среза 4 и после Reviewer rework фиксирует 7 Direct, 10 Compositional,
+  2 Missing и 0 Deferred proofs §25 DP-016; verdict
+  `TASK-026 REMAINS BLOCKED` Coordinator Accepted после repeat Reviewer
+  APPROVED 0/0. Первый bounded candidate — неактивированный design-only atomic expected-attempt Owner Stop
+  contract; private invoker остаётся последующим. Terminal publication остаётся core work TASK-026. Orchestration и
+  production composition остаются Planned; TASK-026 остаётся Blocked;
+  Integration и Production Activation остаются неактивными.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Message Persistence, Delivery и Plugin всё ещё требуют focused design.

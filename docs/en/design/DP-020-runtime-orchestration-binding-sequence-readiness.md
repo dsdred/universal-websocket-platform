@@ -19,8 +19,9 @@ absent. TASK-036 resolves the remaining Slice-3 command-gate and continuation
 API ambiguity, and TASK-037 implements that Slice 3 protocol in isolation:
 managed primitive and linked gates, the stateless OwnerClaim-to-DP-014
 continuation, exact revision threading and managed Flow outcome adaptation.
-TASK-037 is independently accepted; Slice 4 has not started. The overall status
-remains Planned.
+TASK-037 is independently accepted. Slice 4 is completed and Coordinator
+Accepted as TASK-038 with verdict `TASK-026 REMAINS BLOCKED`; its first
+design-only next candidate is not activated. The overall status remains Planned.
 
 This focused design decomposes the remaining Approved DP-019 prerequisites —
 exact orchestration authorization, private managed invocation, and
@@ -670,14 +671,17 @@ TASK-037.
 
 ### Slice 4 — DP-016 orchestrator readiness re-assessment
 
-Current slice status: not started. TASK-037 acceptance satisfies its entry
-prerequisite, but no Slice 4 intake is activated automatically.
+Current slice status: completed and Coordinator Accepted as TASK-038. Its 19-row reassessment records
+`TASK-026 REMAINS BLOCKED`: 7 Direct, 10 Compositional, 2 Missing, and 0 Deferred
+proofs after Reviewer rework and repeat Reviewer APPROVED 0/0. The accepted
+verdict does not activate implementation or change TASK-026 status automatically.
 
 - Only after Slices 1–3, including Slice 2R, are implemented and independently
   accepted, re-assess
   whether TASK-026 can be unblocked against the unmodified DP-016 §25 proofs.
-- This slice is not started by TASK-030 and may conclude that TASK-026 remains
-  Blocked.
+- TASK-038 identifies a design-only atomic expected-attempt Owner Stop contract
+  as the first bounded prerequisite. It is not activated automatically; the
+  private exact-scope composition invoker remains later.
 
 Each slice requires its own task intake, Existing Coverage Report, Verification
 Matrix, Independent Review, PROCESS-002, and Coordinator Acceptance.
@@ -710,11 +714,12 @@ TASK-034 identified the remaining conformance gap, TASK-035 implements and
 independently accepts its Slice 2R repair in isolation, and TASK-036 resolves
 the remaining Slice-3 command-gate and continuation API ambiguity. TASK-037
 implements and independently accepts Slice 3 in isolation. The
-repository still lacks the concrete private composition invoker, later DP-014
-terminal publication and DP-015 command/phase terminalization after the Owner
-result, activation orchestrator, external persistence, API, recovery worker,
-and production wiring. TASK-026 therefore remains Blocked; Slice 4 is not
-activated and is only the next separate readiness-reassessment candidate.
+repository still lacks an atomic expected-attempt Owner Stop contract, the
+later concrete private exact-scope composition invoker, activation orchestrator,
+external persistence, API, recovery worker, and production wiring. Later DP-014 terminal publication and DP-015 command/phase
+terminalization after the Owner result belong to the TASK-026 orchestrator,
+not to a separate prerequisite. TASK-026 therefore remains Blocked; Slice 4 is
+completed and accepted as TASK-038.
 
 ## 15. Consequences
 
@@ -728,8 +733,8 @@ Positive:
 
 Costs:
 
-- accepted TASK-037 Slice 3 now permits, but does not activate, a separate
-  DP-016 readiness re-assessment;
+- TASK-038 performs the permitted readiness reassessment but does not activate
+  its design-only atomic expected-attempt Stop candidate;
 - the synchronous pending-Stop rendezvous may block callers;
 - process restart still requires Planned DP-017 implementation;
 - production integration still requires external durability and a composition
@@ -743,8 +748,8 @@ through a separate, individually reviewed task. Slices 1 and 2 remain
 historically accepted partial implementations; TASK-035 implements and
 independently accepts Slice 2R in isolation; TASK-036 fixes the exact Slice-3
 protocol; and TASK-037 implements and independently accepts Slice 3 in
-isolation. Slice 4 remains unactivated. This
-proposal does not approximate DP-016
+isolation. Slice 4 is completed and accepted as TASK-038 with a remains-Blocked
+verdict. This proposal does not approximate DP-016
 with an adapter, does not add replacement/rollback operations to the Owner,
 does not transfer permits, does not change any Approved status or semantic,
 and does not treat planned capability as implemented.
