@@ -42,7 +42,7 @@ Proposal уточняет, но не переопределяет:
 - [DP-015](DP-015-runtime-management-command-idempotency.md) для durable
   command identity, execution permits, replay и unresolved barriers.
 - [DP-011](DP-011-runtime-launch-pipeline-integration.md) для Owner-owned Start
-  claim и planned private extension claim-continuation.
+  claim и managed extension claim-continuation, реализованного изолированно.
 - [DP-017](DP-017-runtime-recovery-reconciliation.md) для recovery boundary,
   которая требует и использует DP-014-owned execution-generation binding.
 - [DP-019](DP-019-runtime-activation-orchestration-prerequisites.md) для exact
@@ -51,9 +51,11 @@ Proposal уточняет, но не переопределяет:
 
 Принятые ADR и Active/Frozen architecture остаются authoritative. DP-013
 остаётся Draft и реализован изолированно. Approved DP-014 и primitive boundary
-DP-015, partial parent/phase sequential core DP-019 и command-boundary
-Continue/pending-Stop rendezvous реализованы изолированно; managed continuation
-и Approved DP-016/DP-017 остаются Planned.
+DP-015, partial parent/phase sequential core DP-019, command-boundary
+Continue/pending-Stop rendezvous, managed command gates, continuation и binding
+sequence attempt/generation DP-014 реализованы и независимо приняты
+изолированно. Approved DP-016 и DP-017 остаются Planned overall; concrete
+composition invoker и orchestrator отсутствуют.
 
 ## 4. Область
 
@@ -248,10 +250,10 @@ linked Start-target phase parent:
 Definitive failure phase claim оставляет parent terminal и Instance Stopped;
 indeterminate claim делает linked command set unresolved. Затем DP-013 вызывает
 existing Flow, и только Owner может claim Launch Attempt. Gate не pre-create
-attempt. Planned private continuation ниже является coordination seam
-observation claim, а не ownership handoff.
+attempt. Private continuation ниже является реализованным изолированно
+coordination seam observation claim, а не ownership handoff.
 
-Planned private continuation Start-claim DP-011/DP-013 выполняется синхронно
+Реализованная isolated private continuation Start-claim DP-011 выполняется синхронно
 после claim Owner и до Load. При pending Stop continuation сигнализирует original
 blocked claimant Stop. Тот call stack сохраняет permit, проверяет cancellation,
 единолично вызывает exact Stop DP-013, публикует outcome и сигнализирует result.
@@ -272,8 +274,10 @@ publication command/phase. После confirmed
 binding final per-Instance gate упорядочивает new Stop claim и `Continue`.
 Выигравший Stop converge до Load; выигравший `Continue` releases Flow, а later
 Stop обычно достигает claimed attempt. Admission/Owner lock не удерживается во
-время persistence, wait или convergence Stop. Current isolated Flow не реализует
-continuation/binding gate, поэтому DP-016 остаётся Planned.
+время persistence, wait или convergence Stop. Current managed Flow,
+continuation и binding gate реализуют эти seams изолированно. DP-016 остаётся
+Planned overall, поскольку concrete composition-private invoker DP-013,
+terminal publication, orchestrator и production wiring отсутствуют.
 
 ## 16. Explicit rollback
 

@@ -77,10 +77,10 @@ CGO/gcc, substitute stress `-count=100` PASS); Independent Review Approved with
 Findings 0/2 (resolved); Verification Matrix, PROCESS-002, Scope Audit 7/0/0
 PASS. Commit, push, PR, merge и publication не выполнялись.
 
-**Последняя завершённая documentation task:** TASK-040 — Expected-Attempt
-Runtime Owner Stop Implementation; `Completed — Coordinator Accepted`;
-PROCESS-002 Synchronized; repeat final Reviewer `APPROVED` 0/0; Scope Audit
-21/0/0.
+**Последняя завершённая documentation task:** TASK-041 — Managed Continuation
+Documentation Baseline Reconciliation; `Completed — Coordinator Accepted
+(2026-08-20)`; PROCESS-002 Synchronized; final Reviewer `APPROVED` 0/0; Scope
+Audit 15/0/0. Commit и publication не авторизованы и не выполнялись.
 
 **Текущая documentation task:** отсутствует.
 
@@ -596,8 +596,10 @@ Accepted как design-update TASK-039: принятый Draft DP-010 contract a
 expected-attempt Owner Stop зафиксирован. TASK-040 завершена как `Completed —
 Coordinator Accepted`: contract реализован и верифицирован изолированно,
 repeat final Reviewer `APPROVED` 0/0.
-Следующая неактивированная рекомендация — private exact-scope composition
-invoker; terminal publication остаётся core work TASK-026.
+Documentation-only TASK-041 завершена как `Completed — Coordinator Accepted
+(2026-08-20)` после синхронизации critical live status drift; final Reviewer
+`APPROVED` 0/0. Следующий private exact-scope composition invoker design не
+активирован. Terminal publication остаётся core work TASK-026.
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task

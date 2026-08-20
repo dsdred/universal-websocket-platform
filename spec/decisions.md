@@ -58,10 +58,10 @@ schema, API, recovery и production wiring отсутствуют. Design gate �
 DP-014–DP-018 закрывают focused design gates ARCH-004 §19(2)–(6). DP-014 и
 primitive boundary DP-015, partial DP-019 parent/phase sequential core и
 command-boundary Continue/pending-Stop rendezvous, policy-neutral orchestration
-authorization surface и private managed invoker/managed
-Start-claim continuation/OwnerClaimView реализованы изолированно, но concrete
-authorization policy, external persistence, execution-generation binding/load
-gate, management integration/API и Production Activation отсутствуют.
+authorization surface, managed Flow/Start-claim continuation, OwnerClaimView и
+execution-generation binding/load sequence реализованы изолированно, но
+concrete composition-private invoker, authorization policy, external
+persistence, management integration/API и Production Activation отсутствуют.
 
 Approved DP-015 определяет focused contract ARCH-004
 §19(3): opaque command identity в exact authorized scope, immutable intent,
@@ -76,8 +76,9 @@ Approved DP-016 определяет focused contract ARCH-004
 §19(4): exact-version activation, ordered replacement через
 Stop-to-proven-release, fresh-attempt explicit rollback, zero Host overlap и
 phase-specific concurrency/cancellation. Для обязательного Stop-during-Starting
-он требует planned private Start-claim continuation DP-011/DP-013 после sole
-Owner claim и до Load; current isolated Flow этот seam не реализует. DP-016 не
+он требует private Start-claim continuation DP-011/DP-013 после sole Owner
+claim и до Load; managed Flow/continuation и binding sequence реализованы
+изолированно, но concrete composition-private invoker отсутствует. DP-016 не
 создаёт lifecycle implementation, API, recovery или production wiring.
 Approved DP-016 закрывает design gate §19(4); implementation остаётся
 отсутствующей и architecture-blocked prerequisites DP-019.
@@ -89,8 +90,9 @@ version; callback-scoped DP-015 parent/phase claims для replacement/rollback;
 private DP-011/DP-013 Start-claim continuation; publication exact Owner-issued
 attempt и execution-generation binding до Load. Implementation Status DP-019 —
 Planned overall; durable parent/derived-phase storage, callback capability и
-strict sequential core реализованы изолированно в TASK-028, а command-boundary
-Continue/pending-Stop rendezvous — в TASK-029. Он не меняет Owner
+strict sequential core реализованы изолированно в TASK-028, command-boundary
+Continue/pending-Stop rendezvous — в TASK-029, а managed gates, continuation и
+binding sequence — в TASK-037. Он не меняет Owner
 lifecycle semantics, не создаёт orchestrator/API и
 не снимает TASK-026 blocker до отдельной implementation/acceptance.
 
@@ -124,9 +126,9 @@ Concrete policy, external
 persistence, management integration/API и Production Activation не
 активированы и остаются отсутствующими.
 
-Package `internal/runtimelaunchflow` реализует base DP-011 изолированно без
-private Start-claim continuation DP-016 и без изменения этих ожидающих решения
-production boundaries.
+Package `internal/runtimelaunchflow` реализует base DP-011 и additive managed
+Start-claim continuation изолированно без concrete composition-private invoker
+и без изменения ожидающих решения production boundaries.
 
 TASK-026 зафиксирована как `Blocked by Architecture`; упрощённый adapter
 Variant B отклонён, Coordinator Acceptance/commit/publication запрещены.
@@ -223,9 +225,11 @@ Accepted` и фиксирует принятый Draft DP-010 design:
 `ErrInvalidExpectedAttempt`, active-before-last selection, mismatch без
 mutation и exact ordinary-Stop convergence. TASK-040 завершена как `Completed —
 Coordinator Accepted`: extension реализован и верифицирован изолированно,
-repeat final Reviewer `APPROVED` 0/0. Следующая неактивированная рекомендация —
-private exact-scope composition
-invoker. Terminal publication DP-014 и
+repeat final Reviewer `APPROVED` 0/0. Documentation-only TASK-041 завершена как
+`Completed — Coordinator Accepted (2026-08-20)` после синхронизации critical
+live status drift; final Reviewer `APPROVED` 0/0, commit и publication не
+авторизованы и не выполнялись. Следующий private exact-scope composition
+invoker design не активирован. Terminal publication DP-014 и
 terminalization DP-015 после Owner остаются core work TASK-026, а не отдельной
 prerequisite. Repeat Reviewer APPROVED 0/0 и Coordinator Acceptance завершены;
 TASK-038 имеет статус `Completed — Coordinator Accepted`. Approved/Planned

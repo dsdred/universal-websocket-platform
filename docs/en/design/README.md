@@ -16,13 +16,13 @@ This directory contains focused Runtime design documents. A design document expl
 | [DP-008: Snapshot Builder Contract](DP-008-snapshot-builder-contract.md) | Draft; implemented in isolation |
 | [DP-009: Runtime Bootstrap Contract](DP-009-runtime-bootstrap-contract.md) | Draft; implemented in isolation |
 | [DP-010: Runtime Lifecycle Owner Contract](DP-010-runtime-lifecycle-owner-contract.md) | Draft; base and expected-attempt Stop extension implemented in isolation |
-| [DP-011: Runtime Launch Pipeline Integration](DP-011-runtime-launch-pipeline-integration.md) | Draft; base implemented in isolation, DP-019 continuation and binding gate planned |
+| [DP-011: Runtime Launch Pipeline Integration](DP-011-runtime-launch-pipeline-integration.md) | Draft; base and managed continuation implemented in isolation; composition invoker planned |
 | [DP-012: Runtime Source Composition](DP-012-runtime-source-composition.md) | Draft; implemented in isolation |
 | [DP-013: Runtime Management Routing](DP-013-runtime-management-routing.md) | Draft; implemented in isolation; integration blocked |
 | [DP-014: Runtime Operational Identity Persistence](DP-014-runtime-operational-identity-persistence.md) | Approved; implemented in isolation |
-| [DP-015: Runtime Management Command Idempotency](DP-015-runtime-management-command-idempotency.md) | Approved; primitive boundary, DP-019 parent/phase sequential core, and command-boundary Continue/pending-Stop implemented in isolation |
+| [DP-015: Runtime Management Command Idempotency](DP-015-runtime-management-command-idempotency.md) | Approved; primitive/parent managed gates, parent/phase core, Continue/pending-Stop, and Slice 3 continuation implemented in isolation; complete extension planned |
 | [DP-016: Runtime Activation, Replacement, and Rollback](DP-016-runtime-activation-replacement-rollback.md) | Approved; planned and architecture-blocked by remaining DP-019 prerequisites |
 | [DP-017: Runtime Recovery and Reconciliation](DP-017-runtime-recovery-reconciliation.md) | Approved; planned |
 | [DP-018: Runtime Operational Error Reporting and Redaction](DP-018-runtime-operational-error-reporting-redaction.md) | Approved; planned |
-| [DP-019: Runtime Activation Orchestration Prerequisites](DP-019-runtime-activation-orchestration-prerequisites.md) | Approved; planned overall, parent/phase core and command-boundary Continue/pending-Stop implemented in isolation |
-| [DP-020: Runtime Orchestration Binding Sequence Readiness](DP-020-runtime-orchestration-binding-sequence-readiness.md) | Draft; implementation status Planned |
+| [DP-019: Runtime Activation Orchestration Prerequisites](DP-019-runtime-activation-orchestration-prerequisites.md) | Approved; planned overall; managed command/Flow/continuation and attempt/generation binding seams implemented in isolation |
+| [DP-020: Runtime Orchestration Binding Sequence Readiness](DP-020-runtime-orchestration-binding-sequence-readiness.md) | Draft; planned overall; Slice 3 implemented and independently accepted in isolation |

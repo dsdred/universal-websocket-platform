@@ -39,8 +39,10 @@ This proposal refines, without overriding:
 Accepted ADRs and Active or Frozen architecture remain authoritative. DP-013
 remains Draft and is implemented in isolation. Approved DP-014 and the
 primitive DP-015 boundary, partial DP-019 parent/phase sequential core, and
-command-boundary Continue/pending-Stop rendezvous are implemented in isolation;
-managed continuation and Approved DP-016/DP-017 remain Planned.
+command-boundary Continue/pending-Stop rendezvous, managed command gates,
+continuation, and DP-014 attempt/generation binding sequence are implemented
+and independently accepted in isolation. Approved DP-016 and DP-017 remain
+Planned overall; recovery and production composition remain absent.
 
 ## 4. Scope
 
@@ -115,10 +117,10 @@ execution evidence reports execution truth. Neither becomes a second Owner.
 
 The exact Control Service composition creates the opaque execution generation
 and owns its containment/termination proof. DP-014 owns conditional durable
-execution binding inside the Runtime Instance aggregate. The planned DP-011
-Start-claim continuation coordinates that borrowed binding capability and the
-DP-015 pending-Stop gate. DP-017 consumes the binding during assessment but
-allocates neither generation nor binding.
+execution binding inside the Runtime Instance aggregate. The DP-011 managed
+Start-claim continuation that coordinates the borrowed binding capability and
+the DP-015 pending-Stop gate is implemented in isolation. DP-017 consumes the
+binding during assessment but allocates neither generation nor binding.
 
 ## 7. Recovery Trigger and Assessment
 
@@ -190,8 +192,8 @@ ownership, resource release, or lifecycle completion.
 Contradictory evidence is unresolved. Recovery must not select the most recent,
 most convenient, or majority observation.
 
-Before any Load, Build, Launcher, or Host work, the planned DP-011 continuation
-must confirm DP-014 publication of one execution binding for the exact already-
+Before any Load, Build, Launcher, or Host work, the implemented-in-isolation
+DP-011 continuation must confirm DP-014 publication of one execution binding for the exact already-
 claimed attempt and expected aggregate revision. Only a coherent exact read
 proving no binding for that exact still-active attempt at the expected revision
 may produce `BindingFailed`; it performs no external preparation but does not
