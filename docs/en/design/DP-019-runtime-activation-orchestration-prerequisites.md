@@ -225,8 +225,11 @@ The DP-015 extension is callback-scoped and preserves the existing
 non-transferable permit invariant. Its durable parent/phase storage,
 generation-bound callback capability, and strict sequential core are
 implemented in isolation; the command-boundary Continue/pending-Stop surface is
-also implemented there in isolation. Managed continuation and binding remain
-Planned.
+also implemented there in isolation. The managed continuation and exact
+attempt/generation binding sequence are implemented and independently accepted
+in isolation. The composition-private invoker, terminal publication and
+terminalization, orchestrator, and production wiring remain absent; overall
+Implementation Status remains Planned.
 
 Conceptually it provides:
 
@@ -302,8 +305,10 @@ Flow.StartManaged(context, StartRequest, StartExecutionBinding)
 `StartManaged` validates the per-call binding before Owner mutation and retains
 it only on that synchronous call stack. After `Owner.PrepareStart`, it calls
 `StartClaimContinuation.AfterOwnerClaim(StartExecutionBinding, OwnerClaimView)`.
-Returning from `StartManaged` invalidates the per-call binding; it is never a
-Flow field and cannot affect another invocation.
+Returning from `StartManaged` expires the live permit, rendezvous lookup, and
+callback authority, but does not mutate or invalidate the structurally valid
+binding value. The binding is never a Flow field; non-reuse depends on callback
+custody and absence of bypass, not on binding introspection.
 
 Immediately after `Owner.PrepareStart` returns a successful authentic
 preparation and before Load, Build, or Launcher work, Flow passes one immutable
@@ -497,6 +502,9 @@ readiness decomposition of those prerequisites is recorded in the mirrored
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), with
 Design Status Draft and Implementation Status Planned overall, with Slice 3
 implemented and independently accepted in isolation.
+The downstream exact private-invoker refinement is recorded in Draft/Planned
+[DP-021](DP-021-private-exact-scope-managed-start-invoker.md); it does not
+amend this Approved contract or implement the invoker.
 
 ## 23. Consequences
 

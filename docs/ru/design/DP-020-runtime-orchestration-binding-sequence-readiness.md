@@ -179,7 +179,18 @@ exported поверхность авторизации DP-013 для `Directory.
 остаётся неизменной; orchestration actions никогда не проходят через эту
 поверхность без дополнительной exact orchestration authorization.
 
-## 8. Отложенное решение: Private Managed Invoker и Managed Flow Seam
+## 8. Закрытая Design Boundary: Private Managed Invoker и Managed Flow Seam
+
+TASK-042 закрывает только оставшуюся design ambiguity concrete invoker через
+Draft/Planned [DP-021](DP-021-private-exact-scope-managed-start-invoker.md).
+Следующее существующее decomposition остаётся authoritative context: DP-021
+фиксирует ownership `runtimemanagement`, custody preconstructed Flow, единственную
+operation `InvokeManagedStart`, cancellation delegation, capability custody,
+failure behavior и отсутствие legacy fallback. Future orchestrator-owned
+callback closure DP-015 задачи TASK-026 вызывает этот invoker как sole
+lifecycle subcall и владеет mapping `TerminalOutcome`, publication и
+terminalization вне DP-021; сам invoker не является callback. Implementation
+или orchestrator не активируется.
 
 ### 8.1 Package split и направление invocation
 
@@ -238,8 +249,10 @@ callback, binding, allocation rendezvous или permit. Record, изначаль
 через legacy `Execute`, также только наблюдается; managed seam никогда не
 перенимает и не пересоздаёт его execution authority.
 
-Binding и rendezvous lookup authority истекают при возврате callback/permit,
-panic, `runtime.Goexit` или потере generation Boundary. Valid terminal outcome
+Permit, rendezvous lookup и callback authority истекают при возврате
+callback/permit, panic, `runtime.Goexit` или потере generation Boundary. Это не
+mutate и не invalidate structurally valid value binding; его no-reuse зависит
+от callback custody и отсутствия bypass. Valid terminal outcome
 публикуется существующими primitive permit rules. Callback error, panic,
 invalid outcome, missing terminal publication или indeterminate return
 оставляет команду Claimed/unresolved, прекращает live authority, блокирует
@@ -303,8 +316,9 @@ composition-owned exact `ExecutionGeneration`, identity parent и phase, ког�
 execution. Оно не содержит ни primitive, parent, phase или Stop permit, ни
 preparation token, ни Host или Snapshot, ни полномочие cancellation context, ни
 mutable состояние Owner. Оно валидируется до любой mutation Owner, удерживается
-только на том synchronous call stack, вызывается не более одного раза и
-инвалидируется при возврате; оно никогда не сохраняется как поле Flow.
+только на том synchronous call stack и вызывается не более одного раза; оно
+никогда не сохраняется как поле Flow. Возврат callback прекращает live
+authority без mutation или invalidation structurally valid value binding.
 
 Linked execution identity является явным all-or-none вариантом: primitive
 Start не имеет ни parent, ни phase; `StartTarget` Replace/Rollback имеет и
@@ -621,8 +635,9 @@ TASK-032; Срез 2R TASK-035 предоставляет полный authorita
   `StartRendezvous` и exact failed private-invocation error contract, используя
   Slice 1.
 - Доказать: validate-before-Owner-mutation, invoke-at-most-once,
-  invalidate-on-return, never-stored binding; неизменные unmanaged `New` и
-  `Start`; никакого goroutine, записи registry или detached callback.
+  callback-scoped expiry authority, custody-based no-reuse и never-stored
+  binding без mutation structural value; неизменные unmanaged `New` и `Start`;
+  никакого goroutine, записи registry или detached callback.
 - Ещё никакой логики binding DP-014.
 
 ### Срез 2R — repair соответствия managed binding
@@ -680,8 +695,9 @@ Production composition/private-invoker wiring не входит в этот ср
   Stop как первую bounded prerequisite. TASK-039 завершена с Coordinator
   Acceptance после фиксации этого design в Draft DP-010; завершённая и
   Coordinator-Accepted TASK-040 реализует и верифицирует isolated Owner
-  extension, repeat final Reviewer `APPROVED` 0/0. Private
-  exact-scope composition invoker остаётся последующим.
+  extension, repeat final Reviewer `APPROVED` 0/0. Design private exact-scope
+  composition invoker теперь зафиксирован Draft DP-021, тогда как его
+  implementation остаётся последующей и неактивированной.
 
 Каждый срез требует собственного intake задачи, Existing Coverage Report,
 Verification Matrix, Independent Review, PROCESS-002 и Coordinator Acceptance.
@@ -715,7 +731,8 @@ Implementation Status остаётся Planned overall. Сама design-зада
 неоднозначность command-gate и continuation API Среза 3. TASK-037 реализует и
 независимо принимает Срез 3 изолированно. Репозиторий содержит принятый Draft
 design и завершённую TASK-040 isolated implementation atomic expected-attempt Owner
-Stop, но всё ещё не содержит последующий concrete private exact-scope composition invoker,
+Stop, но всё ещё не содержит concrete private exact-scope composition invoker,
+определённый Draft DP-021,
 оркестратор активации, external persistence,
 API, worker recovery и production wiring. Последующая
 terminal publication DP-014 и terminalization command/phase DP-015 после

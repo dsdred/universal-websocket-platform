@@ -223,7 +223,10 @@ DP-015 extension callback-scoped и сохраняет existing non-transferable
 invariant. Durable parent/phase storage, generation-bound callback capability и
 strict sequential core реализованы изолированно; command-boundary
 Continue/pending-Stop surface также реализован там изолированно. Managed
-continuation и binding остаются Planned.
+continuation и exact binding sequence attempt/generation реализованы и
+независимо приняты изолированно. Composition-private invoker, terminal
+publication/terminalization, orchestrator и production wiring остаются
+отсутствующими; overall Implementation Status остаётся Planned.
 
 Conceptually он предоставляет:
 
@@ -299,8 +302,10 @@ Flow.StartManaged(context, StartRequest, StartExecutionBinding)
 `StartManaged` проверяет per-call binding до Owner mutation и удерживает его
 только на synchronous call stack. После `Owner.PrepareStart` он вызывает
 `StartClaimContinuation.AfterOwnerClaim(StartExecutionBinding,
-OwnerClaimView)`. Возврат `StartManaged` invalidates per-call binding; он
-никогда не является Flow field и не влияет на другой invocation.
+OwnerClaimView)`. Возврат `StartManaged` прекращает live permit, rendezvous
+lookup и callback authority, но не mutate и не invalidate structurally valid
+value binding. Binding никогда не является Flow field; no-reuse зависит от
+callback custody и отсутствия bypass, а не от introspection binding.
 
 Сразу после успешного authentic `Owner.PrepareStart` и до Load, Build или
 Launcher Flow передаёт один immutable Owner claim view:
@@ -487,6 +492,9 @@ Focused readiness decomposition этих prerequisites зафиксирован�
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), со
 статусом Design Status Draft и Implementation Status Planned overall, где
 Срез 3 реализован и независимо принят изолированно.
+Downstream refinement exact private invoker зафиксирован в Draft/Planned
+[DP-021](DP-021-private-exact-scope-managed-start-invoker.md); он не изменяет
+этот Approved contract и не реализует invoker.
 
 ## 23. Последствия
 

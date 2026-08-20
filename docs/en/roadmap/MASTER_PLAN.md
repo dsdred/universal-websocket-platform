@@ -377,8 +377,14 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   accepted Draft DP-010 atomic expected-attempt Owner Stop semantics are
   recorded. Completed and Coordinator-Accepted TASK-040 implements them in
   isolation and has passed verification and repeat final Reviewer `APPROVED`
-  0/0. The private exact-scope invoker
-  is the next unactivated recommendation.
+  0/0. Design-only TASK-042 is completed and Coordinator Accepted
+  (2026-08-20), with Tester PASS 0/0, repeat Reviewer APPROVED 0/0, Scope Audit
+  17/0/0, and PROCESS-002 synchronized. It records the private exact-scope
+  invoker contract in Draft/Planned DP-021; concrete implementation remains
+  absent. The next recommendation is not activated: a separate bounded
+  implementation/readiness intake for only that exact DP-021 private invoker,
+  excluding result mapping, terminal publication/terminalization, the
+  DP-016/TASK-026 orchestrator, and production wiring.
   Terminal publication remains TASK-026 core work. Orchestration and production
   composition remain Planned; TASK-026 remains Blocked;
   Integration and Production Activation remain inactive.
