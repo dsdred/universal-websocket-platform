@@ -46,6 +46,7 @@ operational документы ведутся на русском языке и 
 - [TASK-039 — Atomic Expected-Attempt Runtime Owner Stop Design](TASK-039-EXPECTED-ATTEMPT-OWNER-STOP-DESIGN.md) — Completed, Coordinator Accepted; repeat Reviewer APPROVED 0/0; accepted Draft DP-010 design recorded; implementation was absent at closure and subsequently completed as TASK-040; TASK-026 remains Blocked
 - [TASK-040 — Expected-Attempt Runtime Owner Stop Implementation](TASK-040-EXPECTED-ATTEMPT-OWNER-STOP.md) — Completed, Coordinator Accepted; isolated implementation and proof tests verified; repeat final Reviewer APPROVED 0/0; TASK-026 remains Blocked by the later private exact-scope composition invoker and subsequent readiness/orchestrator boundaries
 - [TASK-041 — Managed Continuation Documentation Baseline Reconciliation](TASK-041-PRIVATE-EXACT-SCOPE-INVOKER-DESIGN.md) — Completed, Coordinator Accepted (2026-08-20); final Reviewer APPROVED 0/0; documentation-only live status repair synchronized; invoker design unactivated; TASK-026 remains Blocked
+- [TASK-042 — Private Exact-Scope Composition Invoker Design](TASK-042-PRIVATE-EXACT-SCOPE-INVOKER-DESIGN.md) — Completed, Coordinator Accepted (2026-08-20); Tester PASS 0/0; repeat Reviewer APPROVED 0/0; Scope Audit 17/0/0; Draft/Planned DP-021 recorded; concrete invoker absent; TASK-026 remains Blocked
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

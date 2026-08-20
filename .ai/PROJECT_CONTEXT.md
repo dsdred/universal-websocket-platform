@@ -51,7 +51,9 @@
   верифицирован изолированно, repeat final Reviewer APPROVED 0/0. TASK-041
   завершена как `Completed — Coordinator Accepted (2026-08-20)`: live status
   managed continuation/binding синхронизирован, final Reviewer APPROVED 0/0.
-  Private exact-scope invoker остаётся позже и не активирован.
+  Design-only TASK-042 завершена как `Completed — Coordinator Accepted
+  (2026-08-20)` и фиксирует Draft/Planned DP-021 для private exact-scope
+  invoker; concrete invoker остаётся отсутствующим.
   HTTP, concrete policy, external command storage, recovery/reporting
   package/schema, management wiring и Production Activation отсутствуют**
 - Последняя завершённая development task: **TASK-040 — Expected-Attempt
@@ -60,9 +62,11 @@
 - Последняя завершённая operational task: **TASK-012 — Engineering Process
   Hardening; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
-- Последняя завершённая architecture task: **TASK-039 — Atomic
-  Expected-Attempt Runtime Owner Stop Design; Completed — Coordinator Accepted;
-  repeat Reviewer APPROVED 0/0; Scope Audit 18/0/0**
+- Последняя завершённая architecture task: **TASK-042 — Private Exact-Scope
+  Composition Invoker Design; Completed — Coordinator Accepted (2026-08-20);
+  Tester PASS 0/0; repeat Reviewer APPROVED 0/0; Scope Audit 17/0/0;
+  PROCESS-002 Synchronized; Draft/Planned DP-021 зафиксирован, implementation
+  отсутствует**
 - Текущая architecture task: **отсутствует**
 - TASK-027 acceptance evidence: **DP-019 Approved/Planned; implementable
   parent/phase, exact authorization and private per-call managed Start seams
@@ -179,9 +183,14 @@
   Reconciliation; Completed — Coordinator Accepted (2026-08-20); PROCESS-002
   Synchronized; final Reviewer APPROVED 0/0; Scope Audit 15/0/0; commit и
   publication не авторизованы и не выполнялись**
-- Следующая рекомендация после TASK-041: **bounded private exact-scope
-  composition invoker design; не активирован. Terminal publication остаётся
-  core work TASK-026**
+- TASK-042 acceptance evidence: **Private Exact-Scope Composition Invoker
+  Design; Completed — Coordinator Accepted (2026-08-20); Tester PASS 0/0;
+  repeat Reviewer APPROVED 0/0; Scope Audit 17/0/0; PROCESS-002 Synchronized;
+  commit и publication не авторизованы и не выполнялись**
+- Следующая рекомендация после TASK-042: **не активирована; отдельный bounded
+  implementation/readiness intake только для exact private invoker DP-021, без
+  result mapping, terminal publication/terminalization, orchestrator
+  DP-016/TASK-026 и production wiring**
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы
   изолированно; Repeat Independent Review Approved, blocking/non-blocking 0;
@@ -197,9 +206,7 @@
   (2026-08-20); PROCESS-002 Synchronized; final Reviewer APPROVED 0/0; Scope
   Audit 15/0/0**
 - Текущая documentation task: **отсутствует**
-- Текущая architecture task: **отсутствует; последняя завершённая architecture
-  task — TASK-039 — Atomic Expected-Attempt Runtime Owner Stop Design;
-  Completed — Coordinator Accepted**
+- Текущая architecture task: **отсутствует; TASK-026 остаётся Blocked**
 - Trusted baseline TASK-009: **clean synchronized
   `main@63b961eeb59af9205c3c3d0b68d3f4bd7b8ac25c`; локальная ветка
   `feature/task-009-runtime-lifecycle-owner`; task record создан первым

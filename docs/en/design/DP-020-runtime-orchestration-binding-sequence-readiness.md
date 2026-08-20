@@ -183,7 +183,18 @@ authorization surface for `Directory.Start/Stop/Observe` remains unchanged;
 orchestration actions never pass through that surface without the additional
 exact orchestration authorization.
 
-## 8. Deferred Decision: Private Managed Invoker and Managed Flow Seam
+## 8. Resolved Design Boundary: Private Managed Invoker and Managed Flow Seam
+
+TASK-042 closes only the remaining concrete-invoker design ambiguity through
+Draft/Planned [DP-021](DP-021-private-exact-scope-managed-start-invoker.md).
+The following existing decomposition remains authoritative context: DP-021
+fixes `runtimemanagement` ownership, preconstructed-Flow custody, the sole
+`InvokeManagedStart` operation, cancellation delegation, capability custody,
+failure behavior, and absence of legacy fallback. A future TASK-026
+orchestrator-owned DP-015 callback closure calls that invoker as its sole
+lifecycle subcall and owns `TerminalOutcome` mapping, publication, and
+terminalization outside DP-021; the invoker is not itself the callback. No
+implementation or orchestrator is activated.
 
 ### 8.1 Package split and invocation direction
 
@@ -243,8 +254,10 @@ no callback, binding, rendezvous allocation, or permit. A record originally
 claimed through legacy `Execute` is likewise only observed; the managed seam
 never adopts or recreates its execution authority.
 
-The binding and rendezvous lookup authority expire when the callback/permit
-returns, panics, executes `runtime.Goexit`, or loses its Boundary generation.
+The permit, rendezvous lookup, and callback authority expire when the
+callback/permit returns, panics, executes `runtime.Goexit`, or loses its
+Boundary generation. This does not mutate or invalidate the structurally valid
+binding value; its non-reuse depends on callback custody and absence of bypass.
 A valid terminal outcome is published by the existing primitive permit rules.
 A callback error, panic, invalid outcome, missing terminal publication, or
 indeterminate return leaves the command Claimed/unresolved, expires live
@@ -306,8 +319,9 @@ when applicable, and the opaque `StartRendezvous` for this live primitive or
 phase execution. It contains no primitive, parent, phase, or Stop permit, no
 preparation token, no Host or Snapshot, no context cancellation authority, and
 no mutable Owner state. It is validated before any Owner mutation, retained
-only on that synchronous call stack, invoked at most once, and invalidated on
-return; it is never stored as a Flow field.
+only on that synchronous call stack and invoked at most once; it is never
+stored as a Flow field. Callback return expires live authority without mutating
+or invalidating the structurally valid binding value.
 
 Linked execution identity is an explicit all-or-none variant: primitive Start
 has neither parent nor phase; Replace/Rollback `StartTarget` has both the exact
@@ -623,9 +637,10 @@ without rewriting TASK-032 acceptance history.
   `StartExecutionBinding` / `OwnerClaimView` immutable values, the opaque
   `StartRendezvous` handle, and the failed private-invocation error contract,
   using Slice 1.
-- Prove: validate-before-Owner-mutation, invoke-at-most-once,
-  invalidate-on-return, never-stored binding; unchanged unmanaged `New` and
-  `Start`; no goroutine, registry entry, or detached callback.
+- Prove: validate-before-Owner-mutation, invoke-at-most-once, callback-scoped
+  authority expiry, custody-based no-reuse, and never-stored binding without
+  mutating the structural value; unchanged unmanaged `New` and `Start`; no
+  goroutine, registry entry, or detached callback.
 - No DP-014 binding logic yet.
 
 ### Slice 2R — Managed binding conformance repair
@@ -686,8 +701,9 @@ verdict does not activate implementation or change TASK-026 status automatically
   as the first bounded prerequisite. TASK-039 completed and received
   Coordinator Acceptance after recording that design in Draft DP-010;
   completed and Coordinator-Accepted TASK-040 implements and verifies the
-  isolated Owner extension, with repeat final Reviewer `APPROVED` 0/0. The private
-  exact-scope composition invoker remains later still.
+  isolated Owner extension, with repeat final Reviewer `APPROVED` 0/0. The
+  private exact-scope composition-invoker design is now fixed by Draft DP-021,
+  while its implementation remains later and unactivated.
 
 Each slice requires its own task intake, Existing Coverage Report, Verification
 Matrix, Independent Review, PROCESS-002, and Coordinator Acceptance.
@@ -722,7 +738,8 @@ the remaining Slice-3 command-gate and continuation API ambiguity. TASK-037
 implements and independently accepts Slice 3 in isolation. The
 repository contains the accepted Draft design and completed TASK-040 isolated
 implementation of atomic expected-attempt Owner Stop, but still lacks the
-later concrete private exact-scope composition invoker, activation orchestrator,
+concrete private exact-scope composition invoker defined by Draft DP-021,
+activation orchestrator,
 external persistence, API, recovery worker, and production wiring. Later DP-014 terminal publication and DP-015 command/phase
 terminalization after the Owner result belong to the TASK-026 orchestrator,
 not to a separate prerequisite. TASK-026 therefore remains Blocked; Slice 4 is

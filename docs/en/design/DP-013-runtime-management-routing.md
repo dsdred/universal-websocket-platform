@@ -34,6 +34,8 @@ This proposal refines, without overriding:
 - [DP-010](DP-010-runtime-lifecycle-owner-contract.md);
 - [DP-011](DP-011-runtime-launch-pipeline-integration.md);
 - [DP-012](DP-012-runtime-source-composition.md).
+- [DP-021](DP-021-private-exact-scope-managed-start-invoker.md) for the planned
+  exact composition-private managed Start invocation contract.
 
 Accepted ADR, Frozen foundation, and Active architecture remain authoritative.
 
@@ -398,6 +400,15 @@ mutable Directory slot. Existing public `Start`, `Stop`, `Observe`, and their
 authorization behavior remain unchanged. The managed command, binding, Flow,
 and continuation surfaces are implemented in their focused internal packages;
 the DP-013 composition-private invoker that joins them remains absent.
+Draft [DP-021](DP-021-private-exact-scope-managed-start-invoker.md) now fixes
+that invoker's ownership and exact Planned contract: existing
+`runtimemanagement` composition constructs one scope-bound managed Flow exactly
+once, then gives the invoker copied domain/Target and a borrowed immutable
+reference to that preconstructed Flow. The invoker exposes only synchronous
+`InvokeManagedStart`, creates zero Flow, performs no
+second policy authorization, stores no per-call capability, never calls the
+command Boundary, and adds no public Directory operation. This design
+refinement is not an implementation; the concrete invoker remains absent.
 
 If the linked `Directory.Start` path returns a definitive cancellation or error
 before Owner claim, it signals `StartNoClaim` to the original pending Stop call
@@ -675,7 +686,9 @@ recovery, reporting, Control Service integration, and Production Activation
 remain absent. Any integration slice must first provide its exact required
 dependencies, including composition of the existing isolated private
 Start-claim continuation and execution-generation binding/load gate defined by
-Approved DP-019. The concrete composition-private invoker remains absent.
+Approved DP-019. Draft DP-021 defines the exact composition-private invoker,
+but its Implementation Status is Planned and the concrete invoker remains
+absent.
 
 ## 30. Decision
 

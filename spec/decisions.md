@@ -228,9 +228,14 @@ Coordinator Accepted`: extension реализован и верифициров�
 repeat final Reviewer `APPROVED` 0/0. Documentation-only TASK-041 завершена как
 `Completed — Coordinator Accepted (2026-08-20)` после синхронизации critical
 live status drift; final Reviewer `APPROVED` 0/0, commit и publication не
-авторизованы и не выполнялись. Следующий private exact-scope composition
-invoker design не активирован. Terminal publication DP-014 и
-terminalization DP-015 после Owner остаются core work TASK-026, а не отдельной
-prerequisite. Repeat Reviewer APPROVED 0/0 и Coordinator Acceptance завершены;
-TASK-038 имеет статус `Completed — Coordinator Accepted`. Approved/Planned
-DP-016 не меняется, TASK-026 остаётся Blocked.
+авторизованы и не выполнялись. Private exact-scope composition invoker design
+завершён как `Completed — Coordinator Accepted (2026-08-20)` TASK-042: Tester
+`PASS` 0/0, repeat Reviewer `APPROVED` 0/0, Scope Audit 17/0/0 и PROCESS-002
+Synchronized. Draft/Planned DP-021 фиксирует exact contract, но concrete
+implementation отсутствует; commit и publication TASK-042 не авторизованы и не
+выполнялись. Следующая рекомендация не активирована: отдельный bounded
+implementation/readiness intake только для exact invoker DP-021, без result
+mapping, terminal publication/terminalization, orchestrator DP-016/TASK-026 или
+production wiring. Terminal publication DP-014 и terminalization DP-015 после
+Owner остаются core work TASK-026, а не отдельной prerequisite.
+Approved/Planned DP-016 не меняется, TASK-026 остаётся Blocked.

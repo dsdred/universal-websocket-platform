@@ -38,11 +38,13 @@ Hardening; `Completed — Coordinator Accepted`.
 
 **Текущая operational task:** отсутствует.
 
-**Последняя завершённая architecture task:** TASK-039 — Atomic
-Expected-Attempt Runtime Owner Stop Design; `Completed — Coordinator Accepted`;
-repeat Reviewer `APPROVED` 0/0; Scope Audit 18/0/0.
+**Последняя завершённая architecture task:** TASK-042 — Private Exact-Scope
+Composition Invoker Design; `Completed — Coordinator Accepted (2026-08-20)`;
+Tester `PASS` 0/0; repeat Reviewer `APPROVED` 0/0; Scope Audit 17/0/0;
+PROCESS-002 Synchronized.
 
-**Текущая architecture task:** отсутствует.
+**Текущая architecture task:** отсутствует. Draft/Planned DP-021 зафиксирован,
+concrete implementation отсутствует.
 
 TASK-027 закрыла design ambiguity DP-016 через Approved/Planned DP-019.
 Independent Review — `Approved`, blocking и non-blocking findings 0;
@@ -61,8 +63,9 @@ task — TASK-040 — Expected-Attempt Runtime Owner Stop Implementation;
 selection и shared generic-Stop helper. Repeat final Reviewer `APPROVED` 0/0.
 Concrete DP-013
 private composition invoker, terminal publication и production wiring
-отсутствуют. Следующий private exact-scope invoker не активирован; TASK-026
-остаётся `Blocked by Architecture`.
+отсутствуют. Design-only TASK-042 завершена как `Completed — Coordinator
+Accepted (2026-08-20)` и фиксирует exact contract в Draft/Planned DP-021;
+concrete invoker отсутствует, TASK-026 остаётся `Blocked by Architecture`.
 
 **TASK-031:** `Completed — Coordinator Accepted`. Bounded isolated DP-020
 deferred slice 1 реализован в `internal/runtimecommandidempotency` на branch
@@ -85,8 +88,8 @@ Audit 15/0/0. Commit и publication не авторизованы и не вып
 **Текущая documentation task:** отсутствует.
 
 **Текущая architecture task:** отсутствует. Последняя завершённая architecture
-task — TASK-039 — Atomic Expected-Attempt Runtime Owner Stop Design;
-`Completed — Coordinator Accepted`.
+task — TASK-042; новый Draft/Planned DP-021 не является implementation и не
+активирует TASK-026.
 
 **Trusted baseline TASK-009:** clean synchronized
 `main@63b961eeb59af9205c3c3d0b68d3f4bd7b8ac25c`; локальная ветка
@@ -598,8 +601,13 @@ Coordinator Accepted`: contract реализован и верифицирова
 repeat final Reviewer `APPROVED` 0/0.
 Documentation-only TASK-041 завершена как `Completed — Coordinator Accepted
 (2026-08-20)` после синхронизации critical live status drift; final Reviewer
-`APPROVED` 0/0. Следующий private exact-scope composition invoker design не
-активирован. Terminal publication остаётся core work TASK-026.
+`APPROVED` 0/0. Private exact-scope composition invoker design завершён как
+Coordinator-Accepted TASK-042 и зафиксирован в Draft/Planned DP-021; concrete
+implementation отсутствует. Следующая рекомендация не активирована: отдельный
+bounded implementation/readiness intake только для exact invoker DP-021, без
+result mapping, terminal publication/terminalization, orchestrator
+DP-016/TASK-026 или production wiring. Terminal publication остаётся core work
+TASK-026.
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task

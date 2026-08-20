@@ -26,3 +26,4 @@ This directory contains focused Runtime design documents. A design document expl
 | [DP-018: Runtime Operational Error Reporting and Redaction](DP-018-runtime-operational-error-reporting-redaction.md) | Approved; planned |
 | [DP-019: Runtime Activation Orchestration Prerequisites](DP-019-runtime-activation-orchestration-prerequisites.md) | Approved; planned overall; managed command/Flow/continuation and attempt/generation binding seams implemented in isolation |
 | [DP-020: Runtime Orchestration Binding Sequence Readiness](DP-020-runtime-orchestration-binding-sequence-readiness.md) | Draft; planned overall; Slice 3 implemented and independently accepted in isolation |
+| [DP-021: Private Exact-Scope Managed Start Invoker](DP-021-private-exact-scope-managed-start-invoker.md) | Draft; planned |

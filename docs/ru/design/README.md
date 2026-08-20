@@ -26,3 +26,4 @@
 | [DP-018: Operational error reporting и redaction Runtime](DP-018-runtime-operational-error-reporting-redaction.md) | Approved; запланирован |
 | [DP-019: Предпосылки оркестрации активации Runtime](DP-019-runtime-activation-orchestration-prerequisites.md) | Approved; planned overall; managed command/Flow/continuation и seams binding attempt/generation реализованы изолированно |
 | [DP-020: Готовность последовательности связывания оркестрации Runtime](DP-020-runtime-orchestration-binding-sequence-readiness.md) | Draft; planned overall; Срез 3 реализован и независимо принят изолированно |
+| [DP-021: Private Exact-Scope Managed Start Invoker](DP-021-private-exact-scope-managed-start-invoker.md) | Draft; planned |
