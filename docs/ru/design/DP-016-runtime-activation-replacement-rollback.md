@@ -16,8 +16,10 @@ managed command/Flow/Owner-claim, continuation и binding DP-014 из DP-019.
 TASK-038 установила, что implementation всё ещё architecture-blocked,
 поскольку реализованный Stop DP-010 не может атомарно target ожидаемый Launch
 Attempt. Завершённая и Coordinator-Accepted TASK-039 фиксирует принятый design
-expected-attempt Stop в Draft DP-010, но его реализация отсутствует и должна предшествовать
-последующему private exact-scope invoker. Terminal publication DP-014 и DP-015
+expected-attempt Stop в Draft DP-010; завершённая и Coordinator-Accepted
+TASK-040 реализует и верифицирует его изолированно, repeat final Reviewer
+`APPROVED` 0/0. Последующий private exact-scope invoker отсутствует. Terminal
+publication DP-014 и DP-015
 после Owner остаётся частью этого planned orchestrator.
 
 ## 2. Назначение
@@ -492,10 +494,11 @@ production wiring отсутствуют.
 
 Approval закрывает design gate section 19(4), но не реализует и не подключает
 contract. TASK-038 подтвердила, что TASK-026 оставалась Blocked прежде всего
-из-за отсутствующего contract atomic expected-attempt Owner Stop. TASK-039
-завершена с Coordinator Acceptance после фиксации этого design в Draft DP-010,
-но не реализует его; поэтому
-TASK-026 остаётся Blocked, а private exact-scope invoker — последующей
+из-за отсутствовавшего тогда contract atomic expected-attempt Owner Stop.
+TASK-039 зафиксировала design в Draft DP-010; завершённая и
+Coordinator-Accepted TASK-040 реализует и верифицирует isolated Owner extension,
+repeat final Reviewer `APPROVED` 0/0. TASK-026 остаётся Blocked, а private
+exact-scope invoker — последующей
 prerequisite. Reduced slice DP-016 запрещён.
 
 ## 29. Решение

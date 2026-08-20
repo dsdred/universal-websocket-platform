@@ -29,9 +29,9 @@ management wiring и Control Service activation отсутствуют.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
-**Последняя завершённая development task:** TASK-037 — Runtime Owner Claim
-Binding; `Completed — Coordinator Accepted`; Independent Reviewer `APPROVED`
-0/0.
+**Последняя завершённая development task:** TASK-040 — Expected-Attempt Runtime
+Owner Stop Implementation; `Completed — Coordinator Accepted`; repeat final
+Reviewer `APPROVED` 0/0.
 
 **Последняя завершённая operational task:** TASK-012 — Engineering Process
 Hardening; `Completed — Coordinator Accepted`.
@@ -53,16 +53,16 @@ PASS. Acceptance не реализует prerequisites и не снимает TA
 опубликован через PR #27 и merged как
 `2c017aace7e56a4747d3cecbe8ff3f6cf53e009f`.
 
-**Текущая development task:** отсутствует. TASK-037 реализовала и независимо
-приняла Slice 3 изолированно: primitive/linked managed gates, stateless
-continuation, DP-014 conditional claim/bind и managed Flow outcomes. Concrete
-DP-013 private composition invoker, terminal
-publication и production wiring отсутствуют. TASK-039 завершила и приняла
-только design-update atomic expected-attempt Owner Stop; принятые semantics
-Draft DP-010 не реализованы. Active development task отсутствует. Private
-exact-scope invoker остаётся последующим,
-TASK-026 остаётся
-`Blocked by Architecture`.
+**Текущая development task:** отсутствует. Последняя завершённая development
+task — TASK-040 — Expected-Attempt Runtime Owner Stop Implementation;
+`Completed — Coordinator Accepted`. Принятые TASK-039 semantics Draft DP-010
+реализованы и верифицированы изолированно: `StopExpectedAttempt`,
+`StopAttemptMismatch`, `ErrInvalidExpectedAttempt`, active-before-last
+selection и shared generic-Stop helper. Repeat final Reviewer `APPROVED` 0/0.
+Concrete DP-013
+private composition invoker, terminal publication и production wiring
+отсутствуют. Следующий private exact-scope invoker не активирован; TASK-026
+остаётся `Blocked by Architecture`.
 
 **TASK-031:** `Completed — Coordinator Accepted`. Bounded isolated DP-020
 deferred slice 1 реализован в `internal/runtimecommandidempotency` на branch
@@ -77,11 +77,16 @@ CGO/gcc, substitute stress `-count=100` PASS); Independent Review Approved with
 Findings 0/2 (resolved); Verification Matrix, PROCESS-002, Scope Audit 7/0/0
 PASS. Commit, push, PR, merge и publication не выполнялись.
 
-**Последняя завершённая documentation task:** TASK-039 — Atomic
-Expected-Attempt Runtime Owner Stop Design; `Completed — Coordinator Accepted`;
-PROCESS-002 Synchronized; repeat Reviewer `APPROVED` 0/0; Scope Audit 18/0/0.
+**Последняя завершённая documentation task:** TASK-040 — Expected-Attempt
+Runtime Owner Stop Implementation; `Completed — Coordinator Accepted`;
+PROCESS-002 Synchronized; repeat final Reviewer `APPROVED` 0/0; Scope Audit
+21/0/0.
 
 **Текущая documentation task:** отсутствует.
+
+**Текущая architecture task:** отсутствует. Последняя завершённая architecture
+task — TASK-039 — Atomic Expected-Attempt Runtime Owner Stop Design;
+`Completed — Coordinator Accepted`.
 
 **Trusted baseline TASK-009:** clean synchronized
 `main@63b961eeb59af9205c3c3d0b68d3f4bd7b8ac25c`; локальная ветка
@@ -588,10 +593,11 @@ reassessment после Reviewer rework: 7 Direct, 10 Compositional, 2 Missing,
 0 Deferred; verdict `TASK-026 REMAINS BLOCKED` Coordinator Accepted после
 repeat Reviewer APPROVED 0/0. Первый bounded candidate завершён и Coordinator
 Accepted как design-update TASK-039: принятый Draft DP-010 contract atomic
-expected-attempt Owner Stop зафиксирован, но implementation отсутствует.
-Следующая неактивированная рекомендация — bounded implementation
-`StopExpectedAttempt`. Private exact-scope composition invoker остаётся
-последующей prerequisite; terminal publication остаётся core work TASK-026.
+expected-attempt Owner Stop зафиксирован. TASK-040 завершена как `Completed —
+Coordinator Accepted`: contract реализован и верифицирован изолированно,
+repeat final Reviewer `APPROVED` 0/0.
+Следующая неактивированная рекомендация — private exact-scope composition
+invoker; terminal publication остаётся core work TASK-026.
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task

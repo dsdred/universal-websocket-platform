@@ -16,9 +16,10 @@ managed command/Flow/Owner-claim, continuation, and DP-014 binding seams in
 isolation. TASK-038 found implementation still architecture-blocked because
 the implemented DP-010 Stop cannot atomically target an expected Launch
 Attempt. Completed and Coordinator-Accepted TASK-039 records the accepted Draft
-DP-010 expected-attempt Stop design, while its implementation remains absent
-and must precede the later
-private exact-scope invoker. Post-Owner DP-014 and DP-015 terminal publication
+DP-010 expected-attempt Stop design; completed and Coordinator-Accepted
+TASK-040 implements and verifies it in isolation, with repeat final Reviewer
+`APPROVED` 0/0. The later private exact-scope invoker remains absent. Post-Owner
+DP-014 and DP-015 terminal publication
 remains part of this planned orchestrator.
 
 ## 2. Purpose
@@ -498,11 +499,12 @@ durable command/aggregate/workflow storage, public management API, recovery
 executor, or production wiring.
 
 Approval closes the section 19(4) design gate but does not implement or wire
-the contract. TASK-038 confirmed TASK-026 remained Blocked first by the absent
-atomic expected-attempt Owner Stop contract. TASK-039 completed and received
-Coordinator Acceptance after recording that design in Draft DP-010, but did
-not implement it; TASK-026 therefore
-remains Blocked, and the private exact-scope invoker remains a later
+the contract. TASK-038 confirmed TASK-026 remained Blocked first by the then
+absent atomic expected-attempt Owner Stop contract. TASK-039 recorded that
+design in Draft DP-010; completed and Coordinator-Accepted TASK-040 implements
+and verifies the isolated Owner extension, with repeat final Reviewer
+`APPROVED` 0/0. TASK-026 remains Blocked, and the private exact-scope
+invoker remains a later
 prerequisite. No reduced DP-016 slice is permitted.
 
 ## 29. Decision

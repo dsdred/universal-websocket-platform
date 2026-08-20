@@ -6,8 +6,8 @@
 
 **Design Status:** Draft
 
-**Implementation Status:** base Lifecycle Owner реализован изолированно;
-расширение expected-attempt Stop запланировано
+**Implementation Status:** base Lifecycle Owner и расширение expected-attempt
+Stop реализованы изолированно
 
 **Статус архитектуры:** implementation contract утверждённой модели
 operational identity из
@@ -18,9 +18,10 @@ operational identity из
 Runtime Lifecycle Owner реализован изолированно в
 `internal/runtimelifecycle`. Production wiring
 Loader-to-Builder-to-Launcher не реализован. Контракт
-`StopExpectedAttempt`, добавленный TASK-039, является только принятой design
-baseline и не реализован. Этот Draft не пересматривает утверждённую
-архитектуру.
+`StopExpectedAttempt`, добавленный TASK-039, реализован и верифицирован
+изолированно завершённой и Coordinator-Accepted TASK-040; его private invoker,
+integration и production
+wiring отсутствуют. Этот Draft не пересматривает утверждённую архитектуру.
 
 ## 2. Назначение
 
@@ -89,8 +90,8 @@ manager, registry, service locator или policy engine.
 
 ## 6. Точные exported declarations
 
-Base implementation использует существующие declarations ниже. TASK-039
-добавляет только явно отмеченные planned declarations без добавления другой
+Base implementation использует declarations ниже. TASK-039 спроектировала
+expected-attempt declarations, а TASK-040 реализует их без добавления другой
 public lifecycle abstraction:
 
 ```go
@@ -163,7 +164,7 @@ type StopOutcomeKind string
 const (
     StopStopped         StopOutcomeKind = "stopped"
     StopFailed          StopOutcomeKind = "stop-failed"
-    StopAttemptMismatch StopOutcomeKind = "attempt-mismatch" // planned extension
+    StopAttemptMismatch StopOutcomeKind = "attempt-mismatch"
 )
 
 type StopOutcome struct { /* immutable */ }
@@ -237,7 +238,7 @@ func (o *Owner) PrepareStart(
 ) (LaunchPreparation, error)
 func (o *Owner) Start(ctx context.Context, preparation LaunchPreparation, result PreparationResult) (StartOutcome, error)
 func (o *Owner) Stop(ctx context.Context) (StopOutcome, error)
-func (o *Owner) StopExpectedAttempt(ctx context.Context, expectedAttemptID runtimeconfigload.LaunchAttemptID) (StopOutcome, error) // planned extension
+func (o *Owner) StopExpectedAttempt(ctx context.Context, expectedAttemptID runtimeconfigload.LaunchAttemptID) (StopOutcome, error)
 func (o *Owner) Observe() Observation
 ```
 
@@ -257,7 +258,7 @@ var (
     ErrStartConflict            error
     ErrPreparationNotOwned      error
     ErrInvalidPreparationResult error
-    ErrInvalidExpectedAttempt   error // planned extension
+    ErrInvalidExpectedAttempt   error
 )
 ```
 
@@ -265,7 +266,7 @@ Callers различают их через `errors.Is`. Ошибка source atte
 `ErrAttemptIDSourceFailed`, и exact source error, чтобы оба оставались
 discoverable. Validation и conflict errors не изменяют lifecycle state.
 `ErrInvalidExpectedAttempt` отклоняет empty identity ожидаемого Launch
-Attempt. Вызов planned `StopExpectedAttempt` для nil Owner возвращает
+Attempt. Вызов реализованного `StopExpectedAttempt` для nil Owner возвращает
 `ErrInvalidOwner`. Ни один validation outcome не изменяет lifecycle state.
 
 ## 8. Construction
@@ -489,12 +490,12 @@ attachment. Non-nil error выигрывает без mutation или attachment
 Concurrent operations следуют порядку mutex claims. `StopOrigin()` и
 `RunningPublished()` записываются при claim Stop и никогда не регрессируют.
 
-### 18.1 Запланированное расширение atomic expected-attempt Stop
+### 18.1 Расширение atomic expected-attempt Stop
 
-`StopExpectedAttempt(ctx, expectedAttemptID)` — запланированная atomic
-operation для private orchestration caller, который должен остановить один
-exact Owner-issued Launch Attempt. Она не входит в реализованный base slice.
-Expected identity должна быть non-empty; nil Owner возвращает
+`StopExpectedAttempt(ctx, expectedAttemptID)` — реализованная изолированная
+atomic operation для будущего private orchestration caller, который должен
+остановить один exact Owner-issued Launch Attempt. Expected identity должна
+быть non-empty; nil Owner возвращает
 `ErrInvalidOwner`, а empty identity — `ErrInvalidExpectedAttempt`, без
 lifecycle mutation.
 
@@ -541,7 +542,7 @@ locked match и claim последующая caller cancellation прерыва�
 продолжаются. Callers с одинаковой identity сходятся на одном tracked или
 retained outcome. Другая identity никогда не attaches к этой work.
 
-Последующая реализация должна направлять generic `Stop(ctx)` и
+Реализация направляет generic `Stop(ctx)` и
 `StopExpectedAttempt` через один private helper ordinary Stop, чтобы их phase
 behavior не расходился. Expected path нельзя реализовывать как `Observe()` с
 последующим `Stop()`. Mutex Owner освобождается до context cancellation,
@@ -652,10 +653,10 @@ outcome.
 
 `StopOutcome` immutable и имеет ровно один объявленный `StopOutcomeKind`.
 `Attempt()` отсутствует только для idempotent Stop без applicable attempt или
-planned outcome `StopAttemptMismatch`, когда relevant attempt отсутствует.
+outcome `StopAttemptMismatch`, когда relevant attempt отсутствует.
 `Failure()` успешен только для `StopFailed` и возвращает exact Host Stop error.
 
-Для запланированного expected-attempt extension `StopAttemptMismatch` также
+Для expected-attempt extension `StopAttemptMismatch` также
 является declared immutable kind. Его `Attempt()` сообщает relevant fact, если
 он существовал, а `Failure()` всегда отсутствует. Он возвращается с nil
 method-level error и не представляет accepted lifecycle mutation.
@@ -757,9 +758,9 @@ Host-owned terminal signal.
 23. package race tests и применимые Runtime regression tests проходят при
     поддержке toolchain.
 
-### Acceptance proofs запланированного расширения
+### Acceptance proofs расширения expected-attempt
 
-Последующая реализация `StopExpectedAttempt` должна дополнительно доказать:
+Изолированная реализация `StopExpectedAttempt` дополнительно доказывает:
 
 1. validation nil Owner и empty expected ID использует declared sentinels и
    ничего не изменяет;
@@ -819,7 +820,7 @@ DP-010 не определяет:
 
 Он также не определяет public expected-attempt command DP-013, composition
 invoker или orchestration policy. Они остаются отдельной работой после
-реализации и независимой приёмки запланированного расширения Owner.
+изолированного расширения Owner.
 
 ## 31. Implementation boundary
 
@@ -829,9 +830,10 @@ fakes вокруг package-private immutable launch seam и external preparation
 boundary.
 
 Declarations и semantics expected-attempt в sections 6, 7, 18.1, 23 и 28
-являются запланированным расширением. Они не заявляют executable capability до
-тех пор, пока отдельная implementation task не предоставит code, proof tests,
-verification и independent acceptance.
+реализованы и верифицированы изолированно завершённой и
+Coordinator-Accepted TASK-040. Это не заявляет private invocation, integration
+или production capability. Repeat final Reviewer verdict — `APPROVED`,
+blocking/non-blocking findings 0/0.
 
 Он не подключает Loader, Builder, HTTP handlers Control Service, repositories,
 persistence или production routing. Implementation не повышает design status.

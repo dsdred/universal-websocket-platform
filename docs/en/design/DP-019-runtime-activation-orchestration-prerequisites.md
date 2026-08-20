@@ -20,15 +20,15 @@ attempt/generation binding sequence, and exact managed Flow outcome adaptation,
 implemented and independently accepted in isolation. TASK-038 identifies a
 factual readiness gap: implemented DP-010 Stop cannot atomically select an
 expected Launch Attempt. Completed and Coordinator-Accepted TASK-039 records
-the accepted Draft DP-010 design for that operation, but implementation is
-still required before the concrete
-private exact-scope composition invoker. This statement does not amend this
+the accepted Draft DP-010 design for that operation; completed and
+Coordinator-Accepted TASK-040 implements and verifies it in isolation, with
+repeat final Reviewer `APPROVED` 0/0. The concrete private exact-scope composition
+invoker remains absent. This statement does not amend this
 Approved decision. Post-Owner terminal publication belongs to the later
 TASK-026 orchestrator itself; that orchestrator, external persistence, API,
 recovery worker, and production wiring remain absent. TASK-026 remains Blocked
-pending implementation of the TASK-039 design and independent acceptance of
-that implementation, the later private exact-scope composition invoker, and later readiness
-reassessment.
+by the later private exact-scope composition invoker and subsequent
+readiness/orchestrator boundaries.
 
 ## 2. Purpose
 
@@ -484,8 +484,9 @@ sequence, and managed Flow outcome mapping, implemented and independently
 accepted in isolation. TASK-038 additionally finds that atomic expected-attempt
 Owner Stop must precede the concrete private scoped invoker. Completed and
 Coordinator-Accepted TASK-039 records its accepted Draft DP-010 design;
-implementation is still absent. The
-repository also lacks that invoker, later terminal
+completed and Coordinator-Accepted TASK-040 implements and verifies it in
+isolation, with repeat final Reviewer `APPROVED` 0/0. The repository
+still lacks that invoker, later terminal
 publication and command/phase terminalization, activation orchestrator, and
 production composition audit required by the complete design.
 

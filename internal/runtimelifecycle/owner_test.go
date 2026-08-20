@@ -575,6 +575,385 @@ func TestStopFailureRetainsOwnershipAndDoesNotRetry(t *testing.T) {
 	}
 }
 
+func TestStopExpectedAttemptValidationAndMismatchDoNotMutate(t *testing.T) {
+	var nilOwner *Owner
+	if _, err := nilOwner.StopExpectedAttempt(context.Background(), "attempt-1"); !errors.Is(err, ErrInvalidOwner) {
+		t.Fatalf("nil Owner error = %v", err)
+	}
+
+	owner := mustOwner(t, nil)
+	preparation := mustPrepare(t, owner)
+	if _, err := owner.StopExpectedAttempt(context.Background(), ""); !errors.Is(err, ErrInvalidExpectedAttempt) {
+		t.Fatalf("empty expected ID error = %v", err)
+	}
+	if preparation.Context().Err() != nil {
+		t.Fatalf("validation canceled preparation: %v", preparation.Context().Err())
+	}
+
+	mismatch, err := owner.StopExpectedAttempt(context.Background(), "another-attempt")
+	if err != nil || mismatch.Kind() != StopAttemptMismatch {
+		t.Fatalf("mismatch = %#v, %v", mismatch, err)
+	}
+	fact, ok := mismatch.Attempt()
+	if !ok || fact.LaunchAttemptID() != preparation.LoadRequest().LaunchAttemptID() {
+		t.Fatalf("mismatch Attempt() = %#v, %t", fact, ok)
+	}
+	if failure, ok := mismatch.Failure(); ok || failure != nil {
+		t.Fatalf("mismatch Failure() = %v, %t", failure, ok)
+	}
+	if preparation.Context().Err() != nil || owner.Observe().ActualState() != ActualStarting {
+		t.Fatalf("mismatch mutated attempt: context=%v state=%q", preparation.Context().Err(), owner.Observe().ActualState())
+	}
+
+	emptyOwner := mustOwner(t, nil)
+	none, err := emptyOwner.StopExpectedAttempt(context.Background(), "attempt-1")
+	if err != nil || none.Kind() != StopAttemptMismatch {
+		t.Fatalf("no-attempt mismatch = %#v, %v", none, err)
+	}
+	if _, ok := none.Attempt(); ok {
+		t.Fatal("no-attempt mismatch exposed an attempt")
+	}
+}
+
+func TestStopExpectedAttemptSelectsActiveBeforeRetainedLast(t *testing.T) {
+	owner := mustOwner(t, nil)
+	first := mustPrepare(t, owner)
+	firstID := first.LoadRequest().LaunchAttemptID()
+	if outcome, err := owner.StopExpectedAttempt(context.Background(), firstID); err != nil || outcome.Kind() != StopStopped {
+		t.Fatalf("stop first = %#v, %v", outcome, err)
+	}
+
+	second := mustPrepareRequest(t, owner, NewStartRequest(11, 22, 44))
+	secondID := second.LoadRequest().LaunchAttemptID()
+	mismatch, err := owner.StopExpectedAttempt(context.Background(), firstID)
+	if err != nil || mismatch.Kind() != StopAttemptMismatch {
+		t.Fatalf("old expected ID = %#v, %v", mismatch, err)
+	}
+	fact, ok := mismatch.Attempt()
+	if !ok || fact.LaunchAttemptID() != secondID || second.Context().Err() != nil {
+		t.Fatalf("relevant successor = %#v/%t, context=%v", fact, ok, second.Context().Err())
+	}
+	if outcome, err := owner.StopExpectedAttempt(context.Background(), secondID); err != nil || outcome.Kind() != StopStopped {
+		t.Fatalf("stop successor = %#v, %v", outcome, err)
+	}
+}
+
+func TestStopExpectedAttemptPreservesActivePhaseSemantics(t *testing.T) {
+	t.Run("Preparing", func(t *testing.T) {
+		owner := mustOwner(t, nil)
+		preparation := mustPrepare(t, owner)
+		outcome, err := owner.StopExpectedAttempt(context.Background(), preparation.LoadRequest().LaunchAttemptID())
+		fact, ok := outcome.Attempt()
+		if err != nil || outcome.Kind() != StopStopped || !ok ||
+			fact.TerminalKind() != AttemptStoppedBeforeRunning || preparation.Context().Err() != context.Canceled {
+			t.Fatalf("StopExpectedAttempt = %#v/%#v/%t, %v, context=%v", outcome, fact, ok, err, preparation.Context().Err())
+		}
+	})
+
+	t.Run("Launching", func(t *testing.T) {
+		controller := newLaunchController()
+		owner := mustOwner(t, controller.launch)
+		preparation := mustPrepare(t, owner)
+		startResult := make(chan startCallResult, 1)
+		go func() {
+			outcome, err := owner.Start(context.Background(), preparation, PreparedSnapshot(mustSnapshot(t, preparation)))
+			startResult <- startCallResult{outcome: outcome, err: err}
+		}()
+		<-controller.started
+
+		stopResult := make(chan stopCallResult, 1)
+		go func() {
+			outcome, err := owner.StopExpectedAttempt(context.Background(), preparation.LoadRequest().LaunchAttemptID())
+			stopResult <- stopCallResult{outcome: outcome, err: err}
+		}()
+		<-preparation.Context().Done()
+		controller.results <- launchResult{outcome: runtime.Launch(nil)}
+		if result := <-startResult; result.err != nil || result.outcome.Kind() != StartStoppedBeforeRunning {
+			t.Fatalf("Start = %#v, %v", result.outcome, result.err)
+		}
+		if result := <-stopResult; result.err != nil || result.outcome.Kind() != StopStopped {
+			t.Fatalf("StopExpectedAttempt = %#v, %v", result.outcome, result.err)
+		}
+	})
+
+	t.Run("Running and Stopping convergence", func(t *testing.T) {
+		stopRelease := make(chan error, 1)
+		host := newProofHost(stopRelease, nil)
+		owner := mustOwner(t, func(*runtime.BootstrapRequest) launchResult {
+			return launchResult{host: host, success: true}
+		})
+		preparation := mustPrepare(t, owner)
+		mustStart(t, owner, preparation)
+		expectedID := preparation.LoadRequest().LaunchAttemptID()
+
+		results := make(chan stopCallResult, 2)
+		go func() {
+			outcome, err := owner.StopExpectedAttempt(context.Background(), expectedID)
+			results <- stopCallResult{outcome: outcome, err: err}
+		}()
+		<-host.stopStarted
+		attachmentContext := &observedDoneContext{
+			Context:  context.Background(),
+			observed: make(chan struct{}),
+		}
+		go func() {
+			outcome, err := owner.StopExpectedAttempt(attachmentContext, expectedID)
+			results <- stopCallResult{outcome: outcome, err: err}
+		}()
+		<-attachmentContext.observed
+		mismatch, err := owner.StopExpectedAttempt(context.Background(), "another-attempt")
+		if err != nil || mismatch.Kind() != StopAttemptMismatch {
+			t.Fatalf("different-ID call = %#v, %v", mismatch, err)
+		}
+		fact, ok := mismatch.Attempt()
+		if !ok || fact.Phase() != AttemptStopping || host.stopCalls.Load() != 1 {
+			t.Fatalf("different-ID relevant fact = %#v/%t, calls=%d", fact, ok, host.stopCalls.Load())
+		}
+		stopRelease <- nil
+		for range 2 {
+			result := <-results
+			if result.err != nil || result.outcome.Kind() != StopStopped {
+				t.Errorf("same-ID convergence = %#v, %v", result.outcome, result.err)
+			}
+		}
+		if host.stopCalls.Load() != 1 {
+			t.Fatalf("Host.Stop calls = %d", host.stopCalls.Load())
+		}
+	})
+}
+
+func TestStopExpectedAttemptRetainedOutcomes(t *testing.T) {
+	t.Run("Stop failure", func(t *testing.T) {
+		stopCause := errors.New("shutdown failed")
+		host := newProofHost(nil, stopCause)
+		owner := mustOwner(t, func(*runtime.BootstrapRequest) launchResult {
+			return launchResult{host: host, success: true}
+		})
+		preparation := mustPrepare(t, owner)
+		mustStart(t, owner, preparation)
+		expectedID := preparation.LoadRequest().LaunchAttemptID()
+		if outcome, err := owner.StopExpectedAttempt(context.Background(), expectedID); err != nil || outcome.Kind() != StopFailed {
+			t.Fatalf("first StopExpectedAttempt = %#v, %v", outcome, err)
+		}
+		outcome, err := owner.StopExpectedAttempt(context.Background(), expectedID)
+		failure, ok := outcome.Failure()
+		if err != nil || outcome.Kind() != StopFailed || !ok || failure != stopCause || host.stopCalls.Load() != 1 {
+			t.Fatalf("retained StopExpectedAttempt = %#v, %v/%t, err=%v calls=%d", outcome, failure, ok, err, host.stopCalls.Load())
+		}
+	})
+
+	for _, running := range []bool{false, true} {
+		name := "Stopped before running replay"
+		if running {
+			name = "Stopped after running replay"
+		}
+		t.Run(name, func(t *testing.T) {
+			owner := mustOwner(t, nil)
+			preparation := mustPrepare(t, owner)
+			if running {
+				mustStart(t, owner, preparation)
+			}
+			expectedID := preparation.LoadRequest().LaunchAttemptID()
+			if _, err := owner.StopExpectedAttempt(context.Background(), expectedID); err != nil {
+				t.Fatalf("first StopExpectedAttempt error = %v", err)
+			}
+			outcome, err := owner.StopExpectedAttempt(context.Background(), expectedID)
+			fact, ok := outcome.Attempt()
+			if err != nil || outcome.Kind() != StopStopped || !ok || fact.LaunchAttemptID() != expectedID {
+				t.Fatalf("retained replay = %#v/%#v/%t, %v", outcome, fact, ok, err)
+			}
+			wantTerminal := AttemptStoppedBeforeRunning
+			if running {
+				wantTerminal = AttemptStopped
+			}
+			if fact.TerminalKind() != wantTerminal {
+				t.Fatalf("TerminalKind() = %q, want %q", fact.TerminalKind(), wantTerminal)
+			}
+		})
+	}
+
+	tests := []struct {
+		name  string
+		start func(*testing.T, *Owner, LaunchPreparation)
+		kind  AttemptTerminalKind
+	}{
+		{
+			name: "Preparation failure",
+			start: func(t *testing.T, owner *Owner, preparation LaunchPreparation) {
+				if outcome, err := owner.Start(context.Background(), preparation, FailedPreparation(errors.New("load failed"))); err != nil || outcome.Kind() != StartPreparationFailed {
+					t.Fatalf("Start = %#v, %v", outcome, err)
+				}
+			},
+			kind: AttemptPreparationFailed,
+		},
+		{
+			name: "Launch failure",
+			start: func(t *testing.T, owner *Owner, preparation LaunchPreparation) {
+				if outcome, err := owner.Start(context.Background(), preparation, PreparedSnapshot(mustSnapshot(t, preparation))); err != nil || outcome.Kind() != StartLaunchFailed {
+					t.Fatalf("Start = %#v, %v", outcome, err)
+				}
+			},
+			kind: AttemptLaunchFailed,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			owner := mustOwner(t, func(*runtime.BootstrapRequest) launchResult {
+				return launchResult{outcome: runtime.Launch(nil)}
+			})
+			preparation := mustPrepare(t, owner)
+			test.start(t, owner, preparation)
+			outcome, err := owner.StopExpectedAttempt(context.Background(), preparation.LoadRequest().LaunchAttemptID())
+			fact, ok := outcome.Attempt()
+			observation := owner.Observe()
+			if err != nil || outcome.Kind() != StopStopped || !ok || fact.TerminalKind() != test.kind ||
+				observation.DesiredState() != DesiredStopped || observation.ActualState() != ActualStopped {
+				t.Fatalf("StopExpectedAttempt = %#v/%#v/%t, %v, observation=%#v", outcome, fact, ok, err, observation)
+			}
+		})
+	}
+
+	t.Run("Impossible retained state", func(t *testing.T) {
+		owner := mustOwner(t, nil)
+		preparation := mustPrepare(t, owner)
+		expectedID := preparation.LoadRequest().LaunchAttemptID()
+		owner.mu.Lock()
+		owner.active = nil
+		owner.last = preparation.attempt
+		owner.actual = ActualStopped
+		before := preparation.attempt.fact
+		owner.mu.Unlock()
+
+		if _, err := owner.StopExpectedAttempt(context.Background(), expectedID); !errors.Is(err, ErrStartConflict) {
+			t.Fatalf("StopExpectedAttempt error = %v", err)
+		}
+		owner.mu.Lock()
+		after := preparation.attempt.fact
+		actual := owner.actual
+		owner.mu.Unlock()
+		if after != before || actual != ActualStopped {
+			t.Fatalf("impossible state mutated: before=%#v after=%#v actual=%q", before, after, actual)
+		}
+	})
+}
+
+func TestStopExpectedAttemptCancellationLinearization(t *testing.T) {
+	t.Run("visible before locked check", func(t *testing.T) {
+		owner := mustOwner(t, nil)
+		preparation := mustPrepare(t, owner)
+		ctx, cancel := context.WithCancel(context.Background())
+		owner.mu.Lock()
+		result := make(chan stopCallResult, 1)
+		go func() {
+			outcome, err := owner.StopExpectedAttempt(ctx, preparation.LoadRequest().LaunchAttemptID())
+			result <- stopCallResult{outcome: outcome, err: err}
+		}()
+		cancel()
+		owner.mu.Unlock()
+		if got := <-result; !errors.Is(got.err, context.Canceled) {
+			t.Fatalf("StopExpectedAttempt error = %v", got.err)
+		}
+		if preparation.Context().Err() != nil || owner.Observe().ActualState() != ActualStarting {
+			t.Fatalf("canceled call mutated state: context=%v state=%q", preparation.Context().Err(), owner.Observe().ActualState())
+		}
+	})
+
+	t.Run("after claim cancels only waiter", func(t *testing.T) {
+		stopRelease := make(chan error, 1)
+		host := newProofHost(stopRelease, nil)
+		owner := mustOwner(t, func(*runtime.BootstrapRequest) launchResult {
+			return launchResult{host: host, success: true}
+		})
+		preparation := mustPrepare(t, owner)
+		mustStart(t, owner, preparation)
+		expectedID := preparation.LoadRequest().LaunchAttemptID()
+		ctx, cancel := context.WithCancel(context.Background())
+		result := make(chan stopCallResult, 1)
+		go func() {
+			outcome, err := owner.StopExpectedAttempt(ctx, expectedID)
+			result <- stopCallResult{outcome: outcome, err: err}
+		}()
+		<-host.stopStarted
+		cancel()
+		if got := <-result; !errors.Is(got.err, context.Canceled) {
+			t.Fatalf("wait error = %v", got.err)
+		}
+		stopRelease <- nil
+		waitForActual(t, owner, ActualStopped)
+		outcome, err := owner.StopExpectedAttempt(context.Background(), expectedID)
+		if err != nil || outcome.Kind() != StopStopped || host.stopCalls.Load() != 1 {
+			t.Fatalf("converged replay = %#v, %v, calls=%d", outcome, err, host.stopCalls.Load())
+		}
+	})
+}
+
+func TestStopExpectedAttemptRunsWorkOutsideMutexAndOwnersRemainIndependent(t *testing.T) {
+	cancelOwner := mustOwner(t, nil)
+	cancelPreparation := mustPrepare(t, cancelOwner)
+	cancelObserved := make(chan struct{})
+	originalCancel := cancelPreparation.attempt.cancel
+	cancelPreparation.attempt.cancel = func() {
+		cancelOwner.Observe()
+		originalCancel()
+		close(cancelObserved)
+	}
+	cancelDone := make(chan stopCallResult, 1)
+	go func() {
+		outcome, err := cancelOwner.StopExpectedAttempt(
+			context.Background(),
+			cancelPreparation.LoadRequest().LaunchAttemptID(),
+		)
+		cancelDone <- stopCallResult{outcome: outcome, err: err}
+	}()
+	select {
+	case <-cancelObserved:
+	case <-time.After(time.Second):
+		t.Fatal("preparation cancellation appears to run under Owner mutex")
+	}
+	if result := <-cancelDone; result.err != nil || result.outcome.Kind() != StopStopped {
+		t.Fatalf("preparing StopExpectedAttempt = %#v, %v", result.outcome, result.err)
+	}
+
+	var first *Owner
+	firstHost := newProofHost(nil, nil)
+	firstHost.onStop = func() { first.Observe() }
+	first = mustOwner(t, func(*runtime.BootstrapRequest) launchResult {
+		return launchResult{host: firstHost, success: true}
+	})
+	firstPreparation := mustPrepare(t, first)
+	mustStart(t, first, firstPreparation)
+
+	second := mustOwner(t, nil)
+	secondPreparation := mustPrepare(t, second)
+	secondDone := make(chan stopCallResult, 1)
+	go func() {
+		outcome, err := second.StopExpectedAttempt(context.Background(), secondPreparation.LoadRequest().LaunchAttemptID())
+		secondDone <- stopCallResult{outcome: outcome, err: err}
+	}()
+	select {
+	case result := <-secondDone:
+		if result.err != nil || result.outcome.Kind() != StopStopped {
+			t.Fatalf("independent Owner StopExpectedAttempt = %#v, %v", result.outcome, result.err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("independent Owner did not progress")
+	}
+
+	firstDone := make(chan stopCallResult, 1)
+	go func() {
+		outcome, err := first.StopExpectedAttempt(context.Background(), firstPreparation.LoadRequest().LaunchAttemptID())
+		firstDone <- stopCallResult{outcome: outcome, err: err}
+	}()
+	select {
+	case result := <-firstDone:
+		if result.err != nil || result.outcome.Kind() != StopStopped {
+			t.Fatalf("StopExpectedAttempt = %#v, %v", result.outcome, result.err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("Host.Stop appears to run under Owner mutex")
+	}
+}
+
 func TestCallerCancellationOnlyCancelsWaitAfterClaim(t *testing.T) {
 	t.Run("Start", func(t *testing.T) {
 		controller := newLaunchController()
@@ -918,6 +1297,17 @@ type stopCallResult struct {
 type nonComparableError []string
 
 func (nonComparableError) Error() string { return "non-comparable preparation failure" }
+
+type observedDoneContext struct {
+	context.Context
+	observed chan struct{}
+	once     sync.Once
+}
+
+func (ctx *observedDoneContext) Done() <-chan struct{} {
+	ctx.once.Do(func() { close(ctx.observed) })
+	return ctx.Context.Done()
+}
 
 type launchController struct {
 	calls   atomic.Int32

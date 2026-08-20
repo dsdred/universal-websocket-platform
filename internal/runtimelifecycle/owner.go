@@ -336,8 +336,49 @@ func (o *Owner) Stop(ctx context.Context) (StopOutcome, error) {
 		o.mu.Unlock()
 		return StopOutcome{}, err
 	}
+	return o.stopLocked(ctx, o.active, false)
+}
+
+// StopExpectedAttempt stops only the exact relevant Owner-issued Launch Attempt.
+func (o *Owner) StopExpectedAttempt(
+	ctx context.Context,
+	expectedAttemptID runtimeconfigload.LaunchAttemptID,
+) (StopOutcome, error) {
+	if o == nil {
+		return StopOutcome{}, ErrInvalidOwner
+	}
+	if expectedAttemptID == "" {
+		return StopOutcome{}, ErrInvalidExpectedAttempt
+	}
+
+	o.mu.Lock()
+	if err := ctx.Err(); err != nil {
+		o.mu.Unlock()
+		return StopOutcome{}, err
+	}
 
 	attempt := o.active
+	if attempt == nil {
+		attempt = o.last
+	}
+	if attempt == nil || attempt.fact.launchAttemptID != expectedAttemptID {
+		outcome := StopOutcome{kind: StopAttemptMismatch}
+		if attempt != nil {
+			outcome.attempt = attempt.fact
+			outcome.hasAttempt = true
+		}
+		o.mu.Unlock()
+		return outcome, nil
+	}
+
+	return o.stopLocked(ctx, attempt, attempt == o.last && o.active == nil)
+}
+
+func (o *Owner) stopLocked(
+	ctx context.Context,
+	attempt *attemptState,
+	retainedMatch bool,
+) (StopOutcome, error) {
 	if attempt == nil {
 		switch o.actual {
 		case ActualStopped:
@@ -350,6 +391,31 @@ func (o *Owner) Stop(ctx context.Context) (StopOutcome, error) {
 			if o.last != nil {
 				outcome.attempt = o.last.fact
 				outcome.hasAttempt = true
+			}
+			o.mu.Unlock()
+			return outcome, nil
+		default:
+			o.mu.Unlock()
+			return StopOutcome{}, ErrStartConflict
+		}
+	}
+	if retainedMatch {
+		switch attempt.fact.terminalKind {
+		case AttemptStopped, AttemptStoppedBeforeRunning:
+			outcome := StopOutcome{
+				kind:       StopStopped,
+				attempt:    attempt.fact,
+				hasAttempt: true,
+			}
+			o.mu.Unlock()
+			return outcome, nil
+		case AttemptPreparationFailed, AttemptLaunchFailed:
+			o.desired = DesiredStopped
+			o.actual = ActualStopped
+			outcome := StopOutcome{
+				kind:       StopStopped,
+				attempt:    attempt.fact,
+				hasAttempt: true,
 			}
 			o.mu.Unlock()
 			return outcome, nil

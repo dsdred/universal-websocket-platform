@@ -20,14 +20,15 @@ continuation, binding sequence attempt/generation DP-014 и exact адаптац
 outcomes managed Flow, реализованные и независимо принятые изолированно.
 TASK-038 определяет factual readiness gap: реализованный Stop DP-010 не может
 атомарно выбрать ожидаемый Launch Attempt. Завершённая и Coordinator-Accepted
-TASK-039 фиксирует принятый design этой operation в Draft DP-010, но до concrete private exact-scope composition
-invoker всё ещё требуется implementation. Это утверждение не изменяет данный
+TASK-039 фиксирует принятый design этой operation в Draft DP-010; завершённая и
+Coordinator-Accepted TASK-040 реализует и верифицирует его изолированно, repeat
+final Reviewer `APPROVED` 0/0. Concrete private
+exact-scope composition invoker всё ещё отсутствует. Это утверждение не изменяет данный
 Approved decision. Terminal publication после
 Owner относится к самому последующему orchestrator TASK-026; этот orchestrator,
 external persistence, API, recovery worker и production wiring отсутствуют.
-TASK-026 остаётся Blocked до реализации design TASK-039 и независимой приёмки
-этой реализации, последующего private exact-scope composition invoker и последующей переоценки
-readiness.
+TASK-026 остаётся Blocked последующим private exact-scope composition invoker и
+последующими readiness/orchestrator boundaries.
 
 ## 2. Назначение
 
@@ -473,7 +474,9 @@ concrete stateless continuation, sequence membership/generation binding
 принятые изолированно. TASK-038 дополнительно устанавливает, что atomic
 expected-attempt Owner Stop должен предшествовать concrete private scoped
 invoker. Завершённая и Coordinator-Accepted TASK-039 фиксирует его принятый
-design в Draft DP-010; implementation всё ещё отсутствует. Репозиторий также не содержит этот invoker,
+design в Draft DP-010; завершённая и Coordinator-Accepted TASK-040 реализует и
+верифицирует его изолированно, repeat final Reviewer `APPROVED` 0/0.
+Репозиторий всё ещё не содержит этот invoker,
 последующую terminal publication и terminalization command/phase, activation
 orchestrator и production composition audit полного design.
 

@@ -21,9 +21,10 @@ managed primitive and linked gates, the stateless OwnerClaim-to-DP-014
 continuation, exact revision threading and managed Flow outcome adaptation.
 TASK-037 is independently accepted. Slice 4 is completed and Coordinator
 Accepted as TASK-038 with verdict `TASK-026 REMAINS BLOCKED`; its first
-design-only next candidate completed as Coordinator-Accepted TASK-039, with
-accepted Draft DP-010 semantics and no implementation. The overall status
-remains Planned.
+design-only next candidate completed as Coordinator-Accepted TASK-039.
+Completed and Coordinator-Accepted TASK-040 implements and verifies those
+accepted Draft DP-010 semantics in isolation; repeat final Reviewer is
+`APPROVED` 0/0. The overall status remains Planned.
 
 This focused design decomposes the remaining Approved DP-019 prerequisites —
 exact orchestration authorization, private managed invocation, and
@@ -683,9 +684,10 @@ verdict does not activate implementation or change TASK-026 status automatically
   whether TASK-026 can be unblocked against the unmodified DP-016 §25 proofs.
 - TASK-038 identifies a design-only atomic expected-attempt Owner Stop contract
   as the first bounded prerequisite. TASK-039 completed and received
-  Coordinator Acceptance after recording only that design in Draft DP-010;
-  implementation remains a separate later slice,
-  and the private exact-scope composition invoker remains later still.
+  Coordinator Acceptance after recording that design in Draft DP-010;
+  completed and Coordinator-Accepted TASK-040 implements and verifies the
+  isolated Owner extension, with repeat final Reviewer `APPROVED` 0/0. The private
+  exact-scope composition invoker remains later still.
 
 Each slice requires its own task intake, Existing Coverage Report, Verification
 Matrix, Independent Review, PROCESS-002, and Coordinator Acceptance.
@@ -718,9 +720,9 @@ TASK-034 identified the remaining conformance gap, TASK-035 implements and
 independently accepts its Slice 2R repair in isolation, and TASK-036 resolves
 the remaining Slice-3 command-gate and continuation API ambiguity. TASK-037
 implements and independently accepts Slice 3 in isolation. The
-repository contains the accepted Draft design but still lacks implementation
-of atomic expected-attempt Owner Stop, the later concrete private exact-scope
-composition invoker, activation orchestrator,
+repository contains the accepted Draft design and completed TASK-040 isolated
+implementation of atomic expected-attempt Owner Stop, but still lacks the
+later concrete private exact-scope composition invoker, activation orchestrator,
 external persistence, API, recovery worker, and production wiring. Later DP-014 terminal publication and DP-015 command/phase
 terminalization after the Owner result belong to the TASK-026 orchestrator,
 not to a separate prerequisite. TASK-026 therefore remains Blocked; Slice 4 is
