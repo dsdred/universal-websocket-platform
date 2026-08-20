@@ -42,7 +42,8 @@ operational документы ведутся на русском языке и 
 - [TASK-035 — Managed Binding Repair](TASK-035-MANAGED-BINDING-REPAIR.md) — Completed, Coordinator Accepted; repeat review Approved 0/0; Slice 2R implemented in isolation; Slice 3 was unactivated at closure
 - [TASK-036 — Slice 3 Readiness Reconciliation](TASK-036-SLICE-3-READINESS-RECONCILIATION.md) — Completed, Coordinator Accepted; Independent Review Approved 0/0; Slice 3 implementation was the accepted next candidate at closure
 - [TASK-037 — Runtime Owner Claim Binding](TASK-037-RUNTIME-OWNER-CLAIM-BINDING.md) — Completed, Coordinator Accepted; Slice 3 implemented and accepted in isolation; Independent Reviewer APPROVED 0/0
-- [TASK-038 — Slice 4 Orchestrator Readiness Reassessment](TASK-038-SLICE-4-ORCHESTRATOR-READINESS.md) — Completed, Coordinator Accepted; repeat Reviewer APPROVED 0/0; verdict `TASK-026 REMAINS BLOCKED`; design-only atomic expected-attempt Owner Stop is the first unactivated candidate
+- [TASK-038 — Slice 4 Orchestrator Readiness Reassessment](TASK-038-SLICE-4-ORCHESTRATOR-READINESS.md) — Completed, Coordinator Accepted; repeat Reviewer APPROVED 0/0; verdict `TASK-026 REMAINS BLOCKED`; at TASK-038 closure design-only atomic expected-attempt Owner Stop was the first unactivated candidate
+- [TASK-039 — Atomic Expected-Attempt Runtime Owner Stop Design](TASK-039-EXPECTED-ATTEMPT-OWNER-STOP-DESIGN.md) — Completed, Coordinator Accepted; repeat Reviewer APPROVED 0/0; accepted Draft DP-010 design recorded, implementation absent; TASK-026 remains Blocked
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

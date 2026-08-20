@@ -80,11 +80,13 @@ the exact verdict
 an expected Launch Attempt, while Observe-then-Stop and an invoker-level mutex
 cannot exclude a newer attempt without TOCTOU or violating lock/lifetime rules.
 
-The first bounded prerequisite candidate is a separate design-only DP-010
-atomic expected-attempt Stop contract; it remains unactivated pending separate
-intake. TASK-038 does not finalize its API or change Approved sources. The
-private exact-scope composition invoker remains a later prerequisite after the
-new contract is designed, implemented, and independently accepted.
+At TASK-038 closure, the first bounded prerequisite candidate was a separate
+unactivated design-only DP-010 atomic expected-attempt Stop contract, and
+TASK-038 did not finalize its API or change Approved sources. TASK-039
+subsequently activated and recorded that accepted design in Draft DP-010; its
+implementation remains absent. TASK-026 remains Blocked pending independent
+acceptance of that implementation and the later private exact-scope
+composition invoker.
 Post-Owner DP-014 terminal publication and DP-015 command/phase terminalization
 remain core TASK-026 orchestrator work, not a separate prerequisite. External
 API, persistence, recovery, reporting, production wiring, and Production

@@ -372,8 +372,11 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   the Slice 4 readiness reassessment and, after Reviewer rework, records
   7 Direct, 10 Compositional, 2 Missing, and 0 Deferred DP-016 §25 proofs; its
   `TASK-026 REMAINS BLOCKED` verdict is Coordinator Accepted after repeat
-  Reviewer APPROVED 0/0. The first bounded candidate is an unactivated design-only atomic
-  expected-attempt Owner Stop contract; the private invoker remains later.
+  Reviewer APPROVED 0/0. The first bounded candidate completed as design-update
+  TASK-039 with Coordinator Acceptance and repeat Reviewer APPROVED 0/0: its
+  accepted Draft DP-010 atomic expected-attempt Owner Stop semantics are
+  recorded but not implemented. The bounded implementation is the next
+  unactivated recommendation; the private invoker remains later.
   Terminal publication remains TASK-026 core work. Orchestration and production
   composition remain Planned; TASK-026 remains Blocked;
   Integration and Production Activation remain inactive.

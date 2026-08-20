@@ -371,8 +371,12 @@ Architectural debt относится к границам, которые ост
   Среза 4 и после Reviewer rework фиксирует 7 Direct, 10 Compositional,
   2 Missing и 0 Deferred proofs §25 DP-016; verdict
   `TASK-026 REMAINS BLOCKED` Coordinator Accepted после repeat Reviewer
-  APPROVED 0/0. Первый bounded candidate — неактивированный design-only atomic expected-attempt Owner Stop
-  contract; private invoker остаётся последующим. Terminal publication остаётся core work TASK-026. Orchestration и
+  APPROVED 0/0. Первый bounded candidate завершён как design-update TASK-039 с
+  Coordinator Acceptance и repeat Reviewer APPROVED 0/0: его принятые
+  semantics Draft DP-010 atomic expected-attempt Owner Stop зафиксированы, но
+  не реализованы. Bounded implementation — следующая неактивированная
+  рекомендация; private invoker остаётся последующим.
+  Terminal publication остаётся core work TASK-026. Orchestration и
   production composition остаются Planned; TASK-026 остаётся Blocked;
   Integration и Production Activation остаются неактивными.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.

@@ -6,7 +6,8 @@
 
 **Design Status:** Draft
 
-**Implementation Status:** Implemented in isolation
+**Implementation Status:** base Lifecycle Owner реализован изолированно;
+расширение expected-attempt Stop запланировано
 
 **Статус архитектуры:** implementation contract утверждённой модели
 operational identity из
@@ -16,8 +17,10 @@ operational identity из
 
 Runtime Lifecycle Owner реализован изолированно в
 `internal/runtimelifecycle`. Production wiring
-Loader-to-Builder-to-Launcher не реализован. Этот Draft не пересматривает
-утверждённую архитектуру.
+Loader-to-Builder-to-Launcher не реализован. Контракт
+`StopExpectedAttempt`, добавленный TASK-039, является только принятой design
+baseline и не реализован. Этот Draft не пересматривает утверждённую
+архитектуру.
 
 ## 2. Назначение
 
@@ -86,7 +89,8 @@ manager, registry, service locator или policy engine.
 
 ## 6. Точные exported declarations
 
-Первая реализация использует следующие declarations без добавления другой
+Base implementation использует существующие declarations ниже. TASK-039
+добавляет только явно отмеченные planned declarations без добавления другой
 public lifecycle abstraction:
 
 ```go
@@ -157,8 +161,9 @@ func (r StartOutcome) LaunchOutcome() (runtime.BootstrapOutcome, bool)
 type StopOutcomeKind string
 
 const (
-    StopStopped StopOutcomeKind = "stopped"
-    StopFailed  StopOutcomeKind = "stop-failed"
+    StopStopped         StopOutcomeKind = "stopped"
+    StopFailed          StopOutcomeKind = "stop-failed"
+    StopAttemptMismatch StopOutcomeKind = "attempt-mismatch" // planned extension
 )
 
 type StopOutcome struct { /* immutable */ }
@@ -232,6 +237,7 @@ func (o *Owner) PrepareStart(
 ) (LaunchPreparation, error)
 func (o *Owner) Start(ctx context.Context, preparation LaunchPreparation, result PreparationResult) (StartOutcome, error)
 func (o *Owner) Stop(ctx context.Context) (StopOutcome, error)
+func (o *Owner) StopExpectedAttempt(ctx context.Context, expectedAttemptID runtimeconfigload.LaunchAttemptID) (StopOutcome, error) // planned extension
 func (o *Owner) Observe() Observation
 ```
 
@@ -251,12 +257,16 @@ var (
     ErrStartConflict            error
     ErrPreparationNotOwned      error
     ErrInvalidPreparationResult error
+    ErrInvalidExpectedAttempt   error // planned extension
 )
 ```
 
 Callers различают их через `errors.Is`. Ошибка source attempt ID оборачивает и
 `ErrAttemptIDSourceFailed`, и exact source error, чтобы оба оставались
 discoverable. Validation и conflict errors не изменяют lifecycle state.
+`ErrInvalidExpectedAttempt` отклоняет empty identity ожидаемого Launch
+Attempt. Вызов planned `StopExpectedAttempt` для nil Owner возвращает
+`ErrInvalidOwner`. Ни один validation outcome не изменяет lifecycle state.
 
 ## 8. Construction
 
@@ -479,6 +489,65 @@ attachment. Non-nil error выигрывает без mutation или attachment
 Concurrent operations следуют порядку mutex claims. `StopOrigin()` и
 `RunningPublished()` записываются при claim Stop и никогда не регрессируют.
 
+### 18.1 Запланированное расширение atomic expected-attempt Stop
+
+`StopExpectedAttempt(ctx, expectedAttemptID)` — запланированная atomic
+operation для private orchestration caller, который должен остановить один
+exact Owner-issued Launch Attempt. Она не входит в реализованный base slice.
+Expected identity должна быть non-empty; nil Owner возвращает
+`ErrInvalidOwner`, а empty identity — `ErrInvalidExpectedAttempt`, без
+lifecycle mutation.
+
+После validation operation под mutex Owner проверяет `ctx.Err()`, затем
+выбирает один relevant attempt: active attempt, если он существует, иначе
+retained last attempt, если он существует, иначе none. Active attempt всегда
+имеет приоритет над last attempt. Поэтому old last attempt A не может совпасть,
+пока существует active successor B.
+
+Если relevant identity отсутствует или отличается от expected identity,
+operation возвращает `StopAttemptMismatch` с nil error. Это valid negative
+outcome, а не conflict или lifecycle failure. Он выполняет zero mutation,
+attachment, cancellation, Host call и wait. `StopOutcome.Attempt()` раскрывает
+captured relevant immutable fact, если он существует, и отсутствует при none;
+`Failure()` отсутствует.
+
+Когда совпадает exact active attempt, operation использует ordinary Stop state
+machine section 18 без phase-specific divergence:
+
+- Preparing terminalizes как `AttemptStoppedBeforeRunning` и планирует
+  cancellation Owner context только после unlock;
+- Launching claims ту же combined operation, планирует cancellation после
+  unlock и ждёт её exact result;
+- Running claims ровно одну Host Stop operation для этого attempt;
+- Stopping только attaches к уже tracked operation;
+- retained active `AttemptStopFailed` возвращает exact stored `StopFailed`
+  outcome без retry.
+
+Когда active attempt отсутствует, а retained last attempt совпадает:
+
+- `AttemptStopped` и `AttemptStoppedBeforeRunning` replay attempt-specific
+  outcome `StopStopped` без mutation;
+- `AttemptPreparationFailed` и `AttemptLaunchFailed` используют тот же
+  существующий resource-free transition Failed-to-Stopped, что и ordinary
+  Stop: desired становится `DesiredStopped`, actual становится
+  `ActualStopped`, exact last attempt сохраняется, а operation возвращает
+  attempt-specific `StopStopped`;
+- любое impossible matched state возвращает `ErrStartConflict` без mutation.
+
+Match, claim или attachment является cancellation linearization point. Context
+error, видимая при locked check, выигрывает без mutation или attachment. После
+locked match и claim последующая caller cancellation прерывает только wait
+этого caller; Owner-owned cancellation, launch convergence, Host Stop и cleanup
+продолжаются. Callers с одинаковой identity сходятся на одном tracked или
+retained outcome. Другая identity никогда не attaches к этой work.
+
+Последующая реализация должна направлять generic `Stop(ctx)` и
+`StopExpectedAttempt` через один private helper ordinary Stop, чтобы их phase
+behavior не расходился. Expected path нельзя реализовывать как `Observe()` с
+последующим `Stop()`. Mutex Owner освобождается до context cancellation,
+`runtime.Launch`, `Host.Stop`, callbacks, external storage, work Flow, I/O и
+любого channel, context, resource или caller wait.
+
 ## 19. Stop во время preparation или launch
 
 Stop в `AttemptPreparing` завершается без Host. Последующий Start с тем же
@@ -582,8 +651,14 @@ outcome.
 - Stop failure никогда не дублируется как raw Start failure.
 
 `StopOutcome` immutable и имеет ровно один объявленный `StopOutcomeKind`.
-`Attempt()` отсутствует только для idempotent Stop без applicable attempt.
+`Attempt()` отсутствует только для idempotent Stop без applicable attempt или
+planned outcome `StopAttemptMismatch`, когда relevant attempt отсутствует.
 `Failure()` успешен только для `StopFailed` и возвращает exact Host Stop error.
+
+Для запланированного expected-attempt extension `StopAttemptMismatch` также
+является declared immutable kind. Его `Attempt()` сообщает relevant fact, если
+он существовал, а `Failure()` всегда отсутствует. Он возвращается с nil
+method-level error и не представляет accepted lifecycle mutation.
 
 Method-level errors представляют validation, conflict, ownership, ID-source
 или wait этого caller. Они не заменяют accepted lifecycle outcomes.
@@ -682,6 +757,34 @@ Host-owned terminal signal.
 23. package race tests и применимые Runtime regression tests проходят при
     поддержке toolchain.
 
+### Acceptance proofs запланированного расширения
+
+Последующая реализация `StopExpectedAttempt` должна дополнительно доказать:
+
+1. validation nil Owner и empty expected ID использует declared sentinels и
+   ничего не изменяет;
+2. отсутствие relevant attempt и отличающийся relevant attempt возвращают
+   `StopAttemptMismatch` с exact optional fact, nil failure и zero attachment,
+   cancellation, Host call или wait;
+3. выбор active attempt предшествует выбору retained last attempt, включая
+   successor race old A/new active B, и никогда не останавливает B для expected
+   A;
+4. exact attempts Preparing, Launching, Running и Stopping сохраняют ordinary
+   Stop phase behavior и exact outcomes;
+5. callers с одинаковым ID сходятся, а callers с разными ID никогда не
+   attaches;
+6. retained active Stop failure сохраняет exact identity error и не выполняет
+   cleanup retry;
+7. retained stopped forms replay `StopStopped`, а matching historical failures
+   preparation и launch выполняют resource-free transition Failed-to-Stopped
+   для этого exact attempt;
+8. cancellation, видимая при locked check, выигрывает без mutation, а
+   cancellation после match или claim освобождает только этого waiter;
+9. regression proofs generic `Stop` подтверждают неизменность semantics shared
+   helper;
+10. lock/lifetime, independent-Owner, race, vet, formatting и exported GoDoc
+    checks проходят при поддержке toolchain.
+
 ## 29. Будущие integration proofs
 
 Будущим production evidence остаются:
@@ -714,12 +817,21 @@ DP-010 не определяет:
 - изменения Host API или polling unexpected termination;
 - generic manager, registry, service locator или policy framework.
 
+Он также не определяет public expected-attempt command DP-013, composition
+invoker или orchestration policy. Они остаются отдельной работой после
+реализации и независимой приёмки запланированного расширения Owner.
+
 ## 31. Implementation boundary
 
 Реализованный первый code slice добавляет только
 `internal/runtimelifecycle` и local proof tests этого contract. Он использует
 fakes вокруг package-private immutable launch seam и external preparation
 boundary.
+
+Declarations и semantics expected-attempt в sections 6, 7, 18.1, 23 и 28
+являются запланированным расширением. Они не заявляют executable capability до
+тех пор, пока отдельная implementation task не предоставит code, proof tests,
+verification и independent acceptance.
 
 Он не подключает Loader, Builder, HTTP handlers Control Service, repositories,
 persistence или production routing. Implementation не повышает design status.

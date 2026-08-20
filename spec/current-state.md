@@ -38,9 +38,9 @@ Hardening; `Completed — Coordinator Accepted`.
 
 **Текущая operational task:** отсутствует.
 
-**Последняя завершённая architecture task:** TASK-038 — Slice 4 Orchestrator
-Readiness Reassessment; `Completed — Coordinator Accepted`; repeat Reviewer
-`APPROVED` 0/0; Scope Audit 14/0/0.
+**Последняя завершённая architecture task:** TASK-039 — Atomic
+Expected-Attempt Runtime Owner Stop Design; `Completed — Coordinator Accepted`;
+repeat Reviewer `APPROVED` 0/0; Scope Audit 18/0/0.
 
 **Текущая architecture task:** отсутствует.
 
@@ -57,10 +57,11 @@ PASS. Acceptance не реализует prerequisites и не снимает TA
 приняла Slice 3 изолированно: primitive/linked managed gates, stateless
 continuation, DP-014 conditional claim/bind и managed Flow outcomes. Concrete
 DP-013 private composition invoker, terminal
-publication и production wiring отсутствуют. TASK-038 выполняет Slice 4
-readiness reassessment и определяет design-only atomic expected-attempt Owner
-Stop contract как первый unactivated bounded prerequisite; private exact-scope
-invoker остаётся последующим, TASK-026 остаётся
+publication и production wiring отсутствуют. TASK-039 завершила и приняла
+только design-update atomic expected-attempt Owner Stop; принятые semantics
+Draft DP-010 не реализованы. Active development task отсутствует. Private
+exact-scope invoker остаётся последующим,
+TASK-026 остаётся
 `Blocked by Architecture`.
 
 **TASK-031:** `Completed — Coordinator Accepted`. Bounded isolated DP-020
@@ -76,9 +77,9 @@ CGO/gcc, substitute stress `-count=100` PASS); Independent Review Approved with
 Findings 0/2 (resolved); Verification Matrix, PROCESS-002, Scope Audit 7/0/0
 PASS. Commit, push, PR, merge и publication не выполнялись.
 
-**Последняя завершённая documentation task:** TASK-038 — Slice 4 Orchestrator
-Readiness Reassessment; `Completed — Coordinator Accepted`; PROCESS-002
-Synchronized; repeat Reviewer `APPROVED` 0/0; Scope Audit 14/0/0.
+**Последняя завершённая documentation task:** TASK-039 — Atomic
+Expected-Attempt Runtime Owner Stop Design; `Completed — Coordinator Accepted`;
+PROCESS-002 Synchronized; repeat Reviewer `APPROVED` 0/0; Scope Audit 18/0/0.
 
 **Текущая documentation task:** отсутствует.
 
@@ -585,10 +586,12 @@ Concrete composition-private invoker, terminal publication, orchestration и
 production wiring отсутствуют. TASK-038 активирует только Slice 4 readiness
 reassessment после Reviewer rework: 7 Direct, 10 Compositional, 2 Missing,
 0 Deferred; verdict `TASK-026 REMAINS BLOCKED` Coordinator Accepted после
-repeat Reviewer APPROVED 0/0. Первый
-bounded candidate — design-only atomic expected-attempt Owner Stop contract —
-не активирован. Private exact-scope composition invoker остаётся последующей
-prerequisite; terminal publication остаётся core work TASK-026.
+repeat Reviewer APPROVED 0/0. Первый bounded candidate завершён и Coordinator
+Accepted как design-update TASK-039: принятый Draft DP-010 contract atomic
+expected-attempt Owner Stop зафиксирован, но implementation отсутствует.
+Следующая неактивированная рекомендация — bounded implementation
+`StopExpectedAttempt`. Private exact-scope composition invoker остаётся
+последующей prerequisite; terminal publication остаётся core work TASK-026.
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task

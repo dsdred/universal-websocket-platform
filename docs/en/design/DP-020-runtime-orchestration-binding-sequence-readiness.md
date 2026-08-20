@@ -21,7 +21,9 @@ managed primitive and linked gates, the stateless OwnerClaim-to-DP-014
 continuation, exact revision threading and managed Flow outcome adaptation.
 TASK-037 is independently accepted. Slice 4 is completed and Coordinator
 Accepted as TASK-038 with verdict `TASK-026 REMAINS BLOCKED`; its first
-design-only next candidate is not activated. The overall status remains Planned.
+design-only next candidate completed as Coordinator-Accepted TASK-039, with
+accepted Draft DP-010 semantics and no implementation. The overall status
+remains Planned.
 
 This focused design decomposes the remaining Approved DP-019 prerequisites —
 exact orchestration authorization, private managed invocation, and
@@ -680,8 +682,10 @@ verdict does not activate implementation or change TASK-026 status automatically
   accepted, re-assess
   whether TASK-026 can be unblocked against the unmodified DP-016 §25 proofs.
 - TASK-038 identifies a design-only atomic expected-attempt Owner Stop contract
-  as the first bounded prerequisite. It is not activated automatically; the
-  private exact-scope composition invoker remains later.
+  as the first bounded prerequisite. TASK-039 completed and received
+  Coordinator Acceptance after recording only that design in Draft DP-010;
+  implementation remains a separate later slice,
+  and the private exact-scope composition invoker remains later still.
 
 Each slice requires its own task intake, Existing Coverage Report, Verification
 Matrix, Independent Review, PROCESS-002, and Coordinator Acceptance.
@@ -714,8 +718,9 @@ TASK-034 identified the remaining conformance gap, TASK-035 implements and
 independently accepts its Slice 2R repair in isolation, and TASK-036 resolves
 the remaining Slice-3 command-gate and continuation API ambiguity. TASK-037
 implements and independently accepts Slice 3 in isolation. The
-repository still lacks an atomic expected-attempt Owner Stop contract, the
-later concrete private exact-scope composition invoker, activation orchestrator,
+repository contains the accepted Draft design but still lacks implementation
+of atomic expected-attempt Owner Stop, the later concrete private exact-scope
+composition invoker, activation orchestrator,
 external persistence, API, recovery worker, and production wiring. Later DP-014 terminal publication and DP-015 command/phase
 terminalization after the Owner result belong to the TASK-026 orchestrator,
 not to a separate prerequisite. TASK-026 therefore remains Blocked; Slice 4 is
@@ -733,8 +738,8 @@ Positive:
 
 Costs:
 
-- TASK-038 performs the permitted readiness reassessment but does not activate
-  its design-only atomic expected-attempt Stop candidate;
+- TASK-038 performs the permitted readiness reassessment, and completed
+  TASK-039 records only its design-only atomic expected-attempt Stop candidate;
 - the synchronous pending-Stop rendezvous may block callers;
 - process restart still requires Planned DP-017 implementation;
 - production integration still requires external durability and a composition
