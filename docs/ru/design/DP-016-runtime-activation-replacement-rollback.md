@@ -18,9 +18,9 @@ TASK-038 установила, что implementation всё ещё architecture-
 Attempt. Завершённая и Coordinator-Accepted TASK-039 фиксирует принятый design
 expected-attempt Stop в Draft DP-010; завершённая и Coordinator-Accepted
 TASK-040 реализует и верифицирует его изолированно, repeat final Reviewer
-`APPROVED` 0/0. Последующий private exact-scope invoker отсутствует. Terminal
-publication DP-014 и DP-015
-после Owner остаётся частью этого planned orchestrator.
+`APPROVED` 0/0. TASK-043 реализует private exact-scope invoker изолированно.
+Terminal publication DP-014 и DP-015 после Owner остаётся частью этого planned
+orchestrator; orchestrator и production wiring остаются отсутствующими.
 
 ## 2. Назначение
 
@@ -54,8 +54,9 @@ Proposal уточняет, но не переопределяет:
 DP-015, partial parent/phase sequential core DP-019, command-boundary
 Continue/pending-Stop rendezvous, managed command gates, continuation и binding
 sequence attempt/generation DP-014 реализованы и независимо приняты
-изолированно. Approved DP-016 и DP-017 остаются Planned overall; concrete
-composition invoker и orchestrator отсутствуют.
+изолированно. Approved DP-016 и DP-017 остаются Planned overall; TASK-043
+реализует concrete composition invoker изолированно, а callback/terminal
+orchestrator и production composition остаются отсутствующими.
 
 ## 4. Область
 
@@ -275,9 +276,10 @@ binding final per-Instance gate упорядочивает new Stop claim и `Co
 Выигравший Stop converge до Load; выигравший `Continue` releases Flow, а later
 Stop обычно достигает claimed attempt. Admission/Owner lock не удерживается во
 время persistence, wait или convergence Stop. Current managed Flow,
-continuation и binding gate реализуют эти seams изолированно. DP-016 остаётся
-Planned overall, поскольку concrete composition-private invoker DP-013,
-terminal publication, orchestrator и production wiring отсутствуют.
+continuation, binding gate и concrete composition-private invoker DP-013
+TASK-043 реализуют эти seams изолированно. DP-016 остаётся Planned overall,
+поскольку callback integration, terminal publication, orchestrator и
+production wiring отсутствуют.
 
 ## 16. Explicit rollback
 
@@ -501,9 +503,10 @@ contract. TASK-038 подтвердила, что TASK-026 оставалась 
 из-за отсутствовавшего тогда contract atomic expected-attempt Owner Stop.
 TASK-039 зафиксировала design в Draft DP-010; завершённая и
 Coordinator-Accepted TASK-040 реализует и верифицирует isolated Owner extension,
-repeat final Reviewer `APPROVED` 0/0. TASK-026 остаётся Blocked, а private
-exact-scope invoker — последующей
-prerequisite. Reduced slice DP-016 запрещён.
+repeat final Reviewer `APPROVED` 0/0. TASK-043 впоследствии реализует private
+exact-scope invoker изолированно, но TASK-026 остаётся Blocked remaining
+callback/terminal/orchestrator и production-composition boundaries. Reduced
+slice DP-016 запрещён.
 
 ## 29. Решение
 

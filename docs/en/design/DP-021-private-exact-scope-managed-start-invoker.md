@@ -5,12 +5,13 @@
 ## 1. Status
 
 - **Design Status:** Draft
-- **Implementation Status:** Planned
+- **Implementation Status:** Partial — implemented in isolation
 
 This focused proposal defines one composition-private DP-013 invocation
-contract. It implements no package, public API, transport, policy, persistence,
-or production wiring. Approved DP-014 through DP-019 remain unchanged, and
-TASK-026 remains `Blocked by Architecture`.
+contract. TASK-043 implements that object in isolation inside the existing
+package; it adds no public API, transport, policy, persistence, or production
+wiring. Approved DP-014 through DP-019 remain unchanged, and TASK-026 remains
+`Blocked by Architecture`.
 
 ## 2. Purpose
 
@@ -418,15 +419,25 @@ A later implementation must prove all 18 rows:
 
 ## 17. Implementation Boundary
 
-Implementation Status is Planned. Existing packages already implement the
-dependency-neutral binding, managed primitive/linked adapters, managed Flow,
-Owner-claim continuation, attempt/generation binding, and expected-attempt
-Owner Stop in isolation. The `runtimemanagement` package does not implement
-this invoker or duplicate managed Flow construction.
+Implementation Status is Partial — implemented in isolation. TASK-043 adds the
+concrete `ManagedStartInvoker`, `NewManagedStartInvoker`,
+`InvokeManagedStart`, `ErrInvalidManagedStartInvoker`, and
+`ErrInvalidManagedStartInvocation` to existing package
+`internal/runtimemanagement`. Focused proofs cover constructor and invocation
+validation, exact primitive/linked delegation, already-cancelled context
+delivery, and unchanged downstream outcome/error identity. The invoker stores
+only copied domain/Target and one borrowed preconstructed managed Flow and does
+not duplicate Flow construction.
 
-No implementation task is activated by this design. TASK-026 remains Blocked
-by implementation and independent acceptance of this contract plus its later
-orchestrator-owned terminal work and readiness boundaries.
+This isolated implementation does not provide the future DP-015 callback
+closure, callback custody/replay integration, terminal result mapping, DP-014
+terminal publication, DP-015 command/phase terminalization, the DP-016/TASK-026
+orchestrator, production composition audit, or production wiring.
+
+TASK-043 is Completed — Coordinator Accepted (2026-08-21) and does not
+activate the next task. TASK-026 remains Blocked by separate readiness and
+orchestrator-owned terminal work; no readiness of that remaining work is
+asserted here.
 
 ## 18. Decision
 

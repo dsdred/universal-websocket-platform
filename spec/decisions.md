@@ -58,9 +58,9 @@ schema, API, recovery и production wiring отсутствуют. Design gate �
 DP-014–DP-018 закрывают focused design gates ARCH-004 §19(2)–(6). DP-014 и
 primitive boundary DP-015, partial DP-019 parent/phase sequential core и
 command-boundary Continue/pending-Stop rendezvous, policy-neutral orchestration
-authorization surface, managed Flow/Start-claim continuation, OwnerClaimView и
-execution-generation binding/load sequence реализованы изолированно, но
-concrete composition-private invoker, authorization policy, external
+authorization surface, managed Flow/Start-claim continuation, OwnerClaimView,
+execution-generation binding/load sequence и concrete composition-private
+invoker TASK-043 реализованы изолированно. Authorization policy и external
 persistence, management integration/API и Production Activation отсутствуют.
 
 Approved DP-015 определяет focused contract ARCH-004
@@ -77,8 +77,8 @@ Approved DP-016 определяет focused contract ARCH-004
 Stop-to-proven-release, fresh-attempt explicit rollback, zero Host overlap и
 phase-specific concurrency/cancellation. Для обязательного Stop-during-Starting
 он требует private Start-claim continuation DP-011/DP-013 после sole Owner
-claim и до Load; managed Flow/continuation и binding sequence реализованы
-изолированно, но concrete composition-private invoker отсутствует. DP-016 не
+claim и до Load; managed Flow/continuation, binding sequence и concrete
+composition-private invoker TASK-043 реализованы изолированно. DP-016 не
 создаёт lifecycle implementation, API, recovery или production wiring.
 Approved DP-016 закрывает design gate §19(4); implementation остаётся
 отсутствующей и architecture-blocked prerequisites DP-019.
@@ -127,8 +127,9 @@ persistence, management integration/API и Production Activation не
 активированы и остаются отсутствующими.
 
 Package `internal/runtimelaunchflow` реализует base DP-011 и additive managed
-Start-claim continuation изолированно без concrete composition-private invoker
-и без изменения ожидающих решения production boundaries.
+Start-claim continuation изолированно; TASK-043 добавляет concrete
+composition-private invoker в `internal/runtimemanagement` без изменения
+ожидающих решения production boundaries.
 
 TASK-026 зафиксирована как `Blocked by Architecture`; упрощённый adapter
 Variant B отклонён, Coordinator Acceptance/commit/publication запрещены.
@@ -185,8 +186,9 @@ six-field authorization, dependency-leaf binding values, all-or-none linked
 identity и unique callback-scoped command-owned rendezvous identity; sole
 primitive `Boundary.ExecuteManagedStart` adapter не допускает синтез binding
 после legacy claim. TASK-035 независимо принята. Deferred Slice 3
-OwnerClaim-to-DP-014 остаётся следующим Planned и неактивированным срезом; concrete
-private composition invoker и production wiring отсутствуют. TASK-026 остаётся
+OwnerClaim-to-DP-014 остаётся следующим Planned и неактивированным срезом;
+TASK-043 реализует concrete private composition invoker изолированно, а
+production wiring отсутствует. TASK-026 остаётся
 Blocked до реализации и независимой приёмки remaining prerequisites.
 
 TASK-036 завершена и принята как bounded design-update перед Slice 3 после
@@ -210,9 +212,9 @@ threading в generation bind и fresh revision-sandwich convergence; managed Flo
 `context.WithoutCancel`. Independent code proof — PASS 0/0; Independent
 Reviewer — `APPROVED` 0/0; Coordinator Acceptance — `Accepted`, поэтому
 TASK-037 завершена как `Completed — Coordinator Accepted`. Approved
-DP-014/DP-015/DP-019 semantics не меняются; concrete private
-composition invoker, terminal publication, DP-015 terminalization,
-orchestration и production wiring отсутствуют.
+DP-014/DP-015/DP-019 semantics не меняются. TASK-043 реализует concrete private
+composition invoker изолированно; future callback, terminal publication,
+DP-015 terminalization, orchestration и production wiring отсутствуют.
 
 TASK-038 активирует только design/readiness reassessment Среза 4. Матрица всех
 19 proofs §25 DP-016 после Reviewer B-001/B-002 rework классифицирована как
@@ -231,11 +233,14 @@ live status drift; final Reviewer `APPROVED` 0/0, commit и publication не
 авторизованы и не выполнялись. Private exact-scope composition invoker design
 завершён как `Completed — Coordinator Accepted (2026-08-20)` TASK-042: Tester
 `PASS` 0/0, repeat Reviewer `APPROVED` 0/0, Scope Audit 17/0/0 и PROCESS-002
-Synchronized. Draft/Planned DP-021 фиксирует exact contract, но concrete
-implementation отсутствует; commit и publication TASK-042 не авторизованы и не
-выполнялись. Следующая рекомендация не активирована: отдельный bounded
-implementation/readiness intake только для exact invoker DP-021, без result
-mapping, terminal publication/terminalization, orchestrator DP-016/TASK-026 или
-production wiring. Terminal publication DP-014 и terminalization DP-015 после
-Owner остаются core work TASK-026, а не отдельной prerequisite.
+Synchronized. Draft DP-021 фиксирует exact contract; на closure implementation
+отсутствовала. Впоследствии task commit `ebf4421` опубликован через PR #42 и
+merged как `ded3aa0`. TASK-043 реализует exact invoker изолированно и завершена
+как `Completed — Coordinator Accepted (2026-08-21)` после final Reviewer
+`APPROVED` 0/0, Scope Audit 21/0/0 и PROCESS-002 Synchronized; DP-021 имеет
+Implementation Status Partial. Следующая рекомендация не активирована:
+отдельный bounded repository-first readiness intake remaining TASK-026
+terminal/orchestrator work; Ready status не доказан. Terminal publication
+DP-014 и terminalization DP-015 после Owner остаются core work TASK-026, а не
+отдельной prerequisite.
 Approved/Planned DP-016 не меняется, TASK-026 остаётся Blocked.

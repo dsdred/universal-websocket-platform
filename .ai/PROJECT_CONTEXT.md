@@ -15,7 +15,8 @@
   реализованы изолированно; Draft DP-011 и `internal/runtimelaunchflow`
   реализуют base integration contract и managed Start-claim continuation
   изолированно; TASK-037 реализует managed gates и execution-binding/load
-  sequence изолированно, тогда как concrete composition invoker отсутствует;
+  sequence изолированно; TASK-043 реализует concrete exact-scope composition
+  invoker изолированно;
   Draft DP-012 и
   `internal/configurationloadsource.MemorySource` реализуют concrete Source
   adapter изолированно; Draft DP-013 и `internal/runtimemanagement` реализуют
@@ -34,15 +35,15 @@
   Slice 2R изолированно: `OperationalDomain`, полный binding/linked identity,
   unique callback-scoped command-owned rendezvous identity, dependency-leaf
   package и sole primitive `Boundary.ExecuteManagedStart` adapter; TASK-035
-  независимо принята, concrete private composition invoker отсутствует. TASK-036
+  независимо принята. TASK-036
   уточнила единый primitive/linked command-gate и continuation protocol.
   TASK-037 реализует Slice 3 изолированно: managed parent/StartTarget path,
   общие early/final/no-claim gates, stateless continuation, DP-014 conditional
   claim/bind с revision threading и managed Flow outcomes; independent code
   proof PASS 0/0, Independent Reviewer APPROVED 0/0, Coordinator Acceptance
-  завершена. Concrete private
-  composition invoker, terminal publication, orchestration и production wiring
-  отсутствуют. Slice 4 активирован как design/readiness TASK-038; его verdict
+  завершена. TASK-043 реализует concrete private composition invoker
+  изолированно; future callback/terminal publication, orchestration и
+  production wiring отсутствуют. Slice 4 активирован как design/readiness TASK-038; его verdict
   `TASK-026 REMAINS BLOCKED` после Reviewer B-001/B-002 rework принят
   Coordinator; repeat Reviewer APPROVED 0/0. Первый bounded candidate
   завершён как design-update TASK-039 с Coordinator Acceptance: принятый Draft
@@ -52,21 +53,24 @@
   завершена как `Completed — Coordinator Accepted (2026-08-20)`: live status
   managed continuation/binding синхронизирован, final Reviewer APPROVED 0/0.
   Design-only TASK-042 завершена как `Completed — Coordinator Accepted
-  (2026-08-20)` и фиксирует Draft/Planned DP-021 для private exact-scope
-  invoker; concrete invoker остаётся отсутствующим.
+  (2026-08-20)` и фиксирует Draft DP-021 для private exact-scope invoker;
+  TASK-043 реализует его изолированно и завершена как `Completed — Coordinator
+  Accepted (2026-08-21)` после final Reviewer APPROVED 0/0 и Scope Audit
+  21/0/0.
   HTTP, concrete policy, external command storage, recovery/reporting
   package/schema, management wiring и Production Activation отсутствуют**
-- Последняя завершённая development task: **TASK-040 — Expected-Attempt
-  Runtime Owner Stop Implementation; Completed — Coordinator Accepted; repeat
-  final Reviewer APPROVED 0/0**
+- Последняя завершённая development task: **TASK-043 — Private Exact-Scope
+  Managed Start Invoker Implementation; Completed — Coordinator Accepted
+  (2026-08-21); final Reviewer APPROVED 0/0; Scope Audit 21/0/0; PROCESS-002
+  Synchronized**
 - Последняя завершённая operational task: **TASK-012 — Engineering Process
   Hardening; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
 - Последняя завершённая architecture task: **TASK-042 — Private Exact-Scope
   Composition Invoker Design; Completed — Coordinator Accepted (2026-08-20);
   Tester PASS 0/0; repeat Reviewer APPROVED 0/0; Scope Audit 17/0/0;
-  PROCESS-002 Synchronized; Draft/Planned DP-021 зафиксирован, implementation
-  отсутствует**
+  PROCESS-002 Synchronized; Draft DP-021 зафиксирован, а TASK-043 реализует
+  его concrete invoker изолированно и завершена/принята**
 - Текущая architecture task: **отсутствует**
 - TASK-027 acceptance evidence: **DP-019 Approved/Planned; implementable
   parent/phase, exact authorization and private per-call managed Start seams
@@ -114,12 +118,11 @@
   Verification Matrix, PROCESS-002, status consistency и repository-state
   audit подтверждены; Commit Gate, commit, push и publication не выполнялись**
 - Текущая development task: **отсутствует. Последняя завершённая development
-  task — TASK-040 — Expected-Attempt Runtime Owner Stop Implementation;
-  Completed — Coordinator Accepted. `StopExpectedAttempt`,
-  `StopAttemptMismatch` и `ErrInvalidExpectedAttempt` реализованы и
-  верифицированы изолированно; repeat final Reviewer APPROVED 0/0. Concrete
-  private composition invoker, terminal publication и production wiring
-  отсутствуют; TASK-026 остаётся Blocked by Architecture**
+  task — TASK-043 — Private Exact-Scope Managed Start Invoker Implementation;
+  Completed — Coordinator Accepted (2026-08-21). Concrete invoker DP-021
+  реализован изолированно; final Reviewer APPROVED 0/0; Scope Audit 21/0/0;
+  PROCESS-002 Synchronized. Future callback/terminal publication, orchestrator
+  и production wiring отсутствуют; TASK-026 остаётся Blocked by Architecture**
 - TASK-032 acceptance evidence: **Completed — Coordinator Accepted после
   rework; DP-020 deferred slice 2 реализован изолированно в
   `internal/runtimelaunchflow`: ManagedFlow/NewManaged/StartManaged, immutable
@@ -186,11 +189,17 @@
 - TASK-042 acceptance evidence: **Private Exact-Scope Composition Invoker
   Design; Completed — Coordinator Accepted (2026-08-20); Tester PASS 0/0;
   repeat Reviewer APPROVED 0/0; Scope Audit 17/0/0; PROCESS-002 Synchronized;
-  commit и publication не авторизованы и не выполнялись**
-- Следующая рекомендация после TASK-042: **не активирована; отдельный bounded
-  implementation/readiness intake только для exact private invoker DP-021, без
-  result mapping, terminal publication/terminalization, orchestrator
-  DP-016/TASK-026 и production wiring**
+  на момент closure commit и publication не выполнялись; впоследствии task
+  commit `ebf4421` опубликован через PR #42 и merged как `ded3aa0`**
+- TASK-043 acceptance evidence: **Private Exact-Scope Managed Start Invoker
+  Implementation; Completed — Coordinator Accepted (2026-08-21); Draft DP-021
+  имеет Implementation Status Partial/implemented in isolation; Tester PASS
+  WITH ENVIRONMENT / DECLARED INTEGRATION LIMITATIONS 0/0; final Reviewer
+  APPROVED 0/0; Scope Audit 21/0/0; PROCESS-002 Synchronized; commit и
+  publication не авторизованы и не выполнялись**
+- Следующая рекомендация после TASK-043: **не активирована; отдельный bounded
+  repository-first readiness intake remaining TASK-026 terminal/orchestrator
+  work. Ready status не доказан; TASK-026 остаётся Blocked**
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы
   изолированно; Repeat Independent Review Approved, blocking/non-blocking 0;

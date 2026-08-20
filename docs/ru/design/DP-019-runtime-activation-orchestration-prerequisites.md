@@ -7,8 +7,9 @@
 - **Статус проектирования:** Approved
 - **Статус реализации:** Planned в целом; parent/phase storage, callback
   capability, sequential phase core и command-boundary Continue/pending-Stop
-  rendezvous реализованы изолированно; managed gates и continuation Среза 3
-  реализованы и независимо приняты изолированно
+  rendezvous реализованы изолированно; managed gates и continuation Среза 3,
+  а также exact-scope invoker DP-021 реализованы и независимо верифицированы
+  изолированно
 
 Этот focused design закрывает только неоднозначность integration-contract,
 обнаруженную TASK-026. Репозиторий реализует isolated parent/phase core DP-015,
@@ -22,13 +23,11 @@ TASK-038 определяет factual readiness gap: реализованный 
 атомарно выбрать ожидаемый Launch Attempt. Завершённая и Coordinator-Accepted
 TASK-039 фиксирует принятый design этой operation в Draft DP-010; завершённая и
 Coordinator-Accepted TASK-040 реализует и верифицирует его изолированно, repeat
-final Reviewer `APPROVED` 0/0. Concrete private
-exact-scope composition invoker всё ещё отсутствует. Это утверждение не изменяет данный
-Approved decision. Terminal publication после
+final Reviewer `APPROVED` 0/0. TASK-043 реализует concrete private exact-scope
+composition invoker изолированно, не изменяя этот Approved decision. Terminal publication после
 Owner относится к самому последующему orchestrator TASK-026; этот orchestrator,
 external persistence, API, recovery worker и production wiring отсутствуют.
-TASK-026 остаётся Blocked последующим private exact-scope composition invoker и
-последующими readiness/orchestrator boundaries.
+TASK-026 остаётся Blocked последующими readiness/orchestrator boundaries.
 
 ## 2. Назначение
 
@@ -161,8 +160,8 @@ Principal, Target, version или policy result. Их authority происход
 
 Exact management scope после authorization предоставляет private
 composition-only lifecycle invoker. Он route только к уже связанным
-Flow/Owner и не является public Directory bypass. Его planned Start path
-conceptually равен:
+Flow/Owner и не является public Directory bypass. Его implemented isolated
+Start path равен:
 
 ```text
 InvokeManagedStart(context, StartRequest, StartExecutionBinding) -> exact Owner outcome
@@ -177,7 +176,7 @@ primitive, parent, phase или Stop permit. Call stack с exact live permit
 получить другой scope, изменить target или передать permit.
 
 Private invoker проверяет binding против immutable scope и StartRequest, затем
-вызывает planned managed Start surface одного stored Flow с тем же binding. Он
+вызывает existing managed Start surface одного stored Flow с тем же binding. Он
 не создаёт Flow, registry entry, mutable current-operation slot, goroutine или
 detached callback.
 
@@ -224,9 +223,10 @@ invariant. Durable parent/phase storage, generation-bound callback capability и
 strict sequential core реализованы изолированно; command-boundary
 Continue/pending-Stop surface также реализован там изолированно. Managed
 continuation и exact binding sequence attempt/generation реализованы и
-независимо приняты изолированно. Composition-private invoker, terminal
-publication/terminalization, orchestrator и production wiring остаются
-отсутствующими; overall Implementation Status остаётся Planned.
+независимо приняты изолированно. TASK-043 реализует composition-private invoker
+изолированно; terminal publication/terminalization, orchestrator и production
+wiring остаются отсутствующими, поэтому overall Implementation Status остаётся
+Planned.
 
 Conceptually он предоставляет:
 
@@ -480,8 +480,8 @@ concrete stateless continuation, sequence membership/generation binding
 expected-attempt Owner Stop должен предшествовать concrete private scoped
 invoker. Завершённая и Coordinator-Accepted TASK-039 фиксирует его принятый
 design в Draft DP-010; завершённая и Coordinator-Accepted TASK-040 реализует и
-верифицирует его изолированно, repeat final Reviewer `APPROVED` 0/0.
-Репозиторий всё ещё не содержит этот invoker,
+верифицирует его изолированно, repeat final Reviewer `APPROVED` 0/0. TASK-043
+реализует этот invoker изолированно. Репозиторий всё ещё не содержит
 последующую terminal publication и terminalization command/phase, activation
 orchestrator и production composition audit полного design.
 
@@ -492,9 +492,10 @@ Focused readiness decomposition этих prerequisites зафиксирован�
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), со
 статусом Design Status Draft и Implementation Status Planned overall, где
 Срез 3 реализован и независимо принят изолированно.
-Downstream refinement exact private invoker зафиксирован в Draft/Planned
-[DP-021](DP-021-private-exact-scope-managed-start-invoker.md); он не изменяет
-этот Approved contract и не реализует invoker.
+Downstream refinement exact private invoker зафиксирован в Draft
+[DP-021](DP-021-private-exact-scope-managed-start-invoker.md) со статусом
+Implementation Partial после TASK-043; он не изменяет этот Approved contract и
+не реализует remaining orchestration/terminal work.
 
 ## 23. Последствия
 

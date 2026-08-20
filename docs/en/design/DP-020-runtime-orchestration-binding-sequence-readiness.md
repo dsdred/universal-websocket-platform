@@ -13,9 +13,9 @@ isolated partial implementations of Slices 1 and 2, and TASK-034 defined their
 required conformance repair. TASK-035 implements Slice 2R in isolation: the
 six-field authorization and complete binding now live in the dependency-leaf
 package, primitive managed claims use the sole `ExecuteManagedStart` adapter,
-and command-owned rendezvous identities are unique and callback-scoped. The
-concrete DP-013 composition-private invoker and production wiring remain
-absent. TASK-036 resolves the remaining Slice-3 command-gate and continuation
+and command-owned rendezvous identities are unique and callback-scoped.
+TASK-043 implements the concrete DP-013 composition-private invoker in
+isolation; production wiring remains absent. TASK-036 resolves the remaining Slice-3 command-gate and continuation
 API ambiguity, and TASK-037 implements that Slice 3 protocol in isolation:
 managed primitive and linked gates, the stateless OwnerClaim-to-DP-014
 continuation, exact revision threading and managed Flow outcome adaptation.
@@ -186,15 +186,16 @@ exact orchestration authorization.
 ## 8. Resolved Design Boundary: Private Managed Invoker and Managed Flow Seam
 
 TASK-042 closes only the remaining concrete-invoker design ambiguity through
-Draft/Planned [DP-021](DP-021-private-exact-scope-managed-start-invoker.md).
+Draft/Partial [DP-021](DP-021-private-exact-scope-managed-start-invoker.md).
 The following existing decomposition remains authoritative context: DP-021
 fixes `runtimemanagement` ownership, preconstructed-Flow custody, the sole
 `InvokeManagedStart` operation, cancellation delegation, capability custody,
 failure behavior, and absence of legacy fallback. A future TASK-026
 orchestrator-owned DP-015 callback closure calls that invoker as its sole
 lifecycle subcall and owns `TerminalOutcome` mapping, publication, and
-terminalization outside DP-021; the invoker is not itself the callback. No
-implementation or orchestrator is activated.
+terminalization outside DP-021; the invoker is not itself the callback.
+TASK-043 implements only that invoker in isolation; no callback, terminal work,
+or orchestrator is activated.
 
 ### 8.1 Package split and invocation direction
 
@@ -629,9 +630,11 @@ Slice 2R.
 
 ### Slice 2 — Private managed invoker and managed Flow seam
 
-Current slice status: partial isolated implementation accepted historically by
-TASK-032; TASK-035 Slice 2R supplies the complete authoritative binding repair
-without rewriting TASK-032 acceptance history.
+Current slice status: partial isolated implementation. TASK-032 historically
+implemented the managed Flow seam, TASK-035 Slice 2R supplies the complete
+authoritative binding repair, and TASK-043 implements the concrete exact-scope
+invoker in isolation. Future callback custody and terminal integration remain
+outside this slice's implemented proof.
 
 - Add the managed construction and `StartManaged` per-call seam and the
   `StartExecutionBinding` / `OwnerClaimView` immutable values, the opaque
@@ -702,8 +705,9 @@ verdict does not activate implementation or change TASK-026 status automatically
   Coordinator Acceptance after recording that design in Draft DP-010;
   completed and Coordinator-Accepted TASK-040 implements and verifies the
   isolated Owner extension, with repeat final Reviewer `APPROVED` 0/0. The
-  private exact-scope composition-invoker design is now fixed by Draft DP-021,
-  while its implementation remains later and unactivated.
+  private exact-scope composition-invoker design is fixed by Draft DP-021, and
+  TASK-043 implements that invoker in isolation without activating callback,
+  terminal, orchestrator, or production work.
 
 Each slice requires its own task intake, Existing Coverage Report, Verification
 Matrix, Independent Review, PROCESS-002, and Coordinator Acceptance.
@@ -736,10 +740,10 @@ TASK-034 identified the remaining conformance gap, TASK-035 implements and
 independently accepts its Slice 2R repair in isolation, and TASK-036 resolves
 the remaining Slice-3 command-gate and continuation API ambiguity. TASK-037
 implements and independently accepts Slice 3 in isolation. The
-repository contains the accepted Draft design and completed TASK-040 isolated
-implementation of atomic expected-attempt Owner Stop, but still lacks the
-concrete private exact-scope composition invoker defined by Draft DP-021,
-activation orchestrator,
+repository contains the accepted Draft design, completed TASK-040 isolated
+implementation of atomic expected-attempt Owner Stop, and the TASK-043
+isolated concrete private exact-scope composition invoker defined by Draft
+DP-021, but still lacks the activation orchestrator,
 external persistence, API, recovery worker, and production wiring. Later DP-014 terminal publication and DP-015 command/phase
 terminalization after the Owner result belong to the TASK-026 orchestrator,
 not to a separate prerequisite. TASK-026 therefore remains Blocked; Slice 4 is

@@ -378,12 +378,13 @@ Architectural debt относится к границам, которые ост
   прошла verification и repeat final Reviewer `APPROVED` 0/0. Design-only
   TASK-042 завершена и Coordinator Accepted (2026-08-20): Tester PASS 0/0,
   repeat Reviewer APPROVED 0/0, Scope Audit 17/0/0, PROCESS-002 synchronized.
-  Она фиксирует contract private exact-scope invoker в Draft/Planned DP-021;
-  concrete implementation остаётся отсутствующей. Следующая рекомендация не
-  активирована: отдельный bounded implementation/readiness intake только для
-  exact private invoker DP-021, без result mapping, terminal
-  publication/terminalization, orchestrator DP-016/TASK-026 и production
-  wiring.
+  Она фиксирует contract private exact-scope invoker в Draft DP-021. TASK-043
+  реализует этот concrete invoker изолированно и завершена как `Completed —
+  Coordinator Accepted (2026-08-21)` после final Reviewer APPROVED 0/0, Scope
+  Audit 21/0/0 и PROCESS-002 synchronized; Implementation Status DP-021 —
+  Partial. Следующая рекомендация не активирована: отдельный bounded
+  repository-first readiness intake remaining terminal/orchestrator work
+  TASK-026. Его Ready status здесь не установлен.
   Terminal publication остаётся core work TASK-026. Orchestration и
   production composition остаются Planned; TASK-026 остаётся Blocked;
   Integration и Production Activation остаются неактивными.

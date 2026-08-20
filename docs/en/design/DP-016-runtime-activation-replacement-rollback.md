@@ -18,9 +18,10 @@ the implemented DP-010 Stop cannot atomically target an expected Launch
 Attempt. Completed and Coordinator-Accepted TASK-039 records the accepted Draft
 DP-010 expected-attempt Stop design; completed and Coordinator-Accepted
 TASK-040 implements and verifies it in isolation, with repeat final Reviewer
-`APPROVED` 0/0. The later private exact-scope invoker remains absent. Post-Owner
-DP-014 and DP-015 terminal publication
-remains part of this planned orchestrator.
+`APPROVED` 0/0. TASK-043 implements the private exact-scope invoker in
+isolation. Post-Owner DP-014 and DP-015 terminal publication remains part of
+this planned orchestrator; the orchestrator and production wiring remain
+absent.
 
 ## 2. Purpose
 
@@ -56,7 +57,9 @@ primitive DP-015 boundary, partial DP-019 parent/phase sequential core, and
 command-boundary Continue/pending-Stop rendezvous, managed command gates,
 continuation, and DP-014 attempt/generation binding sequence are implemented
 and independently accepted in isolation. Approved DP-016 and DP-017 remain
-Planned overall; the concrete composition invoker and orchestrator are absent.
+Planned overall; TASK-043 implements the concrete composition invoker in
+isolation, while the callback/terminal orchestrator and production composition
+remain absent.
 
 ## 4. Scope
 
@@ -278,9 +281,10 @@ binding, a final per-Instance gate orders a new Stop claim against `Continue`.
 Stop winning converges before Load; `Continue` winning releases Flow, and a
 later Stop reaches the claimed attempt normally. No admission or Owner lock is
 held across persistence, wait, or Stop convergence. The current managed Flow,
-continuation, and binding gate implement these seams in isolation. DP-016
-remains Planned overall because the concrete DP-013 composition-private
-invoker, terminal publication, orchestrator, and production wiring are absent.
+continuation, binding gate, and TASK-043 concrete DP-013 composition-private
+invoker implement these seams in isolation. DP-016 remains Planned overall
+because callback integration, terminal publication, orchestrator, and
+production wiring are absent.
 
 ## 16. Explicit Rollback
 
@@ -508,9 +512,10 @@ the contract. TASK-038 confirmed TASK-026 remained Blocked first by the then
 absent atomic expected-attempt Owner Stop contract. TASK-039 recorded that
 design in Draft DP-010; completed and Coordinator-Accepted TASK-040 implements
 and verifies the isolated Owner extension, with repeat final Reviewer
-`APPROVED` 0/0. TASK-026 remains Blocked, and the private exact-scope
-invoker remains a later
-prerequisite. No reduced DP-016 slice is permitted.
+`APPROVED` 0/0. TASK-043 subsequently implements the private exact-scope
+invoker in isolation, but TASK-026 remains Blocked by its remaining
+callback/terminal/orchestrator and production-composition boundaries. No
+reduced DP-016 slice is permitted.
 
 ## 29. Decision
 

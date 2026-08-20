@@ -380,11 +380,13 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   0/0. Design-only TASK-042 is completed and Coordinator Accepted
   (2026-08-20), with Tester PASS 0/0, repeat Reviewer APPROVED 0/0, Scope Audit
   17/0/0, and PROCESS-002 synchronized. It records the private exact-scope
-  invoker contract in Draft/Planned DP-021; concrete implementation remains
-  absent. The next recommendation is not activated: a separate bounded
-  implementation/readiness intake for only that exact DP-021 private invoker,
-  excluding result mapping, terminal publication/terminalization, the
-  DP-016/TASK-026 orchestrator, and production wiring.
+  invoker contract in Draft DP-021. TASK-043 implements that concrete invoker
+  in isolation and is Completed — Coordinator Accepted (2026-08-21), with
+  final Reviewer APPROVED 0/0, Scope Audit 21/0/0, and PROCESS-002
+  synchronized; DP-021 Implementation Status is Partial. The next
+  recommendation is not activated: a separate bounded repository-first
+  readiness intake for remaining TASK-026 terminal/orchestrator work. Its
+  Ready status is not established here.
   Terminal publication remains TASK-026 core work. Orchestration and production
   composition remain Planned; TASK-026 remains Blocked;
   Integration and Production Activation remain inactive.

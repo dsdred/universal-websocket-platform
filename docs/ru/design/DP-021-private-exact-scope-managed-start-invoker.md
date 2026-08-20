@@ -5,12 +5,13 @@
 ## 1. Статус
 
 - **Design Status:** Draft
-- **Implementation Status:** Planned
+- **Implementation Status:** Partial — реализован изолированно
 
 Этот focused proposal определяет один composition-private invocation contract
-DP-013. Он не реализует package, public API, transport, policy, persistence или
-production wiring. Approved DP-014–DP-019 остаются неизменными, а TASK-026
-остаётся `Blocked by Architecture`.
+DP-013. TASK-043 реализует этот object изолированно в существующем package; он
+не добавляет public API, transport, policy, persistence или production wiring.
+Approved DP-014–DP-019 остаются неизменными, а TASK-026 остаётся `Blocked by
+Architecture`.
 
 ## 2. Назначение
 
@@ -415,15 +416,25 @@ integration fail closed и TASK-026 остаётся blocked.
 
 ## 17. Граница Implementation
 
-Implementation Status — Planned. Существующие packages уже реализуют
-dependency-neutral binding, managed primitive/linked adapters, managed Flow,
-continuation Owner claim, binding attempt/generation и expected-attempt Owner
-Stop изолированно. Package `runtimemanagement` не реализует этот invoker.
-Он также не дублирует construction managed Flow.
+Implementation Status — Partial, реализован изолированно. TASK-043 добавляет
+concrete `ManagedStartInvoker`, `NewManagedStartInvoker`,
+`InvokeManagedStart`, `ErrInvalidManagedStartInvoker` и
+`ErrInvalidManagedStartInvocation` в существующий package
+`internal/runtimemanagement`. Focused proofs покрывают validation constructor и
+invocation, exact primitive/linked delegation, передачу already-cancelled
+context и unchanged identity downstream outcome/error. Invoker хранит только
+copied domain/Target и один borrowed preconstructed managed Flow и не дублирует
+construction Flow.
 
-Этот design не активирует implementation task. TASK-026 остаётся Blocked
-implementation и independent acceptance этого contract плюс последующими
-orchestrator-owned terminal work и readiness boundaries.
+Эта isolated implementation не предоставляет future callback closure DP-015,
+integration callback custody/replay, terminal result mapping, terminal
+publication DP-014, terminalization command/phase DP-015, orchestrator
+DP-016/TASK-026, production composition audit или production wiring.
+
+TASK-043 завершена как `Completed — Coordinator Accepted (2026-08-21)` и не
+активирует следующую task. TASK-026 остаётся Blocked отдельными readiness и
+orchestrator-owned terminal work; readiness этой remaining работы здесь не
+утверждается.
 
 ## 18. Решение
 

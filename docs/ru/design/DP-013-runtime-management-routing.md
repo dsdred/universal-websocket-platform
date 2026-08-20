@@ -34,8 +34,9 @@ Proposal уточняет, но не переопределяет:
 - [DP-010](DP-010-runtime-lifecycle-owner-contract.md);
 - [DP-011](DP-011-runtime-launch-pipeline-integration.md);
 - [DP-012](DP-012-runtime-source-composition.md).
-- [DP-021](DP-021-private-exact-scope-managed-start-invoker.md) для planned
-  exact composition-private managed Start invocation contract.
+- [DP-021](DP-021-private-exact-scope-managed-start-invoker.md) для exact
+  composition-private managed Start invocation contract и partial isolated
+  implementation.
 
 Accepted ADR, Frozen foundation и Active architecture сохраняют приоритет.
 
@@ -398,18 +399,20 @@ orchestration authorization tuple и private composition-only lifecycle invoker,
 rendezvous facts никогда не являются Flow-construction state или mutable slot
 Directory. Existing public `Start`, `Stop`, `Observe` и их authorization
 behavior не меняются. Managed command, binding, Flow и continuation surfaces
-реализованы в своих focused internal packages; соединяющий их
-composition-private invoker DP-013 отсутствует.
+реализованы в своих focused internal packages; TASK-043 теперь реализует
+соединяющий scope-bound Flow surface composition-private invoker DP-013
+изолированно.
 Draft [DP-021](DP-021-private-exact-scope-managed-start-invoker.md) теперь
-фиксирует ownership и exact Planned contract этого invoker: existing
+фиксирует ownership и exact contract этого invoker: existing
 composition `runtimemanagement` создаёт один scope-bound managed Flow ровно
 один раз, затем передаёт invoker copied domain/Target и borrowed immutable
 reference на этот preconstructed Flow. Invoker раскрывает только synchronous
 `InvokeManagedStart`, создаёт zero Flow, не
 выполняет second policy authorization, не хранит per-call capability, никогда
-не вызывает command Boundary и не добавляет public operation Directory. Это
-design refinement не является implementation; concrete invoker остаётся
-отсутствующим.
+не вызывает command Boundary и не добавляет public operation Directory.
+TASK-043 реализует этот exact invoker изолированно; future callback custody,
+terminal work, orchestration, production composition и wiring остаются
+отсутствующими.
 
 Если linked path `Directory.Start` возвращает definitive cancellation/error до
 claim Owner, он сигнализирует `StartNoClaim` original pending Stop call stack.
@@ -689,8 +692,10 @@ reporting, integration Control Service и Production Activation отсутств
 Любой integration slice сначала должен предоставить exact required
 dependencies, включая composition существующих isolated private Start-claim
 continuation и execution-generation binding/load gate, определённых Approved
-DP-019. Concrete composition-private invoker точно определён Draft DP-021, но
-его Implementation Status — Planned и concrete invoker отсутствует.
+DP-019. Concrete composition-private invoker точно определён Draft DP-021, а
+его Implementation Status — Partial, реализован изолированно TASK-043. Future
+callback/terminal/orchestrator integration и production composition остаются
+отсутствующими.
 
 ## 30. Решение
 
