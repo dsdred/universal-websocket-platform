@@ -18,13 +18,17 @@ Flow/OwnerClaimView seam. TASK-037 implements the managed parent/StartTarget
 adapter, common managed gates, concrete stateless continuation, DP-014
 attempt/generation binding sequence, and exact managed Flow outcome adaptation,
 implemented and independently accepted in isolation. TASK-038 identifies a
-factual readiness gap: current DP-010 Stop cannot atomically select an expected
-Launch Attempt, so a separate design update is required before the concrete
+factual readiness gap: implemented DP-010 Stop cannot atomically select an
+expected Launch Attempt. Completed and Coordinator-Accepted TASK-039 records
+the accepted Draft DP-010 design for that operation, but implementation is
+still required before the concrete
 private exact-scope composition invoker. This statement does not amend this
 Approved decision. Post-Owner terminal publication belongs to the later
 TASK-026 orchestrator itself; that orchestrator, external persistence, API,
 recovery worker, and production wiring remain absent. TASK-026 remains Blocked
-pending the separate design, implementation, and later readiness reassessment.
+pending implementation of the TASK-039 design and independent acceptance of
+that implementation, the later private exact-scope composition invoker, and later readiness
+reassessment.
 
 ## 2. Purpose
 
@@ -477,9 +481,11 @@ primitive managed adapter, and managed Flow/OwnerClaimView seam in isolation.
 TASK-037 implements the managed parent/StartTarget adapter, common managed
 gates, concrete stateless continuation, attempt membership/generation binding
 sequence, and managed Flow outcome mapping, implemented and independently
-accepted in isolation. TASK-038 additionally finds that a separate design and
-implementation of atomic expected-attempt Owner Stop must precede the concrete
-private scoped invoker. The repository still lacks that invoker, later terminal
+accepted in isolation. TASK-038 additionally finds that atomic expected-attempt
+Owner Stop must precede the concrete private scoped invoker. Completed and
+Coordinator-Accepted TASK-039 records its accepted Draft DP-010 design;
+implementation is still absent. The
+repository also lacks that invoker, later terminal
 publication and command/phase terminalization, activation orchestrator, and
 production composition audit required by the complete design.
 

@@ -6,7 +6,8 @@
 
 **Design Status:** Draft
 
-**Implementation Status:** Implemented in isolation
+**Implementation Status:** Base lifecycle Owner implemented in isolation;
+expected-attempt Stop extension Planned
 
 **Architecture status:** implementation contract for the approved operational
 identity model in
@@ -16,7 +17,9 @@ and loading model in
 
 Runtime Lifecycle Owner is implemented in isolation in
 `internal/runtimelifecycle`. Production Loader-to-Builder-to-Launcher wiring
-is not implemented. This Draft does not revise approved architecture.
+is not implemented. The `StopExpectedAttempt` contract added by TASK-039 is an
+accepted design baseline only and is not implemented. This Draft does not
+revise approved architecture.
 
 ## 2. Purpose
 
@@ -85,7 +88,8 @@ Different Owners share no lifecycle state and may progress independently.
 
 ## 6. Exact Exported Declarations
 
-The first implementation uses these declarations without adding another public
+The base implementation uses the existing declarations below. TASK-039 adds
+only the explicitly marked planned declarations, without adding another public
 lifecycle abstraction:
 
 ```go
@@ -156,8 +160,9 @@ func (r StartOutcome) LaunchOutcome() (runtime.BootstrapOutcome, bool)
 type StopOutcomeKind string
 
 const (
-    StopStopped StopOutcomeKind = "stopped"
-    StopFailed  StopOutcomeKind = "stop-failed"
+    StopStopped         StopOutcomeKind = "stopped"
+    StopFailed          StopOutcomeKind = "stop-failed"
+    StopAttemptMismatch StopOutcomeKind = "attempt-mismatch" // planned extension
 )
 
 type StopOutcome struct { /* immutable */ }
@@ -231,6 +236,7 @@ func (o *Owner) PrepareStart(
 ) (LaunchPreparation, error)
 func (o *Owner) Start(ctx context.Context, preparation LaunchPreparation, result PreparationResult) (StartOutcome, error)
 func (o *Owner) Stop(ctx context.Context) (StopOutcome, error)
+func (o *Owner) StopExpectedAttempt(ctx context.Context, expectedAttemptID runtimeconfigload.LaunchAttemptID) (StopOutcome, error) // planned extension
 func (o *Owner) Observe() Observation
 ```
 
@@ -250,12 +256,16 @@ var (
     ErrStartConflict            error
     ErrPreparationNotOwned      error
     ErrInvalidPreparationResult error
+    ErrInvalidExpectedAttempt   error // planned extension
 )
 ```
 
 Callers distinguish them with `errors.Is`. An attempt-ID source failure wraps
 both `ErrAttemptIDSourceFailed` and the exact source error so that both remain
 discoverable. Validation and conflict errors do not mutate lifecycle state.
+`ErrInvalidExpectedAttempt` rejects an empty expected Launch Attempt identity.
+Calling planned `StopExpectedAttempt` on a nil Owner returns `ErrInvalidOwner`.
+Neither validation outcome mutates lifecycle state.
 
 ## 8. Construction
 
@@ -480,6 +490,63 @@ and the following locked mutation win over later caller cancellation.
 Concurrent operations follow mutex claim order. `StopOrigin()` and
 `RunningPublished()` are recorded at Stop claim and never regress.
 
+### 18.1 Planned Atomic Expected-Attempt Stop Extension
+
+`StopExpectedAttempt(ctx, expectedAttemptID)` is the planned atomic operation
+for a private orchestration caller that must stop one exact Owner-issued Launch
+Attempt. It is not part of the implemented base slice. The expected identity
+must be non-empty; a nil Owner returns `ErrInvalidOwner`, and an empty identity
+returns `ErrInvalidExpectedAttempt`, with no lifecycle mutation.
+
+After validation, while holding the Owner mutex, the operation checks
+`ctx.Err()` and then selects one relevant attempt: the active attempt when one
+exists, otherwise the retained last attempt when one exists, otherwise none.
+The active attempt always precedes the last attempt. Therefore an old last
+attempt A cannot match while an active successor B exists.
+
+If no relevant identity exists or the relevant identity differs from the
+expected identity, the operation returns `StopAttemptMismatch` with nil error.
+This is a valid negative outcome, not a conflict or lifecycle failure. It
+performs zero mutation, attachment, cancellation, Host call, or wait.
+`StopOutcome.Attempt()` exposes the captured relevant immutable fact when one
+exists and is absent when none exists; `Failure()` is absent.
+
+When the exact active attempt matches, the operation uses the ordinary Stop
+state machine in section 18 without phase-specific divergence:
+
+- Preparing terminalizes as `AttemptStoppedBeforeRunning` and schedules the
+  Owner-context cancellation only after unlock;
+- Launching claims the same combined operation, schedules cancellation after
+  unlock, and waits for its exact result;
+- Running claims exactly one Host Stop operation for that attempt;
+- Stopping attaches only to the already tracked operation;
+- a retained active `AttemptStopFailed` returns the exact stored `StopFailed`
+  outcome without retry.
+
+When no active attempt exists and the matching last attempt is retained:
+
+- `AttemptStopped` and `AttemptStoppedBeforeRunning` replay the
+  attempt-specific `StopStopped` outcome without mutation;
+- `AttemptPreparationFailed` and `AttemptLaunchFailed` use the same existing
+  resource-free Failed-to-Stopped transition as ordinary Stop: desired becomes
+  `DesiredStopped`, actual becomes `ActualStopped`, the exact last attempt is
+  retained, and the operation returns attempt-specific `StopStopped`;
+- any impossible matched state returns `ErrStartConflict` without mutation.
+
+The match, claim, or attachment is the cancellation linearization point. A
+context error visible at the locked check wins without mutation or attachment.
+After the locked match and claim, later caller cancellation interrupts only
+that caller's wait; Owner-owned cancellation, launch convergence, Host Stop,
+and cleanup continue. Same-identity callers converge on the same tracked or
+retained outcome. A different identity never attaches to that work.
+
+The later implementation must route generic `Stop(ctx)` and
+`StopExpectedAttempt` through one private ordinary-Stop helper so their phase
+behavior cannot drift. The expected path must never be implemented as
+`Observe()` followed by `Stop()`. The Owner mutex is released before context
+cancellation, `runtime.Launch`, `Host.Stop`, callbacks, external storage,
+Flow work, I/O, and every channel, context, resource, or caller wait.
+
 ## 19. Stop During Preparation or Launch
 
 Stop in `AttemptPreparing` completes without Host. A later Start with the same
@@ -584,9 +651,15 @@ Caller cancellation is not a terminal lifecycle outcome.
 - Stop failure is never duplicated as a raw Start failure.
 
 `StopOutcome` is immutable and has exactly one declared `StopOutcomeKind`.
-`Attempt()` is absent only for an idempotent Stop with no applicable attempt.
+`Attempt()` is absent only for an idempotent Stop with no applicable attempt or
+a planned `StopAttemptMismatch` outcome when no relevant attempt exists.
 `Failure()` succeeds only for `StopFailed` and returns the exact Host Stop
 error.
+
+For the planned expected-attempt extension, `StopAttemptMismatch` is also a
+declared immutable kind. Its `Attempt()` reports the relevant fact when one was
+present, and its `Failure()` is always absent. It is returned with nil
+method-level error and does not represent an accepted lifecycle mutation.
 
 Method-level errors represent validation, conflict, ownership, ID-source, or
 this caller's wait. They do not replace accepted lifecycle outcomes.
@@ -686,6 +759,32 @@ The isolated implementation must prove:
 23. package race tests and relevant Runtime regression tests pass when the
     toolchain supports them.
 
+### Planned Extension Acceptance Proofs
+
+A later implementation of `StopExpectedAttempt` must additionally prove:
+
+1. nil Owner and empty expected-ID validation use the declared sentinels and
+   mutate nothing;
+2. no relevant attempt and a differing relevant attempt return
+   `StopAttemptMismatch` with the exact optional fact, nil failure, and zero
+   attachment, cancellation, Host call, or wait;
+3. active attempt selection precedes retained last-attempt selection, including
+   an old A/new active B successor race, and never stops B for expected A;
+4. exact Preparing, Launching, Running, and Stopping attempts preserve the
+   ordinary Stop phase behavior and exact outcomes;
+5. same-ID callers converge while different IDs never attach;
+6. retained active Stop failure preserves exact error identity and performs no
+   cleanup retry;
+7. retained stopped forms replay `StopStopped`, while matching historical
+   preparation and launch failures perform the resource-free Failed-to-Stopped
+   transition for that exact attempt;
+8. cancellation visible at the locked check wins without mutation, while
+   cancellation after match or claim releases only that waiter;
+9. generic `Stop` regression proofs demonstrate the shared-helper semantics
+   remain unchanged;
+10. lock/lifetime, independent-Owner, race, vet, formatting, and exported
+    GoDoc checks pass under the supported toolchain.
+
 ## 29. Future Integration Proofs
 
 The following remain future production evidence:
@@ -717,11 +816,20 @@ DP-010 does not define:
 - Host API changes or unexpected-termination polling;
 - generic manager, registry, service locator, or policy framework.
 
+It also does not define a public DP-013 expected-attempt command, composition
+invoker, or orchestration policy. Those remain separate work after the planned
+Owner extension is implemented and independently accepted.
+
 ## 31. Implementation Boundary
 
 The implemented first code slice adds only `internal/runtimelifecycle` and
 local proof tests for this contract. It uses fakes around the package-private
 immutable launch seam and external preparation boundary.
+
+The expected-attempt declarations and semantics in sections 6, 7, 18.1, 23,
+and 28 are a planned extension. They do not claim executable capability until
+a later implementation task supplies code, proof tests, verification, and
+independent acceptance.
 
 It does not wire Loader, Builder, Control Service HTTP handlers, repositories,
 persistence, or production routing. Implementation does not promote the design

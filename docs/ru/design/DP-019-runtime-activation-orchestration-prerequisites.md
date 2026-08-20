@@ -18,14 +18,16 @@ Flow/OwnerClaimView. TASK-037 реализует изолированно manage
 parent/StartTarget adapter, общие managed gates, concrete stateless
 continuation, binding sequence attempt/generation DP-014 и exact адаптацию
 outcomes managed Flow, реализованные и независимо принятые изолированно.
-TASK-038 определяет factual readiness gap: текущий Stop DP-010 не может
-атомарно выбрать ожидаемый Launch Attempt, поэтому до concrete private
-exact-scope composition invoker требуется отдельное design update. Это
-утверждение не изменяет данный Approved decision. Terminal publication после
+TASK-038 определяет factual readiness gap: реализованный Stop DP-010 не может
+атомарно выбрать ожидаемый Launch Attempt. Завершённая и Coordinator-Accepted
+TASK-039 фиксирует принятый design этой operation в Draft DP-010, но до concrete private exact-scope composition
+invoker всё ещё требуется implementation. Это утверждение не изменяет данный
+Approved decision. Terminal publication после
 Owner относится к самому последующему orchestrator TASK-026; этот orchestrator,
 external persistence, API, recovery worker и production wiring отсутствуют.
-TASK-026 остаётся Blocked до отдельного design, implementation и последующей
-переоценки readiness.
+TASK-026 остаётся Blocked до реализации design TASK-039 и независимой приёмки
+этой реализации, последующего private exact-scope composition invoker и последующей переоценки
+readiness.
 
 ## 2. Назначение
 
@@ -468,9 +470,10 @@ values, primitive managed adapter и seam managed Flow/OwnerClaimView. TASK-037
 реализует изолированно managed parent/StartTarget adapter, общие managed gates,
 concrete stateless continuation, sequence membership/generation binding
 попытки и отображение outcomes managed Flow, реализованные и независимо
-принятые изолированно. TASK-038 дополнительно устанавливает, что отдельные
-design и implementation atomic expected-attempt Owner Stop должны предшествовать
-concrete private scoped invoker. Репозиторий всё ещё не содержит этот invoker,
+принятые изолированно. TASK-038 дополнительно устанавливает, что atomic
+expected-attempt Owner Stop должен предшествовать concrete private scoped
+invoker. Завершённая и Coordinator-Accepted TASK-039 фиксирует его принятый
+design в Draft DP-010; implementation всё ещё отсутствует. Репозиторий также не содержит этот invoker,
 последующую terminal publication и terminalization command/phase, activation
 orchestrator и production composition audit полного design.
 
