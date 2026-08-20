@@ -42,7 +42,8 @@ This proposal refines, without overriding:
 - [DP-015](DP-015-runtime-management-command-idempotency.md) for durable
   command identity, execution permits, replay, and unresolved barriers.
 - [DP-011](DP-011-runtime-launch-pipeline-integration.md) for the Owner-owned
-  Start claim and the planned private claim-continuation extension.
+  Start claim and the managed claim-continuation extension implemented in
+  isolation.
 - [DP-017](DP-017-runtime-recovery-reconciliation.md) for the recovery boundary
   that requires and consumes the DP-014-owned execution-generation binding.
 - [DP-019](DP-019-runtime-activation-orchestration-prerequisites.md) for the
@@ -52,8 +53,10 @@ This proposal refines, without overriding:
 Accepted ADRs and Active or Frozen architecture remain authoritative. DP-013
 remains Draft and is implemented in isolation. Approved DP-014 and the
 primitive DP-015 boundary, partial DP-019 parent/phase sequential core, and
-command-boundary Continue/pending-Stop rendezvous are implemented in isolation;
-managed continuation and Approved DP-016/DP-017 remain Planned.
+command-boundary Continue/pending-Stop rendezvous, managed command gates,
+continuation, and DP-014 attempt/generation binding sequence are implemented
+and independently accepted in isolation. Approved DP-016 and DP-017 remain
+Planned overall; the concrete composition invoker and orchestrator are absent.
 
 ## 4. Scope
 
@@ -248,10 +251,11 @@ The same rule closes the gap after old release and before the Start-phase claim.
 A definitive phase-claim failure leaves the parent terminal and the Instance
 Stopped; an indeterminate claim makes the linked command set unresolved. DP-013
 then invokes existing Flow, and only Owner may claim the Launch Attempt. This
-gate never pre-creates an attempt. The planned private continuation below is a
-claim-observation coordination seam, not an ownership handoff.
+gate never pre-creates an attempt. The private continuation below is an
+implemented-in-isolation claim-observation coordination seam, not an ownership
+handoff.
 
-The planned private DP-011/DP-013 Start-claim continuation runs synchronously
+The implemented isolated private DP-011 Start-claim continuation runs synchronously
 after Owner claim and before Load. If a pending Stop exists, the continuation
 signals the original blocked Stop claimant. That call stack retains its permit,
 checks cancellation, alone invokes exact DP-013 Stop, publishes its outcome,
@@ -273,9 +277,10 @@ DP-014 and command/phase terminal publication. After confirmed
 binding, a final per-Instance gate orders a new Stop claim against `Continue`.
 Stop winning converges before Load; `Continue` winning releases Flow, and a
 later Stop reaches the claimed attempt normally. No admission or Owner lock is
-held across persistence, wait, or Stop convergence. The current isolated Flow
-implements neither this continuation nor the binding gate, so DP-016 remains
-Planned.
+held across persistence, wait, or Stop convergence. The current managed Flow,
+continuation, and binding gate implement these seams in isolation. DP-016
+remains Planned overall because the concrete DP-013 composition-private
+invoker, terminal publication, orchestrator, and production wiring are absent.
 
 ## 16. Explicit Rollback
 

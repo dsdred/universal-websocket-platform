@@ -6,8 +6,9 @@
 
 **Design Status:** Draft
 
-**Implementation Status:** Implemented in isolation; private extension
-Start-claim continuation DP-016, определённый Approved DP-019, — Planned
+**Implementation Status:** base Flow и managed surface Start-claim continuation
+реализованы и независимо приняты изолированно; concrete composition invocation
+и production integration остаются Planned
 
 **Статус архитектуры:** сфокусированный integration contract поверх
 утверждённых ARCH-004 и ARCH-005 и существующих Draft DP-007–DP-010.
@@ -17,8 +18,10 @@ Concrete Source composition и management routing также существую�
 isolated packages DP-012 и DP-013. Их production composition, routing Control
 Service и Production Activation отсутствуют. Implementation не объявляет
 production launch capability реализованной и не повышает статусы связанных
-Draft DP. Текущий package не реализует private claim-continuation gate,
-требуемый DP-016; extension требует отдельной implementation task.
+Draft DP. Тот же package теперь также изолированно реализует additive
+`ManagedFlow`, `StartClaimContinuation` и per-call managed Start surface.
+Concrete composition-private invoker DP-013, который конструирует и вызывает
+эти seams, отсутствует.
 
 ## 2. Назначение
 
@@ -181,10 +184,10 @@ func (f *BuildFailure) Error() string
 func (f *BuildFailure) Diagnostics() []runtimeconfig.Diagnostic
 ```
 
-Реализованный isolated surface не вводит дополнительный exported interface,
-callback, registry, option, stage enum, result union или lifecycle state.
-Private continuation section 10 является planned management integration seam,
-а не частью текущего exported API.
+Base isolated surface не вводит дополнительный exported interface, callback,
+registry, option, stage enum, result union или lifecycle state. Managed
+continuation section 10 реализована через additive repository-internal symbols
+и не является public management API.
 
 `New` отклоняет nil Flow dependencies с `ErrInvalidFlow`. `Start` отклоняет
 nil context с `ErrInvalidStartContext`. Ошибки Owner, Loader и context не
@@ -318,8 +321,9 @@ stack о successful Owner claim и затем ждёт durable outcome того 
 существует и находится Starting; recovery может доказать лишь отсутствие
 external preparation, а не отсутствие lifecycle mutation.
 
-Поскольку Flow и management routing являются разными Go packages, future
-extension использует internal-package-callable managed surface. Один long-lived
+Поскольку Flow и management routing являются разными Go packages,
+реализованное isolated extension использует internal-package-callable managed
+surface. Один long-lived
 Flow при construction immutable связывается со stateless
 `StartClaimContinuation`; каждый managed Start invocation отдельно получает
 exact per-call `StartExecutionBinding`, определённый DP-019. Capability
@@ -328,16 +332,17 @@ exact per-call `StartExecutionBinding`, определённый DP-019. Capabil
 `LaunchPreparation`, command permit, recovery permit или persistence
 implementation. Go symbol может быть exported через repository boundary
 `internal/`, но не является public management/HTTP API. Exact current
-implementation `New` и `Start` остаётся без
-изменения и не имеет этого seam, поэтому не реализует continuation DP-016 или
-binding gate DP-017.
+implementation base `New` и `Start` остаётся без изменения и не имеет managed
+behavior. Additive `NewManaged` и `StartManaged` предоставляют isolated managed
+seam без изменения base surface.
 
 Approved [DP-019](DP-019-runtime-activation-orchestration-prerequisites.md)
 определяет exact per-call binding и claim view, callback-scoped parent/phase
 authority, порядок attempt publication/binding и закрытые outcomes
 continuation. Он не меняет Owner-first claim и synchronous preparation
-semantics Flow. Prerequisite остаётся Planned и должен быть реализован до
-возобновления DP-016 orchestration.
+semantics Flow. TASK-037 реализует и независимо принимает эту continuation и
+binding sequence изолированно. Concrete composition-private invoker и
+orchestrator DP-016 отсутствуют.
 
 ## 11. Synchronous operation и caller lifetime
 
@@ -629,8 +634,9 @@ implementation является отдельно проверенным prerequi
 - HTTP/CLI/API surface и authorization;
 - external durable persistence schema и transactions;
 - process-restart command/result persistence, retention и recovery;
-- orchestration activation/replacement/rollback, private Start-claim
-  continuation и execution-binding/load gate;
+- orchestration activation/replacement/rollback, composition существующих
+  private Start-claim continuation и execution-binding/load gate, а также
+  concrete composition-private invoker;
 - retry, backoff, restart, replacement, rollback policy и reconciliation;
 - terminal supervision Host и unexpected failure;
 - timeout/force policy для blocking Source;
@@ -641,11 +647,13 @@ implementation является отдельно проверенным prerequi
 
 ## 26. Implementation boundary
 
-Первый code slice реализован и ограничен:
+Реализованные isolated slices ограничены:
 
 - `internal/runtimelaunchflow`;
 - local proof tests;
 - factual documentation synchronization.
+
+Они включают base Flow и additive managed Flow/continuation surface.
 
 Он не изменяет DP-007–DP-010 packages, Control Service, repositories,
 management API, persistence, Host или Bootstrap.

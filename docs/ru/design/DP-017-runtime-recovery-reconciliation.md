@@ -37,9 +37,11 @@ authoritative execution evidence, публикует только доказан
 
 Accepted ADR и Active/Frozen architecture остаются authoritative. DP-013
 остаётся Draft и реализован изолированно. Approved DP-014 и primitive boundary
-DP-015, partial parent/phase sequential core DP-019 и command-boundary
-Continue/pending-Stop rendezvous реализованы изолированно; managed continuation
-и Approved DP-016/DP-017 остаются Planned.
+DP-015, partial parent/phase sequential core DP-019, command-boundary
+Continue/pending-Stop rendezvous, managed command gates, continuation и binding
+sequence attempt/generation DP-014 реализованы и независимо приняты
+изолированно. Approved DP-016 и DP-017 остаются Planned overall; recovery и
+production composition отсутствуют.
 
 ## 4. Область действия
 
@@ -112,9 +114,10 @@ evidence сообщает execution truth. Ни один из них не ста
 
 Exact Control Service composition создаёт opaque execution generation и владеет
 proof её containment/termination. DP-014 владеет conditional durable execution
-binding внутри aggregate Runtime Instance. Planned Start-claim continuation
-DP-011 координирует borrowed binding capability и pending-Stop gate DP-015.
-DP-017 читает binding при assessment, но не allocate generation/binding.
+binding внутри aggregate Runtime Instance. Managed Start-claim continuation
+DP-011, координирующая borrowed binding capability и pending-Stop gate DP-015,
+реализована изолированно. DP-017 читает binding при assessment, но не allocate
+generation/binding.
 
 ## 7. Триггер восстановления и оценка
 
@@ -186,8 +189,8 @@ Host ownership, resource release или lifecycle completion.
 Contradictory evidence остаётся unresolved. Recovery не выбирает самое новое,
 удобное или majority observation.
 
-До любого Load, Build, Launcher или Host work planned continuation DP-011
-должен подтвердить DP-014 publication одного execution binding для exact
+До любого Load, Build, Launcher или Host work реализованная изолированно
+continuation DP-011 должна подтвердить DP-014 publication одного execution binding для exact
 already-claimed attempt и expected aggregate revision. Только coherent exact
 read, доказывающий отсутствие binding у этого exact still-active attempt на
 expected revision, может дать `BindingFailed`: external preparation не

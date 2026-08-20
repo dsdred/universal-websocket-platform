@@ -384,8 +384,8 @@ Owner convergence. A Stop losing the final release gate uses the ordinary
 section 17 route and reaches the already-claimed attempt. The DP-013 binding
 supplies the internal-package-callable `StartClaimContinuation` when
 constructing Flow; this adds no exported Directory/Replace/Rollback operation,
-transfers no mutable `LaunchPreparation`, and is Planned rather than
-implemented.
+transfers no mutable `LaunchPreparation`. The managed continuation is
+implemented and independently accepted in isolation outside this package.
 
 Approved [DP-019](DP-019-runtime-activation-orchestration-prerequisites.md)
 closes the design ambiguity around this seam. It adds a separate exact
@@ -395,8 +395,9 @@ passes one per-call immutable `StartExecutionBinding` to the managed Start
 surface of the one already stored Flow; revision, generation, authorization,
 linked execution, and rendezvous facts are never Flow-construction state or a
 mutable Directory slot. Existing public `Start`, `Stop`, `Observe`, and their
-authorization behavior remain unchanged. The DP-019 surfaces are Planned and
-absent from the current package.
+authorization behavior remain unchanged. The managed command, binding, Flow,
+and continuation surfaces are implemented in their focused internal packages;
+the DP-013 composition-private invoker that joins them remains absent.
 
 If the linked `Directory.Start` path returns a definitive cancellation or error
 before Owner claim, it signals `StartNoClaim` to the original pending Stop call
@@ -672,8 +673,9 @@ section 19(2)–(6). Packages `internal/runtimeidentity` and
 over process-local in-memory storage. External durability, activation,
 recovery, reporting, Control Service integration, and Production Activation
 remain absent. Any integration slice must first provide its exact required
-dependencies, including the planned private Start-claim continuation and
-execution-generation binding/load gate defined by Approved DP-019.
+dependencies, including composition of the existing isolated private
+Start-claim continuation and execution-generation binding/load gate defined by
+Approved DP-019. The concrete composition-private invoker remains absent.
 
 ## 30. Decision
 

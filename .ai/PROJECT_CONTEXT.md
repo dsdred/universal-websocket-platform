@@ -13,9 +13,10 @@
   Configuration Loader boundary, DP-008 Snapshot Builder, DP-009 Runtime
   Bootstrap, stateless Runtime Launcher и DP-010 Runtime Lifecycle Owner
   реализованы изолированно; Draft DP-011 и `internal/runtimelaunchflow`
-  реализуют base integration contract изолированно, private Start-claim
-  continuation и execution-binding/load gate DP-016/DP-017 запланированы и
-  отсутствуют; Draft DP-012 и
+  реализуют base integration contract и managed Start-claim continuation
+  изолированно; TASK-037 реализует managed gates и execution-binding/load
+  sequence изолированно, тогда как concrete composition invoker отсутствует;
+  Draft DP-012 и
   `internal/configurationloadsource.MemorySource` реализуют concrete Source
   adapter изолированно; Draft DP-013 и `internal/runtimemanagement` реализуют
   management routing изолированно; Approved DP-014 и `internal/runtimeidentity`
@@ -47,8 +48,10 @@
   завершён как design-update TASK-039 с Coordinator Acceptance: принятый Draft
   DP-010 contract atomic expected-attempt Owner Stop зафиксирован. TASK-040
   завершена как `Completed — Coordinator Accepted`: contract реализован и
-  верифицирован изолированно, repeat final Reviewer APPROVED 0/0. Private exact-scope invoker
-  остаётся позже и не активирован.
+  верифицирован изолированно, repeat final Reviewer APPROVED 0/0. TASK-041
+  завершена как `Completed — Coordinator Accepted (2026-08-20)`: live status
+  managed continuation/binding синхронизирован, final Reviewer APPROVED 0/0.
+  Private exact-scope invoker остаётся позже и не активирован.
   HTTP, concrete policy, external command storage, recovery/reporting
   package/schema, management wiring и Production Activation отсутствуют**
 - Последняя завершённая development task: **TASK-040 — Expected-Attempt
@@ -172,9 +175,13 @@
   publication. Exact authorization/private
   invoker, managed Flow/OwnerClaimView, DP-014 binding, orchestrator и
   production composition остаются Planned; TASK-026 remains Blocked**
-- Следующая рекомендация: **bounded private
-  exact-scope composition invoker; рекомендация не активирована. Terminal
-  publication остаётся core work TASK-026**
+- TASK-041 acceptance evidence: **Managed Continuation Documentation Baseline
+  Reconciliation; Completed — Coordinator Accepted (2026-08-20); PROCESS-002
+  Synchronized; final Reviewer APPROVED 0/0; Scope Audit 15/0/0; commit и
+  publication не авторизованы и не выполнялись**
+- Следующая рекомендация после TASK-041: **bounded private exact-scope
+  composition invoker design; не активирован. Terminal publication остаётся
+  core work TASK-026**
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы
   изолированно; Repeat Independent Review Approved, blocking/non-blocking 0;
@@ -185,10 +192,10 @@
   closure commit и publication ещё не выполнялись. Subsequently task commit
   `d28efa4e88e02ef528c78c3ca88b3f91945069ce` was published through PR #28
   and merged as `ba75e54e00c3cf1d0d87ca2a985acc9699698efd`**
-- Последняя завершённая documentation task: **TASK-040 — Expected-Attempt
-  Runtime Owner Stop Implementation; Completed — Coordinator Accepted;
-  PROCESS-002 Synchronized; repeat final Reviewer APPROVED 0/0; Scope Audit
-  21/0/0**
+- Последняя завершённая documentation task: **TASK-041 — Managed Continuation
+  Documentation Baseline Reconciliation; Completed — Coordinator Accepted
+  (2026-08-20); PROCESS-002 Synchronized; final Reviewer APPROVED 0/0; Scope
+  Audit 15/0/0**
 - Текущая documentation task: **отсутствует**
 - Текущая architecture task: **отсутствует; последняя завершённая architecture
   task — TASK-039 — Atomic Expected-Attempt Runtime Owner Stop Design;
@@ -426,9 +433,9 @@
   **Implemented in isolation**; status не утверждает production wiring,
   persistence или management capability
 - Design Status DP-011 остаётся **Draft**, Implementation Status —
-  **Implemented in isolation для base contract; private DP-019
-  Start-claim continuation и execution-binding/load gate Planned**; Flow package не утверждает concrete Source
-  composition, management routing или Production Activation
+  **base Flow и managed Start-claim continuation реализованы изолированно**;
+  concrete composition invoker, production composition, management routing и
+  Production Activation отсутствуют
 - Design Status DP-012 — **Draft**, Implementation Status — **Implemented in
   isolation**; repository-backed Source adapter реализован, production
   composition отсутствует

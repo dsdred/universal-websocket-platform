@@ -384,7 +384,8 @@ Stop, проигравший final release gate, использует обычн
 достигает already-claimed attempt. Binding DP-013 передаёт internal-package-
 callable `StartClaimContinuation` при construction Flow; seam не добавляет
 exported operation Directory/Replace/Rollback, не передаёт mutable
-`LaunchPreparation` и является Planned, а не implemented.
+`LaunchPreparation`. Managed continuation реализована и независимо принята
+изолированно за пределами этого package.
 
 Approved [DP-019](DP-019-runtime-activation-orchestration-prerequisites.md)
 закрывает design ambiguity этой seam. Он добавляет отдельный exact
@@ -394,7 +395,9 @@ orchestration authorization tuple и private composition-only lifecycle invoker,
 уже stored Flow; revision, generation, authorization, linked execution и
 rendezvous facts никогда не являются Flow-construction state или mutable slot
 Directory. Existing public `Start`, `Stop`, `Observe` и их authorization
-behavior не меняются. Surfaces DP-019 Planned и отсутствуют в current package.
+behavior не меняются. Managed command, binding, Flow и continuation surfaces
+реализованы в своих focused internal packages; соединяющий их
+composition-private invoker DP-013 отсутствует.
 
 Если linked path `Directory.Start` возвращает definitive cancellation/error до
 claim Owner, он сигнализирует `StartNoClaim` original pending Stop call stack.
@@ -672,8 +675,9 @@ Approved DP-014–DP-018 закрывают focused design gates ARCH-004 sectio
 process-local in-memory storage. External durability, activation, recovery,
 reporting, integration Control Service и Production Activation отсутствуют.
 Любой integration slice сначала должен предоставить exact required
-dependencies, включая planned private Start-claim continuation и
-execution-generation binding/load gate, определённые Approved DP-019.
+dependencies, включая composition существующих isolated private Start-claim
+continuation и execution-generation binding/load gate, определённых Approved
+DP-019. Concrete composition-private invoker отсутствует.
 
 ## 30. Решение
 
