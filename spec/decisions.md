@@ -221,11 +221,11 @@ design-only atomic expected-attempt Owner Stop contract; TASK-038 не
 Accepted` и фиксирует принятый Draft DP-010 design:
 `StopExpectedAttempt`, `StopAttemptMismatch` и
 `ErrInvalidExpectedAttempt`, active-before-last selection, mismatch без
-mutation и exact ordinary-Stop convergence. Extension остаётся Planned и не
-реализован. Repeat Reviewer `APPROVED` 0/0, PROCESS-002 `Synchronized`, Scope
-Audit 18/0/0. Следующая неактивированная рекомендация — bounded implementation
-`StopExpectedAttempt`; Private exact-scope composition invoker остаётся
-последующей prerequisite. Terminal publication DP-014 и
+mutation и exact ordinary-Stop convergence. TASK-040 завершена как `Completed —
+Coordinator Accepted`: extension реализован и верифицирован изолированно,
+repeat final Reviewer `APPROVED` 0/0. Следующая неактивированная рекомендация —
+private exact-scope composition
+invoker. Terminal publication DP-014 и
 terminalization DP-015 после Owner остаются core work TASK-026, а не отдельной
 prerequisite. Repeat Reviewer APPROVED 0/0 и Coordinator Acceptance завершены;
 TASK-038 имеет статус `Completed — Coordinator Accepted`. Approved/Planned

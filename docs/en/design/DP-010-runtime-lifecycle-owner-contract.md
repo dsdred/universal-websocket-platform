@@ -6,8 +6,8 @@
 
 **Design Status:** Draft
 
-**Implementation Status:** Base lifecycle Owner implemented in isolation;
-expected-attempt Stop extension Planned
+**Implementation Status:** Base lifecycle Owner and expected-attempt Stop
+extension implemented in isolation
 
 **Architecture status:** implementation contract for the approved operational
 identity model in
@@ -17,9 +17,11 @@ and loading model in
 
 Runtime Lifecycle Owner is implemented in isolation in
 `internal/runtimelifecycle`. Production Loader-to-Builder-to-Launcher wiring
-is not implemented. The `StopExpectedAttempt` contract added by TASK-039 is an
-accepted design baseline only and is not implemented. This Draft does not
-revise approved architecture.
+is not implemented. The `StopExpectedAttempt` contract added by TASK-039 is
+implemented and verified in isolation by completed and Coordinator-Accepted
+TASK-040; its private invoker,
+integration, and production wiring remain absent. This Draft does not revise
+approved architecture.
 
 ## 2. Purpose
 
@@ -88,9 +90,9 @@ Different Owners share no lifecycle state and may progress independently.
 
 ## 6. Exact Exported Declarations
 
-The base implementation uses the existing declarations below. TASK-039 adds
-only the explicitly marked planned declarations, without adding another public
-lifecycle abstraction:
+The base implementation uses the declarations below. TASK-039 designed the
+expected-attempt declarations and TASK-040 implements them without adding
+another public lifecycle abstraction:
 
 ```go
 package runtimelifecycle
@@ -162,7 +164,7 @@ type StopOutcomeKind string
 const (
     StopStopped         StopOutcomeKind = "stopped"
     StopFailed          StopOutcomeKind = "stop-failed"
-    StopAttemptMismatch StopOutcomeKind = "attempt-mismatch" // planned extension
+    StopAttemptMismatch StopOutcomeKind = "attempt-mismatch"
 )
 
 type StopOutcome struct { /* immutable */ }
@@ -236,7 +238,7 @@ func (o *Owner) PrepareStart(
 ) (LaunchPreparation, error)
 func (o *Owner) Start(ctx context.Context, preparation LaunchPreparation, result PreparationResult) (StartOutcome, error)
 func (o *Owner) Stop(ctx context.Context) (StopOutcome, error)
-func (o *Owner) StopExpectedAttempt(ctx context.Context, expectedAttemptID runtimeconfigload.LaunchAttemptID) (StopOutcome, error) // planned extension
+func (o *Owner) StopExpectedAttempt(ctx context.Context, expectedAttemptID runtimeconfigload.LaunchAttemptID) (StopOutcome, error)
 func (o *Owner) Observe() Observation
 ```
 
@@ -256,7 +258,7 @@ var (
     ErrStartConflict            error
     ErrPreparationNotOwned      error
     ErrInvalidPreparationResult error
-    ErrInvalidExpectedAttempt   error // planned extension
+    ErrInvalidExpectedAttempt   error
 )
 ```
 
@@ -264,7 +266,8 @@ Callers distinguish them with `errors.Is`. An attempt-ID source failure wraps
 both `ErrAttemptIDSourceFailed` and the exact source error so that both remain
 discoverable. Validation and conflict errors do not mutate lifecycle state.
 `ErrInvalidExpectedAttempt` rejects an empty expected Launch Attempt identity.
-Calling planned `StopExpectedAttempt` on a nil Owner returns `ErrInvalidOwner`.
+Calling implemented `StopExpectedAttempt` on a nil Owner returns
+`ErrInvalidOwner`.
 Neither validation outcome mutates lifecycle state.
 
 ## 8. Construction
@@ -490,11 +493,11 @@ and the following locked mutation win over later caller cancellation.
 Concurrent operations follow mutex claim order. `StopOrigin()` and
 `RunningPublished()` are recorded at Stop claim and never regress.
 
-### 18.1 Planned Atomic Expected-Attempt Stop Extension
+### 18.1 Atomic Expected-Attempt Stop Extension
 
-`StopExpectedAttempt(ctx, expectedAttemptID)` is the planned atomic operation
-for a private orchestration caller that must stop one exact Owner-issued Launch
-Attempt. It is not part of the implemented base slice. The expected identity
+`StopExpectedAttempt(ctx, expectedAttemptID)` is the implemented isolated
+atomic operation for a future private orchestration caller that must stop one
+exact Owner-issued Launch Attempt. The expected identity
 must be non-empty; a nil Owner returns `ErrInvalidOwner`, and an empty identity
 returns `ErrInvalidExpectedAttempt`, with no lifecycle mutation.
 
@@ -540,7 +543,7 @@ that caller's wait; Owner-owned cancellation, launch convergence, Host Stop,
 and cleanup continue. Same-identity callers converge on the same tracked or
 retained outcome. A different identity never attaches to that work.
 
-The later implementation must route generic `Stop(ctx)` and
+The implementation routes generic `Stop(ctx)` and
 `StopExpectedAttempt` through one private ordinary-Stop helper so their phase
 behavior cannot drift. The expected path must never be implemented as
 `Observe()` followed by `Stop()`. The Owner mutex is released before context
@@ -652,11 +655,11 @@ Caller cancellation is not a terminal lifecycle outcome.
 
 `StopOutcome` is immutable and has exactly one declared `StopOutcomeKind`.
 `Attempt()` is absent only for an idempotent Stop with no applicable attempt or
-a planned `StopAttemptMismatch` outcome when no relevant attempt exists.
+a `StopAttemptMismatch` outcome when no relevant attempt exists.
 `Failure()` succeeds only for `StopFailed` and returns the exact Host Stop
 error.
 
-For the planned expected-attempt extension, `StopAttemptMismatch` is also a
+For the expected-attempt extension, `StopAttemptMismatch` is also a
 declared immutable kind. Its `Attempt()` reports the relevant fact when one was
 present, and its `Failure()` is always absent. It is returned with nil
 method-level error and does not represent an accepted lifecycle mutation.
@@ -759,9 +762,9 @@ The isolated implementation must prove:
 23. package race tests and relevant Runtime regression tests pass when the
     toolchain supports them.
 
-### Planned Extension Acceptance Proofs
+### Expected-Attempt Extension Acceptance Proofs
 
-A later implementation of `StopExpectedAttempt` must additionally prove:
+The isolated implementation of `StopExpectedAttempt` additionally proves:
 
 1. nil Owner and empty expected-ID validation use the declared sentinels and
    mutate nothing;
@@ -817,8 +820,8 @@ DP-010 does not define:
 - generic manager, registry, service locator, or policy framework.
 
 It also does not define a public DP-013 expected-attempt command, composition
-invoker, or orchestration policy. Those remain separate work after the planned
-Owner extension is implemented and independently accepted.
+invoker, or orchestration policy. Those remain separate work after the isolated
+Owner extension.
 
 ## 31. Implementation Boundary
 
@@ -827,9 +830,10 @@ local proof tests for this contract. It uses fakes around the package-private
 immutable launch seam and external preparation boundary.
 
 The expected-attempt declarations and semantics in sections 6, 7, 18.1, 23,
-and 28 are a planned extension. They do not claim executable capability until
-a later implementation task supplies code, proof tests, verification, and
-independent acceptance.
+and 28 are implemented and verified in isolation by completed and
+Coordinator-Accepted TASK-040. This does not claim private invocation,
+integration, or production capability. Repeat final Reviewer verdict is
+`APPROVED` with 0 blocking and 0 non-blocking findings.
 
 It does not wire Loader, Builder, Control Service HTTP handlers, repositories,
 persistence, or production routing. Implementation does not promote the design

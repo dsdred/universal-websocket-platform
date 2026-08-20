@@ -21,9 +21,10 @@ primitive и linked gates, stateless continuation OwnerClaim-to-DP-014, exact
 threading revision и адаптацию outcomes managed Flow. TASK-037 независимо
 принята. Срез 4 завершён и Coordinator Accepted как TASK-038 с verdict
 `TASK-026 REMAINS BLOCKED`; его первый design-only следующий candidate не
-активировался автоматически, а затем завершён как Coordinator-Accepted TASK-039
-с принятыми semantics Draft DP-010 и без implementation. Общий статус остаётся
-Planned.
+активировался автоматически, а затем завершён как Coordinator-Accepted
+TASK-039. Завершённая и Coordinator-Accepted TASK-040 реализует и верифицирует
+принятые semantics Draft DP-010 изолированно; repeat final Reviewer
+`APPROVED` 0/0. Общий статус остаётся Planned.
 
 Этот focused design разделяет оставшиеся prerequisites Approved DP-019 — точную
 авторизацию оркестрации, private managed invocation и связывание
@@ -677,8 +678,10 @@ Production composition/private-invoker wiring не входит в этот ср
   может ли TASK-026 быть разблокирована против неизменных proofs §25 DP-016.
 - TASK-038 определяет design-only contract атомарного expected-attempt Owner
   Stop как первую bounded prerequisite. TASK-039 завершена с Coordinator
-  Acceptance после фиксации только этого design в Draft DP-010; implementation остаётся отдельным следующим
-  slice, а private exact-scope composition invoker — ещё более поздним.
+  Acceptance после фиксации этого design в Draft DP-010; завершённая и
+  Coordinator-Accepted TASK-040 реализует и верифицирует isolated Owner
+  extension, repeat final Reviewer `APPROVED` 0/0. Private
+  exact-scope composition invoker остаётся последующим.
 
 Каждый срез требует собственного intake задачи, Existing Coverage Report,
 Verification Matrix, Independent Review, PROCESS-002 и Coordinator Acceptance.
@@ -711,8 +714,8 @@ Implementation Status остаётся Planned overall. Сама design-зада
 принимает его repair Среза 2R изолированно, а TASK-036 устраняет оставшуюся
 неоднозначность command-gate и continuation API Среза 3. TASK-037 реализует и
 независимо принимает Срез 3 изолированно. Репозиторий содержит принятый Draft
-design, но всё ещё не содержит implementation atomic expected-attempt Owner
-Stop, последующий concrete private exact-scope composition invoker,
+design и завершённую TASK-040 isolated implementation atomic expected-attempt Owner
+Stop, но всё ещё не содержит последующий concrete private exact-scope composition invoker,
 оркестратор активации, external persistence,
 API, worker recovery и production wiring. Последующая
 terminal publication DP-014 и terminalization command/phase DP-015 после

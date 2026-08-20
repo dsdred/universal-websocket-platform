@@ -373,9 +373,11 @@ Architectural debt относится к границам, которые ост
   `TASK-026 REMAINS BLOCKED` Coordinator Accepted после repeat Reviewer
   APPROVED 0/0. Первый bounded candidate завершён как design-update TASK-039 с
   Coordinator Acceptance и repeat Reviewer APPROVED 0/0: его принятые
-  semantics Draft DP-010 atomic expected-attempt Owner Stop зафиксированы, но
-  не реализованы. Bounded implementation — следующая неактивированная
-  рекомендация; private invoker остаётся последующим.
+  semantics Draft DP-010 atomic expected-attempt Owner Stop зафиксированы.
+  Завершённая и Coordinator-Accepted TASK-040 реализует их изолированно и
+  прошла verification и repeat final Reviewer `APPROVED` 0/0. Private
+  exact-scope invoker — следующая неактивированная
+  рекомендация.
   Terminal publication остаётся core work TASK-026. Orchestration и
   production composition остаются Planned; TASK-026 остаётся Blocked;
   Integration и Production Activation остаются неактивными.

@@ -45,13 +45,15 @@
   `TASK-026 REMAINS BLOCKED` после Reviewer B-001/B-002 rework принят
   Coordinator; repeat Reviewer APPROVED 0/0. Первый bounded candidate
   завершён как design-update TASK-039 с Coordinator Acceptance: принятый Draft
-  DP-010 contract atomic expected-attempt Owner Stop зафиксирован, но не
-  реализован; private
-  exact-scope invoker остаётся позже.
+  DP-010 contract atomic expected-attempt Owner Stop зафиксирован. TASK-040
+  завершена как `Completed — Coordinator Accepted`: contract реализован и
+  верифицирован изолированно, repeat final Reviewer APPROVED 0/0. Private exact-scope invoker
+  остаётся позже и не активирован.
   HTTP, concrete policy, external command storage, recovery/reporting
   package/schema, management wiring и Production Activation отсутствуют**
-- Последняя завершённая development task: **TASK-037 — Runtime Owner Claim
-  Binding; Completed — Coordinator Accepted; Independent Reviewer APPROVED 0/0**
+- Последняя завершённая development task: **TASK-040 — Expected-Attempt
+  Runtime Owner Stop Implementation; Completed — Coordinator Accepted; repeat
+  final Reviewer APPROVED 0/0**
 - Последняя завершённая operational task: **TASK-012 — Engineering Process
   Hardening; Completed — Coordinator Accepted**
 - Текущая operational task: **отсутствует**
@@ -104,11 +106,13 @@
   Coordinator Closure Audit PASS; Task Contract, exact scope 26/0/0,
   Verification Matrix, PROCESS-002, status consistency и repository-state
   audit подтверждены; Commit Gate, commit, push и publication не выполнялись**
-- Текущая development task: **отсутствует. TASK-037 реализовала и независимо
-  приняла Slice 3 изолированно. Concrete private composition invoker, terminal
-  publication и production wiring отсутствуют; TASK-039 завершила и приняла
-  только design-update atomic expected-attempt Owner Stop без implementation;
-  active development task отсутствует, TASK-026 остаётся Blocked by Architecture**
+- Текущая development task: **отсутствует. Последняя завершённая development
+  task — TASK-040 — Expected-Attempt Runtime Owner Stop Implementation;
+  Completed — Coordinator Accepted. `StopExpectedAttempt`,
+  `StopAttemptMismatch` и `ErrInvalidExpectedAttempt` реализованы и
+  верифицированы изолированно; repeat final Reviewer APPROVED 0/0. Concrete
+  private composition invoker, terminal publication и production wiring
+  отсутствуют; TASK-026 остаётся Blocked by Architecture**
 - TASK-032 acceptance evidence: **Completed — Coordinator Accepted после
   rework; DP-020 deferred slice 2 реализован изолированно в
   `internal/runtimelaunchflow`: ManagedFlow/NewManaged/StartManaged, immutable
@@ -168,10 +172,9 @@
   publication. Exact authorization/private
   invoker, managed Flow/OwnerClaimView, DP-014 binding, orchestrator и
   production composition остаются Planned; TASK-026 remains Blocked**
-- Следующая рекомендация: **bounded implementation принятого
-  `StopExpectedAttempt` contract; рекомендация не активирована. Private
-  exact-scope invoker остаётся
-  последующей prerequisite; terminal publication остаётся core work TASK-026**
+- Следующая рекомендация: **bounded private
+  exact-scope composition invoker; рекомендация не активирована. Terminal
+  publication остаётся core work TASK-026**
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы
   изолированно; Repeat Independent Review Approved, blocking/non-blocking 0;
@@ -182,10 +185,14 @@
   closure commit и publication ещё не выполнялись. Subsequently task commit
   `d28efa4e88e02ef528c78c3ca88b3f91945069ce` was published through PR #28
   and merged as `ba75e54e00c3cf1d0d87ca2a985acc9699698efd`**
-- Последняя завершённая documentation task: **TASK-039 — Atomic
-  Expected-Attempt Runtime Owner Stop Design; Completed — Coordinator Accepted;
-  PROCESS-002 Synchronized; repeat Reviewer APPROVED 0/0; Scope Audit 18/0/0**
+- Последняя завершённая documentation task: **TASK-040 — Expected-Attempt
+  Runtime Owner Stop Implementation; Completed — Coordinator Accepted;
+  PROCESS-002 Synchronized; repeat final Reviewer APPROVED 0/0; Scope Audit
+  21/0/0**
 - Текущая documentation task: **отсутствует**
+- Текущая architecture task: **отсутствует; последняя завершённая architecture
+  task — TASK-039 — Atomic Expected-Attempt Runtime Owner Stop Design;
+  Completed — Coordinator Accepted**
 - Trusted baseline TASK-009: **clean synchronized
   `main@63b961eeb59af9205c3c3d0b68d3f4bd7b8ac25c`; локальная ветка
   `feature/task-009-runtime-lifecycle-owner`; task record создан первым

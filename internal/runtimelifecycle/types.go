@@ -11,6 +11,9 @@ import (
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfigload"
 )
 
+// ErrInvalidExpectedAttempt reports an empty expected Launch Attempt identity.
+var ErrInvalidExpectedAttempt = errors.New("invalid expected Launch Attempt identity")
+
 var (
 	ErrInvalidOwner             = errors.New("invalid Runtime Lifecycle Owner")
 	ErrInvalidStartRequest      = errors.New("invalid Runtime start request")
@@ -142,6 +145,9 @@ const (
 	StopStopped StopOutcomeKind = "stopped"
 	StopFailed  StopOutcomeKind = "stop-failed"
 )
+
+// StopAttemptMismatch reports that the relevant attempt does not match the expected identity.
+const StopAttemptMismatch StopOutcomeKind = "attempt-mismatch"
 
 type StopOutcome struct {
 	kind       StopOutcomeKind

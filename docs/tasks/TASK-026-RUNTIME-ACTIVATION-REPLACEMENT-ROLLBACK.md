@@ -76,17 +76,19 @@ Accepted DP-020 Slices 1–3 now implement the original command authorization,
 parent/phase, rendezvous, managed Flow/Owner-claim continuation, and DP-014
 binding seams in isolation. Completed and Coordinator-Accepted TASK-038 records
 the exact verdict
-`TASK-026 REMAINS BLOCKED`: current `Owner.Stop(ctx)` cannot atomically select
-an expected Launch Attempt, while Observe-then-Stop and an invoker-level mutex
-cannot exclude a newer attempt without TOCTOU or violating lock/lifetime rules.
+`TASK-026 REMAINS BLOCKED`: the atomic expected-attempt Owner Stop prerequisite
+is now implemented and independently accepted in isolation, but the later
+private exact-scope composition invoker and subsequent readiness/orchestrator
+boundaries remain absent.
 
 At TASK-038 closure, the first bounded prerequisite candidate was a separate
 unactivated design-only DP-010 atomic expected-attempt Stop contract, and
 TASK-038 did not finalize its API or change Approved sources. TASK-039
-subsequently activated and recorded that accepted design in Draft DP-010; its
-implementation remains absent. TASK-026 remains Blocked pending independent
-acceptance of that implementation and the later private exact-scope
-composition invoker.
+subsequently activated and recorded that accepted design in Draft DP-010.
+Completed and Coordinator-Accepted TASK-040 implements and verifies the
+extension in isolation, with repeat final Reviewer `APPROVED` 0/0. TASK-026
+remains Blocked by the later private exact-scope composition invoker and
+subsequent readiness/orchestrator boundaries.
 Post-Owner DP-014 terminal publication and DP-015 command/phase terminalization
 remain core TASK-026 orchestrator work, not a separate prerequisite. External
 API, persistence, recovery, reporting, production wiring, and Production

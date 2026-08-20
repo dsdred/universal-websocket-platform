@@ -15,7 +15,7 @@
 | [DP-007: Configuration Loader Contract](DP-007-configuration-loader-contract.md) | Draft; реализован изолированно |
 | [DP-008: Snapshot Builder Contract](DP-008-snapshot-builder-contract.md) | Draft; реализован изолированно |
 | [DP-009: Runtime Bootstrap Contract](DP-009-runtime-bootstrap-contract.md) | Draft; реализован изолированно |
-| [DP-010: Контракт Runtime Lifecycle Owner](DP-010-runtime-lifecycle-owner-contract.md) | Draft; base реализован изолированно, extension expected-attempt Stop запланирован |
+| [DP-010: Контракт Runtime Lifecycle Owner](DP-010-runtime-lifecycle-owner-contract.md) | Draft; base и extension expected-attempt Stop реализованы изолированно |
 | [DP-011: Интеграция Runtime Launch Pipeline](DP-011-runtime-launch-pipeline-integration.md) | Draft; base реализован изолированно, continuation/binding gate DP-019 запланирован |
 | [DP-012: Композиция Runtime Source](DP-012-runtime-source-composition.md) | Draft; реализован изолированно |
 | [DP-013: Маршрутизация управления Runtime](DP-013-runtime-management-routing.md) | Draft; реализован изолированно; integration blocked |
