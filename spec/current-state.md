@@ -84,10 +84,11 @@ CGO/gcc, substitute stress `-count=100` PASS); Independent Review Approved with
 Findings 0/2 (resolved); Verification Matrix, PROCESS-002, Scope Audit 7/0/0
 PASS. Commit, push, PR, merge и publication не выполнялись.
 
-**Последняя завершённая documentation task:** TASK-041 — Managed Continuation
-Documentation Baseline Reconciliation; `Completed — Coordinator Accepted
-(2026-08-20)`; PROCESS-002 Synchronized; final Reviewer `APPROVED` 0/0; Scope
-Audit 15/0/0. Commit и publication не авторизованы и не выполнялись.
+**Последняя завершённая documentation task:** TASK-045 — TASK-026 Reactivation
+Status Reconciliation; `Completed — Coordinator Accepted (2026-08-24)`;
+repeat Tester `PASS` 0/0/0; Independent Reviewer `APPROVED` 0/0; Scope Audit
+7/0/0; PROCESS-002 Synchronized. TASK-026 Ready to Reactivate, но Not
+Activated. Commit и publication не выполнялись.
 
 **Текущая documentation task:** отсутствует.
 

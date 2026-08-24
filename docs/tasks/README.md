@@ -49,6 +49,7 @@ operational документы ведутся на русском языке и 
 - [TASK-042 — Private Exact-Scope Composition Invoker Design](TASK-042-PRIVATE-EXACT-SCOPE-INVOKER-DESIGN.md) — Completed, Coordinator Accepted (2026-08-20); Tester PASS 0/0; repeat Reviewer APPROVED 0/0; Scope Audit 17/0/0; Draft DP-021 recorded and later implemented partially/in isolation by TASK-043; TASK-026 remained Blocked at closure
 - [TASK-043 — Private Exact-Scope Managed Start Invoker Implementation](TASK-043-PRIVATE-EXACT-SCOPE-INVOKER.md) — Completed, Coordinator Accepted (2026-08-21); final Reviewer APPROVED 0/0; Scope Audit 21/0/0; concrete DP-021 invoker implemented in isolation; TASK-044 later makes TASK-026 Ready to Reactivate but Not Activated
 - [TASK-044 — Runtime Terminal / Orchestrator Readiness Reassessment](TASK-044-RUNTIME-TERMINAL-ORCHESTRATOR-READINESS.md) — Completed, Coordinator Accepted (2026-08-24); Architect `UNBLOCK TASK-026`; repeat Reviewer APPROVED 0/0; Scope Audit 16/0/0; PROCESS-002 Synchronized; TASK-026 Ready to Reactivate but Not Activated
+- [TASK-045 — TASK-026 Reactivation Status Reconciliation](TASK-045-TASK-026-STATUS-RECONCILIATION.md) — Completed, Coordinator Accepted (2026-08-24); repeat Tester PASS 0/0/0; Independent Reviewer APPROVED 0/0; Scope Audit 7/0/0; PROCESS-002 Synchronized; TASK-026 Ready to Reactivate but Not Activated
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.
