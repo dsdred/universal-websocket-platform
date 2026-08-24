@@ -225,10 +225,11 @@
   closure commit и publication ещё не выполнялись. Subsequently task commit
   `d28efa4e88e02ef528c78c3ca88b3f91945069ce` was published through PR #28
   and merged as `ba75e54e00c3cf1d0d87ca2a985acc9699698efd`**
-- Последняя завершённая documentation task: **TASK-041 — Managed Continuation
-  Documentation Baseline Reconciliation; Completed — Coordinator Accepted
-  (2026-08-20); PROCESS-002 Synchronized; final Reviewer APPROVED 0/0; Scope
-  Audit 15/0/0**
+- Последняя завершённая documentation task: **TASK-045 — TASK-026 Reactivation
+  Status Reconciliation; Completed — Coordinator Accepted (2026-08-24);
+  repeat Tester PASS 0/0/0; Independent Reviewer APPROVED 0/0; Scope Audit
+  7/0/0; PROCESS-002 Synchronized; TASK-026 Ready to Reactivate, но Not
+  Activated**
 - Текущая documentation task: **отсутствует**
 - Текущая architecture task: **отсутствует; последняя завершённая — TASK-044,
   Coordinator Accepted (2026-08-24); TASK-026 Ready to Reactivate, но Not
@@ -487,8 +488,9 @@
   production wiring отсутствуют
 - Design Status DP-016 — **Approved**, Implementation Status — **Planned**;
   activation/replacement/rollback ordering определён только на design level;
-  implementation architecture-blocked unimplemented prerequisites DP-019;
-  API, recovery и production wiring отсутствуют
+  TASK-044 фиксирует `UNBLOCK TASK-026`, отдельной prerequisite больше нет,
+  TASK-026 Ready to Reactivate, но Not Activated; orchestrator, API, recovery и
+  production wiring отсутствуют
 - Design Status DP-017 — **Approved**, Implementation Status — **Planned**;
   recovery/reconciliation определены только на design level; recovery store,
   execution-evidence adapter, executor, API и production wiring отсутствуют
@@ -503,8 +505,9 @@
   полный managed binding и Slice 2R repair реализованы и независимо приняты
   изолированно TASK-035; TASK-037 реализует managed gates, continuation,
   DP-014 attempt/generation binding sequence и managed Flow outcomes
-  изолированно и независимо принята; concrete private invoker,
-  policy, terminal publication, orchestrator и production wiring не реализованы
+  изолированно и независимо принята; concrete private invoker реализован
+  изолированно TASK-043; policy, terminal publication, orchestrator и production
+  wiring не реализованы
 - Design Status DP-008 остаётся **Draft**, Implementation Status — **Implemented in isolation**
 - Содержимое репозитория: документация, спецификации, инженерные соглашения, исполняемый Control Service и изолированные Runtime-компоненты с тестами
 

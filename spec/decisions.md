@@ -81,7 +81,8 @@ claim и до Load; managed Flow/continuation, binding sequence и concrete
 composition-private invoker TASK-043 реализованы изолированно. DP-016 не
 создаёт lifecycle implementation, API, recovery или production wiring.
 Approved DP-016 закрывает design gate §19(4); implementation остаётся
-отсутствующей и architecture-blocked prerequisites DP-019.
+отсутствующей. TASK-044 фиксирует `UNBLOCK TASK-026`: отдельной prerequisite
+больше нет, TASK-026 Ready to Reactivate, но Not Activated.
 
 Approved DP-019 определяет focused internal integration contract, необходимый
 для реализации DP-016 без ослабления proofs: exact authorization tuple
@@ -94,7 +95,8 @@ strict sequential core реализованы изолированно в TASK-0
 Continue/pending-Stop rendezvous — в TASK-029, а managed gates, continuation и
 binding sequence — в TASK-037. Он не меняет Owner
 lifecycle semantics, не создаёт orchestrator/API и
-не снимает TASK-026 blocker до отдельной implementation/acceptance.
+не реализует TASK-026 автоматически; DP-019 остаётся Planned overall, а
+reactivation требует отдельного Coordinator selection.
 
 Approved DP-017 определяет focused contract ARCH-004
 §19(5): exact fail-closed restart assessment, durable recovery claim,
@@ -185,11 +187,12 @@ conformance interpretation. TASK-035 реализует Slice 2R изолиро�
 six-field authorization, dependency-leaf binding values, all-or-none linked
 identity и unique callback-scoped command-owned rendezvous identity; sole
 primitive `Boundary.ExecuteManagedStart` adapter не допускает синтез binding
-после legacy claim. TASK-035 независимо принята. Deferred Slice 3
-OwnerClaim-to-DP-014 остаётся следующим Planned и неактивированным срезом;
-TASK-043 реализует concrete private composition invoker изолированно, а
-production wiring отсутствует. TASK-026 остаётся
-Blocked до реализации и независимой приёмки remaining prerequisites.
+после legacy claim. TASK-035 независимо принята. TASK-036 затем фиксирует
+managed protocol Среза 3, а TASK-037 реализует и независимо принимает Slice 3
+OwnerClaim-to-DP-014 изолированно. TASK-043 реализует concrete private
+composition invoker изолированно; production wiring остаётся отсутствующим.
+TASK-044 впоследствии фиксирует `UNBLOCK TASK-026`: отдельной prerequisite
+больше нет, TASK-026 Ready to Reactivate, но Not Activated.
 
 TASK-036 завершена и принята как bounded design-update перед Slice 3 после
 read-only readiness inspection. Draft DP-020 теперь фиксирует единый primitive/linked

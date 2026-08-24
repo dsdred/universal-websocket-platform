@@ -21,7 +21,7 @@
 | [DP-013: Маршрутизация управления Runtime](DP-013-runtime-management-routing.md) | Draft; реализован изолированно; integration blocked |
 | [DP-014: Персистентность operational identity Runtime](DP-014-runtime-operational-identity-persistence.md) | Approved; реализован изолированно |
 | [DP-015: Идемпотентность management commands Runtime](DP-015-runtime-management-command-idempotency.md) | Approved; primitive/parent managed gates, parent/phase core, Continue/pending-Stop и continuation Среза 3 реализованы изолированно; complete extension запланирован |
-| [DP-016: Activation, replacement и rollback Runtime](DP-016-runtime-activation-replacement-rollback.md) | Approved; запланирован и architecture-blocked оставшимися prerequisites DP-019 |
+| [DP-016: Activation, replacement и rollback Runtime](DP-016-runtime-activation-replacement-rollback.md) | Approved; запланирован; TASK-026 Ready to Reactivate, но Not Activated после TASK-044; отдельной prerequisite больше нет |
 | [DP-017: Восстановление и сверка Runtime](DP-017-runtime-recovery-reconciliation.md) | Approved; запланирован |
 | [DP-018: Operational error reporting и redaction Runtime](DP-018-runtime-operational-error-reporting-redaction.md) | Approved; запланирован |
 | [DP-019: Предпосылки оркестрации активации Runtime](DP-019-runtime-activation-orchestration-prerequisites.md) | Approved; planned overall; managed command/Flow/continuation и seams binding attempt/generation реализованы изолированно |
