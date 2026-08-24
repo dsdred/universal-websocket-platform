@@ -6,9 +6,10 @@
 
 **Design Status:** Draft
 
-**Implementation Status:** Base Flow and the managed Start-claim continuation
-surface are implemented and independently accepted in isolation; concrete
-composition invocation and production integration remain Planned
+**Implementation Status:** Base Flow, the managed Start-claim continuation
+surface, and the concrete composition-private invoker are implemented and
+independently accepted in isolation; callback/orchestrator composition and
+production integration remain Planned
 
 **Architecture Status:** focused integration contract over approved ARCH-004
 and ARCH-005 and the existing Draft DP-007 through DP-010.
@@ -20,8 +21,10 @@ routing, and Production Activation remain absent. Implementation does not claim
 that the production launch capability is implemented and does not raise the
 status of any related Draft DP. The same package now also implements the
 additive `ManagedFlow`, `StartClaimContinuation`, and per-call managed Start
-surface in isolation. The concrete DP-013 composition-private invoker that
-constructs and calls those seams remains absent.
+surface in isolation. TASK-043 implements and independently verifies the
+concrete DP-013 composition-private invoker that calls those seams in
+isolation; callback/orchestrator composition and production wiring remain
+absent.
 
 ## 2. Purpose
 
@@ -347,8 +350,9 @@ defines the exact per-call binding and claim view, callback-scoped parent/phase
 authority, attempt-publication/binding order, and closed continuation outcomes.
 It does not change this Flow's Owner-first claim or synchronous preparation
 semantics. TASK-037 implements and independently accepts that continuation and
-binding sequence in isolation. The concrete composition-private invoker and
-the DP-016 orchestrator remain absent.
+binding sequence in isolation. TASK-043 implements the concrete
+composition-private invoker in isolation; the DP-016 orchestrator remains
+absent.
 
 ## 11. Synchronous Operation and Caller Lifetime
 
@@ -643,9 +647,9 @@ Deferred:
 - HTTP/CLI/API surface and authorization;
 - external durable persistence schema and transactions;
 - process-restart command/result persistence, retention, and recovery;
-- activation/replacement/rollback orchestration, composition of the existing
-  private Start-claim continuation and execution-binding/load gate, and the
-  concrete composition-private invoker;
+- activation/replacement/rollback orchestration and composition of the
+  existing private Start-claim continuation and execution-binding/load gate
+  through the concrete composition-private invoker;
 - retry, backoff, restart, replacement, rollback policy, and reconciliation;
 - terminal Host supervision and unexpected failure;
 - timeout/force policy for a blocking Source;

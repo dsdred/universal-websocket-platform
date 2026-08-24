@@ -22,6 +22,7 @@
 - после изменения публичных API;
 - после изменения модели данных;
 - при передаче задачи другому агенту;
+- перед `Blocked Closure Certified`;
 - по запросу Coordinator.
 
 ---
@@ -148,7 +149,14 @@ Status. Documentation Agent не повышает статус самостоя�
 Project-state документы сохраняют только устойчивые repository facts:
 
 - accepted task и factual closure;
-- task commit и подтверждённый merge/PR outcome после terminal publication;
+- accepted task commit либо certified blocked evidence checkpoint и
+  подтверждённый merge/PR outcome после terminal publication;
+- для blocked closure — неизменный статус `Blocked`, непройденный Coordinator
+  Acceptance, blocker identity и prerequisite `Not Activated`;
+- после terminal blocked publication — при следующем применимом PROCESS-002
+  устойчивые merged PR/OID и sealed-evidence facts; их ещё не записанное
+  post-merge состояние не блокирует exact prerequisite admission, если полный
+  terminal outcome read-only reconstructable по PROCESS-001;
 - текущую active task и product implemented/planned boundary;
 - следующую рекомендацию, если она не активирована.
 
@@ -158,7 +166,8 @@ checks, push pending, temporary branch/worktree condition, первый
 resume state принадлежат Publisher blocker/terminal report и при resume
 реконструируются read-only из Git/GitHub.
 
-Причина: accepted task commit является immutable publication target.
+Причина: accepted task commit либо blocked recovery-chain является immutable
+publication target.
 Записывать transient blocker state в этот commit после выдачи publish
 authority означало бы изменить OID и invalidate разрешение.
 
@@ -177,7 +186,7 @@ completed checkpoints и phase. Phase-aware Resume Reconstruction Guard до
 confirmed P6 обычно ожидает current task branch/HEAD; после P6 truthful phase
 использует current `main`, допускает его отставание до P7 и не
 требует/не восстанавливает task branch. Эти ephemeral checkpoint facts не
-записываются изменением accepted task commit.
+записываются изменением immutable publication target.
 
 ---
 
@@ -200,6 +209,25 @@ confirmed P6 обычно ожидает current task branch/HEAD; после P6
 Невозможно определить корректное состояние проекта.
 
 Требуется решение Coordinator или Architect.
+
+## Blocked Evidence Synchronized
+
+Для candidate `Blocked Closure Certified` Documentation Agent дополнительно
+подтверждает, что:
+
+- task record, task index и project-state documents одинаково сохраняют
+  статус `Blocked` и точную missing-prerequisite причину;
+- Coordinator Acceptance и Completion нигде не заявлены;
+- следующий prerequisite обозначен только как recommendation / `Not
+  Activated` и не получил неявный Task ID;
+- diff содержит только стабильное blocking-discovery, closure и navigation
+  evidence, без transient workstation, auth или Publisher state;
+- exact evidence file set и canonical evidence digest по алгоритму PROCESS-001
+  готовы для certification tuple.
+
+Выход `Blocked Evidence Synchronized` разрешает Coordinator продолжить
+certification checks, но сам не является certification, commit или
+publication permission.
 
 ---
 
@@ -239,6 +267,9 @@ Reviewer:
 - отсутствуют противоречия между документами;
 - следующий агент может продолжить работу только по репозиторию;
 - обязательная applicability record заполнена.
+
+Для blocked closure дополнительно выполнен выход `Blocked Evidence
+Synchronized`; product Definition of Done при этом не считается выполненным.
 
 ---
 

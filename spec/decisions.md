@@ -81,8 +81,11 @@ claim и до Load; managed Flow/continuation, binding sequence и concrete
 composition-private invoker TASK-043 реализованы изолированно. DP-016 не
 создаёт lifecycle implementation, API, recovery или production wiring.
 Approved DP-016 закрывает design gate §19(4); implementation остаётся
-отсутствующей. TASK-044 фиксирует `UNBLOCK TASK-026`: отдельной prerequisite
-больше нет, TASK-026 Ready to Reactivate, но Not Activated.
+отсутствующей. Historical TASK-044 `UNBLOCK TASK-026` superseded recheck:
+missing DP-015 tracked-Start managed-parent плюс preclaimed `StopOld` admission
+prerequisite, corrected matrix 7 Direct / 9 Compositional / 2 Missing core / 1
+Missing prerequisite / 0 Deferred. TASK-026 заблокирована; prerequisite не
+активирована.
 
 Approved DP-019 определяет focused internal integration contract, необходимый
 для реализации DP-016 без ослабления proofs: exact authorization tuple
@@ -191,8 +194,10 @@ primitive `Boundary.ExecuteManagedStart` adapter не допускает син�
 managed protocol Среза 3, а TASK-037 реализует и независимо принимает Slice 3
 OwnerClaim-to-DP-014 изолированно. TASK-043 реализует concrete private
 composition invoker изолированно; production wiring остаётся отсутствующим.
-TASK-044 впоследствии фиксирует `UNBLOCK TASK-026`: отдельной prerequisite
-больше нет, TASK-026 Ready to Reactivate, но Not Activated.
+TASK-044 впоследствии исторически фиксирует `UNBLOCK TASK-026`; superseding
+recheck TASK-026 подтверждает missing DP-015 tracked-Start managed-parent плюс
+preclaimed `StopOld` admission prerequisite. TASK-026 заблокирована;
+prerequisite не активирована.
 
 TASK-036 завершена и принята как bounded design-update перед Slice 3 после
 read-only readiness inspection. Draft DP-020 теперь фиксирует единый primitive/linked
@@ -242,13 +247,15 @@ merged как `ded3aa0`. TASK-043 реализует exact invoker изолир�
 как `Completed — Coordinator Accepted (2026-08-21)` после final Reviewer
 `APPROVED` 0/0, Scope Audit 21/0/0 и PROCESS-002 Synchronized; DP-021 имеет
 Implementation Status Partial. TASK-044 завершает отдельную repository-first
-readiness reassessment remaining TASK-026 terminal/orchestrator work. Architect
-verdict — `UNBLOCK TASK-026`; exact matrix неизменённых proofs DP-016 §25: 7
-Direct / 10 Compositional / 2 Missing core / 0 Missing external / 0 Deferred.
-Все remaining callback, terminal publication/terminalization и orchestration
-behavior образуют один coherent bounded core TASK-026; отдельной prerequisite
-нет. DP-016 сохраняет Design Status Approved и Implementation Status Planned;
+readiness reassessment remaining TASK-026 terminal/orchestrator work и
+исторически фиксирует `UNBLOCK TASK-026` с matrix 7 Direct / 10 Compositional /
+2 Missing core / 0 Missing external / 0 Deferred. Superseding recheck TASK-026
+подтверждает missing DP-015 tracked-Start managed-parent плюс preclaimed
+`StopOld` admission prerequisite и corrected matrix 7 Direct / 9 Compositional
+/ 2 Missing core / 1 Missing prerequisite / 0 Deferred. DP-016 сохраняет Design
+Status Approved и Implementation Status Planned;
 DP-019/DP-020/DP-021 сохраняют свои статусы. TASK-044 — `Completed —
 Coordinator Accepted (2026-08-24)`, repeat Reviewer `APPROVED` 0/0, Scope Audit
-16/0/0 и PROCESS-002 Synchronized. TASK-026 Ready to Reactivate, но Not
-Activated; её следующая explicit активация не выполняется этой closure.
+16/0/0 и PROCESS-002 Synchronized. TASK-026 заблокирована; следующая
+рекомендация — отдельная bounded DP-015 conformance prerequisite, Not Activated,
+без назначенного Task ID.

@@ -154,11 +154,26 @@ generated, formatting-only и незадокументированное planned
 ## Commit Gate
 
 - exact command `Разрешаю коммит.` получена: да/нет;
+- gate class: `Coordinator Accepted` / `Blocked Closure Certified` / not ready;
 - commit message policy:
 - exact file set:
-- post-acceptance diff:
+- post-acceptance/certification diff:
 - temporary/generated/unrelated files:
 - final checks:
+
+### Blocked Evidence Checkpoint (если применимо)
+
+- task status остаётся `Blocked`:
+- Coordinator Acceptance: `не пройден`;
+- exact blocker и missing prerequisite:
+- prerequisite: `Not Activated`;
+- evidence-only scope и подтверждение отсутствия product implementation:
+- certification tuple: repository, Task ID, branch, base/OID, HEAD OID, exact
+  lexicographically ordered file set, staging-invariant canonical evidence
+  digest command/certified HEAD/object format/OID, blocker identity,
+  verification/review results;
+- `Blocked Closure Certified`: да/нет, кем и когда;
+- exact checkpoint commit OID либо `not authorized/not created`:
 
 ## Process Health
 
@@ -176,17 +191,21 @@ generated, formatting-only и незадокументированное planned
 ## Publication
 
 - publication readiness отдельно от completion;
+- publication class: `Accepted Task` / `Blocked Evidence Recovery`;
 - repository:
-- accepted task branch:
-- exact task commit:
+- exact branch:
+- ordered commit target и head OID:
 - base `main`:
-- accepted verification/scope:
+- accepted/certified verification и scope:
 - Publisher P0–P10 state или `not authorized`;
 - при blocker: completed steps, exact first unfinished step, preserved state и
   phase (`task branch` до P6 либо `main` после P6), known PR/merge OID и
   confirmation, что permission остаётся действительным;
 - при terminal success: PR, task/merge commits, checks, merge gate, обе branch
   deletions, `main == origin/main`, clean worktree и STOP.
+- для blocked recovery: reconstructable terminal P10/merged PR/OID/refs state
+  и exact prerequisite, который остаётся `Not Activated` до отдельного normal
+  intake; durable facts синхронизируются при следующем применимом PROCESS-002;
 
 ## Next Candidate
 
@@ -197,5 +216,8 @@ generated, formatting-only и незадокументированное planned
 ## Closure
 
 - Final status:
+- closure class: `Coordinator Accepted` / `Blocked Closure Certified`;
+- при blocked closure: подтверждение, что task не Accepted/Completed и
+  prerequisite не активирован;
 - Closed by:
 - Date:

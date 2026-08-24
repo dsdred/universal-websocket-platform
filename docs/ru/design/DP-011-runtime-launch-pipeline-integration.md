@@ -6,9 +6,10 @@
 
 **Design Status:** Draft
 
-**Implementation Status:** base Flow и managed surface Start-claim continuation
-реализованы и независимо приняты изолированно; concrete composition invocation
-и production integration остаются Planned
+**Implementation Status:** base Flow, managed surface Start-claim continuation
+и concrete composition-private invoker реализованы и независимо приняты
+изолированно; callback/orchestrator composition и production integration
+остаются Planned
 
 **Статус архитектуры:** сфокусированный integration contract поверх
 утверждённых ARCH-004 и ARCH-005 и существующих Draft DP-007–DP-010.
@@ -20,8 +21,9 @@ Service и Production Activation отсутствуют. Implementation не о�
 production launch capability реализованной и не повышает статусы связанных
 Draft DP. Тот же package теперь также изолированно реализует additive
 `ManagedFlow`, `StartClaimContinuation` и per-call managed Start surface.
-Concrete composition-private invoker DP-013, который конструирует и вызывает
-эти seams, отсутствует.
+TASK-043 реализует и независимо верифицирует concrete composition-private
+invoker DP-013, который вызывает эти seams, изолированно;
+callback/orchestrator composition и production wiring отсутствуют.
 
 ## 2. Назначение
 
@@ -341,8 +343,8 @@ Approved [DP-019](DP-019-runtime-activation-orchestration-prerequisites.md)
 authority, порядок attempt publication/binding и закрытые outcomes
 continuation. Он не меняет Owner-first claim и synchronous preparation
 semantics Flow. TASK-037 реализует и независимо принимает эту continuation и
-binding sequence изолированно. Concrete composition-private invoker и
-orchestrator DP-016 отсутствуют.
+binding sequence изолированно. TASK-043 реализует concrete
+composition-private invoker изолированно; orchestrator DP-016 отсутствует.
 
 ## 11. Synchronous operation и caller lifetime
 
@@ -634,8 +636,8 @@ implementation является отдельно проверенным prerequi
 - HTTP/CLI/API surface и authorization;
 - external durable persistence schema и transactions;
 - process-restart command/result persistence, retention и recovery;
-- orchestration activation/replacement/rollback, composition существующих
-  private Start-claim continuation и execution-binding/load gate, а также
+- orchestration activation/replacement/rollback и composition существующих
+  private Start-claim continuation и execution-binding/load gate через
   concrete composition-private invoker;
 - retry, backoff, restart, replacement, rollback policy и reconciliation;
 - terminal supervision Host и unexpected failure;

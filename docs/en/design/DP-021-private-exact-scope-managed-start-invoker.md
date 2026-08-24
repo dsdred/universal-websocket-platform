@@ -12,8 +12,10 @@ contract. TASK-043 implements that object in isolation inside the existing
 package; it adds no public API, transport, policy, persistence, or production
 wiring. Approved DP-014 through DP-019 remain unchanged, and TASK-026 remains
 unimplemented. Completed and Coordinator-Accepted TASK-044 (2026-08-24)
-records `UNBLOCK TASK-026`; TASK-026 is Ready to
-Reactivate but not activated, and this DP remains Draft/Partial.
+historically records `UNBLOCK TASK-026`. A superseding TASK-026 recheck
+confirms one missing DP-015 tracked-Start managed-parent plus preclaimed
+`StopOld` admission prerequisite. TASK-026 is blocked, the prerequisite is not
+activated, and this DP remains Draft/Partial.
 
 ## 2. Purpose
 
@@ -437,10 +439,11 @@ terminal publication, DP-015 command/phase terminalization, the DP-016/TASK-026
 orchestrator, production composition audit, or production wiring.
 
 TASK-043 is Completed — Coordinator Accepted (2026-08-21) and does not
-activate the next task. TASK-044 later confirms that orchestrator-owned
-callback/terminal work is one coherent TASK-026 core with no separate missing
-prerequisite and records `UNBLOCK TASK-026`. TASK-026 is Ready to Reactivate
-but not activated; no implementation is asserted here.
+activate the next task. TASK-044 historically records `UNBLOCK TASK-026`; the
+superseding TASK-026 recheck confirms the missing DP-015 tracked-Start
+managed-parent plus preclaimed `StopOld` admission prerequisite. TASK-026 is
+blocked, the prerequisite is not activated, and no TASK-026 implementation is
+asserted here.
 
 ## 18. Decision
 

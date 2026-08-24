@@ -385,15 +385,18 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   final Reviewer APPROVED 0/0, Scope Audit 21/0/0, and PROCESS-002
   synchronized; DP-021 Implementation Status is Partial. TASK-044 completes
   the separate bounded repository-first readiness intake for remaining
-  TASK-026 terminal/orchestrator work. Its Architect verdict is `UNBLOCK
+  TASK-026 terminal/orchestrator work and historically records `UNBLOCK
   TASK-026`, with 7 Direct / 10 Compositional / 2 Missing core / 0 Missing
-  external / 0 Deferred DP-016 section 25 proofs. All remaining behavior is
-  one coherent bounded TASK-026 core; no separate prerequisite remains.
-  Terminal publication remains TASK-026 core work. Orchestration and production
+  external / 0 Deferred DP-016 section 25 proofs. A superseding TASK-026
+  recheck confirms one missing DP-015 tracked-Start managed-parent plus
+  preclaimed `StopOld` admission prerequisite and corrects the matrix to 7
+  Direct / 9 Compositional / 2 Missing core / 1 Missing prerequisite / 0
+  Deferred. Terminal publication remains TASK-026 core work. Orchestration and production
   composition remain Planned; TASK-044 is Completed — Coordinator Accepted
   (2026-08-24), repeat Reviewer APPROVED 0/0, Scope Audit 16/0/0, and
-  PROCESS-002 Synchronized; TASK-026 is Ready to Reactivate but Not Activated;
-  Integration and Production Activation remain inactive.
+  PROCESS-002 Synchronized; TASK-026 is blocked. The separate bounded DP-015
+  conformance prerequisite is the next candidate, Not Activated, without an
+  assigned Task ID; Integration and Production Activation remain inactive.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Message Persistence, Delivery, and Plugin contracts still require focused design.

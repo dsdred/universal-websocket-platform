@@ -46,8 +46,14 @@ managed adapter, and managed Flow/OwnerClaimView seam in isolation. TASK-037
 implements the managed parent/StartTarget adapter, common managed gates,
 concrete continuation, DP-014 attempt/generation binding sequence, and exact
 managed Flow outcome adaptation and are independently accepted in isolation.
-The concrete private composition invoker, later terminal publication,
-orchestrator, and Approved DP-016 retain Implementation Status Planned.
+TASK-043 implements and independently verifies the concrete private
+composition invoker in isolation. Later terminal publication, the orchestrator,
+and Approved DP-016 retain Implementation Status Planned.
+The TASK-026 reactivation recheck confirms one still-missing conformance seam:
+managed-parent admission cannot yet atomically consume the tracked-Start
+exception and preclaim the derived ordinal-zero `StopOld` phase. The corrected
+readiness matrix is 7 Direct / 9 Compositional / 2 Missing core / 1 Missing
+prerequisite / 0 Deferred; the prerequisite is recommended but not activated.
 
 ## 4. Scope
 
@@ -540,11 +546,13 @@ binding, primitive `ExecuteManagedStart` adapter, and managed
 Flow/OwnerClaimView seam in isolation. TASK-037 adds the managed
 parent/StartTarget adapter, common primitive/linked managed rendezvous gates,
 stateless OwnerClaim-to-DP-014 continuation, and managed Flow outcome mapping,
-implemented and independently accepted in isolation. External durable
-storage/schema, API, DP-016 orchestration, DP-017 recovery, the concrete private
-composition invoker, later DP-014 terminal publication and DP-015
-command/phase terminalization, management wiring, and Production Activation
-remain absent. The isolated
+implemented and independently accepted in isolation. TASK-043 adds the
+concrete private composition invoker in isolation. External durable
+storage/schema, API, DP-016 orchestration, DP-017 recovery, later DP-014
+terminal publication and DP-015 command/phase terminalization, management
+wiring, and Production Activation remain absent. The separate bounded
+tracked-Start managed-parent plus preclaimed `StopOld` admission conformance
+prerequisite also remains unimplemented and not activated. The isolated
 package changes no lifecycle contract and is not connected to the DP-013
 Directory.
 

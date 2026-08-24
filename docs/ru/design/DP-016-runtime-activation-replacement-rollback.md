@@ -21,12 +21,13 @@ TASK-040 реализует и верифицирует его изолиров�
 `APPROVED` 0/0. TASK-043 реализует private exact-scope invoker изолированно.
 Terminal publication DP-014 и DP-015 после Owner остаётся частью этого planned
 orchestrator; orchestrator и production wiring остаются отсутствующими.
-Завершённая и Coordinator-Accepted TASK-044 (2026-08-24) повторно оценивает
-принятые prerequisites TASK-040/TASK-043 против
-всех неизменённых proofs section 25 и возвращает `UNBLOCK TASK-026`: remaining
-callback/terminal behavior является одним coherent bounded core TASK-026 без
-отдельной missing prerequisite. TASK-026 Ready to Reactivate, но verdict
-readiness не активирует её.
+Завершённая и Coordinator-Accepted TASK-044 (2026-08-24) исторически вернула
+`UNBLOCK TASK-026` после повторной оценки TASK-040/TASK-043. Superseding recheck
+реактивации TASK-026 подтверждает missing DP-015 prerequisite tracked-Start
+managed-parent плюс preclaimed `StopOld` admission. Corrected matrix section 25
+— 7 Direct / 9 Compositional / 2 Missing core / 1 Missing prerequisite / 0
+Deferred. TASK-026 заблокирована; отдельная bounded prerequisite рекомендована,
+но не активирована.
 
 ## 2. Назначение
 
@@ -510,11 +511,12 @@ contract. TASK-038 подтвердила, что TASK-026 оставалась 
 TASK-039 зафиксировала design в Draft DP-010; завершённая и
 Coordinator-Accepted TASK-040 реализует и верифицирует isolated Owner extension,
 repeat final Reviewer `APPROVED` 0/0. TASK-043 впоследствии реализует private
-exact-scope invoker изолированно. TASK-044 доказывает, что remaining callback,
-terminal и orchestrator behavior образуют coherent bounded implementation core
-TASK-026, и фиксирует `UNBLOCK TASK-026`; отдельной prerequisite больше нет.
-TASK-026 Ready to Reactivate, но не активирована. Reduced slice DP-016
-запрещён.
+exact-scope invoker изолированно. TASK-044 исторически фиксирует `UNBLOCK
+TASK-026`; superseding recheck TASK-026 обнаруживает missing DP-015 prerequisite
+tracked-Start managed-parent плюс preclaimed `StopOld` admission и исправляет
+matrix на 7 Direct / 9 Compositional / 2 Missing core / 1 Missing prerequisite
+/ 0 Deferred. TASK-026 заблокирована, а prerequisite не активирована. Reduced
+slice DP-016 запрещён.
 
 ## 29. Решение
 

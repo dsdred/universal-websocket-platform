@@ -4,8 +4,9 @@
 
 Эти process scenarios проверяют контракт Publisher из
 [PROCESS-001](PROCESS-001-AI-DEVELOPMENT-WORKFLOW.md) и
-[Publisher role](agents/publisher.md). Во всех сценариях task commit уже
-создан по отдельной команде `Разрешаю коммит.`.
+[Publisher role](agents/publisher.md). Во всех сценариях accepted task commit
+либо blocked evidence checkpoint уже создан по отдельной команде
+`Разрешаю коммит.`.
 
 ## S-001 — Полностью успешный pipeline
 
@@ -44,7 +45,7 @@ phase-aware Resume Reconstruction Guard reconstruct-ит P1 из remote OID и
 
 Given P6 уже confirmed, current branch clean `main`, а blocker остановил P7,
 P8 или P9, main-phase Resume Reconstruction Guard не требует current task
-branch/HEAD task OID, не recreates её и продолжает exact cleanup step. Новая
+branch/HEAD target OID, не recreates её и продолжает exact cleanup step. Новая
 команда `Разрешаю публиковать.` в обоих случаях не требуется.
 
 ## S-006 — CI отсутствует
@@ -94,13 +95,14 @@ Given merge response ambiguous, Publisher inspect-ит PR state. P4 считае
 
 ## S-013 — Remote branch recreated or moved
 
-Given после merge remote task ref указывает не на authorized task OID,
+Given после merge remote task ref указывает не на authorized target head OID,
 Publisher не удаляет ref. P5 остаётся незавершённым, текущее состояние
 сохраняется и сообщается как cleanup blocker.
 
 ## S-014 — Target invalidation
 
-Given branch, task OID, base или accepted scope изменились, read-only
+Given publication class, branch, ordered commit target/head OID, base или
+accepted/certified scope изменились, read-only
 preflight останавливает pipeline до mutation. Это invalidation exact authority,
 а не внешний blocker; старое разрешение не применяется к новому target.
 
@@ -128,3 +130,42 @@ Given P5 удалил exact remote branch, Publisher выполняет `git fet
 затем P6–P9. P9 подтверждает отсутствие remote-tracking и local task refs,
 `main == origin/main` и clean worktree. Failure prune фиксируется как первый
 незавершённый cleanup action без replay merge.
+
+## S-019 — Certified blocked closure не является Acceptance
+
+Given task имеет `Blocked Closure Certified` и отдельно созданный `Blocked
+Evidence Checkpoint`, Publisher target использует class `Blocked Evidence
+Recovery`. P0 отклоняет любой tuple, где task названа Accepted или Completed.
+
+## S-020 — Ordered recovery-chain
+
+Given между base OID и evidence checkpoint существует ровно один явно
+authorized process-amendment commit, P0 подтверждает exact ordered range и
+разрешает P1 только для его head OID. Любой дополнительный commit invalidates
+target.
+
+## S-021 — Dirty evidence после checkpoint
+
+Given после evidence checkpoint остались staged, unstaged или untracked
+changes, initial P0 сообщает safety failure без mutation. Publish authority не
+используется для stash, reset, amendment или нового commit.
+
+## S-022 — Blocked publication выполняет полный P0–P10
+
+Given valid blocked recovery target и `Разрешаю публиковать.`, Publisher не
+сокращает pipeline: push, PR, checks, merge, cleanup, synchronized `main` и
+terminal report выполняются по тем же P0–P10 gates.
+
+## S-023 — Prerequisite не активируется публикацией
+
+Given blocked recovery merged и P9 подтвердил clean synchronized `main`, P10
+сохраняет task `Blocked` и prerequisite `Not Activated`. Только отдельная
+последующая `Продолжай проект.` может через узкое sealed-evidence exception
+запустить обычный deterministic intake exact prerequisite. Без P10 exception
+не действует.
+
+## S-024 — Certification tuple изменился
+
+Given evidence file set, canonical evidence digest, blocker identity или verification/review
+results отличаются от certification tuple, Commit Gate либо Publisher P0
+останавливается. Ранее выданное permission не применяется к изменённому target.

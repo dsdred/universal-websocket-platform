@@ -62,10 +62,15 @@ pull, изменение remote или изменение `main`.
 Сообщение, всё содержимое которого после удаления начальных и конечных
 пробельных символов равно `Разрешаю коммит.`, после Coordinator Acceptance
 разрешает создать ровно один проверенный task commit из принятого diff.
+Альтернативно, после `Blocked Closure Certified` эта же команда разрешает
+ровно один `Blocked Evidence Checkpoint` из certified evidence-only diff;
+задача при этом остаётся `Blocked` и не считается Accepted или Completed.
 
 Перед commit Coordinator выполняет Commit Gate PROCESS-001: повторно проверяет
 message policy, exact file set, отсутствие post-acceptance, временных,
-generated и посторонних changes и применимые final checks. Команда не
+generated и посторонних changes и применимые final checks. Для blocked
+closure вместо post-acceptance проверяется неизменность certified tuple и
+отсутствие product implementation. Команда не
 разрешает push, PR, merge или публикацию. GPG, DCO и sign-off не добавляются
 без отдельной policy проекта.
 
@@ -75,21 +80,25 @@ generated и посторонних changes и применимые final checks
 
 Сообщение, всё содержимое которого после удаления начальных и конечных
 пробельных символов равно `Разрешаю публиковать.`, после отдельно разрешённого
-и созданного task commit даёт Publisher одно разрешение на весь exact pipeline
+и созданного accepted task commit либо `Blocked Evidence Checkpoint` даёт
+Publisher одно разрешение на весь exact pipeline
 `preflight -> push -> create/discover PR -> inspect checks -> merge -> cleanup
 -> synchronized main -> terminal report -> STOP`.
 
-Разрешение связано с accepted task branch, exact task commit, base `main` и
-scope. Push и merge являются checkpoint: здоровый pipeline продолжается без
+Разрешение связано с publication class, exact branch, ordered commit target,
+base `main` и accepted либо certified scope. Для blocked recovery target может включать
+предшествующий process-amendment commit и exact evidence checkpoint; это не
+создаёт Coordinator Acceptance. Push и merge являются checkpoint: здоровый
+pipeline продолжается без
 дополнительного запроса. Реальный внешний blocker сохраняет разрешение и
 позволяет inspect-first phase-aware resume командой
 `Авторизация готова. Продолжай ранее разрешённую публикацию.` без повторного
 `Разрешаю публиковать.`. Изменение target tuple или scope invalidates
 разрешение.
 
-Initial P0 требует current exact task branch/commit. Resume Reconstruction
+Initial P0 требует current exact target branch/head commit. Resume Reconstruction
 Guard reconstruct-ит checkpoints по immutable Target и после confirmed P6
-ожидает clean current `main`, а не task branch/commit. Полный P0–P10, blocker
+ожидает clean current `main`, а не target branch/commit. Полный P0–P10, blocker
 report, CI/merge gate, safe cleanup и terminal evidence определены в
 [PROCESS-001](PROCESS-001-AI-DEVELOPMENT-WORKFLOW.md) и
 [Publisher contract](agents/publisher.md).

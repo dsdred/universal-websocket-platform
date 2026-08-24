@@ -2,11 +2,13 @@
 
 ## Purpose
 
-Publisher выполняет одну уже разрешённую публикацию принятого task commit в
-`main` и доводит её до полностью проверенного terminal state.
+Publisher выполняет одну уже разрешённую публикацию принятого task commit либо
+certified blocked-evidence recovery-chain в `main` и доводит её до полностью
+проверенного terminal state.
 
 Точная команда `Разрешаю публиковать.` после отдельного разрешения и создания
-task commit даёт одно сохраняющее силу разрешение на полный pipeline:
+accepted task commit либо blocked evidence checkpoint даёт одно сохраняющее
+силу разрешение на полный pipeline:
 
 ```text
 P0 preflight
@@ -28,10 +30,15 @@ Push и merge являются checkpoint, а не terminal outcome.
 
 Разрешение относится ровно к immutable tuple:
 
-- accepted task branch;
-- exact task commit OID;
+- publication class: `Accepted Task` или `Blocked Evidence Recovery`;
+- exact branch и ordered commit target с head OID;
 - base branch `main`;
-- accepted task scope.
+- accepted либо certified scope.
+
+Для `Blocked Evidence Recovery` target обязательно содержит exact `Blocked
+Evidence Checkpoint`, certification tuple и любой явно включённый contiguous
+process-amendment commit. Такой target не означает Coordinator Acceptance или
+Completion.
 
 Оно не разрешает другой commit, branch, PR, force operation, bypass, rebase,
 reset, non-fast-forward pull или scope change. Разрешение прекращается только
@@ -50,8 +57,9 @@ reconstruction и продолжение с первого незавершён�
 
 1. `git status --porcelain=v1 --branch`: staged, unstaged и untracked changes
    отсутствуют;
-2. текущую ветку и `git rev-parse HEAD`: они совпадают с exact task branch и
-   task OID; локальный `main` и ожидаемый base существуют;
+2. текущую ветку и `git rev-parse HEAD`: они совпадают с exact target branch и
+   target head OID; ordered range от base содержит только authorized commits;
+   локальный `main` и ожидаемый base существуют;
 3. `git remote get-url origin`: remote соответствует ожидаемому repository;
 4. noninteractive SSH/origin access с `BatchMode` и
    `git ls-remote --exit-code origin`; для GitHub raw `ssh -T` может
@@ -66,18 +74,24 @@ Publisher ничего не меняет и сообщает safety failure. И�
 target invalidates разрешение; обычный auth/network/GitHub blocker его
 сохраняет.
 
+Для `Blocked Evidence Recovery` P0 также проверяет evidence checkpoint,
+certification tuple, статус task `Blocked`, отсутствие Coordinator Acceptance/
+Completion и отсутствие автоматической активации prerequisite. Несовпадение
+является target invalidation.
+
 ## Resume Reconstruction Guard
 
 Resume Guard не является checkpoint P0–P10 и не требует заново пройти условия
 initial P0. Он сначала reconstruct-ит completed checkpoints по immutable Target
-`{TaskID, repository, task branch, task commit, base main}`, exact PR
+`{publication class, TaskID, repository, branch, ordered commit target, base
+main, scope}`, exact PR
 head/base/OID и merge OID, если они уже известны.
 
 - До confirmed P6, в phase P0–P5, worktree clean и обычно current branch/HEAD
-  равны exact task branch/task OID. Remote ref может существовать до P4 и
+  равны exact target branch/head OID. Remote ref может существовать до P4 и
   должен отсутствовать после P5. Ambiguous mutation сначала inspect-ится.
 - После confirmed P6, в phase P7–P9, worktree clean и current branch —
-  `main`. Resume никогда не требует current task branch или HEAD task OID,
+  `main`. Resume никогда не требует current target branch или HEAD target OID,
   никогда не recreates и не checkout-ит удалённую task branch. Local task
   branch существует до P8 и отсутствует после него; remote branch отсутствует
   после P5. `main` может отставать от `origin/main` до P7, а equality требуется
@@ -92,9 +106,9 @@ Guard повторно проверяет repository/auth/transport, необх�
 
 ### P1 — Push
 
-Publisher публикует exact task branch/OID и подтверждает, что remote OID равен
-task OID. Успешный push немедленно переходит к P2 без запроса разрешения и без
-STOP.
+Publisher публикует exact target branch/head OID и подтверждает, что remote OID
+равен target head OID. Успешный push немедленно переходит к P2 без запроса
+разрешения и без STOP.
 
 ### P2 — Create or Discover Pull Request
 
@@ -139,7 +153,7 @@ state `MERGED` и сохраняет merge commit OID. Ambiguous response inspec
 После подтверждённого merge Publisher:
 
 1. P5 удаляет и подтверждает отсутствие exact remote task branch только если
-   ref всё ещё указывает на authorized task OID; уже отсутствующая ветка
+   ref всё ещё указывает на authorized target head OID; уже отсутствующая ветка
    считается промежуточным результатом P5, а recreated/moved ref не удаляется;
 2. завершает P5 командой `git fetch --prune` и подтверждает актуальное
    состояние remote refs;
@@ -162,7 +176,7 @@ unmerged/unconfirmed branch. Ошибка P5–P9 не откатывает merg
 - фиксирует последний успешно выполненный checkpoint;
 - называет точный первый незавершённый P-step;
 - сообщает factual error/check/gate state;
-- сообщает известные PR, task commit и merge commit;
+- сообщает известные PR, publication class, target head commit и merge commit;
 - фиксирует current branch, HEAD, worktree и сохранённые refs;
 - указывает требуемое unblock action;
 - подтверждает, что ранее выданное разрешение остаётся действительным.
@@ -183,7 +197,7 @@ Resume Reconstruction Guard, реконструирует Git/GitHub checkpoints
 P10 содержит:
 
 - номер и URL PR;
-- task commit OID;
+- target head commit OID и publication class;
 - merge commit OID;
 - CI/checks state;
 - подтверждённый merge gate `MERGEABLE / CLEAN`;
@@ -191,6 +205,11 @@ P10 содержит:
 - подтверждение `main == origin/main` с OID;
 - подтверждение current branch `main` и чистого worktree;
 - затем `STOP`.
+
+Для blocked recovery P10 дополнительно содержит publication class, ordered
+commit target и подтверждение, что TASK остаётся `Blocked`, Acceptance не
+появился, а clean synchronized `main` только открыл baseline для отдельного
+subsequent intake.
 
 Отчёт только об успешном push или merge запрещён как terminal outcome.
 

@@ -32,9 +32,11 @@ OwnerClaim-to-DP-014 binding — into ordered, independently testable
 implementation slices and discharges the deferred design decisions they need.
 
 It defines no production code and changes no approved semantics. Completed and
-Coordinator-Accepted TASK-044 (2026-08-24) records `UNBLOCK TASK-026`;
-TASK-026 is Ready to Reactivate but
-not activated, and DP-020 remains Draft/Planned overall.
+Coordinator-Accepted TASK-044 (2026-08-24) historically records `UNBLOCK
+TASK-026`. A superseding TASK-026 recheck confirms one missing DP-015
+tracked-Start managed-parent plus preclaimed `StopOld` admission prerequisite;
+TASK-026 is blocked, the prerequisite is not activated, and DP-020 remains
+Draft/Planned overall.
 
 ## 2. Purpose
 
@@ -747,10 +749,13 @@ implementation of atomic expected-attempt Owner Stop, and the TASK-043
 isolated concrete private exact-scope composition invoker defined by Draft
 DP-021, but still lacks the activation orchestrator,
 external persistence, API, recovery worker, and production wiring. Later DP-014 terminal publication and DP-015 command/phase
-terminalization after the Owner result belong to the TASK-026 orchestrator,
-not to a separate prerequisite. TASK-044 confirms no later prerequisite
-remains and records `UNBLOCK TASK-026`; TASK-026 is Ready to Reactivate but not
-activated. Historical Slice 4 remains completed and accepted as TASK-038.
+terminalization after the Owner result belong to the TASK-026 orchestrator.
+TASK-044 historically records `UNBLOCK TASK-026`; the superseding TASK-026
+recheck confirms the missing DP-015 tracked-Start managed-parent plus
+preclaimed `StopOld` admission prerequisite and corrects the matrix to 7 Direct
+/ 9 Compositional / 2 Missing core / 1 Missing prerequisite / 0 Deferred.
+TASK-026 is blocked and the prerequisite is not activated. Historical Slice 4
+remains completed and accepted as TASK-038.
 
 ## 15. Consequences
 
@@ -780,9 +785,10 @@ historically accepted partial implementations; TASK-035 implements and
 independently accepts Slice 2R in isolation; TASK-036 fixes the exact Slice-3
 protocol; and TASK-037 implements and independently accepts Slice 3 in
 isolation. Slice 4 is completed and accepted as TASK-038 with a remains-Blocked
-verdict at that historical closure; TASK-044 later records `UNBLOCK TASK-026`
-after TASK-040 and TASK-043, without changing this proposal's Draft/Planned
-status. This proposal does not approximate DP-016
+verdict at that historical closure; TASK-044 later historically records
+`UNBLOCK TASK-026` after TASK-040 and TASK-043. That outcome is superseded by
+the TASK-026 blocker recheck described above, without changing this proposal's
+Draft/Planned status. This proposal does not approximate DP-016
 with an adapter, does not add replacement/rollback operations to the Owner,
 does not transfer permits, does not change any Approved status or semantic,
 and does not treat planned capability as implemented.
