@@ -238,9 +238,14 @@ Synchronized. Draft DP-021 фиксирует exact contract; на closure imple
 merged как `ded3aa0`. TASK-043 реализует exact invoker изолированно и завершена
 как `Completed — Coordinator Accepted (2026-08-21)` после final Reviewer
 `APPROVED` 0/0, Scope Audit 21/0/0 и PROCESS-002 Synchronized; DP-021 имеет
-Implementation Status Partial. Следующая рекомендация не активирована:
-отдельный bounded repository-first readiness intake remaining TASK-026
-terminal/orchestrator work; Ready status не доказан. Terminal publication
-DP-014 и terminalization DP-015 после Owner остаются core work TASK-026, а не
-отдельной prerequisite.
-Approved/Planned DP-016 не меняется, TASK-026 остаётся Blocked.
+Implementation Status Partial. TASK-044 завершает отдельную repository-first
+readiness reassessment remaining TASK-026 terminal/orchestrator work. Architect
+verdict — `UNBLOCK TASK-026`; exact matrix неизменённых proofs DP-016 §25: 7
+Direct / 10 Compositional / 2 Missing core / 0 Missing external / 0 Deferred.
+Все remaining callback, terminal publication/terminalization и orchestration
+behavior образуют один coherent bounded core TASK-026; отдельной prerequisite
+нет. DP-016 сохраняет Design Status Approved и Implementation Status Planned;
+DP-019/DP-020/DP-021 сохраняют свои статусы. TASK-044 — `Completed —
+Coordinator Accepted (2026-08-24)`, repeat Reviewer `APPROVED` 0/0, Scope Audit
+16/0/0 и PROCESS-002 Synchronized. TASK-026 Ready to Reactivate, но Not
+Activated; её следующая explicit активация не выполняется этой closure.

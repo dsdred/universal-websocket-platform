@@ -28,7 +28,11 @@ exact-scope composition invoker in isolation without amending this Approved
 decision. Post-Owner terminal publication belongs to the later
 TASK-026 orchestrator itself; that orchestrator, external persistence, API,
 recovery worker, and production wiring remain absent. TASK-026 remains Blocked
-by subsequent readiness/orchestrator boundaries.
+until a separate readiness verdict. Completed and Coordinator-Accepted
+TASK-044 (2026-08-24) records `UNBLOCK TASK-026`:
+all prerequisites are accepted, and the remaining terminal/orchestrator work
+is TASK-026 core rather than another prerequisite. TASK-026 is Ready to
+Reactivate but not activated.
 
 ## 2. Purpose
 
@@ -495,10 +499,11 @@ invoker in isolation. The repository still lacks later terminal publication
 and command/phase terminalization, activation orchestrator, and production
 composition audit required by the complete design.
 
-TASK-026 therefore remains Blocked. Successor tasks must implement and
-independently verify the remaining prerequisites before TASK-026 may be
-reconsidered against the complete unmodified DP-016 proofs. The focused
-readiness decomposition of those prerequisites is recorded in the mirrored
+TASK-044 subsequently reassesses the complete unmodified DP-016 proofs and
+records `UNBLOCK TASK-026`. No separate prerequisite remains; terminal
+publication and command/phase terminalization are coherent TASK-026 core work.
+TASK-026 is Ready to Reactivate but not activated. The historical focused
+readiness decomposition of prerequisites is recorded in the mirrored
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), with
 Design Status Draft and Implementation Status Planned overall, with Slice 3
 implemented and independently accepted in isolation.
@@ -518,8 +523,7 @@ Positive:
 
 Costs:
 
-- at least one prerequisite design task and its implementation precede
-  TASK-026;
+- prerequisite design and isolated implementation tasks precede TASK-026;
 - the synchronous pending-Stop rendezvous can block its callers;
 - process restart still requires Planned DP-017 implementation;
 - production integration still requires external durability and composition

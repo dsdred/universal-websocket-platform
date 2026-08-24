@@ -2,10 +2,13 @@
 
 ## Status
 
-`Blocked by Architecture`.
+`Ready to Reactivate — Not Activated`.
 
-Coordinator Acceptance, implementation, commit and publication are forbidden
-until the prerequisite design and implementation identified below are complete.
+TASK-044 records architecture verdict `UNBLOCK TASK-026`: all prerequisites
+are complete, and the remaining callback/terminal/orchestrator behavior is one
+coherent bounded TASK-026 core. This readiness update does not reactivate the
+task, authorize implementation or tests, perform Coordinator Acceptance, or
+authorize commit/publication.
 
 ## Original Task Contract
 
@@ -70,16 +73,16 @@ text is not an implemented parent/phase API, and documenting DP-016 §25 proof 9
 as a limitation would violate the original Definition of Done. No production
 code or tests were created from that proposal.
 
-## TASK-038 Readiness Reassessment
+## TASK-038 and TASK-044 Readiness Reassessments
 
 Accepted DP-020 Slices 1–3 now implement the original command authorization,
 parent/phase, rendezvous, managed Flow/Owner-claim continuation, and DP-014
 binding seams in isolation. Completed and Coordinator-Accepted TASK-038 records
 the exact verdict
 `TASK-026 REMAINS BLOCKED`: the atomic expected-attempt Owner Stop prerequisite
-is now implemented and independently accepted in isolation, but the later
-private exact-scope composition invoker and subsequent readiness/orchestrator
-boundaries remain absent.
+was then the first missing prerequisite; the later private exact-scope
+composition invoker and subsequent readiness/orchestrator boundaries were also
+absent at that historical verdict.
 
 At TASK-038 closure, the first bounded prerequisite candidate was a separate
 unactivated design-only DP-010 atomic expected-attempt Stop contract, and
@@ -87,13 +90,25 @@ TASK-038 did not finalize its API or change Approved sources. TASK-039
 subsequently activated and recorded that accepted design in Draft DP-010.
 Completed and Coordinator-Accepted TASK-040 implements and verifies the
 extension in isolation, with repeat final Reviewer `APPROVED` 0/0. TASK-026
-remains Blocked by the later private exact-scope composition invoker and
-subsequent readiness/orchestrator boundaries.
+then remained Blocked by the later private exact-scope composition invoker and
+subsequent readiness/orchestrator boundaries. Completed and Coordinator-
+Accepted TASK-043 subsequently implements the invoker in isolation.
 Post-Owner DP-014 terminal publication and DP-015 command/phase terminalization
 remain core TASK-026 orchestrator work, not a separate prerequisite. External
 API, persistence, recovery, reporting, production wiring, and Production
-Activation remain outside the bounded reassessment. This record stays
-`Blocked by Architecture`; no automatic reactivation or acceptance occurred.
+Activation remain outside the bounded reassessment.
+
+TASK-044 remaps every unchanged DP-016 §25 proof after TASK-040 and TASK-043:
+**7 Direct / 10 Compositional / 2 Missing core / 0 Missing external / 0
+Deferred**. Its Architect verdict is `UNBLOCK TASK-026`. The two Missing-core
+rows are TASK-026-owned zero-mutation satisfied decisions, while the ten
+Compositional rows have all required callable seams and remain end-to-end
+TASK-026 implementation/proof work. No separate prerequisite remains.
+TASK-044 completed with Coordinator Acceptance (2026-08-24), repeat Reviewer
+`APPROVED` 0/0, Scope Audit 16/0/0, and PROCESS-002 Synchronized.
+
+Current status is `Ready to Reactivate — Not Activated`. No automatic branch
+resume, implementation, test edit, acceptance, commit, or publication occurs.
 
 ## Sources of Truth
 
@@ -131,12 +146,16 @@ TASK-027 must define one coherent prerequisite contract covering:
 - exact activation/replacement/rollback authorization scope;
 - explicit linkage to unchanged DP-016 ordering and proofs.
 
-TASK-026 remains Blocked after design acceptance. It may be reconsidered only
-after the prerequisite contract is implemented and independently accepted.
+Historical TASK-027 handoff is satisfied by the subsequently accepted
+prerequisite sequence through TASK-043 and the TASK-044 readiness verdict.
+TASK-026 may be reactivated only by a later explicit Coordinator task
+selection after accepted TASK-044; this record does not perform that selection.
 
 ## Closure
 
-- Final status: `Blocked by Architecture`;
-- Coordinator Acceptance: not performed;
+- Historical closure status: `Blocked by Architecture`;
+- Current readiness status after TASK-044 architecture handoff: `Ready to
+  Reactivate — Not Activated`;
+- TASK-026 Coordinator Acceptance: not performed;
 - commit: not performed and forbidden;
 - publication: not performed and forbidden.

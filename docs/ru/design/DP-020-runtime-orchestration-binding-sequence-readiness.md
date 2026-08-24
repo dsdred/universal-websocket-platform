@@ -34,7 +34,9 @@ implementation-срезы и закрывает отложенные решен�
 нужны.
 
 Он не определяет production-код и не меняет ни одну принятую семантику.
-TASK-026 остаётся `Blocked by Architecture`.
+Завершённая и Coordinator-Accepted TASK-044 (2026-08-24) фиксирует `UNBLOCK
+TASK-026`; TASK-026 Ready to
+Reactivate, но не активирована, а DP-020 остаётся Draft/Planned overall.
 
 ## 2. Назначение
 
@@ -742,7 +744,9 @@ TASK-043, определённый Draft DP-021, но всё ещё не сод�
 API, worker recovery и production wiring. Последующая
 terminal publication DP-014 и terminalization command/phase DP-015 после
 результата Owner принадлежат orchestrator TASK-026, а не отдельной prerequisite.
-Поэтому TASK-026 остаётся Blocked; Срез 4 завершён и принят как TASK-038.
+TASK-044 подтверждает, что более поздней prerequisite нет, и фиксирует
+`UNBLOCK TASK-026`; TASK-026 Ready to Reactivate, но не активирована.
+Historical Срез 4 остаётся завершённым и принятым как TASK-038.
 
 ## 15. Последствия
 
@@ -771,7 +775,9 @@ UWP фиксирует разложение готовности оставши�
 частичными реализациями; TASK-035 реализует и независимо принимает Срез 2R
 изолированно; TASK-036 фиксирует exact протокол Среза 3; а TASK-037 реализует и
 независимо принимает Срез 3 изолированно. Срез 4 завершён и принят как TASK-038
-с remains-Blocked verdict. Proposal не
+с remains-Blocked verdict на момент historical closure; TASK-044 позднее
+фиксирует `UNBLOCK TASK-026` после TASK-040 и TASK-043, не меняя Draft/Planned
+status proposal. Proposal не
 approximates DP-016 adapter-ом,
 не добавляет операции replacement/rollback Owner, не передаёт permits, не меняет
 ни один Approved статус или семантику и не выдаёт planned capability за
