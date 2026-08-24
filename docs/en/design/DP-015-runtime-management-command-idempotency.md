@@ -49,11 +49,13 @@ managed Flow outcome adaptation and are independently accepted in isolation.
 TASK-043 implements and independently verifies the concrete private
 composition invoker in isolation. Later terminal publication, the orchestrator,
 and Approved DP-016 retain Implementation Status Planned.
-The TASK-026 reactivation recheck confirms one still-missing conformance seam:
-managed-parent admission cannot yet atomically consume the tracked-Start
-exception and preclaim the derived ordinal-zero `StopOld` phase. The corrected
-readiness matrix is 7 Direct / 9 Compositional / 2 Missing core / 1 Missing
-prerequisite / 0 Deferred; the prerequisite is recommended but not activated.
+The TASK-026 reactivation recheck confirms one still-unimplemented conformance
+seam: managed-parent admission cannot yet atomically consume the tracked-Start
+exception and preclaim the derived ordinal-zero `StopOld` phase. TASK-046
+records the additive planned contract for that seam; it does not implement it.
+The corrected readiness matrix remains 7 Direct / 9 Compositional / 2 Missing
+core / 1 Missing prerequisite / 0 Deferred, TASK-026 remains Blocked, and the
+subsequent implementation task is not activated and has no Task ID.
 
 ## 4. Scope
 
@@ -264,6 +266,48 @@ publication. A Stop winning Owner's mutex yields the stopped-before-running
 outcome instead. Binding, Owner convergence, or terminal-publication
 indeterminacy is `Blocked` and unresolved.
 Another Stop or lifecycle command receives a non-mutating in-progress conflict.
+
+### 13.1 Tracked-Start Managed-Parent Admission
+
+One dedicated internal operation may admit a new replacement or rollback
+parent over exactly one blocking primitive Start only when that Start is
+`Claimed`, has its exact live current-generation permit and revision in the
+same operational domain, Workspace, Configuration, and Runtime Instance, and
+has no occupant of its sole Stop exception. Validation, current authorization,
+the final pre-claim cancellation gate, and same-parent inspection precede the
+new claim. Same intent observes InProgress or Replay without callback or new
+authority; different intent returns key conflict.
+
+Under the active-generation read lock and the one per-Instance ledger lock, one
+atomic transition commits the parent as Claimed, its derived ordinal-zero
+`StopOld` phase as Claimed with one private live phase permit, occupation of
+the tracked Start's sole Stop exception by that phase, and the parent
+rendezvous. Those internal DP-015 ledger/storage record mutations are the
+required atomic transition and execute under those locks. No callback,
+lifecycle invocation, wait, external storage callback or I/O, or other
+external work runs under them. The occupant is internally either one primitive
+Stop command or one derived `StopOld` phase; this path fabricates no primitive
+Stop record or identity.
+
+Only the newly claiming call receives a callback-scoped, generation-bound
+managed-parent capability. It preserves the existing managed StartTarget and
+parent-terminal operations and adds one operation that consumes the already-
+issued `StopOld` permit. It exposes neither parent nor phase permit. Exactly
+one callback-scoped consumer may invoke the exact Stop synchronously and at
+most once; repeated consumers and replay only observe. StartTarget remains
+illegal until the preclaimed phase is durably Terminal.
+
+Independent primitive Stop and this parent admission share the same ledger-
+lock linearization point. Stop first creates no parent or phase. Parent first
+atomically exposes both records and makes independent Stop fail without
+mutation. Invalid, unauthorized, pre-claim-cancelled, or stale submissions
+mutate nothing. Callback error, invalid outcome, panic, `runtime.Goexit`,
+return without consumption or publication, generation loss, cancellation
+after claim, or indeterminate publication never fabricates success, transfers
+authority, or reissues a permit; durable non-terminal facts remain fail-closed
+and unresolved. A non-returning callback holds only its private live capability
+and no admission lock. Existing ordinary admission paths remain unchanged,
+and different Runtime Instances remain independent.
 
 The pending claimant waits for exactly one process-local signal:
 `OwnerClaimed`, or `StartNoClaim` when the linked Start path definitively returns
@@ -491,6 +535,18 @@ An implementation must prove at minimum:
     serialization;
 15. restart of a storage client preserves claim and terminal replay facts;
 16. domain isolation and redaction prevent cross-scope disclosure.
+17. tracked-Start managed-parent admission atomically exposes exactly one
+    parent and its derived ordinal-zero `StopOld` phase or exposes neither;
+18. independent Stop and managed-parent admission prove both legal winner
+    orders with exactly one Stop-exception occupant;
+19. only a new claim receives the callback-scoped preclaimed phase authority;
+    same-key observation and replay receive none;
+20. the preclaimed permit invokes exact Stop at most once, cannot be consumed
+    through the ordinary phase path, and expires on callback return;
+21. panic, `runtime.Goexit`, non-return, cancellation, generation loss, and
+    indeterminate publication preserve truthful fail-closed barriers;
+22. ordinary admission behavior is unchanged and different Runtime Instances
+    continue independently.
 
 Proofs include technically available concurrency, race, failure-injection,
 durability, and storage-client-restart scenarios. They do not authorize
@@ -550,11 +606,12 @@ implemented and independently accepted in isolation. TASK-043 adds the
 concrete private composition invoker in isolation. External durable
 storage/schema, API, DP-016 orchestration, DP-017 recovery, later DP-014
 terminal publication and DP-015 command/phase terminalization, management
-wiring, and Production Activation remain absent. The separate bounded
-tracked-Start managed-parent plus preclaimed `StopOld` admission conformance
-prerequisite also remains unimplemented and not activated. The isolated
-package changes no lifecycle contract and is not connected to the DP-013
-Directory.
+wiring, and Production Activation remain absent. TASK-046 defines the bounded
+tracked-Start managed-parent plus preclaimed `StopOld` admission contract in
+section 13.1, but that prerequisite remains unimplemented. TASK-026 therefore
+remains Blocked; the implementation prerequisite is the next candidate but is
+not activated and has no Task ID. The isolated package changes no lifecycle
+contract and is not connected to the DP-013 Directory.
 
 ## 28. Decision
 

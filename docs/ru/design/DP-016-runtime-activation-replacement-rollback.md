@@ -23,11 +23,13 @@ Terminal publication DP-014 и DP-015 после Owner остаётся част
 orchestrator; orchestrator и production wiring остаются отсутствующими.
 Завершённая и Coordinator-Accepted TASK-044 (2026-08-24) исторически вернула
 `UNBLOCK TASK-026` после повторной оценки TASK-040/TASK-043. Superseding recheck
-реактивации TASK-026 подтверждает missing DP-015 prerequisite tracked-Start
-managed-parent плюс preclaimed `StopOld` admission. Corrected matrix section 25
+реактивации TASK-026 подтверждает не реализованную DP-015 prerequisite
+tracked-Start managed-parent плюс preclaimed `StopOld` admission. TASK-046
+фиксирует её additive planned contract без implementation. Corrected matrix
+section 25
 — 7 Direct / 9 Compositional / 2 Missing core / 1 Missing prerequisite / 0
-Deferred. TASK-026 заблокирована; отдельная bounded prerequisite рекомендована,
-но не активирована.
+Deferred. TASK-026 заблокирована; отдельная bounded implementation task
+является next candidate, не активирована и не имеет Task ID.
 
 ## 2. Назначение
 
@@ -217,6 +219,15 @@ Service gap между proven release и new readiness принимается in
 single-node contract.
 
 ## 13. Replacement во время Starting
+
+Parent может войти в этот path только через dedicated admission DP-015,
+определённый TASK-046. Эта operation атомарно claim replacement или rollback
+parent и его derived ordinal-zero phase `StopOld` поверх exact eligible tracked
+primitive Start, одновременно занимая sole Stop exception этого Start.
+Independent Stop и parent admission имеют одного winner: Stop first не создаёт
+parent/phase, а parent first раскрывает оба и заставляет independent Stop
+завершиться без mutation. Уже выданная phase authority остаётся private и
+callback-scoped; replay наблюдает records и никогда не получает её.
 
 Если old active attempt ещё Starting на другой target, command admission
 атомарно claim parent replacement и его linked Stop-old phase в single
@@ -451,7 +462,10 @@ mechanics должны доказать contract без его расширен�
 2. exact Running target возвращает satisfied с zero mutation;
 3. different Running target не меняется in place;
 4. replacement никогда не владеет old и new Hosts одновременно;
-5. Stop во время old Starting захватывает тот же attempt;
+5. Stop во время old Starting захватывает тот же attempt; admission parent
+   поверх tracked-Start атомарно commit parent плюс derived ordinal-zero phase
+   `StopOld`, имеет одного winner против independent Stop и не выдаёт authority
+   повторно при replay;
 6. new claim происходит только после old proven release;
 7. Continue gate имеет одного winner между linked Start phase и concurrent Stop;
 8. Stop, выигравший до new claim, предотвращает любой новый attempt;
@@ -512,11 +526,13 @@ TASK-039 зафиксировала design в Draft DP-010; завершённа
 Coordinator-Accepted TASK-040 реализует и верифицирует isolated Owner extension,
 repeat final Reviewer `APPROVED` 0/0. TASK-043 впоследствии реализует private
 exact-scope invoker изолированно. TASK-044 исторически фиксирует `UNBLOCK
-TASK-026`; superseding recheck TASK-026 обнаруживает missing DP-015 prerequisite
-tracked-Start managed-parent плюс preclaimed `StopOld` admission и исправляет
+TASK-026`; superseding recheck TASK-026 обнаруживает не реализованную DP-015
+prerequisite tracked-Start managed-parent плюс preclaimed `StopOld` admission.
+TASK-046 определяет этот additive contract без implementation и сохраняет corrected
 matrix на 7 Direct / 9 Compositional / 2 Missing core / 1 Missing prerequisite
-/ 0 Deferred. TASK-026 заблокирована, а prerequisite не активирована. Reduced
-slice DP-016 запрещён.
+/ 0 Deferred. TASK-026 заблокирована; отдельная implementation task остаётся
+next candidate, не активирована и не имеет Task ID. Reduced slice DP-016
+запрещён.
 
 ## 29. Решение
 

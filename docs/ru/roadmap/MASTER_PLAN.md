@@ -392,9 +392,12 @@ Architectural debt относится к границам, которые ост
   Terminal publication остаётся core work TASK-026. Orchestration и
   production composition остаются Planned; TASK-044 `Completed — Coordinator
   Accepted (2026-08-24)`, repeat Reviewer APPROVED 0/0, Scope Audit 16/0/0 и
-  PROCESS-002 Synchronized; TASK-026 заблокирована. Отдельная bounded DP-015
-  conformance prerequisite является следующим candidate, Not Activated, без
-  назначенного Task ID; Integration и Production Activation остаются неактивными.
+  PROCESS-002 Synchronized; TASK-026 заблокирована. Design-update TASK-046
+  завершена как `Completed — Coordinator Accepted (2026-08-25)`, repeat
+  Reviewer Approved 0/0, и фиксирует additive planned contract этой prerequisite
+  без implementation. Отдельная bounded implementation task остаётся следующим
+  candidate, Not Activated, без назначенного Task ID; Integration и Production
+  Activation остаются неактивными.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Message Persistence, Delivery и Plugin всё ещё требуют focused design.

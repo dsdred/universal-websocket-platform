@@ -394,9 +394,12 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   Deferred. Terminal publication remains TASK-026 core work. Orchestration and production
   composition remain Planned; TASK-044 is Completed — Coordinator Accepted
   (2026-08-24), repeat Reviewer APPROVED 0/0, Scope Audit 16/0/0, and
-  PROCESS-002 Synchronized; TASK-026 is blocked. The separate bounded DP-015
-  conformance prerequisite is the next candidate, Not Activated, without an
-  assigned Task ID; Integration and Production Activation remain inactive.
+  PROCESS-002 Synchronized; TASK-026 is blocked. Design-update TASK-046 is
+  Completed — Coordinator Accepted (2026-08-25), with repeat Reviewer Approved
+  0/0, and records the additive planned contract for that prerequisite without
+  implementation. The separate bounded implementation task remains the
+  next candidate, Not Activated, without an assigned Task ID; Integration and
+  Production Activation remain inactive.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Message Persistence, Delivery, and Plugin contracts still require focused design.
