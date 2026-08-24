@@ -29,8 +29,10 @@ management wiring и Control Service activation отсутствуют. Historic
 TASK-044 `UNBLOCK TASK-026` superseded recheck реактивации: missing DP-015
 tracked-Start managed-parent плюс preclaimed `StopOld` admission prerequisite;
 corrected matrix 7 Direct / 9 Compositional / 2 Missing core / 1 Missing
-prerequisite / 0 Deferred. TASK-026 заблокирована; prerequisite не активирована
-и не имеет назначенного Task ID.
+prerequisite / 0 Deferred. TASK-046 завершена как `Completed — Coordinator
+Accepted (2026-08-25)` и фиксирует planned design этой admission без
+implementation. TASK-026 заблокирована; отдельная implementation task является
+next candidate, не активирована и не имеет назначенного Task ID.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
@@ -44,10 +46,11 @@ Hardening; `Completed — Coordinator Accepted`.
 
 **Текущая operational task:** отсутствует.
 
-**Последняя завершённая architecture task:** TASK-044 — Runtime Terminal /
-Orchestrator Readiness Reassessment; `Completed — Coordinator Accepted
-(2026-08-24)`; historical Architect `UNBLOCK TASK-026`, позднее superseded
-repeat TASK-026 Architect verdict `CONFIRMED BLOCKER`.
+**Последняя завершённая architecture task:** TASK-046 — Tracked-Start
+Managed-Parent Admission Design; `Completed — Coordinator Accepted
+(2026-08-25)`; repeat Reviewer `Approved 0/0`; Scope Audit 15/0/0; PROCESS-002
+Synchronized; additive planned DP-015 contract зафиксирован без implementation;
+TASK-026 остаётся Blocked.
 
 **Текущая architecture task:** отсутствует. Draft DP-021 остаётся Partial;
 TASK-043 реализует concrete invoker изолированно и завершена/принята.
@@ -71,7 +74,9 @@ LIMITATIONS` 0/0, final Reviewer `APPROVED` 0/0, Scope Audit 21/0/0 и
 PROCESS-002 Synchronized. Future callback custody, terminal publication/
 terminalization, orchestrator и production wiring отсутствуют. Corrected
 TASK-026 matrix — 7 Direct / 9 Compositional / 2 Missing core / 1 Missing
-prerequisite / 0 Deferred; next bounded prerequisite не активирована.
+prerequisite / 0 Deferred; design refinement завершён как TASK-046 `Completed —
+Coordinator Accepted (2026-08-25)`, а implementation prerequisite остаётся next
+candidate, Not Activated, без Task ID.
 
 **TASK-031:** `Completed — Coordinator Accepted`. Bounded isolated DP-020
 deferred slice 1 реализован в `internal/runtimecommandidempotency` на branch
@@ -96,7 +101,9 @@ publication на closure не выполнялись.
 **Текущая documentation task:** отсутствует.
 
 **Текущая architecture task:** отсутствует. Последняя завершённая architecture
-task — TASK-044, Coordinator Accepted (2026-08-24); Draft DP-021 имеет Partial
+task — TASK-046, `Completed — Coordinator Accepted (2026-08-25)`; additive
+planned DP-015 tracked-Start managed-parent plus preclaimed `StopOld` admission
+contract зафиксирован без implementation. Draft DP-021 имеет Partial
 Implementation Status после isolated implementation TASK-043. Superseding
 Architect recheck TASK-026 фиксирует `CONFIRMED BLOCKER`; prerequisite не
 активирована.
@@ -540,8 +547,9 @@ production/test changes, Coordinator Acceptance, commit и publication не
 фиксирует `UNBLOCK TASK-026`. Superseding recheck реактивации подтверждает
 missing DP-015 tracked-Start managed-parent плюс preclaimed `StopOld` admission
 prerequisite и corrected matrix 7 Direct / 9 Compositional / 2 Missing core /
-1 Missing prerequisite / 0 Deferred. TASK-026 заблокирована; implementation и
-test expansion запрещены, prerequisite не активирована.
+1 Missing prerequisite / 0 Deferred. TASK-046 фиксирует planned design этой
+admission без implementation. TASK-026 заблокирована; implementation и test
+expansion в TASK-026 запрещены, отдельная implementation task не активирована.
 
 **TASK-027:** `Completed — Coordinator Accepted`. Approved/Planned DP-019 фиксирует
 единый prerequisite contract: exact orchestration authorization tuple,
@@ -629,8 +637,24 @@ Direct / 9 Compositional / 2 Missing core / 1 Missing prerequisite / 0 Deferred
 из-за missing DP-015 tracked-Start managed-parent плюс preclaimed `StopOld`
 admission prerequisite. Approved/Planned DP-016 не меняется. TASK-044 `Completed — Coordinator
 Accepted (2026-08-24)`, repeat Reviewer `APPROVED` 0/0, Scope Audit 16/0/0 и
-PROCESS-002 Synchronized. TASK-026 заблокирована; prerequisite не активирована
-и не имеет назначенного Task ID.
+PROCESS-002 Synchronized. TASK-046 завершила только design refinement missing
+prerequisite и сохраняет TASK-026 Blocked. Отдельная bounded
+implementation prerequisite остаётся next candidate, не активирована и не
+имеет назначенного Task ID.
+
+**TASK-046:** `Completed — Coordinator Accepted (2026-08-25)`. Repeat Reviewer
+`Approved 0/0`; Scope Audit 15/0/0; PROCESS-002 Synchronized. Approved DP-015
+additive уточнён planned internal
+admission contract: над exact eligible tracked primitive Start одна atomic
+operation создаёт managed replacement/rollback parent и его derived
+ordinal-zero `StopOld` phase, занимает sole Stop exception tracked Start этой
+phase и выдаёт
+только new claimant callback-scoped at-most-once authority уже preclaimed
+phase. Independent Stop и parent admission имеют одного winner; replay не
+получает authority; panic, `runtime.Goexit`, non-return, cancellation,
+generation loss и indeterminate publication fail closed. Production/test code
+не менялся, implementation отсутствует. TASK-026 остаётся Blocked; следующая
+implementation task Not Activated и не имеет Task ID.
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task

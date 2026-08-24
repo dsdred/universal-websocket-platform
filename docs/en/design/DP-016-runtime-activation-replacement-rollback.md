@@ -23,11 +23,13 @@ isolation. Post-Owner DP-014 and DP-015 terminal publication remains part of
 this planned orchestrator; the orchestrator and production wiring remain
 absent. Completed and Coordinator-Accepted TASK-044 (2026-08-24) historically
 returned `UNBLOCK TASK-026` after reassessing TASK-040/TASK-043. A superseding
-TASK-026 reactivation recheck confirms a missing DP-015 tracked-Start
-managed-parent plus preclaimed `StopOld` admission prerequisite. The corrected
+TASK-026 reactivation recheck confirms an unimplemented DP-015 tracked-Start
+managed-parent plus preclaimed `StopOld` admission prerequisite. TASK-046
+records its additive planned admission contract without implementing it. The
+corrected
 section 25 matrix is 7 Direct / 9 Compositional / 2 Missing core / 1 Missing
 prerequisite / 0 Deferred. TASK-026 is blocked; the separate bounded
-prerequisite is recommended but not activated.
+implementation task is the next candidate, not activated, and has no Task ID.
 
 ## 2. Purpose
 
@@ -218,6 +220,15 @@ between proven release and new readiness is accepted by this initial single-
 node contract.
 
 ## 13. Replacement During Starting
+
+The parent may enter this path only through the dedicated DP-015 admission
+defined by TASK-046. That operation atomically claims the replacement or
+rollback parent and its derived ordinal-zero `StopOld` phase over the exact
+eligible tracked primitive Start, while occupying the Start's sole Stop
+exception. Independent Stop and parent admission have one winner: Stop first
+creates no parent/phase, while parent first exposes both and makes independent
+Stop fail without mutation. The already-issued phase authority remains private
+and callback-scoped; replay observes records and never receives it.
 
 If the old active attempt is still Starting on a different target,
 command admission atomically claims the replacement parent and its linked
@@ -459,7 +470,10 @@ A future implementation must prove at minimum:
 2. exact Running target returns satisfied with zero mutation;
 3. different Running target cannot change in place;
 4. replacement never owns old and new Hosts simultaneously;
-5. Stop during old Starting captures that same attempt;
+5. Stop during old Starting captures that same attempt; tracked-Start parent
+   admission atomically commits the parent plus derived ordinal-zero `StopOld`
+   phase, has one winner against independent Stop, and replay reissues no
+   authority;
 6. new claim occurs only after old proven release;
 7. Continue gate has one winner between linked Start phase and concurrent Stop;
 8. Stop winning before new claim prevents any new attempt;
@@ -520,11 +534,13 @@ design in Draft DP-010; completed and Coordinator-Accepted TASK-040 implements
 and verifies the isolated Owner extension, with repeat final Reviewer
 `APPROVED` 0/0. TASK-043 subsequently implements the private exact-scope
 invoker in isolation. TASK-044 historically records `UNBLOCK TASK-026`; the
-superseding TASK-026 recheck finds the missing DP-015 tracked-Start
-managed-parent plus preclaimed `StopOld` admission prerequisite and corrects
-the matrix to 7 Direct / 9 Compositional / 2 Missing core / 1 Missing
-prerequisite / 0 Deferred. TASK-026 is blocked, and the prerequisite is not
-activated. No reduced DP-016 slice is permitted.
+superseding TASK-026 recheck finds the unimplemented DP-015 tracked-Start
+managed-parent plus preclaimed `StopOld` admission prerequisite. TASK-046
+defines that additive contract without implementation and leaves the corrected
+matrix at 7 Direct / 9 Compositional / 2 Missing core / 1 Missing
+prerequisite / 0 Deferred. TASK-026 is blocked; the separate implementation
+task remains the next candidate, is not activated, and has no Task ID. No
+reduced DP-016 slice is permitted.
 
 ## 29. Decision
 

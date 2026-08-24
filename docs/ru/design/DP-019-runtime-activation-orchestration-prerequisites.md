@@ -29,10 +29,12 @@ Owner относится к самому последующему orchestrator T
 external persistence, API, recovery worker и production wiring отсутствуют.
 Завершённая и Coordinator-Accepted TASK-044 (2026-08-24) исторически фиксирует
 `UNBLOCK TASK-026`. Superseding recheck реактивации TASK-026 подтверждает одну
-missing DP-015 conformance prerequisite: atomic tracked-Start managed-parent
-admission с preclaimed ordinal-zero `StopOld`. Corrected matrix — 7 Direct / 9
+не реализованную DP-015 conformance prerequisite: atomic tracked-Start
+managed-parent admission с preclaimed ordinal-zero `StopOld`. TASK-046 фиксирует
+её additive planned contract без implementation. Corrected matrix — 7 Direct / 9
 Compositional / 2 Missing core / 1 Missing prerequisite / 0 Deferred. TASK-026
-заблокирована; prerequisite не активирована.
+заблокирована; отдельная implementation task является next candidate, не
+активирована и не имеет Task ID.
 
 ## 2. Назначение
 
@@ -242,6 +244,15 @@ invokeParent(parentExecution):
     InspectOrClaimPhase(StopOld, invokeExactStop)
     ContinueOrClaimPhase(StartTarget, invokeManagedStartWithBinding)
     PublishParentTerminal(exact linked outcomes)
+
+ExecuteManagedParentFromTrackedStart(
+    submission, authorize, invokeTrackedParent
+) -> admission/result
+
+invokeTrackedParent(trackedParentExecution):
+    ExecutePreclaimedStopOld(invokeExactStop)
+    ContinueOrClaimPhase(StartTarget, invokeManagedStartWithBinding)
+    PublishParentTerminal(exact linked outcomes)
 ```
 
 `ExecuteParent` выполняет validation, exact authorization, cancellation gate,
@@ -253,6 +264,22 @@ admission boundary. Только call, committed новый parent, получа
 storage-client generation. Retain, возврат callback, panic, `runtime.Goexit`
 или generation replacement expire все неопубликованные live capabilities и
 оставляют committed non-terminal parent/phase unresolved.
+
+Additive tracked-Start operation eligible только поверх одного exact live
+primitive Start текущей generation в том же полном scope с незанятым Stop
+exception. Под existing generation и per-Instance admission locks она атомарно
+commits новый parent, его derived ordinal-zero phase `StopOld` с одним private
+live permit, occupation sole Stop exception этого Start данной phase и
+rendezvous parent. Эти internal mutations записей ledger/storage DP-015
+являются обязательной atomic work под этими locks. Callback, lifecycle
+invocation, wait, external storage callback/I/O и иная external work под ними
+не выполняются, а transition не создаёт primitive Stop identity.
+Same-parent observation и replay получают только records и никогда не получают
+callback-scoped authority.
+Её dedicated callback consume уже preclaimed `StopOld` через
+`ExecutePreclaimedStopOld` и никогда не вызывает ordinary inspect-or-claim
+operation phase. Ordinary path `ExecuteParent` сохраняет existing semantics
+`InspectOrClaimPhase`.
 
 ## 12. Семантика claim фаз
 
@@ -275,6 +302,18 @@ Parent terminal publication разрешена только после definitiv
 terminal outcome каждой required phase либо definitive zero-mutation parent
 outcome до следующей phase. Parent не фабрикует phase result только из
 aggregate observation.
+
+Для tracked-Start operation `StopOld` уже claimed при admission parent. Его
+callback-scoped consumer выполняет уже выданный permit не более одного раза,
+вместо inspection или claim другой phase. Ordinary phase path не может обойти
+это правило, а StartTarget остаётся illegal до durable Terminal phase.
+Independent primitive Stop и parent admission разделяют одну winner
+linearization point: Stop first не создаёт ни parent, ни phase; parent first
+раскрывает оба и заставляет independent Stop завершиться без mutation.
+Callback error, invalid outcome, panic, `runtime.Goexit`, return без
+consumption/publication, non-return, post-claim cancellation, generation loss
+или indeterminate publication не выдают authority повторно и не фабрикуют
+completion; linked facts остаются fail-closed и unresolved.
 
 ## 13. Continue Gate
 
@@ -463,6 +502,15 @@ Prerequisite implementation обязана доказать минимум:
 17. unmanaged Flow не используется production activation composition;
 18. public/private routing bypass до authorization отсутствует;
 19. EN/RU и linked DP semantics aligned.
+20. tracked-Start admission атомарно создаёт parent и preclaimed ordinal-zero
+    phase `StopOld` либо не создаёт ни одного;
+21. independent Stop и parent admission доказывают оба winner orders с одним
+    occupant Stop exception и без replay authority;
+22. consumption preclaimed phase callback-scoped, at-most-once, expires при
+    return/generation loss и fails closed при panic, `runtime.Goexit`,
+    non-return, cancellation или indeterminate publication;
+23. existing ordinary admissions не регрессируют, а разные Instances
+    продолжают выполняться независимо.
 
 Эти proofs не доказывают сам DP-016 orchestrator.
 
@@ -492,10 +540,12 @@ orchestrator и production composition audit полного design.
 
 TASK-044 впоследствии повторно оценивает полный неизменённый набор DP-016
 proofs и исторически фиксирует `UNBLOCK TASK-026`. Superseding recheck TASK-026
-обнаруживает missing DP-015 prerequisite tracked-Start managed-parent плюс
-preclaimed `StopOld` admission и исправляет matrix на 7 Direct / 9
+обнаруживает не реализованную DP-015 prerequisite tracked-Start managed-parent
+плюс preclaimed `StopOld` admission. TASK-046 определяет этот additive planned
+contract без implementation и сохраняет corrected matrix 7 Direct / 9
 Compositional / 2 Missing core / 1 Missing prerequisite / 0 Deferred. TASK-026
-заблокирована, а prerequisite не активирована. Historical focused
+заблокирована; implementation prerequisite остаётся next candidate, не
+активирована и не имеет Task ID. Historical focused
 readiness decomposition prerequisites зафиксирована в зеркальном
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), со
 статусом Design Status Draft и Implementation Status Planned overall, где

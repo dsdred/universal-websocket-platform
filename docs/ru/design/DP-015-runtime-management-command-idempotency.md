@@ -49,12 +49,13 @@ outcomes managed Flow, реализованные и независимо при
 TASK-043 реализует и независимо верифицирует concrete private composition
 invoker изолированно. Последующая terminal publication, orchestrator и
 Approved DP-016 сохраняют Implementation Status Planned.
-Repeat recheck реактивации TASK-026 подтверждает один всё ещё отсутствующий
+Repeat recheck реактивации TASK-026 подтверждает один всё ещё не реализованный
 conformance seam: managed-parent admission пока не может атомарно использовать
 tracked-Start exception и preclaim derived ordinal-zero phase `StopOld`.
-Corrected readiness matrix — 7 Direct / 9 Compositional / 2 Missing core / 1
-Missing prerequisite / 0 Deferred; prerequisite рекомендована, но не
-активирована.
+TASK-046 фиксирует additive planned contract этого seam, но не реализует его.
+Corrected readiness matrix остаётся 7 Direct / 9 Compositional / 2 Missing core
+/ 1 Missing prerequisite / 0 Deferred; TASK-026 остаётся Blocked, а следующая
+implementation task не активирована и не имеет Task ID.
 
 ## 4. Область
 
@@ -265,6 +266,48 @@ publication. Stop, выигравший mutex Owner, вместо этого д�
 stopped-before-running outcome. Indeterminate binding, Owner convergence или
 terminal publication даёт `Blocked` и unresolved. Другой Stop/lifecycle command
 получает non-mutating in-progress conflict.
+
+### 13.1 Admission managed-parent поверх tracked-Start
+
+Одна dedicated internal operation может admit новый replacement или rollback
+parent поверх ровно одного blocking primitive Start, только когда этот Start
+находится в `Claimed`, имеет exact live permit и revision текущей generation в
+том же operational domain, Workspace, Configuration и Runtime Instance, а его
+sole Stop exception не занят. Validation, current authorization, final
+pre-claim cancellation gate и inspection того же parent предшествуют новому
+claim. Same intent наблюдает InProgress или Replay без callback и новой
+authority; different intent возвращает key conflict.
+
+Под active-generation read lock и одним per-Instance ledger lock единый atomic
+transition commits parent как Claimed, его derived ordinal-zero phase
+`StopOld` как Claimed с одним private live phase permit, occupation sole Stop
+exception tracked Start этой phase и rendezvous parent. Эти internal mutations
+записей ledger/storage DP-015 являются обязательным atomic transition и
+выполняются под этими locks. Callback, lifecycle invocation, wait, external
+storage callback/I/O и иная external work под ними не выполняются. Occupant
+внутренне является либо одним primitive Stop
+command, либо одной derived phase `StopOld`; новый path не создаёт primitive
+Stop record или identity.
+
+Только call нового claim получает callback-scoped, generation-bound capability
+managed-parent. Она сохраняет existing managed StartTarget и parent-terminal
+operations и добавляет одну operation, consume уже выданный permit `StopOld`.
+Она не раскрывает parent или phase permit. Ровно один callback-scoped consumer
+может synchronously и не более одного раза invoke exact Stop; repeated
+consumers и replay только наблюдают. StartTarget остаётся illegal до durable
+Terminal preclaimed phase.
+
+Independent primitive Stop и этот parent admission разделяют одну ledger-lock
+linearization point. Stop first не создаёт parent или phase. Parent first
+атомарно раскрывает обе records и заставляет independent Stop завершиться без
+mutation. Invalid, unauthorized, pre-claim-cancelled или stale submissions не
+изменяют state. Callback error, invalid outcome, panic, `runtime.Goexit`,
+return без consumption/publication, generation loss, cancellation после claim
+или indeterminate publication не фабрикуют success, не передают authority и не
+выдают permit повторно; durable non-terminal facts остаются fail-closed и
+unresolved. Non-returning callback удерживает только private live capability,
+но не admission lock. Existing ordinary admission paths не меняются, а разные
+Runtime Instances остаются независимыми.
 
 Pending claimant ждёт ровно один process-local signal: `OwnerClaimed` или
 `StartNoClaim`, когда linked Start path definitive возвращается до claim Owner.
@@ -491,6 +534,19 @@ Implementation должна доказать минимум:
 14. разные command identities сохраняют one-Instance lifecycle serialization;
 15. restart storage client сохраняет claim и terminal replay facts;
 16. domain isolation и redaction предотвращают cross-scope disclosure.
+17. admission managed-parent поверх tracked-Start атомарно раскрывает ровно
+    один parent и его derived ordinal-zero phase `StopOld` либо не раскрывает
+    ни одного;
+18. independent Stop и managed-parent admission доказывают оба legal winner
+    orders с ровно одним occupant Stop exception;
+19. только new claim получает callback-scoped authority preclaimed phase;
+    same-key observation и replay не получают её;
+20. preclaimed permit вызывает exact Stop не более одного раза, не consume
+    через ordinary phase path и expires при возврате callback;
+21. panic, `runtime.Goexit`, non-return, cancellation, generation loss и
+    indeterminate publication сохраняют truthful fail-closed barriers;
+22. ordinary admission behavior не меняется, а разные Runtime Instances
+    продолжают выполняться независимо.
 
 Proofs включают технически доступные concurrency, race, failure-injection,
 durability и storage-client-restart scenarios. Они не разрешают Production
@@ -550,11 +606,12 @@ Flow, реализованные и независимо принятые изо
 concrete private composition invoker изолированно. External durable
 storage/schema, API, DP-016 orchestration, DP-017 recovery, последующая
 terminal publication DP-014 и terminalization command/phase DP-015, management
-wiring и Production Activation отсутствуют. Отдельная bounded conformance
-prerequisite tracked-Start managed-parent плюс preclaimed `StopOld` admission
-также остаётся нереализованной и неактивированной.
-Isolated package не
-изменяет lifecycle contracts и не подключён к DP-013 Directory.
+wiring и Production Activation отсутствуют. TASK-046 определяет bounded
+contract tracked-Start managed-parent плюс preclaimed `StopOld` admission в
+section 13.1, но эта prerequisite остаётся нереализованной. Поэтому TASK-026
+остаётся Blocked; implementation prerequisite является next candidate, но не
+активирована и не имеет Task ID. Isolated package не изменяет lifecycle
+contracts и не подключён к DP-013 Directory.
 
 ## 28. Решение
 

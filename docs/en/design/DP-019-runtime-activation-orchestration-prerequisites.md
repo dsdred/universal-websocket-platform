@@ -29,11 +29,13 @@ decision. Post-Owner terminal publication belongs to the later
 TASK-026 orchestrator itself; that orchestrator, external persistence, API,
 recovery worker, and production wiring remain absent. Completed and
 Coordinator-Accepted TASK-044 (2026-08-24) historically records `UNBLOCK
-TASK-026`. A superseding TASK-026 reactivation recheck confirms one missing
+TASK-026`. A superseding TASK-026 reactivation recheck confirms one unimplemented
 DP-015 conformance prerequisite: atomic tracked-Start managed-parent admission
-with preclaimed ordinal-zero `StopOld`. The corrected matrix is 7 Direct / 9
+with preclaimed ordinal-zero `StopOld`. TASK-046 records its additive planned
+contract without implementation. The corrected matrix is 7 Direct / 9
 Compositional / 2 Missing core / 1 Missing prerequisite / 0 Deferred. TASK-026
-is blocked; the prerequisite is not activated.
+is blocked; the separate implementation task is the next candidate, not
+activated, and has no Task ID.
 
 ## 2. Purpose
 
@@ -245,6 +247,15 @@ invokeParent(parentExecution):
     InspectOrClaimPhase(StopOld, invokeExactStop)
     ContinueOrClaimPhase(StartTarget, invokeManagedStartWithBinding)
     PublishParentTerminal(exact linked outcomes)
+
+ExecuteManagedParentFromTrackedStart(
+    submission, authorize, invokeTrackedParent
+) -> admission/result
+
+invokeTrackedParent(trackedParentExecution):
+    ExecutePreclaimedStopOld(invokeExactStop)
+    ContinueOrClaimPhase(StartTarget, invokeManagedStartWithBinding)
+    PublishParentTerminal(exact linked outcomes)
 ```
 
 `ExecuteParent` performs validation, exact authorization, cancellation gate,
@@ -256,6 +267,22 @@ existing admission boundary. Only the call that commits a new parent receives
 exact storage-client generation. Retaining it, returning from the callback,
 panic, `runtime.Goexit`, or generation replacement expires every unpublished
 live capability and leaves any committed non-terminal parent/phase unresolved.
+
+The additive tracked-Start operation is eligible only over one exact live
+current-generation primitive Start in the same full scope with an unoccupied
+Stop exception. Under the existing generation and per-Instance admission
+locks, it atomically commits the new parent, its derived ordinal-zero
+`StopOld` phase with one private live permit, occupation of that Start's sole
+Stop exception by the phase, and the parent rendezvous. Those internal DP-015
+ledger/storage record mutations are the required atomic work under those
+locks. No callback, lifecycle invocation, wait, external storage callback or
+I/O, or other external work runs under them, and the transition creates no
+primitive Stop identity. Same-parent observation and replay receive records
+only and never receive the callback-scoped authority.
+Its dedicated callback consumes the already-preclaimed `StopOld` through
+`ExecutePreclaimedStopOld`; it never calls the ordinary inspect-or-claim phase
+operation. The ordinary `ExecuteParent` path retains its existing
+`InspectOrClaimPhase` semantics.
 
 ## 12. Phase Claim Semantics
 
@@ -278,6 +305,18 @@ Parent terminal publication is permitted only after every required phase has
 a definitive durable terminal outcome or the parent has a definitive
 zero-mutation outcome before the next phase. A parent never fabricates a phase
 result from aggregate observation alone.
+
+For the tracked-Start operation, `StopOld` is already claimed at parent
+admission. Its callback-scoped consumer executes that already-issued permit at
+most once rather than inspecting or claiming another phase. The ordinary phase
+path cannot bypass it, and StartTarget remains illegal until the phase is
+durably Terminal. Independent primitive Stop and parent admission share one
+winner linearization point: Stop first creates neither parent nor phase;
+parent first exposes both and makes independent Stop fail without mutation.
+Callback error, invalid outcome, panic, `runtime.Goexit`, return without
+consumption/publication, non-return, post-claim cancellation, generation loss,
+or indeterminate publication never reissues authority or fabricates completion;
+the linked facts remain fail-closed and unresolved.
 
 ## 13. Continue Gate
 
@@ -473,6 +512,15 @@ A prerequisite implementation must prove at minimum:
 17. unmanaged Flow cannot be used by production activation composition;
 18. no public/private routing bypass exists before authorization;
 19. EN/RU and linked DP semantics remain aligned.
+20. tracked-Start admission atomically creates the parent and preclaimed
+    ordinal-zero `StopOld` phase or creates neither;
+21. independent Stop and parent admission prove both winner orders with one
+    Stop-exception occupant and no replay authority;
+22. preclaimed phase consumption is callback-scoped, at most once, expires on
+    return/generation loss, and fails closed on panic, `runtime.Goexit`,
+    non-return, cancellation, or indeterminate publication;
+23. existing ordinary admissions do not regress and different Instances
+    continue independently.
 
 These proofs do not prove DP-016 orchestration itself.
 
@@ -502,10 +550,12 @@ composition audit required by the complete design.
 
 TASK-044 subsequently reassesses the complete unmodified DP-016 proofs and
 historically records `UNBLOCK TASK-026`. The superseding TASK-026 recheck
-identifies the missing DP-015 tracked-Start managed-parent plus preclaimed
-`StopOld` admission prerequisite and corrects the matrix to 7 Direct / 9
+identifies the unimplemented DP-015 tracked-Start managed-parent plus preclaimed
+`StopOld` admission prerequisite. TASK-046 defines that additive planned
+contract without implementing it and preserves the corrected matrix at 7 Direct / 9
 Compositional / 2 Missing core / 1 Missing prerequisite / 0 Deferred. TASK-026
-is blocked, and the prerequisite is not activated. The historical focused
+is blocked; the implementation prerequisite remains the next candidate, is not
+activated, and has no Task ID. The historical focused
 readiness decomposition of prerequisites is recorded in the mirrored
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), with
 Design Status Draft and Implementation Status Planned overall, with Slice 3
