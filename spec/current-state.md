@@ -25,7 +25,10 @@ DP-016–DP-019 имеют Implementation Status Planned overall. Packages
 Dedicated DP-016 orchestration, DP-017 recovery, DP-018 reporting, concrete
 future callback closure, terminal publication, external schema/HTTP API/persistence,
 orchestration/recovery/reporting implementation, concrete authorization policy,
-management wiring и Control Service activation отсутствуют.
+management wiring и Control Service activation отсутствуют. TASK-044 Architect
+verdict `UNBLOCK TASK-026` подтверждает, что remaining callback/terminal/
+orchestrator behavior является одним coherent bounded TASK-026 core без
+отдельной prerequisite; TASK-026 Ready to Reactivate, но не активирована.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
@@ -39,13 +42,14 @@ Hardening; `Completed — Coordinator Accepted`.
 
 **Текущая operational task:** отсутствует.
 
-**Последняя завершённая architecture task:** TASK-042 — Private Exact-Scope
-Composition Invoker Design; `Completed — Coordinator Accepted (2026-08-20)`;
-Tester `PASS` 0/0; repeat Reviewer `APPROVED` 0/0; Scope Audit 17/0/0;
-PROCESS-002 Synchronized.
+**Последняя завершённая architecture task:** TASK-044 — Runtime Terminal /
+Orchestrator Readiness Reassessment; `Completed — Coordinator Accepted
+(2026-08-24)`; Architect `UNBLOCK TASK-026`; repeat Reviewer `APPROVED` 0/0;
+Scope Audit 16/0/0; PROCESS-002 Synchronized. TASK-026 Ready to Reactivate, но
+Not Activated.
 
-**Текущая architecture task:** отсутствует. Draft DP-021 зафиксирован; TASK-043
-реализует concrete invoker изолированно и завершена/принята.
+**Текущая architecture task:** отсутствует. Draft DP-021 остаётся Partial;
+TASK-043 реализует concrete invoker изолированно и завершена/принята.
 TASK-042 task commit `ebf4421` опубликован через PR #42 и merged как `ded3aa0`.
 
 TASK-027 закрыла design ambiguity DP-016 через Approved/Planned DP-019.
@@ -63,8 +67,9 @@ task — TASK-043 — Private Exact-Scope Managed Start Invoker Implementation;
 реализован изолированно; Tester `PASS WITH ENVIRONMENT / DECLARED INTEGRATION
 LIMITATIONS` 0/0, final Reviewer `APPROVED` 0/0, Scope Audit 21/0/0 и
 PROCESS-002 Synchronized. Future callback custody, terminal publication/
-terminalization, orchestrator и production wiring отсутствуют; TASK-026
-остаётся `Blocked by Architecture`.
+terminalization, orchestrator и production wiring отсутствуют. TASK-044
+Architect verdict классифицирует их как coherent bounded TASK-026 core без
+отдельной prerequisite; TASK-026 Ready to Reactivate, но Not Activated.
 
 **TASK-031:** `Completed — Coordinator Accepted`. Bounded isolated DP-020
 deferred slice 1 реализован в `internal/runtimecommandidempotency` на branch
@@ -87,8 +92,9 @@ Audit 15/0/0. Commit и publication не авторизованы и не вып
 **Текущая documentation task:** отсутствует.
 
 **Текущая architecture task:** отсутствует. Последняя завершённая architecture
-task — TASK-042; Draft DP-021 имеет Partial Implementation Status после
-isolated implementation TASK-043 и не активирует TASK-026.
+task — TASK-044, Coordinator Accepted (2026-08-24); Draft DP-021 имеет Partial
+Implementation Status после isolated implementation TASK-043. TASK-026 Ready
+to Reactivate, но Not Activated.
 
 **Trusted baseline TASK-009:** clean synchronized
 `main@63b961eeb59af9205c3c3d0b68d3f4bd7b8ac25c`; локальная ветка
@@ -519,13 +525,15 @@ Coordinator Closure Audit повторно подтвердил Task Contract, e
 `751577e839cdea3a0f35032b1339d1d9f74d28ec`; branches удалены, synchronized
 `main` подтверждён.
 
-**TASK-026:** `Blocked by Architecture`. Architecture Blocking Discovery на
-своём baseline подтвердил отсутствие implementable DP-015 parent/phase API, private
+**TASK-026:** historical Architecture Blocking Discovery на своём baseline
+подтвердил отсутствие implementable DP-015 parent/phase API, private
 DP-011/DP-013 Start-claim continuation, coordination exact Owner-issued attempt
 с DP-014 publication/binding и authorization tuple для replacement/rollback.
 Simplified Variant B отклонён; implementation scope DP-016 не уменьшен;
 production/test changes, Coordinator Acceptance, commit и publication не
-выполнялись и запрещены до prerequisite implementation.
+выполнялись. После accepted prerequisites через TASK-043 TASK-044 Architect
+verdict `UNBLOCK TASK-026` устанавливает current status `Ready to Reactivate —
+Not Activated`; implementation/test authorization по-прежнему отсутствует.
 
 **TASK-027:** `Completed — Coordinator Accepted`. Approved/Planned DP-019 фиксирует
 единый prerequisite contract: exact orchestration authorization tuple,
@@ -605,10 +613,14 @@ Documentation-only TASK-041 завершена как `Completed — Coordinator
 Coordinator-Accepted TASK-042 и зафиксирован в Draft DP-021. TASK-043 реализует
 concrete invoker изолированно и завершена как `Completed — Coordinator
 Accepted (2026-08-21)` после final Reviewer `APPROVED` 0/0 и Scope Audit
-21/0/0. Следующая рекомендация не активирована: отдельный bounded
-repository-first readiness intake remaining TASK-026 terminal/orchestrator
-work. Его Ready status не доказан; terminal publication остаётся core work
-TASK-026, а TASK-026 остаётся Blocked.
+21/0/0. TASK-044 завершает отдельный bounded repository-first readiness
+intake remaining TASK-026 terminal/orchestrator work. Architect verdict
+`UNBLOCK TASK-026` фиксирует 7 Direct / 10 Compositional / 2 Missing core / 0
+Missing external / 0 Deferred proofs. Terminal publication и orchestration
+являются coherent bounded core TASK-026, а не отдельной prerequisite.
+Approved/Planned DP-016 не меняется. TASK-044 `Completed — Coordinator
+Accepted (2026-08-24)`, repeat Reviewer `APPROVED` 0/0, Scope Audit 16/0/0 и
+PROCESS-002 Synchronized. TASK-026 Ready to Reactivate, но Not Activated.
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task

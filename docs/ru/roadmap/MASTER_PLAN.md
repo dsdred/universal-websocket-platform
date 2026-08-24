@@ -382,11 +382,16 @@ Architectural debt относится к границам, которые ост
   реализует этот concrete invoker изолированно и завершена как `Completed —
   Coordinator Accepted (2026-08-21)` после final Reviewer APPROVED 0/0, Scope
   Audit 21/0/0 и PROCESS-002 synchronized; Implementation Status DP-021 —
-  Partial. Следующая рекомендация не активирована: отдельный bounded
-  repository-first readiness intake remaining terminal/orchestrator work
-  TASK-026. Его Ready status здесь не установлен.
+  Partial. TASK-044 завершает отдельный bounded repository-first readiness
+  intake remaining terminal/orchestrator work TASK-026. Architect verdict —
+  `UNBLOCK TASK-026`, с 7 Direct / 10 Compositional / 2 Missing core / 0
+  Missing external / 0 Deferred proofs section 25 DP-016. Все remaining
+  behavior является одним coherent bounded core TASK-026; отдельной
+  prerequisite нет.
   Terminal publication остаётся core work TASK-026. Orchestration и
-  production composition остаются Planned; TASK-026 остаётся Blocked;
+  production composition остаются Planned; TASK-044 `Completed — Coordinator
+  Accepted (2026-08-24)`, repeat Reviewer APPROVED 0/0, Scope Audit 16/0/0 и
+  PROCESS-002 Synchronized; TASK-026 Ready to Reactivate, но Not Activated;
   Integration и Production Activation остаются неактивными.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.

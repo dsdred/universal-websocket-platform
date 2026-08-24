@@ -27,7 +27,11 @@ final Reviewer `APPROVED` 0/0. TASK-043 реализует concrete private exac
 composition invoker изолированно, не изменяя этот Approved decision. Terminal publication после
 Owner относится к самому последующему orchestrator TASK-026; этот orchestrator,
 external persistence, API, recovery worker и production wiring отсутствуют.
-TASK-026 остаётся Blocked последующими readiness/orchestrator boundaries.
+TASK-026 оставалась Blocked до отдельного verdict readiness. Завершённая и
+Coordinator-Accepted TASK-044 (2026-08-24) фиксирует `UNBLOCK TASK-026`: все
+prerequisites приняты, а remaining terminal/
+orchestrator work относится к core TASK-026, а не к новой prerequisite.
+TASK-026 Ready to Reactivate, но не активирована.
 
 ## 2. Назначение
 
@@ -485,10 +489,11 @@ design в Draft DP-010; завершённая и Coordinator-Accepted TASK-040 
 последующую terminal publication и terminalization command/phase, activation
 orchestrator и production composition audit полного design.
 
-Поэтому TASK-026 остаётся Blocked. Следующие tasks должны реализовать и
-независимо проверить оставшиеся prerequisites. Только после этого TASK-026
-может быть повторно оценена против полного неизменённого набора DP-016 proofs.
-Focused readiness decomposition этих prerequisites зафиксирована в зеркальном
+TASK-044 впоследствии повторно оценивает полный неизменённый набор DP-016
+proofs и фиксирует `UNBLOCK TASK-026`. Отдельной prerequisite больше нет;
+terminal publication и terminalization command/phase являются coherent core
+TASK-026. TASK-026 Ready to Reactivate, но не активирована. Historical focused
+readiness decomposition prerequisites зафиксирована в зеркальном
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), со
 статусом Design Status Draft и Implementation Status Planned overall, где
 Срез 3 реализован и независимо принят изолированно.
@@ -508,8 +513,7 @@ Implementation Partial после TASK-043; он не изменяет этот 
 
 Стоимость:
 
-- минимум одна prerequisite design task и её implementation предшествуют
-  TASK-026;
+- prerequisite design и isolated implementation tasks предшествуют TASK-026;
 - synchronous pending-Stop rendezvous может блокировать callers;
 - process restart всё ещё требует Planned DP-017 implementation;
 - production integration всё ещё требует external durability и composition

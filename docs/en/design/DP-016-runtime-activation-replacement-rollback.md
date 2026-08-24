@@ -21,7 +21,12 @@ TASK-040 implements and verifies it in isolation, with repeat final Reviewer
 `APPROVED` 0/0. TASK-043 implements the private exact-scope invoker in
 isolation. Post-Owner DP-014 and DP-015 terminal publication remains part of
 this planned orchestrator; the orchestrator and production wiring remain
-absent.
+absent. Completed and Coordinator-Accepted TASK-044 (2026-08-24) reassesses
+the accepted TASK-040/TASK-043 prerequisites
+against all unchanged section 25 proofs and returns `UNBLOCK TASK-026`: the
+remaining callback/terminal behavior is one coherent bounded TASK-026 core,
+with no separate missing prerequisite. TASK-026 is Ready to Reactivate but is
+not activated by that readiness verdict.
 
 ## 2. Purpose
 
@@ -513,9 +518,10 @@ absent atomic expected-attempt Owner Stop contract. TASK-039 recorded that
 design in Draft DP-010; completed and Coordinator-Accepted TASK-040 implements
 and verifies the isolated Owner extension, with repeat final Reviewer
 `APPROVED` 0/0. TASK-043 subsequently implements the private exact-scope
-invoker in isolation, but TASK-026 remains Blocked by its remaining
-callback/terminal/orchestrator and production-composition boundaries. No
-reduced DP-016 slice is permitted.
+invoker in isolation. TASK-044 proves the remaining callback, terminal, and
+orchestrator behavior is the coherent bounded TASK-026 implementation core and
+records `UNBLOCK TASK-026`; no separate prerequisite remains. TASK-026 is
+Ready to Reactivate but not activated. No reduced DP-016 slice is permitted.
 
 ## 29. Decision
 

@@ -11,7 +11,10 @@
 DP-013. TASK-043 реализует этот object изолированно в существующем package; он
 не добавляет public API, transport, policy, persistence или production wiring.
 Approved DP-014–DP-019 остаются неизменными, а TASK-026 остаётся `Blocked by
-Architecture`.
+Architecture` только до отдельного readiness verdict. Завершённая и
+Coordinator-Accepted TASK-044 (2026-08-24) фиксирует `UNBLOCK TASK-026`;
+TASK-026 Ready to Reactivate, но не активирована, а этот DP
+остаётся Draft/Partial.
 
 ## 2. Назначение
 
@@ -432,9 +435,10 @@ publication DP-014, terminalization command/phase DP-015, orchestrator
 DP-016/TASK-026, production composition audit или production wiring.
 
 TASK-043 завершена как `Completed — Coordinator Accepted (2026-08-21)` и не
-активирует следующую task. TASK-026 остаётся Blocked отдельными readiness и
-orchestrator-owned terminal work; readiness этой remaining работы здесь не
-утверждается.
+активирует следующую task. TASK-044 позднее подтверждает, что orchestrator-owned
+callback/terminal work является одним coherent core TASK-026 без отдельной
+missing prerequisite, и фиксирует `UNBLOCK TASK-026`. TASK-026 Ready to
+Reactivate, но не активирована; implementation здесь не утверждается.
 
 ## 18. Решение
 
