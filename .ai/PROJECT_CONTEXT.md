@@ -57,10 +57,11 @@
   TASK-043 реализует его изолированно и завершена как `Completed — Coordinator
   Accepted (2026-08-21)` после final Reviewer APPROVED 0/0 и Scope Audit
   21/0/0. TASK-044 завершает отдельную readiness reassessment remaining
-  terminal/orchestrator work; Architect verdict `UNBLOCK TASK-026` фиксирует
-  7 Direct / 10 Compositional / 2 Missing core / 0 Missing external / 0
-  Deferred proofs. Все remaining behavior является coherent bounded core
-  TASK-026 без отдельной prerequisite; TASK-026 Ready to Reactivate, но не
+  terminal/orchestrator work и исторически фиксирует `UNBLOCK TASK-026`.
+  Superseding recheck реактивации TASK-026 подтверждает missing DP-015
+  tracked-Start managed-parent плюс preclaimed `StopOld` admission prerequisite
+  и corrected matrix 7 Direct / 9 Compositional / 2 Missing core / 1 Missing
+  prerequisite / 0 Deferred. TASK-026 заблокирована; prerequisite не
   активирована. TASK-044 `Completed — Coordinator Accepted (2026-08-24)`,
   repeat Reviewer APPROVED 0/0, Scope Audit 16/0/0, PROCESS-002 Synchronized.
   HTTP, concrete policy, external command storage, recovery/reporting
@@ -74,9 +75,8 @@
 - Текущая operational task: **отсутствует**
 - Последняя завершённая architecture task: **TASK-044 — Runtime Terminal /
   Orchestrator Readiness Reassessment; Completed — Coordinator Accepted
-  (2026-08-24); Architect `UNBLOCK TASK-026`; repeat Reviewer APPROVED 0/0;
-  Scope Audit 16/0/0; PROCESS-002 Synchronized; TASK-026 Ready to Reactivate,
-  но Not Activated**
+  (2026-08-24); historical Architect `UNBLOCK TASK-026`; superseded by the
+  TASK-026 `CONFIRMED BLOCKER` recheck and corrected 7/9/2/1/0 matrix**
 - Текущая architecture task: **отсутствует**
 - TASK-027 acceptance evidence: **DP-019 Approved/Planned; implementable
   parent/phase, exact authorization and private per-call managed Start seams
@@ -123,14 +123,15 @@
   Coordinator Closure Audit PASS; Task Contract, exact scope 26/0/0,
   Verification Matrix, PROCESS-002, status consistency и repository-state
   audit подтверждены; Commit Gate, commit, push и publication не выполнялись**
-- Текущая development task: **отсутствует. Последняя завершённая development
-  task — TASK-043 — Private Exact-Scope Managed Start Invoker Implementation;
+- Текущая development task: **TASK-026 — Blocked by missing DP-015
+  tracked-Start managed-parent плюс preclaimed `StopOld` admission prerequisite.
+  Последняя завершённая development task — TASK-043 — Private Exact-Scope Managed Start Invoker Implementation;
   Completed — Coordinator Accepted (2026-08-21). Concrete invoker DP-021
   реализован изолированно; final Reviewer APPROVED 0/0; Scope Audit 21/0/0;
   PROCESS-002 Synchronized. Future callback/terminal publication, orchestrator
-  и production wiring отсутствуют. TASK-044 Architect verdict подтверждает,
-  что это coherent bounded TASK-026 core без separate prerequisite; TASK-026
-  Ready to Reactivate, но Not Activated**
+  и production wiring отсутствуют. Corrected TASK-026 matrix — 7 Direct / 9
+  Compositional / 2 Missing core / 1 Missing prerequisite / 0 Deferred; next
+  bounded prerequisite не активирована**
 - TASK-032 acceptance evidence: **Completed — Coordinator Accepted после
   rework; DP-020 deferred slice 2 реализован изолированно в
   `internal/runtimelaunchflow`: ManagedFlow/NewManaged/StartManaged, immutable
@@ -206,15 +207,14 @@
   APPROVED 0/0; Scope Audit 21/0/0; PROCESS-002 Synchronized; commit и
   publication не авторизованы и не выполнялись**
 - TASK-044 architecture evidence: **Completed — Coordinator Accepted
-  (2026-08-24); Architect `UNBLOCK TASK-026`;
+  (2026-08-24); historical Architect `UNBLOCK TASK-026`;
   DP-016 §25 totals 7 Direct / 10 Compositional / 2 Missing core / 0 Missing
   external / 0 Deferred; no separate prerequisite; DP-016 remains Approved /
   Planned; Tester PASS 0/0/0; repeat Reviewer APPROVED 0/0; Scope Audit
-  16/0/0; PROCESS-002 Synchronized**
-- Следующая рекомендация после TASK-044: **TASK-026 — Runtime Activation,
-  Replacement, and Rollback Implementation; Ready to Reactivate, но Not
-  Activated. Реактивация требует следующего explicit Coordinator selection и
-  не выполняется closure TASK-044**
+  16/0/0; PROCESS-002 Synchronized; later superseded by the TASK-026 recheck**
+- Текущая рекомендация после superseding TASK-026 recheck: **отдельная bounded
+  DP-015 tracked-Start managed-parent плюс preclaimed `StopOld` admission
+  conformance prerequisite; Not Activated, Task ID не назначен**
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы
   изолированно; Repeat Independent Review Approved, blocking/non-blocking 0;
@@ -228,12 +228,12 @@
 - Последняя завершённая documentation task: **TASK-045 — TASK-026 Reactivation
   Status Reconciliation; Completed — Coordinator Accepted (2026-08-24);
   repeat Tester PASS 0/0/0; Independent Reviewer APPROVED 0/0; Scope Audit
-  7/0/0; PROCESS-002 Synchronized; TASK-026 Ready to Reactivate, но Not
-  Activated**
+  7/0/0; PROCESS-002 Synchronized; Ready-to-reactivate verdict был правдив на
+  closure baseline TASK-045 и позднее superseded recheck TASK-026**
 - Текущая documentation task: **отсутствует**
-- Текущая architecture task: **отсутствует; последняя завершённая — TASK-044,
-  Coordinator Accepted (2026-08-24); TASK-026 Ready to Reactivate, но Not
-  Activated**
+- Текущая architecture task: **отсутствует; superseding Architect recheck в
+  TASK-026 фиксирует `CONFIRMED BLOCKER`; следующая bounded prerequisite не
+  активирована**
 - Trusted baseline TASK-009: **clean synchronized
   `main@63b961eeb59af9205c3c3d0b68d3f4bd7b8ac25c`; локальная ветка
   `feature/task-009-runtime-lifecycle-owner`; task record создан первым
@@ -488,9 +488,11 @@
   production wiring отсутствуют
 - Design Status DP-016 — **Approved**, Implementation Status — **Planned**;
   activation/replacement/rollback ordering определён только на design level;
-  TASK-044 фиксирует `UNBLOCK TASK-026`, отдельной prerequisite больше нет,
-  TASK-026 Ready to Reactivate, но Not Activated; orchestrator, API, recovery и
-  production wiring отсутствуют
+  historical TASK-044 `UNBLOCK TASK-026` superseded recheck, который фиксирует
+  7 Direct / 9 Compositional / 2 Missing core / 1 Missing prerequisite / 0
+  Deferred и блокирует TASK-026 до отдельной неактивированной DP-015
+  conformance prerequisite; orchestrator, API, recovery и production wiring
+  отсутствуют
 - Design Status DP-017 — **Approved**, Implementation Status — **Planned**;
   recovery/reconciliation определены только на design level; recovery store,
   execution-evidence adapter, executor, API и production wiring отсутствуют

@@ -27,12 +27,13 @@ repeat final Reviewer `APPROVED` 0/0. TASK-043 implements the concrete private
 exact-scope composition invoker in isolation without amending this Approved
 decision. Post-Owner terminal publication belongs to the later
 TASK-026 orchestrator itself; that orchestrator, external persistence, API,
-recovery worker, and production wiring remain absent. TASK-026 remains Blocked
-until a separate readiness verdict. Completed and Coordinator-Accepted
-TASK-044 (2026-08-24) records `UNBLOCK TASK-026`:
-all prerequisites are accepted, and the remaining terminal/orchestrator work
-is TASK-026 core rather than another prerequisite. TASK-026 is Ready to
-Reactivate but not activated.
+recovery worker, and production wiring remain absent. Completed and
+Coordinator-Accepted TASK-044 (2026-08-24) historically records `UNBLOCK
+TASK-026`. A superseding TASK-026 reactivation recheck confirms one missing
+DP-015 conformance prerequisite: atomic tracked-Start managed-parent admission
+with preclaimed ordinal-zero `StopOld`. The corrected matrix is 7 Direct / 9
+Compositional / 2 Missing core / 1 Missing prerequisite / 0 Deferred. TASK-026
+is blocked; the prerequisite is not activated.
 
 ## 2. Purpose
 
@@ -500,9 +501,11 @@ and command/phase terminalization, activation orchestrator, and production
 composition audit required by the complete design.
 
 TASK-044 subsequently reassesses the complete unmodified DP-016 proofs and
-records `UNBLOCK TASK-026`. No separate prerequisite remains; terminal
-publication and command/phase terminalization are coherent TASK-026 core work.
-TASK-026 is Ready to Reactivate but not activated. The historical focused
+historically records `UNBLOCK TASK-026`. The superseding TASK-026 recheck
+identifies the missing DP-015 tracked-Start managed-parent plus preclaimed
+`StopOld` admission prerequisite and corrects the matrix to 7 Direct / 9
+Compositional / 2 Missing core / 1 Missing prerequisite / 0 Deferred. TASK-026
+is blocked, and the prerequisite is not activated. The historical focused
 readiness decomposition of prerequisites is recorded in the mirrored
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), with
 Design Status Draft and Implementation Status Planned overall, with Slice 3

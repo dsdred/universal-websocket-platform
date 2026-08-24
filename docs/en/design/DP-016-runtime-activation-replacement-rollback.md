@@ -21,12 +21,13 @@ TASK-040 implements and verifies it in isolation, with repeat final Reviewer
 `APPROVED` 0/0. TASK-043 implements the private exact-scope invoker in
 isolation. Post-Owner DP-014 and DP-015 terminal publication remains part of
 this planned orchestrator; the orchestrator and production wiring remain
-absent. Completed and Coordinator-Accepted TASK-044 (2026-08-24) reassesses
-the accepted TASK-040/TASK-043 prerequisites
-against all unchanged section 25 proofs and returns `UNBLOCK TASK-026`: the
-remaining callback/terminal behavior is one coherent bounded TASK-026 core,
-with no separate missing prerequisite. TASK-026 is Ready to Reactivate but is
-not activated by that readiness verdict.
+absent. Completed and Coordinator-Accepted TASK-044 (2026-08-24) historically
+returned `UNBLOCK TASK-026` after reassessing TASK-040/TASK-043. A superseding
+TASK-026 reactivation recheck confirms a missing DP-015 tracked-Start
+managed-parent plus preclaimed `StopOld` admission prerequisite. The corrected
+section 25 matrix is 7 Direct / 9 Compositional / 2 Missing core / 1 Missing
+prerequisite / 0 Deferred. TASK-026 is blocked; the separate bounded
+prerequisite is recommended but not activated.
 
 ## 2. Purpose
 
@@ -518,10 +519,12 @@ absent atomic expected-attempt Owner Stop contract. TASK-039 recorded that
 design in Draft DP-010; completed and Coordinator-Accepted TASK-040 implements
 and verifies the isolated Owner extension, with repeat final Reviewer
 `APPROVED` 0/0. TASK-043 subsequently implements the private exact-scope
-invoker in isolation. TASK-044 proves the remaining callback, terminal, and
-orchestrator behavior is the coherent bounded TASK-026 implementation core and
-records `UNBLOCK TASK-026`; no separate prerequisite remains. TASK-026 is
-Ready to Reactivate but not activated. No reduced DP-016 slice is permitted.
+invoker in isolation. TASK-044 historically records `UNBLOCK TASK-026`; the
+superseding TASK-026 recheck finds the missing DP-015 tracked-Start
+managed-parent plus preclaimed `StopOld` admission prerequisite and corrects
+the matrix to 7 Direct / 9 Compositional / 2 Missing core / 1 Missing
+prerequisite / 0 Deferred. TASK-026 is blocked, and the prerequisite is not
+activated. No reduced DP-016 slice is permitted.
 
 ## 29. Decision
 

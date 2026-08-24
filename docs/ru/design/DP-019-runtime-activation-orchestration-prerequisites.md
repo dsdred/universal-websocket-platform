@@ -27,11 +27,12 @@ final Reviewer `APPROVED` 0/0. TASK-043 реализует concrete private exac
 composition invoker изолированно, не изменяя этот Approved decision. Terminal publication после
 Owner относится к самому последующему orchestrator TASK-026; этот orchestrator,
 external persistence, API, recovery worker и production wiring отсутствуют.
-TASK-026 оставалась Blocked до отдельного verdict readiness. Завершённая и
-Coordinator-Accepted TASK-044 (2026-08-24) фиксирует `UNBLOCK TASK-026`: все
-prerequisites приняты, а remaining terminal/
-orchestrator work относится к core TASK-026, а не к новой prerequisite.
-TASK-026 Ready to Reactivate, но не активирована.
+Завершённая и Coordinator-Accepted TASK-044 (2026-08-24) исторически фиксирует
+`UNBLOCK TASK-026`. Superseding recheck реактивации TASK-026 подтверждает одну
+missing DP-015 conformance prerequisite: atomic tracked-Start managed-parent
+admission с preclaimed ordinal-zero `StopOld`. Corrected matrix — 7 Direct / 9
+Compositional / 2 Missing core / 1 Missing prerequisite / 0 Deferred. TASK-026
+заблокирована; prerequisite не активирована.
 
 ## 2. Назначение
 
@@ -490,9 +491,11 @@ design в Draft DP-010; завершённая и Coordinator-Accepted TASK-040 
 orchestrator и production composition audit полного design.
 
 TASK-044 впоследствии повторно оценивает полный неизменённый набор DP-016
-proofs и фиксирует `UNBLOCK TASK-026`. Отдельной prerequisite больше нет;
-terminal publication и terminalization command/phase являются coherent core
-TASK-026. TASK-026 Ready to Reactivate, но не активирована. Historical focused
+proofs и исторически фиксирует `UNBLOCK TASK-026`. Superseding recheck TASK-026
+обнаруживает missing DP-015 prerequisite tracked-Start managed-parent плюс
+preclaimed `StopOld` admission и исправляет matrix на 7 Direct / 9
+Compositional / 2 Missing core / 1 Missing prerequisite / 0 Deferred. TASK-026
+заблокирована, а prerequisite не активирована. Historical focused
 readiness decomposition prerequisites зафиксирована в зеркальном
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), со
 статусом Design Status Draft и Implementation Status Planned overall, где

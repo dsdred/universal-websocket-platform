@@ -34,9 +34,11 @@ implementation-срезы и закрывает отложенные решен�
 нужны.
 
 Он не определяет production-код и не меняет ни одну принятую семантику.
-Завершённая и Coordinator-Accepted TASK-044 (2026-08-24) фиксирует `UNBLOCK
-TASK-026`; TASK-026 Ready to
-Reactivate, но не активирована, а DP-020 остаётся Draft/Planned overall.
+Завершённая и Coordinator-Accepted TASK-044 (2026-08-24) исторически фиксирует
+`UNBLOCK TASK-026`. Superseding recheck TASK-026 подтверждает missing DP-015
+prerequisite tracked-Start managed-parent плюс preclaimed `StopOld` admission;
+TASK-026 заблокирована, prerequisite не активирована, а DP-020 остаётся
+Draft/Planned overall.
 
 ## 2. Назначение
 
@@ -743,10 +745,12 @@ TASK-043, определённый Draft DP-021, но всё ещё не сод�
 активации, external persistence,
 API, worker recovery и production wiring. Последующая
 terminal publication DP-014 и terminalization command/phase DP-015 после
-результата Owner принадлежат orchestrator TASK-026, а не отдельной prerequisite.
-TASK-044 подтверждает, что более поздней prerequisite нет, и фиксирует
-`UNBLOCK TASK-026`; TASK-026 Ready to Reactivate, но не активирована.
-Historical Срез 4 остаётся завершённым и принятым как TASK-038.
+результата Owner принадлежат orchestrator TASK-026. TASK-044 исторически
+фиксирует `UNBLOCK TASK-026`; superseding recheck TASK-026 подтверждает missing
+DP-015 prerequisite tracked-Start managed-parent плюс preclaimed `StopOld`
+admission и исправляет matrix на 7 Direct / 9 Compositional / 2 Missing core /
+1 Missing prerequisite / 0 Deferred. TASK-026 заблокирована, а prerequisite не
+активирована. Historical Срез 4 остаётся завершённым и принятым как TASK-038.
 
 ## 15. Последствия
 
@@ -776,8 +780,9 @@ UWP фиксирует разложение готовности оставши�
 изолированно; TASK-036 фиксирует exact протокол Среза 3; а TASK-037 реализует и
 независимо принимает Срез 3 изолированно. Срез 4 завершён и принят как TASK-038
 с remains-Blocked verdict на момент historical closure; TASK-044 позднее
-фиксирует `UNBLOCK TASK-026` после TASK-040 и TASK-043, не меняя Draft/Planned
-status proposal. Proposal не
+исторически фиксирует `UNBLOCK TASK-026` после TASK-040 и TASK-043. Этот outcome
+superseded recheck blocker TASK-026 выше, не меняя Draft/Planned status
+proposal. Proposal не
 approximates DP-016 adapter-ом,
 не добавляет операции replacement/rollback Owner, не передаёт permits, не меняет
 ни один Approved статус или семантику и не выдаёт planned capability за

@@ -45,9 +45,16 @@ rendezvous реализованы изолированно. TASK-031/TASK-032/TA
 managed adapter и seam managed Flow/OwnerClaimView. TASK-037 реализует
 изолированно managed parent/StartTarget adapter, общие managed gates, concrete
 continuation, binding sequence attempt/generation DP-014 и exact адаптацию
-outcomes managed Flow, реализованные и независимо принятые изолированно. Concrete private
-composition invoker, последующая terminal publication, orchestrator и Approved
-DP-016 сохраняют Implementation Status Planned.
+outcomes managed Flow, реализованные и независимо принятые изолированно.
+TASK-043 реализует и независимо верифицирует concrete private composition
+invoker изолированно. Последующая terminal publication, orchestrator и
+Approved DP-016 сохраняют Implementation Status Planned.
+Repeat recheck реактивации TASK-026 подтверждает один всё ещё отсутствующий
+conformance seam: managed-parent admission пока не может атомарно использовать
+tracked-Start exception и preclaim derived ordinal-zero phase `StopOld`.
+Corrected readiness matrix — 7 Direct / 9 Compositional / 2 Missing core / 1
+Missing prerequisite / 0 Deferred; prerequisite рекомендована, но не
+активирована.
 
 ## 4. Область
 
@@ -539,10 +546,13 @@ dependency-leaf binding, primitive adapter `ExecuteManagedStart` и seam managed
 Flow/OwnerClaimView. TASK-037 добавляет изолированно managed
 parent/StartTarget adapter, общие primitive/linked managed rendezvous gates,
 stateless continuation OwnerClaim-to-DP-014 и отображение outcomes managed
-Flow, реализованные и независимо принятые изолированно. External durable storage/schema, API,
-DP-016 orchestration, DP-017 recovery, concrete private composition invoker,
-последующая terminal publication DP-014 и terminalization command/phase
-DP-015, management wiring и Production Activation отсутствуют.
+Flow, реализованные и независимо принятые изолированно. TASK-043 добавляет
+concrete private composition invoker изолированно. External durable
+storage/schema, API, DP-016 orchestration, DP-017 recovery, последующая
+terminal publication DP-014 и terminalization command/phase DP-015, management
+wiring и Production Activation отсутствуют. Отдельная bounded conformance
+prerequisite tracked-Start managed-parent плюс preclaimed `StopOld` admission
+также остаётся нереализованной и неактивированной.
 Isolated package не
 изменяет lifecycle contracts и не подключён к DP-013 Directory.
 
