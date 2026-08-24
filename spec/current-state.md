@@ -23,15 +23,16 @@ command-boundary Continue/pending-Stop rendezvous DP-019 также реализ
 изолированно, а полный extension остаётся Planned;
 DP-016–DP-019 имеют Implementation Status Planned overall. Packages
 Dedicated DP-016 orchestration, DP-017 recovery, DP-018 reporting, concrete
-private composition invoker, terminal publication, external schema/HTTP API/persistence,
+future callback closure, terminal publication, external schema/HTTP API/persistence,
 orchestration/recovery/reporting implementation, concrete authorization policy,
 management wiring и Control Service activation отсутствуют.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
-**Последняя завершённая development task:** TASK-040 — Expected-Attempt Runtime
-Owner Stop Implementation; `Completed — Coordinator Accepted`; repeat final
-Reviewer `APPROVED` 0/0.
+**Последняя завершённая development task:** TASK-043 — Private Exact-Scope
+Managed Start Invoker Implementation; `Completed — Coordinator Accepted
+(2026-08-21)`; final Reviewer `APPROVED` 0/0; Scope Audit 21/0/0; PROCESS-002
+Synchronized.
 
 **Последняя завершённая operational task:** TASK-012 — Engineering Process
 Hardening; `Completed — Coordinator Accepted`.
@@ -43,8 +44,9 @@ Composition Invoker Design; `Completed — Coordinator Accepted (2026-08-20)`;
 Tester `PASS` 0/0; repeat Reviewer `APPROVED` 0/0; Scope Audit 17/0/0;
 PROCESS-002 Synchronized.
 
-**Текущая architecture task:** отсутствует. Draft/Planned DP-021 зафиксирован,
-concrete implementation отсутствует.
+**Текущая architecture task:** отсутствует. Draft DP-021 зафиксирован; TASK-043
+реализует concrete invoker изолированно и завершена/принята.
+TASK-042 task commit `ebf4421` опубликован через PR #42 и merged как `ded3aa0`.
 
 TASK-027 закрыла design ambiguity DP-016 через Approved/Planned DP-019.
 Independent Review — `Approved`, blocking и non-blocking findings 0;
@@ -56,16 +58,13 @@ PASS. Acceptance не реализует prerequisites и не снимает TA
 `2c017aace7e56a4747d3cecbe8ff3f6cf53e009f`.
 
 **Текущая development task:** отсутствует. Последняя завершённая development
-task — TASK-040 — Expected-Attempt Runtime Owner Stop Implementation;
-`Completed — Coordinator Accepted`. Принятые TASK-039 semantics Draft DP-010
-реализованы и верифицированы изолированно: `StopExpectedAttempt`,
-`StopAttemptMismatch`, `ErrInvalidExpectedAttempt`, active-before-last
-selection и shared generic-Stop helper. Repeat final Reviewer `APPROVED` 0/0.
-Concrete DP-013
-private composition invoker, terminal publication и production wiring
-отсутствуют. Design-only TASK-042 завершена как `Completed — Coordinator
-Accepted (2026-08-20)` и фиксирует exact contract в Draft/Planned DP-021;
-concrete invoker отсутствует, TASK-026 остаётся `Blocked by Architecture`.
+task — TASK-043 — Private Exact-Scope Managed Start Invoker Implementation;
+`Completed — Coordinator Accepted (2026-08-21)`. Concrete invoker Draft DP-021
+реализован изолированно; Tester `PASS WITH ENVIRONMENT / DECLARED INTEGRATION
+LIMITATIONS` 0/0, final Reviewer `APPROVED` 0/0, Scope Audit 21/0/0 и
+PROCESS-002 Synchronized. Future callback custody, terminal publication/
+terminalization, orchestrator и production wiring отсутствуют; TASK-026
+остаётся `Blocked by Architecture`.
 
 **TASK-031:** `Completed — Coordinator Accepted`. Bounded isolated DP-020
 deferred slice 1 реализован в `internal/runtimecommandidempotency` на branch
@@ -88,8 +87,8 @@ Audit 15/0/0. Commit и publication не авторизованы и не вып
 **Текущая documentation task:** отсутствует.
 
 **Текущая architecture task:** отсутствует. Последняя завершённая architecture
-task — TASK-042; новый Draft/Planned DP-021 не является implementation и не
-активирует TASK-026.
+task — TASK-042; Draft DP-021 имеет Partial Implementation Status после
+isolated implementation TASK-043 и не активирует TASK-026.
 
 **Trusted baseline TASK-009:** clean synchronized
 `main@63b961eeb59af9205c3c3d0b68d3f4bd7b8ac25c`; локальная ветка
@@ -590,8 +589,9 @@ closed continuation outcomes и revision-sandwich convergence. TASK-037
 scope/revision proof, exact DP-014 revision threading и post-claim convergence;
 independent code proof PASS 0/0, Independent Reviewer APPROVED 0/0 и
 Coordinator Acceptance завершены.
-Concrete composition-private invoker, terminal publication, orchestration и
-production wiring отсутствуют. TASK-038 активирует только Slice 4 readiness
+TASK-043 реализует concrete composition-private invoker изолированно; future
+callback, terminal publication, orchestration и production wiring отсутствуют.
+TASK-038 активирует только Slice 4 readiness
 reassessment после Reviewer rework: 7 Direct, 10 Compositional, 2 Missing,
 0 Deferred; verdict `TASK-026 REMAINS BLOCKED` Coordinator Accepted после
 repeat Reviewer APPROVED 0/0. Первый bounded candidate завершён и Coordinator
@@ -602,12 +602,13 @@ repeat final Reviewer `APPROVED` 0/0.
 Documentation-only TASK-041 завершена как `Completed — Coordinator Accepted
 (2026-08-20)` после синхронизации critical live status drift; final Reviewer
 `APPROVED` 0/0. Private exact-scope composition invoker design завершён как
-Coordinator-Accepted TASK-042 и зафиксирован в Draft/Planned DP-021; concrete
-implementation отсутствует. Следующая рекомендация не активирована: отдельный
-bounded implementation/readiness intake только для exact invoker DP-021, без
-result mapping, terminal publication/terminalization, orchestrator
-DP-016/TASK-026 или production wiring. Terminal publication остаётся core work
-TASK-026.
+Coordinator-Accepted TASK-042 и зафиксирован в Draft DP-021. TASK-043 реализует
+concrete invoker изолированно и завершена как `Completed — Coordinator
+Accepted (2026-08-21)` после final Reviewer `APPROVED` 0/0 и Scope Audit
+21/0/0. Следующая рекомендация не активирована: отдельный bounded
+repository-first readiness intake remaining TASK-026 terminal/orchestrator
+work. Его Ready status не доказан; terminal publication остаётся core work
+TASK-026, а TASK-026 остаётся Blocked.
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task

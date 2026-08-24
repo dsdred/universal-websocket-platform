@@ -14,7 +14,8 @@
 six-field authorization и полный binding теперь принадлежат dependency-leaf
 package, primitive managed claims используют sole `ExecuteManagedStart`
 adapter, а command-owned rendezvous identities уникальны и callback-scoped.
-Concrete DP-013 composition-private invoker и production wiring отсутствуют.
+TASK-043 реализует concrete DP-013 composition-private invoker изолированно;
+production wiring отсутствует.
 TASK-036 устраняет оставшуюся неоднозначность command-gate и continuation API
 Среза 3, а TASK-037 реализует этот протокол Среза 3 изолированно: managed
 primitive и linked gates, stateless continuation OwnerClaim-to-DP-014, exact
@@ -182,15 +183,16 @@ exported поверхность авторизации DP-013 для `Directory.
 ## 8. Закрытая Design Boundary: Private Managed Invoker и Managed Flow Seam
 
 TASK-042 закрывает только оставшуюся design ambiguity concrete invoker через
-Draft/Planned [DP-021](DP-021-private-exact-scope-managed-start-invoker.md).
+Draft/Partial [DP-021](DP-021-private-exact-scope-managed-start-invoker.md).
 Следующее существующее decomposition остаётся authoritative context: DP-021
 фиксирует ownership `runtimemanagement`, custody preconstructed Flow, единственную
 operation `InvokeManagedStart`, cancellation delegation, capability custody,
 failure behavior и отсутствие legacy fallback. Future orchestrator-owned
 callback closure DP-015 задачи TASK-026 вызывает этот invoker как sole
 lifecycle subcall и владеет mapping `TerminalOutcome`, publication и
-terminalization вне DP-021; сам invoker не является callback. Implementation
-или orchestrator не активируется.
+terminalization вне DP-021; сам invoker не является callback. TASK-043
+реализует только этот invoker изолированно; callback, terminal work или
+orchestrator не активируются.
 
 ### 8.1 Package split и направление invocation
 
@@ -626,9 +628,11 @@ TASK-035.
 
 ### Срез 2 — private managed invoker и managed Flow seam
 
-Текущий статус среза: partial isolated implementation, исторически принятая
-TASK-032; Срез 2R TASK-035 предоставляет полный authoritative binding repair,
-не переписывая историю acceptance TASK-032.
+Текущий статус среза: partial isolated implementation. TASK-032 исторически
+реализует seam managed Flow, Срез 2R TASK-035 предоставляет полный
+authoritative binding repair, а TASK-043 реализует concrete exact-scope invoker
+изолированно. Future callback custody и terminal integration остаются вне
+implemented proof этого среза.
 
 - Добавить managed construction и per-call seam `StartManaged` и immutable
   значения `StartExecutionBinding` / `OwnerClaimView`, opaque handle
@@ -696,8 +700,9 @@ Production composition/private-invoker wiring не входит в этот ср
   Acceptance после фиксации этого design в Draft DP-010; завершённая и
   Coordinator-Accepted TASK-040 реализует и верифицирует isolated Owner
   extension, repeat final Reviewer `APPROVED` 0/0. Design private exact-scope
-  composition invoker теперь зафиксирован Draft DP-021, тогда как его
-  implementation остаётся последующей и неактивированной.
+  composition invoker зафиксирован Draft DP-021, а TASK-043 реализует этот
+  invoker изолированно без активации callback, terminal, orchestrator или
+  production work.
 
 Каждый срез требует собственного intake задачи, Existing Coverage Report,
 Verification Matrix, Independent Review, PROCESS-002 и Coordinator Acceptance.
@@ -730,10 +735,10 @@ Implementation Status остаётся Planned overall. Сама design-зада
 принимает его repair Среза 2R изолированно, а TASK-036 устраняет оставшуюся
 неоднозначность command-gate и continuation API Среза 3. TASK-037 реализует и
 независимо принимает Срез 3 изолированно. Репозиторий содержит принятый Draft
-design и завершённую TASK-040 isolated implementation atomic expected-attempt Owner
-Stop, но всё ещё не содержит concrete private exact-scope composition invoker,
-определённый Draft DP-021,
-оркестратор активации, external persistence,
+design, завершённую TASK-040 isolated implementation atomic expected-attempt
+Owner Stop и isolated concrete private exact-scope composition invoker
+TASK-043, определённый Draft DP-021, но всё ещё не содержит оркестратор
+активации, external persistence,
 API, worker recovery и production wiring. Последующая
 terminal publication DP-014 и terminalization command/phase DP-015 после
 результата Owner принадлежат orchestrator TASK-026, а не отдельной prerequisite.

@@ -8,7 +8,8 @@
 - **Implementation Status:** Planned overall; parent/phase storage, callback
   capability, sequential phase core, and command-boundary Continue/pending-Stop
   rendezvous implemented in isolation; Slice 3 managed gates and continuation
-  implemented and independently accepted in isolation
+  and the DP-021 exact-scope invoker implemented and independently verified in
+  isolation
 
 This focused design closes only the integration-contract ambiguity discovered
 by TASK-026. The repository implements the isolated DP-015 parent/phase core,
@@ -22,13 +23,12 @@ factual readiness gap: implemented DP-010 Stop cannot atomically select an
 expected Launch Attempt. Completed and Coordinator-Accepted TASK-039 records
 the accepted Draft DP-010 design for that operation; completed and
 Coordinator-Accepted TASK-040 implements and verifies it in isolation, with
-repeat final Reviewer `APPROVED` 0/0. The concrete private exact-scope composition
-invoker remains absent. This statement does not amend this
-Approved decision. Post-Owner terminal publication belongs to the later
+repeat final Reviewer `APPROVED` 0/0. TASK-043 implements the concrete private
+exact-scope composition invoker in isolation without amending this Approved
+decision. Post-Owner terminal publication belongs to the later
 TASK-026 orchestrator itself; that orchestrator, external persistence, API,
 recovery worker, and production wiring remain absent. TASK-026 remains Blocked
-by the later private exact-scope composition invoker and subsequent
-readiness/orchestrator boundaries.
+by subsequent readiness/orchestrator boundaries.
 
 ## 2. Purpose
 
@@ -164,7 +164,7 @@ declared phase.
 
 The exact management scope exposes a private composition-only lifecycle
 invoker after authorization. It routes only to the already bound Flow/Owner;
-it is not a public Directory bypass. Its planned Start path is conceptually:
+it is not a public Directory bypass. Its implemented isolated Start path is:
 
 ```text
 InvokeManagedStart(context, StartRequest, StartExecutionBinding) -> exact Owner outcome
@@ -179,7 +179,7 @@ permit constructs the binding and synchronously invokes this operation once;
 it cannot obtain another scope, change the target, or transfer its permit.
 
 The private invoker validates the binding against its immutable scope and the
-StartRequest, then calls the one stored Flow through its planned managed Start
+StartRequest, then calls the one stored Flow through its existing managed Start
 surface with that same binding. It creates no Flow, registry entry, mutable
 current-operation slot, goroutine, or detached callback.
 
@@ -227,9 +227,9 @@ generation-bound callback capability, and strict sequential core are
 implemented in isolation; the command-boundary Continue/pending-Stop surface is
 also implemented there in isolation. The managed continuation and exact
 attempt/generation binding sequence are implemented and independently accepted
-in isolation. The composition-private invoker, terminal publication and
-terminalization, orchestrator, and production wiring remain absent; overall
-Implementation Status remains Planned.
+in isolation. TASK-043 implements the composition-private invoker in isolation;
+terminal publication and terminalization, orchestrator, and production wiring
+remain absent, so overall Implementation Status remains Planned.
 
 Conceptually it provides:
 
@@ -490,10 +490,10 @@ accepted in isolation. TASK-038 additionally finds that atomic expected-attempt
 Owner Stop must precede the concrete private scoped invoker. Completed and
 Coordinator-Accepted TASK-039 records its accepted Draft DP-010 design;
 completed and Coordinator-Accepted TASK-040 implements and verifies it in
-isolation, with repeat final Reviewer `APPROVED` 0/0. The repository
-still lacks that invoker, later terminal
-publication and command/phase terminalization, activation orchestrator, and
-production composition audit required by the complete design.
+isolation, with repeat final Reviewer `APPROVED` 0/0. TASK-043 implements that
+invoker in isolation. The repository still lacks later terminal publication
+and command/phase terminalization, activation orchestrator, and production
+composition audit required by the complete design.
 
 TASK-026 therefore remains Blocked. Successor tasks must implement and
 independently verify the remaining prerequisites before TASK-026 may be
@@ -502,9 +502,10 @@ readiness decomposition of those prerequisites is recorded in the mirrored
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), with
 Design Status Draft and Implementation Status Planned overall, with Slice 3
 implemented and independently accepted in isolation.
-The downstream exact private-invoker refinement is recorded in Draft/Planned
-[DP-021](DP-021-private-exact-scope-managed-start-invoker.md); it does not
-amend this Approved contract or implement the invoker.
+The downstream exact private-invoker refinement is recorded in Draft
+[DP-021](DP-021-private-exact-scope-managed-start-invoker.md), with Partial
+Implementation Status after TASK-043; it does not amend this Approved contract
+or implement the remaining orchestration/terminal work.
 
 ## 23. Consequences
 
