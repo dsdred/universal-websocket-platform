@@ -35,6 +35,8 @@ Coordinator обязан:
 - закрыть задачу после успешного завершения всех этапов;
 - после отдельно разрешённого commit сформировать immutable Publisher handoff
   и отличать publication readiness от terminal publication completion;
+- сертифицировать `Blocked Closure Certified` только по полному evidence gate
+  PROCESS-001 и не выдавать его за Acceptance или Completion;
 - синхронизировать project state и рекомендовать следующую Ready work, не
   запуская её автоматически.
 
@@ -88,24 +90,39 @@ Coordinator управляет процессом.
 
 1. выполняет read-only preflight branch, status, history, task records,
    project state, decisions и roadmap;
-2. сначала ищет однозначно возобновляемую active task;
-3. затем проверяет явную current/next task;
-4. при её отсутствии строит кандидатов только из пересечения milestone
+2. сначала ищет однозначно возобновляемую active task, включая bounded
+   evidence-closure resume `Blocked` task только по eligibility PROCESS-001;
+3. при clean synchronized `main` read-only reconstruct-ит terminal publication
+   exact checkpoint по ancestry, merged PR/OID, отсутствующим refs и equality
+   main/origin; только затем распознаёт sealed blocked-evidence record и
+   допускает normal intake ровно его exact `Not Activated` prerequisite;
+4. затем проверяет явную current/next task;
+5. при её отсутствии строит кандидатов только из пересечения milestone
    dependencies, factual gaps и существующих решений;
-5. применяет readiness и ranking rules PROCESS-001;
-6. разрешает attributed dirty worktree только для resume единственной active
+6. применяет readiness и ranking rules PROCESS-001;
+7. разрешает attributed dirty worktree только для resume единственной active
    task и останавливается при любом dirty baseline для новой task, materially
    different tie, product prioritization, unattributed/diverged baseline или
    недостающем решении;
-7. при необходимости безопасно создаёт либо переключает локальную ветку;
-8. первым content change записывает выбор и отклонённые alternatives в task
+8. при необходимости безопасно создаёт либо переключает локальную ветку;
+9. первым content change записывает выбор и отклонённые alternatives в task
    record;
-9. проводит полный применимый role cycle;
-10. после PROCESS-002 классифицирует каждый файл diff как `Required`,
+10. проводит полный применимый role cycle;
+11. после PROCESS-002 классифицирует каждый файл diff как `Required`,
     `Questionable` или `Removable`;
-11. выполняет final checks и независимый review;
-12. принимает результат, обновляет project state и рекомендует следующую
+12. выполняет final checks и независимый review;
+13. принимает результат, обновляет project state и рекомендует следующую
     Ready work.
+
+Для eligible blocked-evidence resume шаг 13 заменяется на `Blocked Closure
+Certified`: Coordinator не принимает product result, не меняет статус
+`Blocked` и не активирует recommended prerequisite.
+
+Sealed blocked record не считается active work только в шаге 3 и только для
+exact prerequisite. Обязательны отсутствие иной active work, обычная readiness,
+полностью reconstructable terminal outcome и новый task record; post-merge
+documentation commit не требуется. Без любого evidence selection
+останавливается.
 
 Task Contract и все gates определены PROCESS-001; Coordinator не создаёт их
 альтернативные версии в task-specific инструкциях.
@@ -122,13 +139,22 @@ fetch, pull, remote mutation или изменение `main`.
 PROCESS-001 и не трактует эту команду как разрешение push, PR, merge или
 publication.
 
+После `Blocked Closure Certified` та же команда альтернативно разрешает ровно
+один `Blocked Evidence Checkpoint`. Coordinator повторно доказывает immutable
+certification tuple, exact evidence-only staged set, статус `Blocked`,
+отсутствие Acceptance и отсутствие product implementation. Изменение tuple
+останавливает gate; команда не переносится на новый diff.
+
 ---
 
 # Publisher Coordination
 
-После создания отдельно разрешённого task commit Coordinator передаёт
-Publisher immutable Target: Task ID, repository, exact accepted branch, task
-commit OID, base `main`, accepted verification/scope и publication readiness.
+После создания отдельно разрешённого task commit либо evidence checkpoint
+Coordinator передаёт Publisher immutable Target: publication class, Task ID,
+repository, exact branch, ordered commit target, base `main`, verification/
+scope и publication readiness. Для blocked recovery scope остаётся certified,
+а не accepted; target включает evidence checkpoint и необходимый contiguous
+process-amendment commit.
 После появления PR/merge evidence к handoff добавляются exact PR head/base/OID
 и merge OID без изменения Target.
 
@@ -168,7 +194,10 @@ Coordinator обязан остановить выполнение задачи 
 - выбирается новая task, а baseline содержит любые uncommitted changes;
 - baseline diverged либо происхождение branch/history неясно;
 - следующий slice требует продуктовой приоритизации или отсутствующего
-  решения.
+  решения;
+- blocked certification tuple или evidence diff изменился после verification;
+- prerequisite admission ссылается на blocked record без reconstructable
+  terminal P10 outcome либо при наличии другой active work.
 
 ---
 
@@ -184,6 +213,12 @@ Coordinator закрывает задачу только если:
   changes;
 - project state отражает фактический результат;
 - следующий candidate рекомендован либо зафиксирована причина его отсутствия.
+
+`Blocked Closure Certified` является отдельным terminal handoff, но не закрывает
+task как Completed: Coordinator сохраняет `Blocked`, фиксирует непройденный
+Acceptance и запрещает автоматическую активацию prerequisite. После полной
+publication recovery-chain clean synchronized `main` может служить baseline
+для normal intake exact prerequisite через sealed-evidence exception.
 
 ## Coordinator Final Report
 

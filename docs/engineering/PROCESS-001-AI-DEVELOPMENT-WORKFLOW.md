@@ -105,11 +105,24 @@ branch/history всегда останавливают autonomous continuation.
 Coordinator выбирает ровно один bounded slice:
 
 1. возобновляет однозначно атрибутированную `In Progress` task; `Blocked` task
-   возобновляется только при наличии в репозитории evidence, что blocker
-   устранён, иначе autonomous continuation останавливается;
-2. иначе использует явную current или next task из project-state documents
+   возобновляется при наличии в репозитории evidence, что blocker устранён,
+   либо только для bounded `Blocked Closure Certified` cycle, когда её exact
+   attributed evidence diff удовлетворяет eligibility этого процесса. Второй
+   случай запрещает product implementation, изменение blocker scope и
+   активацию prerequisite; иначе autonomous continuation останавливается;
+2. если clean synchronized `main` содержит exact certified checkpoint и ровно
+   один записанный `Not Activated` prerequisite, Coordinator read-only
+   reconstruct-ит terminal publication: checkpoint/ordered target находятся в
+   ancestry `main`, exact PR имеет `MERGED` с ожидаемыми head/base/merge OID,
+   local/remote task refs отсутствуют и `main == origin/main`. Только при полном
+   доказательстве P0–P10 outcome blocked record считается sealed evidence, а не
+   resumable active work, и только для admission этого exact prerequisite.
+   Coordinator проверяет обычную readiness и создаёт новую task normal intake;
+   TASK сохраняет `Blocked` и не считается Accepted/Completed. Отсутствующий,
+   неоднозначный или не-Ready prerequisite останавливает selection;
+3. иначе использует явную current или next task из project-state documents
    либо closure последней завершённой task после проверки readiness;
-3. иначе пересекает dependency ordering текущей milestone из MASTER_PLAN,
+4. иначе пересекает dependency ordering текущей milestone из MASTER_PLAN,
    фактические gaps из `spec/current-state.md`, открытые решения из
    `spec/decisions.md` и существующие ADR, ARCH и DP.
 
@@ -153,7 +166,9 @@ task-ветку, если она требуется. Task record являетс�
 - следующий candidate, который не становится active автоматически.
 
 Новая task и её ветка начинаются только с чистого, понятного baseline и при
-отсутствии другой active task. Для production work используется локальная
+отсутствии другой active task. Единственное исключение — terminally published
+sealed blocked-evidence record из шага 2: он не является active work только для
+admission своего exact prerequisite. Для production work используется локальная
 ветка с префиксом `feature/`, для documentation-only work — с префиксом
 `docs/`; новый slug должен включать Task ID, если он уже назначен. Если
 подходящая task-ветка уже активна, работа продолжается в ней. Создавать или
@@ -190,6 +205,11 @@ Task Intake
 с явным обоснованием в task record. Следующая рекомендация не запускает новую
 task и не создаёт для неё branch.
 
+Для eligible blocked-evidence resume цикл заканчивается PROCESS-002, Scope
+Audit, Verification, independent final Review и `Blocked Closure Certified`
+вместо Coordinator Acceptance. Это не является новой task или сокращённым
+product acceptance cycle.
+
 ### User Command Gates
 
 Пользовательская модель содержит ровно три permission/gate-команды:
@@ -201,7 +221,7 @@ task и не создаёт для неё branch.
     -> STOP
 
 Разрешаю коммит.
-    -> один проверенный task commit
+    -> один проверенный accepted task commit либо Blocked Evidence Checkpoint
     -> STOP
 
 Разрешаю публиковать.
@@ -213,6 +233,10 @@ task и не создаёт для неё branch.
 permissions. Publisher resume-сигнал после устранения blocker не является
 четвёртым gate: он не выдаёт нового разрешения и только возобновляет ранее
 разрешённый immutable target.
+
+`Blocked Closure Certified` не добавляет пользовательскую команду и не
+является Coordinator Acceptance. Оно только выбирает альтернативный,
+ограниченный closure/commit path, определённый ниже.
 
 ## Task Intake
 
@@ -408,17 +432,64 @@ Closure record содержит:
 
 Commit выполняется только при явном разрешении.
 
+### Blocked Closure Certified
+
+Если выполнение остановлено отсутствующим prerequisite, Coordinator может
+сертифицировать blocked closure вместо Acceptance только при одновременном
+выполнении всех условий:
+
+1. task record сохраняет статус `Blocked`, точный blocker, нарушенный invariant
+   и отдельный следующий prerequisite как `Not Activated`;
+2. Coordinator Acceptance явно записан как `не пройден` и не подменён review
+   evidence;
+3. полный attributed diff содержит только необходимые blocking-discovery,
+   closure и project-state evidence; production code, exploratory code,
+   generated, temporary, staged и untracked files отсутствуют;
+4. Documentation Synchronization, применимая Verification Matrix, Scope Audit
+   и независимый final Review завершены; blocking evidence признано полным и
+   непротиворечивым, но product result не принят;
+5. зафиксирован immutable certification tuple: repository, Task ID, branch,
+   base branch/OID, current HEAD OID, exact evidence file set, canonical
+   evidence digest, blocker identity и verification/review results.
+
+Canonical evidence digest — Git blob OID сырых bytes результата
+`git diff --binary --full-index --no-ext-diff <certified-HEAD-OID> -- <exact
+evidence file set>`. Явный certified HEAD делает bytes одинаковыми до и после
+exact staging, но чувствительными к любому content change. Paths передаются
+после `--` в зафиксированном лексикографическом порядке; digest вычисляется
+`git hash-object --stdin`, а команда, certified HEAD, exact path order, object
+format и OID записываются в certification tuple. Hash от иного diff
+representation не взаимозаменяем.
+
+Результат называется `Blocked Closure Certified`. Он не меняет task status,
+не выполняет commit, не разрешает publication, не устраняет blocker и не
+активирует следующую task. Любое изменение tuple, file set или evidence diff
+аннулирует certification и требует повторных verification, review и
+сертификации.
+
+После отдельной команды `Разрешаю коммит.` альтернативный Commit Gate может
+создать ровно один `Blocked Evidence Checkpoint`. Checkpoint является
+evidence/transition artifact, а не task Acceptance или Completion.
+
 ## Commit Gate
 
 Точная команда `Разрешаю коммит.` после Coordinator Acceptance разрешает
 создание ровно одного проверенного task commit из принятого diff. Она не
 разрешает push, PR, merge или публикацию.
 
+Та же точная команда после `Blocked Closure Certified` разрешает ровно один
+`Blocked Evidence Checkpoint` из exact certified evidence diff. В этом режиме
+Coordinator обязан дополнительно подтвердить неизменность certification tuple,
+статус task `Blocked`, отсутствие Coordinator Acceptance, отсутствие product
+implementation и exact staged set, равный certified evidence file set.
+Сообщение commit должно обозначать blocked evidence, а не completion.
+
 Непосредственно перед commit Coordinator:
 
 1. проверяет соответствие commit message принятой policy;
 2. повторно проверяет полный exact file set;
-3. убеждается, что после acceptance не появились неожиданные изменения;
+3. убеждается, что после acceptance либо certification не появились
+   неожиданные изменения;
 4. исключает временные, generated и посторонние файлы;
 5. повторяет `git diff --check` и применимые final checks.
 
@@ -427,9 +498,14 @@ GPG, DCO и sign-off не требуются, если отдельно не п�
 ## Publication
 
 Publication readiness не является publication completion. После отдельного
-разрешения commit Coordinator передаёт Publisher immutable tuple: Task ID,
-accepted task branch, exact task commit OID, base `main`, accepted
-verification/scope и publication readiness.
+разрешения commit Coordinator передаёт Publisher immutable tuple: publication
+class (`Accepted Task` или `Blocked Evidence Recovery`), Task ID, exact branch,
+ordered commit target, base `main`, verification/scope и publication readiness.
+Для `Accepted Task` target содержит exact task commit и accepted scope. Для
+`Blocked Evidence Recovery` target содержит exact evidence checkpoint, его
+certification tuple и при необходимости contiguous process-amendment commit
+между base OID и checkpoint; task остаётся `Blocked`, а scope называется
+certified, не accepted.
 
 Сообщение, всё содержимое которого после удаления начальных и конечных
 пробельных символов равно `Разрешаю публиковать.`, разрешает одну полную
@@ -450,8 +526,9 @@ P0 read-only preflight
 ```
 
 Initial P0 до первой mutation проверяет clean staged/unstaged/untracked state,
-current exact task branch/HEAD, immutable Target `{TaskID, repository, task
-branch, task commit, base main}`, origin URL/repository, noninteractive SSH и
+current exact branch/HEAD, immutable Target `{publication class, TaskID,
+repository, branch, ordered commit target, base main, scope}`, origin
+URL/repository, noninteractive SSH и
 `git ls-remote --exit-code origin`, `gh auth status` и repository/default
 branch через `gh repo view` либо equivalent. Failure любого transport/auth/
 repository subcheck внутри P0 оставляет P0 первым незавершённым, zero completed
@@ -461,7 +538,7 @@ Resume использует отдельный non-checkpoint Resume Reconstruct
 регрессирует P0. Guard сначала reconstruct-ит completed checkpoints, PR head
 OID и merge OID:
 
-- до confirmed P6 current branch/HEAD обычно остаются exact task branch/task
+- до confirmed P6 current branch/HEAD обычно остаются exact target branch/head
   OID; remote ref допустим до P4 и отсутствует после P5;
 - после confirmed P6 current branch обязан быть clean `main`; task branch/HEAD
   больше не требуются, local task branch существует только до P8, remote уже
@@ -472,7 +549,7 @@ OID и merge OID:
 Resume никогда не recreates/checkout-ит удалённую task branch и сначала
 inspect-ит ambiguous outcomes.
 
-P1 подтверждает `remote OID == task OID` и немедленно переходит к P2. P2
+P1 подтверждает `remote OID == target head OID` и немедленно переходит к P2. P2
 сначала ищет exact PR по head branch/OID и base `main`, затем при необходимости
 создаёт ровно один PR; ambiguous response inspect-ится до retry. Успешный push
 не является terminal outcome и не разрешает запрос `Создать Pull Request`.
@@ -495,7 +572,7 @@ Merge strategy называется явно и соответствует де�
 репозитория; Publisher не выбирает новую policy самостоятельно.
 
 P5–P9 выполняют отдельный безопасный cleanup только после confirmed merge:
-remote ref удаляется лишь если всё ещё равен authorized task OID; затем
+remote ref удаляется лишь если всё ещё равен authorized target head OID; затем
 P5 выполняет `git fetch --prune`; затем P6 checkout `main`, P7 только
 `pull --ff-only`, P8 local delete
 через `-d` и final
@@ -505,21 +582,36 @@ rebase, non-fast-forward pull, globs и удаление unmerged/unconfirmed br
 
 External blocker не расходует publish authority. Blocker report перечисляет
 completed steps, exact first unfinished P-step, factual error/check state,
-известные PR/task/merge IDs, current branch/HEAD/worktree/refs, unblock action
+известные PR/target-head/merge IDs и publication class, current
+branch/HEAD/worktree/refs, unblock action
 и сохранение разрешения. Команда
 `Авторизация готова. Продолжай ранее разрешённую публикацию.` либо столь же
 явная unblock/resume ссылка выполняет phase-aware Resume Reconstruction Guard
 и продолжает первый незавершённый шаг без нового publish permission. Blind
 replay uncertain mutation запрещён.
 
-Dirty/ambiguous baseline является safety failure; изменение branch/task
-OID/base/scope invalidates exact authority. Они отличаются от SSH, `gh`,
+Dirty/ambiguous baseline является safety failure; изменение publication class,
+branch, ordered commit target/target head OID, base или accepted/certified scope
+invalidates exact authority. Они отличаются от SSH, `gh`,
 repository, PR, checks, merge-gate/protection и cleanup external blockers.
 
-P10 сообщает PR number/URL, task commit, merge commit, CI/checks state,
+P10 сообщает PR number/URL, publication class, target head commit, merge
+commit, CI/checks state,
 наблюдавшийся `MERGEABLE / CLEAN`, удаление remote/local task branches,
 `main == origin/main` с OID, current `main`, clean worktree и затем STOP.
 Отчёт только о push или merge запрещён.
+
+Для `Blocked Evidence Recovery` все P0–P10 выполняются без послаблений. P0
+дополнительно доказывает exact ordered commit range, наличие evidence
+checkpoint, неизменность certification tuple и отсутствие ложного Accepted/
+Completed state. P10 называет publication class и подтверждает, что task
+остаётся `Blocked`. После P9 clean synchronized `main` является допустимым
+baseline для последующей отдельной команды `Продолжай проект.`; prerequisite
+не выбирается и не активируется Publisher автоматически.
+Только read-only reconstructable terminal P10 outcome делает blocked record
+sealed для узкого selection exception; post-merge documentation commit для
+admission не требуется. Checkpoint без terminal publication сохраняет
+dirty/active-baseline stop.
 
 Publisher фиксирует последний успешно выполненный P-checkpoint. Blocker
 report содержит exact первый незавершённый checkpoint, factual blocker,
@@ -640,6 +732,12 @@ Review не создаёт fast path, обязательную статисти�
 - Coordinator зафиксировал Closure;
 - commit не выполнен без явного разрешения.
 
+Для `Blocked Closure Certified` этот список применяется к достоверности и
+полноте evidence, а не к выполнению product Definition of Done. Task не
+считается завершённой; terminal blocked closure достигается только через
+certification, отдельно разрешённый checkpoint и, если разрешена, полную
+P0–P10 publication с clean synchronized baseline.
+
 ## Process Invariants
 
 Запрещается:
@@ -653,3 +751,7 @@ Review не создаёт fast path, обязательную статисти�
 - пропускать независимый review;
 - создавать конкурирующие источники истины;
 - полагаться на память диалога для продолжения работы.
+- считать `Blocked Closure Certified` либо `Blocked Evidence Checkpoint`
+  Coordinator Acceptance, Completion или доказательством устранения blocker;
+- активировать subsequent prerequisite до clean synchronized baseline после
+  publication blocked evidence либо иного отдельно определённого clean path.
