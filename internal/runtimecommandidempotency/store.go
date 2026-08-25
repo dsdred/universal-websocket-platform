@@ -39,11 +39,16 @@ type permitState struct {
 	revision   Revision
 }
 
+type stopExceptionOccupant struct {
+	command *commandIdentity
+	phase   *phaseIdentity
+}
+
 type commandLedger struct {
 	mu           sync.Mutex
 	records      map[commandIdentity]*commandRecord
 	live         map[commandIdentity]*permitState
-	stopForStart map[commandIdentity]commandIdentity
+	stopForStart map[commandIdentity]stopExceptionOccupant
 	parents      map[commandIdentity]*parentRecord
 	phases       map[phaseIdentity]*phaseRecord
 	liveParents  map[commandIdentity]*permitState
@@ -88,7 +93,7 @@ func (s *MemoryStorage) ledger(scope instanceScope) *commandLedger {
 		ledger = &commandLedger{
 			records:      make(map[commandIdentity]*commandRecord),
 			live:         make(map[commandIdentity]*permitState),
-			stopForStart: make(map[commandIdentity]commandIdentity),
+			stopForStart: make(map[commandIdentity]stopExceptionOccupant),
 			parents:      make(map[commandIdentity]*parentRecord),
 			phases:       make(map[phaseIdentity]*phaseRecord),
 			liveParents:  make(map[commandIdentity]*permitState),
@@ -199,7 +204,8 @@ func (b *Boundary) Execute(
 	ledger.records[identity] = record
 	ledger.live[identity] = state
 	if trackedStart != nil {
-		ledger.stopForStart[*trackedStart] = identity
+		occupant := identity
+		ledger.stopForStart[*trackedStart] = stopExceptionOccupant{command: &occupant}
 	}
 	permit := &executionPermit{
 		boundary: b,

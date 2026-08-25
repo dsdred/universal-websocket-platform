@@ -26,20 +26,19 @@ Dedicated DP-016 orchestration, DP-017 recovery, DP-018 reporting, concrete
 future callback closure, terminal publication, external schema/HTTP API/persistence,
 orchestration/recovery/reporting implementation, concrete authorization policy,
 management wiring и Control Service activation отсутствуют. Historical
-TASK-044 `UNBLOCK TASK-026` superseded recheck реактивации: missing DP-015
+TASK-044 `UNBLOCK TASK-026` superseded recheck реактивации определил DP-015
 tracked-Start managed-parent плюс preclaimed `StopOld` admission prerequisite;
-corrected matrix 7 Direct / 9 Compositional / 2 Missing core / 1 Missing
-prerequisite / 0 Deferred. TASK-046 завершена как `Completed — Coordinator
-Accepted (2026-08-25)` и фиксирует planned design этой admission без
-implementation. TASK-026 заблокирована; отдельная implementation task является
-next candidate, не активирована и не имеет назначенного Task ID.
+TASK-046 зафиксировала contract, а TASK-047 реализует его изолированно.
+Corrected matrix 7 Direct / 9 Compositional / 2 Missing core / 1 Missing
+prerequisite / 0 Deferred остаётся historical до отдельной repository-first
+reassessment. TASK-026 сохраняет статус Blocked.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
-**Последняя завершённая development task:** TASK-043 — Private Exact-Scope
-Managed Start Invoker Implementation; `Completed — Coordinator Accepted
-(2026-08-21)`; final Reviewer `APPROVED` 0/0; Scope Audit 21/0/0; PROCESS-002
-Synchronized.
+**Последняя завершённая development task:** TASK-047 — Tracked-Start
+Managed-Parent Admission Implementation; `Completed — Coordinator Accepted
+(2026-08-25)`; independent Tester `PASS WITH ENVIRONMENT LIMITATION` 0/0;
+final Reviewer `APPROVED` 0/0; Scope Audit 18/0/0; PROCESS-002 Synchronized.
 
 **Последняя завершённая operational task:** TASK-012 — Engineering Process
 Hardening; `Completed — Coordinator Accepted`.
@@ -65,18 +64,9 @@ PASS. Acceptance не реализует prerequisites и не снимает TA
 опубликован через PR #27 и merged как
 `2c017aace7e56a4747d3cecbe8ff3f6cf53e009f`.
 
-**Текущая development task:** TASK-026 — Blocked by missing DP-015
-tracked-Start managed-parent плюс preclaimed `StopOld` admission prerequisite.
-Последняя завершённая development task — TASK-043 — Private Exact-Scope Managed Start Invoker Implementation;
-`Completed — Coordinator Accepted (2026-08-21)`. Concrete invoker Draft DP-021
-реализован изолированно; Tester `PASS WITH ENVIRONMENT / DECLARED INTEGRATION
-LIMITATIONS` 0/0, final Reviewer `APPROVED` 0/0, Scope Audit 21/0/0 и
-PROCESS-002 Synchronized. Future callback custody, terminal publication/
-terminalization, orchestrator и production wiring отсутствуют. Corrected
-TASK-026 matrix — 7 Direct / 9 Compositional / 2 Missing core / 1 Missing
-prerequisite / 0 Deferred; design refinement завершён как TASK-046 `Completed —
-Coordinator Accepted (2026-08-25)`, а implementation prerequisite остаётся next
-candidate, Not Activated, без Task ID.
+**Текущая development task:** отсутствует. TASK-026 сохраняет статус Blocked
+до отдельной repository-first readiness reassessment; terminalization,
+orchestrator и production wiring отсутствуют.
 
 **TASK-031:** `Completed — Coordinator Accepted`. Bounded isolated DP-020
 deferred slice 1 реализован в `internal/runtimecommandidempotency` на branch
@@ -102,11 +92,10 @@ publication на closure не выполнялись.
 
 **Текущая architecture task:** отсутствует. Последняя завершённая architecture
 task — TASK-046, `Completed — Coordinator Accepted (2026-08-25)`; additive
-planned DP-015 tracked-Start managed-parent plus preclaimed `StopOld` admission
-contract зафиксирован без implementation. Draft DP-021 имеет Partial
-Implementation Status после isolated implementation TASK-043. Superseding
-Architect recheck TASK-026 фиксирует `CONFIRMED BLOCKER`; prerequisite не
-активирована.
+DP-015 tracked-Start managed-parent plus preclaimed `StopOld` admission contract
+зафиксирован и реализован изолированно в TASK-047. Draft DP-021 имеет Partial
+Implementation Status после isolated implementation TASK-043. TASK-026
+сохраняет `Blocked` до отдельной reassessment.
 
 **Trusted baseline TASK-009:** clean synchronized
 `main@63b961eeb59af9205c3c3d0b68d3f4bd7b8ac25c`; локальная ветка
@@ -545,11 +534,11 @@ Simplified Variant B отклонён; implementation scope DP-016 не умен
 production/test changes, Coordinator Acceptance, commit и publication не
 выполнялись. После accepted prerequisites через TASK-043 TASK-044 исторически
 фиксирует `UNBLOCK TASK-026`. Superseding recheck реактивации подтверждает
-missing DP-015 tracked-Start managed-parent плюс preclaimed `StopOld` admission
+DP-015 tracked-Start managed-parent плюс preclaimed `StopOld` admission
 prerequisite и corrected matrix 7 Direct / 9 Compositional / 2 Missing core /
-1 Missing prerequisite / 0 Deferred. TASK-046 фиксирует planned design этой
-admission без implementation. TASK-026 заблокирована; implementation и test
-expansion в TASK-026 запрещены, отдельная implementation task не активирована.
+1 Missing prerequisite / 0 Deferred. TASK-046 фиксирует design, а TASK-047
+реализует prerequisite изолированно. TASK-026 заблокирована; implementation и
+test expansion в TASK-026 запрещены до отдельной reassessment.
 
 **TASK-027:** `Completed — Coordinator Accepted`. Approved/Planned DP-019 фиксирует
 единый prerequisite contract: exact orchestration authorization tuple,
@@ -637,10 +626,9 @@ Direct / 9 Compositional / 2 Missing core / 1 Missing prerequisite / 0 Deferred
 из-за missing DP-015 tracked-Start managed-parent плюс preclaimed `StopOld`
 admission prerequisite. Approved/Planned DP-016 не меняется. TASK-044 `Completed — Coordinator
 Accepted (2026-08-24)`, repeat Reviewer `APPROVED` 0/0, Scope Audit 16/0/0 и
-PROCESS-002 Synchronized. TASK-046 завершила только design refinement missing
-prerequisite и сохраняет TASK-026 Blocked. Отдельная bounded
-implementation prerequisite остаётся next candidate, не активирована и не
-имеет назначенного Task ID.
+PROCESS-002 Synchronized. TASK-046 завершила design refinement, а TASK-047
+реализует bounded implementation prerequisite изолированно. TASK-026 остаётся
+Blocked до отдельной repository-first reassessment.
 
 **TASK-046:** `Completed — Coordinator Accepted (2026-08-25)`. Repeat Reviewer
 `Approved 0/0`; Scope Audit 15/0/0; PROCESS-002 Synchronized. Approved DP-015
@@ -652,9 +640,25 @@ phase и выдаёт
 только new claimant callback-scoped at-most-once authority уже preclaimed
 phase. Independent Stop и parent admission имеют одного winner; replay не
 получает authority; panic, `runtime.Goexit`, non-return, cancellation,
-generation loss и indeterminate publication fail closed. Production/test code
-не менялся, implementation отсутствует. TASK-026 остаётся Blocked; следующая
-implementation task Not Activated и не имеет Task ID.
+generation loss и indeterminate publication fail closed. На closure baseline
+TASK-046 production/test code не менялся, implementation отсутствовала, а
+implementation task была Not Activated. Впоследствии она активирована как
+TASK-047; TASK-026 остаётся Blocked до отдельной reassessment.
+
+**TASK-047:** `Completed — Coordinator Accepted (2026-08-25)`. Bounded
+implementation добавляет
+`Boundary.ExecuteManagedParentFromTrackedStart`: под одной generation/ledger
+linearization point создаются managed Replace/Rollback parent, derived
+ordinal-zero `StopOld`, live callback capabilities, discriminated occupant sole
+Stop exception и parent rendezvous. Только new claimant может callback-scoped
+consume preclaimed phase; ordinary phase path и replay получают observation без
+authority. Proof tests покрывают atomic visibility, оба winner order, retention
+slot до завершения tracked Start, at-most-once consumption, invalid/denied/
+cancelled/stale zero mutation, callback/phase panic и `runtime.Goexit`,
+reconstruction, retained capability и different-Instance concurrency. TASK-026
+остаётся Blocked до отдельной readiness reassessment. Independent Tester —
+`PASS WITH ENVIRONMENT LIMITATION` 0/0; final Reviewer — `APPROVED` 0/0;
+Scope Audit 18/0/0; PROCESS-002 Synchronized.
 
 **Stage 2 verification completed:** для TASK-003, TASK-004, TASK-005, TASK-006
 и TASK-007 соответствующий task record создан как первый content change на task

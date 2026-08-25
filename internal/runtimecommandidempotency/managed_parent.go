@@ -16,6 +16,235 @@ type ManagedParentExecution struct {
 	authorization runtimeorchestrationbinding.OrchestrationAuthorizationRequest
 }
 
+// TrackedStartManagedParentExecution is the callback-scoped capability issued
+// only by a newly claimed tracked-Start parent admission. It preserves the
+// managed parent operations and adds consumption of the already-issued
+// ordinal-zero StopOld permit without exposing either permit.
+type TrackedStartManagedParentExecution struct {
+	managed      *ManagedParentExecution
+	stopOld      *phasePermit
+	stopOldMu    sync.Mutex
+	stopConsumed bool
+}
+
+// ExecuteManagedParentFromTrackedStart atomically claims a Replace/Rollback
+// parent and its ordinal-zero StopOld phase over the sole live tracked-Start
+// exception. Replay observes facts without receiving execution authority.
+func (b *Boundary) ExecuteManagedParentFromTrackedStart(
+	ctx context.Context,
+	scope Scope,
+	key CommandKey,
+	intent Intent,
+	authorize AuthorizeOrchestration,
+	invoke func(*TrackedStartManagedParentExecution) error,
+) (ParentAdmission, error) {
+	if b == nil || b.storage == nil || ctx == nil || !scope.validParent() || key == "" ||
+		!intent.validParentFor(scope) || authorize == nil || invoke == nil {
+		return ParentAdmission{}, ErrInvalidSubmission
+	}
+	authorization, ok := authorizeCommandMaps(scope, intent)
+	if !ok {
+		return ParentAdmission{}, ErrInvalidSubmission
+	}
+	if err := authorizeOrchestration(authorize, ctx, scope, intent); err != nil {
+		return ParentAdmission{}, err
+	}
+	if err := ctx.Err(); err != nil {
+		return ParentAdmission{}, err
+	}
+
+	b.storage.clientMu.RLock()
+	if b.storage.generation != b.generation {
+		b.storage.clientMu.RUnlock()
+		return ParentAdmission{}, ErrBoundaryExpired
+	}
+	ledger := b.storage.ledger(scope.instanceScope())
+	identity := commandIdentity{scope: scope, key: key}
+	ledger.mu.Lock()
+	if existing := ledger.parents[identity]; existing != nil {
+		if existing.intent != intent {
+			ledger.mu.Unlock()
+			b.storage.clientMu.RUnlock()
+			return ParentAdmission{}, ErrCommandKeyConflict
+		}
+		kind := AdmissionInProgress
+		if existing.state == CommandStateTerminal {
+			kind = AdmissionReplay
+		}
+		view := existing.view()
+		ledger.mu.Unlock()
+		b.storage.clientMu.RUnlock()
+		return ParentAdmission{kind: kind, record: view}, nil
+	}
+	trackedStart, eligible := b.trackedStartForManagedParentLocked(ledger)
+	if !eligible {
+		ledger.mu.Unlock()
+		b.storage.clientMu.RUnlock()
+		return ParentAdmission{}, ErrInstanceBlocked
+	}
+
+	parentRecord := &parentRecord{
+		identity: identity, intent: intent, state: CommandStateClaimed, revision: 1,
+	}
+	parentState := &permitState{generation: b.generation, revision: parentRecord.revision}
+	stopIdentity, _ := newPhaseIdentity(identity, PhaseStopOld)
+	stopRecord := &phaseRecord{identity: stopIdentity, state: CommandStateClaimed, revision: 1}
+	stopState := &permitState{generation: b.generation, revision: stopRecord.revision}
+	ledger.parents[identity] = parentRecord
+	ledger.liveParents[identity] = parentState
+	ledger.phases[stopIdentity] = stopRecord
+	ledger.livePhases[stopIdentity] = stopState
+	occupant := stopIdentity
+	ledger.stopForStart[trackedStart] = stopExceptionOccupant{phase: &occupant}
+	ledger.rendezvous[identity] = newStartRendezvous(b.generation)
+
+	parent := &ParentExecution{
+		boundary: b, ledger: ledger, identity: identity, state: parentState,
+		usage: &parentUsage{},
+	}
+	parent.usage.cond = sync.NewCond(&parent.usage.mu)
+	stopPermit := &phasePermit{parent: parent, identity: stopIdentity, state: stopState}
+	managed := &ManagedParentExecution{parent: parent, authorization: authorization}
+	execution := &TrackedStartManagedParentExecution{managed: managed, stopOld: stopPermit}
+	claimed := ParentAdmission{kind: AdmissionClaimed, record: parentRecord.view()}
+	ledger.mu.Unlock()
+	b.storage.clientMu.RUnlock()
+
+	defer func() {
+		parent.closeAndWait()
+		stopPermit.expire()
+		parent.expire()
+	}()
+	definitive := invokeTrackedStartManagedParentSafely(invoke, execution)
+	parent.closeAndWait()
+	stopPermit.expire()
+	b.storage.clientMu.RLock()
+	ledger.mu.Lock()
+	if current := ledger.parents[identity]; current != nil && current.state == CommandStateTerminal {
+		claimed.record = current.view()
+		ledger.mu.Unlock()
+		b.storage.clientMu.RUnlock()
+		return claimed, nil
+	}
+	ledger.mu.Unlock()
+	b.storage.clientMu.RUnlock()
+	if !definitive {
+		return claimed, ErrIndeterminateExecution
+	}
+	return claimed, ErrIndeterminateExecution
+}
+
+func (b *Boundary) trackedStartForManagedParentLocked(
+	ledger *commandLedger,
+) (commandIdentity, bool) {
+	if ledger.hasNonterminalParentOrPhaseLocked() {
+		return commandIdentity{}, false
+	}
+	var tracked commandIdentity
+	found := false
+	for identity, record := range ledger.records {
+		if record.state == CommandStateTerminal {
+			continue
+		}
+		state := ledger.live[identity]
+		if found || identity.scope.operation != OperationStart || state == nil ||
+			state.generation != b.generation || state.revision != record.revision {
+			return commandIdentity{}, false
+		}
+		tracked = identity
+		found = true
+	}
+	if !found {
+		return commandIdentity{}, false
+	}
+	if _, occupied := ledger.stopForStart[tracked]; occupied {
+		return commandIdentity{}, false
+	}
+	return tracked, true
+}
+
+func invokeTrackedStartManagedParentSafely(
+	invoke func(*TrackedStartManagedParentExecution) error,
+	execution *TrackedStartManagedParentExecution,
+) (definitive bool) {
+	defer func() {
+		if recover() != nil {
+			definitive = false
+		}
+	}()
+	return invoke(execution) == nil
+}
+
+// ExecutePreclaimedStopOld consumes the already-issued ordinal-zero StopOld
+// permit. It never inspects or claims a replacement phase.
+func (p *TrackedStartManagedParentExecution) ExecutePreclaimedStopOld(
+	invoke func() (TerminalOutcome, error),
+) (PhaseAdmission, error) {
+	if p == nil || p.managed == nil || p.managed.parent == nil || p.stopOld == nil || invoke == nil {
+		return PhaseAdmission{}, ErrInvalidSubmission
+	}
+	parent := p.managed.parent
+	if !parent.beginUse() {
+		return PhaseAdmission{}, ErrBoundaryExpired
+	}
+	defer parent.endUse()
+	p.stopOldMu.Lock()
+	if p.stopConsumed {
+		p.stopOldMu.Unlock()
+		view := p.stopOldRecordView()
+		kind := AdmissionInProgress
+		if view.State() == CommandStateTerminal {
+			kind = AdmissionReplay
+		}
+		return PhaseAdmission{kind: kind, record: view}, nil
+	}
+	p.stopConsumed = true
+	p.stopOldMu.Unlock()
+	view, err := p.stopOld.execute(invoke)
+	admission := PhaseAdmission{kind: AdmissionClaimed, record: p.stopOldRecordView()}
+	if err != nil {
+		return admission, err
+	}
+	admission.record = view
+	return admission, nil
+}
+
+func (p *TrackedStartManagedParentExecution) stopOldRecordView() PhaseRecordView {
+	parent := p.managed.parent
+	parent.ledger.mu.Lock()
+	defer parent.ledger.mu.Unlock()
+	record := parent.ledger.phases[p.stopOld.identity]
+	if record == nil {
+		return PhaseRecordView{}
+	}
+	return record.view()
+}
+
+// PublishTerminal preserves managed parent publication.
+func (p *TrackedStartManagedParentExecution) PublishTerminal(
+	outcome ParentTerminalOutcome,
+) (ParentRecordView, error) {
+	if p == nil || p.managed == nil {
+		return ParentRecordView{}, ErrInvalidSubmission
+	}
+	return p.managed.PublishTerminal(outcome)
+}
+
+// ContinueOrExecuteManagedStartTarget preserves the managed StartTarget path.
+func (p *TrackedStartManagedParentExecution) ContinueOrExecuteManagedStartTarget(
+	ctx context.Context,
+	expectedAggregateRevision runtimeorchestrationbinding.AggregateRevision,
+	executionGeneration runtimeorchestrationbinding.ExecutionGeneration,
+	invoke func(runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error),
+) (PhaseAdmission, bool, error) {
+	if p == nil || p.managed == nil {
+		return PhaseAdmission{}, false, ErrInvalidSubmission
+	}
+	return p.managed.ContinueOrExecuteManagedStartTarget(
+		ctx, expectedAggregateRevision, executionGeneration, invoke,
+	)
+}
+
 // ExecuteManagedParent authorizes every submission and supplies the newly
 // claimed Replace/Rollback parent with managed phase authority only.
 func (b *Boundary) ExecuteManagedParent(
