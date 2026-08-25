@@ -49,13 +49,12 @@ outcomes managed Flow, реализованные и независимо при
 TASK-043 реализует и независимо верифицирует concrete private composition
 invoker изолированно. Последующая terminal publication, orchestrator и
 Approved DP-016 сохраняют Implementation Status Planned.
-Repeat recheck реактивации TASK-026 подтверждает один всё ещё не реализованный
-conformance seam: managed-parent admission пока не может атомарно использовать
-tracked-Start exception и preclaim derived ordinal-zero phase `StopOld`.
-TASK-046 фиксирует additive planned contract этого seam, но не реализует его.
-Corrected readiness matrix остаётся 7 Direct / 9 Compositional / 2 Missing core
-/ 1 Missing prerequisite / 0 Deferred; TASK-026 остаётся Blocked, а следующая
-implementation task не активирована и не имеет Task ID.
+TASK-046 фиксирует additive contract admission tracked-Start managed-parent, а
+TASK-047 реализует его изолированно через
+`Boundary.ExecuteManagedParentFromTrackedStart` и callback-scoped capability
+preclaimed `StopOld`. Superseded corrected matrix TASK-026 сохраняется как
+historical readiness evidence до отдельной reassessment; TASK-026 остаётся
+Blocked и не активируется этой изолированной prerequisite.
 
 ## 4. Область
 
@@ -608,10 +607,11 @@ storage/schema, API, DP-016 orchestration, DP-017 recovery, последующа
 terminal publication DP-014 и terminalization command/phase DP-015, management
 wiring и Production Activation отсутствуют. TASK-046 определяет bounded
 contract tracked-Start managed-parent плюс preclaimed `StopOld` admission в
-section 13.1, но эта prerequisite остаётся нереализованной. Поэтому TASK-026
-остаётся Blocked; implementation prerequisite является next candidate, но не
-активирована и не имеет Task ID. Isolated package не изменяет lifecycle
-contracts и не подключён к DP-013 Directory.
+section 13.1; TASK-047 реализует изолированно его atomic admission,
+discriminated occupant sole Stop exception, callback-scoped consumption,
+replay, expiry и proofs winner ordering. TASK-026 остаётся Blocked до отдельной
+repository-first readiness reassessment. Isolated package не изменяет
+lifecycle contracts и не подключён к DP-013 Directory.
 
 ## 28. Решение
 

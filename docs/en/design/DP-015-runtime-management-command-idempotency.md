@@ -49,13 +49,12 @@ managed Flow outcome adaptation and are independently accepted in isolation.
 TASK-043 implements and independently verifies the concrete private
 composition invoker in isolation. Later terminal publication, the orchestrator,
 and Approved DP-016 retain Implementation Status Planned.
-The TASK-026 reactivation recheck confirms one still-unimplemented conformance
-seam: managed-parent admission cannot yet atomically consume the tracked-Start
-exception and preclaim the derived ordinal-zero `StopOld` phase. TASK-046
-records the additive planned contract for that seam; it does not implement it.
-The corrected readiness matrix remains 7 Direct / 9 Compositional / 2 Missing
-core / 1 Missing prerequisite / 0 Deferred, TASK-026 remains Blocked, and the
-subsequent implementation task is not activated and has no Task ID.
+TASK-046 records the additive tracked-Start managed-parent admission contract,
+and TASK-047 implements it in isolation through
+`Boundary.ExecuteManagedParentFromTrackedStart` and its callback-scoped
+preclaimed `StopOld` capability. The superseded corrected TASK-026 matrix
+remains historical readiness evidence until a separate reassessment; TASK-026
+stays Blocked and is not activated by this isolated prerequisite.
 
 ## 4. Scope
 
@@ -608,10 +607,11 @@ storage/schema, API, DP-016 orchestration, DP-017 recovery, later DP-014
 terminal publication and DP-015 command/phase terminalization, management
 wiring, and Production Activation remain absent. TASK-046 defines the bounded
 tracked-Start managed-parent plus preclaimed `StopOld` admission contract in
-section 13.1, but that prerequisite remains unimplemented. TASK-026 therefore
-remains Blocked; the implementation prerequisite is the next candidate but is
-not activated and has no Task ID. The isolated package changes no lifecycle
-contract and is not connected to the DP-013 Directory.
+section 13.1; TASK-047 implements its atomic admission, discriminated sole
+Stop-exception occupant, callback-scoped consumption, replay, expiry, and
+winner-order proofs in isolation. TASK-026 remains Blocked pending a separate
+repository-first readiness reassessment. The isolated package changes no
+lifecycle contract and is not connected to the DP-013 Directory.
 
 ## 28. Decision
 

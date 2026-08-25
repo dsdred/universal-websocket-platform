@@ -23,13 +23,11 @@ isolation. Post-Owner DP-014 and DP-015 terminal publication remains part of
 this planned orchestrator; the orchestrator and production wiring remain
 absent. Completed and Coordinator-Accepted TASK-044 (2026-08-24) historically
 returned `UNBLOCK TASK-026` after reassessing TASK-040/TASK-043. A superseding
-TASK-026 reactivation recheck confirms an unimplemented DP-015 tracked-Start
+TASK-026 reactivation recheck identified the DP-015 tracked-Start
 managed-parent plus preclaimed `StopOld` admission prerequisite. TASK-046
-records its additive planned admission contract without implementing it. The
-corrected
-section 25 matrix is 7 Direct / 9 Compositional / 2 Missing core / 1 Missing
-prerequisite / 0 Deferred. TASK-026 is blocked; the separate bounded
-implementation task is the next candidate, not activated, and has no Task ID.
+records its additive contract and TASK-047 implements it in isolation. The
+corrected section 25 matrix remains historical until a separate repository-
+first reassessment; TASK-026 stays Blocked and is not activated by TASK-047.
 
 ## 2. Purpose
 
@@ -534,13 +532,11 @@ design in Draft DP-010; completed and Coordinator-Accepted TASK-040 implements
 and verifies the isolated Owner extension, with repeat final Reviewer
 `APPROVED` 0/0. TASK-043 subsequently implements the private exact-scope
 invoker in isolation. TASK-044 historically records `UNBLOCK TASK-026`; the
-superseding TASK-026 recheck finds the unimplemented DP-015 tracked-Start
-managed-parent plus preclaimed `StopOld` admission prerequisite. TASK-046
-defines that additive contract without implementation and leaves the corrected
-matrix at 7 Direct / 9 Compositional / 2 Missing core / 1 Missing
-prerequisite / 0 Deferred. TASK-026 is blocked; the separate implementation
-task remains the next candidate, is not activated, and has no Task ID. No
-reduced DP-016 slice is permitted.
+superseding TASK-026 recheck identifies the DP-015 tracked-Start managed-parent
+plus preclaimed `StopOld` admission prerequisite. TASK-046 defines that
+additive contract and TASK-047 implements it in isolation. The corrected matrix
+remains historical pending a separate repository-first reassessment. TASK-026
+is Blocked and is not activated; no reduced DP-016 slice is permitted.
 
 ## 29. Decision
 

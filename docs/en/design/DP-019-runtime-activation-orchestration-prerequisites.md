@@ -29,13 +29,11 @@ decision. Post-Owner terminal publication belongs to the later
 TASK-026 orchestrator itself; that orchestrator, external persistence, API,
 recovery worker, and production wiring remain absent. Completed and
 Coordinator-Accepted TASK-044 (2026-08-24) historically records `UNBLOCK
-TASK-026`. A superseding TASK-026 reactivation recheck confirms one unimplemented
-DP-015 conformance prerequisite: atomic tracked-Start managed-parent admission
-with preclaimed ordinal-zero `StopOld`. TASK-046 records its additive planned
-contract without implementation. The corrected matrix is 7 Direct / 9
-Compositional / 2 Missing core / 1 Missing prerequisite / 0 Deferred. TASK-026
-is blocked; the separate implementation task is the next candidate, not
-activated, and has no Task ID.
+TASK-026`. A superseding TASK-026 reactivation recheck identified one DP-015
+conformance prerequisite: atomic tracked-Start managed-parent admission with
+preclaimed ordinal-zero `StopOld`. TASK-046 records its additive contract and
+TASK-047 implements it in isolation. The corrected matrix remains historical
+until a separate repository-first reassessment; TASK-026 stays Blocked.
 
 ## 2. Purpose
 
@@ -533,6 +531,9 @@ records, generation-bound callback capabilities, strict optional-StopOld-then-
 StartTarget ordering, phase replay, parent terminal gating, unresolved
 barriers, reconstruction invalidation, the non-bypassable StartTarget Continue
 gate, and the synchronous pending-Stop rendezvous with immutable signal cause.
+TASK-047 additionally implements the dedicated atomic tracked-Start parent plus
+preclaimed `StopOld` admission, callback-scoped permit consumption, both sole-
+exception winner orders, replay without authority, and fail-closed expiry.
 
 TASK-031/TASK-032/TASK-035 implement the exact authorization and binding values,
 primitive managed adapter, and managed Flow/OwnerClaimView seam in isolation.
@@ -550,12 +551,10 @@ composition audit required by the complete design.
 
 TASK-044 subsequently reassesses the complete unmodified DP-016 proofs and
 historically records `UNBLOCK TASK-026`. The superseding TASK-026 recheck
-identifies the unimplemented DP-015 tracked-Start managed-parent plus preclaimed
-`StopOld` admission prerequisite. TASK-046 defines that additive planned
-contract without implementing it and preserves the corrected matrix at 7 Direct / 9
-Compositional / 2 Missing core / 1 Missing prerequisite / 0 Deferred. TASK-026
-is blocked; the implementation prerequisite remains the next candidate, is not
-activated, and has no Task ID. The historical focused
+identifies the DP-015 tracked-Start managed-parent plus preclaimed `StopOld`
+admission prerequisite. TASK-046 defines that additive contract and TASK-047
+implements it in isolation. The corrected matrix remains historical pending a
+separate repository-first reassessment. TASK-026 stays Blocked. The historical focused
 readiness decomposition of prerequisites is recorded in the mirrored
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), with
 Design Status Draft and Implementation Status Planned overall, with Slice 3

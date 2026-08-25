@@ -28,13 +28,11 @@ composition invoker изолированно, не изменяя этот Appro
 Owner относится к самому последующему orchestrator TASK-026; этот orchestrator,
 external persistence, API, recovery worker и production wiring отсутствуют.
 Завершённая и Coordinator-Accepted TASK-044 (2026-08-24) исторически фиксирует
-`UNBLOCK TASK-026`. Superseding recheck реактивации TASK-026 подтверждает одну
-не реализованную DP-015 conformance prerequisite: atomic tracked-Start
-managed-parent admission с preclaimed ordinal-zero `StopOld`. TASK-046 фиксирует
-её additive planned contract без implementation. Corrected matrix — 7 Direct / 9
-Compositional / 2 Missing core / 1 Missing prerequisite / 0 Deferred. TASK-026
-заблокирована; отдельная implementation task является next candidate, не
-активирована и не имеет Task ID.
+`UNBLOCK TASK-026`. Superseding recheck реактивации TASK-026 определяет одну
+DP-015 conformance prerequisite: atomic tracked-Start managed-parent admission
+с preclaimed ordinal-zero `StopOld`. TASK-046 фиксирует её additive contract, а
+TASK-047 реализует его изолированно. Corrected matrix остаётся historical до
+отдельной repository-first reassessment; TASK-026 сохраняет статус Blocked.
 
 ## 2. Назначение
 
@@ -523,6 +521,9 @@ records, generation-bound callback capabilities, strict порядок optional
 StopOld затем StartTarget, phase replay, parent terminal gating, unresolved
 barriers, reconstruction invalidation, non-bypassable StartTarget Continue gate
 и synchronous pending-Stop rendezvous с immutable signal cause.
+TASK-047 дополнительно реализует dedicated atomic admission tracked-Start
+parent плюс preclaimed `StopOld`, callback-scoped consumption permit, оба
+winner order sole exception, replay без authority и fail-closed expiry.
 
 TASK-031/TASK-032/TASK-035 реализуют изолированно exact authorization и binding
 values, primitive managed adapter и seam managed Flow/OwnerClaimView. TASK-037
@@ -540,12 +541,10 @@ orchestrator и production composition audit полного design.
 
 TASK-044 впоследствии повторно оценивает полный неизменённый набор DP-016
 proofs и исторически фиксирует `UNBLOCK TASK-026`. Superseding recheck TASK-026
-обнаруживает не реализованную DP-015 prerequisite tracked-Start managed-parent
-плюс preclaimed `StopOld` admission. TASK-046 определяет этот additive planned
-contract без implementation и сохраняет corrected matrix 7 Direct / 9
-Compositional / 2 Missing core / 1 Missing prerequisite / 0 Deferred. TASK-026
-заблокирована; implementation prerequisite остаётся next candidate, не
-активирована и не имеет Task ID. Historical focused
+определяет DP-015 prerequisite tracked-Start managed-parent плюс preclaimed
+`StopOld` admission. TASK-046 фиксирует этот additive contract, а TASK-047
+реализует его изолированно. Corrected matrix остаётся historical до отдельной
+repository-first reassessment; TASK-026 сохраняет статус Blocked. Historical focused
 readiness decomposition prerequisites зафиксирована в зеркальном
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), со
 статусом Design Status Draft и Implementation Status Planned overall, где

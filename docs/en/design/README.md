@@ -20,8 +20,8 @@ This directory contains focused Runtime design documents. A design document expl
 | [DP-012: Runtime Source Composition](DP-012-runtime-source-composition.md) | Draft; implemented in isolation |
 | [DP-013: Runtime Management Routing](DP-013-runtime-management-routing.md) | Draft; implemented in isolation; integration blocked |
 | [DP-014: Runtime Operational Identity Persistence](DP-014-runtime-operational-identity-persistence.md) | Approved; implemented in isolation |
-| [DP-015: Runtime Management Command Idempotency](DP-015-runtime-management-command-idempotency.md) | Approved; primitive/parent managed gates, parent/phase core, Continue/pending-Stop, and Slice 3 continuation implemented in isolation; TASK-046 records the planned tracked-Start managed-parent plus preclaimed StopOld admission contract, implementation absent |
-| [DP-016: Runtime Activation, Replacement, and Rollback](DP-016-runtime-activation-replacement-rollback.md) | Approved; planned; TASK-026 blocked by one unimplemented DP-015 command-admission prerequisite after TASK-046 design refinement |
+| [DP-015: Runtime Management Command Idempotency](DP-015-runtime-management-command-idempotency.md) | Approved; primitive/parent managed gates, parent/phase core, Continue/pending-Stop, Slice 3 continuation, and TASK-047 tracked-Start managed-parent admission implemented in isolation |
+| [DP-016: Runtime Activation, Replacement, and Rollback](DP-016-runtime-activation-replacement-rollback.md) | Approved; planned; TASK-026 remains Blocked pending reassessment after isolated TASK-047 prerequisite implementation |
 | [DP-017: Runtime Recovery and Reconciliation](DP-017-runtime-recovery-reconciliation.md) | Approved; planned |
 | [DP-018: Runtime Operational Error Reporting and Redaction](DP-018-runtime-operational-error-reporting-redaction.md) | Approved; planned |
 | [DP-019: Runtime Activation Orchestration Prerequisites](DP-019-runtime-activation-orchestration-prerequisites.md) | Approved; planned overall; managed command/Flow/continuation and attempt/generation binding seams implemented in isolation |

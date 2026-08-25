@@ -20,8 +20,8 @@
 | [DP-012: Композиция Runtime Source](DP-012-runtime-source-composition.md) | Draft; реализован изолированно |
 | [DP-013: Маршрутизация управления Runtime](DP-013-runtime-management-routing.md) | Draft; реализован изолированно; integration blocked |
 | [DP-014: Персистентность operational identity Runtime](DP-014-runtime-operational-identity-persistence.md) | Approved; реализован изолированно |
-| [DP-015: Идемпотентность management commands Runtime](DP-015-runtime-management-command-idempotency.md) | Approved; primitive/parent managed gates, parent/phase core, Continue/pending-Stop и continuation Среза 3 реализованы изолированно; TASK-046 фиксирует planned contract tracked-Start managed-parent плюс preclaimed StopOld admission, implementation отсутствует |
-| [DP-016: Activation, replacement и rollback Runtime](DP-016-runtime-activation-replacement-rollback.md) | Approved; запланирован; TASK-026 заблокирована одной не реализованной DP-015 command-admission prerequisite после design refinement TASK-046 |
+| [DP-015: Идемпотентность management commands Runtime](DP-015-runtime-management-command-idempotency.md) | Approved; primitive/parent managed gates, parent/phase core, Continue/pending-Stop, continuation Среза 3 и admission tracked-Start managed-parent TASK-047 реализованы изолированно |
+| [DP-016: Activation, replacement и rollback Runtime](DP-016-runtime-activation-replacement-rollback.md) | Approved; запланирован; TASK-026 остаётся Blocked до reassessment после isolated implementation prerequisite TASK-047 |
 | [DP-017: Восстановление и сверка Runtime](DP-017-runtime-recovery-reconciliation.md) | Approved; запланирован |
 | [DP-018: Operational error reporting и redaction Runtime](DP-018-runtime-operational-error-reporting-redaction.md) | Approved; запланирован |
 | [DP-019: Предпосылки оркестрации активации Runtime](DP-019-runtime-activation-orchestration-prerequisites.md) | Approved; planned overall; managed command/Flow/continuation и seams binding attempt/generation реализованы изолированно |

@@ -23,13 +23,11 @@ Terminal publication DP-014 и DP-015 после Owner остаётся част
 orchestrator; orchestrator и production wiring остаются отсутствующими.
 Завершённая и Coordinator-Accepted TASK-044 (2026-08-24) исторически вернула
 `UNBLOCK TASK-026` после повторной оценки TASK-040/TASK-043. Superseding recheck
-реактивации TASK-026 подтверждает не реализованную DP-015 prerequisite
-tracked-Start managed-parent плюс preclaimed `StopOld` admission. TASK-046
-фиксирует её additive planned contract без implementation. Corrected matrix
-section 25
-— 7 Direct / 9 Compositional / 2 Missing core / 1 Missing prerequisite / 0
-Deferred. TASK-026 заблокирована; отдельная bounded implementation task
-является next candidate, не активирована и не имеет Task ID.
+реактивации TASK-026 определяет DP-015 prerequisite tracked-Start managed-parent
+плюс preclaimed `StopOld` admission. TASK-046 фиксирует её additive contract, а
+TASK-047 реализует его изолированно. Corrected matrix section 25 остаётся
+historical до отдельной repository-first reassessment; TASK-026 сохраняет
+статус Blocked и не активируется TASK-047.
 
 ## 2. Назначение
 
@@ -526,12 +524,11 @@ TASK-039 зафиксировала design в Draft DP-010; завершённа
 Coordinator-Accepted TASK-040 реализует и верифицирует isolated Owner extension,
 repeat final Reviewer `APPROVED` 0/0. TASK-043 впоследствии реализует private
 exact-scope invoker изолированно. TASK-044 исторически фиксирует `UNBLOCK
-TASK-026`; superseding recheck TASK-026 обнаруживает не реализованную DP-015
-prerequisite tracked-Start managed-parent плюс preclaimed `StopOld` admission.
-TASK-046 определяет этот additive contract без implementation и сохраняет corrected
-matrix на 7 Direct / 9 Compositional / 2 Missing core / 1 Missing prerequisite
-/ 0 Deferred. TASK-026 заблокирована; отдельная implementation task остаётся
-next candidate, не активирована и не имеет Task ID. Reduced slice DP-016
+TASK-026`; superseding recheck TASK-026 определяет DP-015 prerequisite
+tracked-Start managed-parent плюс preclaimed `StopOld` admission. TASK-046
+фиксирует additive contract, а TASK-047 реализует его изолированно. Corrected
+matrix остаётся historical до отдельной repository-first reassessment.
+TASK-026 сохраняет статус Blocked и не активирована; reduced slice DP-016
 запрещён.
 
 ## 29. Решение

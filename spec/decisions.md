@@ -82,13 +82,11 @@ composition-private invoker TASK-043 реализованы изолирован
 создаёт lifecycle implementation, API, recovery или production wiring.
 Approved DP-016 закрывает design gate §19(4); implementation остаётся
 отсутствующей. Historical TASK-044 `UNBLOCK TASK-026` superseded recheck:
-missing DP-015 tracked-Start managed-parent плюс preclaimed `StopOld` admission
+DP-015 tracked-Start managed-parent плюс preclaimed `StopOld` admission
 prerequisite, corrected matrix 7 Direct / 9 Compositional / 2 Missing core / 1
-Missing prerequisite / 0 Deferred. TASK-046 завершена как `Completed —
-Coordinator Accepted (2026-08-25)` и фиксирует additive planned contract этой
-admission без implementation. TASK-026 заблокирована; отдельная bounded
-implementation task остаётся next candidate, не активирована и не имеет Task
-ID.
+Missing prerequisite / 0 Deferred. TASK-046 фиксирует additive contract, а
+TASK-047 реализует его изолированно. Matrix остаётся historical до отдельной
+repository-first reassessment; TASK-026 сохраняет статус Blocked.
 
 Approved DP-019 определяет focused internal integration contract, необходимый
 для реализации DP-016 без ослабления proofs: exact authorization tuple
@@ -198,12 +196,10 @@ managed protocol Среза 3, а TASK-037 реализует и независ�
 OwnerClaim-to-DP-014 изолированно. TASK-043 реализует concrete private
 composition invoker изолированно; production wiring остаётся отсутствующим.
 TASK-044 впоследствии исторически фиксирует `UNBLOCK TASK-026`; superseding
-recheck TASK-026 подтверждает missing DP-015 tracked-Start managed-parent плюс
-preclaimed `StopOld` admission prerequisite. Design refinement завершён как
-TASK-046 `Completed — Coordinator Accepted (2026-08-25)` и определяет atomic
-parent плюс preclaimed `StopOld` admission без
-implementation. TASK-026 остаётся заблокированной; implementation prerequisite
-не активирована и не имеет Task ID.
+recheck TASK-026 определяет DP-015 tracked-Start managed-parent плюс preclaimed
+`StopOld` admission prerequisite. TASK-046 определяет atomic parent плюс
+preclaimed `StopOld` admission, а TASK-047 реализует его изолированно. TASK-026
+остаётся заблокированной до отдельной readiness reassessment.
 
 TASK-036 завершена и принята как bounded design-update перед Slice 3 после
 read-only readiness inspection. Draft DP-020 теперь фиксирует единый primitive/linked
@@ -264,7 +260,6 @@ DP-019/DP-020/DP-021 сохраняют свои статусы. TASK-044 — `C
 Coordinator Accepted (2026-08-24)`, repeat Reviewer `APPROVED` 0/0, Scope Audit
 16/0/0 и PROCESS-002 Synchronized. TASK-026 заблокирована. Design refinement
 завершён как TASK-046 `Completed — Coordinator Accepted (2026-08-25)`; он
-сохраняет DP-015 Approved и фиксирует planned
-atomic tracked-Start managed-parent плюс preclaimed
-`StopOld` admission без implementation. Отдельная bounded implementation task
-остаётся next candidate, Not Activated, без назначенного Task ID.
+сохраняет DP-015 Approved и фиксирует atomic tracked-Start managed-parent плюс
+preclaimed `StopOld` admission. TASK-047 реализует contract изолированно;
+TASK-026 остаётся Blocked до отдельной repository-first reassessment.
