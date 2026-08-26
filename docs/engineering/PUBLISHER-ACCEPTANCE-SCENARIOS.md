@@ -8,6 +8,11 @@
 либо blocked evidence checkpoint уже создан по отдельной команде
 `Разрешаю коммит.`.
 
+Общий pre-publication и cross-pipeline interruption contract проверяется
+[Execution Interruption Recovery Acceptance Scenarios](EXECUTION-INTERRUPTION-RECOVERY-ACCEPTANCE-SCENARIOS.md).
+Эти scenarios сохраняют более строгие immutable Target и phase-aware P0–P10
+rules.
+
 ## S-001 — Полностью успешный pipeline
 
 Given clean exact task branch/OID и команда `Разрешаю публиковать.`, Publisher
@@ -169,3 +174,14 @@ Given blocked recovery merged и P9 подтвердил clean synchronized `mai
 Given evidence file set, canonical evidence digest, blocker identity или verification/review
 results отличаются от certification tuple, Commit Gate либо Publisher P0
 останавливается. Ранее выданное permission не применяется к изменённому target.
+
+## S-025 — Новый Publisher без истории session
+
+Given новый Publisher не имеет прежнего chat/tool context, он сначала
+reconstruct-ит immutable Target и completed P-checkpoints из Git/GitHub. Если
+current user input явно ссылается на ранее разрешённую exact publication,
+Resume Reconstruction Guard продолжает первый незавершённый P-step без новой
+команды `Разрешаю публиковать.`. Если explicit resume reference либо exact
+Target отсутствуют, существующий ref/PR/merge не выдаёт permission: уже
+completed effect только сообщается, а не начатая publication требует обычного
+gate.

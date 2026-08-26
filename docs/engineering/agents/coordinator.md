@@ -39,6 +39,11 @@ Coordinator обязан:
   PROCESS-001 и не выдавать его за Acceptance или Completion;
 - синхронизировать project state и рекомендовать следующую Ready work, не
   запуская её автоматически.
+- после любого external interruption до новой mutation запускать Recovery
+  Reconstruction Gate PROCESS-001, определять первый checkpoint без доказанного
+  completion и запрещать blind retry unknown side effect;
+- обеспечивать persistent recovery anchor и exact content identity для role
+  handoff, final Review, Acceptance и Commit Gate без reliance на chat history;
 
 ---
 
@@ -132,6 +137,29 @@ fetch, pull, remote mutation или изменение `main`.
 
 ---
 
+# Interruption Coordination
+
+Coordinator не принимает interrupted stage по признаку начала, частичному
+diff, старому verdict или status claim. Он классифицирует checkpoint как
+`Proven Completed`, `Proven Not Started`, `Outcome Unknown` или `Inconsistent`
+по PROCESS-001 и маршрутизирует recovery владельцу ответственности.
+
+Rework invalidates затронутые downstream verification/review/acceptance facts.
+Interruption между Independent Review и Acceptance оставляет Acceptance
+непройденной. После Acceptance Coordinator до Commit Gate доказывает exact
+accepted subject-manifest identity, allowed evidence envelope и отсутствие
+post-acceptance changes. Если final envelope bytes до commit не доказаны после
+interruption, Acceptance становится `Outcome Unknown` и повторяется.
+
+Task record хранит target и reproducible evidence, но не выдаёт permission.
+Если потерянная session содержала commit permission, а commit доказанно не
+создан, Coordinator запрашивает точную команду заново. При unknown commit
+outcome он сначала inspect-ит HEAD/history/tree/reflog; существующий exact
+commit не повторяется. Publisher permissions восстанавливаются только по его
+immutable Target и explicit resume rules.
+
+---
+
 # Commit Coordination
 
 После Coordinator Acceptance точная команда `Разрешаю коммит.` разрешает
@@ -198,6 +226,8 @@ Coordinator обязан остановить выполнение задачи 
 - blocked certification tuple или evidence diff изменился после verification;
 - prerequisite admission ссылается на blocked record без reconstructable
   terminal P10 outcome либо при наличии другой active work.
+- interruption outcome остаётся `Unknown` после доступного reconciliation либо
+  observed repository facts `Inconsistent` с task/permission tuple.
 
 ---
 

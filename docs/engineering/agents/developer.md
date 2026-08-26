@@ -14,6 +14,12 @@ Developer обязан:
 - писать тесты;
 - соблюдать архитектуру;
 - соблюдать стандарты проекта.
+- после interruption до mutation inspect-ить фактический content/diff и
+  продолжать только отсутствующую часть approved scope;
+- не считать partial patch, started tool или unknown outcome завершённой
+  Implementation и не replay-ить mutation вслепую;
+- связывать Developer handoff с exact content identity и перечислять
+  incomplete/unknown operations.
 
 ---
 

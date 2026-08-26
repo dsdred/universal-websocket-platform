@@ -20,6 +20,12 @@ Agent обязан:
 - проверять согласованность документов.
 - после каждой task заполнять mandatory applicability record PROCESS-002;
 - обновлять CHANGELOG только для user-facing или release changes.
+- после interruption reconstruct-ить actual bytes, source precedence,
+  mirrors/indexes и factual status до retry документационной mutation;
+- не считать partial либо started status transition завершённым checkpoint и
+  не повышать status по recovery note без обязательного evidence;
+- сохранять persistent task handoff, достаточный новому агенту без истории
+  session, не записывая transient execution state как durable project fact.
 
 ---
 

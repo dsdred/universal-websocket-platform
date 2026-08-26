@@ -73,6 +73,16 @@ Universal WebSocket Platform — open-source платформа для созд�
   изменение не реализует и не анализирует Production Activation и не меняет
   product architecture или production code. Independent Tester, Scope Audit и
   Final Reviewer gates пройдены; TASK-012 принята Coordinator.
+- TASK-048 завершила documentation-only Execution Interruption Recovery
+  Governance с Coordinator Acceptance после устранения независимо
+  воспроизведённой неоднозначности cross-platform ordering canonical manifest. Она добавляет общий reconstruction gate PROCESS-001,
+  inspect-first reconciliation side effects, session-independent recovery
+  evidence, permission-resume rules и cross-pipeline acceptance scenarios,
+  сохраняя Publisher Resume Reconstruction Guard и все существующие gates.
+  Canonical paths используют exact unsigned UTF-8 byte order; repeat Tester
+  прошёл 0/0/1, Repeat Independent Review — Approved 0/0, Scope Audit —
+  19/0/0. TASK-026 остаётся
+  Blocked и не активирована.
 
 ## 3. Engineering Principles
 

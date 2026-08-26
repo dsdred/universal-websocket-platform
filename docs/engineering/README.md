@@ -11,6 +11,7 @@
 - [Контракты ролей](agents/)
 - [Publisher Agent](agents/publisher.md)
 - [Publisher acceptance scenarios](PUBLISHER-ACCEPTANCE-SCENARIOS.md)
+- [Execution interruption recovery acceptance scenarios](EXECUTION-INTERRUPTION-RECOVERY-ACCEPTANCE-SCENARIOS.md)
 - [Шаблон task record](TASK-TEMPLATE.md)
 - [Индекс task records](../tasks/README.md)
 
