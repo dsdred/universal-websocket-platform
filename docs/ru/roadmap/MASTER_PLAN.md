@@ -81,8 +81,8 @@ Universal WebSocket Platform — open-source платформа для созд�
   сохраняя Publisher Resume Reconstruction Guard и все существующие gates.
   Canonical paths используют exact unsigned UTF-8 byte order; repeat Tester
   прошёл 0/0/1, Repeat Independent Review — Approved 0/0, Scope Audit —
-  19/0/0. TASK-026 остаётся
-  Blocked и не активирована.
+  19/0/0. Design-only reassessment TASK-026 активирована; implementation
+  остаётся Not Activated.
 
 ## 3. Engineering Principles
 
@@ -396,18 +396,20 @@ Architectural debt относится к границам, которые ост
   intake remaining terminal/orchestrator work TASK-026 и исторически фиксирует
   `UNBLOCK TASK-026` с 7 Direct / 10 Compositional / 2 Missing core / 0
   Missing external / 0 Deferred proofs section 25 DP-016. Superseding recheck
-  TASK-026 подтверждает missing DP-015 tracked-Start managed-parent плюс
-  preclaimed `StopOld` admission prerequisite и corrected matrix 7 Direct / 9
-  Compositional / 2 Missing core / 1 Missing prerequisite / 0 Deferred.
+  TASK-026 определяет missing DP-015 tracked-Start managed-parent плюс
+  preclaimed `StopOld` admission prerequisite; TASK-046 фиксирует его, а
+  TASK-047 реализует изолированно. Fresh reassessment принимает `READY —
+  UNBLOCK TASK-026` с 7 Direct / 10 Compositional / 2 Missing core / 0 Missing
+  prerequisite / 0 Missing external / 0 Deferred.
   Terminal publication остаётся core work TASK-026. Orchestration и
   production composition остаются Planned; TASK-044 `Completed — Coordinator
   Accepted (2026-08-24)`, repeat Reviewer APPROVED 0/0, Scope Audit 16/0/0 и
-  PROCESS-002 Synchronized; TASK-026 заблокирована. Design-update TASK-046
+  PROCESS-002 Synchronized. Design-update TASK-046
   завершена как `Completed — Coordinator Accepted (2026-08-25)`, repeat
   Reviewer Approved 0/0, и фиксирует additive contract. TASK-047 реализует эту
   bounded prerequisite admission tracked-Start managed-parent изолированно.
-  TASK-026 остаётся Blocked до отдельной repository-first readiness
-  reassessment; Integration и Production Activation остаются неактивными.
+  Implementation transition TASK-026 остаётся Not Activated; DP-016 —
+  Approved/Planned, Integration и Production Activation остаются неактивными.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Message Persistence, Delivery и Plugin всё ещё требуют focused design.

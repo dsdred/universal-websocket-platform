@@ -31,8 +31,9 @@ external persistence, API, recovery worker и production wiring отсутств
 `UNBLOCK TASK-026`. Superseding recheck реактивации TASK-026 определяет одну
 DP-015 conformance prerequisite: atomic tracked-Start managed-parent admission
 с preclaimed ordinal-zero `StopOld`. TASK-046 фиксирует её additive contract, а
-TASK-047 реализует его изолированно. Corrected matrix остаётся historical до
-отдельной repository-first reassessment; TASK-026 сохраняет статус Blocked.
+TASK-047 реализует его изолированно. Fresh reassessment TASK-026 принимает
+`READY — UNBLOCK TASK-026` с matrix 7/10/2/0/0/0; implementation остаётся Not
+Activated, DP-019 — Approved/Planned overall.
 
 ## 2. Назначение
 
@@ -543,8 +544,8 @@ TASK-044 впоследствии повторно оценивает полны
 proofs и исторически фиксирует `UNBLOCK TASK-026`. Superseding recheck TASK-026
 определяет DP-015 prerequisite tracked-Start managed-parent плюс preclaimed
 `StopOld` admission. TASK-046 фиксирует этот additive contract, а TASK-047
-реализует его изолированно. Corrected matrix остаётся historical до отдельной
-repository-first reassessment; TASK-026 сохраняет статус Blocked. Historical focused
+реализует его изолированно. Fresh reassessment TASK-026 принимает READY
+boundary; implementation остаётся Not Activated. Historical focused
 readiness decomposition prerequisites зафиксирована в зеркальном
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), со
 статусом Design Status Draft и Implementation Status Planned overall, где

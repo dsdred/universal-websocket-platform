@@ -52,9 +52,10 @@ Approved DP-016 сохраняют Implementation Status Planned.
 TASK-046 фиксирует additive contract admission tracked-Start managed-parent, а
 TASK-047 реализует его изолированно через
 `Boundary.ExecuteManagedParentFromTrackedStart` и callback-scoped capability
-preclaimed `StopOld`. Superseded corrected matrix TASK-026 сохраняется как
-historical readiness evidence до отдельной reassessment; TASK-026 остаётся
-Blocked и не активируется этой изолированной prerequisite.
+preclaimed `StopOld`. Fresh reassessment TASK-026 принимает `READY — UNBLOCK
+TASK-026` с 7 Direct / 10 Compositional / 2 Missing core / 0 Missing
+prerequisite / 0 Missing external / 0 Deferred; implementation остаётся Not
+Activated, а статус DP-015 не меняется.
 
 ## 4. Область
 
@@ -609,9 +610,9 @@ wiring и Production Activation отсутствуют. TASK-046 определ�
 contract tracked-Start managed-parent плюс preclaimed `StopOld` admission в
 section 13.1; TASK-047 реализует изолированно его atomic admission,
 discriminated occupant sole Stop exception, callback-scoped consumption,
-replay, expiry и proofs winner ordering. TASK-026 остаётся Blocked до отдельной
-repository-first readiness reassessment. Isolated package не изменяет
-lifecycle contracts и не подключён к DP-013 Directory.
+replay, expiry и proofs winner ordering. Fresh reassessment TASK-026 принимает
+READY boundary, а implementation остаётся Not Activated. Isolated package не
+изменяет lifecycle contracts и не подключён к DP-013 Directory.
 
 ## 28. Решение
 

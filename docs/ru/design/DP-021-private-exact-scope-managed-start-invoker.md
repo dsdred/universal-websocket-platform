@@ -13,9 +13,10 @@ DP-013. TASK-043 реализует этот object изолированно в 
 Approved DP-014–DP-019 остаются неизменными, а TASK-026 остаётся
 нереализованной. Завершённая и Coordinator-Accepted TASK-044 (2026-08-24)
 исторически фиксирует `UNBLOCK TASK-026`. Superseding recheck TASK-026
-подтверждает missing DP-015 prerequisite tracked-Start managed-parent плюс
-preclaimed `StopOld` admission. TASK-026 заблокирована, prerequisite не
-активирована, а этот DP остаётся Draft/Partial.
+определяет missing DP-015 prerequisite tracked-Start managed-parent плюс
+preclaimed `StopOld` admission; TASK-047 реализует её изолированно. Fresh
+reassessment TASK-026 принимает `READY — UNBLOCK TASK-026` с matrix
+7/10/2/0/0/0; implementation остаётся Not Activated, этот DP — Draft/Partial.
 
 ## 2. Назначение
 

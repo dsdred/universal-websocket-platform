@@ -35,10 +35,11 @@ implementation-срезы и закрывает отложенные решен�
 
 Он не определяет production-код и не меняет ни одну принятую семантику.
 Завершённая и Coordinator-Accepted TASK-044 (2026-08-24) исторически фиксирует
-`UNBLOCK TASK-026`. Superseding recheck TASK-026 подтверждает missing DP-015
+`UNBLOCK TASK-026`. Superseding recheck TASK-026 определяет missing DP-015
 prerequisite tracked-Start managed-parent плюс preclaimed `StopOld` admission;
-TASK-026 заблокирована, prerequisite не активирована, а DP-020 остаётся
-Draft/Planned overall.
+TASK-047 реализует её изолированно. Fresh reassessment TASK-026 принимает
+`READY — UNBLOCK TASK-026` с matrix 7/10/2/0/0/0; implementation остаётся Not
+Activated, DP-020 — Draft/Planned overall.
 
 ## 2. Назначение
 
@@ -749,8 +750,9 @@ terminal publication DP-014 и terminalization command/phase DP-015 после
 фиксирует `UNBLOCK TASK-026`; superseding recheck TASK-026 подтверждает missing
 DP-015 prerequisite tracked-Start managed-parent плюс preclaimed `StopOld`
 admission и исправляет matrix на 7 Direct / 9 Compositional / 2 Missing core /
-1 Missing prerequisite / 0 Deferred. TASK-026 заблокирована, а prerequisite не
-активирована. Historical Срез 4 остаётся завершённым и принятым как TASK-038.
+1 Missing prerequisite / 0 Deferred. Fresh reassessment TASK-026 принимает
+READY boundary; implementation остаётся Not Activated. Historical Срез 4
+остаётся завершённым и принятым как TASK-038.
 
 ## 15. Последствия
 
