@@ -87,6 +87,12 @@ initial P0. Он сначала reconstruct-ит completed checkpoints по immu
 main, scope}`, exact PR
 head/base/OID и merge OID, если они уже известны.
 
+Guard является специализированным extension общего Execution Interruption
+Recovery gate PROCESS-001. External interruption не превращает current P-step
+в failed/completed checkpoint; unknown mutation outcome сначала reconciled.
+Общий gate не разрешает replay P0–P10, не ослабляет phase rules и не выводит
+publish permission из существующего remote side effect.
+
 - До confirmed P6, в phase P0–P5, worktree clean и обычно current branch/HEAD
   равны exact target branch/head OID. Remote ref может существовать до P4 и
   должен отсутствовать после P5. Ambiguous mutation сначала inspect-ится.
@@ -191,6 +197,12 @@ cleanup error останавливает точный P5–P9.
 Resume всегда inspect-first и idempotent: Publisher выполняет phase-aware
 Resume Reconstruction Guard, реконструирует Git/GitHub checkpoints и не
 повторяет вслепую неопределённую mutation.
+
+Если новый Publisher не имеет истории session, текущий user input должен явно
+ссылаться на ранее разрешённую publication, а immutable Target должен быть
+reconstructable. Иначе существующий PR/ref/merge не является permission:
+completed effect только правдиво сообщается, а ещё не начатая publication
+требует обычного gate PROCESS-001.
 
 ## Terminal Success
 

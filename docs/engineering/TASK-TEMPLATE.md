@@ -151,6 +151,27 @@ generated, formatting-only и незадокументированное planned
 - CHANGELOG только для user-facing/release change:
 - parity, links и contradictions:
 
+## Interruption Recovery
+
+- persistent anchor: repository, Task ID/status, branch, baseline/HEAD OID,
+  scope, roles и ordered applicable stages;
+- current evidence subject/exclusions: exact file set in ascending unsigned
+  UTF-8 path-byte order (case-sensitive, locale-independent), regions and
+  allowed evidence envelope per PROCESS-001;
+- canonical subject-manifest rows/object format/OID;
+- pre-commit envelope provenance доказан либо affected Review/Acceptance
+  повторены; post-commit final tree/commit OID reconstruct-ится из Git
+  refs/history и не записывается внутрь того же commit;
+- proven completed checkpoints и independently reproducible evidence;
+- first checkpoint without proven completion;
+- unknown/inconsistent operations и required reconciliation;
+- permission state: current explicit command/resume signal либо `not proven`;
+  task record не является permission;
+- operation reconciliation: file mutation, stage, commit, push, PR, merge,
+  branch deletion и documentation/status transitions;
+- downstream evidence invalidated by rework/content change;
+- новый агент без chat history способен продолжить: да/нет и evidence.
+
 ## Commit Gate
 
 - exact command `Разрешаю коммит.` получена: да/нет;
@@ -169,7 +190,8 @@ generated, formatting-only и незадокументированное planned
 - prerequisite: `Not Activated`;
 - evidence-only scope и подтверждение отсутствия product implementation:
 - certification tuple: repository, Task ID, branch, base/OID, HEAD OID, exact
-  lexicographically ordered file set, staging-invariant canonical evidence
+  file set in PROCESS-001 ascending unsigned UTF-8 path-byte order,
+  staging-invariant canonical evidence
   digest command/certified HEAD/object format/OID, blocker identity,
   verification/review results;
 - `Blocked Closure Certified`: да/нет, кем и когда;
@@ -207,6 +229,11 @@ generated, formatting-only и незадокументированное planned
   и exact prerequisite, который остаётся `Not Activated` до отдельного normal
   intake; durable facts синхронизируются при следующем применимом PROCESS-002;
 
+Post-commit/PR/merge OID в этой секции является handoff/reconstruction evidence
+из Git/GitHub. Он не требует и не разрешает mutating update того же immutable
+task commit; durable post-publication запись выполняется только отдельным
+применимым synchronization transition.
+
 ## Next Candidate
 
 - рекомендуемая Ready work:
@@ -221,3 +248,13 @@ generated, formatting-only и незадокументированное planned
   prerequisite не активирован;
 - Closed by:
 - Date:
+
+## Recovery Evidence Envelope
+
+Эта секция обязана быть последним top-level `##` heading task record и следует
+projection `task-record-v1` PROCESS-001. Status evidence, role verdicts,
+Acceptance tuple, subject-manifest rows/OID, post-acceptance integrity и
+pre-commit readiness фиксируются здесь. Секция не self-attest-ит свои bytes;
+до commit недоказанная после interruption envelope mutation возвращает
+affected gate. После commit final bytes доказывает reconstructable Git tree
+OID, который не записывается внутрь того же commit.

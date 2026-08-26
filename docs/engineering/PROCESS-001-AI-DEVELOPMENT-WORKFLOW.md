@@ -238,6 +238,210 @@ permissions. Publisher resume-сигнал после устранения block
 является Coordinator Acceptance. Оно только выбирает альтернативный,
 ограниченный closure/commit path, определённый ниже.
 
+## Execution Interruption Recovery
+
+Этот contract применяется при model usage/time limit, потере сети, закрытии
+или restart session, crash процесса, restart/reboot host, tool timeout/failure,
+GitHub outage/authentication failure и любом ином внешнем interruption на
+любой стадии PROCESS-001.
+
+Interruption сам по себе не является `PASS`, `FAIL`, `Approved`, `Accepted`,
+`Completed`, `Blocked Closure Certified` или завершённым checkpoint.
+
+Обязательные инварианты:
+
+- `Started != Completed`;
+- `Outcome Unknown != Failed`;
+- `Outcome Unknown != Safe to Retry`;
+- status claim или recovery note не заменяет independently reproducible
+  evidence;
+- уже доказанный checkpoint не повторяется без необходимости;
+- side effect с неизвестным outcome никогда не повторяется вслепую.
+
+### Recovery Reconstruction Gate
+
+Новый или восстановленный агент до любой дальнейшей mutation:
+
+1. читает repository entry contracts, branch/status/history, task index,
+   единственную active task и её persistent recovery anchor;
+2. проверяет происхождение baseline, staged/unstaged/untracked state, refs и
+   применимое remote/GitHub state read-only;
+3. связывает evidence с exact task scope и exact content identity, а не с
+   именем stage или chat assertion;
+4. классифицирует каждый затронутый checkpoint как:
+   - `Proven Completed` — результат и все обязательные evidence доказаны;
+   - `Proven Not Started` — side effect и completion evidence доказанно
+     отсутствуют;
+   - `Outcome Unknown` — момент interruption относительно операции либо её
+     результат не доказан;
+   - `Inconsistent` — наблюдаемые facts конфликтуют с task contract,
+     authorization tuple или друг с другом;
+5. продолжает с первого checkpoint, завершение которого не доказано.
+
+`Proven Completed` не replay-ится. `Proven Not Started` может выполняться
+только при действующих scope, prerequisites и permission. `Outcome Unknown`
+сначала проходит operation-specific reconciliation ниже. `Inconsistent`
+является stop condition и возвращается Coordinator без cleanup, reset или
+предположения о preferred state.
+
+Read-only reconstruction не повышает status и не создаёт verdict. Если exact
+diff, scope, baseline или prerequisite изменились, агент повторяет только
+затронутые и downstream checks; stale evidence не переносится.
+
+### Persistent Recovery Anchor
+
+До первой task mutation task record обязан содержать минимум:
+
+- repository, Task ID/status, exact branch и trusted baseline OID;
+- Task Contract, scope/non-goals, sources, roles и ordered applicable stages;
+- разрешённые и запрещённые operations, stop conditions и next candidate как
+  `Not Activated`;
+- Existing Coverage Report и Verification Plan до test mutation;
+- для каждого заявленного completed role checkpoint — exact content identity,
+  command/result либо role verdict, findings и следующий stage;
+- после Independent Review и Coordinator Acceptance — exact reviewed/accepted
+  evidence subject, HEAD/base OID и canonical subject-manifest identity;
+- до commit/publication — accepted subject/tree identity и immutable Target;
+  после side effect exact local commit и Git/GitHub PR/merge/ref outcome
+  reconstruct-ятся из refs/history/external repository evidence и не
+  встраиваются в bytes того же commit. Их durable запись допустима только
+  отдельным позднейшим authorized synchronization transition; immutable target
+  не изменяется ради recovery note.
+
+Canonical subject manifest включает новые/untracked paths без преждевременного
+stage. Evidence subject — exact projected bytes, которые attests role handoff;
+сам role verdict/Acceptance/evidence envelope не может self-attest.
+
+Task record использует обязательную projection `task-record-v1`:
+
+1. headings `## Status`, `## Task Contract` и terminal
+   `## Recovery Evidence Envelope` встречаются ровно по одному разу, в этом
+   порядке и с начала строки;
+2. envelope heading является последним top-level `##` heading; все bytes от
+   его первого `#` до EOF исключаются;
+3. status evidence body между окончанием строки `## Status` и первым `#`
+   строки `## Task Contract` исключается;
+4. projected byte stream равен: raw bytes от BOF до и включая фактический line
+   terminator строки `## Status`, затем exact UTF-8 bytes
+   `STATUS-EVIDENCE-EXCLUDED` и один NUL byte, затем raw bytes от первого `#`
+   строки `## Task Contract` до byte перед первым `#` envelope heading;
+5. никакая newline normalization, decoding, trimming или path filtering не
+   применяется. Missing/duplicate/out-of-order heading либо последующий `##`
+   heading после envelope делает identity `Inconsistent`.
+
+Для каждого subject path в ascending unsigned UTF-8 path-byte order
+(case-sensitive и locale-independent; сравнение выполняется по каждому byte
+как `0..255`, без Unicode/case/locale collation) repository bytes
+manifest содержит NUL-separated `path`, projection (`full` или
+`task-record-v1`), state (`present`/`deleted`), mode и Git blob OID projected
+bytes. Full present path использует current/intended Git mode и
+`git hash-object --no-filters`; projected task record передаёт exact stream из
+шага 4 в `git hash-object --stdin`; deleted path использует projection `full`,
+baseline tree mode и OID `-`. Записи также заканчиваются NUL. Raw manifest
+передаётся `git hash-object --stdin`; record сохраняет anchor HEAD, exact
+subject paths/projections, path order, manifest rows, object format и OID.
+
+Evidence envelope связывает verdict/Acceptance с subject-manifest OID, но не
+объявляет hash собственных final bytes. До commit, если после interruption
+append-only envelope provenance, exact subject либо отсутствие последующей
+mutation нельзя независимо доказать, затронутые Review/Acceptance
+классифицируются `Outcome Unknown` и выполняются повторно. После commit exact
+tree/commit OID из Git history является immutable proof final
+task-record/evidence bytes; task record не пытается содержать OID самого себя.
+Перед commit staged tree сверяется с accepted subject, allowed evidence
+envelope и exact file set. Эта двухфазная схема не создаёт self-referential
+digest и не ослабляет Review/Commit Gate.
+
+Task record является recovery anchor, но его утверждение `completed` само по
+себе не доказывает completion. Chat history, незаписанный terminal output,
+process memory и model memory recovery state не являются.
+
+### Stage Reconstruction
+
+- **Implementation / Documentation mutation:** агент сначала inspect-ит exact
+  current content и полный diff. Частично применённое изменение продолжается
+  от фактического состояния; patch или generator не replay-ится наугад.
+- **Verification Matrix / Tester:** started command без сохранённого exact exit
+  и результата считается незавершённым. Проверка безопасно запускается заново
+  на неизменном content identity; material files или external state, которые
+  могла изменить проверка, сначала reconciled. `PASS`/`FAIL` существует только
+  как завершённый reproducible result.
+- **Independent Review:** review завершён только при explicit verdict,
+  findings и exact reviewed subject-manifest identity в repository handoff.
+  Interruption во время чтения или анализа не создаёт verdict.
+- **Rework:** фактический diff reconciled; rework invalidates все затронутые
+  verification/review/scope/acceptance evidence. После rework обязательны
+  повторные applicable Verification, Scope Audit и Independent Review.
+- **Coordinator Acceptance:** существует только как explicit Acceptance,
+  связанная с exact reviewed subject и canonical subject-manifest identity.
+  Interruption между review и Acceptance оставляет Acceptance непройденной;
+  interruption после Acceptance требует доказать неизменность tuple.
+- **Commit Gate:** до stage/commit повторно reconstruct-ятся exact accepted или
+  certified tuple, index, worktree, HEAD и permission. Partial staging не
+  является завершённым commit checkpoint.
+- **Publisher:** после publish permission применяется специализированный
+  phase-aware Resume Reconstruction Guard. Он расширяет этот общий gate и не
+  заменяется им.
+
+### Side-Effect Reconciliation Before Retry
+
+Для side-effecting operation с `Outcome Unknown` обязательны следующие
+read-only/inspect-first proofs:
+
+| Operation | Reconciliation before any retry |
+|---|---|
+| File mutation | Сравнить exact file bytes/content, expected pre/postcondition и полный diff; продолжать только отсутствующую часть без overwrite чужих changes |
+| Stage | Inspect index, worktree и exact accepted/certified path set; partial/unexpected index сначала классифицировать, не считать commit выполненным |
+| Commit | Inspect HEAD, parents, tree, message, log/reflog и exact accepted/certified subject-manifest identity; существующий exact commit принять как completed, duplicate commit запретить |
+| Push | Inspect exact remote ref/OID; совпадающий OID доказывает completion, moved/ambiguous ref блокирует blind push |
+| PR creation | Искать exact repository/head OID/base PR до create; ambiguous response не создаёт duplicate |
+| Merge | Inspect exact PR state/head/base и merge OID; confirmed `MERGED` не merge-ится повторно |
+| Branch deletion | Проверить существование и OID exact local/remote ref; already absent может доказать completed outcome, moved/recreated ref не удаляется |
+| Documentation/status transition | Сверить actual bytes, source precedence, required evidence и все mirrors/indexes; partial либо ложное повышение status исправляется через обычный review, а не принимается как checkpoint |
+
+Локальный side effect при отсутствии remote effect и remote side effect при
+устаревшем local state классифицируются раздельно. Например, local commit без
+push не доказывает P1, а remote push/merge сначала обновляет factual
+reconstruction и не replay-ится из-за stale local refs.
+
+### User Permissions After Interruption
+
+Persistent recovery anchor хранит exact target/readiness, но не создаёт и не
+подменяет пользовательское permission. Permission нельзя выводить из status,
+существующего side effect или недоступной истории чата.
+
+- interruption **до** permission gate оставляет gate непройденным;
+- authority уже активированной PROCESS-001 task сохраняется до её terminal
+  `STOP` только для exact task contract/scope; новый агент может применить её,
+  когда current user input явно просит продолжить/resume эту active task.
+  Bare `Продолжай проект.` также детерминированно возобновляет её через обычный
+  preflight. Без current continue/resume input task record сам выполнение не
+  запускает;
+- если exact permission присутствует в текущем пользовательском вводе и tuple
+  неизменен, оно применяется по обычному contract;
+- для one-shot Commit Gate, если permission было дано в потерянной session, а
+  commit доказанно не создан, новый агент запрашивает `Разрешаю коммит.` снова;
+- если outcome commit неизвестен, сначала выполняется reconciliation; exact
+  существующий commit не повторяется и новое permission не запрашивается для
+  его создания post factum;
+- Publisher permission сохраняется только для неизменного immutable Target по
+  действующему Publisher contract. Новый агент без session history требует
+  текущий explicit resume-сигнал, ссылающийся на ранее разрешённую exact
+  publication; при отсутствии такой ссылки либо reconstructable Target
+  требуется обычное `Разрешаю публиковать.`;
+- permission, данное до изменения diff/branch/commit/base/scope, не переносится
+  на изменённый tuple;
+- если operation доказанно выполнена, но user report не отправлен, агент
+  reconstruct-ит outcome и отправляет только truthful report/следующий
+  обязательный checkpoint; operation не повторяется.
+
+Повторный запрос permission после доказанного `Proven Not Started` не является
+retry side effect. Он не разрешает расширение scope и не лечит invalidation.
+
+Process behavior проверяется
+[Execution Interruption Recovery Acceptance Scenarios](EXECUTION-INTERRUPTION-RECOVERY-ACCEPTANCE-SCENARIOS.md),
+а Publisher-specific behavior — отдельными Publisher scenarios.
+
 ## Task Intake
 
 Coordinator:
@@ -670,6 +874,12 @@ Coordinator направляет проблему владельцу соотв�
 
 ## Failure Handling
 
+External interruption сначала проходит Recovery Reconstruction Gate. До
+reconciliation `Outcome Unknown` не классифицируется как failure и не запускает
+Rework/Blocked автоматически. После reconstruction доказанный failed check,
+inconsistent state или factual external blocker обрабатывается обычными
+правилами ниже.
+
 Агент:
 
 1. прекращает только затронутую работу;
@@ -751,6 +961,9 @@ P0–P10 publication с clean synchronized baseline.
 - пропускать независимый review;
 - создавать конкурирующие источники истины;
 - полагаться на память диалога для продолжения работы.
+- считать external interruption результатом stage либо завершённым checkpoint;
+- считать unknown outcome failed или safe to retry;
+- повторять side-effecting operation до reconciliation фактического outcome;
 - считать `Blocked Closure Certified` либо `Blocked Evidence Checkpoint`
   Coordinator Acceptance, Completion или доказательством устранения blocker;
 - активировать subsequent prerequisite до clean synchronized baseline после

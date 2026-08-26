@@ -40,8 +40,11 @@ Managed-Parent Admission Implementation; `Completed — Coordinator Accepted
 (2026-08-25)`; independent Tester `PASS WITH ENVIRONMENT LIMITATION` 0/0;
 final Reviewer `APPROVED` 0/0; Scope Audit 18/0/0; PROCESS-002 Synchronized.
 
-**Последняя завершённая operational task:** TASK-012 — Engineering Process
-Hardening; `Completed — Coordinator Accepted`.
+**Последняя завершённая operational task:** TASK-048 — Execution Interruption
+Recovery Governance; `Completed — Coordinator Accepted (2026-08-26)`; общий
+PROCESS-001 recovery gate, inspect-first reconciliation, exact unsigned UTF-8
+path-byte manifest ordering и 28 general scenarios; Tester `PASS 0/0/1`,
+Reviewer `Approved 0/0`, Scope Audit `19/0/0`; TASK-026 не активирована.
 
 **Текущая operational task:** отсутствует.
 

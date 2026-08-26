@@ -74,6 +74,16 @@ The repository currently contains an Alpha foundation rather than a production-r
   does not change product architecture or production code. Independent Tester,
   Scope Audit, and Final Reviewer gates passed; TASK-012 is Coordinator
   Accepted.
+- TASK-048 completed the documentation-only Execution Interruption Recovery
+  Governance task with Coordinator Acceptance after resolving an independently
+  reproduced cross-platform canonical-manifest ordering ambiguity. It adds a general PROCESS-001 reconstruction gate,
+  inspect-first side-effect reconciliation, session-independent recovery
+  evidence, permission-resume rules and cross-pipeline acceptance scenarios
+  while preserving the Publisher Resume Reconstruction Guard and all existing
+  gates. Canonical paths use exact unsigned UTF-8 byte order. Repeat Tester
+  passed 0/0/1, Repeat Independent Review approved 0/0, and Scope Audit passed
+  19/0/0.
+  TASK-026 remains Blocked and is not activated.
 
 ## 3. Engineering Principles
 

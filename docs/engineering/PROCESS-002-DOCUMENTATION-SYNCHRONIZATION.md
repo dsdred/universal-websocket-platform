@@ -140,6 +140,9 @@ Status. Documentation Agent не повышает статус самостоя�
   PROCESS-001;
 - отсутствуют противоречия между документами;
 - новый агент способен продолжить работу без истории переписки.
+- active task recovery anchor содержит exact branch/baseline/scope/content
+  identity, а каждый claimed checkpoint имеет independently reproducible
+  evidence;
 - обязательная applicability record заполнена.
 
 ---
@@ -187,6 +190,36 @@ confirmed P6 обычно ожидает current task branch/HEAD; после P6
 использует current `main`, допускает его отставание до P7 и не
 требует/не восстанавливает task branch. Эти ephemeral checkpoint facts не
 записываются изменением immutable publication target.
+
+---
+
+# Interruption-Recovery Synchronization
+
+Documentation/project-state sources хранят durable recovery facts, но не
+подменяют Execution Interruption Recovery gate PROCESS-001.
+
+Task record до первой mutation хранит persistent recovery anchor: exact task,
+branch/baseline, scope, roles, ordered stages и reproducible evidence только
+для действительно завершённых checkpoints. После review/acceptance он хранит
+exact evidence subject, exclusions и canonical subject-manifest identity
+PROCESS-001, включая untracked/new files без преждевременного stage. Evidence
+envelope не self-attest-ит свои final bytes; до commit не доказанная после
+interruption envelope mutation возвращает affected Review/Acceptance, а после
+commit final bytes доказывает tree OID. Started command, partial output, memory
+session, live tool/network/auth condition и unknown outcome не
+записываются как `PASS`, `FAIL`, `Approved`, `Accepted` или `Completed`.
+
+После interruption Documentation Agent сначала сверяет actual bytes,
+source-precedence, mirrors/indexes и required evidence. Partial
+documentation/status mutation отражается как factual incomplete diff и
+возвращается в обычные Verification/Review gates; одно наличие нового status
+text не доказывает допустимый transition.
+
+Project-state documents не хранят user permission как authority. Они могут
+хранить exact accepted/certified/publication target и доказанный outcome, но
+permission применяется только по текущему user input и правилам PROCESS-001.
+Это предотвращает одновременно потерю factual target и перенос chat-only
+authority на изменённый diff.
 
 ---
 

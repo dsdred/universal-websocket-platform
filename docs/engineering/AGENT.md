@@ -121,6 +121,31 @@ Auth/transport/repository failure внутри initial P0 оставляет P0 
 
 ---
 
+# External Interruption Entry
+
+После model/time limit, потери сети, закрытия/restart session, crash/tool
+failure, restart host либо неизвестного результата внешней операции агент не
+продолжает с remembered stage и не повторяет mutation.
+
+До любой дальнейшей mutation он выполняет общий **Execution Interruption
+Recovery** gate PROCESS-001: reconstruct-ит task/branch/baseline/diff и
+local/remote facts, классифицирует checkpoints и продолжает первый, completion
+которого не доказан. `Started` не означает `Completed`, interruption не создаёт
+verdict/status, а unknown side effect сначала reconciled inspect-first.
+
+Chat history не является recovery state. Task record обязан давать persistent
+anchor, но status claim без independently reproducible evidence не доказывает
+checkpoint и не выдаёт user permission. Для Publisher сохраняется его более
+строгий phase-aware Resume Reconstruction Guard.
+
+Authority exact active task сохраняется через interruption только до её
+terminal `STOP` и только в записанном scope. Новый агент применяет её после
+current explicit user request продолжить/resume эту task; task record без
+такого current input не запускает выполнение. Commit/Publisher permissions
+сохраняют отдельные более строгие правила PROCESS-001.
+
+---
+
 # Responsibilities
 
 Каждый агент работает только в рамках своей роли.
