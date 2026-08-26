@@ -83,7 +83,8 @@ The repository currently contains an Alpha foundation rather than a production-r
   gates. Canonical paths use exact unsigned UTF-8 byte order. Repeat Tester
   passed 0/0/1, Repeat Independent Review approved 0/0, and Scope Audit passed
   19/0/0.
-  TASK-026 remains Blocked and is not activated.
+  TASK-026 Design-only reassessment is active; implementation remains Not
+  Activated.
 
 ## 3. Engineering Principles
 
@@ -398,18 +399,20 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   TASK-026 terminal/orchestrator work and historically records `UNBLOCK
   TASK-026`, with 7 Direct / 10 Compositional / 2 Missing core / 0 Missing
   external / 0 Deferred DP-016 section 25 proofs. A superseding TASK-026
-  recheck confirms one missing DP-015 tracked-Start managed-parent plus
-  preclaimed `StopOld` admission prerequisite and corrects the matrix to 7
-  Direct / 9 Compositional / 2 Missing core / 1 Missing prerequisite / 0
-  Deferred. Terminal publication remains TASK-026 core work. Orchestration and production
+  recheck identified one missing DP-015 tracked-Start managed-parent plus
+  preclaimed `StopOld` admission prerequisite; TASK-046 records it and TASK-047
+  implements it in isolation. Fresh reassessment accepts `READY — UNBLOCK
+  TASK-026` with 7 Direct / 10 Compositional / 2 Missing core / 0 Missing
+  prerequisite / 0 Missing external / 0 Deferred. Terminal publication remains
+  TASK-026 core work. Orchestration and production
   composition remain Planned; TASK-044 is Completed — Coordinator Accepted
   (2026-08-24), repeat Reviewer APPROVED 0/0, Scope Audit 16/0/0, and
-  PROCESS-002 Synchronized; TASK-026 is blocked. Design-update TASK-046 is
+  PROCESS-002 Synchronized. Design-update TASK-046 is
   Completed — Coordinator Accepted (2026-08-25), with repeat Reviewer Approved
   0/0, and records the additive contract. TASK-047 implements that bounded
   tracked-Start managed-parent admission prerequisite in isolation. TASK-026
-  remains Blocked pending a separate repository-first readiness reassessment;
-  Integration and Production Activation remain inactive.
+  implementation transition remains Not Activated; DP-016 is Approved/Planned
+  and Integration and Production Activation remain inactive.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Message Persistence, Delivery, and Plugin contracts still require focused design.

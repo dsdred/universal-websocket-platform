@@ -25,9 +25,10 @@ absent. Completed and Coordinator-Accepted TASK-044 (2026-08-24) historically
 returned `UNBLOCK TASK-026` after reassessing TASK-040/TASK-043. A superseding
 TASK-026 reactivation recheck identified the DP-015 tracked-Start
 managed-parent plus preclaimed `StopOld` admission prerequisite. TASK-046
-records its additive contract and TASK-047 implements it in isolation. The
-corrected section 25 matrix remains historical until a separate repository-
-first reassessment; TASK-026 stays Blocked and is not activated by TASK-047.
+records its additive contract and TASK-047 implements it in isolation. Fresh
+TASK-026 reassessment accepts `READY — UNBLOCK TASK-026` with 7 Direct / 10
+Compositional / 2 Missing core / 0 Missing prerequisite / 0 Missing external /
+0 Deferred. DP-016 remains Approved/Planned and implementation is Not Activated.
 
 ## 2. Purpose
 
@@ -534,9 +535,9 @@ and verifies the isolated Owner extension, with repeat final Reviewer
 invoker in isolation. TASK-044 historically records `UNBLOCK TASK-026`; the
 superseding TASK-026 recheck identifies the DP-015 tracked-Start managed-parent
 plus preclaimed `StopOld` admission prerequisite. TASK-046 defines that
-additive contract and TASK-047 implements it in isolation. The corrected matrix
-remains historical pending a separate repository-first reassessment. TASK-026
-is Blocked and is not activated; no reduced DP-016 slice is permitted.
+additive contract and TASK-047 implements it in isolation. Fresh TASK-026
+reassessment accepts the READY boundary; implementation remains Not Activated
+and no reduced DP-016 slice is permitted.
 
 ## 29. Decision
 

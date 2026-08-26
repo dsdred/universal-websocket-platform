@@ -33,10 +33,11 @@ implementation slices and discharges the deferred design decisions they need.
 
 It defines no production code and changes no approved semantics. Completed and
 Coordinator-Accepted TASK-044 (2026-08-24) historically records `UNBLOCK
-TASK-026`. A superseding TASK-026 recheck confirms one missing DP-015
-tracked-Start managed-parent plus preclaimed `StopOld` admission prerequisite;
-TASK-026 is blocked, the prerequisite is not activated, and DP-020 remains
-Draft/Planned overall.
+TASK-026`. A superseding recheck identified one missing DP-015 tracked-Start
+managed-parent plus preclaimed `StopOld` admission prerequisite; TASK-047 now
+implements it in isolation. Fresh TASK-026 reassessment accepts `READY —
+UNBLOCK TASK-026` with matrix 7/10/2/0/0/0; implementation remains Not
+Activated and DP-020 remains Draft/Planned overall.
 
 ## 2. Purpose
 
@@ -754,8 +755,8 @@ TASK-044 historically records `UNBLOCK TASK-026`; the superseding TASK-026
 recheck confirms the missing DP-015 tracked-Start managed-parent plus
 preclaimed `StopOld` admission prerequisite and corrects the matrix to 7 Direct
 / 9 Compositional / 2 Missing core / 1 Missing prerequisite / 0 Deferred.
-TASK-026 is blocked and the prerequisite is not activated. Historical Slice 4
-remains completed and accepted as TASK-038.
+Fresh TASK-026 reassessment accepts the READY boundary; implementation remains
+Not Activated. Historical Slice 4 remains completed and accepted as TASK-038.
 
 ## 15. Consequences
 

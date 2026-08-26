@@ -32,8 +32,9 @@ Coordinator-Accepted TASK-044 (2026-08-24) historically records `UNBLOCK
 TASK-026`. A superseding TASK-026 reactivation recheck identified one DP-015
 conformance prerequisite: atomic tracked-Start managed-parent admission with
 preclaimed ordinal-zero `StopOld`. TASK-046 records its additive contract and
-TASK-047 implements it in isolation. The corrected matrix remains historical
-until a separate repository-first reassessment; TASK-026 stays Blocked.
+TASK-047 implements it in isolation. Fresh TASK-026 reassessment accepts
+`READY — UNBLOCK TASK-026` with matrix 7/10/2/0/0/0; implementation remains
+Not Activated and DP-019 remains Approved/Planned overall.
 
 ## 2. Purpose
 
@@ -553,8 +554,8 @@ TASK-044 subsequently reassesses the complete unmodified DP-016 proofs and
 historically records `UNBLOCK TASK-026`. The superseding TASK-026 recheck
 identifies the DP-015 tracked-Start managed-parent plus preclaimed `StopOld`
 admission prerequisite. TASK-046 defines that additive contract and TASK-047
-implements it in isolation. The corrected matrix remains historical pending a
-separate repository-first reassessment. TASK-026 stays Blocked. The historical focused
+implements it in isolation. Fresh TASK-026 reassessment accepts the READY
+boundary; implementation remains Not Activated. The historical focused
 readiness decomposition of prerequisites is recorded in the mirrored
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), with
 Design Status Draft and Implementation Status Planned overall, with Slice 3

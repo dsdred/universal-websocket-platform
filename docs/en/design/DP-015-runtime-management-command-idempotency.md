@@ -52,9 +52,10 @@ and Approved DP-016 retain Implementation Status Planned.
 TASK-046 records the additive tracked-Start managed-parent admission contract,
 and TASK-047 implements it in isolation through
 `Boundary.ExecuteManagedParentFromTrackedStart` and its callback-scoped
-preclaimed `StopOld` capability. The superseded corrected TASK-026 matrix
-remains historical readiness evidence until a separate reassessment; TASK-026
-stays Blocked and is not activated by this isolated prerequisite.
+preclaimed `StopOld` capability. Fresh TASK-026 reassessment accepts `READY —
+UNBLOCK TASK-026` with 7 Direct / 10 Compositional / 2 Missing core / 0 Missing
+prerequisite / 0 Missing external / 0 Deferred; implementation remains Not
+Activated and DP-015 status is unchanged.
 
 ## 4. Scope
 
@@ -609,9 +610,9 @@ wiring, and Production Activation remain absent. TASK-046 defines the bounded
 tracked-Start managed-parent plus preclaimed `StopOld` admission contract in
 section 13.1; TASK-047 implements its atomic admission, discriminated sole
 Stop-exception occupant, callback-scoped consumption, replay, expiry, and
-winner-order proofs in isolation. TASK-026 remains Blocked pending a separate
-repository-first readiness reassessment. The isolated package changes no
-lifecycle contract and is not connected to the DP-013 Directory.
+winner-order proofs in isolation. Fresh TASK-026 reassessment accepts the READY
+boundary, while implementation remains Not Activated. The isolated package
+changes no lifecycle contract and is not connected to the DP-013 Directory.
 
 ## 28. Decision
 

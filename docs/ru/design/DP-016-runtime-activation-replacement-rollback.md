@@ -25,9 +25,10 @@ orchestrator; orchestrator и production wiring остаются отсутст�
 `UNBLOCK TASK-026` после повторной оценки TASK-040/TASK-043. Superseding recheck
 реактивации TASK-026 определяет DP-015 prerequisite tracked-Start managed-parent
 плюс preclaimed `StopOld` admission. TASK-046 фиксирует её additive contract, а
-TASK-047 реализует его изолированно. Corrected matrix section 25 остаётся
-historical до отдельной repository-first reassessment; TASK-026 сохраняет
-статус Blocked и не активируется TASK-047.
+TASK-047 реализует его изолированно. Fresh reassessment TASK-026 принимает
+`READY — UNBLOCK TASK-026` с 7 Direct / 10 Compositional / 2 Missing core / 0
+Missing prerequisite / 0 Missing external / 0 Deferred. DP-016 остаётся
+Approved/Planned, implementation — Not Activated.
 
 ## 2. Назначение
 
@@ -526,10 +527,9 @@ repeat final Reviewer `APPROVED` 0/0. TASK-043 впоследствии реал
 exact-scope invoker изолированно. TASK-044 исторически фиксирует `UNBLOCK
 TASK-026`; superseding recheck TASK-026 определяет DP-015 prerequisite
 tracked-Start managed-parent плюс preclaimed `StopOld` admission. TASK-046
-фиксирует additive contract, а TASK-047 реализует его изолированно. Corrected
-matrix остаётся historical до отдельной repository-first reassessment.
-TASK-026 сохраняет статус Blocked и не активирована; reduced slice DP-016
-запрещён.
+фиксирует additive contract, а TASK-047 реализует его изолированно. Fresh
+reassessment TASK-026 принимает READY boundary; implementation остаётся Not
+Activated, reduced slice DP-016 запрещён.
 
 ## 29. Решение
 

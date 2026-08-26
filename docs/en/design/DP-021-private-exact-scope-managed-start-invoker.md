@@ -13,9 +13,11 @@ package; it adds no public API, transport, policy, persistence, or production
 wiring. Approved DP-014 through DP-019 remain unchanged, and TASK-026 remains
 unimplemented. Completed and Coordinator-Accepted TASK-044 (2026-08-24)
 historically records `UNBLOCK TASK-026`. A superseding TASK-026 recheck
-confirms one missing DP-015 tracked-Start managed-parent plus preclaimed
-`StopOld` admission prerequisite. TASK-026 is blocked, the prerequisite is not
-activated, and this DP remains Draft/Partial.
+identified one missing DP-015 tracked-Start managed-parent plus preclaimed
+`StopOld` admission prerequisite; TASK-047 implements it in isolation. Fresh
+TASK-026 reassessment accepts `READY — UNBLOCK TASK-026` with matrix
+7/10/2/0/0/0; implementation remains Not Activated and this DP remains
+Draft/Partial.
 
 ## 2. Purpose
 
