@@ -38,8 +38,13 @@ implementation-срезы и закрывает отложенные решен�
 `UNBLOCK TASK-026`. Superseding recheck TASK-026 определяет missing DP-015
 prerequisite tracked-Start managed-parent плюс preclaimed `StopOld` admission;
 TASK-047 реализует её изолированно. Fresh reassessment TASK-026 принимает
-`READY — UNBLOCK TASK-026` с matrix 7/10/2/0/0/0; implementation остаётся Not
-Activated, DP-020 — Draft/Planned overall.
+`READY — UNBLOCK TASK-026` с matrix 7/10/2/0/0/0. Текущий цикл supersedes эту
+readiness для live execution: repeat Architecture Confirmation вернула `NEEDS
+DECISION` / `SPLIT REQUIRED`, потому что текущие eager generation и combined
+inspect/claim не обеспечивают replay-first admission и late allocation.
+TASK-026 заблокирована; отдельная узкая DP-015/DP-020 design плюс isolated
+implementation prerequisite — Not Activated без Task ID. DP-020 остаётся
+Draft/Planned overall.
 
 ## 2. Назначение
 
@@ -751,8 +756,10 @@ terminal publication DP-014 и terminalization command/phase DP-015 после
 DP-015 prerequisite tracked-Start managed-parent плюс preclaimed `StopOld`
 admission и исправляет matrix на 7 Direct / 9 Compositional / 2 Missing core /
 1 Missing prerequisite / 0 Deferred. Fresh reassessment TASK-026 принимает
-READY boundary; implementation остаётся Not Activated. Historical Срез 4
-остаётся завершённым и принятым как TASK-038.
+READY boundary; на том checkpoint implementation оставалась Not Activated.
+Repeat Architecture Confirmation теперь блокирует TASK-026 отдельной
+DP-015/DP-020 prerequisite replay-first admission и late generation. Она Not
+Activated. Historical Срез 4 остаётся завершённым и принятым как TASK-038.
 
 ## 15. Последствия
 

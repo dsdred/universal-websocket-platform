@@ -54,8 +54,13 @@ TASK-047 реализует его изолированно через
 `Boundary.ExecuteManagedParentFromTrackedStart` и callback-scoped capability
 preclaimed `StopOld`. Fresh reassessment TASK-026 принимает `READY — UNBLOCK
 TASK-026` с 7 Direct / 10 Compositional / 2 Missing core / 0 Missing
-prerequisite / 0 Missing external / 0 Deferred; implementation остаётся Not
-Activated, а статус DP-015 не меняется.
+prerequisite / 0 Missing external / 0 Deferred. Текущий цикл TASK-026
+supersedes эту readiness для live execution: repeat Architecture Confirmation
+вернула `NEEDS DECISION` / `SPLIT REQUIRED`, потому что eager generation и
+combined inspect/claim не обеспечивают exact replay-first admission и late
+allocation. TASK-026 заблокирована; узкая DP-015/DP-020 design плюс isolated
+implementation prerequisite — Not Activated без Task ID. Статус DP-015 не
+меняется.
 
 ## 4. Область
 
@@ -611,8 +616,10 @@ contract tracked-Start managed-parent плюс preclaimed `StopOld` admission в
 section 13.1; TASK-047 реализует изолированно его atomic admission,
 discriminated occupant sole Stop exception, callback-scoped consumption,
 replay, expiry и proofs winner ordering. Fresh reassessment TASK-026 принимает
-READY boundary, а implementation остаётся Not Activated. Isolated package не
-изменяет lifecycle contracts и не подключён к DP-013 Directory.
+READY boundary как historical evidence. Repeat Architecture Confirmation теперь
+блокирует TASK-026 отдельным DP-015/DP-020 refinement replay-first admission и
+late generation, описанным выше. Prerequisite — Not Activated; isolated package
+не изменяет lifecycle contracts и не подключён к DP-013 Directory.
 
 ## 28. Решение
 

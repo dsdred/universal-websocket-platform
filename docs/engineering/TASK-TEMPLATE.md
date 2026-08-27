@@ -191,9 +191,16 @@ generated, formatting-only и незадокументированное planned
 - evidence-only scope и подтверждение отсутствия product implementation:
 - certification tuple: repository, Task ID, branch, base/OID, HEAD OID, exact
   file set in PROCESS-001 ascending unsigned UTF-8 path-byte order,
-  staging-invariant canonical evidence
-  digest command/certified HEAD/object format/OID, blocker identity,
-  verification/review results;
+  staging-invariant canonical subject-manifest command/certified HEAD/object
+  format/OID, every ordered `path\0projection\0state\0mode\0oid\0` row,
+  blocker identity, verification/review results;
+- task record is included with `task-record-v1` projection; terminal Recovery
+  Evidence Envelope is metadata excluded from that projection and does not
+  self-attest its own bytes; any mutation outside the envelope invalidates
+  the subject and downstream gates;
+- durable Tester handoff: exact tested subject/manifest identity, repository,
+  branch and HEAD, exact commands with exit/results, limitations,
+  scope/coverage counts and reproducible proof artifacts;
 - `Blocked Closure Certified`: да/нет, кем и когда;
 - exact checkpoint commit OID либо `not authorized/not created`:
 

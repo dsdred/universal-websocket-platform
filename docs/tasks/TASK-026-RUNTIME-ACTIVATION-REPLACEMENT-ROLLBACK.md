@@ -2,58 +2,66 @@
 
 ## Status
 
-`Ready for Implementation — Design-only reassessment Coordinator Accepted
-(2026-08-26); Implementation Not Activated`.
+`Blocked — missing DP-015/DP-020 orchestration-admission refinement
+(2026-08-27)`.
 
-The accepted readiness verdict is `READY — UNBLOCK TASK-026`, with matrix 7
-Direct / 10 Compositional / 2 Missing core / 0 Missing prerequisite / 0 Missing
-external / 0 Deferred. This closure accepts only the Design-only reassessment;
-DP-016 remains Approved/Planned, and no implementation, tests, production
-wiring, implementation Acceptance/Completion, commit, or publication occurred.
+The separately accepted and published readiness verdict `READY — UNBLOCK
+TASK-026`, with matrix 7 Direct / 10 Compositional / 2 Missing core / 0 Missing
+prerequisite / 0 Missing external / 0 Deferred, is preserved as historical
+evidence. The current implementation cycle supersedes that readiness for live
+execution: repeat Architecture Confirmation returned `NEEDS DECISION` and
+`SPLIT REQUIRED` because the current DP-015/DP-020 eager-generation and
+combined inspect/claim boundaries cannot satisfy exact replay-first admission
+and late generation allocation. The rejected implementation was removed, so
+production and test diff is zero. DP-016 remains Approved/Planned. A separate
+narrow DP-015/DP-020 design and isolated implementation prerequisite is `Not
+Activated` and has no Task ID.
 
 ## Task Contract
 
 ### Task Mode
 
-`Design-only`: recovery-aware, repository-first readiness reassessment. This
-intake does not activate implementation.
+`Implementation`: bounded isolated DP-016 activation/replacement/rollback
+orchestrator and its proof/regression tests.
 
 ### Why Now
 
-- TASK-046 accepted the additive tracked-Start managed-parent plus preclaimed
-  `StopOld` admission design, and TASK-047 subsequently implemented and
-  independently accepted that prerequisite in isolation;
-- TASK-047 closure, the task index, `.ai/PROJECT_CONTEXT.md`,
-  `spec/current-state.md`, and `spec/decisions.md` all identify a separate
-  repository-first TASK-026 readiness reassessment as the next bounded work;
-- TASK-048 added mandatory interruption-recovery governance, so the resumed
-  task must establish a `task-record-v1` recovery anchor before any further
-  task mutation;
-- the historical 7 Direct / 9 Compositional / 2 Missing core / 1 Missing
-  prerequisite / 0 Deferred matrix is selection evidence only and must be
-  recomputed from current repository bytes.
+- the Design-only TASK-026 reassessment was Coordinator Accepted, committed as
+  `e4c0cf8`, and published through PR #50 into synchronized
+  `main@65af65c3154d70db10de52483149960a42dcfb9a`;
+- its fresh Architect verdict is `READY — UNBLOCK TASK-026`, and all mandatory
+  prerequisites are present in isolation;
+- its recovery handoff names this exact Implementation contract transition as
+  the sole next candidate and leaves it `Not Activated` until a separate bare
+  continuation command;
+- the current bare continuation command activates that candidate without
+  authorizing commit or publication.
 
 ### Definition of Done
 
-1. Current Approved/Active contracts, implemented package surfaces, and tests
-   are mapped to every unchanged DP-016 §25 acceptance proof without treating
-   historical verdicts as current evidence.
-2. A fresh Architect verdict records either an exact remaining blocker or an
-   implementation-ready boundary, including ownership, ordering, admission,
-   replay, cancellation, indeterminate-outcome, and terminalization constraints.
-3. The Existing Coverage Report records current coverage and exact gaps before
-   any production or test edit.
-4. Coordinator records the readiness decision, applicable PROCESS-002 result,
-   verification evidence, independent review, scope audit, and durable handoff.
-5. No implementation, test mutation, architecture contract change, commit, or
-   publication occurs under this Design-only intake.
+1. One isolated `internal/runtimeactivation` package implements the exact
+   activation, replacement, and explicit rollback composition authorized by
+   DP-016 and the accepted readiness boundary.
+2. Exact-version validation and same-target satisfied outcomes occur before
+   command/lifecycle mutation; replacement proves old release before Continue
+   and fresh claim; rollback uses an exact Published target and a fresh attempt.
+3. The orchestrator preserves DP-014/DP-015/Owner truth, replay, cancellation,
+   unresolved/indeterminate outcomes, zero Host overlap, and per-Instance
+   independence without holding locks across repository, lifecycle, wait, or
+   storage calls.
+4. Proof and regression tests cover all nineteen DP-016 §25 rows, including the
+   two previously Missing-core same-target decisions and the ten compositional
+   rows, with current Direct prerequisites protected against regression.
+5. Applicable focused/stress/full tests, vet, formatting, module, documentation,
+   diff, scope, and independent-review gates pass; PROCESS-002 truthfully
+   synchronizes the isolated implementation boundary.
 
 ### Out of Scope
 
-- implementing or editing the DP-016 orchestrator or its tests;
-- declaring TASK-026 unblocked before the Architect recheck;
-- changing Approved/Frozen semantics, weakening any DP-016 proof, or inventing
-  a new prerequisite/API;
+- changing Approved/Frozen semantics, DP-016 acceptance proofs, or existing
+  prerequisite contracts;
+- generic orchestration engines, registries, service locators, exported public
+  API, recovery hooks, new lifecycle abstractions, or changes to existing seams;
 - production wiring, Control Service/API, persistence, recovery, reporting,
   authorization policy, automatic rollback, or multi-node supervision;
 - stage, commit, push, PR, merge, publication, branch deletion, or mutation of
@@ -61,48 +69,47 @@ intake does not activate implementation.
 
 ### Verification Plan
 
-- inspect current DP-014–DP-021 contracts, TASK-046/TASK-047 evidence, package
-  surfaces, and existing tests read-only;
-- remap all nineteen DP-016 §25 proofs as Direct, Compositional, Missing core,
-  Missing prerequisite, Missing external, or Deferred with exact file/test
-  evidence;
-- verify prerequisite non-regression and the tracked-Start managed-parent plus
-  preclaimed `StopOld` admission path using existing tests only during this
-  Design-only stage;
-- run applicable focused/full tests and documentation/diff checks only after
-  the mapping identifies them; record exact results or limitations, never an
-  inferred `PASS`;
-- require independent Architect, Tester, and Reviewer handoffs before the
-  Coordinator readiness decision.
+- complete the repository-first Documentation Baseline and explicit Architect
+  confirmation before production/test mutation;
+- preserve the Existing Coverage Report below before adding tests;
+- implement the smallest closed package-local dependency surface and proof
+  tests mapped to DP-016 §25 rows 1–19;
+- run focused tests and repeated shuffled stress for the affected packages,
+  full `go test ./... -count=1`, `go vet ./...`, `gofmt -d`,
+  `go mod tidy -diff`, and `git diff --check`; attempt race verification and
+  record an exact environment limitation if it remains unavailable;
+- validate exported-surface confinement, EN/RU parity, links, live status
+  claims, exact file set, Size Guard, Scope Audit, and independent final review.
 
 ### Selection Evidence
 
 - repository preflight: clean synchronized
-  `main@55821d4a0c17f5cce5658087b38ba3f15973b695` with
+  `main@65af65c3154d70db10de52483149960a42dcfb9a` with
   `main == origin/main` at branch creation;
 - current task branch:
-  `feature/task-026-runtime-activation-orchestration-resume` at the same trusted
-  baseline;
+  `feature/task-026-runtime-activation-orchestration-implementation` at that
+  trusted baseline;
 - no other active task or unexplained staged, unstaged, or untracked state was
   present at intake;
-- TASK-047 is accepted evidence that the previously identified prerequisite
-  exists in isolation; it is not evidence for the full DP-016 composition;
-- rejected alternative: direct implementation resume, because the current
-  proof matrix and callable end-to-end boundary have not yet been independently
-  revalidated;
-- rejected alternative: new architecture work, because no current repository
-  evidence yet proves a remaining design gap.
+- TASK-026 is the sole explicit next candidate; its accepted readiness record
+  provides the exact one-package implementation boundary;
+- rejected alternative: a new prerequisite or architecture task, because the
+  current matrix has zero Missing prerequisite and the Accepted contracts are
+  sufficient;
+- rejected alternative: production wiring, because it is a materially larger
+  later integration slice and explicitly outside the readiness boundary.
 
 ### Scope, Sources, and Branch
 
 - repository: `E:\wikiPRJ\universal-websocket-platform`;
 - trusted baseline and intake HEAD:
-  `55821d4a0c17f5cce5658087b38ba3f15973b695`;
+  `65af65c3154d70db10de52483149960a42dcfb9a`;
 - task branch:
-  `feature/task-026-runtime-activation-orchestration-resume`;
-- first content change: this task-record intake; historical sections remain
-  evidence and are not rewritten as current verdicts;
-- mutation permitted before Architect recheck: this task record only;
+  `feature/task-026-runtime-activation-orchestration-implementation`;
+- first content change: this Implementation task-contract transition in the
+  existing task record; historical sections remain evidence;
+- mutation permitted before current Architecture Confirmation: this task
+  record only;
 - sources of truth: Active ARCH-004 §19(4), Approved DP-014–DP-019, applicable
   DP-020/DP-021 contracts, TASK-046/TASK-047 accepted evidence, current package
   surfaces and tests, PROCESS-001, and PROCESS-002;
@@ -111,30 +118,30 @@ intake does not activate implementation.
 
 ### Roles and Ordered Stages
 
-1. Coordinator — recovery reconstruction, selection, intake, gates, Size Guard,
-   readiness decision, scope audit, and closure.
-2. Documentation Agent — this first content change and the repository-first
-   documentation baseline; no architecture verdict.
-3. Architect — fresh read-only proof/seam recheck and explicit readiness or
-   blocker verdict.
-4. Tester — independent Existing Coverage mapping verification and applicable
-   read-only/focused checks; no test edit in this mode.
-5. Reviewer — independent review of the exact reassessment subject and verdict
-   consistency.
-6. Documentation Agent — PROCESS-002 applicability/synchronization after the
-   verdict, without presenting planned capability as implemented.
-7. Coordinator — final Design-only scope audit and readiness closure. Only a
-   later explicit Implementation contract transition after a Ready Architect
-   verdict may enable Developer work; it is `Not Activated` here.
-8. Publisher — not applicable and not authorized.
+1. Coordinator — recovery reconstruction, deterministic selection, intake,
+   gates, Size Guard, scope audit, and closure.
+2. Documentation Agent — repository-first baseline and later PROCESS-002
+   synchronization without overstating isolated implementation.
+3. Architect — explicit confirmation that the current contract fits the
+   Accepted DP-016 boundary and requires no new decision.
+4. Developer — production implementation and scoped tests only after the
+   Architecture Confirmation.
+5. Tester — independent Verification Matrix execution and coverage audit.
+6. Reviewer — independent review; any blocking finding returns through the
+   bounded Rework Loop and invalidates affected downstream evidence.
+7. Documentation Agent — final applicability/status synchronization.
+8. Coordinator — final Scope Audit, final independent review, Acceptance, and
+   next-task recommendation.
+9. Publisher — not applicable and not authorized.
 
 ### Stop Conditions
 
 Stop and return to Coordinator on dirty/unattributed or diverged repository
-state, source-precedence conflict, incomplete proof mapping, ambiguous callable
-ownership/order, a remaining prerequisite, required Approved/Frozen contract
-change, critical documentation drift, materially expanded scope, or any attempt
-to edit production/tests before the Architect recheck and Coordinator gate.
+state, source-precedence conflict, ambiguous ownership/order, any newly found
+prerequisite, required Approved/Frozen contract change, critical documentation
+drift, public API or production-wiring need, more than one new package, more
+than 500 net production lines, more than 15 total task files, more than one
+independently deliverable behavior, or failed mandatory verification/review.
 
 ### Existing Coverage Report — Current Read-Only Gate
 
@@ -149,42 +156,60 @@ new orchestrator's authorized pre-claim zero-mutation same-target decisions.
 The ten Compositional rows still require TASK-026 end-to-end implementation and
 proof tests; existing isolated seams do not prove that future composition.
 
-`Added Proof Tests`: none; forbidden before the Architect recheck and an
-Implementation-mode contract transition.
+`Added Proof Tests`: `internal/runtimeactivation/activation_test.go` now maps
+all nineteen DP-016 §25 proofs, including real-Host successful replacement and
+rollback, exact Running same-target zero mutation, same-address zero Host
+overlap, release-before-fresh-claim, fresh rollback attempt, and binding-before-
+Load order.
 
-`Added Regression Tests`: none; forbidden in this Design-only stage.
+`Added Regression Tests`: replay without reinvocation, Stop failure,
+cancellation, unresolved barrier, startup failure without resurrection or
+automatic rollback, and different-Instance progress are executable; existing
+tracked-Start/rendezvous/managed-continuation suites remain green.
 
-`Remaining Limitations`: implementation and its proof/regression tests remain
-absent and Not Activated. Race execution is unavailable in the current Windows
-environment because `CGO_ENABLED=1 go test -race` cannot find `gcc`; repeated
-shuffled stress is the recorded substitute for this readiness reassessment.
+`Remaining Limitations`: production wiring, external persistence, recovery,
+reporting, concrete authorization policy, and public management API remain out
+of scope. Race execution was unavailable at readiness time because `gcc` was
+missing; the implementation gate must attempt it again and record the current
+fact rather than inherit the historical limitation.
 
 ### Recovery Checkpoints
 
-1. Recovery reconstruction — `Proven Completed`: exact branch, baseline/HEAD,
-   clean index/worktree, and current task identity were inspected read-only.
-2. Task intake — `Proven Completed`: this task record is the first content
-   change; exact worktree scope is this one file and `git diff --check` passes.
-3. Documentation baseline — `Proven Completed`: scoped inventory, statuses,
-   EN/RU structure, links, and factual drift were inspected read-only; the
-   evidence and verdict are recorded below.
-4. Architect readiness recheck — `Proven Completed`: independent verdict
-   `READY — UNBLOCK TASK-026`, current 19-row matrix and boundary recorded below.
-5. Existing Coverage mapping verification — `Proven Completed`: independent
-   Tester `PASS WITH ENVIRONMENT LIMITATION`, findings `0/0`; no test mutation.
-6. Coordinator readiness decision — `Proven Completed`: Design-only READY
-   boundary accepted; implementation transition remains `Not Activated`.
-7. Initial independent review — `Proven Completed` for the pre-synchronization
-   one-file subject, verdict `Approved 0/0`; subsequent PROCESS-002 content
-   change invalidates that subject for final review.
-8. PROCESS-002 synchronization — `Proven Completed`; provisional Scope Audit
-   `17 Required / 0 Questionable / 0 Removable`; final independent review is
-   the first unfinished checkpoint.
-9. Implementation transition and Developer work — `Not Activated` and
-   forbidden unless checkpoints 3–6 establish readiness and Coordinator records
-   a new exact Implementation contract.
+1. Recovery reconstruction — `Proven Completed`: clean synchronized
+   `main@65af65c3154d70db10de52483149960a42dcfb9a`, published readiness history,
+   active/next-task state, and absence of competing work were inspected.
+2. Implementation intake and safe branch preparation — `Proven Completed`:
+   current branch is the exact task branch above and this task record is the
+   first content change.
+3. Documentation Baseline and bounded pre-implementation synchronization —
+   `Proven Completed`: the critical stale recovery/navigation drift recorded
+   below is repaired in the exact 19-path documentation subject.
+4. Architecture Confirmation — `Proven Completed`: independent Architect
+   verdict `PASS`, exact one-package boundary and ordering constraints are
+   recorded below.
+5. Initial Developer implementation — `Proven Completed`: one new package, 499
+   production lines, no existing-seam change; handoff recorded below.
+6. Initial Independent Tester verification — `Proven Completed`: `PASS WITH
+   ENVIRONMENT LIMITATION`, findings `0/0`; the later Reviewer invalidated the
+   claimed complete proof mapping.
+7. Initial Independent Review — `Proven Completed`: `Needs Revision`, blocking
+   findings `6`, non-blocking findings `0`; exact findings and reviewed identity
+   are recorded below.
+8. Developer rework attempt — `Proven Stopped Before Mutation`: B-001 and B-003
+   cannot be corrected through the Architecture-confirmed existing seams.
+9. Repeat Architecture Confirmation and Size Guard decision — `Proven
+   Completed`: `NEEDS DECISION`; the required DP-015/DP-020 refinement is a
+   separate prerequisite behavior and cannot enter this task.
+10. Rejected implementation cleanup — `Proven Completed`: the two
+    `internal/runtimeactivation` files were removed; production, test, module,
+    dependency, generated, staged, and untracked diff is zero.
+11. Blocked-handoff PROCESS-002 — `Proven Completed`: the exact 19-path
+    documentation set records the superseding blocker and unactivated
+    prerequisite without changing any Design/Implementation Status.
+12. Final Tester, independent Reviewer, Scope Audit, and blocked closure —
+    first unfinished checkpoint.
 
-### Documentation Baseline — Repository-First Reassessment
+### Documentation Baseline — Implementation Intake
 
 #### Inventory and Status Evidence
 
@@ -192,8 +217,9 @@ All **26/26** scoped files are present: TASK-026, TASK-047, task index,
 ARCH-004 EN/RU, DP-014–DP-021 EN/RU, `spec/current-state.md`,
 `spec/decisions.md`, `.ai/PROJECT_CONTEXT.md`, and MASTER_PLAN EN/RU.
 
-- TASK-026: current `In Progress — Repository-first readiness reassessment`;
-  Design-only and no implementation activation;
+- TASK-026 at this baseline checkpoint: `In Progress — Implementation intake
+  (2026-08-27)`; the later repeat Architecture verdict supersedes it with the
+  live Blocked status at the top of this record;
 - TASK-047: `Completed — Coordinator Accepted (2026-08-25)`;
 - ARCH-004: `Active`, Approved stability in both mirrors;
 - DP-014: Approved / Implemented in isolation;
@@ -219,61 +245,62 @@ pair: ARCH-004 `29/29`, `8/8`; DP-014 `28/28`, `4/4`; DP-015 `30/30`,
 
 #### Drift Verdict
 
-Documentation Baseline verdict: **`Drift Detected — bounded intake-status
-synchronization pending; no critical architecture or implementation drift`**.
+Initial Documentation Baseline verdict: **`Drift Detected — Critical`**.
+Approved/Active status, EN/RU normative meaning, and the
+Planned-versus-Implemented boundary were mutually consistent, but the intake
+record retained the terminal Design-only recovery anchor and stale baseline,
+while live navigation, project state, roadmap, and related proposal summaries
+still described the separately activated Implementation transition as `Not
+Activated`. The EN/RU design indexes and the DP-021 implementation-boundary
+conclusion also retained a superseded Blocked/pending-reassessment statement.
 
-Critical drift: **0**. Approved/Active status, EN/RU normative meaning, and the
-Planned-versus-Implemented boundary are mutually consistent. No source requires
-an architecture change before the read-only Architect reassessment.
-
-Bounded factual drift is expected from the mandatory first-content-change
-ordering: task index, `spec/current-state.md`, `spec/decisions.md`,
-`.ai/PROJECT_CONTEXT.md`, MASTER_PLAN EN/RU, and scoped DP live summaries still
-describe TASK-026 as Blocked/pending a separate reassessment. Those statements
-remain truthful historical baseline evidence but are stale as live active-task
-navigation after this intake. They must not be rewritten into a readiness
-verdict before Architect/Coordinator evidence exists. This drift blocks a
-`Synchronized` claim and any implementation activation, but does not block the
-next read-only Architect recheck.
+Bounded repair verdict: **`Synchronized for Architecture Confirmation`**.
+The exact 19-path update makes current task activation and recovery facts
+consistent without claiming implementation, changing any Design or
+Implementation Status, or rewriting historical closure chronology. DP-016
+remains Approved/Planned and no production/test mutation is present.
 
 #### Applicability
 
-- this TASK-026 record: **Required and updated** for intake/recovery evidence;
+- this TASK-026 record: **Required and updated** for current recovery evidence;
 - task index, `spec/current-state.md`, `spec/decisions.md`, and
-  `.ai/PROJECT_CONTEXT.md`: **Required at post-verdict PROCESS-002** for current
-  task/readiness navigation;
-- MASTER_PLAN EN/RU: **Required at post-verdict PROCESS-002** if the readiness
-  or dependency boundary changes; otherwise the intake-status wording still
-  requires an explicit disposition;
-- DP-015, DP-016, DP-019, DP-020, and DP-021 EN/RU: **applicability pending the
-  Architect verdict**; update only exact live matrix/boundary text, without
-  changing Design Status or claiming implementation;
+  `.ai/PROJECT_CONTEXT.md`: **Required and updated** for current task
+  navigation;
+- MASTER_PLAN EN/RU and design indexes EN/RU: **Required and updated** for the
+  durable active-work and design-navigation boundary;
+- DP-015, DP-016, DP-019, DP-020, and DP-021 EN/RU: **Required and updated**
+  only for live TASK-026 activation/boundary wording; all statuses and contract
+  semantics are preserved;
 - ARCH-004, DP-014, DP-017, and DP-018 EN/RU: **Not applicable at baseline**;
   no contract, status, or implementation fact changed;
 - root README EN/RU and `CHANGELOG.md`: **Not applicable**; no user-facing,
   release, or production capability changed;
 - production, tests, modules, dependencies, generated artifacts: **Not
-  applicable and forbidden** in this Design-only stage.
+  applicable and forbidden** before Architecture Confirmation.
 
 #### Reproducible Commands and Results
 
 - repository reconstruction:
   `git branch --show-current; git rev-parse HEAD; git rev-parse main; git status
   --short; git log -1 --oneline --decorate` → branch
-  `feature/task-026-runtime-activation-orchestration-resume`, HEAD/main
-  `55821d4a0c17f5cce5658087b38ba3f15973b695`, clean pre-intake worktree;
+  `feature/task-026-runtime-activation-orchestration-implementation`, HEAD/main
+  `65af65c3154d70db10de52483149960a42dcfb9a`, clean pre-intake worktree and
+  one attributed task-record change at baseline review;
 - inventory/status/structure: PowerShell `Test-Path`, `Get-Content`, and
   `Select-String -Pattern '^#{1,6} |^```'` over the exact 26-file inventory
   above → `26 present / 0 missing`, pair counts recorded above;
-- factual drift search: ``rg -n -C 2
-  "TASK-026|TASK-047|tracked-Start managed-parent|preclaimed
-  `StopOld`|repository-first readiness reassessment"`` over the same scoped
-  inventory → isolated TASK-047 prerequisite consistently present; live
-  TASK-026 pending-reassessment wording identified for later synchronization;
+- factual drift search: scoped `rg -n` searches for TASK-026, `Not Activated`,
+  Blocked, and current-task summaries → stale live matches repaired in the
+  exact applicability set; explicit historical matches preserved;
 - relative-link validation: PowerShell Markdown-link extraction plus
   `Test-Path -LiteralPath` over the exact inventory → `294 valid / 0 broken`;
 - task-record diff hygiene: `git diff --check` → `PASS` (Git emits only the
   repository line-ending advisory; no whitespace error).
+
+The current later boundary is a separate production composition/integration
+intake after accepted isolated implementation. It remains **`Not Activated`**;
+Control Service/API wiring, recovery, reporting, and Production Activation are
+outside this task and are not assigned a Task ID here.
 
 ### Independent Architect Readiness Handoff
 
@@ -451,6 +478,288 @@ closure remain unclaimed.
   live contradictions `0`;
 - `git diff --check`: `PASS`; Git reports only CRLF conversion advisories, not
   whitespace errors.
+
+### Current Implementation Architecture Confirmation
+
+Independent Architect verdict: **`PASS`**. Active ARCH-004 §19(4), Approved
+DP-014/DP-015/DP-016/DP-019, and the accepted isolated DP-020/DP-021 seams are
+sufficient for this exact Implementation contract; no new design decision or
+existing-seam change is required. The current proof matrix remains **7 Direct /
+10 Compositional / 2 Missing core / 0 Missing prerequisite / 0 Missing external
+/ 0 Deferred**. Proofs 2 and 14 are intentionally orchestrator-owned
+same-target decisions.
+
+Authorized shape: one new `internal/runtimeactivation` package with a validating
+constructor, immutable exact-scope request, closed result categories, and exact
+`ActivateExact`, `ReplaceExact`, and `RollbackExact` entry points. Package-local
+interfaces may mirror only exact version `Get`, DP-014 read/history/conditional
+publication, Owner `Observe`/`StopExpectedAttempt`, existing DP-015 managed
+admission/callback capabilities, DP-021 `InvokeManagedStart`, and the exact
+execution-generation source. `Unresolved` is non-terminal and must never be
+published as a terminal command outcome.
+
+Mandatory order is exact target lookup/Published and scope validation, coherent
+DP-014/Owner observation, same-target zero mutation, managed primitive or parent
+admission, proven old release and DP-014 terminal publication before Continue,
+managed Start invocation, DP-014 Running/terminal publication, then DP-015
+phase and parent terminal publication. Tracked Starting replacement must use
+only the TASK-047 atomic parent plus preclaimed `StopOld` path. Rollback uses an
+exact Published target and fresh attempt. Indeterminate reads, calls,
+publication, panic, `runtime.Goexit`, expired capability, or generation loss
+remain unresolved without retry or inferred terminal truth.
+
+Architecture stop conditions: any Approved/Frozen contract change, missing
+prerequisite, ambiguous ownership/order, inability to reconcile aggregate and
+Owner facts, existing-seam/public-API/production-wiring need, inability to
+publish DP-014 truth before DP-015 terminalization, assumed release, blind
+retry, authority reuse, Host overlap, or Size Guard breach. Size Guard remains
+one new package, at most 500 net production lines, at most 15 total task files,
+and one independently deliverable behavior.
+
+### Developer Implementation Handoff
+
+Developer added only `internal/runtimeactivation/activation.go` and
+`internal/runtimeactivation/activation_test.go`; no existing seam, public API,
+production wiring, module, dependency, or documentation file was changed by
+Developer. The package implements a validating constructor, immutable exact-
+scope request, closed result categories, and `ActivateExact`, `ReplaceExact`,
+and `RollbackExact`. It performs exact Published-version validation, coherent
+DP-014/Owner observation, authorized same-target decisions, primitive or
+managed-parent admission, exact expected-attempt Stop, proven-release
+publication before Continue, fresh generation/managed Start, DP-014 terminal or
+Running publication, and DP-015 phase/parent terminalization. `Unresolved`
+never becomes a terminal durable outcome.
+
+Developer focused, shuffled stress, affected-package, full, vet, module,
+formatting, and diff checks passed. Initial production size 494 grew to 527
+during authorization/coherent-observation correction; Developer stopped on the
+guard and reduced only redundant comments/blank lines/accessors, preserving the
+same behavior, to exactly **499 physical production lines** after `gofmt`.
+
+### Independent Tester Handoff
+
+Tester verdict: **`PASS WITH ENVIRONMENT LIMITATION`**, blocking findings `0`,
+non-blocking findings `0`, production defects `0`. Tester changed only
+`internal/runtimeactivation/activation_test.go`, now **584 lines**; production
+remains 499 lines. All DP-016 §25 proofs 1–19 have executable new or retained
+prerequisite evidence. New real-Host scenarios prove successful replacement and
+rollback, same-address zero overlap, old release before fresh claim, exact
+Published rollback with fresh attempt, same-target activation/rollback zero
+mutation, replay, stop failure/cancellation fail-closed behavior, unresolved
+barrier, startup failure without resurrection, binding-before-Load, and
+different-Instance progress.
+
+Checks: focused PASS; focused shuffled `-count=20` PASS; eight affected packages
+shuffled `-count=5` PASS; full `go test ./... -count=1` PASS; `go vet ./...`
+PASS; `go mod tidy -diff` PASS; scoped `gofmt -d` empty; `git diff --check`
+PASS. Default race attempt requires CGO; explicit `CGO_ENABLED=1` race build
+completed exit 1 because `gcc` is absent. Stress/full/vet substitutes pass, so
+the verdict retains that exact environment limitation.
+
+### Initial Independent Reviewer Handoff
+
+Reviewer verdict: **`Needs Revision`**, blocking findings `6`, non-blocking
+findings `0`. The blocking areas are: exact DP-015 replay is bypassed by
+aggregate-derived preflight decisions; cancellation after proven old release
+and definitive pre-Owner no-claim outcomes are not terminalized; generation is
+allocated before authorization/admission or the cancellation gate; the claimed
+nineteen-row proof set omits tracked-Starting replacement, post-release and
+no-claim cancellation, post-continuation Stop, authorization/allocation order,
+and shared-infrastructure different-Instance proof; all new exported
+identifiers lack required GoDoc; and the persistent Recovery Evidence Envelope
+was stale.
+
+The reviewed 21-path subject used SHA-1 object format and unsigned UTF-8
+path-byte ordering, with `task-record-v1` projection for this record. Its
+canonical manifest was `37a6092603e7ba53b646fec23dfcf1f216de8bba`;
+projected task-record blob `6c0edf570733d55aff18ec4f9f94826cffb14eac`,
+production blob `b984df83494af1a4b6e679627da60e0a0e2ad217`, and test
+blob `e1bc321f79599d71868692b5c37b8a2df7cb7212`. Those identities are
+historical after this recovery correction and subsequent Developer rework.
+Reviewer checks passed for focused tests (`-count=20`), full tests, vet,
+formatting, module tidiness, and diff hygiene; race remained unavailable
+because `gcc` is absent. PROCESS-002 and final Scope Audit remain forbidden
+until rework, repeat independent verification, and repeat review succeed.
+
+### Developer Rework Stop Handoff
+
+Developer performed read-only composition analysis and stopped before mutation.
+The current DP-015 managed-Start API requires an expected aggregate revision
+and non-empty generation as eager arguments, validates them before
+authorization, and only then inspects/replays/claims. Parent APIs likewise
+combine inspection and claim. Consequently the Approved requirements for exact
+replay before aggregate-derived same-target decisions and generation allocation
+only after authorization, cancellation, and confirmed new claim cannot be
+composed through the Architecture-confirmed existing seams. An authorized
+inspect-only/admission-decision mechanism and late generation provider are
+candidate additive seams, but Developer is forbidden to invent them. Repeat
+Architecture Confirmation and Size Guard reevaluation are active; no code or
+test byte was changed by this rework attempt.
+
+### Repeat Architecture Confirmation and Split Decision
+
+Independent Architect verdict: **`NEEDS DECISION`**. B-001 is confirmed:
+current DP-015 APIs combine inspection and claim and cannot provide exact replay
+before aggregate-derived same-target decisions. A bare inspect-only shortcut
+would itself violate DP-015 atomic absent-intent claim semantics. B-003 is also
+confirmed: eager non-empty generation is required before authorization/replay
+by the current APIs, while moving generation after a winning claim changes the
+Approved DP-020 binding timing and failure semantics.
+
+The minimum correction is a distinct DP-015/DP-020 refinement owned by
+`internal/runtimecommandidempotency`: replay-first authorized orchestration
+admission, a closed orchestrator decision for absent intents, atomic recheck and
+claim, and late generation allocation only after the winning primitive or
+StartTarget-phase claim and cancellation winner. Provider failure, empty value,
+panic, `runtime.Goexit`, replacement, or binding-install uncertainty must leave
+unresolved durable truth, exhaust the capability, and never retry or call
+Owner/Load. Exact replay, concurrency linearization, same-target semantics,
+tracked-Starting replacement, pending/post-continuation Stop, cross-Instance
+progress, and reconstruction require independent proof.
+
+This refines Approved DP-015 behavior and Draft DP-020 binding timing, affects
+an existing second production package, adds production lines beyond the task's
+exact 499-line stop condition, and is independently deliverable. The earlier
+21-path `DO NOT SPLIT` decision
+does not waive it. Decision: **`SPLIT REQUIRED`**. Further runtimeactivation
+changes, repeat implementation testing/review, PROCESS-002 completion, and
+Acceptance are forbidden. TASK-026 must close Blocked with no implementation
+diff; the prerequisite remains a separate Not Activated candidate with no Task
+ID until a future intake.
+
+### Implementation Size Guard Re-evaluation
+
+The implementation attempt reached **21 files**: 19 Required documentation
+paths plus two files in one new package. The repeat Architecture verdict then
+proved that a correction would require a refinement of Approved DP-015 and
+Draft DP-020, an existing second production package, additional lines beyond the
+499-line stop boundary, and a separately deliverable prerequisite. Decision:
+**`SPLIT REQUIRED`**. The rejected two-file implementation was removed. The
+remaining exact subject is **19 documentation files**, still above the 15-file
+review trigger; Coordinator decision for that evidence-only synchronization is
+**`DO NOT SPLIT`** because the task/navigation/state documents and mandatory
+EN/RU mirrors form one indivisible blocker handoff. This does not activate or
+design the prerequisite and does not waive final verification, Scope Audit, or
+independent review.
+
+### Bounded Certification Process-Recovery Contract (2026-08-27)
+
+This recovery cycle is evidence-only and may change process/documentation
+contracts, not product behavior. Its sole objective is to resolve the three
+certification defects found by the latest independent Reviewer without
+changing TASK-026's blocker, status, implementation scope, or prerequisite
+activation.
+
+The minimum cross-cutting amendment scope is: `docs/engineering/PROCESS-001-
+AI-DEVELOPMENT-WORKFLOW.md`, `docs/engineering/PROCESS-002-DOCUMENTATION-
+SYNCHRONIZATION.md`, `docs/engineering/TASK-TEMPLATE.md`,
+`docs/engineering/EXECUTION-INTERRUPTION-RECOVERY-ACCEPTANCE-SCENARIOS.md`,
+`docs/engineering/agents/coordinator.md`, `docs/engineering/agents/tester.md`,
+`docs/engineering/agents/reviewer.md`, `.ai/PROJECT_CONTEXT.md`, and this
+task record. No production, test, module, dependency, generated, Publisher,
+or next-prerequisite path is in scope.
+
+The general process convention is now recorded by the bounded amendment to
+PROCESS-001, PROCESS-002, TASK-TEMPLATE, the interruption scenarios, and the
+Coordinator/Tester/Reviewer contracts. A canonical ordered subject manifest
+is the only certification identity: the TASK record is included with
+`task-record-v1` projection; every other present evidence path uses `full`;
+deleted paths use baseline mode and OID `-`; paths sort by ascending unsigned
+UTF-8 bytes; each row is `path\\0projection\\0state\\0mode\\0oid\\0`; and the
+manifest OID is the Git blob identity of that complete NUL-separated stream.
+`task-record-v1` excludes the Status evidence body and terminal Recovery
+Evidence Envelope, so the tuple can be appended envelope-only without
+changing the certified subject identity. Raw `git diff` is not a canonical
+certification digest and is not replaced by an 18-file, normalized, or
+projected-diff workaround.
+
+The envelope must durably record the exact ordered path/projection set, rows,
+repository/Task/branch/base/current HEAD, object format, manifest OID, blocker
+identity, and a fresh Tester handoff containing exact commands, exit/results,
+limitations, scope/coverage counts, reproducible proof artifacts, and tested
+identity. Independent Reviewer and Scope Audit must verify that tuple; any
+mutation of projected subject outside the envelope invalidates the subject and
+all downstream gates. Status evidence body remains excluded from manifest
+identity but requires separate status/contract reconciliation. This amendment
+is process-only: Commit, Publisher, Coordinator
+Acceptance, Completion, product implementation, and prerequisite activation
+remain forbidden.
+
+The ordered pipeline is: process amendment → PROCESS-002 → Verification
+Matrix → durable Tester handoff → Independent Reviewer/rework as needed →
+Scope Audit → recomputed projected manifest → envelope-only tuple append and
+identity recheck → `Blocked Closure Certified`. The task remains Blocked, and
+the prior non-certified digest is never reused.
+
+### Process-Contract Amendment Documentation Handoff (2026-08-27)
+
+Documentation Agent completed only the bounded process/documentation
+amendment. The seven amended operational contracts are
+`docs/engineering/PROCESS-001-AI-DEVELOPMENT-WORKFLOW.md`,
+`docs/engineering/PROCESS-002-DOCUMENTATION-SYNCHRONIZATION.md`,
+`docs/engineering/TASK-TEMPLATE.md`,
+`docs/engineering/EXECUTION-INTERRUPTION-RECOVERY-ACCEPTANCE-SCENARIOS.md`,
+`docs/engineering/agents/coordinator.md`,
+`docs/engineering/agents/tester.md`, and
+`docs/engineering/agents/reviewer.md`; `.ai/PROJECT_CONTEXT.md` and this task
+record carry the durable governance/task facts. The resulting current
+documentation subject is 26 paths: the prior 19 blocked-handoff paths plus
+these seven operational contracts. `git diff --check` passes; no production,
+test, module, dependency, generated, staged, or untracked path is present.
+The amendment preserves TASK-026 `Blocked`, DP-016 `Approved/Planned`, the
+unactivated prerequisite, and all permission/Acceptance/Completion gates.
+Tester, Independent Reviewer, Scope Audit, canonical manifest calculation,
+and `Blocked Closure Certified` remain pending and are not claimed by this
+handoff.
+
+### Blocked-Handoff PROCESS-002 Synchronization (2026-08-27)
+
+Documentation Agent verdict: **`Synchronized for blocked-handoff
+verification`**. The current repository truth is aligned across the exact 19
+already-modified documentation paths: TASK-026 is Blocked by the missing
+DP-015/DP-020 replay-first admission and late-generation refinement; the
+rejected `internal/runtimeactivation` implementation/test diff is absent;
+DP-015, DP-016, DP-019, DP-020, and DP-021 retain their existing Design and
+Implementation Status values; no TASK-026 implementation, Acceptance, or
+Completion is claimed.
+
+The next candidate is a separate narrow design plus isolated implementation
+prerequisite for DP-015/DP-020. It remains **`Not Activated`**, has no assigned
+Task ID, and may be selected only by a later normal intake after this blocked
+evidence reaches its required closure path. This synchronization neither
+defines the new contract nor starts its implementation.
+
+PROCESS-002 applicability:
+
+- this task record and `docs/tasks/README.md`: **Required and updated** for the
+  live Blocked status, chronology, recovery handoff, and next-candidate boundary;
+- `.ai/PROJECT_CONTEXT.md`, `spec/current-state.md`, and `spec/decisions.md`:
+  **Required and updated** for current task/capability/decision truth;
+- MASTER_PLAN EN/RU and design indexes EN/RU: **Required and updated** for the
+  durable dependency and navigation boundary;
+- DP-015, DP-016, DP-019, DP-020, and DP-021 EN/RU: **Required and updated**
+  only for the superseding blocker and missing-prerequisite wording; normative
+  semantics and statuses are unchanged;
+- ARCH/ADR, DP-014, DP-017, DP-018, root README EN/RU, `spec/README.md`, and
+  `CHANGELOG.md`: **Not applicable** because no approved semantic, adjacent
+  status, user-facing/release capability, or specification inventory changed;
+- production code, tests, modules, dependencies, generated artifacts, and the
+  next prerequisite: **Not applicable and absent**.
+
+Documentation verification: exact changed set `19 expected / 19 actual`;
+production, test, module, dependency, generated, staged, and untracked paths
+`0`; changed EN/RU heading/fence parity aligned for DP-015 `30/30, 4/4`,
+DP-016 `30/30, 4/4`, DP-019 `25/25, 16/16`, DP-020 `34/34, 12/12`, DP-021
+`21/21, 10/10`, design indexes `1/1, 0/0`, and MASTER_PLAN `36/36, 0/0`;
+changed-file relative links `258 valid / 0 broken`; live stale
+In-Progress/Architecture-PASS activation matches `0`; conflict markers `0`;
+task-record-v1 has one `## Status`, one `## Task Contract`, and one terminal
+`## Recovery Evidence Envelope` in order; `git diff --check` PASS with only
+line-ending advisories.
+
+Final Tester, independent Reviewer, Scope Audit, canonical evidence identity,
+`Blocked Closure Certified`, Coordinator closure, commit, and publication are
+not claimed by this Documentation Agent handoff.
 
 ## Reactivation Task Contract (2026-08-25)
 
@@ -1084,7 +1393,7 @@ the current blocker/next-candidate boundary is present; conflict markers `0`;
 `git diff --check` PASS. Root README and CHANGELOG remain unchanged as Not
 applicable.
 
-## Recovery Evidence Envelope
+### Historical Design-only Recovery Evidence Envelope (published readiness cycle)
 
 - projection: `task-record-v1`; this is the final top-level heading and its
   bytes through EOF are excluded from the projected evidence subject;
@@ -1188,3 +1497,323 @@ applicable.
 - recovery handoff: this Design-only task is terminal. A new agent may begin
   only the exact Not Activated Implementation candidate through a separate bare
   continuation/intake transition and fresh recovery reconstruction.
+
+## Recovery Evidence Envelope
+
+- projection: `task-record-v1`; this is the final top-level heading and its
+  bytes through EOF are excluded from the projected evidence subject;
+- repository: `E:\wikiPRJ\universal-websocket-platform`;
+- Task/status: `TASK-026` / `Blocked — missing DP-015/DP-020
+  orchestration-admission refinement (2026-08-27)`;
+- branch: `feature/task-026-runtime-activation-orchestration-implementation`;
+- trusted baseline and current HEAD before the first intake mutation:
+  `65af65c3154d70db10de52483149960a42dcfb9a`;
+- current exact subject: the 19 Required documentation paths recorded in the
+  current Documentation Baseline; production, test, module, dependency,
+  generated, staged, and untracked paths are absent;
+- recovery reconstruction and Implementation intake: `Proven Completed`;
+  synchronized `main`, accepted/published readiness history, exact branch,
+  attributed first task-record change, and absence of competing work were
+  inspected read-only;
+- Documentation Baseline and pre-implementation synchronization: `Proven
+  Completed`; initial verdict `Drift Detected — Critical`, repaired verdict
+  `Synchronized for Architecture Confirmation`; inventory `26/26`, public
+  mirrors `46/46` with unmatched `0/0`, scoped pair structure aligned, links
+  `294/0`, and exact applicability `19 Required / 0 Questionable / 0
+  Removable`;
+- Architecture Confirmation: `Proven Completed`; independent Architect verdict
+  `PASS`, one-package boundary, exact ordering, proof mapping, Size Guard, and
+  stop conditions are recorded in the current Task Contract;
+- initial Developer implementation and Tester verification: `Proven Completed`;
+  their handoffs are historical inputs, not acceptance evidence, because the
+  subsequent independent review found six blocking defects;
+- initial Independent Review: `Proven Completed`, verdict `Needs Revision`
+  `6/0`, reviewed canonical manifest
+  `37a6092603e7ba53b646fec23dfcf1f216de8bba`; its exact findings and identity
+  are recorded in the handoff above;
+- initial Developer rework attempt: `Proven Stopped Before Mutation`; existing
+  seams cannot satisfy B-001/B-003 and the exact stop handoff is recorded above;
+- repeat Architecture Confirmation: `Proven Completed`, verdict `NEEDS
+  DECISION`; `SPLIT REQUIRED` because the minimum correction changes Approved
+  DP-015 behavior and Draft DP-020 binding timing, touches a second production
+  package, and breaches the
+  500-line stop condition;
+- rejected implementation cleanup: `Proven Completed`; the two
+  `internal/runtimeactivation` files and their empty directory are absent, and
+  production/test diff is zero;
+- blocked-handoff PROCESS-002: `Proven Completed`; exact applicability and
+  the synchronized 19-path handoff are recorded above;
+- final Tester verification: `Proven Completed` by cleanup and documentation
+  closure checks; race is not applicable because production/test diff is zero;
+- prior independent final Review and Scope Audit: `Proven Completed` for the
+  prior envelope bytes, verdict `Approved` `0/0`, Scope Audit `19/0/0`,
+  canonical manifest `6332ae0cc8edfc8a2ddf0e0851a08d25280d939b`, projected
+  task-record blob `fb87e0bab803f0349157ccacb4f7b8957b7383a6`; that evidence is
+  superseded by the current revalidation and does not certify current bytes;
+- previously recorded `Blocked Closure Certified` / Coordinator closure is
+  superseded for the current revalidation and must not be treated as a current
+  certification; no ordinary or blocked Coordinator Acceptance of TASK-026 is
+  performed;
+- status boundary: DP-016 remains Design Status `Approved`, Implementation
+  Status `Planned`; implementation behavior, Acceptance, and Completion are not
+  claimed by this synchronization;
+- exclusions: historical status evidence, the envelope itself, chat-only
+  assertions, staging, commit/publication authority, and unrecorded command
+  output;
+- stage/commit/push/PR/merge/branch deletion: not authorized and not performed;
+- current-cycle next candidate: separate narrow DP-015/DP-020 design plus
+  isolated implementation prerequisite for replay-first orchestration
+  admission and late generation allocation; `Not Activated`, no Task ID
+  assigned; production composition/integration remains later and outside this
+  task;
+- current handoff: TASK-026 remains Blocked; Coordinator Acceptance and Blocked
+  Closure Certification are not performed for the current bytes. No
+  implementation Acceptance or Completion may be claimed. A future normal
+  intake must first design and independently accept the separate DP-015/DP-020
+  replay-first/late-generation prerequisite.
+- latest Blocked Closure Certification revalidation (2026-08-27): **`Not
+  Certified — STOP`**. Independent Tester returned `PASS WITH LIMITATION`; the
+  subsequent independent Reviewer returned `Needs Revision`, blocking findings
+  `3`, non-blocking findings `0`. Blocking findings are: the raw evidence-diff
+  digest/command/object-format tuple is absent; the current envelope does not
+  enumerate the exact 19 paths; and the mandated raw digest includes this task
+  record, so appending the missing tuple would change the digest and violate
+  the non-self-attestation rule. The current Tester handoff is not durably
+  recorded with exact current identity and commands, and `Coordinator
+  Acceptance: not performed` is not explicit in the prior summary.
+- observed (not certified) raw diff digest for the pre-revalidation bytes:
+  `ae8935eb3e2d643f3ad34d3353187765062d973f`; it must not be reused after this
+  envelope append, replaced by an 18-file digest, or substituted with a
+  projected/normalized diff. The current exact 19-path subject-manifest and
+  projected blob remain historical observations only until a non-self-referential
+  convention is resolved and the affected Tester/Reviewer gates are rerun.
+- certification eligibility is therefore **not confirmed**. No baseline
+  cleanup, blocker-scope change, local implementation, stage, commit, push,
+  publication, ordinary Acceptance, or prerequisite activation is authorized;
+  the next permitted step is process clarification or a future recovery cycle
+  that reconstructs this changed envelope, reconciles identity, and reruns the
+  affected Tester → Independent Reviewer → Scope Audit → digest gates.
+
+### Certification Tuple Draft Superseded (2026-08-27)
+
+The tuple below was drafted before the durable Tester handoff was appended to
+this terminal envelope. It is retained as historical recovery evidence only and
+is **not** a current `Blocked Closure Certified` result. The final certification
+tuple appears after the durable handoff and its identity recheck. Certification
+does not change TASK-026's status, does not accept DP-016 implementation, and
+does not activate the prerequisite.
+
+Immutable certification tuple:
+
+- repository: `E:\wikiPRJ\universal-websocket-platform`;
+- Task/status: `TASK-026` / `Blocked — missing DP-015/DP-020
+  orchestration-admission refinement`;
+- branch: `feature/task-026-runtime-activation-orchestration-implementation`;
+- base branch/OID: `main` /
+  `65af65c3154d70db10de52483149960a42dcfb9a`;
+- certified HEAD/OID: `65af65c3154d70db10de52483149960a42dcfb9a`;
+- exact evidence set: the 26 present `100644` documentation paths listed in
+  the durable Tester handoff above, in ascending unsigned UTF-8 path-byte
+  order; the TASK record uses `task-record-v1`, all other present paths use
+  `full`, and there are no deleted paths;
+- canonical identity: object format `sha1`; task-record projection
+  `83,477` bytes, Git blob
+  `feabbed62af1c957bfde57becc16186d94a76548`; ordered NUL-separated manifest
+  `2,873` bytes, Git blob
+  `161a6d10f0355dc313b2290d1111bc1f75b2ad4e`;
+- manifest command/semantics: build exact rows
+  `path\\0projection\\0state\\0mode\\0oid\\0` using raw current bytes for
+  `full`, the exact `task-record-v1` projection for the TASK record, and
+  unsigned UTF-8 path order, then hash the complete stream with
+  `git hash-object --stdin`; terminal envelope bytes are excluded by the
+  projection and do not self-attest;
+- blocker identity: repeat Architecture `NEEDS DECISION / SPLIT REQUIRED` —
+  current DP-015/DP-020 admission cannot provide replay-first inspection and
+  late generation allocation; the separate refinement remains `Not Activated`
+  with no Task ID;
+- Verification Matrix/PROCESS-002: Tester `PASS`, exact 26/26 subject,
+  commands/results and limitation durable above; process amendment and
+  R-029/R-030 checks pass;
+- independent Reviewer: `Approved`, blocking/non-blocking findings `0/0`;
+  Scope Audit `26 Required / 0 Questionable / 0 Removable`;
+- repository residue: production/test/module/dependency/generated/temp/
+  staged/untracked paths `0`; `internal/runtimeactivation` absent;
+- prior observed raw diff digest `ae8935eb3e2d643f3ad34d3353187765062d973f`
+  is not part of this tuple and was not reused;
+- Coordinator Acceptance: **not performed**; Completion and product
+  Definition of Done are **not claimed**;
+- commit, Blocked Evidence Checkpoint, push, PR, merge, publication and
+  prerequisite activation: **not authorized / not performed**;
+- certification class: superseded evidence-only tuple draft; it must not be
+  used as certification. Any mutation outside this terminal envelope, any
+  change to the exact set or tuple, or any change to the projected manifest
+  requires the affected gates to be rerun.
+
+### Current Bounded Recovery Tester Handoff (2026-08-27)
+
+- role/verdict: **Tester — `PASS`** for the current evidence-only bounded
+  recovery subject. This is a verification handoff only; it is not Scope Audit,
+  Independent Review, Coordinator Acceptance, or `Blocked Closure Certified`.
+- repository: `E:\wikiPRJ\universal-websocket-platform`;
+  Task/status: `TASK-026` / `Blocked — missing DP-015/DP-020
+  orchestration-admission refinement (2026-08-27)`;
+  branch: `feature/task-026-runtime-activation-orchestration-implementation`;
+  trusted base `main` and current `HEAD` before this envelope append:
+  `65af65c3154d70db10de52483149960a42dcfb9a` / `65af65c3154d70db10de52483149960a42dcfb9a`.
+- exact tested subject: 26 present documentation paths below, with the task
+  record represented by `task-record-v1` and every other present path by
+  `full`. Missing paths, extra paths, production code, test code, module or
+  dependency files, generated/temporary files, staged paths, and untracked
+  paths are all `0`. The exact diff is `26 expected / 26 actual`, with
+  `0 missing / 0 extra`.
+- canonical identity calculation: all path comparisons use ascending unsigned
+  UTF-8 bytes (case-sensitive, locale-independent); present full bytes are
+  hashed with `git hash-object --no-filters`, the task record projection is
+  hashed with `git hash-object --stdin`, and the complete NUL-separated rows
+  below are hashed with `git hash-object --stdin`. The task-record projection
+  uses the exact PROCESS-001 `task-record-v1` rule: raw bytes through the
+  `## Status` line, `STATUS-EVIDENCE-EXCLUDED`, one NUL, then raw bytes from
+  `## Task Contract` through the byte before `## Recovery Evidence Envelope`.
+  Object format is `sha1`; projected task-record bytes/OID are
+  `83477` / `feabbed62af1c957bfde57becc16186d94a76548`; canonical manifest
+  bytes/OID are `2873` / `161a6d10f0355dc313b2290d1111bc1f75b2ad4e`.
+- exact ordered canonical rows (`<NUL>` denotes one NUL byte):
+
+  ```text
+  .ai/PROJECT_CONTEXT.md<NUL>full<NUL>present<NUL>100644<NUL>69e295cff446489a29aea4dd631e76c7bd17e867<NUL>
+  docs/en/design/DP-015-runtime-management-command-idempotency.md<NUL>full<NUL>present<NUL>100644<NUL>caf0fec1e6b4ae28ca3523948028cea520849236<NUL>
+  docs/en/design/DP-016-runtime-activation-replacement-rollback.md<NUL>full<NUL>present<NUL>100644<NUL>7c752d8b37c51445b3ae264f3aaefc2e6384768c<NUL>
+  docs/en/design/DP-019-runtime-activation-orchestration-prerequisites.md<NUL>full<NUL>present<NUL>100644<NUL>1091d956bd8938ee39d2e040aa4ffa5aae04096e<NUL>
+  docs/en/design/DP-020-runtime-orchestration-binding-sequence-readiness.md<NUL>full<NUL>present<NUL>100644<NUL>90286bdc9cffc97a354b4d89491ee98f18ba85da<NUL>
+  docs/en/design/DP-021-private-exact-scope-managed-start-invoker.md<NUL>full<NUL>present<NUL>100644<NUL>29f289c41047d07682e6ef5402a60da5e3dd1bf5<NUL>
+  docs/en/design/README.md<NUL>full<NUL>present<NUL>100644<NUL>b177cc044569c2ba36cd9cdff6679074eae6de75<NUL>
+  docs/en/roadmap/MASTER_PLAN.md<NUL>full<NUL>present<NUL>100644<NUL>286197478dd8aa35c853eb55d9419fdebd611059<NUL>
+  docs/engineering/EXECUTION-INTERRUPTION-RECOVERY-ACCEPTANCE-SCENARIOS.md<NUL>full<NUL>present<NUL>100644<NUL>ac8414d7fa8bb0b73d80d97a968ab7c5a1e9c298<NUL>
+  docs/engineering/PROCESS-001-AI-DEVELOPMENT-WORKFLOW.md<NUL>full<NUL>present<NUL>100644<NUL>590cab13e3ca2b2c192a787aa58be651d9723ab3<NUL>
+  docs/engineering/PROCESS-002-DOCUMENTATION-SYNCHRONIZATION.md<NUL>full<NUL>present<NUL>100644<NUL>49b8cb942b19ff61b37ad89666559fb9004a9bff<NUL>
+  docs/engineering/TASK-TEMPLATE.md<NUL>full<NUL>present<NUL>100644<NUL>9a62a2f2b78bc146eba4490700350138a4ce4a6c<NUL>
+  docs/engineering/agents/coordinator.md<NUL>full<NUL>present<NUL>100644<NUL>22146e3e98f68c0163c899355dc268b7261e5858<NUL>
+  docs/engineering/agents/reviewer.md<NUL>full<NUL>present<NUL>100644<NUL>439c5b84216b0d84c2de99232a5ca5ca1f1be569<NUL>
+  docs/engineering/agents/tester.md<NUL>full<NUL>present<NUL>100644<NUL>1fdc6a7a8b47a46163589c7b7ea034c948ba898b<NUL>
+  docs/ru/design/DP-015-runtime-management-command-idempotency.md<NUL>full<NUL>present<NUL>100644<NUL>ad0c88c619db1e4760ba951cda228351e61837c5<NUL>
+  docs/ru/design/DP-016-runtime-activation-replacement-rollback.md<NUL>full<NUL>present<NUL>100644<NUL>3312c3974ff06e3dec179b1a4ff07cc49abf908d<NUL>
+  docs/ru/design/DP-019-runtime-activation-orchestration-prerequisites.md<NUL>full<NUL>present<NUL>100644<NUL>1a81224da0549d5ace3cb5a8a4d979ea54d427ce<NUL>
+  docs/ru/design/DP-020-runtime-orchestration-binding-sequence-readiness.md<NUL>full<NUL>present<NUL>100644<NUL>7c22c6b1477527511f1aac2e3ba67f253e90c655<NUL>
+  docs/ru/design/DP-021-private-exact-scope-managed-start-invoker.md<NUL>full<NUL>present<NUL>100644<NUL>bf756ad3aad4cc27441762dae9f646bb0870277c<NUL>
+  docs/ru/design/README.md<NUL>full<NUL>present<NUL>100644<NUL>b8ebd7f2042992ff07afdd82c14e48508f409c0e<NUL>
+  docs/ru/roadmap/MASTER_PLAN.md<NUL>full<NUL>present<NUL>100644<NUL>86d6cd86a31b3ca6b2d066d3ff5ae000f1971f15<NUL>
+  docs/tasks/README.md<NUL>full<NUL>present<NUL>100644<NUL>f0955fbdaead5afc4b4cc8bcbdf541602b6e6f8a<NUL>
+  docs/tasks/TASK-026-RUNTIME-ACTIVATION-REPLACEMENT-ROLLBACK.md<NUL>task-record-v1<NUL>present<NUL>100644<NUL>feabbed62af1c957bfde57becc16186d94a76548<NUL>
+  spec/current-state.md<NUL>full<NUL>present<NUL>100644<NUL>b5d365a6879f3d7738a12a1815270617f442b478<NUL>
+  spec/decisions.md<NUL>full<NUL>present<NUL>100644<NUL>fe4a25057b24859a6c5e6807ff62f43a25e6e2ae<NUL>
+  ```
+- exact verification commands and results (all commands were run against the
+  subject above before this envelope-only append):
+
+  | Command | Exit | Result |
+  |---|---:|---|
+  | `git status --short` | `0` | 26 expected modified tracked documentation paths; no staged or untracked paths |
+  | `git diff --name-only` | `0` | exact 26-path set; no missing or extra path |
+  | `git diff --cached --name-only` | `0` | empty |
+  | `git ls-files --others --exclude-standard` | `0` | empty |
+  | `git diff --check` | `0` | PASS; only Git line-ending advisories, no whitespace errors |
+  | `go test ./... -count=1` | `0` | all repository packages passed; no implementation package is present |
+  | `go vet ./...` | `0` | PASS |
+  | `go mod tidy -diff` | `0` | no module diff |
+
+- Verification Matrix results: documentation parity is `7/7` changed EN/RU
+  pairs with aligned heading/fence counts — DP-015 `30/30, 4/4`, DP-016
+  `30/30, 4/4`, DP-019 `25/25, 16/16`, DP-020 `34/34, 12/12`, DP-021
+  `21/21, 10/10`, design indexes `1/1, 0/0`, and MASTER_PLAN `36/36, 0/0`;
+  changed-file links are `271 valid / 0 broken`; conflict markers are `0`;
+  task-record-v1 has one Status, one Task Contract, and one terminal Recovery
+  Evidence Envelope heading in the required order. No product API,
+  configuration, dependency, production wiring, or concurrency behavior was
+  changed; race testing is **not applicable** to this zero-code subject.
+- process-contract verification: the amended PROCESS-001, PROCESS-002,
+  TASK-TEMPLATE, interruption scenarios R-029/R-030, and Coordinator/Tester/
+  Reviewer contracts consistently require task-record-v1 projection, unsigned
+  UTF-8 ordered rows, envelope exclusion/non-self-attestation, exact durable
+  Tester evidence, and repeat review after projected rework. TASK-026 remains
+  `Blocked`; DP-016 remains `Approved / Planned`; the DP-015/DP-020
+  prerequisite remains `Not Activated` with no Task ID. The prior observed
+  digest `ae8935eb3e2d643f3ad34d3353187765062d973f` is historical and was not
+  reused.
+- coverage and limitations: `26/26` subject paths verified; `26/26` required
+  documentation paths present; code/test/module/dependency/generated/temp/
+  staged/untracked counts `0`; no executable proof artifact was introduced.
+  Race is not run because no production or test path exists in this subject;
+  this is the only non-applicable matrix item. No other limitation remains for
+  this evidence-only handoff. Scope Audit, Independent Reviewer, exact
+  evidence-set recheck, and Blocked Closure Certification remain pending at
+  handoff time; the subsequent identity recheck, Reviewer approval, Scope Audit
+  and final certification below supersede that pending-state note.
+- reproducibility: an independent agent can reconstruct this handoff from the
+  Repository by reading the seven amended contracts and this envelope, running
+  the commands above, applying the stated byte-exact projection, and verifying
+  every ordered row and both OIDs. Chat history, partial output, raw/normalized
+  diff digests, and the terminal envelope bytes are not used as subject
+  identity. Post-append projection/manifest identity recheck follows as a
+  separate envelope-only recovery step.
+
+### Tester Envelope-Only Identity Recheck (2026-08-27)
+
+- the append above was reconciled read-only immediately after mutation;
+  `task-record-v1` heading/order invariants remain `1/1/1` (Status/Task
+  Contract/terminal Envelope), projected bytes remain `83477`, projected blob
+  remains `feabbed62af1c957bfde57becc16186d94a76548`, and the exact 26-path
+  manifest remains `2873` bytes with OID
+  `161a6d10f0355dc313b2290d1111bc1f75b2ad4e` under object format `sha1`.
+- the exact path count remains `26`, staged count `0`, and untracked count `0`.
+  Therefore the envelope-only append did not alter the certified subject,
+  projected task-record identity, ordered rows, or manifest identity.
+
+### Final Blocked Closure Certification (2026-08-27)
+
+The amended bounded recovery pipeline is complete and the current evidence-only
+subject is **`Blocked Closure Certified`**. This certification is not ordinary
+Coordinator Acceptance, does not mark TASK-026 Completed, and does not authorize
+implementation, staging, commit, push, publication, or prerequisite activation.
+
+Immutable certification tuple:
+
+- repository: `E:\wikiPRJ\universal-websocket-platform`;
+- Task/status: `TASK-026` / `Blocked — missing DP-015/DP-020
+  orchestration-admission refinement (2026-08-27)`;
+- branch: `feature/task-026-runtime-activation-orchestration-implementation`;
+- trusted base and certified HEAD: `main` /
+  `65af65c3154d70db10de52483149960a42dcfb9a`;
+- exact evidence set: the 26 present `100644` documentation paths in the
+  durable Tester handoff immediately above, in ascending unsigned UTF-8 path
+  order; the TASK record uses `task-record-v1`, all other present paths use
+  `full`, and no deleted paths are present;
+- canonical identity: Git object format `sha1`; task-record-v1 projection is
+  `83,477` bytes with blob OID
+  `feabbed62af1c957bfde57becc16186d94a76548`; the ordered NUL-separated
+  manifest is `2,873` bytes with blob OID
+  `161a6d10f0355dc313b2290d1111bc1f75b2ad4e`;
+- canonical rows are exactly `path\0projection\0state\0mode\0oid\0`, sorted
+  by unsigned UTF-8 path bytes; `full` rows hash raw current bytes and the TASK
+  row hashes the stated task-record projection. The terminal envelope is
+  excluded from that projection, so this tuple is non-self-referential;
+- Verification Matrix and PROCESS-002: Tester `PASS`, exact `26/26`,
+  missing/extra `0/0`, all commands and results durably recorded above; the
+  sole non-applicable item is race testing because the subject has no
+  production or test path;
+- Independent Reviewer: `Approved`, blocking/non-blocking findings `0/0`;
+  Scope Audit `26 Required / 0 Questionable / 0 Removable`;
+- repository residue: production/test/module/dependency/generated/temp,
+  staged, and untracked counts `0`; `internal/runtimeactivation` is absent;
+- prior raw digest `ae8935eb3e2d643f3ad34d3353187765062d973f` is historical and
+  was not reused;
+- Coordinator Acceptance, Completion, and DP-016 implementation acceptance:
+  **not performed / not claimed**;
+- commit, Blocked Evidence Checkpoint, push, PR, merge, publication, and
+  activation of the separate DP-015/DP-020 prerequisite: **not authorized /
+  not performed**.
+
+This immutable tuple is reproducible from the Repository using the amended
+PROCESS-001/PROCESS-002 convention, the exact durable Tester handoff, and the
+independent Reviewer record above. Any change to the projected subject, exact
+path set, ordered rows, or tuple invalidates this certification and requires the
+affected gates to be rerun.

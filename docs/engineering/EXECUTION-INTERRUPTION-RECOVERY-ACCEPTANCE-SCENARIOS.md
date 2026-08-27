@@ -227,6 +227,29 @@ ascending unsigned UTF-8 path bytes, case-sensitive и locale-independent.
 Одинаковые repository bytes дают один manifest OID; platform-default sort не
 является допустимым evidence.
 
+## R-029 — Blocked closure manifest не self-referential
+
+Given blocked-closure evidence set зафиксирован Coordinator, when canonical
+subject manifest строится, then task record входит с projection
+`task-record-v1`, каждый другой present path — с `full`, deleted path — с
+baseline mode и OID `-`, а rows имеют exact NUL-separated форму
+`path\0projection\0state\0mode\0oid\0` и unsigned UTF-8 path order. Terminal
+Recovery Evidence Envelope является metadata и исключается из task-record
+projection. Append-only запись tuple в envelope не меняет manifest OID;
+mutation projected subject вне envelope invalidates downstream gates. Изменение
+исключённого status evidence body не меняет manifest OID, но требует
+status/contract reconciliation. Raw или normalized diff digest не является
+допустимой заменой.
+
+## R-030 — Blocked closure Tester handoff durable
+
+Given Tester выдал verdict для blocked-closure subject, then repository
+handoff содержит exact tested subject/manifest identity, ordered path set,
+commands с exit/results, limitations, scope/coverage counts и
+reproducible proof artifacts. Reviewer проверяет эти сведения без chat
+history; отсутствующий, неполный или stale identity не даёт certification и
+требует повторной Verification/Review.
+
 ## Coverage Matrix
 
 | Required area | Scenarios |
@@ -240,6 +263,7 @@ ascending unsigned UTF-8 path bytes, case-sensitive и locale-independent.
 | New agent without history | R-002 |
 | Permission before/after, granted-not-run, run-not-reported | R-008–R-011, R-027 |
 | Cross-platform canonical identity | R-028 |
+| Blocked closure canonical subject and durable Tester evidence | R-029–R-030 |
 
 ## Acceptance
 

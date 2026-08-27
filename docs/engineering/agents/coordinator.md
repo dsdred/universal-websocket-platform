@@ -44,6 +44,13 @@ Coordinator обязан:
   completion и запрещать blind retry unknown side effect;
 - обеспечивать persistent recovery anchor и exact content identity для role
   handoff, final Review, Acceptance и Commit Gate без reliance на chat history;
+- для `Blocked Closure Certified` фиксировать exact ordered subject manifest:
+  task record с `task-record-v1`, остальные present paths с `full`, deleted
+  paths с baseline mode/OID `-`, все rows, object format и manifest OID;
+- сохранять durable Tester handoff с exact tested identity, командами,
+  exit/results, limitations, scope/coverage counts и воспроизводимыми
+  artifacts; terminal envelope не входит в subject и не self-attest-ит свои
+  bytes;
 
 ---
 
@@ -150,6 +157,15 @@ Interruption между Independent Review и Acceptance оставляет Acce
 accepted subject-manifest identity, allowed evidence envelope и отсутствие
 post-acceptance changes. Если final envelope bytes до commit не доказаны после
 interruption, Acceptance становится `Outcome Unknown` и повторяется.
+
+Для blocked closure Coordinator не использует raw `git diff` как digest.
+Canonical identity строится по staging-invariant manifest PROCESS-001;
+append-only запись в terminal envelope допустима только после фиксации
+subject и не меняет `task-record-v1` projection. Любая mutation вне envelope
+в projected subject invalidates affected verification, Scope Audit и Review.
+Изменение исключённого status evidence body не меняет manifest identity, но
+требует status/contract reconciliation и не может менять Blocked Closure
+state.
 
 Task record хранит target и reproducible evidence, но не выдаёт permission.
 Если потерянная session содержала commit permission, а commit доказанно не

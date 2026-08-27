@@ -32,8 +32,12 @@ external persistence, API, recovery worker и production wiring отсутств
 DP-015 conformance prerequisite: atomic tracked-Start managed-parent admission
 с preclaimed ordinal-zero `StopOld`. TASK-046 фиксирует её additive contract, а
 TASK-047 реализует его изолированно. Fresh reassessment TASK-026 принимает
-`READY — UNBLOCK TASK-026` с matrix 7/10/2/0/0/0; implementation остаётся Not
-Activated, DP-019 — Approved/Planned overall.
+`READY — UNBLOCK TASK-026` с matrix 7/10/2/0/0/0. Текущий цикл supersedes эту
+readiness для live execution: repeat Architecture Confirmation вернула `NEEDS
+DECISION` / `SPLIT REQUIRED`, потому что текущий admission DP-015/DP-020 не
+обеспечивает replay-first inspection и late generation allocation. TASK-026
+заблокирована; отдельная узкая design плюс isolated implementation prerequisite
+— Not Activated без Task ID. DP-019 остаётся Approved/Planned overall.
 
 ## 2. Назначение
 
@@ -545,8 +549,10 @@ proofs и исторически фиксирует `UNBLOCK TASK-026`. Supersed
 определяет DP-015 prerequisite tracked-Start managed-parent плюс preclaimed
 `StopOld` admission. TASK-046 фиксирует этот additive contract, а TASK-047
 реализует его изолированно. Fresh reassessment TASK-026 принимает READY
-boundary; implementation остаётся Not Activated. Historical focused
-readiness decomposition prerequisites зафиксирована в зеркальном
+boundary как historical evidence. Repeat Architecture Confirmation теперь
+блокирует TASK-026 отдельной DP-015/DP-020 prerequisite replay-first admission
+и late generation, которая Not Activated. Historical focused readiness
+decomposition зафиксирована в зеркальном
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), со
 статусом Design Status Draft и Implementation Status Planned overall, где
 Срез 3 реализован и независимо принят изолированно.
