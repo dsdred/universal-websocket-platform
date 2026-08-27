@@ -83,8 +83,11 @@ The repository currently contains an Alpha foundation rather than a production-r
   gates. Canonical paths use exact unsigned UTF-8 byte order. Repeat Tester
   passed 0/0/1, Repeat Independent Review approved 0/0, and Scope Audit passed
   19/0/0.
-  TASK-026 Design-only reassessment is active; implementation remains Not
-  Activated.
+  TASK-026 Design-only reassessment is accepted and published. Its subsequent
+  implementation cycle is now Blocked after repeat Architecture returned
+  `NEEDS DECISION` / `SPLIT REQUIRED`: a separate narrow DP-015/DP-020
+  replay-first admission and late-generation prerequisite remains Not
+  Activated with no Task ID.
 
 ## 3. Engineering Principles
 
@@ -411,8 +414,11 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   Completed — Coordinator Accepted (2026-08-25), with repeat Reviewer Approved
   0/0, and records the additive contract. TASK-047 implements that bounded
   tracked-Start managed-parent admission prerequisite in isolation. TASK-026
-  implementation transition remains Not Activated; DP-016 is Approved/Planned
-  and Integration and Production Activation remain inactive.
+  implementation cycle is Blocked after repeat Architecture superseded that
+  readiness for live execution. The required narrow DP-015/DP-020 design plus
+  isolated implementation prerequisite is Not Activated and has no Task ID;
+  DP-016 remains Approved/Planned, and Integration and Production Activation
+  remain inactive.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Message Persistence, Delivery, and Plugin contracts still require focused design.

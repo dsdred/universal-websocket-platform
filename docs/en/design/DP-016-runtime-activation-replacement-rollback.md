@@ -28,7 +28,12 @@ managed-parent plus preclaimed `StopOld` admission prerequisite. TASK-046
 records its additive contract and TASK-047 implements it in isolation. Fresh
 TASK-026 reassessment accepts `READY — UNBLOCK TASK-026` with 7 Direct / 10
 Compositional / 2 Missing core / 0 Missing prerequisite / 0 Missing external /
-0 Deferred. DP-016 remains Approved/Planned and implementation is Not Activated.
+0 Deferred. That readiness is now superseded for live execution by repeat
+Architecture Confirmation `NEEDS DECISION` / `SPLIT REQUIRED`: current
+DP-015/DP-020 admission cannot provide exact replay-first inspection and late
+generation allocation. TASK-026 is Blocked; the separate narrow design plus
+isolated implementation prerequisite is Not Activated and has no Task ID.
+DP-016 remains Approved/Planned and unimplemented.
 
 ## 2. Purpose
 
@@ -536,7 +541,9 @@ invoker in isolation. TASK-044 historically records `UNBLOCK TASK-026`; the
 superseding TASK-026 recheck identifies the DP-015 tracked-Start managed-parent
 plus preclaimed `StopOld` admission prerequisite. TASK-046 defines that
 additive contract and TASK-047 implements it in isolation. Fresh TASK-026
-reassessment accepts the READY boundary; implementation remains Not Activated
+reassessment accepts the READY boundary as historical evidence. Repeat
+Architecture Confirmation now blocks TASK-026 on the separate DP-015/DP-020
+replay-first admission and late-generation prerequisite. It is Not Activated,
 and no reduced DP-016 slice is permitted.
 
 ## 29. Decision

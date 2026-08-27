@@ -215,6 +215,31 @@ documentation/status mutation отражается как factual incomplete dif
 возвращается в обычные Verification/Review gates; одно наличие нового status
 text не доказывает допустимый transition.
 
+### Durable Blocked-Closure Evidence
+
+Перед выходом `Blocked Evidence Synchronized` Documentation Agent фиксирует
+точный subject, который будет проверяться certification pipeline. В subject
+входит task record с projection `task-record-v1`; каждый другой present
+evidence path имеет projection `full`, а необходимый deleted path — baseline
+mode и OID `-`. Paths и rows воспроизводятся в ascending unsigned UTF-8
+path-byte order как `path\0projection\0state\0mode\0oid\0`, после чего полный
+NUL-separated manifest stream хешируется `git hash-object --stdin`. Raw
+`git diff`, normalized diff и сокращённый path set не являются canonical
+identity.
+
+Terminal `Recovery Evidence Envelope` task record — metadata, не отдельный
+subject: его bytes исключены через общую `task-record-v1` projection. Поэтому
+envelope может быть дописан только append-only после фиксации manifest; любое
+изменение projected subject вне envelope invalidates downstream
+verification/review/scope evidence. Status evidence body также исключён из
+manifest identity, но его изменение требует отдельной status/contract
+reconciliation. Durable handoff обязан перечислять exact ordered paths,
+projection/state/mode/OID rows, repository/Task/branch/base/current HEAD,
+object format, manifest command/OID и blocker identity. Он также обязан
+содержать свежий Tester handoff с exact tested identity, командами и exit/
+results, limitations, scope/coverage counts и воспроизводимыми proof
+artifacts. Эти сведения должны быть доступны из repository без chat history.
+
 Project-state documents не хранят user permission как authority. Они могут
 хранить exact accepted/certified/publication target и доказанный outcome, но
 permission применяется только по текущему user input и правилам PROCESS-001.
@@ -255,8 +280,13 @@ authority на изменённый diff.
   Activated` и не получил неявный Task ID;
 - diff содержит только стабильное blocking-discovery, closure и navigation
   evidence, без transient workstation, auth или Publisher state;
-- exact evidence file set и canonical evidence digest по алгоритму PROCESS-001
-  готовы для certification tuple.
+- exact ordered evidence path set и canonical subject-manifest rows по
+  алгоритму PROCESS-001 готовы для certification tuple;
+- task record включён с `task-record-v1`, terminal envelope исключён из
+  projected subject и не self-attest-ит собственные bytes;
+- свежий durable Tester handoff точно привязан к manifest identity и содержит
+  команды, exit/results, limitations, scope/coverage counts и reproducible
+  evidence.
 
 Выход `Blocked Evidence Synchronized` разрешает Coordinator продолжить
 certification checks, но сам не является certification, commit или

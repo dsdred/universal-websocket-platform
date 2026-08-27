@@ -63,8 +63,12 @@
   фиксирует contract, а TASK-047 реализует его изолированно. Fresh
   repository-first reassessment принимает `READY — UNBLOCK TASK-026` с matrix
   7 Direct / 10 Compositional / 2 Missing core / 0 Missing prerequisite / 0
-  Missing external / 0 Deferred. DP-016 остаётся Approved/Planned;
-  implementation transition TASK-026 — Not Activated.
+  Missing external / 0 Deferred как historical readiness evidence. DP-016
+  остаётся Approved/Planned; текущий implementation cycle TASK-026 теперь
+  Blocked после repeat Architecture `NEEDS DECISION` / `SPLIT REQUIRED`:
+  текущий admission DP-015/DP-020 не обеспечивает exact replay-first
+  inspection и late generation allocation. Отдельная узкая design плюс
+  isolated implementation prerequisite — Not Activated без Task ID.
   TASK-044 `Completed — Coordinator Accepted (2026-08-24)`,
   repeat Reviewer APPROVED 0/0, Scope Audit 16/0/0, PROCESS-002 Synchronized.
   HTTP, concrete policy, external command storage, recovery/reporting
@@ -79,6 +83,14 @@
   path-byte manifest ordering, 28 general scenarios; Tester PASS 0/0/1,
   Reviewer Approved 0/0, Scope Audit 19/0/0; на closure TASK-026 не была
   активирована**
+- Active governance amendment (2026-08-27): blocked-closure recovery now uses
+  the general staging-invariant ordered subject manifest and `task-record-v1`
+  projection, excludes the terminal Recovery Evidence Envelope from the
+  projected subject, and requires a durable Tester handoff bound to the exact
+  tested identity. TASK-026 remains **Blocked** by the DP-015/DP-020
+  replay-first admission and late-generation refinement; no implementation,
+  Acceptance, Completion, prerequisite activation, commit, or publication is
+  implied by this amendment.
 - Текущая operational task: **отсутствует**
 - Последняя завершённая architecture task: **TASK-046 — Tracked-Start
   Managed-Parent Admission Design; Completed — Coordinator Accepted
@@ -132,10 +144,12 @@
   Coordinator Closure Audit PASS; Task Contract, exact scope 26/0/0,
   Verification Matrix, PROCESS-002, status consistency и repository-state
   audit подтверждены; Commit Gate, commit, push и publication не выполнялись**
-- Текущая development task: **TASK-026 — In Progress, Design-only
-  repository-first readiness reassessment; Coordinator принял fresh `READY —
-  UNBLOCK TASK-026`, implementation transition Not Activated; terminalization,
-  orchestrator и production wiring отсутствуют**
+- Текущая development task: **TASK-026 — Blocked (2026-08-27); historical
+  accepted/published `READY — UNBLOCK TASK-026` superseded для live execution
+  repeat Architecture `NEEDS DECISION` / `SPLIT REQUIRED`; текущий admission
+  DP-015/DP-020 не обеспечивает replay-first inspection и late generation;
+  prerequisite — Not Activated без Task ID, terminalization, orchestrator и
+  production wiring отсутствуют**
 - TASK-032 acceptance evidence: **Completed — Coordinator Accepted после
   rework; DP-020 deferred slice 2 реализован изолированно в
   `internal/runtimelaunchflow`: ManagedFlow/NewManaged/StartManaged, immutable
@@ -216,9 +230,9 @@
   external / 0 Deferred; no separate prerequisite; DP-016 remains Approved /
   Planned; Tester PASS 0/0/0; repeat Reviewer APPROVED 0/0; Scope Audit
   16/0/0; PROCESS-002 Synchronized; later superseded by the TASK-026 recheck**
-- Текущая рекомендация после accepted TASK-026 readiness decision: **exact
-  TASK-026 Implementation intake transition отдельной bare-командой;
-  Not Activated**
+- Текущая рекомендация: **отдельная узкая DP-015/DP-020 design плюс isolated
+  implementation prerequisite для replay-first orchestration admission и late
+  generation allocation; Not Activated, Task ID не назначен**
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы
   изолированно; Repeat Independent Review Approved, blocking/non-blocking 0;
@@ -495,8 +509,10 @@
   activation/replacement/rollback ordering определён только на design level;
   fresh TASK-026 reassessment принимает `READY — UNBLOCK TASK-026` с 7 Direct /
   10 Compositional / 2 Missing core / 0 Missing prerequisite / 0 Missing
-  external / 0 Deferred; implementation transition остаётся Not Activated,
-  orchestrator, API, recovery и production wiring отсутствуют
+  external / 0 Deferred как historical readiness evidence; текущий cycle
+  Blocked repeat Architecture `NEEDS DECISION` / `SPLIT REQUIRED` на Not
+  Activated DP-015/DP-020 prerequisite replay-first admission и late
+  generation; orchestrator, API, recovery и production wiring отсутствуют
 - Design Status DP-017 — **Approved**, Implementation Status — **Planned**;
   recovery/reconciliation определены только на design level; recovery store,
   execution-evidence adapter, executor, API и production wiring отсутствуют

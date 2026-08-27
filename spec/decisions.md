@@ -86,8 +86,11 @@ DP-015 tracked-Start managed-parent плюс preclaimed `StopOld` admission
 prerequisite с historical matrix 7 Direct / 9 Compositional / 2 Missing core /
 1 Missing prerequisite / 0 Deferred. TASK-046 фиксирует additive contract, а
 TASK-047 реализует его изолированно. Fresh reassessment принимает `READY —
-UNBLOCK TASK-026` с matrix 7/10/2/0/0/0; DP-016 остаётся Approved/Planned,
-implementation transition Not Activated.
+UNBLOCK TASK-026` с matrix 7/10/2/0/0/0 как historical readiness evidence.
+DP-016 остаётся Approved/Planned; текущий implementation cycle TASK-026 теперь
+Blocked после repeat Architecture `NEEDS DECISION` / `SPLIT REQUIRED`: текущий
+admission DP-015/DP-020 не обеспечивает replay-first inspection и late
+generation allocation. Отдельная узкая prerequisite — Not Activated без Task ID.
 
 Approved DP-019 определяет focused internal integration contract, необходимый
 для реализации DP-016 без ослабления proofs: exact authorization tuple
@@ -264,5 +267,8 @@ Coordinator Accepted (2026-08-24)`, repeat Reviewer `APPROVED` 0/0, Scope Audit
 сохраняет DP-015 Approved и фиксирует atomic tracked-Start managed-parent плюс
 preclaimed `StopOld` admission. TASK-047 реализует contract изолированно.
 Fresh TASK-026 Design-only reassessment принимает `READY — UNBLOCK TASK-026` с
-matrix 7/10/2/0/0/0; implementation transition остаётся Not Activated, без
-implementation Acceptance/Completion.
+matrix 7/10/2/0/0/0 как historical readiness evidence. Последующий
+implementation cycle теперь Blocked repeat Architecture `NEEDS DECISION` /
+`SPLIT REQUIRED` на отдельной Not Activated DP-015/DP-020 prerequisite
+replay-first admission и late generation; implementation Acceptance/Completion
+отсутствуют.

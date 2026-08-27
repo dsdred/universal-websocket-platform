@@ -312,6 +312,22 @@ Canonical subject manifest включает новые/untracked paths без п
 stage. Evidence subject — exact projected bytes, которые attests role handoff;
 сам role verdict/Acceptance/evidence envelope не может self-attest.
 
+Для любого evidence-bearing checkpoint Coordinator сначала фиксирует exact
+subject path set и строит его staging-invariant canonical manifest. Subject
+не является raw `git diff`: task record входит в set с projection
+`task-record-v1`, каждый другой present path — с projection `full`, а
+необходимый deleted path — с projection `full`, baseline mode и OID `-`.
+Terminal `Recovery Evidence Envelope` является metadata envelope, а не
+отдельным subject path; его bytes исключаются только через общую
+`task-record-v1` projection task record. Поэтому envelope может быть
+дописан только append-only после фиксации subject, не меняя его projection.
+Любое изменение task record вне envelope, кроме специально исключённого
+status evidence body, либо любого другого subject path изменяет identity и
+invalidates затронутые verification/review/acceptance gates. Status evidence
+body остаётся исключённым из manifest identity по `task-record-v1`, но его
+изменение всё равно требует отдельной status/contract reconciliation и не
+может изменить Blocked Closure state.
+
 Task record использует обязательную projection `task-record-v1`:
 
 1. headings `## Status`, `## Task Contract` и terminal
@@ -651,19 +667,41 @@ Commit выполняется только при явном разрешени�
    generated, temporary, staged и untracked files отсутствуют;
 4. Documentation Synchronization, применимая Verification Matrix, Scope Audit
    и независимый final Review завершены; blocking evidence признано полным и
-   непротиворечивым, но product result не принят;
+   непротиворечивым, но product result не принят. Durable Tester handoff
+   обязан быть воспроизводим из repository и содержать exact tested subject
+   identity, commands с exit/results, limitations, scope/coverage counts и
+   применимые proof artifacts;
 5. зафиксирован immutable certification tuple: repository, Task ID, branch,
-   base branch/OID, current HEAD OID, exact evidence file set, canonical
-   evidence digest, blocker identity и verification/review results.
+   base branch/OID, current HEAD OID, exact ordered evidence path set с
+   projection/state/mode/OID rows, canonical manifest command/object
+   format/OID, blocker identity, Tester handoff identity и
+   verification/review results.
 
-Canonical evidence digest — Git blob OID сырых bytes результата
-`git diff --binary --full-index --no-ext-diff <certified-HEAD-OID> -- <exact
-evidence file set>`. Явный certified HEAD делает bytes одинаковыми до и после
-exact staging, но чувствительными к любому content change. Paths передаются
-после `--` в зафиксированном лексикографическом порядке; digest вычисляется
-`git hash-object --stdin`, а команда, certified HEAD, exact path order, object
-format и OID записываются в certification tuple. Hash от иного diff
-representation не взаимозаменяем.
+Canonical evidence identity — Git blob OID staging-invariant manifest stream,
+а не hash от `git diff` или другой diff representation. Для exact evidence
+set Coordinator строит в ascending unsigned UTF-8 path-byte order
+(case-sensitive, locale-independent) NUL-separated rows:
+
+`path\0projection\0state\0mode\0oid\0`
+
+Для present `full` path `oid` — Git blob OID raw current/intended bytes,
+полученный через `git hash-object --no-filters`; для present task record
+`projection` — `task-record-v1`, а `oid` — Git blob OID exact projected stream,
+переданный в `git hash-object --stdin`; для deleted path `state=deleted`,
+`projection=full`, `mode` берётся из baseline tree, а `oid=-`. Raw manifest
+stream хешируется через `git hash-object --stdin`; tuple сохраняет exact
+ordered path/projection set, все rows, command, certified HEAD, repository
+object format и manifest OID. Manifest OID, вычисленный от сырых diff bytes,
+нормализованного или сокращённого set, не является взаимозаменяемым.
+
+`task-record-v1` исключает status evidence body и terminal envelope, поэтому
+certification tuple может быть дописан в envelope без self-reference и без
+изменения certified subject. Envelope обязана повторить exact ordered set,
+projection/state/mode/OID rows и свежий durable Tester handoff: tested
+identity/manifest OID, exact commands и exit/results, limitations,
+scope/coverage counts и путь к воспроизводимым evidence. До tuple append
+любая mutation вне envelope требует повторить затронутые verification,
+review и scope gates; envelope не объявляет hash собственных bytes.
 
 Результат называется `Blocked Closure Certified`. Он не меняет task status,
 не выполняет commit, не разрешает publication, не устраняет blocker и не

@@ -54,8 +54,13 @@ and TASK-047 implements it in isolation through
 `Boundary.ExecuteManagedParentFromTrackedStart` and its callback-scoped
 preclaimed `StopOld` capability. Fresh TASK-026 reassessment accepts `READY —
 UNBLOCK TASK-026` with 7 Direct / 10 Compositional / 2 Missing core / 0 Missing
-prerequisite / 0 Missing external / 0 Deferred; implementation remains Not
-Activated and DP-015 status is unchanged.
+prerequisite / 0 Missing external / 0 Deferred. The current TASK-026 cycle
+supersedes that readiness for live execution: repeat Architecture Confirmation
+returned `NEEDS DECISION` / `SPLIT REQUIRED` because eager generation and
+combined inspect/claim cannot provide exact replay-first admission and late
+allocation. TASK-026 is Blocked; a narrow DP-015/DP-020 design plus isolated
+implementation prerequisite is Not Activated and has no Task ID. DP-015 status
+is unchanged.
 
 ## 4. Scope
 
@@ -611,8 +616,11 @@ tracked-Start managed-parent plus preclaimed `StopOld` admission contract in
 section 13.1; TASK-047 implements its atomic admission, discriminated sole
 Stop-exception occupant, callback-scoped consumption, replay, expiry, and
 winner-order proofs in isolation. Fresh TASK-026 reassessment accepts the READY
-boundary, while implementation remains Not Activated. The isolated package
-changes no lifecycle contract and is not connected to the DP-013 Directory.
+boundary as historical evidence. Repeat Architecture Confirmation now blocks
+TASK-026 on the separate replay-first admission and late-generation
+DP-015/DP-020 refinement described above. That prerequisite is Not Activated;
+the isolated package changes no lifecycle contract and is not connected to the
+DP-013 Directory.
 
 ## 28. Decision
 

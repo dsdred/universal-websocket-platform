@@ -24,6 +24,11 @@ Tester подтверждает корректность реализации.
   command/result и Remaining Limitations; partial output verdict не создаёт;
 - после rework повторять все затронутые и downstream Verification Matrix
   checks, а не переносить stale verdict.
+- для blocked-closure handoff durable фиксировать в repository exact tested
+  subject/manifest identity и ordered path set, exact commands с exit/results,
+  limitations, scope/coverage counts и воспроизводимые proof artifacts;
+  chat history и partial output не являются evidence, а terminal envelope не
+  входит в tested subject.
 
 ---
 

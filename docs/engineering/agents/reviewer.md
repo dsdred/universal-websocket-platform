@@ -17,6 +17,14 @@ Reviewer проверяет:
 - соблюдение стандартов проекта;
 - interruption recovery evidence, exact reviewed content identity и отсутствие
   blind retry неизвестных side effects.
+- при blocked closure — canonical subject-manifest convention PROCESS-001,
+  exact ordered paths/projection/state/mode/OID rows, task-record-v1
+  non-self-reference и durable Tester handoff с exact identity, commands,
+  results, limitations, scope/coverage counts и reproducible evidence;
+- envelope-only append не изменяет subject; mutation projected subject вне
+  envelope invalidates reviewed identity и требует повторных downstream
+  gates. Исключённый status evidence body проходит отдельную
+  status/contract reconciliation.
 
 После Scope Audit Reviewer для каждого change явно проверяет: «Можно ли
 удалить это изменение и сохранить выполнение Definition of Done?» Любой

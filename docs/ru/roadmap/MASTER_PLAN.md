@@ -81,8 +81,10 @@ Universal WebSocket Platform — open-source платформа для созд�
   сохраняя Publisher Resume Reconstruction Guard и все существующие gates.
   Canonical paths используют exact unsigned UTF-8 byte order; repeat Tester
   прошёл 0/0/1, Repeat Independent Review — Approved 0/0, Scope Audit —
-  19/0/0. Design-only reassessment TASK-026 активирована; implementation
-  остаётся Not Activated.
+  19/0/0. Design-only reassessment TASK-026 принята и опубликована. Последующий
+  implementation cycle теперь Blocked после repeat Architecture `NEEDS
+  DECISION` / `SPLIT REQUIRED`: отдельная узкая DP-015/DP-020 prerequisite
+  replay-first admission и late generation остаётся Not Activated без Task ID.
 
 ## 3. Engineering Principles
 
@@ -408,8 +410,11 @@ Architectural debt относится к границам, которые ост
   завершена как `Completed — Coordinator Accepted (2026-08-25)`, repeat
   Reviewer Approved 0/0, и фиксирует additive contract. TASK-047 реализует эту
   bounded prerequisite admission tracked-Start managed-parent изолированно.
-  Implementation transition TASK-026 остаётся Not Activated; DP-016 —
-  Approved/Planned, Integration и Production Activation остаются неактивными.
+  implementation cycle TASK-026 — Blocked после того, как repeat Architecture
+  superseded readiness для live execution. Необходимая узкая DP-015/DP-020
+  design плюс isolated implementation prerequisite — Not Activated без Task ID;
+  DP-016 остаётся Approved/Planned, Integration и Production Activation —
+  неактивными.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Message Persistence, Delivery и Plugin всё ещё требуют focused design.

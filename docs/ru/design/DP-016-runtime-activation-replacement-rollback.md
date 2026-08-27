@@ -28,7 +28,11 @@ orchestrator; orchestrator и production wiring остаются отсутст�
 TASK-047 реализует его изолированно. Fresh reassessment TASK-026 принимает
 `READY — UNBLOCK TASK-026` с 7 Direct / 10 Compositional / 2 Missing core / 0
 Missing prerequisite / 0 Missing external / 0 Deferred. DP-016 остаётся
-Approved/Planned, implementation — Not Activated.
+Approved/Planned. Эта readiness теперь superseded для live execution repeat
+Architecture Confirmation `NEEDS DECISION` / `SPLIT REQUIRED`: текущий
+admission DP-015/DP-020 не обеспечивает exact replay-first inspection и late
+generation allocation. TASK-026 заблокирована; отдельная узкая design плюс
+isolated implementation prerequisite — Not Activated без Task ID.
 
 ## 2. Назначение
 
@@ -528,8 +532,10 @@ exact-scope invoker изолированно. TASK-044 исторически ф
 TASK-026`; superseding recheck TASK-026 определяет DP-015 prerequisite
 tracked-Start managed-parent плюс preclaimed `StopOld` admission. TASK-046
 фиксирует additive contract, а TASK-047 реализует его изолированно. Fresh
-reassessment TASK-026 принимает READY boundary; implementation остаётся Not
-Activated, reduced slice DP-016 запрещён.
+reassessment TASK-026 принимает READY boundary как historical evidence. Repeat
+Architecture Confirmation теперь блокирует TASK-026 отдельной DP-015/DP-020
+prerequisite replay-first admission и late generation. Она Not Activated;
+reduced slice DP-016 запрещён.
 
 ## 29. Решение
 

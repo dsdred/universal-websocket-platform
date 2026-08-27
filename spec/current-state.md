@@ -31,8 +31,11 @@ tracked-Start managed-parent плюс preclaimed `StopOld` admission prerequisit
 TASK-046 зафиксировала contract, а TASK-047 реализует его изолированно. Fresh
 repository-first reassessment принимает `READY — UNBLOCK TASK-026` с 7 Direct /
 10 Compositional / 2 Missing core / 0 Missing prerequisite / 0 Missing external
-/ 0 Deferred. DP-016 остаётся Approved/Planned; TASK-026 implementation
-transition Not Activated.
+/ 0 Deferred как historical readiness evidence. DP-016 остаётся
+Approved/Planned; текущий implementation cycle TASK-026 теперь Blocked после
+repeat Architecture `NEEDS DECISION` / `SPLIT REQUIRED`: текущий admission
+DP-015/DP-020 не обеспечивает replay-first inspection и late generation
+allocation. Отдельная узкая prerequisite — Not Activated без Task ID.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
@@ -70,10 +73,13 @@ PASS. Acceptance не реализует prerequisites и не снимает TA
 опубликован через PR #27 и merged как
 `2c017aace7e56a4747d3cecbe8ff3f6cf53e009f`.
 
-**Текущая development task:** TASK-026 — `In Progress`, Design-only
-repository-first readiness reassessment. Coordinator принял fresh `READY —
-UNBLOCK TASK-026`; implementation transition Not Activated, terminalization,
-orchestrator и production wiring отсутствуют.
+**Текущая development task:** TASK-026 — `Blocked` (2026-08-27). Historical
+accepted/published `READY — UNBLOCK TASK-026` superseded для live execution
+repeat Architecture `NEEDS DECISION` / `SPLIT REQUIRED`: текущий admission
+DP-015/DP-020 не обеспечивает replay-first inspection и late generation.
+Отдельная узкая design плюс isolated implementation prerequisite — `Not
+Activated` без Task ID; terminalization, orchestrator и production wiring
+отсутствуют.
 
 **TASK-031:** `Completed — Coordinator Accepted`. Bounded isolated DP-020
 deferred slice 1 реализован в `internal/runtimecommandidempotency` на branch
@@ -634,8 +640,10 @@ admission prerequisite. Approved/Planned DP-016 не меняется. TASK-044 
 Accepted (2026-08-24)`, repeat Reviewer `APPROVED` 0/0, Scope Audit 16/0/0 и
 PROCESS-002 Synchronized. TASK-046 завершила design refinement, а TASK-047
 реализует bounded implementation prerequisite изолированно. Fresh TASK-026
-readiness reassessment принимает READY boundary; implementation transition
-остаётся Not Activated.
+readiness reassessment принимает READY boundary как historical evidence;
+последующий implementation cycle теперь Blocked repeat Architecture `NEEDS
+DECISION` / `SPLIT REQUIRED` на отдельной Not Activated DP-015/DP-020
+prerequisite replay-first admission и late generation.
 
 **TASK-046:** `Completed — Coordinator Accepted (2026-08-25)`. Repeat Reviewer
 `Approved 0/0`; Scope Audit 15/0/0; PROCESS-002 Synchronized. Approved DP-015
@@ -664,8 +672,10 @@ authority. Proof tests покрывают atomic visibility, оба winner order
 slot до завершения tracked Start, at-most-once consumption, invalid/denied/
 cancelled/stale zero mutation, callback/phase panic и `runtime.Goexit`,
 reconstruction, retained capability и different-Instance concurrency. Fresh
-TASK-026 reassessment принимает READY boundary; implementation transition
-остаётся Not Activated. Independent Tester —
+TASK-026 reassessment принимает READY boundary как historical evidence;
+последующий implementation cycle теперь Blocked repeat Architecture `NEEDS
+DECISION` / `SPLIT REQUIRED` на отдельной Not Activated DP-015/DP-020
+prerequisite replay-first admission и late generation. Independent Tester —
 `PASS WITH ENVIRONMENT LIMITATION` 0/0; final Reviewer — `APPROVED` 0/0;
 Scope Audit 18/0/0; PROCESS-002 Synchronized.
 

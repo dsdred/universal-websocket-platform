@@ -16,8 +16,12 @@ historically records `UNBLOCK TASK-026`. A superseding TASK-026 recheck
 identified one missing DP-015 tracked-Start managed-parent plus preclaimed
 `StopOld` admission prerequisite; TASK-047 implements it in isolation. Fresh
 TASK-026 reassessment accepts `READY — UNBLOCK TASK-026` with matrix
-7/10/2/0/0/0; implementation remains Not Activated and this DP remains
-Draft/Partial.
+7/10/2/0/0/0. The current cycle supersedes that readiness for live execution:
+repeat Architecture Confirmation returned `NEEDS DECISION` / `SPLIT REQUIRED`
+because current DP-015/DP-020 admission cannot provide replay-first inspection
+and late generation allocation. TASK-026 is Blocked; the separate narrow
+design plus isolated implementation prerequisite is Not Activated and has no
+Task ID. This DP remains Draft/Partial.
 
 ## 2. Purpose
 
@@ -443,9 +447,12 @@ orchestrator, production composition audit, or production wiring.
 TASK-043 is Completed — Coordinator Accepted (2026-08-21) and does not
 activate the next task. TASK-044 historically records `UNBLOCK TASK-026`; the
 superseding TASK-026 recheck confirms the missing DP-015 tracked-Start
-managed-parent plus preclaimed `StopOld` admission prerequisite. TASK-026 is
-blocked, the prerequisite is not activated, and no TASK-026 implementation is
-asserted here.
+managed-parent plus preclaimed `StopOld` admission prerequisite. TASK-046 later
+records that contract, TASK-047 implements it in isolation, and the fresh
+reassessment accepts `READY — UNBLOCK TASK-026` as historical evidence. Repeat
+Architecture Confirmation now blocks TASK-026 on the separate DP-015/DP-020
+replay-first admission and late-generation prerequisite. It is Not Activated;
+no TASK-026 implementation is asserted here.
 
 ## 18. Decision
 
