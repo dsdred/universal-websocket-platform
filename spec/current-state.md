@@ -51,14 +51,22 @@ path-byte manifest ordering и 28 general scenarios; Tester `PASS 0/0/1`,
 Reviewer `Approved 0/0`, Scope Audit `19/0/0`; на closure TASK-026 не была
 активирована.
 
-**Текущая operational task:** отсутствует.
+**Текущая operational task:** TASK-050 — Publisher Execution Environment
+Capability and Trusted-Context Handoff, `In Progress`; documentation-only
+governance. Exact latest verdict, canonical identity и first incomplete
+checkpoint определяются только newest valid terminal Recovery Evidence
+Envelope entry, совпадающей с independently recomputed current manifest.
+Missing/stale/conflicting/mismatched evidence означает STOP. Projected live
+state не копирует mutable checkpoint, Acceptance, commit или publication
+state.
 
-**Последняя завершённая architecture task:** TASK-046 — Tracked-Start
-Managed-Parent Admission Design; `Completed — Coordinator Accepted
-(2026-08-25)`; repeat Reviewer `Approved 0/0`; Scope Audit 15/0/0; PROCESS-002
-Synchronized; additive planned DP-015 contract зафиксирован без implementation;
-на closure TASK-026 оставалась Blocked, а fresh reassessment теперь приняла
-READY boundary без активации implementation.
+**Последняя завершённая architecture task:** TASK-049 — Replay-First
+Orchestration Admission Design; `Completed — Coordinator Accepted
+(2026-08-28)`; immutable target
+`4a040b4e86ec2f4361ec765657e46cd0f36bf349`. Предыдущая TASK-046 —
+Tracked-Start Managed-Parent Admission Design — завершена и принята
+(2026-08-25). TASK-026 остаётся Blocked; implementation candidate — `Not
+Activated`.
 
 **Текущая architecture task:** отсутствует. Draft DP-021 остаётся Partial;
 TASK-043 реализует concrete invoker изолированно и завершена/принята.
@@ -94,14 +102,26 @@ CGO/gcc, substitute stress `-count=100` PASS); Independent Review Approved with
 Findings 0/2 (resolved); Verification Matrix, PROCESS-002, Scope Audit 7/0/0
 PASS. Commit, push, PR, merge и publication не выполнялись.
 
-**Последняя завершённая documentation task:** TASK-045 — TASK-026 Reactivation
+**Последняя завершённая documentation task:** TASK-049 — Replay-First
+Orchestration Admission Design, `Completed — Coordinator Accepted
+(2026-08-28)`, committed as immutable target
+`4a040b4e86ec2f4361ec765657e46cd0f36bf349` on
+`docs/task-049-replay-first-late-generation-design`. TASK-050 не выполняет
+publication этого target. Любые live Publisher phase, authorization, ref, PR
+или outcome facts требуют independent operational reconstruction и не
+выводятся из этого project-state документа.
+
+Предыдущая завершённая documentation task: TASK-045 — TASK-026 Reactivation
 Status Reconciliation; `Completed — Coordinator Accepted (2026-08-24)`;
 repeat Tester `PASS` 0/0/0; Independent Reviewer `APPROVED` 0/0; Scope Audit
 7/0/0; PROCESS-002 Synchronized. Ready-to-reactivate verdict был правдив на
 closure baseline TASK-045 и позднее superseded recheck TASK-026. Commit и
 publication на closure не выполнялись.
 
-**Текущая documentation task:** отсутствует.
+**Текущая documentation task:** TASK-050 — Publisher Execution Environment
+Capability and Trusted-Context Handoff, `In Progress`; exact live verdict,
+identity и first incomplete checkpoint определяются только matching newest
+valid terminal envelope по правилу выше, а не этим projected summary.
 
 **Текущая architecture task:** отсутствует. Fresh Architect recheck TASK-026
 завершён verdict `READY — UNBLOCK TASK-026`; matrix 7/10/2/0/0/0. Это readiness

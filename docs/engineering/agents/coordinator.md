@@ -51,6 +51,35 @@ Coordinator обязан:
   exit/results, limitations, scope/coverage counts и воспроизводимыми
   artifacts; terminal envelope не входит в subject и не self-attest-ит свои
   bytes;
+- при Publisher execution-context blocker сохранять immutable Target и
+  проверять, что Release Handoff имеет новый unique non-secret transfer ID, не
+  содержит secret, не расширяет authority и
+  оставляет source observation-only;
+- признавать destination Publisher owner только после explicit user routing,
+  exact Target reconstruction, двух successful exact-context capability probes
+  и `Accept Handoff`, цитирующего exact transfer ID/Target; unknown, reused,
+  mismatched, duplicate и already-accepted ID fail closed; exclusivity является procedural invariant, не machine
+  lock;
+- проверять normative Transfer Identity и append-only operational record
+  PROCESS-001: UUIDv4 ID fresh для publication records, immutable
+  Target/source/Release snapshot, destination binding через user route/Accept
+  и доказанные separate authorization/ownership/attempt axes; каждый closed
+  event содержит reason и authorization/owner disposition, а unavailable/
+  ambiguous record означает ownership `Unknown` и STOP;
+- принимать return только как `CancelledBeforeAccept` по explicit user
+  directive после reconciliation без Accept/side effect; различать accepted
+  reverse fresh-ID Release, Target invalidation, user revoke и consumed P10 по
+  exact PROCESS-001 dispositions;
+- до P10 доказывать `Active/Owned(execution-context)` у exact actor;
+  `Released/InTransitNone` запрещает terminalization до exact Accept либо valid
+  `CancelledBeforeAccept`, вернувшего releasing owner; затем проверять
+  `Consumed(P10)/NoneTerminal`, но закрывать attempt условно: no-handoff
+  остаётся `Unissued`, current `Accepted` закрывается exact ID, previously
+  closed reason сохраняется отдельным publication-level P10 event без
+  fabricated transfer ID и только при доказанном current owner;
+- live verdict/identity/first incomplete checkpoint принимать только из newest
+  valid envelope entry, совпадающей с recomputed manifest; stale/conflicting/
+  mismatched evidence означает STOP;
 
 ---
 
@@ -221,6 +250,14 @@ external blocker. Coordinator не переносит старое permission н
 Project-state synchronization следует stable-vs-ephemeral правилу
 PROCESS-002: transient Publisher blockers не записываются в immutable task
 commit.
+
+Если execution identity не обладает GitHub capability, Coordinator не требует
+login/token transfer внутри sandbox и не считает наличие user profile
+либо `gh auth status` доказательством decisive API capability. Он допускает
+только trusted-context handoff PROCESS-001,
+сохраняет прежнее publish permission для неизменного Target и запрещает source
+side effects с момента Release Handoff. Новый Commit Gate или Acceptance для
+неизменного Target не выполняются.
 
 ---
 

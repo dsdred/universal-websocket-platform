@@ -53,6 +53,14 @@ operational документы ведутся на русском языке и 
 - [TASK-046 — Tracked-Start Managed-Parent Admission Design](TASK-046-TRACKED-START-MANAGED-PARENT-ADMISSION-DESIGN.md) — Completed, Coordinator Accepted (2026-08-25); repeat Reviewer Approved 0/0; Scope Audit 15/0/0; PROCESS-002 Synchronized; additive DP-015 planned contract documented without implementation; TASK-026 remains Blocked; implementation prerequisite is the next candidate, Not Activated, without a Task ID
 - [TASK-047 — Tracked-Start Managed-Parent Admission Implementation](TASK-047-TRACKED-START-MANAGED-PARENT-ADMISSION.md) — Completed, Coordinator Accepted (2026-08-25); independent Tester PASS WITH ENVIRONMENT LIMITATION 0/0; final Reviewer APPROVED 0/0; Scope Audit 18/0/0; isolated DP-015 prerequisite implemented; TASK-026 remains Blocked pending separate reassessment
 - [TASK-048 — Execution Interruption Recovery Governance](TASK-048-EXECUTION-INTERRUPTION-RECOVERY-GOVERNANCE.md) — Completed, Coordinator Accepted (2026-08-26); Tester PASS 0/0/1; Repeat Independent Review Approved 0/0; Scope Audit 19/0/0; canonical manifest uses exact unsigned UTF-8 path-byte order; TASK-026 remains Blocked and is not activated
+- TASK-049 — Replay-First Orchestration Admission Design — Completed,
+  Coordinator Accepted (2026-08-28); its record is contained in immutable
+  target `4a040b4e86ec2f4361ec765657e46cd0f36bf349` on branch
+  `docs/task-049-replay-first-late-generation-design`, not in this task
+  baseline; TASK-050 does not publish it; live Publisher phase, authorization,
+  ref, PR and outcome facts require operational reconstruction; TASK-026
+  remains Blocked and its implementation candidate is Not Activated
+- [TASK-050 — Publisher Execution Environment Capability and Trusted-Context Handoff](TASK-050-PUBLISHER-EXECUTION-CONTEXT-HANDOFF.md) — In Progress; documentation-only governance; latest verdict/identity/first incomplete checkpoint resolve only from newest valid terminal envelope entry matching recomputed manifest, otherwise STOP; projected index text does not duplicate mutable checkpoint, Acceptance, commit or publication state
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

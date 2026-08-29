@@ -230,6 +230,45 @@ generated, formatting-only и незадокументированное planned
 - при blocker: completed steps, exact first unfinished step, preserved state и
   phase (`task branch` до P6 либо `main` после P6), known PR/merge OID и
   confirmation, что permission остаётся действительным;
+- execution capability: exact identity/session, successful decisive GitHub API
+  user/repository probe, supporting-only `gh auth status`, и
+  successful exact-origin Git remote probe; profile/account/helper/keyring
+  metadata отдельно и только как insufficient diagnostic evidence;
+- execution-environment blocker classification: credential unavailable to
+  identity / invalid or expired credential / repository permission / network
+  or transport / GitHub outage / tool or session failure;
+- trusted-context handoff, если применимо: unique non-secret transfer ID for
+  one Release Handoff instance (fresh canonical lowercase UUIDv4, absent from
+  available publication handoff records), exact immutable Target plus source
+  identity and Release checkpoint snapshot, explicit user routing citing ID,
+  Target and destination identity, source observation-only state,
+  destination reconstruction/dual-probe evidence, Accept Handoff ownership
+  record citing the same ID/Target, linearization point либо exact first
+  incomplete handoff step; unknown/reused/mismatched/duplicate/already-accepted
+  IDs fail closed, reverse transfer uses a new ID;
+- durable handoff evidence: append-only operational record outside immutable
+  Target/project-state with separate authorization
+  `Active/Consumed(P10)/RevokedByUser/InvalidatedByTargetChange`, ownership
+  `Owned(context)/InTransitNone/NoneTerminal/Unknown` and attempt
+  `Unissued/Released/Accepted/Closed(reason)` axes; predecessor/tail, actor,
+  resulting states and terminal reason/disposition recorded; unavailable/
+  ambiguous record means ownership `Unknown` and STOP;
+- return/terminal evidence: exact `CancelledBeforeAccept` directive and
+  no-Accept reconciliation, accepted reverse fresh-ID releasing owner, Target
+  invalidation, user revoke, or proven P10; resulting authorization/owner and
+  closed reason must match PROCESS-001, generic cancellation is invalid;
+- P10 evidence: predecessor proves `Active/Owned(execution-context)` for exact
+  actor; `Released/InTransitNone` forbids P10 until exact Accept or valid
+  `CancelledBeforeAccept` restores an owner; terminal result is authorization
+  `Consumed(P10)`, ownership `NoneTerminal`; no handoff keeps `Unissued` plus
+  publication-level no-ID event, current Accepted closes exact ID, previously
+  closed reason remains plus separate P10 event only with proven current owner;
+- verification-stable live state: projected sources remain `In Progress` and
+  resolve latest verdict/identity/first incomplete checkpoint from newest valid
+  envelope entry matching recomputed manifest; missing/stale/conflict/mismatch
+  means STOP;
+- ownership: ровно один procedural Publisher owner; отсутствие machine lock не
+  разрешает source/duplicate destination side effects;
 - при terminal success: PR, task/merge commits, checks, merge gate, обе branch
   deletions, `main == origin/main`, clean worktree и STOP.
 - для blocked recovery: reconstructable terminal P10/merged PR/OID/refs state

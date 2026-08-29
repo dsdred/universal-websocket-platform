@@ -106,6 +106,46 @@ report, CI/merge gate, safe cleanup и terminal evidence определены в
 Auth/transport/repository failure внутри initial P0 оставляет P0 первым
 незавершённым и P1 not attempted.
 
+### Publisher Execution Context
+
+Publisher выполняет side effects только из exact execution context, который
+до них успешно прошёл оба обязательных read-only capability probe: decisive
+GitHub API user/repository access и Git remote authentication/read для exact
+origin. `gh auth status` — supporting diagnostics, не decisive proof.
+Совпадение `USERPROFILE`, account metadata, `gh` configuration,
+`credential.helper`, keyring reference или credentials другой Windows identity
+не доказывает capability.
+
+Если текущий context неспособен пройти оба probe, Publisher не запрашивает
+secret через prompt, не записывает credential в repository и не использует
+непредусмотренную elevation. Уже разрешённый immutable Target может быть
+передан только через trusted-context Release Handoff PROCESS-001: явная
+маршрутизация пользователя с exact unique non-secret transfer ID и immutable
+Target, destination `Inspect -> Reconstruct -> Reconcile`,
+оба успешных probe и затем `Accept Handoff`. Release Handoff не является новой
+publication permission; Accept Handoff цитирует тот же transfer ID и Target.
+Unknown, reused, mismatched, duplicate либо already-accepted ID fail closed.
+Source становится observation-only, а после Accept Handoff ровно destination
+владеет P0-P10. ID не является secret или machine lock; exclusivity —
+обязательный procedural contract.
+
+Normative Transfer Identity, UUIDv4 freshness/uniqueness, immutable Target и
+Release snapshot, независимые authorization/ownership/attempt axes и
+append-only durable operational record определены PROCESS-001. Любой closed
+attempt фиксирует reason и authorization/owner disposition; недоступный или
+неоднозначный record означает ownership `Unknown` и запрещает все publication
+mutations.
+
+P10 требует доказанного `Active/Owned(execution-context)` у exact actor;
+`Released/InTransitNone` запрещает terminalization до exact Accept либо valid
+`CancelledBeforeAccept`, вернувшего releasing owner. Proven P10 всегда
+consumption/no-owner, но не фабрикует transfer: no-handoff остаётся `Unissued`,
+current Accepted закрывает exact attempt, already-closed reason сохраняется
+отдельным publication event только при доказанном current owner. Projected
+live state остаётся `In Progress`; newest valid envelope matching recomputed
+manifest является единственным latest checkpoint source, mismatch/conflict
+означает STOP.
+
 ---
 
 # Read Before Work

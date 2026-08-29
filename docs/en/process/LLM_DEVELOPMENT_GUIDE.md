@@ -209,6 +209,100 @@ zero completed pipeline steps, and P1 not attempted. A successful push
 proceeds directly to Pull Request discovery/creation without another
 permission or a `Create Pull Request` prompt.
 
+The exact execution context that will perform publication must prove usable
+GitHub capability with two successful read-only probes: a decisive GitHub API
+user/repository operation and Git remote authentication/read for the exact
+origin. Both are mandatory; `gh auth status` is supporting diagnostics only.
+A user profile path, account or helper
+configuration, keyring reference, installed credential tool, or successful
+probe from another Windows identity is not capability evidence. Non-secret
+evidence identifies the context and results; credentials, tokens, headers, and
+credential payloads must never enter prompts, logs, task records, or the
+repository.
+
+If the source context lacks capability, it may issue a Release Handoff with a
+unique opaque non-secret transfer ID for one release instance and the unchanged
+immutable Target, then become observation-only. The user must explicitly route
+that exact ID and Target for the previously authorized publication to a
+trusted destination. The destination performs `Inspect -> Reconstruct ->
+Reconcile`, proves the Target and all local/remote checkpoints, passes both
+probes from its exact context, and then records Accept Handoff citing the same
+ID and Target. Accept Handoff
+is the procedural ownership linearization point: only the destination may
+resume P0-P10; the source and duplicate destinations remain observation-only.
+This is an exclusivity contract, not a machine lock; the transfer ID is also
+not a secret, credential, or permission.
+
+The normative Transfer Identity is the immutable tuple `{transfer ID, Target,
+source execution identity, Release checkpoint snapshot}`. The ID is a fresh
+canonical lowercase UUIDv4 absent from all available operational handoff
+records for that publication; it is opaque and is not derived from the Target,
+identity, or time. The Target contains publication class, Task ID,
+repository/origin, exact branch, ordered range/head OID, base OID, and scope
+identity. The snapshot contains P0-P10 classifications, known refs/PR/merge
+OIDs, and the first unfinished step. The explicit user route and Accept event
+bind the exact destination identity to those unchanged fields.
+
+The state model has three independent axes: authorization `Active |
+Consumed(P10) | RevokedByUser | InvalidatedByTargetChange`; mutation ownership
+`Owned(context) | InTransitNone | NoneTerminal | Unknown`; and transfer attempt
+`Unissued | Released | Accepted | Closed(reason)`. Release sets
+`Active/InTransitNone/Released`; Accept sets
+`Active/Owned(destination)/Accepted`.
+
+`CancelledBeforeAccept` requires an explicit user directive naming the exact
+ID and reconciliation proving no Accept or destination side effect. Its event
+closes the ID, keeps authorization `Active`, returns ownership to the recorded
+releasing source, and requires that context to re-prove capability. After
+Accept, only the current destination-owner may reverse-transfer by releasing a
+fresh ID and losing ownership at Release; cancellation returns that releasing
+destination. A factual Target mismatch sets
+`InvalidatedByTargetChange/NoneTerminal` and closes all attempts; user revoke
+sets `RevokedByUser/NoneTerminal` and a later run needs a new gate. P10 may be
+terminalized only when its predecessor chain proves
+`Active/Owned(execution-context)` for the exact actor. `Released/InTransitNone`
+forbids P10 until an exact Accept establishes the destination owner or a valid
+`CancelledBeforeAccept` restores the releasing owner. Proven P10 then always
+sets `Consumed(P10)/NoneTerminal` and recovery is report-only. With no handoff,
+the attempt remains `Unissued` and a publication-level P10 event uses
+`transfer ID: none`; current `Accepted` closes that exact attempt; an already
+`Closed(reason)` attempt retains its reason and P10 is a separate event only
+while current ownership remains proven. `NoneTerminal`, `Unknown`, or missing
+owner proof cannot create P10.
+
+Release, user route, Accept, and closed events form an append-only non-secret
+operational record outside the immutable Target and project-state documents.
+Each event cites Target, actor identity, predecessor event ID or digest/tail,
+resulting three-axis state, owner, and terminal reason/disposition. Transfer
+events cite the exact ID; a publication-level P10 event explicitly cites
+`transfer ID: none` and never fabricates an attempt.
+The record must survive interruption and be independently inspectable by
+source, destination, and Coordinator. If it is unavailable, ambiguous, or
+conflicting, ownership is `Unknown` and all publication mutations STOP. This
+is procedural exclusivity, not a machine or distributed lock.
+
+Projected live-state sources remain verification-stable `In Progress`. The
+exact latest verdict, identity, and first incomplete checkpoint come only from
+the newest valid terminal envelope entry matching an independently recomputed
+canonical manifest. Missing, stale, conflicting, or mismatched evidence means
+STOP; it does not imply Acceptance, commit, or publication.
+
+The handoff preserves authorization only for the unchanged publication class,
+Task ID, repository, branch, ordered commit range/head OID, base, and scope. It
+does not create a new permission, Commit Gate, or Coordinator Acceptance.
+Different release/destination, unknown/reused/mismatched/duplicate/
+already-accepted ID, ambiguous ownership, missing explicit user routing, or
+interruption before Accept Handoff forbids side effects. Repeat, reverse, and
+cancellation follow only the exact transitions above; every new attempt uses a
+fresh ID. A completed remote effect found
+during reconciliation is not blindly repeated.
+
+Credential unavailability to the exact execution identity is classified
+separately from invalid/expired credentials, repository permission denial,
+network/transport failure, GitHub outage, and tool/session failure. Login,
+secret transfer, authentication bypass, and undocumented elevation are not
+handoff mechanisms.
+
 Required checks must succeed. No workflows or zero registered checks is
 reported as `No CI` and is non-blocking only when the merge gate is
 `MERGEABLE / CLEAN`. Pending or failed required checks, an unproven or

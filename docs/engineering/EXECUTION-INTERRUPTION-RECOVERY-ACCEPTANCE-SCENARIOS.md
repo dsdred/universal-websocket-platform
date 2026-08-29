@@ -208,7 +208,7 @@ Given interruption в любом P0–P10, then общий Recovery Reconstructi
 передаёт управление phase-aware Publisher Resume Reconstruction Guard. Guard
 сохраняет immutable Target, P6 phase boundary, inspect-first ambiguous
 mutations, cleanup и P10; общий contract не replay-ит P-step и не ослабляет
-S-001–S-025 Publisher scenarios.
+S-001–S-040 Publisher scenarios.
 
 ## R-027 — Permission target изменился
 
@@ -250,6 +250,72 @@ reproducible proof artifacts. Reviewer проверяет эти сведени�
 history; отсутствующий, неполный или stale identity не даёт certification и
 требует повторной Verification/Review.
 
+## R-031 — Publisher execution context не наследует user capability
+
+Given normal interactive identity проходит GitHub API и Git remote probes, но
+agent sandbox identity не проходит их, then recovery не выводит capability из
+общего `USERPROFILE`, account/helper metadata или user vault. Exact sandbox
+context остаётся blocked до successful dual proof либо trusted-context handoff.
+
+## R-032 — Interruption во время Release/Accept Handoff
+
+Given interruption произошёл после Release Handoff, но до доказанного Accept
+Handoff, then source остаётся observation-only, destination не считается
+owner, side effects запрещены. Recovery reconstruct-ит exact handoff/Target и
+его unique non-secret transfer ID, повторяет только недоказанные read-only inspections/probes; `Started !=
+Completed` применяется к acceptance ownership.
+
+## R-033 — Accepted destination и duplicate source resume
+
+Given exact Accept Handoff доказан, then destination является единственным
+procedural owner remaining P0-P10. Source или второй destination, пытающийся
+resume, останавливается до mutation; отсутствие machine lock не разрешает
+concurrent ownership. Accept обязан ссылаться на exact unique transfer ID и
+Target; ID сам не является secret, permission или lock.
+
+## R-034 — Mismatched handoff или reconciled remote effect
+
+Given factual immutable Target mismatch, then publication authorization
+становится `InvalidatedByTargetChange`, ownership `NoneTerminal`, связанные
+attempts закрываются `Closed(TargetChanged)`. Given Target unchanged, но
+acceptance использует unknown/reused/mismatched/duplicate/already-accepted
+transfer ID либо два destinations, then отклоняется только эта acceptance
+attempt: proven exact owner сохраняется, а ambiguous/conflicting ownership даёт
+`Unknown` и STOP. Given Target unchanged и remote inspect доказал push/PR/merge
+после previously unknown outcome, then completed checkpoint не replay-ится;
+destination принимает ownership только через exact valid Accept и продолжает
+первый незавершённый step после dual capability proof.
+
+## R-035 — Operational handoff record утрачен или partial
+
+Given interruption произошёл в любом handoff state, recovery читает append-only
+operational record вне immutable Target/project-state и сверяет UUIDv4 transfer
+ID, Target, source/destination identities, Release snapshot и event chain.
+Каждый event обязан цитировать predecessor ID/digest/tail и resulting
+authorization, ownership, attempt/reason. Release без Accept означает
+`Active/InTransitNone/Released`; exact route/Accept —
+`Active/Owned(destination)/Accepted`; closed event обязан доказать reason и
+authorization/owner disposition. Partial/conflicting chain либо более одного
+state/owner даёт ownership `Unknown`, STOP; started output не является durable
+transition.
+
+## R-036 — Recovery terminal/return disposition
+
+Given interruption после cancellation request, reverse Release, Target
+mismatch, user revoke или P10, recovery не применяет generic terminal state. Он
+доказывает exact event: valid `CancelledBeforeAccept` возвращает recorded
+releasing source при `Active`; reverse Release оставляет `InTransitNone` до
+fresh Accept; mismatch даёт `InvalidatedByTargetChange/NoneTerminal`; revoke —
+`RevokedByUser/NoneTerminal`. P10 transition допустим только если predecessor
+доказывает `Active/Owned(execution-context)` у exact actor; `Released/
+InTransitNone` запрещает P10 до exact Accept либо valid
+`CancelledBeforeAccept`, вернувшего owner. Proven P10 даёт
+`Consumed(P10)/NoneTerminal` и report-only; no-handoff сохраняет `Unissued` с
+publication-level no-ID event, current `Accepted` закрывает exact ID, а already
+`Closed(reason)` сохраняет reason с отдельным P10 event только при доказанном
+current owner. Missing predecessor, owner, reason/disposition либо fabricated
+transfer ID даёт ownership `Unknown` и STOP.
+
 ## Coverage Matrix
 
 | Required area | Scenarios |
@@ -264,10 +330,12 @@ history; отсутствующий, неполный или stale identity не
 | Permission before/after, granted-not-run, run-not-reported | R-008–R-011, R-027 |
 | Cross-platform canonical identity | R-028 |
 | Blocked closure canonical subject and durable Tester evidence | R-029–R-030 |
+| Exact-context capability and user/sandbox identity separation | R-031 |
+| Trusted-context handoff interruption, ownership, return and terminal disposition | R-032–R-036 |
 
 ## Acceptance
 
 Contract passes only if every scenario is traceable to normative PROCESS-001,
 PROCESS-002 or role text; negative assertions (`no verdict`, `no blind retry`,
 `no inferred permission`, `no replay completed checkpoint`) are preserved; and
-Publisher S-001–S-025 remain valid.
+Publisher S-001–S-040 remain valid.

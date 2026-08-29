@@ -91,14 +91,28 @@
   replay-first admission and late-generation refinement; no implementation,
   Acceptance, Completion, prerequisite activation, commit, or publication is
   implied by this amendment.
-- Текущая operational task: **отсутствует**
-- Последняя завершённая architecture task: **TASK-046 — Tracked-Start
-  Managed-Parent Admission Design; Completed — Coordinator Accepted
-  (2026-08-25); repeat Reviewer Approved 0/0; Scope Audit 15/0/0; PROCESS-002
-  Synchronized; additive planned DP-015 contract зафиксирован без
-  implementation; на closure TASK-026 оставалась Blocked; fresh reassessment
-  впоследствии приняла READY boundary без активации implementation**
+- Текущая operational task: **TASK-050 — Publisher Execution Environment
+  Capability and Trusted-Context Handoff; In Progress; documentation-only
+  governance. Exact latest verdict, canonical identity и first incomplete
+  checkpoint определяются только newest valid terminal Recovery Evidence
+  Envelope entry, совпадающей с independently recomputed current manifest;
+  missing/stale/conflicting/mismatched evidence означает STOP. Projected live
+  state не копирует mutable checkpoint, result, Acceptance, commit или
+  publication state**
+- Последняя завершённая architecture task: **TASK-049 — Replay-First
+  Orchestration Admission Design; Completed — Coordinator Accepted
+  (2026-08-28); immutable target
+  `4a040b4e86ec2f4361ec765657e46cd0f36bf349`. Предыдущая TASK-046 —
+  Tracked-Start Managed-Parent Admission Design — завершена и принята
+  (2026-08-25); TASK-026 остаётся Blocked, implementation candidate Not
+  Activated**
 - Текущая architecture task: **отсутствует**
+- TASK-049 publication boundary: **TASK-049 Completed — Coordinator Accepted;
+  immutable target `4a040b4e86ec2f4361ec765657e46cd0f36bf349`
+  on branch `docs/task-049-replay-first-late-generation-design`. TASK-050 не
+  выполняет её publication. Любые live Publisher phase, authorization, ref,
+  PR или outcome facts требуют independent operational reconstruction и не
+  выводятся из этого project-state документа**
 - TASK-027 acceptance evidence: **DP-019 Approved/Planned; implementable
   parent/phase, exact authorization and private per-call managed Start seams
   defined; repeat Independent Review Approved with blocking 0 and non-blocking
@@ -243,12 +257,21 @@
   closure commit и publication ещё не выполнялись. Subsequently task commit
   `d28efa4e88e02ef528c78c3ca88b3f91945069ce` was published through PR #28
   and merged as `ba75e54e00c3cf1d0d87ca2a985acc9699698efd`**
-- Последняя завершённая documentation task: **TASK-045 — TASK-026 Reactivation
+- Последняя завершённая documentation task: **TASK-049 — Replay-First
+  Orchestration Admission Design; Completed — Coordinator Accepted
+  (2026-08-28); committed as immutable target
+  `4a040b4e86ec2f4361ec765657e46cd0f36bf349`; current documentation-only
+  governance TASK-050 не изменяет этот commit. Предыдущая TASK-045 — TASK-026 Reactivation
   Status Reconciliation; Completed — Coordinator Accepted (2026-08-24);
   repeat Tester PASS 0/0/0; Independent Reviewer APPROVED 0/0; Scope Audit
   7/0/0; PROCESS-002 Synchronized; Ready-to-reactivate verdict был правдив на
   closure baseline TASK-045 и позднее superseded recheck TASK-026**
-- Текущая documentation task: **отсутствует**
+- Текущая documentation task: **TASK-050 — Publisher Execution Environment
+  Capability and Trusted-Context Handoff; In Progress. Exact latest verdict,
+  canonical identity и first incomplete checkpoint определяются только newest
+  valid terminal Recovery Evidence Envelope entry, совпадающей с independently
+  recomputed current manifest; missing/stale/conflicting/mismatched evidence
+  означает STOP. Этот projected summary не копирует transient verdict**
 - Текущая architecture task: **отсутствует. Fresh Architect recheck TASK-026
   завершён verdict `READY — UNBLOCK TASK-026`; matrix 7/10/2/0/0/0; это
   readiness evidence, а не implementation Acceptance/Completion**

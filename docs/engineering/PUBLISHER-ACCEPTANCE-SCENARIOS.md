@@ -185,3 +185,144 @@ Resume Reconstruction Guard продолжает первый незавершё
 Target отсутствуют, существующий ref/PR/merge не выдаёт permission: уже
 completed effect только сообщается, а не начатая publication требует обычного
 gate.
+
+## S-026 (A) — Windows user capable, sandbox identity incapable
+
+Given normal Windows identity успешно проходит GitHub API и Git remote probes,
+но exact sandbox identity не имеет доступа к user credential vault и проваливает
+обязательные probes, then capability sandbox не доказана, P0 `BLOCKED`, P1 не
+attempted и side effects отсутствуют. Blocker классифицируется `Blocked by
+Publisher Execution Environment — GitHub credentials unavailable to execution
+identity`; общий `USERPROFILE` не меняет verdict.
+
+## S-027 (B) — Trusted-context handoff после blocker
+
+Given source выпустил non-secret Release Handoff и стал observation-only, а
+handoff содержит новый unique non-secret transfer ID, пользователь явно
+маршрутизировал exact ID плюс Target ранее разрешённой publication в trusted
+destination, then destination выполняет `Inspect -> Reconstruct -> Reconcile`,
+доказывает unchanged Target и оба capability probe, фиксирует Accept Handoff с
+тем же ID/Target и
+продолжает первый незавершённый step. Authorization сохраняется; новый publish
+gate, Commit Gate и Coordinator Acceptance не требуются.
+
+## S-028 (C) — Destination обнаруживает другой HEAD
+
+Given destination при reconstruction видит HEAD, ordered range или иной
+immutable Target field, отличный от Release Handoff, then authorization
+становится `InvalidatedByTargetChange`, ownership `NoneTerminal`, attempts
+закрываются `Closed(TargetChanged)`. Given Target unchanged, но ID unknown/
+reused/duplicate/already-accepted/mismatched либо user route подменяет
+destination, then отклоняется только acceptance attempt: proven Released state
+либо proven exact owner сохраняется; ambiguous/conflicting ownership становится
+`Unknown` и STOP. Ни один случай не является resumable credential blocker.
+
+## S-029 (D) — Push найден после unknown outcome
+
+Given Release Handoff классифицировал P1 outcome `Unknown`, а destination
+read-only inspect обнаружил exact remote branch at authorized head OID, then P1
+reconciled как completed и push не повторяется. Destination продолжает P2 только
+после полного Accept Handoff.
+
+## S-030 (E) — API PASS, Git remote FAIL
+
+Given GitHub API probe успешен, но exact-origin Git remote authentication/read
+неуспешен, then execution capability не доказана. P0 остаётся незавершённым и
+side effects запрещены.
+
+## S-031 (F) — Git remote PASS, API FAIL
+
+Given exact-origin Git remote probe успешен, но GitHub API authentication или
+repository probe неуспешен, then execution capability не доказана. P0 остаётся
+незавершённым и side effects запрещены.
+
+## S-032 (G) — User vault недоступен sandbox SID
+
+Given credentials существуют только в vault normal user SID, а exact sandbox
+SID видит тот же profile/configuration, но не может использовать vault, then
+profile/config/helper metadata является diagnostic evidence, не capability
+proof. Secret не копируется и login/elevation workaround не выполняется.
+
+## S-033 (H) — Source пытается продолжить после handoff
+
+Given source выпустил Release Handoff или destination уже выпустил Accept
+Handoff, when source пытается resume Publisher, then ownership check останавливает
+source до side effect. Только accepted destination может продолжать; duplicate
+publication attempt запрещён даже без machine-enforced lock. Transfer ID не
+является lock, secret или permission.
+
+## S-034 — Destination interrupted до Accept Handoff
+
+Given destination прерван во время inspect или capability probes до Accept
+Handoff, then он не владеет publication и не выполняет mutation. Source также
+остаётся observation-only; resume reconstruct-ит handoff и повторяет только
+недоказанные read-only checks. Если exact attempt всё ещё доказан как open
+`Released` с неизменными ID/Target/route и непротиворечивым predecessor chain,
+recovery продолжает explicit route/Accept с тем же exact transfer ID. Fresh ID
+требуется только для новой, повторной или reverse attempt; любой `Closed` ID
+нельзя route, accept или reuse. `CancelledBeforeAccept` остаётся отдельным
+explicit transition, который закрывает текущий ID.
+
+## S-035 — Duplicate или mismatched acceptance
+
+Given два releases/destination пытаются использовать один transfer ID, Accept
+Handoff уже существует либо acceptance ссылается на unknown, reused,
+mismatched, duplicate, already-accepted ID или другой Target, then дальнейшая
+mutation останавливается. При unchanged Target доказанный exact owner
+сохраняется; factual Target mismatch применяет
+`InvalidatedByTargetChange/NoneTerminal`; ambiguous ownership становится
+`Unknown` и не разрешается предположением.
+
+## S-036 — Durable transfer identity и state recovery
+
+Given candidate ID не имеет durable Release, then attempt `Unissued`,
+authorization `Active`, owner остаётся source. Given Release event cites Target,
+ID, actor и predecessor/tail, then attempt `Released`, ownership
+`InTransitNone`. Exact route/Accept даёт `Accepted/Owned(destination)`. Every
+event records all three axes and terminal reason/disposition. Если append-only
+record недоступен, conflicting или допускает два predecessor/owner, ownership
+`Unknown` и все mutations STOP; session memory не является evidence.
+
+## S-037 — CancelledBeforeAccept возвращает releasing source
+
+Given exact attempt `Released`, explicit user directive называет его ID, and
+reconciliation доказывает отсутствие Accept и destination side effect, then
+`Closed(CancelledBeforeAccept)` сохраняет authorization `Active` и возвращает
+`Owned(recorded-release-source)`. Source повторно доказывает capability перед
+mutation; старый ID нельзя route/accept/reuse. Без exact directive или
+reconciliation cancellation запрещена и ownership остаётся `InTransitNone`.
+
+## S-038 — Reverse после Accepted
+
+Given destination имеет `Active/Owned(destination)/Accepted`, only этот
+destination может выпустить fresh reverse Release. Release немедленно даёт
+`InTransitNone/Released`; fresh route/Accept назначает нового owner. Если этот
+attempt получает valid `CancelledBeforeAccept`, ownership возвращается
+recorded releasing destination, не первоначальному source. Machine lock не
+утверждается.
+
+## S-039 — Target mismatch invalidates authorization
+
+Given factual reconstruction обнаружил изменение любого immutable Target
+field, then authorization становится `InvalidatedByTargetChange`, ownership
+`NoneTerminal`, все связанные attempts — `Closed(TargetChanged)`. Ни source,
+ни destination не используют прежнюю authorization; resumable handoff и
+mutation запрещены.
+
+## S-040 — User revoke и proven P10 различаются
+
+Given explicit user revoke, then authorization `RevokedByUser`, ownership
+`NoneTerminal`, open attempt `Closed(UserRevoked)` и более поздняя publication
+требует нового exact gate. Given P10 independently proven and its predecessor
+chain proves `Active/Owned(execution-context)` for the exact actor, then
+authorization `Consumed(P10)`, ownership `NoneTerminal` и recovery выполняет
+только reconciliation/report. If handoff не выпускался, attempt остаётся
+`Unissued`, а publication-level P10 event имеет `transfer ID: none`; if current
+attempt `Accepted`, exact accepting owner закрывает exact ID как
+`Closed(CompletedP10)`; if attempt уже `Closed(reason)`, reason сохраняется и
+P10 добавляется отдельным publication-level event only when current ownership
+is still proven. Given attempt `Released` and ownership `InTransitNone`, P10 is
+forbidden until exact Accept establishes the destination owner or valid
+`CancelledBeforeAccept` restores the releasing owner. `NoneTerminal`, `Unknown`
+or missing owner proof cannot create P10. Каждый terminal event содержит reason
+и authorization/owner disposition; fabricated ID запрещён.
