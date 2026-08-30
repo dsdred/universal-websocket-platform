@@ -8,6 +8,11 @@
 - **Implementation Status:** Planned overall; Slice 3 implemented and
   independently accepted in isolation
 
+TASK-049 completed the design-only refinement of the replay-first admission and
+late-generation provider contract in section 8.5 and was Coordinator Accepted
+on 2026-08-28. Its separate isolated implementation prerequisite remains
+Planned and `Not Activated`, with no Task ID.
+
 Implementation progress: TASK-031 and TASK-032 produced Coordinator-Accepted
 isolated partial implementations of Slices 1 and 2, and TASK-034 defined their
 required conformance repair. TASK-035 implements Slice 2R in isolation: the
@@ -40,8 +45,9 @@ UNBLOCK TASK-026` with matrix 7/10/2/0/0/0. The current cycle supersedes that
 readiness for live execution: repeat Architecture Confirmation returned `NEEDS
 DECISION` / `SPLIT REQUIRED` because current eager generation and combined
 inspect/claim cannot provide replay-first admission and late allocation.
-TASK-026 is Blocked; the separate narrow DP-015/DP-020 design plus isolated
-implementation prerequisite is Not Activated and has no Task ID. DP-020 remains
+TASK-026 is Blocked. TASK-049 is the completed and Coordinator-Accepted
+design-only DP-015/DP-020 refinement; its separate isolated implementation
+prerequisite remains `Not Activated`, with no Task ID. DP-020 remains
 Draft/Planned overall.
 
 ## 2. Purpose
@@ -424,6 +430,36 @@ distinguishable error (fail-closed) and performs zero Owner or aggregate
 mutation. Owner or continuation errors are returned unchanged and unwrapped;
 there is no reclassification, wrapping, or recovery at this seam.
 
+### 8.5 Replay-first admission and late generation provider
+
+The refined managed path performs exact command inspection before any
+aggregate-derived decision. Authorization and the final cancellation gate
+precede inspection for both initial and replay submissions. Existing records
+return `InProgress`, replay, or conflict without invoking the absent-intent
+decision or allocating a generation. Only an absent identity may receive the
+closed read-only decision `SatisfiedCandidate`, `ExecutePrimitiveCandidate`,
+`ExecuteParentCandidate` (including tracked-Starting `StopOld`), or definitive
+`NoClaim`. The decision carries no generation or execution authority and runs
+outside all command, aggregate, and Owner locks.
+
+The caller re-enters the same DP-015 admission boundary and atomically
+rechecks the identity and decision before claiming. A satisfied candidate is
+claimed first and then revalidated against the exact aggregate revision,
+attempt, and version; stale, unavailable, or ambiguous facts remain unresolved
+and never become terminal satisfied truth. For an execution candidate, only the
+winning primitive or `StartTarget` claim may request the composition-owned
+generation. DP-015 requests it exactly once after the final cancellation and
+admission winner, validates a non-empty value, and installs the immutable
+binding and rendezvous before invoking managed Flow.
+
+Provider failure or empty output, panic, `runtime.Goexit`, non-return,
+generation replacement, cancellation after the winning gate, or binding
+installation uncertainty leaves the command or phase Claimed and unresolved.
+The provider is never retried, capability is never reissued, and Owner, Load,
+Build, Launcher, and Host are not called. Replay never adopts callback or
+provider authority; reconstruction restores durable facts but no live
+capability. Legacy unmanaged and ordinary parent paths remain unchanged.
+
 ## 9. Deferred Decision: OwnerClaimView, Binding Sequence, and Outcomes
 
 ### 9.1 `OwnerClaimView` and the `LaunchAttemptID` accessor
@@ -763,8 +799,10 @@ preclaimed `StopOld` admission prerequisite and corrects the matrix to 7 Direct
 Fresh TASK-026 reassessment accepts the READY boundary; implementation remains
 Not Activated at that reassessment checkpoint. Repeat Architecture
 Confirmation now blocks TASK-026 on the separate DP-015/DP-020 replay-first
-admission and late-generation prerequisite. It is Not Activated. Historical
-Slice 4 remains completed and accepted as TASK-038.
+admission and late-generation refinement. That design refinement was completed
+as TASK-049 and Coordinator Accepted on 2026-08-28; its separate isolated
+implementation prerequisite remains `Not Activated`, with no Task ID. Historical Slice 4 remains completed and accepted
+as TASK-038.
 
 ## 15. Consequences
 

@@ -30,7 +30,7 @@ operational документы ведутся на русском языке и 
 - [TASK-023 — Runtime Management Routing Implementation](TASK-023-RUNTIME-MANAGEMENT-ROUTING.md) — Completed, Coordinator Accepted
 - [TASK-024 — Runtime Operational Identity Persistence Implementation](TASK-024-RUNTIME-OPERATIONAL-IDENTITY-PERSISTENCE.md) — Completed, Coordinator Accepted
 - [TASK-025 — Runtime Management Command Idempotency Implementation](TASK-025-RUNTIME-COMMAND-IDEMPOTENCY.md) — Completed, Coordinator Accepted
-- [TASK-026 — Runtime Activation, Replacement, and Rollback Implementation](TASK-026-RUNTIME-ACTIVATION-REPLACEMENT-ROLLBACK.md) — Blocked (2026-08-27); historical accepted readiness `READY — UNBLOCK TASK-026` is superseded for live execution by repeat Architecture `NEEDS DECISION` / `SPLIT REQUIRED`: current DP-015/DP-020 admission cannot provide replay-first inspection and late generation; the separate narrow design plus isolated implementation prerequisite is Not Activated with no Task ID; DP-016 remains Approved/Planned and no implementation/Acceptance/Completion/commit/publication is claimed
+- [TASK-026 — Runtime Activation, Replacement, and Rollback Implementation](TASK-026-RUNTIME-ACTIVATION-REPLACEMENT-ROLLBACK.md) — Blocked (2026-08-27); historical accepted readiness `READY — UNBLOCK TASK-026` is superseded for live execution by repeat Architecture `NEEDS DECISION` / `SPLIT REQUIRED`: TASK-049 completed the replay-first inspection and late-generation design refinement, while its separate isolated implementation prerequisite remains Not Activated with no Task ID; DP-016 remains Approved/Planned and no implementation/Acceptance/Completion/commit/publication is claimed
 - [TASK-027 — Runtime Activation Orchestration Prerequisites Design](TASK-027-RUNTIME-ACTIVATION-ORCHESTRATION-PREREQUISITES-DESIGN.md) — Completed, Coordinator Accepted
 - [TASK-028 — Runtime Command Parent/Phase Prerequisites Implementation](TASK-028-RUNTIME-COMMAND-PARENT-PHASE-PREREQUISITES.md) — Completed, Coordinator Accepted; TASK-026 remains Blocked
 - [TASK-029 — Runtime Command Continue and Pending-Stop Prerequisite](TASK-029-RUNTIME-COMMAND-CONTINUE-PENDING-STOP.md) — Completed, Coordinator Accepted; TASK-026 remains Blocked
@@ -56,11 +56,12 @@ operational документы ведутся на русском языке и 
 - TASK-049 — Replay-First Orchestration Admission Design — Completed,
   Coordinator Accepted (2026-08-28); its record is contained in immutable
   target `4a040b4e86ec2f4361ec765657e46cd0f36bf349` on branch
-  `docs/task-049-replay-first-late-generation-design`, not in this task
-  baseline; TASK-050 does not publish it; live Publisher phase, authorization,
-  ref, PR and outcome facts require operational reconstruction; TASK-026
-  remains Blocked and its implementation candidate is Not Activated
-- [TASK-050 — Publisher Execution Environment Capability and Trusted-Context Handoff](TASK-050-PUBLISHER-EXECUTION-CONTEXT-HANDOFF.md) — In Progress; documentation-only governance; latest verdict/identity/first incomplete checkpoint resolve only from newest valid terminal envelope entry matching recomputed manifest, otherwise STOP; projected index text does not duplicate mutable checkpoint, Acceptance, commit or publication state
+  `docs/task-049-replay-first-late-generation-design`, not in current `main`;
+  publication ended `InvalidatedByTargetChange`, so the old authorization is
+  terminal, non-transferable and non-reusable; TASK-026 remains Blocked and its
+  implementation candidate is Not Activated
+- [TASK-050 — Publisher Execution Environment Capability and Trusted-Context Handoff](TASK-050-PUBLISHER-EXECUTION-CONTEXT-HANDOFF.md) — Completed — Coordinator Accepted (2026-08-30); published as task commit `794ce5f350649115900ab8c88f34a91cf181e1c8` through PR #52 and merged as `ae76c8385ac3241946267272e4468d74fcee9cb4`; exact-context capability, trusted-context handoff and stable-live-state governance are current
+- [TASK-051 — TASK-049 Publication-Invalidation Reconciliation](TASK-051-TASK-049-PUBLICATION-RECONCILIATION.md) — In Progress; documentation-only reconciliation from `main@ae76c8385ac3241946267272e4468d74fcee9cb4`; latest verdict/identity/first incomplete checkpoint resolve only from the newest valid terminal envelope entry matching the independently recomputed manifest, otherwise STOP; old TASK-049 acceptance and publication authority do not transfer to this new identity
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

@@ -37,8 +37,9 @@ TASK-047 implements it in isolation. Fresh TASK-026 reassessment accepts
 supersedes that readiness for live execution: repeat Architecture Confirmation
 returned `NEEDS DECISION` / `SPLIT REQUIRED` because current DP-015/DP-020
 admission cannot provide replay-first inspection and late generation
-allocation. TASK-026 is Blocked; the separate narrow design plus isolated
-implementation prerequisite is Not Activated and has no Task ID. DP-019
+allocation. TASK-026 is Blocked. TASK-049 is the completed and Coordinator-
+Accepted design-only DP-015/DP-020 refinement; its separate isolated
+implementation prerequisite remains `Not Activated`, with no Task ID. DP-019
 remains Approved/Planned overall.
 
 ## 2. Purpose
@@ -562,8 +563,10 @@ admission prerequisite. TASK-046 defines that additive contract and TASK-047
 implements it in isolation. Fresh TASK-026 reassessment accepts the READY
 boundary as historical evidence. Repeat Architecture Confirmation now blocks
 TASK-026 on a separate DP-015/DP-020 replay-first admission and late-generation
-prerequisite, which is Not Activated. The historical focused readiness
-decomposition is recorded in the mirrored
+refinement. That design refinement was completed as TASK-049 and Coordinator
+Accepted on 2026-08-28; its separate isolated implementation prerequisite
+remains `Not Activated`, with no Task ID. The
+historical focused readiness decomposition is recorded in the mirrored
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), with
 Design Status Draft and Implementation Status Planned overall, with Slice 3
 implemented and independently accepted in isolation.

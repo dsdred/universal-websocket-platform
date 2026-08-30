@@ -85,9 +85,10 @@ The repository currently contains an Alpha foundation rather than a production-r
   19/0/0.
   TASK-026 Design-only reassessment is accepted and published. Its subsequent
   implementation cycle is now Blocked after repeat Architecture returned
-  `NEEDS DECISION` / `SPLIT REQUIRED`: a separate narrow DP-015/DP-020
-  replay-first admission and late-generation prerequisite remains Not
-  Activated with no Task ID.
+  `NEEDS DECISION` / `SPLIT REQUIRED`. TASK-049 completed the design-only
+  DP-015/DP-020 replay-first admission and late-generation refinement and was
+  Coordinator Accepted on 2026-08-28; its separate isolated implementation
+  prerequisite remains Not Activated with no Task ID.
 
 ## 3. Engineering Principles
 
@@ -415,9 +416,11 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   0/0, and records the additive contract. TASK-047 implements that bounded
   tracked-Start managed-parent admission prerequisite in isolation. TASK-026
   implementation cycle is Blocked after repeat Architecture superseded that
-  readiness for live execution. The required narrow DP-015/DP-020 design plus
-  isolated implementation prerequisite is Not Activated and has no Task ID;
-  DP-016 remains Approved/Planned, and Integration and Production Activation
+  readiness for live execution. TASK-049 completed the design-only DP-015/
+  DP-020 replay-first admission and late-generation refinement and was
+  Coordinator Accepted on 2026-08-28; its separate isolated implementation
+  prerequisite remains Not Activated with no Task ID. DP-016 remains
+  Approved/Planned, and Integration and Production Activation
   remain inactive.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.

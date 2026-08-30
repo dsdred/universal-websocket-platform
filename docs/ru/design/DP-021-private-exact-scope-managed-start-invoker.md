@@ -19,9 +19,10 @@ reassessment TASK-026 принимает `READY — UNBLOCK TASK-026` с matrix
 7/10/2/0/0/0. Текущий цикл supersedes эту readiness для live execution: repeat
 Architecture Confirmation вернула `NEEDS DECISION` / `SPLIT REQUIRED`, потому
 что текущий admission DP-015/DP-020 не обеспечивает replay-first inspection и
-late generation allocation. TASK-026 заблокирована; отдельная узкая design плюс
-isolated implementation prerequisite — Not Activated без Task ID. Этот DP
-остаётся Draft/Partial.
+late generation allocation. TASK-026 заблокирована. TASK-049 — завершённая и
+Coordinator-Accepted design-only DP-015/DP-020 refinement; её отдельная
+isolated implementation prerequisite остаётся `Not Activated` без Task ID.
+Этот DP остаётся Draft/Partial.
 
 ## 2. Назначение
 
@@ -448,8 +449,11 @@ tracked-Start managed-parent плюс preclaimed `StopOld` admission. TASK-046 �
 фиксирует этот contract, TASK-047 реализует его изолированно, а fresh
 reassessment принимает `READY — UNBLOCK TASK-026` как historical evidence.
 Repeat Architecture Confirmation теперь блокирует TASK-026 отдельной
-DP-015/DP-020 prerequisite replay-first admission и late generation. Она Not
-Activated; implementation TASK-026 здесь не утверждается.
+DP-015/DP-020 refinement replay-first admission и late generation. Design
+refinement завершена как TASK-049 и принята Coordinator 2026-08-28; её
+отдельная isolated implementation prerequisite остаётся `Not Activated` без
+Task ID; implementation TASK-026
+здесь не утверждается.
 
 ## 18. Решение
 
