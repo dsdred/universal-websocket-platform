@@ -4,6 +4,12 @@
 
 ## Принятые решения
 
+- TASK-049 — завершённая и Coordinator-Accepted (2026-08-28) design-only
+  refinement в Draft DP-020 и Approved DP-015 для replay-first orchestration
+  admission и late generation allocation; отдельная isolated implementation
+  prerequisite остаётся Planned и Not Activated без Task ID, а TASK-026 —
+  Blocked.
+
 - [`ADR 0001: Базовая реализация Control Service`](../docs/ru/adr/0001-bootstrap-control-service.md)
 - [`ADR 0002: Configuration DSL`](../docs/ru/adr/0002-configuration-dsl.md)
 - [`ADR 0003: Runtime Architecture`](../docs/ru/adr/0003-runtime-architecture.md)
@@ -90,7 +96,9 @@ UNBLOCK TASK-026` с matrix 7/10/2/0/0/0 как historical readiness evidence.
 DP-016 остаётся Approved/Planned; текущий implementation cycle TASK-026 теперь
 Blocked после repeat Architecture `NEEDS DECISION` / `SPLIT REQUIRED`: текущий
 admission DP-015/DP-020 не обеспечивает replay-first inspection и late
-generation allocation. Отдельная узкая prerequisite — Not Activated без Task ID.
+generation allocation. TASK-049 — завершённая и Coordinator-Accepted
+design-only refinement; её отдельная isolated implementation prerequisite
+остаётся Not Activated без Task ID.
 
 Approved DP-019 определяет focused internal integration contract, необходимый
 для реализации DP-016 без ослабления proofs: exact authorization tuple
@@ -269,6 +277,7 @@ preclaimed `StopOld` admission. TASK-047 реализует contract изоли�
 Fresh TASK-026 Design-only reassessment принимает `READY — UNBLOCK TASK-026` с
 matrix 7/10/2/0/0/0 как historical readiness evidence. Последующий
 implementation cycle теперь Blocked repeat Architecture `NEEDS DECISION` /
-`SPLIT REQUIRED` на отдельной Not Activated DP-015/DP-020 prerequisite
-replay-first admission и late generation; implementation Acceptance/Completion
-отсутствуют.
+`SPLIT REQUIRED` на DP-015/DP-020 refinement replay-first admission и late
+generation. Design refinement завершена как TASK-049 и принята Coordinator
+2026-08-28; её отдельная isolated implementation prerequisite остаётся Not
+Activated без Task ID; implementation Acceptance/Completion отсутствуют.

@@ -36,8 +36,9 @@ TASK-047 реализует его изолированно. Fresh reassessment 
 readiness для live execution: repeat Architecture Confirmation вернула `NEEDS
 DECISION` / `SPLIT REQUIRED`, потому что текущий admission DP-015/DP-020 не
 обеспечивает replay-first inspection и late generation allocation. TASK-026
-заблокирована; отдельная узкая design плюс isolated implementation prerequisite
-— Not Activated без Task ID. DP-019 остаётся Approved/Planned overall.
+заблокирована. TASK-049 — завершённая и Coordinator-Accepted design-only
+DP-015/DP-020 refinement; её отдельная isolated implementation prerequisite
+остаётся `Not Activated` без Task ID. DP-019 остаётся Approved/Planned overall.
 
 ## 2. Назначение
 
@@ -550,9 +551,11 @@ proofs и исторически фиксирует `UNBLOCK TASK-026`. Supersed
 `StopOld` admission. TASK-046 фиксирует этот additive contract, а TASK-047
 реализует его изолированно. Fresh reassessment TASK-026 принимает READY
 boundary как historical evidence. Repeat Architecture Confirmation теперь
-блокирует TASK-026 отдельной DP-015/DP-020 prerequisite replay-first admission
-и late generation, которая Not Activated. Historical focused readiness
-decomposition зафиксирована в зеркальном
+блокирует TASK-026 отдельной DP-015/DP-020 refinement replay-first admission и
+late generation. Design refinement завершена как TASK-049 и принята Coordinator
+2026-08-28; её отдельная isolated implementation prerequisite остаётся `Not
+Activated` без Task ID. Historical
+focused readiness decomposition зафиксирована в зеркальном
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), со
 статусом Design Status Draft и Implementation Status Planned overall, где
 Срез 3 реализован и независимо принят изолированно.

@@ -8,6 +8,11 @@
 - **Статус реализации:** Planned overall; Срез 3 реализован и независимо
   принят изолированно
 
+TASK-049 завершила design-only refinement contract replay-first admission и
+позднего generation provider в разделе 8.5; Coordinator Acceptance получена
+2026-08-28. Её отдельная isolated implementation prerequisite остаётся Planned
+и `Not Activated` без Task ID.
+
 Прогресс реализации: TASK-031 и TASK-032 создали изолированные частичные
 реализации Срезов 1 и 2, исторически принятые Coordinator, а TASK-034 определила
 обязательный repair соответствия. TASK-035 реализует Срез 2R изолированно:
@@ -42,8 +47,9 @@ TASK-047 реализует её изолированно. Fresh reassessment TA
 readiness для live execution: repeat Architecture Confirmation вернула `NEEDS
 DECISION` / `SPLIT REQUIRED`, потому что текущие eager generation и combined
 inspect/claim не обеспечивают replay-first admission и late allocation.
-TASK-026 заблокирована; отдельная узкая DP-015/DP-020 design плюс isolated
-implementation prerequisite — Not Activated без Task ID. DP-020 остаётся
+TASK-026 заблокирована. TASK-049 — завершённая и Coordinator-Accepted
+design-only DP-015/DP-020 refinement; её отдельная isolated implementation
+prerequisite остаётся `Not Activated` без Task ID. DP-020 остаётся
 Draft/Planned overall.
 
 ## 2. Назначение
@@ -424,6 +430,36 @@ Validation failure binding до mutation Owner возвращает exact, disti
 или continuation возвращаются неизменными и без обёртки; на этом seam нет ни
 reclassification, ни wrapping, ни recovery.
 
+### 8.5 Replay-first admission и поздний generation provider
+
+Refined managed path выполняет exact command inspection до любого решения,
+выведенного из aggregate. Authorization и финальная cancellation-проверка
+предшествуют inspection для initial и replay submission. Существующая запись
+возвращает `InProgress`, replay или conflict без absent-intent decision и без
+выделения generation. Только absent identity получает closed read-only decision
+`SatisfiedCandidate`, `ExecutePrimitiveCandidate`, `ExecuteParentCandidate`
+(включая tracked-Starting `StopOld`) или definitive `NoClaim`. Decision не
+содержит generation или execution authority и выполняется вне command,
+aggregate и Owner locks.
+
+Caller возвращается в ту же DP-015 admission boundary и атомарно повторно
+проверяет identity и decision до claim. Satisfied candidate сначала claim-ится,
+затем revalidate-ится по exact aggregate revision, attempt и version; stale,
+unavailable или ambiguous facts остаются unresolved и не становятся terminal
+satisfied truth. Для execution candidate generation запрашивается только
+winning claim primitive или `StartTarget`. DP-015 вызывает composition-owned
+provider ровно один раз после победы final cancellation/admission gate,
+проверяет непустое значение и устанавливает immutable binding и rendezvous до
+вызова managed Flow.
+
+Ошибка provider или пустой результат, panic, `runtime.Goexit`, non-return,
+замена generation, cancellation после winning gate или неопределённость
+установки binding оставляют command/phase в Claimed и unresolved. Provider не
+retry-ится, capability не выдаётся повторно, Owner, Load, Build, Launcher и
+Host не вызываются. Replay не принимает authority callback/provider;
+reconstruction восстанавливает durable facts без live capability. Legacy
+unmanaged и обычные parent paths не меняются.
+
 ## 9. Отложенное решение: OwnerClaimView, последовательность binding и исходы
 
 ### 9.1 `OwnerClaimView` и accessor `LaunchAttemptID`
@@ -758,8 +794,11 @@ admission и исправляет matrix на 7 Direct / 9 Compositional / 2 Mis
 1 Missing prerequisite / 0 Deferred. Fresh reassessment TASK-026 принимает
 READY boundary; на том checkpoint implementation оставалась Not Activated.
 Repeat Architecture Confirmation теперь блокирует TASK-026 отдельной
-DP-015/DP-020 prerequisite replay-first admission и late generation. Она Not
-Activated. Historical Срез 4 остаётся завершённым и принятым как TASK-038.
+DP-015/DP-020 refinement replay-first admission и late generation. Design
+refinement завершена как TASK-049 и принята Coordinator 2026-08-28; её
+отдельная isolated implementation prerequisite остаётся `Not Activated` без
+Task ID. Historical Срез 4 остаётся
+завершённым и принятым как TASK-038.
 
 ## 15. Последствия
 

@@ -11,6 +11,11 @@
   реализованы и независимо приняты изолированно; полное extension
   DP-019 остаётся Planned
 
+TASK-049 завершила design-only refinement contract replay-first orchestration
+admission и позднего выделения generation в разделе 13.2; Coordinator
+Acceptance получена 2026-08-28. Её отдельная isolated implementation
+prerequisite остаётся Planned и `Not Activated` без Task ID.
+
 Этот approved design определяет durable idempotency boundary для
 state-changing management commands Runtime. Package
 `internal/runtimecommandidempotency` реализует boundary изолированно на
@@ -58,9 +63,10 @@ prerequisite / 0 Missing external / 0 Deferred. Текущий цикл TASK-026
 supersedes эту readiness для live execution: repeat Architecture Confirmation
 вернула `NEEDS DECISION` / `SPLIT REQUIRED`, потому что eager generation и
 combined inspect/claim не обеспечивают exact replay-first admission и late
-allocation. TASK-026 заблокирована; узкая DP-015/DP-020 design плюс isolated
-implementation prerequisite — Not Activated без Task ID. Статус DP-015 не
-меняется.
+allocation. TASK-026 заблокирована. TASK-049 — завершённая и Coordinator-
+Accepted design-only DP-015/DP-020 refinement; её отдельная isolated
+implementation prerequisite остаётся `Not Activated` без Task ID. Статус DP-015
+не меняется.
 
 ## 4. Область
 
@@ -314,6 +320,44 @@ unresolved. Non-returning callback удерживает только private liv
 но не admission lock. Existing ordinary admission paths не меняются, а разные
 Runtime Instances остаются независимыми.
 
+### 13.2 Replay-first admission оркестрации и позднее выделение generation
+
+Additive orchestration admission сохраняет эту границу и разделяет наблюдение
+и claim. Каждая submission валидируется, авторизуется и проходит финальную
+cancellation-проверку до входа в существующую per-Instance точку
+линеаризации. Сначала инспектируется exact command identity: same-intent
+non-terminal возвращает `InProgress`, terminal — exact replay, different intent
+— conflict. Для существующей записи не вызываются absent-intent decision,
+generation provider или lifecycle callback.
+
+Только absent identity может вызвать принадлежащее оркестратору read-only
+решение вне command, aggregate и Owner locks. Closed decision возвращает только
+`SatisfiedCandidate` с exact revision/attempt/version facts,
+`ExecutePrimitiveCandidate` с exact expected aggregate revision,
+`ExecuteParentCandidate` (включая tracked-Starting parent и preclaimed
+`StopOld`) либо definitive `NoClaim`. Он не содержит generation, permit,
+rendezvous, lifecycle authority или непроверенную terminal truth. Claiming path
+возвращается в ту же admission boundary и атомарно повторно проверяет identity
+и candidate; проигравший race только наблюдает победителя.
+
+`SatisfiedCandidate` сначала создаёт durable command claim, затем повторно
+проверяет exact aggregate facts до terminal publication. Stale, unavailable или
+ambiguous revalidation оставляет запись unresolved и не фабрикует satisfied
+truth. Для execution candidate composition-owned generation provider вызывается
+ровно один раз на winning synchronous call stack, только после claim primitive
+или `StartTarget` и победы final cancellation/admission gate. Результат обязан
+быть непустым; DP-015 устанавливает immutable binding и rendezvous до вызова
+managed Flow. Replay, losing race, satisfied outcome и pre-claim failure provider
+не вызывают.
+
+Ошибка provider или пустой результат, panic, `runtime.Goexit`, non-return,
+замена generation, cancellation после winning gate, неопределённость установки
+binding/rendezvous и любая indeterminate publication оставляют durable command
+или phase в `Claimed` и unresolved. Capability исчерпывается, не retry-ится и
+не выдаётся повторно; Owner, Load, Build, Launcher и Host не вызываются.
+Обычная legacy admission не меняется, разные Runtime Instances остаются
+независимыми.
+
 Pending claimant ждёт ровно один process-local signal: `OwnerClaimed` или
 `StartNoClaim`, когда linked Start path definitive возвращается до claim Owner.
 `StartNoClaim` позволяет тому же Stop path consume permit как terminal satisfied
@@ -552,6 +596,15 @@ Implementation должна доказать минимум:
     indeterminate publication сохраняют truthful fail-closed barriers;
 22. ordinary admission behavior не меняется, а разные Runtime Instances
     продолжают выполняться независимо.
+23. replay и conflict возвращаются до absent-intent decision и generation
+    provider; concurrent absent decisions имеют одного atomic winner;
+24. satisfied candidate claim-ится и точно revalidate-ится до terminal
+    publication, а stale/ambiguous facts остаются unresolved;
+25. generation выделяется один раз после winning claim и cancellation gate и до
+    managed Flow; provider/binding failure не вызывает Owner или Load и не
+    retry-ится;
+26. replay не принимает authority provider/callback, а reconstruction
+    восстанавливает durable facts без live capability.
 
 Proofs включают технически доступные concurrency, race, failure-injection,
 durability и storage-client-restart scenarios. Они не разрешают Production
@@ -618,8 +671,10 @@ discriminated occupant sole Stop exception, callback-scoped consumption,
 replay, expiry и proofs winner ordering. Fresh reassessment TASK-026 принимает
 READY boundary как historical evidence. Repeat Architecture Confirmation теперь
 блокирует TASK-026 отдельным DP-015/DP-020 refinement replay-first admission и
-late generation, описанным выше. Prerequisite — Not Activated; isolated package
-не изменяет lifecycle contracts и не подключён к DP-013 Directory.
+late generation, описанным выше. Design refinement завершена как TASK-049 и
+принята Coordinator 2026-08-28; её отдельная isolated implementation
+prerequisite остаётся `Not Activated` без Task ID. Isolated package не изменяет lifecycle contracts и не подключён к
+DP-013 Directory.
 
 ## 28. Решение
 

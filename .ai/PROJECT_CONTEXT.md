@@ -67,8 +67,10 @@
   остаётся Approved/Planned; текущий implementation cycle TASK-026 теперь
   Blocked после repeat Architecture `NEEDS DECISION` / `SPLIT REQUIRED`:
   текущий admission DP-015/DP-020 не обеспечивает exact replay-first
-  inspection и late generation allocation. Отдельная узкая design плюс
-  isolated implementation prerequisite — Not Activated без Task ID.
+  inspection и late generation allocation. TASK-049 завершила и Coordinator
+  Accepted design-only refinement этого contract; TASK-051 reconciles it onto
+  current `main`, while the separate isolated implementation prerequisite
+  remains Not Activated without a Task ID.
   TASK-044 `Completed — Coordinator Accepted (2026-08-24)`,
   repeat Reviewer APPROVED 0/0, Scope Audit 16/0/0, PROCESS-002 Synchronized.
   HTTP, concrete policy, external command storage, recovery/reporting
@@ -91,14 +93,13 @@
   replay-first admission and late-generation refinement; no implementation,
   Acceptance, Completion, prerequisite activation, commit, or publication is
   implied by this amendment.
-- Текущая operational task: **TASK-050 — Publisher Execution Environment
-  Capability and Trusted-Context Handoff; In Progress; documentation-only
-  governance. Exact latest verdict, canonical identity и first incomplete
-  checkpoint определяются только newest valid terminal Recovery Evidence
-  Envelope entry, совпадающей с independently recomputed current manifest;
-  missing/stale/conflicting/mismatched evidence означает STOP. Projected live
-  state не копирует mutable checkpoint, result, Acceptance, commit или
-  publication state**
+- Последняя завершённая operational task: **TASK-050 — Publisher Execution
+  Environment Capability and Trusted-Context Handoff; Completed — Coordinator
+  Accepted (2026-08-30); task commit `794ce5f350649115900ab8c88f34a91cf181e1c8`
+  published through PR #52 and merged as
+  `ae76c8385ac3241946267272e4468d74fcee9cb4`. Its exact-context capability,
+  trusted-context handoff, authorization/ownership/transfer and stable-live-
+  state rules remain current**
 - Последняя завершённая architecture task: **TASK-049 — Replay-First
   Orchestration Admission Design; Completed — Coordinator Accepted
   (2026-08-28); immutable target
@@ -109,10 +110,10 @@
 - Текущая architecture task: **отсутствует**
 - TASK-049 publication boundary: **TASK-049 Completed — Coordinator Accepted;
   immutable target `4a040b4e86ec2f4361ec765657e46cd0f36bf349`
-  on branch `docs/task-049-replay-first-late-generation-design`. TASK-050 не
-  выполняет её publication. Любые live Publisher phase, authorization, ref,
-  PR или outcome facts требуют independent operational reconstruction и не
-  выводятся из этого project-state документа**
+  on branch `docs/task-049-replay-first-late-generation-design`; publication
+  outcome `InvalidatedByTargetChange`, authorization terminal/non-transferable/
+  non-reusable. TASK-051 creates a new verification identity from current
+  `main`; the old commit remains historical evidence and is not its target**
 - TASK-027 acceptance evidence: **DP-019 Approved/Planned; implementable
   parent/phase, exact authorization and private per-call managed Start seams
   defined; repeat Independent Review Approved with blocking 0 and non-blocking
@@ -161,9 +162,10 @@
 - Текущая development task: **TASK-026 — Blocked (2026-08-27); historical
   accepted/published `READY — UNBLOCK TASK-026` superseded для live execution
   repeat Architecture `NEEDS DECISION` / `SPLIT REQUIRED`; текущий admission
-  DP-015/DP-020 не обеспечивает replay-first inspection и late generation;
-  prerequisite — Not Activated без Task ID, terminalization, orchestrator и
-  production wiring отсутствуют**
+  DP-015/DP-020 replay-first inspection and late-generation design completed as
+  TASK-049 and is reconciled onto current baseline by TASK-051; the isolated
+  implementation prerequisite remains Not Activated without a Task ID;
+  terminalization, orchestrator and production wiring remain absent**
 - TASK-032 acceptance evidence: **Completed — Coordinator Accepted после
   rework; DP-020 deferred slice 2 реализован изолированно в
   `internal/runtimelaunchflow`: ManagedFlow/NewManaged/StartManaged, immutable
@@ -244,9 +246,10 @@
   external / 0 Deferred; no separate prerequisite; DP-016 remains Approved /
   Planned; Tester PASS 0/0/0; repeat Reviewer APPROVED 0/0; Scope Audit
   16/0/0; PROCESS-002 Synchronized; later superseded by the TASK-026 recheck**
-- Текущая рекомендация: **отдельная узкая DP-015/DP-020 design плюс isolated
-  implementation prerequisite для replay-first orchestration admission и late
-  generation allocation; Not Activated, Task ID не назначен**
+- Текущая рекомендация: **после успешной reconciliation TASK-051 — одна
+  bounded isolated implementation prerequisite для replay-first orchestration
+  admission and late generation allocation; Not Activated, Task ID не
+  назначен**
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы
   изолированно; Repeat Independent Review Approved, blocking/non-blocking 0;
@@ -257,21 +260,20 @@
   closure commit и publication ещё не выполнялись. Subsequently task commit
   `d28efa4e88e02ef528c78c3ca88b3f91945069ce` was published through PR #28
   and merged as `ba75e54e00c3cf1d0d87ca2a985acc9699698efd`**
-- Последняя завершённая documentation task: **TASK-049 — Replay-First
-  Orchestration Admission Design; Completed — Coordinator Accepted
-  (2026-08-28); committed as immutable target
-  `4a040b4e86ec2f4361ec765657e46cd0f36bf349`; current documentation-only
-  governance TASK-050 не изменяет этот commit. Предыдущая TASK-045 — TASK-026 Reactivation
-  Status Reconciliation; Completed — Coordinator Accepted (2026-08-24);
-  repeat Tester PASS 0/0/0; Independent Reviewer APPROVED 0/0; Scope Audit
-  7/0/0; PROCESS-002 Synchronized; Ready-to-reactivate verdict был правдив на
-  closure baseline TASK-045 и позднее superseded recheck TASK-026**
-- Текущая documentation task: **TASK-050 — Publisher Execution Environment
-  Capability and Trusted-Context Handoff; In Progress. Exact latest verdict,
-  canonical identity и first incomplete checkpoint определяются только newest
-  valid terminal Recovery Evidence Envelope entry, совпадающей с independently
-  recomputed current manifest; missing/stale/conflicting/mismatched evidence
-  означает STOP. Этот projected summary не копирует transient verdict**
+- Последняя завершённая documentation task: **TASK-050 — Publisher Execution
+  Environment Capability and Trusted-Context Handoff; Completed — Coordinator
+  Accepted (2026-08-30), published through PR #52 as merge
+  `ae76c8385ac3241946267272e4468d74fcee9cb4`. Historical TASK-049 remains the
+  accepted replay-first design source at immutable old target `4a040b4e...`,
+  whose publication authorization ended `InvalidatedByTargetChange`**
+- Текущая documentation task: **TASK-051 — TASK-049 Publication-Invalidation
+  Reconciliation; In Progress from
+  `main@ae76c8385ac3241946267272e4468d74fcee9cb4`. Exact latest verdict,
+  canonical identity and first incomplete checkpoint resolve only from the
+  newest valid terminal Recovery Evidence Envelope entry matching the
+  independently recomputed current manifest; missing/stale/conflicting/
+  mismatched evidence means STOP. This projected summary does not copy mutable
+  checkpoint, result, Acceptance, commit or publication state**
 - Текущая architecture task: **отсутствует. Fresh Architect recheck TASK-026
   завершён verdict `READY — UNBLOCK TASK-026`; matrix 7/10/2/0/0/0; это
   readiness evidence, а не implementation Acceptance/Completion**
@@ -533,9 +535,11 @@
   fresh TASK-026 reassessment принимает `READY — UNBLOCK TASK-026` с 7 Direct /
   10 Compositional / 2 Missing core / 0 Missing prerequisite / 0 Missing
   external / 0 Deferred как historical readiness evidence; текущий cycle
-  Blocked repeat Architecture `NEEDS DECISION` / `SPLIT REQUIRED` на Not
-  Activated DP-015/DP-020 prerequisite replay-first admission и late
-  generation; orchestrator, API, recovery и production wiring отсутствуют
+  TASK-026 remains Blocked after repeat Architecture `NEEDS DECISION` / `SPLIT
+  REQUIRED`; DP-015/DP-020 replay-first admission and late-generation design
+  completed as TASK-049 and is reconciled by TASK-051, while the isolated
+  implementation prerequisite remains Not Activated without a Task ID;
+  orchestrator, API, recovery and production wiring are absent
 - Design Status DP-017 — **Approved**, Implementation Status — **Planned**;
   recovery/reconciliation определены только на design level; recovery store,
   execution-evidence adapter, executor, API и production wiring отсутствуют

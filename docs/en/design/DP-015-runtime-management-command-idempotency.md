@@ -11,6 +11,11 @@
   implemented and independently accepted in isolation; the complete
   DP-019 extension remains Planned
 
+TASK-049 completed the design-only refinement of the replay-first
+orchestration-admission and late-generation contract in section 13.2 and was
+Coordinator Accepted on 2026-08-28. Its separate isolated implementation
+prerequisite remains Planned and `Not Activated`, with no Task ID.
+
 This approved design defines the durable idempotency boundary for state-changing
 Runtime management commands. Package `internal/runtimecommandidempotency`
 implements the boundary in isolation over process-local in-memory storage,
@@ -58,9 +63,10 @@ prerequisite / 0 Missing external / 0 Deferred. The current TASK-026 cycle
 supersedes that readiness for live execution: repeat Architecture Confirmation
 returned `NEEDS DECISION` / `SPLIT REQUIRED` because eager generation and
 combined inspect/claim cannot provide exact replay-first admission and late
-allocation. TASK-026 is Blocked; a narrow DP-015/DP-020 design plus isolated
-implementation prerequisite is Not Activated and has no Task ID. DP-015 status
-is unchanged.
+allocation. TASK-026 is Blocked. TASK-049 is the completed and Coordinator-
+Accepted design-only DP-015/DP-020 refinement; its separate isolated
+implementation prerequisite remains `Not Activated`, with no Task ID. DP-015
+status is unchanged.
 
 ## 4. Scope
 
@@ -314,6 +320,44 @@ and unresolved. A non-returning callback holds only its private live capability
 and no admission lock. Existing ordinary admission paths remain unchanged,
 and different Runtime Instances remain independent.
 
+### 13.2 Replay-first orchestration admission and late generation
+
+The orchestration-specific admission extension preserves this boundary while
+separating observation from claim. Every submission is validated, authorized,
+and cancellation-gated before it enters the existing per-Instance
+linearization point. That point inspects the exact command identity first:
+same-intent non-terminal records return `InProgress`, terminal records return
+the exact replay, and different intents return conflict. Existing records never
+invoke an absent-intent decision, a generation provider, or a lifecycle callback.
+
+Only an absent identity may invoke an orchestrator-owned, read-only decision
+outside command, aggregate, or Owner locks. The closed decision may return only
+`SatisfiedCandidate` (with exact observed revision/attempt/version facts),
+`ExecutePrimitiveCandidate` (with exact expected aggregate revision),
+`ExecuteParentCandidate` (including the tracked-Starting parent plus preclaimed
+`StopOld` path), or a definitive `NoClaim` observation. It carries no generation,
+permit, rendezvous, lifecycle authority, or terminal truth. The claiming path
+re-enters the same admission boundary and atomically rechecks the identity and
+candidate; a losing race observes the winner without authority.
+
+A `SatisfiedCandidate` first claims the durable command and then revalidates
+the exact aggregate facts before terminal publication. Stale, unavailable, or
+ambiguous revalidation remains unresolved and never fabricates satisfied truth.
+For an execution candidate, the composition-owned generation provider is
+called exactly once, on the winning synchronous call stack, only after the
+primitive or `StartTarget` claim and its final cancellation/admission winner.
+The provider result must be non-empty; DP-015 installs the immutable binding
+and rendezvous before invoking managed Flow. Replay, losing races, satisfied
+outcomes, and pre-claim failures never call the provider.
+
+Provider failure or empty output, panic, `runtime.Goexit`, non-return,
+generation replacement, cancellation after the winning gate, binding or
+rendezvous installation uncertainty, and any indeterminate publication leave
+the durable command or phase `Claimed` and unresolved. The capability is
+exhausted, never retried or reissued, and Owner, Load, Build, Launcher, and
+Host are not called. Existing legacy admission remains unchanged; different
+Runtime Instances remain independent.
+
 The pending claimant waits for exactly one process-local signal:
 `OwnerClaimed`, or `StartNoClaim` when the linked Start path definitively returns
 before Owner claim. `StartNoClaim` lets that same Stop path consume its permit
@@ -552,6 +596,15 @@ An implementation must prove at minimum:
     indeterminate publication preserve truthful fail-closed barriers;
 22. ordinary admission behavior is unchanged and different Runtime Instances
     continue independently.
+23. replay and conflict are returned before the absent-intent decision or
+    generation provider; concurrent absent decisions have one atomic winner;
+24. a satisfied candidate is claimed and exactly revalidated before terminal
+    publication, while stale or ambiguous facts remain unresolved;
+25. generation allocation occurs once, after the winning claim and cancellation
+    gate and before managed Flow; provider or binding failure never calls Owner
+    or Load and is never retried;
+26. replay never adopts provider or callback authority, and reconstruction
+    restores durable facts but no live capability.
 
 Proofs include technically available concurrency, race, failure-injection,
 durability, and storage-client-restart scenarios. They do not authorize
@@ -618,8 +671,10 @@ Stop-exception occupant, callback-scoped consumption, replay, expiry, and
 winner-order proofs in isolation. Fresh TASK-026 reassessment accepts the READY
 boundary as historical evidence. Repeat Architecture Confirmation now blocks
 TASK-026 on the separate replay-first admission and late-generation
-DP-015/DP-020 refinement described above. That prerequisite is Not Activated;
-the isolated package changes no lifecycle contract and is not connected to the
+DP-015/DP-020 refinement described above. The design refinement was completed
+as TASK-049 and Coordinator Accepted on 2026-08-28; its separate isolated
+implementation prerequisite remains `Not Activated`, with no Task ID. The
+isolated package changes no lifecycle contract and is not connected to the
 DP-013 Directory.
 
 ## 28. Decision
