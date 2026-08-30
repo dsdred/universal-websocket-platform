@@ -51,6 +51,116 @@ branch/commit/base/scope. Внешний blocker разрешение не ра�
 reconstruction и продолжение с первого незавершённого шага. Повторная команда
 `Разрешаю публиковать.` не требуется.
 
+## Execution Environment Capability
+
+Текущий Publisher context способен владеть publication side effects только
+после двух successful read-only probes из exact identity/session:
+
+- decisive GitHub API authentication/user и access к exact repository/default
+  branch; `gh auth status` — supporting diagnostics, не decisive proof;
+- Git remote authentication/read exact origin.
+
+Оба probe обязательны. `USERPROFILE`, сохранённое имя account, `gh` config,
+`credential.helper`, keyring reference, установленный helper или успешные
+probes другой Windows identity capability не доказывают. В evidence сохраняют
+identity и non-secret result, но никогда credential/token/header.
+
+Если credential vault доступен normal user SID, но недоступен sandbox SID,
+blocker называется exactly `Blocked by Publisher Execution Environment —
+GitHub credentials unavailable to execution identity`, а не `invalid
+credentials`. Invalid/expired credential, repository permission denial,
+network/transport failure, GitHub outage и tool/session failure фиксируются
+отдельно по непосредственно наблюдаемому evidence.
+
+Publisher не просит personal token через prompt/chat, не пишет secret в
+repository/task/evidence, не выполняет `gh auth login/logout`, credential
+mutation, authentication bypass или undocumented elevation как workaround.
+
+## Trusted-Context Ownership Handoff
+
+Неспособный source Publisher может выпустить observation-only `Release
+Handoff`: unique opaque non-secret transfer ID для одной release instance,
+exact immutable Target, source identity, P-step classification,
+known refs/PR/merge OID, first unfinished step и non-secret blocker evidence.
+С этого момента source не выполняет publication mutation.
+
+Normative Transfer Identity равна immutable tuple `{transfer ID, Target,
+source execution identity, Release checkpoint snapshot}`. Transfer ID — fresh
+canonical lowercase UUIDv4, который отсутствует во всех доступных operational
+handoff records этой publication; он opaque и не вычисляется из Target,
+identity или времени. Target фиксирует publication class, Task ID,
+repository/origin, exact branch, ordered range/head OID, base OID и
+accepted/certified scope identity. Snapshot фиксирует P0-P10 classifications,
+known refs/PR/head/base/merge OID и first unfinished step. User route и Accept
+не меняют эти поля, а append-only связывают их с exact destination identity.
+
+Initial procedural owner — exact context, которому пользователь адресовал
+publish gate и который начал read-only P0. До успешного P0 он не имеет права
+side effect; только текущий owner может выпустить Release Handoff.
+
+Destination получает authority только если пользователь явно маршрутизировал
+exact transfer ID плюс Target и сослался на ранее разрешённую publication, после чего
+destination:
+
+1. выполняет `Inspect -> Reconstruct -> Reconcile` всего Target и фактических
+   local/remote checkpoints;
+2. подтверждает unchanged tuple и отсутствие concurrent owner;
+3. успешно выполняет оба capability probe из exact destination context;
+4. фиксирует `Accept Handoff`, цитирующий exact transfer ID, destination
+   identity и неизменный Target.
+
+`Accept Handoff` — procedural ownership linearization point. После него только
+destination продолжает первый незавершённый P-step; source остаётся
+observation-only. Это не machine lock: каждый context обязан сам соблюдать и
+проверять ownership record. До Accept Handoff side-effect owner отсутствует;
+failed/interrupted assessment не даёт destination права mutation. Reverse или
+повторный handoff требует нового unique transfer ID, того же полного protocol
+и explicit user routing. Unknown, reused, mismatched, duplicate либо
+already-accepted ID, два releases/destinations и Target mismatch fail closed.
+Transfer ID не является secret, credential, permission или machine lock.
+
+State model содержит три независимые оси: authorization `Active |
+Consumed(P10) | RevokedByUser | InvalidatedByTargetChange`; mutation ownership
+`Owned(context) | InTransitNone | NoneTerminal | Unknown`; transfer attempt
+`Unissued | Released | Accepted | Closed(reason)`. Release устанавливает
+`Active/InTransitNone/Released`, Accept — `Active/Owned(destination)/Accepted`.
+
+`CancelledBeforeAccept` требует explicit user directive с exact ID и
+reconciliation без Accept/side effect; event закрывает ID, сохраняет `Active`,
+возвращает ownership recorded releasing source и требует повторного capability
+proof. После Accepted reverse начинает current destination через fresh ID и
+теряет ownership при Release; cancellation возвращает именно этого releasing
+destination. Target mismatch даёт `InvalidatedByTargetChange/NoneTerminal` и
+закрывает все attempts; user revoke — `RevokedByUser/NoneTerminal` и требует
+нового gate. P10 может terminalize publication только при доказанном
+`Active/Owned(execution-context)` у exact actor. `Released/InTransitNone`
+запрещает P10 до exact Accept либо valid `CancelledBeforeAccept`, вернувшего
+releasing owner. Proven P10 всегда даёт `Consumed(P10)/NoneTerminal`, recovery
+report-only: без handoff attempt остаётся `Unissued` и записывается
+publication-level event без ID; exact current `Accepted` закрывается
+`Closed(CompletedP10)`; ранее `Closed(reason)` сохраняется, а P10 получает
+отдельный publication-level event только при всё ещё доказанном current owner.
+`NoneTerminal`, `Unknown` или missing owner proof запрещают P10. Каждый
+terminal event фиксирует reason и authorization/owner disposition.
+
+Release, explicit user route, Accept и closed events образуют append-only
+non-secret operational handoff record вне immutable Target/project-state. Он
+обязан переживать interruption, быть independently inspectable source,
+destination и Coordinator и сохранять Transfer Identity, route destination,
+event order, все три state axes, actor и non-secret probe results. Каждый event
+цитирует Target, actor identity, predecessor event ID либо digest/append-only
+tail и resulting states/owner/reason. Transfer event цитирует exact transfer
+ID; publication-level P10 явно цитирует `transfer ID: none` и не фабрикует
+attempt. Если exact record
+недоступен, неоднозначен или противоречив, ownership = `Unknown` и все
+publication mutations STOP. Начатое сообщение или session memory record не
+заменяют.
+
+Handoff переносит существующую authorization только для неизменного Target и
+не создаёт permission, Coordinator Acceptance либо Commit Gate. Target
+mismatch, другой HEAD/range/scope, duplicate destination, missing explicit
+user routing или ambiguous ownership останавливают publication.
+
 ## P0 — Initial Read-Only Preflight
 
 До первой mutation Publisher проверяет:
@@ -65,9 +175,12 @@ reconstruction и продолжение с первого незавершён�
    `git ls-remote --exit-code origin`; для GitHub raw `ssh -T` может
    подтверждать authentication с non-zero exit и не заменяет decisive
    `ls-remote`;
-5. `gh auth status`;
-6. доступ к текущему repository через `gh repo view` или equivalent, включая
-   `nameWithOwner`, URL и default branch.
+5. `gh auth status` только как supporting diagnostics;
+6. decisive GitHub API user и repository/default-branch probes, включая
+   `nameWithOwner`, URL и default branch;
+7. текущий context является initial owner либо exact accepted handoff owner;
+   source/released, in-transit, duplicate или ambiguous ownership запрещает
+   mutation.
 
 Dirty или ambiguous baseline не является consumptive external blocker:
 Publisher ничего не меняет и сообщает safety failure. Изменившийся exact
@@ -107,6 +220,11 @@ publish permission из существующего remote side effect.
 
 Guard повторно проверяет repository/auth/transport, необходимый следующему
 шагу, но не регрессирует P0 и не replay-ит completed mutation.
+
+При trusted-context resume Guard дополнительно reconstruct-ит Release/Accept
+Handoff, ownership и оба destination capability probe. Найденный completed
+push/PR/merge reconciled как checkpoint и не повторяется; handoff сам по себе
+не повышает `Started` до `Completed`.
 
 ## Pipeline
 

@@ -209,6 +209,96 @@ Auth, transport или repository failure внутри P0 оставляет P0 
 непосредственно переходит к discovery/creation Pull Request без нового
 permission или запроса `Создать Pull Request`.
 
+Exact execution context, который будет выполнять publication, обязан доказать
+usable GitHub capability двумя успешными read-only probes: decisive GitHub API
+user/repository operation и Git remote authentication/read exact origin. Оба
+обязательны; `gh auth status` — только supporting diagnostics. User profile path, account/helper configuration,
+keyring reference, установленный credential tool или успешный probe другой
+Windows identity не являются capability evidence. Non-secret evidence называет
+context и результаты; credentials, tokens, headers и credential payloads
+никогда не попадают в prompts, logs, task records или repository.
+
+Если source context не обладает capability, он может выпустить Release Handoff
+с unique opaque non-secret transfer ID для одной release instance и неизменным
+immutable Target, затем стать observation-only. Пользователь обязан явно
+маршрутизировать exact ID и Target этой ранее разрешённой publication в trusted destination. Destination выполняет `Inspect ->
+Reconstruct -> Reconcile`, доказывает Target и все local/remote checkpoints,
+проходит оба probe из exact context и затем фиксирует Accept Handoff с тем же
+ID и Target. Accept
+Handoff является procedural ownership linearization point: только destination
+может resume P0-P10; source и duplicate destinations остаются
+observation-only. Это exclusivity contract, а не machine lock; transfer ID
+также не является secret, credential или permission.
+
+Normative Transfer Identity — immutable tuple `{transfer ID, Target, source
+execution identity, Release checkpoint snapshot}`. ID — fresh canonical
+lowercase UUIDv4, отсутствующий во всех доступных operational handoff records
+этой publication; он opaque и не выводится из Target, identity или времени.
+Target содержит publication class, Task ID, repository/origin, exact branch,
+ordered range/head OID, base OID и scope identity. Snapshot содержит P0-P10
+classifications, known refs/PR/merge OID и first unfinished step. Explicit user
+route и Accept event связывают exact destination identity с этими неизменными
+полями.
+
+State model имеет три независимые оси: authorization `Active | Consumed(P10) |
+RevokedByUser | InvalidatedByTargetChange`; mutation ownership `Owned(context)
+| InTransitNone | NoneTerminal | Unknown`; transfer attempt `Unissued |
+Released | Accepted | Closed(reason)`. Release устанавливает
+`Active/InTransitNone/Released`, Accept —
+`Active/Owned(destination)/Accepted`.
+
+`CancelledBeforeAccept` требует explicit user directive с exact ID и
+reconciliation, доказавшего отсутствие Accept/side effect destination. Event
+закрывает ID, сохраняет authorization `Active`, возвращает ownership recorded
+releasing source и требует повторного capability proof. После Accept reverse
+может начать только current destination-owner через release fresh ID с потерей
+ownership; cancellation возвращает этого releasing destination. Factual Target
+mismatch устанавливает `InvalidatedByTargetChange/NoneTerminal` и закрывает все
+attempts; user revoke — `RevokedByUser/NoneTerminal`, а позже нужен новый gate.
+P10 может terminalize publication только когда predecessor chain доказывает
+`Active/Owned(execution-context)` у exact actor. `Released/InTransitNone`
+запрещает P10 до exact Accept, установившего destination owner, либо valid
+`CancelledBeforeAccept`, вернувшего releasing owner. Proven P10 затем всегда
+даёт `Consumed(P10)/NoneTerminal`, recovery только report-only. Без handoff
+attempt остаётся `Unissued`, publication-level P10 event использует `transfer
+ID: none`; current `Accepted` закрывает этот exact attempt; already
+`Closed(reason)` сохраняет reason, а P10 является отдельным event только пока
+current ownership доказан. `NoneTerminal`, `Unknown` либо missing owner proof
+не могут создать P10.
+
+Release, user route, Accept и closed events образуют append-only non-secret
+operational record вне immutable Target и project-state documents. Каждый event
+цитирует Target, actor identity, predecessor event ID либо digest/tail,
+resulting three-axis state, owner и terminal reason/disposition. Transfer event
+цитирует exact ID; publication-level P10 явно цитирует `transfer ID: none` и не
+фабрикует attempt.
+Record обязан переживать interruption и быть independently inspectable source,
+destination и Coordinator. Если он недоступен, неоднозначен или противоречив,
+ownership = `Unknown` и все publication mutations STOP. Это procedural
+exclusivity, а не machine или distributed lock.
+
+Projected live-state sources сохраняют verification-stable `In Progress`.
+Exact latest verdict, identity и first incomplete checkpoint берутся только из
+newest valid terminal envelope entry, совпадающей с independently recomputed
+canonical manifest. Missing, stale, conflicting или mismatched evidence
+означает STOP и не создаёт Acceptance, commit или publication.
+
+Handoff сохраняет authorization только для неизменных publication class, Task
+ID, repository, branch, ordered commit range/head OID, base и scope. Он не
+создаёт новое permission, Commit Gate или Coordinator Acceptance. Другой
+release/destination, unknown/reused/mismatched/duplicate/already-accepted ID,
+ambiguous ownership, отсутствие explicit user routing либо interruption до
+Accept Handoff запрещают side effects. Repeat, reverse и cancellation следуют
+только exact transitions выше; каждая новая attempt использует fresh ID.
+Найденный при reconciliation completed
+remote effect не повторяется вслепую.
+
+Credential unavailability для exact execution identity классифицируется
+отдельно от invalid/expired credentials, repository permission denial,
+network/transport failure, GitHub outage и tool/session failure. Login, secret
+transfer, authentication bypass и undocumented elevation не являются handoff
+механизмами.
+
 Required checks должны завершиться успешно. Отсутствие workflows или zero
 registered checks фиксируется как `No CI` и не блокирует только при merge gate
 `MERGEABLE / CLEAN`. Pending или failed required checks, недоказанный либо

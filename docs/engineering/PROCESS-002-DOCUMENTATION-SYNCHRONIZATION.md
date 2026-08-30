@@ -191,6 +191,40 @@ confirmed P6 обычно ожидает current task branch/HEAD; после P6
 требует/не восстанавливает task branch. Эти ephemeral checkpoint facts не
 записываются изменением immutable publication target.
 
+Trusted-context `Release Handoff`/`Accept Handoff` является non-secret
+operational evidence, а не credential store и не новым project capability.
+Immutable target commit не изменяется ради записи handoff. Source/destination
+reports обязаны сохранять exact Target, execution identities, ownership phase,
+dual-probe non-secret results и first unfinished P-step; tokens, passwords,
+authorization headers и credential payload запрещены. Project-state документы
+фиксируют сам принятый governance contract и terminal publication facts, но не
+копируют transient handoff, auth или workstation state.
+
+Operational handoff record хранится вне immutable Target/project-state и
+append-only связывает exact UUIDv4 transfer ID с immutable Target, source
+identity, Release checkpoint snapshot, explicit user route, destination
+identity, Accept и closed events. Он обязан переживать interruption и быть
+independently inspectable. Authorization `Active/Consumed/Revoked/Invalidated`,
+ownership `Owned/InTransitNone/NoneTerminal/Unknown` и attempt
+`Unissued/Released/Accepted/Closed(reason)` не выводятся из project-state text.
+Недоступный или неоднозначный record означает ownership `Unknown` и STOP.
+
+Projected task/context/current-state/index сохраняют verification-stable
+`In Progress` и envelope-resolution rule. Они не копируют изменчивый latest
+verdict/identity/checkpoint либо mutable Acceptance/commit/publication state:
+current value даёт newest valid terminal envelope entry, совпадающая с
+independently recomputed manifest. Stale, missing, conflicting или mismatched
+evidence означает STOP. P10 evidence сначала доказывает
+`Active/Owned(execution-context)` у exact actor; `Released/InTransitNone`
+запрещает terminalization до exact Accept либо valid
+`CancelledBeforeAccept`. Затем evidence различает no-handoff
+`Unissued`/publication-level no-ID event, exact Accepted closure и сохранение
+already-closed reason с отдельным P10 event при доказанном current owner.
+
+При applicability review изменения Publisher execution governance требуют
+проверки PROCESS-001, AGENT, Coordinator/Publisher roles, Publisher и general
+recovery scenarios, task template и зеркальных EN/RU process guides.
+
 ---
 
 # Interruption-Recovery Synchronization
