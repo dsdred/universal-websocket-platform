@@ -68,9 +68,10 @@
   Blocked после repeat Architecture `NEEDS DECISION` / `SPLIT REQUIRED`:
   текущий admission DP-015/DP-020 не обеспечивает exact replay-first
   inspection и late generation allocation. TASK-049 завершила и Coordinator
-  Accepted design-only refinement этого contract; TASK-051 reconciles it onto
-  current `main`, while the separate isolated implementation prerequisite
-  remains Not Activated without a Task ID.
+  Accepted design-only refinement этого contract; TASK-051 reconciled that
+  design onto current `main` and was terminally published through PR #53,
+  while the separate isolated implementation prerequisite remains Not
+  Activated without a Task ID.
   TASK-044 `Completed — Coordinator Accepted (2026-08-24)`,
   repeat Reviewer APPROVED 0/0, Scope Audit 16/0/0, PROCESS-002 Synchronized.
   HTTP, concrete policy, external command storage, recovery/reporting
@@ -112,8 +113,11 @@
   immutable target `4a040b4e86ec2f4361ec765657e46cd0f36bf349`
   on branch `docs/task-049-replay-first-late-generation-design`; publication
   outcome `InvalidatedByTargetChange`, authorization terminal/non-transferable/
-  non-reusable. TASK-051 creates a new verification identity from current
-  `main`; the old commit remains historical evidence and is not its target**
+  non-reusable. TASK-051 created a distinct current-main verification identity
+  and was terminally published as task commit
+  `171d002322e965e98f7af75722338858b4d255d1` through PR #53, merged as
+  `3f7c23dc3acc6a4007a8f6a081f91386aefaa2ff`; the old commit remains
+  historical evidence and was not its target**
 - TASK-027 acceptance evidence: **DP-019 Approved/Planned; implementable
   parent/phase, exact authorization and private per-call managed Start seams
   defined; repeat Independent Review Approved with blocking 0 and non-blocking
@@ -163,8 +167,8 @@
   accepted/published `READY — UNBLOCK TASK-026` superseded для live execution
   repeat Architecture `NEEDS DECISION` / `SPLIT REQUIRED`; текущий admission
   DP-015/DP-020 replay-first inspection and late-generation design completed as
-  TASK-049 and is reconciled onto current baseline by TASK-051; the isolated
-  implementation prerequisite remains Not Activated without a Task ID;
+  TASK-049 and was reconciled onto current baseline by published TASK-051; the
+  isolated implementation prerequisite remains Not Activated without a Task ID;
   terminalization, orchestrator and production wiring remain absent**
 - TASK-032 acceptance evidence: **Completed — Coordinator Accepted после
   rework; DP-020 deferred slice 2 реализован изолированно в
@@ -246,10 +250,11 @@
   external / 0 Deferred; no separate prerequisite; DP-016 remains Approved /
   Planned; Tester PASS 0/0/0; repeat Reviewer APPROVED 0/0; Scope Audit
   16/0/0; PROCESS-002 Synchronized; later superseded by the TASK-026 recheck**
-- Текущая рекомендация: **после успешной reconciliation TASK-051 — одна
-  bounded isolated implementation prerequisite для replay-first orchestration
-  admission and late generation allocation; Not Activated, Task ID не
-  назначен**
+- Текущая рекомендация: **после TASK-052 — отдельная bounded reconciliation
+  оставшихся Important documentation findings; Not Activated, Task ID не
+  назначен. Отдельный isolated implementation prerequisite для replay-first
+  orchestration admission and late generation allocation также остаётся Not
+  Activated без Task ID**
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы
   изолированно; Repeat Independent Review Approved, blocking/non-blocking 0;
@@ -260,15 +265,17 @@
   closure commit и publication ещё не выполнялись. Subsequently task commit
   `d28efa4e88e02ef528c78c3ca88b3f91945069ce` was published through PR #28
   and merged as `ba75e54e00c3cf1d0d87ca2a985acc9699698efd`**
-- Последняя завершённая documentation task: **TASK-050 — Publisher Execution
-  Environment Capability and Trusted-Context Handoff; Completed — Coordinator
-  Accepted (2026-08-30), published through PR #52 as merge
-  `ae76c8385ac3241946267272e4468d74fcee9cb4`. Historical TASK-049 remains the
-  accepted replay-first design source at immutable old target `4a040b4e...`,
-  whose publication authorization ended `InvalidatedByTargetChange`**
-- Текущая documentation task: **TASK-051 — TASK-049 Publication-Invalidation
-  Reconciliation; In Progress from
-  `main@ae76c8385ac3241946267272e4468d74fcee9cb4`. Exact latest verdict,
+- Последняя завершённая documentation task: **TASK-051 — TASK-049
+  Publication-Invalidation Reconciliation; Completed — Coordinator Accepted
+  (2026-08-31); task commit
+  `171d002322e965e98f7af75722338858b4d255d1` published through PR #53 and
+  merged as `3f7c23dc3acc6a4007a8f6a081f91386aefaa2ff`. Historical TASK-049 remains
+  the accepted replay-first design source at immutable old target
+  `4a040b4e86ec2f4361ec765657e46cd0f36bf349`, whose publication authorization
+  ended `InvalidatedByTargetChange`; TASK-050 governance remains current**
+- Текущая documentation task: **TASK-052 — Blocking Documentation Live-State
+  Reconciliation; projected `In Progress` from
+  `main@3f7c23dc3acc6a4007a8f6a081f91386aefaa2ff`. Exact latest verdict,
   canonical identity and first incomplete checkpoint resolve only from the
   newest valid terminal Recovery Evidence Envelope entry matching the
   independently recomputed current manifest; missing/stale/conflicting/
@@ -537,8 +544,8 @@
   external / 0 Deferred как historical readiness evidence; текущий cycle
   TASK-026 remains Blocked after repeat Architecture `NEEDS DECISION` / `SPLIT
   REQUIRED`; DP-015/DP-020 replay-first admission and late-generation design
-  completed as TASK-049 and is reconciled by TASK-051, while the isolated
-  implementation prerequisite remains Not Activated without a Task ID;
+  completed as TASK-049 and was reconciled by published TASK-051, while the
+  isolated implementation prerequisite remains Not Activated without a Task ID;
   orchestrator, API, recovery and production wiring are absent
 - Design Status DP-017 — **Approved**, Implementation Status — **Planned**;
   recovery/reconciliation определены только на design level; recovery store,

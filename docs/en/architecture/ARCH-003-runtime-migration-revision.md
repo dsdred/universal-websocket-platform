@@ -24,16 +24,21 @@ The previous remaining sequence treated Dormant Execution, Execution Binding int
 
 The defect was in migration sequencing, not in DP-003 or DP-004. Several primitives can be implemented and tested independently, but their production ownership and publication effects are inseparable.
 
-## 3. Completed Migration Tasks
+## 3. Migration State at Adoption
 
-The following migration tasks are complete:
+When this revision was adopted, the following migration tasks were complete:
 
 1. Session Core;
 2. Provisional Session;
 3. Cleanup Acknowledgement;
 4. Pre-Commit Session Bundle.
 
-These tasks preserve the synchronous production Dispatcher. The private pre-Commit bundle is a structurally complete Session-side prepared object graph, not the normative Manager Commit result. No ownership transfer, execution publication, or Runtime integration has occurred.
+At that adoption checkpoint, these tasks preserved the synchronous production
+Dispatcher. The private pre-Commit bundle was a structurally complete
+Session-side prepared object graph, not the normative Manager Commit result;
+ownership transfer, execution publication, and Runtime integration had not yet
+occurred. This paragraph is historical migration evidence, not a statement of
+the current production path.
 
 ## 4. Primitive and Production Responsibility
 
@@ -81,7 +86,12 @@ Production handoff must not occur before the complete terminal Owner lifecycle e
 
 Production Runtime activation must be combined with truthful shutdown integration. Runtime must not begin producing Manager-tracked Sessions until Host shutdown can request Stop through the captured Snapshot, cancel the root Runtime context, drain Listener handlers, and wait for Manager accounting.
 
-## 6. Revised Remaining Migration Roadmap
+## 6. Revised Migration Roadmap — Completed Sequence
+
+The following Tasks 5–10 are retained as the approved migration sequence and
+its invariants. That sequence subsequently completed; the task-local
+dependencies and out-of-scope statements below describe each migration
+checkpoint, not missing current Runtime capabilities.
 
 ### Task 5: Complete Atomic Commit Publication Foundation
 
@@ -223,6 +233,14 @@ Historical completed-task information remains valid. The existing Execution Bind
 
 ## 9. Compatibility and Production Status
 
-This revision introduces no Runtime capability and changes no production behavior. The current production Dispatcher remains synchronous, and Runtime composition does not yet construct or coordinate the Session Manager.
+At adoption, this revision itself introduced no Runtime capability and changed
+no production behavior; the production Dispatcher was still synchronous and
+Runtime composition did not yet construct or coordinate the Session Manager.
+That statement is historical. The approved sequence subsequently completed:
+production composition now constructs one Session Manager per Runtime, selects
+`TransactionalDispatcher`, and, after closing Admission, shuts down through
+`BeginShutdown -> Snapshot RequestStop -> root Runtime cancellation -> Listener
+Stop -> Manager.Wait`. This completed cutover is implementation evidence, not
+a revision of the target architecture.
 
 DP-003 and DP-004 remain the normative target architecture. ARCH-002 remains unchanged: production cutover must preserve its frozen Host lifecycle, readiness, Admission Gate, Runtime context, startup rollback, and Listener ordering.

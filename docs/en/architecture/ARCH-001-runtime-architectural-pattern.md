@@ -42,7 +42,9 @@ Published ConfigurationVersion
     -> Send
 ```
 
-The current implementation and [Runtime Alpha Architecture Review](../reviews/runtime-alpha-review.md) confirm these principles:
+At the Alpha checkpoint, the implemented vertical and
+[Runtime Alpha Architecture Review](../reviews/runtime-alpha-review.md)
+provided the following historical evidence for these principles:
 
 - Snapshot separates Control Plane data from effective Runtime data and copies nested Provider configuration.
 - A Factory converts an `AuthenticationProviderSnapshot` into Provider-specific Runtime configuration before constructing a Provider.
@@ -53,7 +55,15 @@ The current implementation and [Runtime Alpha Architecture Review](../reviews/ru
 - Network resources and application goroutines have identifiable owners and termination paths.
 - Host, Listener, and Session lifecycles are explicit, although their contracts are not identical.
 
-This evidence does not mean Runtime Host is already a production composition root. It currently owns a Snapshot and Container and performs state transitions only. Production composition remains an Alpha review finding.
+At that checkpoint, Runtime Host was not yet the production composition root:
+it owned a Snapshot and Container and performed state transitions only. That
+implementation limitation is historical, not current. The current Runtime
+Host is the sole production operational composition root, Authentication runs
+before `websocket.Accept`, and production Session handoff is transactional and
+Manager-tracked. These later implementation facts extend the evidence without
+changing this architectural pattern. They do not imply Runtime activation from
+the Control Service or product production-readiness; those capabilities remain
+absent.
 
 ## 3. Core Architectural Pattern
 
@@ -222,7 +232,8 @@ The Runtime core remains compact and predictable.
 
 ## 13. Applying the Pattern
 
-The following examples are cautious applications. They are future design inputs, not implemented contracts.
+The following examples began as cautious design inputs. Their implementation
+status is stated explicitly; the examples do not define subsystem APIs.
 
 ### Handshake
 
@@ -233,7 +244,10 @@ Handshake metadata
     -> HTTP rejection or WebSocket Upgrade
 ```
 
-The Handshake pipeline requires a future DP. It is not implemented in this form: current Authentication occurs after Upgrade, as recorded by the Alpha review.
+The Handshake pipeline was subsequently designed in DP-001 and implemented in
+the production Runtime path: Authentication and the final Admission check run
+before `websocket.Accept`. Origin Policy remains unimplemented, and ARCH-001
+still does not define the Handshake API.
 
 ### Routing
 
@@ -306,7 +320,8 @@ Runtime Host as composition root remains responsible for wiring and lifecycle co
 
 ## 16. Relationship to Future Documents
 
-- Handshake Pipeline will be designed in a separate DP.
+- Handshake Pipeline is designed separately in DP-001; ARCH-001 does not
+  replace that subsystem design.
 - Router will receive its own DP.
 - A Plugin ABI requires a separate DP and likely an ADR because compatibility and isolation create long-term constraints.
 - ARCH-001 does not define any of those APIs.
