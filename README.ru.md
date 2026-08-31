@@ -6,15 +6,30 @@ Universal WebSocket Platform — open-source платформа для созд�
 
 ## Статус
 
-Проект находится на ранней alpha-стадии и не готов к production-эксплуатации. Репозиторий содержит Control Service, in-memory доменные API и реализованную single-node Runtime vertical с Manager-aware shutdown. Configuration Loader связан со Snapshot Builder через изолированный in-process Runtime Launch Flow, а репозиторий доказывает изолированную конструкцию `Source -> Loader -> Flow` поверх конкретного in-memory Source adapter. Изолированный Runtime Management Directory авторизует и маршрутизирует exact операции Start, Stop и Observe, тогда как Application wiring, интеграция с Control Service и Production Activation отсутствуют.
+Проект находится на инженерной вехе **Beta — Complete the Single-Node
+Runtime** и не готов к production-эксплуатации. Репозиторий содержит Control
+Service, in-memory доменные API и собранную в production single-node Runtime
+vertical с Authentication до Upgrade, детерминированной маршрутизацией,
+транзакционной передачей Session и Manager-aware shutdown.
+
+Configuration Loader, Snapshot Builder, Runtime Bootstrap и Launcher,
+Lifecycle Owner, management routing, operational identity, command
+idempotency и orchestration prerequisites также существуют изолированно. Они
+не подключены к пути управления Runtime из Control Service: Production
+Activation, реализации external persistence, recovery и reporting, полное
+исполнение TLS и Listener settings и Control Service Runtime API отсутствуют.
 
 ## Текущий релиз
 
 **Версия:** `v0.1.0-alpha`
 
-**Статус:** early alpha
+**Зрелость релиза:** alpha
 
-Релиз содержит Control Service и базовый жизненный цикл Workspace, Configuration и ConfigurationVersion. Подробности приведены в [заметках к релизу](docs/ru/releases/v0.1.0-alpha.md).
+Этот опубликованный релиз содержит Control Service и базовый жизненный цикл
+Workspace, Configuration и ConfigurationVersion. Текущий репозиторий содержит
+более поздний, ещё не выпущенный инженерный прогресс Beta, описанный выше.
+Подробности релиза приведены в
+[заметках к релизу](docs/ru/releases/v0.1.0-alpha.md).
 
 ## Принципы проекта
 
@@ -45,7 +60,10 @@ Universal WebSocket Platform — open-source платформа для созд�
 
 ## Участие в разработке
 
-Проект находится на ранней стадии. Перед тем как предлагать изменения, прочитайте русскоязычную документацию и внутренние спецификации. Архитектурные решения следует фиксировать до того, как они превратятся в ограничения реализации.
+Проект находится на активной инженерной стадии Beta. Перед тем как предлагать
+изменения, прочитайте русскоязычную документацию и фактическое состояние
+реализации. Архитектурные решения следует фиксировать до того, как они
+превратятся в ограничения реализации.
 
 ## Лицензия
 
