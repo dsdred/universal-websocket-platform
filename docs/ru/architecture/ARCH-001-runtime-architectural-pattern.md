@@ -42,7 +42,9 @@ Published ConfigurationVersion
     -> Send
 ```
 
-Текущая реализация и [Runtime Alpha Architecture Review](../reviews/runtime-alpha-review.md) подтверждают следующие принципы:
+На Alpha checkpoint реализованная вертикаль и
+[Runtime Alpha Architecture Review](../reviews/runtime-alpha-review.md)
+предоставили следующее historical evidence этих принципов:
 
 - Snapshot отделяет данные Control Plane от effective Runtime data и копирует вложенную Configuration Provider.
 - Factory преобразует `AuthenticationProviderSnapshot` в runtime-specific Configuration Provider до создания Provider.
@@ -53,7 +55,15 @@ Published ConfigurationVersion
 - У сетевых ресурсов и application goroutine есть определяемые владельцы и пути завершения.
 - Lifecycles Host, Listener и Session явны, хотя их контракты не идентичны.
 
-Эти факты не означают, что Runtime Host уже является production composition root. Сейчас он владеет Snapshot и Container и только меняет lifecycle state. Production composition остается finding из Alpha review.
+На этом checkpoint Runtime Host ещё не был production composition root: он
+владел Snapshot и Container и только менял lifecycle state. Это ограничение
+реализации является historical, а не current. Сейчас Runtime Host является
+единственным production operational composition root, Authentication
+выполняется до `websocket.Accept`, а production Session handoff является
+transactional и отслеживается Manager. Эти более поздние implementation facts
+расширяют evidence без изменения архитектурного паттерна. Они не означают
+Runtime activation из Control Service или production-readiness продукта; эти
+capabilities остаются отсутствующими.
 
 ## 3. Core Architectural Pattern
 
@@ -222,7 +232,8 @@ Alpha review выявил неполную обработку deadline, semantic
 
 ## 13. Applying the Pattern
 
-Следующие примеры являются осторожным применением паттерна. Это входные данные для будущего проектирования, а не реализованные контракты.
+Следующие примеры начинались как осторожные входные данные для проектирования.
+Их Implementation Status указан явно; примеры не определяют API подсистем.
 
 ### Handshake
 
@@ -233,7 +244,10 @@ Handshake metadata
     -> HTTP rejection or WebSocket Upgrade
 ```
 
-Handshake pipeline требует отдельного будущего DP. В таком виде он еще не реализован: текущая Authentication происходит после Upgrade, что зафиксировано Alpha review.
+Handshake pipeline впоследствии спроектирован в DP-001 и реализован в
+production path Runtime: Authentication и финальная проверка Admission
+выполняются до `websocket.Accept`. Origin Policy остаётся не реализованной, а
+ARCH-001 по-прежнему не определяет API Handshake.
 
 ### Routing
 
@@ -306,7 +320,8 @@ Runtime Host как composition root отвечает за wiring и коорд�
 
 ## 16. Relationship to Future Documents
 
-- Handshake Pipeline будет спроектирован в отдельном DP.
+- Handshake Pipeline спроектирован отдельно в DP-001; ARCH-001 не заменяет
+  этот subsystem design.
 - Router получит собственный DP.
 - Plugin ABI требует отдельного DP и, вероятно, ADR, поскольку compatibility и isolation создают долгосрочные ограничения.
 - ARCH-001 не определяет ни один из этих API.

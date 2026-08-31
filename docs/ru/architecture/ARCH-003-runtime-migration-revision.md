@@ -24,16 +24,20 @@ Target architecture остаётся неизменной. Документ из
 
 Дефект находился в migration sequencing, а не в DP-003 или DP-004. Несколько primitives могут быть независимо реализованы и протестированы, но их production effects ownership и publication неразделимы.
 
-## 3. Completed Migration Tasks
+## 3. Migration State at Adoption
 
-Следующие migration tasks завершены:
+На момент принятия этой revision были завершены следующие migration tasks:
 
 1. Session Core;
 2. Provisional Session;
 3. Cleanup Acknowledgement;
 4. Pre-Commit Session Bundle.
 
-Эти tasks сохраняют synchronous production Dispatcher. Private pre-Commit bundle является структурно полным подготовленным Session-side object graph, а не нормативным Manager Commit result. Ownership transfer, execution publication и Runtime integration не выполнялись.
+На этом adoption checkpoint tasks сохраняли synchronous production Dispatcher.
+Private pre-Commit bundle был структурно полным подготовленным Session-side
+object graph, а не нормативным Manager Commit result; ownership transfer,
+execution publication и Runtime integration ещё не выполнялись. Этот абзац —
+historical migration evidence, а не утверждение о текущем production path.
 
 ## 4. Primitive and Production Responsibility
 
@@ -81,7 +85,12 @@ Production handoff не должен происходить до появлен�
 
 Production activation Runtime должна объединяться с правдивой shutdown integration. Runtime не должен начинать создавать Manager-tracked Sessions, пока shutdown Host не может запросить Stop через захваченный Snapshot, отменить root Runtime context, выполнить drain handlers Listener и дождаться accounting Manager.
 
-## 6. Revised Remaining Migration Roadmap
+## 6. Revised Migration Roadmap — Completed Sequence
+
+Следующие Tasks 5–10 сохранены как approved migration sequence и её
+инварианты. Эта последовательность впоследствии завершена; task-local
+dependencies и out-of-scope statements ниже описывают каждый migration
+checkpoint, а не отсутствующие current Runtime capabilities.
 
 ### Task 5: Complete Atomic Commit Publication Foundation
 
@@ -223,6 +232,14 @@ Task 10: Atomic Runtime Composition and Shutdown Cutover
 
 ## 9. Compatibility and Production Status
 
-Эта revision не вводит Runtime capability и не изменяет production behavior. Текущий production Dispatcher остаётся synchronous, а composition Runtime пока не создаёт и не координирует Session Manager.
+На момент принятия эта revision сама не вводила Runtime capability и не меняла
+production behavior; production Dispatcher ещё оставался synchronous, а
+composition Runtime ещё не создавала и не координировала Session Manager. Это
+утверждение является historical. Approved sequence впоследствии завершена:
+production composition сейчас создаёт один Session Manager на Runtime,
+выбирает `TransactionalDispatcher` и после закрытия Admission выполняет
+shutdown в порядке `BeginShutdown -> Snapshot RequestStop -> root Runtime
+cancellation -> Listener Stop -> Manager.Wait`. Этот завершённый cutover —
+implementation evidence, а не revision target architecture.
 
 DP-003 и DP-004 остаются нормативной target architecture. ARCH-002 остаётся неизменным: production cutover должен сохранить его frozen semantics lifecycle Host, readiness, Admission Gate, Runtime context, startup rollback и ordering Listener.

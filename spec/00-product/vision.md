@@ -22,11 +22,22 @@ Universal WebSocket Platform — open-source платформа для созд�
 
 ## Текущий объем работ
 
-Текущая веха — **M0 Bootstrap**. Она создает основу проектной документации и инженерных соглашений, а также минимальный HTTP Control Service. Полноценные возможности продукта пока не реализованы.
+Текущая веха — **Beta — Complete the Single-Node Runtime**. Репозиторий уже
+содержит Control Service и production single-node Runtime vertical с
+pre-Upgrade Authentication, transactional Session handoff и Manager-aware
+shutdown. Production activation Runtime из Control Service, внешнее
+операционное хранение, recovery/reporting и полная orchestration
+activation/replacement/rollback ещё не реализованы. Точные границы
+Implemented, Designed/Accepted, Blocked и Planned/Not Activated фиксирует
+[`spec/current-state.md`](../current-state.md).
 
-## Что не входит в M0
+## Историческая граница M0 Bootstrap
 
-- Реализация полноценной архитектуры приложения
-- Создание WebSocket-сервера
-- Добавление инфраструктуры развертывания или хранения данных
-- Заявление о поведении, которое еще не реализовано
+M0 Bootstrap был начальной вехой: он создавал основу проектной документации,
+инженерных соглашений и минимального HTTP Control Service. В его scope не
+входили полноценная архитектура приложения, WebSocket Runtime и
+инфраструктура развёртывания или хранения данных. Эти ограничения сохранены
+как historical scope, а не как текущая граница Beta.
+
+На любой вехе запрещено заявлять как существующее поведение, которое ещё не
+реализовано.
