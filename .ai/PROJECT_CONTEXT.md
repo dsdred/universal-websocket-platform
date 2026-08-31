@@ -250,9 +250,11 @@
   external / 0 Deferred; no separate prerequisite; DP-016 remains Approved /
   Planned; Tester PASS 0/0/0; repeat Reviewer APPROVED 0/0; Scope Audit
   16/0/0; PROCESS-002 Synchronized; later superseded by the TASK-026 recheck**
-- Текущая рекомендация: **после TASK-052 — отдельная bounded reconciliation
-  оставшихся Important documentation findings; Not Activated, Task ID не
-  назначен. Отдельный isolated implementation prerequisite для replay-first
+- Текущая рекомендация: **после TASK-053 — отдельная bounded reconciliation
+  docs-home user guidance; Not Activated, Task ID не назначен. Остальные
+  Important documentation findings в MASTER_PLAN, DP-001–DP-006,
+  Authentication proposals и DP-009 также не активированы. Отдельный isolated
+  implementation prerequisite для replay-first
   orchestration admission and late generation allocation также остаётся Not
   Activated без Task ID**
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
@@ -265,22 +267,22 @@
   closure commit и publication ещё не выполнялись. Subsequently task commit
   `d28efa4e88e02ef528c78c3ca88b3f91945069ce` was published through PR #28
   and merged as `ba75e54e00c3cf1d0d87ca2a985acc9699698efd`**
-- Последняя завершённая documentation task: **TASK-051 — TASK-049
-  Publication-Invalidation Reconciliation; Completed — Coordinator Accepted
+- Последняя завершённая documentation task: **TASK-052 — Blocking
+  Documentation Live-State Reconciliation; Completed — Coordinator Accepted
   (2026-08-31); task commit
-  `171d002322e965e98f7af75722338858b4d255d1` published through PR #53 and
-  merged as `3f7c23dc3acc6a4007a8f6a081f91386aefaa2ff`. Historical TASK-049 remains
-  the accepted replay-first design source at immutable old target
-  `4a040b4e86ec2f4361ec765657e46cd0f36bf349`, whose publication authorization
-  ended `InvalidatedByTargetChange`; TASK-050 governance remains current**
-- Текущая documentation task: **TASK-052 — Blocking Documentation Live-State
+  `c71b1deef0c5cf0ff42c685db7274bb77a846666` published through PR #54 and
+  merged as `44a0283e6667b79fdc63882afe0dc2b1f136a9bc`. TASK-051 remains published
+  through PR #53, historical TASK-049 remains immutable evidence with ended
+  authorization, and TASK-050 governance remains current**
+- Текущая documentation task: **TASK-053 — Root README Runtime Status
   Reconciliation; projected `In Progress` from
-  `main@3f7c23dc3acc6a4007a8f6a081f91386aefaa2ff`. Exact latest verdict,
+  `main@44a0283e6667b79fdc63882afe0dc2b1f136a9bc`. Exact latest verdict,
   canonical identity and first incomplete checkpoint resolve only from the
   newest valid terminal Recovery Evidence Envelope entry matching the
-  independently recomputed current manifest; missing/stale/conflicting/
-  mismatched evidence means STOP. This projected summary does not copy mutable
-  checkpoint, result, Acceptance, commit or publication state**
+  independently recomputed current manifest; missing, stale, conflicting or
+  mismatched evidence means STOP. Documentation-only six-path root
+  public-entry-point correction; TASK-026 remains Blocked, and runtime and
+  remaining documentation candidates remain Not Activated**
 - Текущая architecture task: **отсутствует. Fresh Architect recheck TASK-026
   завершён verdict `READY — UNBLOCK TASK-026`; matrix 7/10/2/0/0/0; это
   readiness evidence, а не implementation Acceptance/Completion**

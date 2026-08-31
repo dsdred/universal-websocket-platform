@@ -107,15 +107,13 @@ CGO/gcc, substitute stress `-count=100` PASS); Independent Review Approved with
 Findings 0/2 (resolved); Verification Matrix, PROCESS-002, Scope Audit 7/0/0
 PASS. Commit, push, PR, merge и publication не выполнялись.
 
-**Последняя завершённая documentation task:** TASK-051 — TASK-049
-Publication-Invalidation Reconciliation; `Completed — Coordinator Accepted
+**Последняя завершённая documentation task:** TASK-052 — Blocking
+Documentation Live-State Reconciliation; `Completed — Coordinator Accepted
 (2026-08-31)`; task commit
-`171d002322e965e98f7af75722338858b4d255d1` published through PR #53 and
-merged as `3f7c23dc3acc6a4007a8f6a081f91386aefaa2ff`. Historical TASK-049 remains
-the accepted replay-first design source at immutable old target
-`4a040b4e86ec2f4361ec765657e46cd0f36bf349`; publication authorization for
-that target ended `InvalidatedByTargetChange`. Published TASK-050 governance
-remains current.
+`c71b1deef0c5cf0ff42c685db7274bb77a846666` published through PR #54 and
+merged as `44a0283e6667b79fdc63882afe0dc2b1f136a9bc`. TASK-051 remains published
+through PR #53; historical TASK-049 remains immutable evidence with ended
+authorization, and published TASK-050 governance remains current.
 
 Историческая TASK-045 — TASK-026 Reactivation
 Status Reconciliation; `Completed — Coordinator Accepted (2026-08-24)`;
@@ -124,14 +122,16 @@ repeat Tester `PASS` 0/0/0; Independent Reviewer `APPROVED` 0/0; Scope Audit
 closure baseline TASK-045 и позднее superseded recheck TASK-026. Commit и
 publication на closure не выполнялись.
 
-**Текущая documentation task:** TASK-052 — Blocking Documentation Live-State
-Reconciliation, projected `In Progress` from
-`main@3f7c23dc3acc6a4007a8f6a081f91386aefaa2ff`. Exact latest verdict,
+**Текущая documentation task:** TASK-053 — Root README Runtime Status
+Reconciliation; projected `In Progress` from
+`main@44a0283e6667b79fdc63882afe0dc2b1f136a9bc`. Exact latest verdict,
 canonical identity and first incomplete checkpoint resolve only from the newest
 valid terminal Recovery Evidence Envelope entry matching the independently
-recomputed current manifest. Missing/stale/conflicting/mismatched evidence
-means STOP. This projected state does not copy mutable checkpoint, result,
-Acceptance, commit or publication facts.
+recomputed current manifest; missing, stale, conflicting or mismatched evidence
+means STOP. Documentation-only scope синхронизирует текущую Beta-веху и
+historical `v0.1.0-alpha` release в корневых README без product/code/design
+changes. TASK-026 remains Blocked; implementation и remaining Important
+documentation candidates remain Not Activated.
 
 **Текущая architecture task:** отсутствует. Fresh Architect recheck TASK-026
 завершён verdict `READY — UNBLOCK TASK-026`; matrix 7/10/2/0/0/0. Это readiness

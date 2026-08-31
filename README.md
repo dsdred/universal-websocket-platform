@@ -6,15 +6,31 @@ Universal WebSocket Platform is an open-source platform for creating, configurin
 
 ## Status
 
-The project is in early alpha and is not production-ready. The repository contains the Control Service, in-memory domain APIs, and an implemented single-node Runtime vertical with Manager-aware shutdown. The Configuration Loader is connected to the Snapshot Builder through the isolated in-process Runtime Launch Flow, and the repository proves isolated `Source -> Loader -> Flow` construction over a concrete in-memory Source adapter. An isolated Runtime Management Directory authorizes and routes exact Start, Stop, and Observe operations, while application and Control Service wiring and Production Activation remain absent.
+The project is in the **Beta — Complete the Single-Node Runtime** engineering
+milestone and is not production-ready. The repository contains the Control
+Service, in-memory domain APIs, and a production-composed single-node Runtime
+vertical with pre-Upgrade Authentication, deterministic routing,
+transactional Session handoff, and Manager-aware shutdown.
+
+The Configuration Loader, Snapshot Builder, Runtime Bootstrap and Launcher,
+Lifecycle Owner, management routing, operational identity, command
+idempotency, and orchestration prerequisites also exist in isolation. They are
+not wired into a Control Service Runtime-management path: Production
+Activation, external persistence, recovery and reporting implementations,
+complete TLS and Listener-settings execution, and the Control Service Runtime
+API remain absent.
 
 ## Current release
 
 **Version:** `v0.1.0-alpha`
 
-**Status:** early alpha
+**Release maturity:** alpha
 
-This release includes the Control Service and the basic lifecycle for Workspace, Configuration, and ConfigurationVersion. See the [release notes](docs/en/releases/v0.1.0-alpha.md) and [`CHANGELOG.md`](CHANGELOG.md) for details.
+This tagged release includes the Control Service and the basic lifecycle for
+Workspace, Configuration, and ConfigurationVersion. The current repository
+contains later, unreleased Beta engineering progress described above. See the
+[release notes](docs/en/releases/v0.1.0-alpha.md) and
+[`CHANGELOG.md`](CHANGELOG.md) for release details.
 
 ## Project principles
 
@@ -45,7 +61,10 @@ This release includes the Control Service and the basic lifecycle for Workspace,
 
 ## Contributing
 
-The project is at an early stage. Read the English documentation before proposing changes. Architecture choices should be recorded before they become implementation constraints.
+The project is in an active Beta engineering stage. Read the English
+documentation and the factual implementation state before proposing changes.
+Architecture choices should be recorded before they become implementation
+constraints.
 
 ## License
 
