@@ -107,13 +107,12 @@ CGO/gcc, substitute stress `-count=100` PASS); Independent Review Approved with
 Findings 0/2 (resolved); Verification Matrix, PROCESS-002, Scope Audit 7/0/0
 PASS. Commit, push, PR, merge и publication не выполнялись.
 
-**Последняя завершённая documentation task:** TASK-052 — Blocking
-Documentation Live-State Reconciliation; `Completed — Coordinator Accepted
-(2026-08-31)`; task commit
-`c71b1deef0c5cf0ff42c685db7274bb77a846666` published through PR #54 and
-merged as `44a0283e6667b79fdc63882afe0dc2b1f136a9bc`. TASK-051 remains published
-through PR #53; historical TASK-049 remains immutable evidence with ended
-authorization, and published TASK-050 governance remains current.
+**Последняя завершённая documentation task:** TASK-053 — Root README Runtime
+Status Reconciliation; `Completed — Coordinator Accepted (2026-08-31)`; task
+commit `bfc1d579f1dbf353d1a74dfb4e98b61132ff1bf2` published through PR #55 and
+merged as `0e0d02ad976db0fc05346d1085932b658e5bbb0b`. TASK-026 remains Blocked,
+its implementation prerequisite remains Not Activated, and published TASK-050
+governance remains current.
 
 Историческая TASK-045 — TASK-026 Reactivation
 Status Reconciliation; `Completed — Coordinator Accepted (2026-08-24)`;
@@ -122,15 +121,16 @@ repeat Tester `PASS` 0/0/0; Independent Reviewer `APPROVED` 0/0; Scope Audit
 closure baseline TASK-045 и позднее superseded recheck TASK-026. Commit и
 publication на closure не выполнялись.
 
-**Текущая documentation task:** TASK-053 — Root README Runtime Status
+**Текущая documentation task:** TASK-054 — Documentation Home User Guidance
 Reconciliation; projected `In Progress` from
-`main@44a0283e6667b79fdc63882afe0dc2b1f136a9bc`. Exact latest verdict,
+`main@0e0d02ad976db0fc05346d1085932b658e5bbb0b`. Exact latest verdict,
 canonical identity and first incomplete checkpoint resolve only from the newest
 valid terminal Recovery Evidence Envelope entry matching the independently
 recomputed current manifest; missing, stale, conflicting or mismatched evidence
-means STOP. Documentation-only scope синхронизирует текущую Beta-веху и
-historical `v0.1.0-alpha` release в корневых README без product/code/design
-changes. TASK-026 remains Blocked; implementation и remaining Important
+means STOP. Documentation-only scope добавляет в зеркальные docs home маршрут
+к current repository state, tagged `v0.1.0-alpha` release и contribution/
+engineering materials, сохраняя отсутствующие Production Activation и полный
+operator workflow. TASK-026 remains Blocked; implementation и remaining
 documentation candidates remain Not Activated.
 
 **Текущая architecture task:** отсутствует. Fresh Architect recheck TASK-026
