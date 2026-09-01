@@ -2,6 +2,28 @@
 
 [Russian version](../ru/README.md)
 
+## Start Here
+
+Choose the route that matches what you need:
+
+- **What works in the current repository?** Read the root
+  [project status](../../README.md#status), then use the factual
+  [current implementation state](../../spec/current-state.md) for the detailed
+  implemented, isolated, planned, and absent boundaries.
+- **What is included in the published release?** Read the
+  [`v0.1.0-alpha` release notes](releases/v0.1.0-alpha.md). The tagged alpha
+  release is an earlier snapshot than the current repository.
+- **Want to contribute or follow the engineering direction?** Start with the
+  root [contribution guidance](../../README.md#contributing), then use the
+  [Engineering Roadmap](roadmap/README.md) and [Engineering Wiki](../../wiki/README.md)
+  for plans, principles, process, and knowledge ownership.
+
+The current **Beta — Complete the Single-Node Runtime** milestone describes
+engineering progress; it is not a production-readiness claim. A production
+installation/operator quick start is not available: Control Service Production
+Activation and the complete operator workflow remain absent. Use the current
+state for repository facts and the release notes for tagged-release facts.
+
 ## Architecture Guides
 
 Active architecture-wide patterns, including the complete ARCH document list, are maintained in the [Architecture Guides index](architecture/README.md).
