@@ -26,6 +26,9 @@ Decisions
 Implementation
     │
     ▼
+Reviews
+    │
+    ▼
 Lessons
 ```
 
@@ -33,6 +36,8 @@ Lessons
 - **Architecture** описывает устройство системы, границы и инварианты.
 - **Decisions** фиксируют выбор в конкретном архитектурном контексте.
 - **Implementation** воплощает утверждённую модель в исходном коде.
+- **Reviews** проверяют реализацию по архитектуре и evidence, но не заменяют
+  Architecture, ADR или Design.
 - **Lessons** сохраняют выводы, полученные в ходе инженерной работы.
 
 Уровни дополняют друг друга. Нижний уровень не должен неявно переопределять
@@ -52,6 +57,9 @@ docs/{en,ru}/
     design/
     reviews/
     roadmap/
+    proposals/
+    releases/
+    retrospectives/
 ```
 
 Wiki хранит knowledge map, Principles и Lessons. Нормативная двуязычная
@@ -95,6 +103,15 @@ Wiki хранит knowledge map, Principles и Lessons. Нормативная �
 - [English Runtime design index](../docs/en/design/README.md)
 - [Русский индекс Runtime design](../docs/ru/design/README.md)
 
+### `docs/{en,ru}/reviews/`
+
+Содержит основанные на evidence оценки реализованной системы. Reviews
+проверяют соответствие реализации Architecture, ADR и Design, но не принимают
+и не заменяют эти решения.
+
+- [English architecture reviews index](../docs/en/reviews/README.md)
+- [Русский индекс архитектурных ревью](../docs/ru/reviews/README.md)
+
 ### `lessons/`
 
 Сохраняет инженерный опыт и выводы, полученные во время исследования,
@@ -112,6 +129,39 @@ Wiki хранит knowledge map, Principles и Lessons. Нормативная �
 - [English roadmap index](../docs/en/roadmap/README.md)
 - [Русский индекс roadmap](../docs/ru/roadmap/README.md)
 
+### Supporting Public Navigation
+
+Следующие материалы дополняют core knowledge model, но не создают в нём новые
+уровни:
+
+- [English documentation home](../docs/en/README.md) и
+  [русская документация](../docs/ru/README.md) маршрутизируют читателя по
+  публичным материалам;
+- [English Authentication proposals](../docs/en/proposals/) и
+  [русские Authentication proposals](../docs/ru/proposals/) появились до
+  отдельной серии Runtime Design Documents;
+- [English release notes](../docs/en/releases/) и
+  [русские заметки к релизам](../docs/ru/releases/) описывают tagged release
+  snapshot, который может быть старше текущего состояния репозитория;
+- [English retrospectives](../docs/en/retrospectives/) и
+  [русские ретроспективы](../docs/ru/retrospectives/) хранят историю и выводы
+  конкретного deliverable, тогда как Wiki Lessons обобщают повторно
+  применимый инженерный опыт.
+
+### Internal Working Sources
+
+Внутренние operational и factual источники не являются отдельными уровнями
+публичной knowledge model:
+
+- AI-агенты начинают с корневого [`AGENTS.md`](../AGENTS.md), затем используют
+  [внутренний инженерный процесс](../docs/engineering/README.md);
+- [task records](../docs/tasks/README.md) хранят operational scope, handoff и
+  recovery evidence, но не устанавливают архитектуру или product capability;
+- [внутренние спецификации](../spec/README.md) отделяют рабочие требования,
+  [текущее фактическое состояние](../spec/current-state.md) и
+  [перечень решений](../spec/decisions.md) от стабильной публичной
+  документации.
+
 ## 4. Reading Order
 
 Рекомендуемый порядок знакомства с базой знаний:
@@ -127,6 +177,10 @@ Architecture
 ↓
 Decisions
 ↓
+Implementation
+↓
+Reviews
+↓
 Lessons
 ↓
 Roadmap
@@ -137,8 +191,11 @@ Roadmap
 3. **Process** показывает, как проект применяет эти правила.
 4. **Architecture** формирует системную модель и её границы.
 5. **Decisions** объясняют конкретные выборы внутри этой модели.
-6. **Lessons** добавляют проверенный практический контекст.
-7. **Roadmap** показывает направления дальнейшей инженерной работы.
+6. **Implementation** даёт фактическое evidence реализованного поведения.
+7. **Reviews** проверяют реализацию относительно принятых оснований.
+8. **Lessons** добавляют повторно применимый практический контекст.
+9. **Roadmap** показывает направления дальнейшей инженерной работы, но не
+   является task queue.
 
 Для локальной задачи допускается сокращённый маршрут, но относящиеся к ней
 Principles, Architecture и Decisions должны быть изучены до изменения кода.
@@ -151,8 +208,12 @@ Principles, Architecture и Decisions должны быть изучены до 
 | Как выполняется работа? | Process |
 | Как устроена система? | Architecture |
 | Почему принято конкретное решение? | Decisions |
+| Соответствует ли реализация принятым основаниям? | Reviews |
 | Что было обнаружено во время разработки? | Lessons |
 | Какие направления работы следуют дальше? | Roadmap |
+| Что фактически существует в текущем репозитории? | `spec/current-state.md` |
+| Что входило в tagged release? | Release Notes через public documentation home |
+| Где scope, handoff и recovery evidence текущей task? | `docs/tasks/` |
 
 Если документ отвечает сразу на несколько вопросов, его следует разделить по
 типам знаний, а между частями установить ссылки.
@@ -170,16 +231,24 @@ Decision
     ↓
 Implementation
     ↓
+Review
+    ↓
 Lesson
 ```
 
-Process определяет порядок прохождения этого потока, а Roadmap задаёт контекст
-для будущей работы. Документы должны ссылаться на нормативные основания и
-связанные материалы, образуя связанный граф знаний, а не набор изолированных
-страниц.
+Публичные Process-документы объясняют contributor workflow, а обязательный
+внутренний agent workflow определён корневым `AGENTS.md` и
+`docs/engineering/`. Process задаёт порядок прохождения потока знаний, Reviews
+проверяют Implementation относительно принятых оснований, а Roadmap задаёт
+контекст будущей работы без превращения в task queue. Документы должны
+ссылаться на нормативные основания и связанные материалы, образуя связанный
+граф знаний, а не набор изолированных страниц.
 
-Ссылка на другой документ не переносит его ответственность: Lesson не
-становится Decision, а Decision не становится Principle.
+Ссылка на другой документ не переносит его ответственность: Review не
+становится Decision, Lesson не становится Retrospective конкретного
+deliverable, а Decision не становится Principle. Release Notes описывают
+tagged snapshot; факты текущего репозитория проверяются отдельно по current
+state, коду и тестам.
 
 ## 7. Rules
 
@@ -190,23 +259,35 @@ Process определяет порядок прохождения этого п
 - Конкретные архитектурные решения фиксируются в Decisions.
 - Долгоживущие инженерные правила хранятся в Principles.
 - Рабочие процедуры хранятся в Process.
+- Reviews оценивают реализацию и не заменяют Architecture, ADR или Design.
+- Tagged release state и текущее состояние репозитория не смешиваются.
+- Retrospective сохраняет историю конкретного deliverable, а Lesson —
+  повторно применимый инженерный вывод.
 - Ссылки должны вести к источнику утверждения, а не к его копии.
 - При изменении знания обновляются связанные документы и навигация.
 
 ## 8. LLM Usage
 
-Перед проектированием или изменением функции LLM следует изучить:
+AI-агент сначала следует обязательному маршруту из корневого `AGENTS.md` и
+внутреннего agent workflow. Перед проектированием или изменением функции LLM
+также следует изучить:
 
 1. применимые Principles;
 2. обязательный Process;
 3. относящиеся к подсистеме Architecture-документы;
 4. связанные Decisions;
-5. Lessons по соответствующей области;
-6. актуальный инженерный контекст Roadmap, если он влияет на scope.
+5. применимые Reviews как evidence реализованного состояния;
+6. Lessons по соответствующей области;
+7. актуальный инженерный контекст Roadmap, если он влияет на scope, не
+   используя Roadmap как task queue;
+8. `spec/current-state.md` и task record, когда нужны текущие факты, scope или
+   recovery evidence.
 
 LLM должна различать нормативные документы и накопленный опыт, проверять
 ссылки, не выводить архитектуру только из реализации и не переносить решение
-из Lesson без нормативного основания.
+из Review, Retrospective или Lesson без нормативного основания. Для release
+facts используется соответствующая release note, а для текущего состояния —
+актуальное repository evidence.
 
 ## 9. Future Growth
 
@@ -221,4 +302,4 @@ Wiki развивается вместе с проектом. Новые док�
 
 Wiki является инженерной памятью проекта. Она дополняет исходный код, разделяет
 типы знаний и предоставляет единый маршрут от принципов и архитектуры к
-решениям, реализации и накопленному опыту.
+решениям, реализации, её review и накопленному опыту.
