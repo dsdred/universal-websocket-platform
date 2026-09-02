@@ -73,20 +73,30 @@ Universal WebSocket Platform — open-source платформа для созд�
   изменение не реализует и не анализирует Production Activation и не меняет
   product architecture или production code. Independent Tester, Scope Audit и
   Final Reviewer gates пройдены; TASK-012 принята Coordinator.
-- TASK-048 завершила documentation-only Execution Interruption Recovery
-  Governance с Coordinator Acceptance после устранения независимо
-  воспроизведённой неоднозначности cross-platform ordering canonical manifest. Она добавляет общий reconstruction gate PROCESS-001,
-  inspect-first reconciliation side effects, session-independent recovery
-  evidence, permission-resume rules и cross-pipeline acceptance scenarios,
-  сохраняя Publisher Resume Reconstruction Guard и все существующие gates.
-  Canonical paths используют exact unsigned UTF-8 byte order; repeat Tester
-  прошёл 0/0/1, Repeat Independent Review — Approved 0/0, Scope Audit —
-  19/0/0. Design-only reassessment TASK-026 принята и опубликована. Последующий
-  implementation cycle теперь Blocked после repeat Architecture `NEEDS
-  DECISION` / `SPLIT REQUIRED`. TASK-049 — завершённая и Coordinator-Accepted
-  design-only DP-015/DP-020 refinement replay-first admission и late
-  generation; её отдельная isolated implementation prerequisite остаётся Not
-  Activated без Task ID.
+- [TASK-048](../../tasks/TASK-048-EXECUTION-INTERRUPTION-RECOVERY-GOVERNANCE.md)
+  установила общий gate Execution Interruption Recovery:
+  repository-first reconstruction, inspect-before-retry reconciliation,
+  session-independent evidence, exact unsigned UTF-8 ordering manifest и
+  сохранение существующих permission и review gates.
+- [TASK-050](../../tasks/TASK-050-PUBLISHER-EXECUTION-CONTEXT-HANDOFF.md)
+  сохраняет привязку side effects Publisher к одному exact execution
+  context, который проходит и decisive GitHub API/repository probe, и Git
+  remote probe exact origin. Trusted-context handoff явный, append-only,
+  fail-closed, никогда не передаёт credentials и опубликован через PR #52.
+- Старый immutable publication target TASK-049 сохраняет состояние
+  `InvalidatedByTargetChange`: он terminal, non-transferable и non-reusable.
+  [TASK-051](../../tasks/TASK-051-TASK-049-PUBLICATION-RECONCILIATION.md)
+  создала и опубликовала отдельную current-main reconciliation identity через
+  PR #53.
+- Затем documentation truth синхронизирована без изменения product behavior:
+  [TASK-052](../../tasks/TASK-052-BLOCKING-DOCUMENTATION-LIVE-STATE-RECONCILIATION.md),
+  [TASK-053](../../tasks/TASK-053-ROOT-README-RUNTIME-STATUS.md) и
+  [TASK-054](../../tasks/TASK-054-DOCS-HOME-USER-GUIDANCE.md) опубликованы
+  через PR #54–#56. [TASK-055](../../tasks/TASK-055-MASTER-PLAN-GOVERNANCE-FRESHNESS.md)
+  является текущей projected documentation reconciliation и не меняет
+  semantics roadmap. TASK-026 остаётся Blocked, а её отдельная
+  replay-first/late-generation implementation prerequisite остаётся Planned и
+  Not Activated без Task ID.
 
 ## 3. Engineering Principles
 
