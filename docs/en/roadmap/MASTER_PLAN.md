@@ -74,21 +74,30 @@ The repository currently contains an Alpha foundation rather than a production-r
   does not change product architecture or production code. Independent Tester,
   Scope Audit, and Final Reviewer gates passed; TASK-012 is Coordinator
   Accepted.
-- TASK-048 completed the documentation-only Execution Interruption Recovery
-  Governance task with Coordinator Acceptance after resolving an independently
-  reproduced cross-platform canonical-manifest ordering ambiguity. It adds a general PROCESS-001 reconstruction gate,
-  inspect-first side-effect reconciliation, session-independent recovery
-  evidence, permission-resume rules and cross-pipeline acceptance scenarios
-  while preserving the Publisher Resume Reconstruction Guard and all existing
-  gates. Canonical paths use exact unsigned UTF-8 byte order. Repeat Tester
-  passed 0/0/1, Repeat Independent Review approved 0/0, and Scope Audit passed
-  19/0/0.
-  TASK-026 Design-only reassessment is accepted and published. Its subsequent
-  implementation cycle is now Blocked after repeat Architecture returned
-  `NEEDS DECISION` / `SPLIT REQUIRED`. TASK-049 completed the design-only
-  DP-015/DP-020 replay-first admission and late-generation refinement and was
-  Coordinator Accepted on 2026-08-28; its separate isolated implementation
-  prerequisite remains Not Activated with no Task ID.
+- [TASK-048](../../tasks/TASK-048-EXECUTION-INTERRUPTION-RECOVERY-GOVERNANCE.md)
+  established the general Execution Interruption Recovery gate:
+  repository-first reconstruction, inspect-before-retry reconciliation,
+  session-independent evidence, exact unsigned UTF-8 manifest ordering, and
+  preservation of existing permission and review gates.
+- [TASK-050](../../tasks/TASK-050-PUBLISHER-EXECUTION-CONTEXT-HANDOFF.md)
+  keeps Publisher side effects bound to one exact execution context
+  that passes both decisive GitHub API/repository and exact-origin Git remote
+  probes. Its trusted-context handoff is explicit, append-only, fail-closed,
+  never transfers credentials, and was published through PR #52.
+- TASK-049's old immutable publication target remains
+  `InvalidatedByTargetChange`, terminal, non-transferable, and non-reusable.
+  [TASK-051](../../tasks/TASK-051-TASK-049-PUBLICATION-RECONCILIATION.md)
+  created and published a distinct current-main reconciliation identity
+  through PR #53.
+- Documentation truth was then reconciled without changing product behavior:
+  [TASK-052](../../tasks/TASK-052-BLOCKING-DOCUMENTATION-LIVE-STATE-RECONCILIATION.md),
+  [TASK-053](../../tasks/TASK-053-ROOT-README-RUNTIME-STATUS.md), and
+  [TASK-054](../../tasks/TASK-054-DOCS-HOME-USER-GUIDANCE.md) were published
+  through PRs #54–#56. [TASK-055](../../tasks/TASK-055-MASTER-PLAN-GOVERNANCE-FRESHNESS.md)
+  is the current projected documentation reconciliation and does not change
+  roadmap semantics. TASK-026 remains Blocked, and its separate
+  replay-first/late-generation implementation prerequisite remains Planned
+  and Not Activated without a Task ID.
 
 ## 3. Engineering Principles
 
