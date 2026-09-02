@@ -250,12 +250,11 @@
   external / 0 Deferred; no separate prerequisite; DP-016 remains Approved /
   Planned; Tester PASS 0/0/0; repeat Reviewer APPROVED 0/0; Scope Audit
   16/0/0; PROCESS-002 Synchronized; later superseded by the TASK-026 recheck**
-- Текущая рекомендация: **после TASK-055 — отдельная bounded Wiki
-  knowledge-map freshness reconciliation; recommendation only, Not Activated,
-  Task ID не назначен. Documentation findings в DP-001–DP-006,
-  Authentication proposals и DP-009 также не активированы. Отдельный isolated
-  implementation prerequisite для replay-first orchestration admission and
-  late generation allocation остаётся Planned и Not Activated без Task ID**
+- Текущая рекомендация: **отсутствует / Not Activated. TASK-056 не активирует
+  следующую work. Documentation findings в DP-001–DP-006, Authentication
+  proposals и DP-009 остаются Not Activated. Отдельный isolated implementation
+  prerequisite для replay-first orchestration admission and late generation
+  allocation остаётся Planned и Not Activated без Task ID**
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы
   изолированно; Repeat Independent Review Approved, blocking/non-blocking 0;
@@ -266,24 +265,24 @@
   closure commit и publication ещё не выполнялись. Subsequently task commit
   `d28efa4e88e02ef528c78c3ca88b3f91945069ce` was published through PR #28
   and merged as `ba75e54e00c3cf1d0d87ca2a985acc9699698efd`**
-- Последняя завершённая documentation task: **TASK-054 — Documentation Home
-  User Guidance Reconciliation; Completed — Coordinator Accepted
-  (2026-09-01); task commit
-  `07f9cc7e8a5aac4e24b52795f21fdeca5b9d5b14` published through PR #56 and
-  merged as `64601fc26dd57c0ebd09f1db39f9851b6b16643e`. TASK-026 remains Blocked,
-  its implementation prerequisite remains Not Activated, and TASK-050
-  governance remains current**
-- Текущая documentation task: **TASK-055 — Mirrored MASTER_PLAN Governance
-  Freshness Reconciliation; projected `In Progress` from
-  `main@64601fc26dd57c0ebd09f1db39f9851b6b16643e`. Exact latest verdict,
+- Последняя завершённая documentation task: **TASK-055 — Mirrored MASTER_PLAN
+  Governance Freshness Reconciliation; Completed — Coordinator Accepted
+  (2026-09-02); task commit
+  `da44e0ab22aa94a223628afdc9b20e61a1337e02` published through PR #57 and
+  merged as `9884d8458bc99ce61439c286c810d7e2cd2f91ae`. TASK-026 remains Blocked,
+  its implementation prerequisite and all other runtime/DP/proposal candidates
+  remain Not Activated, and TASK-050 governance remains current**
+- Текущая documentation task: **TASK-056 — Wiki Knowledge-Map Freshness
+  Reconciliation; projected `In Progress` from
+  `main@9884d8458bc99ce61439c286c810d7e2cd2f91ae`. Exact latest verdict,
   canonical identity and first incomplete checkpoint resolve only from the
   newest valid terminal Recovery Evidence Envelope entry matching the
   independently recomputed current manifest; missing, stale, conflicting or
-  mismatched evidence means STOP. Documentation-only six-path reconciliation
-  updates durable MASTER_PLAN governance/current-work evidence without
-  changing milestone semantics, dependency ordering, priorities, product
-  capability, or ADR/ARCH/DP statuses. TASK-026 remains Blocked; runtime and
-  remaining Wiki/DP/proposal candidates remain Not Activated**
+  mismatched evidence means STOP. Documentation-only five-path reconciliation
+  updates the bounded Wiki knowledge map and minimum project-state navigation
+  without changing architecture, milestone semantics, dependency ordering,
+  product capability, or ADR/ARCH/DP statuses. TASK-026 remains Blocked; all
+  other runtime/DP/proposal/documentation candidates remain Not Activated**
 - Текущая architecture task: **отсутствует. Fresh Architect recheck TASK-026
   завершён verdict `READY — UNBLOCK TASK-026`; matrix 7/10/2/0/0/0; это
   readiness evidence, а не implementation Acceptance/Completion**
