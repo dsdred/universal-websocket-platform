@@ -94,10 +94,11 @@ The repository currently contains an Alpha foundation rather than a production-r
   [TASK-053](../../tasks/TASK-053-ROOT-README-RUNTIME-STATUS.md), and
   [TASK-054](../../tasks/TASK-054-DOCS-HOME-USER-GUIDANCE.md) were published
   through PRs #54–#56. [TASK-055](../../tasks/TASK-055-MASTER-PLAN-GOVERNANCE-FRESHNESS.md)
-  is the current projected documentation reconciliation and does not change
-  roadmap semantics. TASK-026 remains Blocked, and its separate
-  replay-first/late-generation implementation prerequisite remains Planned
-  and Not Activated without a Task ID.
+  and [TASK-056](../../tasks/TASK-056-WIKI-KNOWLEDGE-MAP-FRESHNESS.md) were
+  subsequently published through PRs #57 and #58. TASK-057 is the current
+  projected implementation task: it implements the replay-first/
+  late-generation prerequisite in isolation under verification. TASK-026
+  remains Blocked pending a separate reassessment after TASK-057 Acceptance.
 
 ## 3. Engineering Principles
 
@@ -427,10 +428,10 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   implementation cycle is Blocked after repeat Architecture superseded that
   readiness for live execution. TASK-049 completed the design-only DP-015/
   DP-020 replay-first admission and late-generation refinement and was
-  Coordinator Accepted on 2026-08-28; its separate isolated implementation
-  prerequisite remains Not Activated with no Task ID. DP-016 remains
-  Approved/Planned, and Integration and Production Activation
-  remain inactive.
+  Coordinator Accepted on 2026-08-28. TASK-057 implements its separate
+  isolated prerequisite under verification; TASK-026 remains Blocked pending
+  a separate post-acceptance readiness reassessment. DP-016 remains Approved/
+  Planned, and Integration and Production Activation remain inactive.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Message Persistence, Delivery, and Plugin contracts still require focused design.

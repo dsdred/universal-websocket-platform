@@ -8,13 +8,15 @@
 - **Implementation Status:** Primitive boundary Start/Stop, parent/phase
   sequential core Approved DP-019 и command-boundary Continue/pending-Stop
   rendezvous реализованы изолированно; managed gates и continuation Среза 3
-  реализованы и независимо приняты изолированно; полное extension
-  DP-019 остаётся Planned
+  реализованы и независимо приняты изолированно; replay-first/late-generation
+  admission TASK-057 реализован изолированно под verification; полное
+  extension DP-019 остаётся Planned
 
 TASK-049 завершила design-only refinement contract replay-first orchestration
 admission и позднего выделения generation в разделе 13.2; Coordinator
-Acceptance получена 2026-08-28. Её отдельная isolated implementation
-prerequisite остаётся Planned и `Not Activated` без Task ID.
+Acceptance получена 2026-08-28. TASK-057 реализует этот отдельный contract
+изолированно и остаётся projected `In Progress` под post-sync verification.
+DP-015 остаётся Approved с Partial implementation.
 
 Этот approved design определяет durable idempotency boundary для
 state-changing management commands Runtime. Package
@@ -60,13 +62,13 @@ TASK-047 реализует его изолированно через
 preclaimed `StopOld`. Fresh reassessment TASK-026 принимает `READY — UNBLOCK
 TASK-026` с 7 Direct / 10 Compositional / 2 Missing core / 0 Missing
 prerequisite / 0 Missing external / 0 Deferred. Текущий цикл TASK-026
-supersedes эту readiness для live execution: repeat Architecture Confirmation
-вернула `NEEDS DECISION` / `SPLIT REQUIRED`, потому что eager generation и
-combined inspect/claim не обеспечивают exact replay-first admission и late
+superseded эту readiness для live execution: repeat Architecture Confirmation
+вернула `NEEDS DECISION` / `SPLIT REQUIRED`, потому что тогдашние eager
+generation и combined inspect/claim не обеспечивали exact replay-first admission и late
 allocation. TASK-026 заблокирована. TASK-049 — завершённая и Coordinator-
-Accepted design-only DP-015/DP-020 refinement; её отдельная isolated
-implementation prerequisite остаётся `Not Activated` без Task ID. Статус DP-015
-не меняется.
+Accepted design-only DP-015/DP-020 refinement; TASK-057 реализует её isolated
+prerequisite под verification. Статус DP-015 не меняется, а TASK-026 требует
+отдельной post-acceptance readiness reassessment.
 
 ## 4. Область
 
@@ -672,9 +674,10 @@ replay, expiry и proofs winner ordering. Fresh reassessment TASK-026 прини
 READY boundary как historical evidence. Repeat Architecture Confirmation теперь
 блокирует TASK-026 отдельным DP-015/DP-020 refinement replay-first admission и
 late generation, описанным выше. Design refinement завершена как TASK-049 и
-принята Coordinator 2026-08-28; её отдельная isolated implementation
-prerequisite остаётся `Not Activated` без Task ID. Isolated package не изменяет lifecycle contracts и не подключён к
-DP-013 Directory.
+принята Coordinator 2026-08-28; TASK-057 реализует её отдельный replay-first/
+late-generation prerequisite изолированно под verification. Isolated package
+не изменяет lifecycle contracts и не подключён к DP-013 Directory. TASK-026
+остаётся Blocked до отдельной readiness reassessment после TASK-057 Acceptance.
 
 ## 28. Решение
 

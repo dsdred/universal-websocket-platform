@@ -6,9 +6,10 @@
 
 - TASK-049 — завершённая и Coordinator-Accepted (2026-08-28) design-only
   refinement в Draft DP-020 и Approved DP-015 для replay-first orchestration
-  admission и late generation allocation; отдельная isolated implementation
-  prerequisite остаётся Planned и Not Activated без Task ID, а TASK-026 —
-  Blocked.
+  admission и late generation allocation. TASK-057 реализует этот отдельный
+  prerequisite изолированно и остаётся projected `In Progress` под post-sync
+  verification; TASK-026 остаётся Blocked до отдельной readiness reassessment
+  после TASK-057 Acceptance.
 
 - [`ADR 0001: Базовая реализация Control Service`](../docs/ru/adr/0001-bootstrap-control-service.md)
 - [`ADR 0002: Configuration DSL`](../docs/ru/adr/0002-configuration-dsl.md)
@@ -35,8 +36,10 @@
   Status Approved. Статус не повышается реализацией или commit. DP-012 и
   DP-013 реализованы изолированно; DP-014, primitive boundary DP-015 и partial
   DP-019 parent/phase sequential core и command-boundary Continue/pending-Stop
-  rendezvous реализованы изолированно. Полный DP-015/DP-019 extension и
-  DP-016–DP-019 сохраняют Implementation Status Planned overall.
+  rendezvous и TASK-057 replay-first/late-generation admission реализованы
+  изолированно. DP-015 Implementation Status остаётся Partial; полный
+  DP-015/DP-019 extension и DP-016–DP-019 сохраняют Planned overall там, где
+  это указано их отдельным статусом.
 
 ## Ожидающие отдельного решения
 
@@ -65,18 +68,21 @@ DP-014–DP-018 закрывают focused design gates ARCH-004 §19(2)–(6). 
 primitive boundary DP-015, partial DP-019 parent/phase sequential core и
 command-boundary Continue/pending-Stop rendezvous, policy-neutral orchestration
 authorization surface, managed Flow/Start-claim continuation, OwnerClaimView,
-execution-generation binding/load sequence и concrete composition-private
-invoker TASK-043 реализованы изолированно. Authorization policy и external
-persistence, management integration/API и Production Activation отсутствуют.
+  execution-generation binding/load sequence, concrete composition-private
+  invoker TASK-043 и replay-first/late-generation admission TASK-057
+  реализованы изолированно. Authorization policy и external persistence,
+  management integration/API и Production Activation отсутствуют.
 
 Approved DP-015 определяет focused contract ARCH-004
 §19(3): opaque command identity в exact authorized scope, immutable intent,
 durable claim до lifecycle delegation, same-intent replay без mutation,
 per-Instance barrier для unresolved command, mandatory tracked-Start Stop и
-truthful indeterminate outcome. Package `internal/runtimecommandidempotency`
-реализует claim/replay store изолированно на process-local in-memory storage;
-external schema, API, recovery и production wiring отсутствуют. Design gate
-§19(3) закрыт.
+  truthful indeterminate outcome. Package `internal/runtimecommandidempotency`
+  реализует claim/replay store и TASK-057 replay-first inspection,
+  claim/revalidation, late-generation provider custody и managed-rendezvous
+  ordering изолированно на process-local in-memory storage; external schema,
+  API, recovery и production wiring отсутствуют. Design gate §19(3) закрыт;
+  DP-015 Implementation Status остаётся Partial.
 
 Approved DP-016 определяет focused contract ARCH-004
 §19(4): exact-version activation, ordered replacement через
@@ -94,11 +100,12 @@ prerequisite с historical matrix 7 Direct / 9 Compositional / 2 Missing core /
 TASK-047 реализует его изолированно. Fresh reassessment принимает `READY —
 UNBLOCK TASK-026` с matrix 7/10/2/0/0/0 как historical readiness evidence.
 DP-016 остаётся Approved/Planned; текущий implementation cycle TASK-026 теперь
-Blocked после repeat Architecture `NEEDS DECISION` / `SPLIT REQUIRED`: текущий
-admission DP-015/DP-020 не обеспечивает replay-first inspection и late
-generation allocation. TASK-049 — завершённая и Coordinator-Accepted
-design-only refinement; её отдельная isolated implementation prerequisite
-остаётся Not Activated без Task ID.
+  Blocked после repeat Architecture `NEEDS DECISION` / `SPLIT REQUIRED`, которая
+  выявила отсутствие replay-first inspection и late generation allocation.
+  TASK-049 — завершённая и Coordinator-Accepted design-only refinement;
+  TASK-057 реализует этот isolated prerequisite под verification. TASK-026 не
+  активируется автоматически и требует отдельной readiness reassessment после
+  TASK-057 Acceptance.
 
 Approved DP-019 определяет focused internal integration contract, необходимый
 для реализации DP-016 без ослабления proofs: exact authorization tuple
@@ -278,6 +285,7 @@ Fresh TASK-026 Design-only reassessment принимает `READY — UNBLOCK TA
 matrix 7/10/2/0/0/0 как historical readiness evidence. Последующий
 implementation cycle теперь Blocked repeat Architecture `NEEDS DECISION` /
 `SPLIT REQUIRED` на DP-015/DP-020 refinement replay-first admission и late
-generation. Design refinement завершена как TASK-049 и принята Coordinator
-2026-08-28; её отдельная isolated implementation prerequisite остаётся Not
-Activated без Task ID; implementation Acceptance/Completion отсутствуют.
+  generation. Design refinement завершена как TASK-049 и принята Coordinator
+  2026-08-28; TASK-057 реализует отдельный isolated prerequisite и остаётся
+  projected `In Progress` под verification. TASK-057 Acceptance/Completion ещё
+  отсутствуют, а TASK-026 остаётся Blocked до отдельной readiness reassessment.

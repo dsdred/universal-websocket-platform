@@ -2,7 +2,6 @@ package runtimecommandidempotency
 
 import (
 	"context"
-	"strconv"
 	"sync"
 
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeorchestrationbinding"
@@ -36,6 +35,20 @@ func (b *Boundary) ExecuteManagedParentFromTrackedStart(
 	key CommandKey,
 	intent Intent,
 	authorize AuthorizeOrchestration,
+	invoke func(*TrackedStartManagedParentExecution) error,
+) (ParentAdmission, error) {
+	return b.executeManagedParentFromTrackedStartCandidate(
+		ctx, scope, key, intent, authorize, AbsentCandidate{}, invoke,
+	)
+}
+
+func (b *Boundary) executeManagedParentFromTrackedStartCandidate(
+	ctx context.Context,
+	scope Scope,
+	key CommandKey,
+	intent Intent,
+	authorize AuthorizeOrchestration,
+	candidate AbsentCandidate,
 	invoke func(*TrackedStartManagedParentExecution) error,
 ) (ParentAdmission, error) {
 	if b == nil || b.storage == nil || ctx == nil || !scope.validParent() || key == "" ||
@@ -77,6 +90,13 @@ func (b *Boundary) ExecuteManagedParentFromTrackedStart(
 		return ParentAdmission{kind: kind, record: view}, nil
 	}
 	trackedStart, eligible := b.trackedStartForManagedParentLocked(ledger)
+	if eligible && candidate.kind != 0 {
+		expected := commandIdentity{scope: candidate.trackedStartScope, key: candidate.trackedStartKey}
+		record := ledger.records[trackedStart]
+		eligible = candidate.kind == CandidateExecuteParent &&
+			candidate.parentMode == ParentCandidateTrackedStart && trackedStart == expected &&
+			record != nil && record.revision == candidate.trackedStartRevision
+	}
 	if !eligible {
 		ledger.mu.Unlock()
 		b.storage.clientMu.RUnlock()
@@ -370,8 +390,21 @@ func (p *ManagedParentExecution) ContinueOrExecuteManagedStartTarget(
 	executionGeneration runtimeorchestrationbinding.ExecutionGeneration,
 	invoke func(runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error),
 ) (PhaseAdmission, bool, error) {
+	return p.continueOrExecuteManagedStartTarget(
+		ctx, expectedAggregateRevision, executionGeneration, nil, invoke,
+	)
+}
+
+func (p *ManagedParentExecution) continueOrExecuteManagedStartTarget(
+	ctx context.Context,
+	expectedAggregateRevision runtimeorchestrationbinding.AggregateRevision,
+	executionGeneration runtimeorchestrationbinding.ExecutionGeneration,
+	provideGeneration ProvideExecutionGeneration,
+	invoke func(runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error),
+) (PhaseAdmission, bool, error) {
+	late := provideGeneration != nil
 	if p == nil || p.parent == nil || ctx == nil || expectedAggregateRevision == 0 ||
-		executionGeneration == "" || invoke == nil {
+		invoke == nil || late == (executionGeneration != "") {
 		return PhaseAdmission{}, false, ErrInvalidSubmission
 	}
 	parent := p.parent
@@ -438,48 +471,43 @@ func (p *ManagedParentExecution) ContinueOrExecuteManagedStartTarget(
 
 	record := &phaseRecord{identity: identity, state: CommandStateClaimed, revision: 1}
 	state := &permitState{generation: parent.boundary.generation, revision: record.revision}
+	var binding runtimeorchestrationbinding.StartExecutionBinding
+	var rendezvous runtimeorchestrationbinding.StartRendezvous
+	if late {
+		var err error
+		rendezvous, err = parent.boundary.newStartRendezvous()
+		if err != nil {
+			parent.ledger.mu.Unlock()
+			parent.boundary.storage.clientMu.RUnlock()
+			return PhaseAdmission{}, false, ErrInvalidSubmission
+		}
+	} else {
+		var err error
+		rendezvous, binding, err = p.newLinkedBinding(expectedAggregateRevision, executionGeneration)
+		if err != nil {
+			parent.ledger.mu.Unlock()
+			parent.boundary.storage.clientMu.RUnlock()
+			return PhaseAdmission{}, false, ErrInvalidSubmission
+		}
+	}
 	parent.ledger.phases[identity] = record
 	parent.ledger.livePhases[identity] = state
 	legacy.startPhaseClaimed = true
 	legacy.signal = startSignalBlocked // later Stops use only the managed rendezvous.
-	rendezvous, err := runtimeorchestrationbinding.NewStartRendezvous(
-		strconv.FormatUint(parent.boundary.generation, 36) + ":" +
-			strconv.FormatUint(parent.boundary.rendezvousSeq.Add(1), 36),
-	)
-	if err != nil {
-		delete(parent.ledger.phases, identity)
-		delete(parent.ledger.livePhases, identity)
-		parent.ledger.mu.Unlock()
-		parent.boundary.storage.clientMu.RUnlock()
-		return PhaseAdmission{}, false, ErrInvalidSubmission
-	}
-	parentIdentity, err := runtimeorchestrationbinding.NewParentCommandIdentity(p.authorization, string(parent.identity.key))
-	if err != nil {
-		parent.ledger.mu.Unlock()
-		parent.boundary.storage.clientMu.RUnlock()
-		return PhaseAdmission{}, false, ErrInvalidSubmission
-	}
-	phaseIdentityValue, _ := runtimeorchestrationbinding.DeriveStartTargetPhaseIdentity(parentIdentity)
-	linked, _ := runtimeorchestrationbinding.NewLinkedExecutionIdentity(parentIdentity, phaseIdentityValue)
-	binding, err := runtimeorchestrationbinding.NewLinkedStartExecutionBinding(
-		p.authorization, expectedAggregateRevision, executionGeneration, linked, rendezvous,
-	)
-	if err != nil {
-		parent.ledger.mu.Unlock()
-		parent.boundary.storage.clientMu.RUnlock()
-		return PhaseAdmission{}, false, ErrInvalidSubmission
-	}
-	managed := &managedStartRendezvous{
-		binding: binding, phase: identity, state: state, generation: parent.boundary.generation,
-		bridge: newStartRendezvous(parent.boundary.generation), stage: managedStagePreOwner,
-	}
-	parent.ledger.managedStart[rendezvous] = managed
 	permit := &managedPhasePermit{parent: parent, identity: identity, state: state, rendezvous: rendezvous}
+	parent.ledger.managedStart[rendezvous] = p.newManagedRendezvous(binding, identity, state)
 	claimed := PhaseAdmission{kind: AdmissionClaimed, record: record.view()}
 	parent.ledger.mu.Unlock()
 	parent.boundary.storage.clientMu.RUnlock()
 
-	terminal, executeErr := permit.execute(invoke, binding)
+	var terminal PhaseRecordView
+	var executeErr error
+	if late {
+		terminal, executeErr = permit.executeAfterGeneration(
+			ctx, p.authorization, expectedAggregateRevision, provideGeneration, invoke)
+	} else {
+		terminal, executeErr = permit.execute(invoke, binding)
+	}
 	if executeErr != nil {
 		return claimed, false, executeErr
 	}
@@ -487,11 +515,106 @@ func (p *ManagedParentExecution) ContinueOrExecuteManagedStartTarget(
 	return claimed, false, nil
 }
 
+func (p *ManagedParentExecution) continueOrExecuteLateManagedStartTarget(
+	ctx context.Context,
+	expectedAggregateRevision runtimeorchestrationbinding.AggregateRevision,
+	provideGeneration ProvideExecutionGeneration,
+	invoke func(runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error),
+) (PhaseAdmission, bool, error) {
+	return p.continueOrExecuteManagedStartTarget(
+		ctx, expectedAggregateRevision, "", provideGeneration, invoke,
+	)
+}
+
+func (p *ManagedParentExecution) newLinkedBinding(
+	revision runtimeorchestrationbinding.AggregateRevision,
+	generation runtimeorchestrationbinding.ExecutionGeneration,
+) (runtimeorchestrationbinding.StartRendezvous, runtimeorchestrationbinding.StartExecutionBinding, error) {
+	rendezvous, err := p.parent.boundary.newStartRendezvous()
+	if err != nil {
+		return runtimeorchestrationbinding.StartRendezvous{}, runtimeorchestrationbinding.StartExecutionBinding{}, err
+	}
+	binding, err := p.newLinkedBindingAt(revision, generation, rendezvous)
+	return rendezvous, binding, err
+}
+
+func (p *ManagedParentExecution) newLinkedBindingAt(
+	revision runtimeorchestrationbinding.AggregateRevision,
+	generation runtimeorchestrationbinding.ExecutionGeneration,
+	rendezvous runtimeorchestrationbinding.StartRendezvous,
+) (runtimeorchestrationbinding.StartExecutionBinding, error) {
+	parent, err := runtimeorchestrationbinding.NewParentCommandIdentity(p.authorization, string(p.parent.identity.key))
+	if err != nil {
+		return runtimeorchestrationbinding.StartExecutionBinding{}, err
+	}
+	phase, err := runtimeorchestrationbinding.DeriveStartTargetPhaseIdentity(parent)
+	if err != nil {
+		return runtimeorchestrationbinding.StartExecutionBinding{}, err
+	}
+	linked, err := runtimeorchestrationbinding.NewLinkedExecutionIdentity(parent, phase)
+	if err != nil {
+		return runtimeorchestrationbinding.StartExecutionBinding{}, err
+	}
+	return runtimeorchestrationbinding.NewLinkedStartExecutionBinding(
+		p.authorization, revision, generation, linked, rendezvous)
+}
+
+func (p *ManagedParentExecution) newManagedRendezvous(
+	binding runtimeorchestrationbinding.StartExecutionBinding,
+	identity phaseIdentity,
+	state *permitState,
+) *managedStartRendezvous {
+	return &managedStartRendezvous{
+		binding: binding, phase: identity, state: state, generation: p.parent.boundary.generation,
+		bridge: newStartRendezvous(p.parent.boundary.generation), stage: managedStagePreOwner,
+	}
+}
+
 type managedPhasePermit struct {
 	parent     *ParentExecution
 	identity   phaseIdentity
 	state      *permitState
 	rendezvous runtimeorchestrationbinding.StartRendezvous
+}
+
+func (p *managedPhasePermit) executeAfterGeneration(
+	ctx context.Context,
+	authorization OrchestrationAuthorizationRequest,
+	expectedAggregateRevision runtimeorchestrationbinding.AggregateRevision,
+	provideGeneration ProvideExecutionGeneration,
+	invoke func(runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error),
+) (PhaseRecordView, error) {
+	defer p.expire()
+	generation, definitive := provideGenerationSafely(provideGeneration, ctx)
+	if !definitive || generation == "" || ctx.Err() != nil {
+		return PhaseRecordView{}, ErrIndeterminateExecution
+	}
+	p.parent.boundary.storage.clientMu.RLock()
+	p.parent.ledger.mu.Lock()
+	if !p.parent.liveLocked() || p.parent.ledger.livePhases[p.identity] != p.state {
+		p.parent.ledger.mu.Unlock()
+		p.parent.boundary.storage.clientMu.RUnlock()
+		return PhaseRecordView{}, ErrBoundaryExpired
+	}
+	rendezvous := p.parent.ledger.managedStart[p.rendezvous]
+	if rendezvous == nil || !rendezvous.liveLocked(p.parent.boundary, p.parent.ledger) ||
+		rendezvous.binding != (runtimeorchestrationbinding.StartExecutionBinding{}) ||
+		rendezvous.stage != managedStagePreOwner || rendezvous.bridge == nil {
+		p.parent.ledger.mu.Unlock()
+		p.parent.boundary.storage.clientMu.RUnlock()
+		return PhaseRecordView{}, ErrIndeterminateExecution
+	}
+	managed := &ManagedParentExecution{parent: p.parent, authorization: authorization}
+	binding, err := managed.newLinkedBindingAt(expectedAggregateRevision, generation, p.rendezvous)
+	if err != nil {
+		p.parent.ledger.mu.Unlock()
+		p.parent.boundary.storage.clientMu.RUnlock()
+		return PhaseRecordView{}, ErrIndeterminateExecution
+	}
+	rendezvous.binding = binding
+	p.parent.ledger.mu.Unlock()
+	p.parent.boundary.storage.clientMu.RUnlock()
+	return p.execute(invoke, binding)
 }
 
 func (p *managedPhasePermit) execute(
