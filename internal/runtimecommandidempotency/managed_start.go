@@ -20,10 +20,38 @@ func (b *Boundary) ExecuteManagedStart(
 	authorize AuthorizeOrchestration,
 	invoke func(runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error),
 ) (Admission, error) {
-	if b == nil || b.storage == nil || ctx == nil || !scope.validPrimitive() ||
-		scope.operation != OperationStart || key == "" || !intent.validFor(scope) ||
-		expectedAggregateRevision == 0 || executionGeneration == "" ||
-		authorize == nil || invoke == nil {
+	return b.executeManagedStart(ctx, scope, key, intent, expectedAggregateRevision,
+		executionGeneration, authorize, nil, invoke)
+}
+
+// executeLateManagedStart claims before requesting the composition-owned
+// execution generation. It is used only by replay-first orchestration.
+func (b *Boundary) executeLateManagedStart(
+	ctx context.Context,
+	scope Scope,
+	key CommandKey,
+	intent Intent,
+	expectedAggregateRevision runtimeorchestrationbinding.AggregateRevision,
+	authorize AuthorizeOrchestration,
+	provideGeneration ProvideExecutionGeneration,
+	invoke func(runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error),
+) (Admission, error) {
+	return b.executeManagedStart(ctx, scope, key, intent, expectedAggregateRevision,
+		"", authorize, provideGeneration, invoke)
+}
+
+func (b *Boundary) executeManagedStart(
+	ctx context.Context, scope Scope, key CommandKey, intent Intent,
+	expectedRevision runtimeorchestrationbinding.AggregateRevision,
+	generation runtimeorchestrationbinding.ExecutionGeneration,
+	authorize AuthorizeOrchestration,
+	provide ProvideExecutionGeneration,
+	invoke func(runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error),
+) (Admission, error) {
+	late := provide != nil
+	if b == nil || b.storage == nil || ctx == nil || scope.operation != OperationStart ||
+		!scope.validPrimitive() || key == "" || !intent.validFor(scope) ||
+		expectedRevision == 0 || authorize == nil || invoke == nil || late == (generation != "") {
 		return Admission{}, ErrInvalidSubmission
 	}
 	authorization, ok := authorizeCommandMaps(scope, intent)
@@ -45,57 +73,49 @@ func (b *Boundary) ExecuteManagedStart(
 	ledger := b.storage.ledger(scope.instanceScope())
 	identity := commandIdentity{scope: scope, key: key}
 	ledger.mu.Lock()
-
-	if existing, exists := ledger.records[identity]; exists {
+	if existing := ledger.records[identity]; existing != nil {
 		if existing.intent != intent {
 			ledger.mu.Unlock()
 			b.storage.clientMu.RUnlock()
 			return Admission{}, ErrCommandKeyConflict
 		}
-		view := existing.view()
 		kind := AdmissionInProgress
 		if existing.state == CommandStateTerminal {
 			kind = AdmissionReplay
 		}
+		view := existing.view()
 		ledger.mu.Unlock()
 		b.storage.clientMu.RUnlock()
 		return Admission{kind: kind, record: view}, nil
 	}
-
 	allowed, _, pending := b.mayClaimLocked(ledger, scope.operation)
 	if !allowed || pending != nil {
 		ledger.mu.Unlock()
 		b.storage.clientMu.RUnlock()
 		return Admission{}, ErrInstanceBlocked
 	}
-
-	rendezvous, err := runtimeorchestrationbinding.NewStartRendezvous(
-		strconv.FormatUint(b.generation, 36) + ":" +
-			strconv.FormatUint(b.rendezvousSeq.Add(1), 36),
-	)
-	if err != nil {
+	var binding runtimeorchestrationbinding.StartExecutionBinding
+	rendezvous, rendezvousErr := b.newStartRendezvous()
+	if rendezvousErr != nil {
 		ledger.mu.Unlock()
 		b.storage.clientMu.RUnlock()
 		return Admission{}, ErrInvalidSubmission
 	}
-	binding, err := runtimeorchestrationbinding.NewPrimitiveStartExecutionBinding(
-		authorization, expectedAggregateRevision, executionGeneration, rendezvous,
-	)
-	if err != nil {
-		ledger.mu.Unlock()
-		b.storage.clientMu.RUnlock()
-		return Admission{}, ErrInvalidSubmission
+	if !late {
+		var err error
+		binding, err = runtimeorchestrationbinding.NewPrimitiveStartExecutionBinding(
+			authorization, expectedRevision, generation, rendezvous)
+		if err != nil {
+			ledger.mu.Unlock()
+			b.storage.clientMu.RUnlock()
+			return Admission{}, ErrInvalidSubmission
+		}
 	}
-
-	record := &commandRecord{
-		identity: identity, intent: intent, state: CommandStateClaimed, revision: 1,
-	}
+	record := &commandRecord{identity: identity, intent: intent, state: CommandStateClaimed, revision: 1}
 	state := &permitState{generation: b.generation, revision: record.revision}
 	ledger.records[identity] = record
 	ledger.live[identity] = state
-	permit := &executionPermit{
-		boundary: b, ledger: ledger, identity: identity, state: state, managed: rendezvous,
-	}
+	permit := &executionPermit{boundary: b, ledger: ledger, identity: identity, state: state, managed: rendezvous}
 	ledger.managedStart[rendezvous] = &managedStartRendezvous{
 		binding: binding, identity: identity, state: state, generation: b.generation,
 		bridge: newStartRendezvous(b.generation), stage: managedStagePreOwner,
@@ -104,17 +124,82 @@ func (b *Boundary) ExecuteManagedStart(
 	ledger.mu.Unlock()
 	b.storage.clientMu.RUnlock()
 
-	terminal, executeErr := permit.execute(ctx, func() (TerminalOutcome, error) {
-		return invoke(binding)
-	})
-	if executeErr != nil {
+	var terminal RecordView
+	var err error
+	if late {
+		terminal, err = permit.executeAfterGeneration(ctx, authorization, expectedRevision, provide, invoke)
+	} else {
+		terminal, err = permit.execute(ctx, func() (TerminalOutcome, error) { return invoke(binding) })
+	}
+	if err != nil {
 		if terminal.state == CommandStateTerminal {
 			claimed.record = terminal
 		}
-		return claimed, executeErr
+		return claimed, err
 	}
 	claimed.record = terminal
 	return claimed, nil
+}
+
+func (b *Boundary) newStartRendezvous() (runtimeorchestrationbinding.StartRendezvous, error) {
+	return runtimeorchestrationbinding.NewStartRendezvous(
+		strconv.FormatUint(b.generation, 36) + ":" + strconv.FormatUint(b.rendezvousSeq.Add(1), 36))
+}
+
+func (p *executionPermit) executeAfterGeneration(
+	ctx context.Context,
+	authorization OrchestrationAuthorizationRequest,
+	expectedAggregateRevision runtimeorchestrationbinding.AggregateRevision,
+	provideGeneration ProvideExecutionGeneration,
+	invoke func(runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error),
+) (RecordView, error) {
+	defer p.expire()
+	generation, definitive := provideGenerationSafely(provideGeneration, ctx)
+	if !definitive || generation == "" || ctx.Err() != nil {
+		return RecordView{}, ErrIndeterminateExecution
+	}
+	p.boundary.storage.clientMu.RLock()
+	p.ledger.mu.Lock()
+	if p.boundary.storage.generation != p.boundary.generation ||
+		p.ledger.live[p.identity] != p.state {
+		p.ledger.mu.Unlock()
+		p.boundary.storage.clientMu.RUnlock()
+		return RecordView{}, ErrBoundaryExpired
+	}
+	managed := p.ledger.managedStart[p.managed]
+	if managed == nil || !managed.liveLocked(p.boundary, p.ledger) ||
+		managed.binding != (runtimeorchestrationbinding.StartExecutionBinding{}) ||
+		managed.stage != managedStagePreOwner || managed.bridge == nil {
+		p.ledger.mu.Unlock()
+		p.boundary.storage.clientMu.RUnlock()
+		return RecordView{}, ErrIndeterminateExecution
+	}
+	binding, err := runtimeorchestrationbinding.NewPrimitiveStartExecutionBinding(
+		authorization, expectedAggregateRevision, generation, p.managed,
+	)
+	if err != nil {
+		p.ledger.mu.Unlock()
+		p.boundary.storage.clientMu.RUnlock()
+		return RecordView{}, ErrIndeterminateExecution
+	}
+	managed.binding = binding
+	p.ledger.mu.Unlock()
+	p.boundary.storage.clientMu.RUnlock()
+	return p.execute(ctx, func() (TerminalOutcome, error) { return invoke(binding) })
+}
+
+func provideGenerationSafely(
+	provide ProvideExecutionGeneration,
+	ctx context.Context,
+) (generation runtimeorchestrationbinding.ExecutionGeneration, definitive bool) {
+	defer func() {
+		if recover() != nil {
+			generation = ""
+			definitive = false
+		}
+	}()
+	generation, err := provide(ctx)
+	return generation, err == nil
 }
 
 // managedStartRendezvousLive is the private Slice-2R lookup proof used by the

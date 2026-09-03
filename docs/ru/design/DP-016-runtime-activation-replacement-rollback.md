@@ -29,11 +29,12 @@ TASK-047 реализует его изолированно. Fresh reassessment 
 `READY — UNBLOCK TASK-026` с 7 Direct / 10 Compositional / 2 Missing core / 0
 Missing prerequisite / 0 Missing external / 0 Deferred. DP-016 остаётся
 Approved/Planned. Эта readiness теперь superseded для live execution repeat
-Architecture Confirmation `NEEDS DECISION` / `SPLIT REQUIRED`: текущий
-admission DP-015/DP-020 не обеспечивает exact replay-first inspection и late
-generation allocation. TASK-026 заблокирована. TASK-049 — завершённая и
-Coordinator-Accepted design-only DP-015/DP-020 refinement; её отдельная
-isolated implementation prerequisite остаётся `Not Activated` без Task ID.
+Architecture Confirmation `NEEDS DECISION` / `SPLIT REQUIRED`: historical
+admission DP-015/DP-020 не обеспечивал exact replay-first inspection и late
+generation allocation. TASK-049 — завершённая и Coordinator-Accepted
+design-only refinement; TASK-057 реализует её isolated prerequisite под
+verification. TASK-026 остаётся Blocked до отдельной post-acceptance readiness
+reassessment. DP-016 остаётся Approved/Planned и не реализована.
 
 ## 2. Назначение
 
@@ -536,8 +537,9 @@ tracked-Start managed-parent плюс preclaimed `StopOld` admission. TASK-046
 reassessment TASK-026 принимает READY boundary как historical evidence. Repeat
 Architecture Confirmation теперь блокирует TASK-026 отдельной DP-015/DP-020
 refinement replay-first admission и late generation. Design refinement
-завершена как TASK-049 и принята Coordinator 2026-08-28; её отдельная isolated
-implementation prerequisite остаётся `Not Activated` без Task ID; reduced slice
+завершена как TASK-049 и принята Coordinator 2026-08-28; TASK-057 реализует её
+отдельную isolated prerequisite под verification. TASK-026 остаётся Blocked до
+отдельной readiness reassessment после TASK-057 Acceptance; reduced slice
 DP-016 запрещён.
 
 ## 29. Решение

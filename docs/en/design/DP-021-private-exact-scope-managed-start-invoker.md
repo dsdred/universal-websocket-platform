@@ -18,11 +18,11 @@ identified one missing DP-015 tracked-Start managed-parent plus preclaimed
 TASK-026 reassessment accepts `READY — UNBLOCK TASK-026` with matrix
 7/10/2/0/0/0. The current cycle supersedes that readiness for live execution:
 repeat Architecture Confirmation returned `NEEDS DECISION` / `SPLIT REQUIRED`
-because current DP-015/DP-020 admission cannot provide replay-first inspection
-and late generation allocation. TASK-026 is Blocked. TASK-049 is the completed
-and Coordinator-Accepted design-only DP-015/DP-020 refinement; its separate
-isolated implementation prerequisite remains `Not Activated`, with no Task ID.
-This DP remains Draft/Partial.
+because the historical DP-015/DP-020 admission could not provide replay-first
+inspection and late generation allocation. TASK-049 is the completed and
+Coordinator-Accepted design-only refinement; TASK-057 implements its isolated
+prerequisite under verification. TASK-026 remains Blocked pending separate
+post-acceptance readiness reassessment. This DP remains Draft/Partial.
 
 ## 2. Purpose
 
@@ -453,10 +453,10 @@ records that contract, TASK-047 implements it in isolation, and the fresh
 reassessment accepts `READY — UNBLOCK TASK-026` as historical evidence. Repeat
 Architecture Confirmation now blocks TASK-026 on the separate DP-015/DP-020
 replay-first admission and late-generation refinement. That design refinement
-was completed as TASK-049 and Coordinator Accepted on 2026-08-28; its separate
-isolated implementation prerequisite remains `Not Activated`, with no Task ID.
-No TASK-026 implementation is
-asserted here.
+was completed as TASK-049 and Coordinator Accepted on 2026-08-28; TASK-057
+implements its separate isolated prerequisite under verification. TASK-026
+remains Blocked pending separate readiness reassessment after TASK-057
+Acceptance. No TASK-026 implementation is asserted here.
 
 ## 18. Decision
 

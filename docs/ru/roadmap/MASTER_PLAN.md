@@ -93,10 +93,11 @@ Universal WebSocket Platform — open-source платформа для созд�
   [TASK-053](../../tasks/TASK-053-ROOT-README-RUNTIME-STATUS.md) и
   [TASK-054](../../tasks/TASK-054-DOCS-HOME-USER-GUIDANCE.md) опубликованы
   через PR #54–#56. [TASK-055](../../tasks/TASK-055-MASTER-PLAN-GOVERNANCE-FRESHNESS.md)
-  является текущей projected documentation reconciliation и не меняет
-  semantics roadmap. TASK-026 остаётся Blocked, а её отдельная
-  replay-first/late-generation implementation prerequisite остаётся Planned и
-  Not Activated без Task ID.
+  и [TASK-056](../../tasks/TASK-056-WIKI-KNOWLEDGE-MAP-FRESHNESS.md) затем
+  опубликованы через PR #57 и #58. TASK-057 — текущая projected
+  implementation task: она реализует replay-first/late-generation prerequisite
+  изолированно под verification. TASK-026 остаётся Blocked до отдельной
+  reassessment после TASK-057 Acceptance.
 
 ## 3. Engineering Principles
 
@@ -425,10 +426,10 @@ Architectural debt относится к границам, которые ост
   implementation cycle TASK-026 — Blocked после того, как repeat Architecture
   superseded readiness для live execution. TASK-049 — завершённая и
   Coordinator-Accepted design-only DP-015/DP-020 refinement replay-first
-  admission и late generation; её отдельная isolated implementation
-  prerequisite остаётся Not Activated без Task ID. DP-016 остаётся
-  Approved/Planned, Integration и Production
-  Activation — неактивными.
+  admission и late generation. TASK-057 реализует её отдельную isolated
+  prerequisite под verification; TASK-026 остаётся Blocked до отдельной
+  post-acceptance readiness reassessment. DP-016 остаётся Approved/Planned,
+  Integration и Production Activation — неактивными.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Message Persistence, Delivery и Plugin всё ещё требуют focused design.

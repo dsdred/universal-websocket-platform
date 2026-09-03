@@ -29,12 +29,12 @@ records its additive contract and TASK-047 implements it in isolation. Fresh
 TASK-026 reassessment accepts `READY — UNBLOCK TASK-026` with 7 Direct / 10
 Compositional / 2 Missing core / 0 Missing prerequisite / 0 Missing external /
 0 Deferred. That readiness is now superseded for live execution by repeat
-Architecture Confirmation `NEEDS DECISION` / `SPLIT REQUIRED`: current
-DP-015/DP-020 admission cannot provide exact replay-first inspection and late
-generation allocation. TASK-026 is Blocked. TASK-049 is the completed and
-Coordinator-Accepted design-only DP-015/DP-020 refinement; its separate
-isolated implementation prerequisite remains `Not Activated`, with no Task ID.
-DP-016 remains Approved/Planned and unimplemented.
+Architecture Confirmation `NEEDS DECISION` / `SPLIT REQUIRED`: the historical
+DP-015/DP-020 admission could not provide exact replay-first inspection and
+late generation allocation. TASK-049 is the completed and Coordinator-Accepted
+design-only refinement; TASK-057 implements its isolated prerequisite under
+verification. TASK-026 remains Blocked pending separate post-acceptance
+readiness reassessment. DP-016 remains Approved/Planned and unimplemented.
 
 ## 2. Purpose
 
@@ -545,9 +545,10 @@ additive contract and TASK-047 implements it in isolation. Fresh TASK-026
 reassessment accepts the READY boundary as historical evidence. Repeat
 Architecture Confirmation now blocks TASK-026 on the separate DP-015/DP-020
 replay-first admission and late-generation refinement. That design refinement
-was completed as TASK-049 and Coordinator Accepted on 2026-08-28; its separate
-isolated implementation prerequisite remains `Not Activated`, with no Task ID,
-and no reduced DP-016 slice is permitted.
+was completed as TASK-049 and Coordinator Accepted on 2026-08-28; TASK-057
+implements its separate isolated prerequisite under verification. TASK-026
+remains Blocked pending a separate readiness reassessment after TASK-057
+Acceptance, and no reduced DP-016 slice is permitted.
 
 ## 29. Decision
 
