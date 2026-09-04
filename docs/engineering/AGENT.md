@@ -66,6 +66,12 @@ pull, изменение remote или изменение `main`.
 ровно один `Blocked Evidence Checkpoint` из certified evidence-only diff;
 задача при этом остаётся `Blocked` и не считается Accepted или Completed.
 
+Третий отдельный class по ND-1–ND-3 PROCESS-001: после `Negative Disposition
+Recorded` и post-decision integrity эта же точная команда разрешает ровно один
+`Negative Disposition Checkpoint`. Exact decision tuple и staged-tree match
+обязательны; это не Acceptance/BCC/Completed. Без отдельной команды stage и
+commit запрещены. LF/CRLF mismatch не получает equivalence.
+
 Перед commit Coordinator выполняет Commit Gate PROCESS-001: повторно проверяет
 message policy, exact file set, отсутствие post-acceptance, временных,
 generated и посторонних changes и применимые final checks. Для blocked
@@ -80,13 +86,14 @@ closure вместо post-acceptance проверяется неизменнос
 
 Сообщение, всё содержимое которого после удаления начальных и конечных
 пробельных символов равно `Разрешаю публиковать.`, после отдельно разрешённого
-и созданного accepted task commit либо `Blocked Evidence Checkpoint` даёт
+и созданного accepted task commit, `Blocked Evidence Checkpoint` либо
+`Negative Disposition Checkpoint` даёт
 Publisher одно разрешение на весь exact pipeline
 `preflight -> push -> create/discover PR -> inspect checks -> merge -> cleanup
 -> synchronized main -> terminal report -> STOP`.
 
 Разрешение связано с publication class, exact branch, ordered commit target,
-base `main` и accepted либо certified scope. Для blocked recovery target может включать
+base `main` и accepted, certified либо negative disposition scope. Для blocked recovery target может включать
 предшествующий process-amendment commit и exact evidence checkpoint; это не
 создаёт Coordinator Acceptance. Push и merge являются checkpoint: здоровый
 pipeline продолжается без
@@ -95,6 +102,14 @@ pipeline продолжается без
 `Авторизация готова. Продолжай ранее разрешённую публикацию.` без повторного
 `Разрешаю публиковать.`. Изменение target tuple или scope invalidates
 разрешение.
+
+Class `Negative Disposition` содержит один exact checkpoint непосредственно
+поверх base и его disposition tuple; обычные P0–P10, context/ownership,
+invalidation и recovery сохраняются. P10 означает публикацию отрицательного
+checkpoint, не Acceptance/BCC/Completion. Только reconstructed terminal P10 на
+clean synchronized main даёт `Sealed Negative Disposition`, после которого
+допустим отдельный normal intake без positive prerequisite proof. До этого
+projected In Progress не разрешает resume original work или новый intake.
 
 Initial P0 требует current exact target branch/head commit. Resume Reconstruction
 Guard reconstruct-ит checkpoints по immutable Target и после confirmed P6

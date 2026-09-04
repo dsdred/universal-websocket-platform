@@ -107,7 +107,7 @@
 
 ### Publisher
 
-Publisher интегрирует один принятый task commit после явного разрешения на
+Publisher интегрирует один допустимый accepted либо evidence target после явного разрешения на
 публикацию. Точная команда `Разрешаю публиковать.` разрешает весь pipeline
 immutable target от read-only preflight через push, Pull Request, checks,
 merge, cleanup веток, синхронизированный локальный `main`, terminal report и
@@ -182,10 +182,35 @@ Independent Review проверяет фактический код и тест�
 
 Commit создаётся только после завершения реализации в заданном scope и обязательных проверок, когда findings устранены или явно приняты. Commit фиксирует одну завершённую идею.
 
+Для evidence-only paths отдельная точная команда `Разрешаю коммит.` может
+вместо этого разрешить один Blocked Evidence Checkpoint после Blocked Closure
+Certified либо один Negative Disposition Checkpoint после Negative Disposition
+Recorded и post-decision integrity. Это не implementation Acceptance.
+Полные gates PROCESS-001 обязательны, включая exact staged-tree match;
+LF/CRLF mismatch не является equivalence. Decision не выдаёт permission.
+
 ### Publication
 
-Разрешение публикации связано с одной принятой task branch, exact task commit,
-base `main` и accepted scope:
+Разрешение публикации связано с exact class, task/repository/branch,
+ordered commit target, base `main` и scope соответствующего class:
+
+- `Accepted Task`: accepted task commit/scope;
+- `Blocked Evidence Recovery`: certified checkpoint/recovery-chain и scope;
+- `Negative Disposition`: один exact Negative Disposition Checkpoint прямо
+  поверх fixed base, его disposition tuple и negative scope.
+
+Negative Disposition следует ND-1–ND-5
+[PROCESS-001](../../engineering/PROCESS-001-AI-DEVELOPMENT-WORKFLOW.md).
+Обязательны proven ownership/preservation, exact mandatory provenance blocker,
+недоступность обычных Acceptance/BCC, независимо доказанный bounded Required
+Recovery Exhausted, полные governance testing/review, PROCESS-002 и Scope Audit.
+Известный feasible recovery route, unknown outcome обязательного источника,
+product/test changes или unresolved blocking finding запрещают этот path.
+Not Proven сохраняет uncertainty; Disproven сохраняет явное опровержение.
+Ни одно не является positive downstream evidence или successful implementation.
+
+Отдельная команда `Разрешаю публиковать.` по-прежнему нужна после отдельно
+разрешённого checkpoint. Все classes выполняют один полный pipeline:
 
 ```text
 P0 read-only preflight
@@ -323,6 +348,25 @@ fast-forward pull и safe local deletion и никогда не использу
 или rebase. Terminal success сообщает PR number/URL, task и merge commits,
 checks state, наблюдавшийся `MERGEABLE / CLEAN`, удаление обеих веток,
 `main == origin/main`, clean worktree/current `main`, а затем STOP.
+
+Для Negative Disposition P0 дополнительно проверяет exact checkpoint/base,
+decision tuple, negative facts и отсутствие Acceptance/BCC/Completed claims.
+Все capability, ownership/handoff, invalidation и phase-aware recovery rules
+выше сохраняются. P10 доказывает только публикацию negative evidence.
+Negative Disposition Recorded останавливает original work, но сохраняет
+active-task barrier. Только reconstructed terminal P10, exact merged PR/ancestry,
+удалённые task refs и clean synchronized main дают Sealed Negative Disposition.
+Последующий отдельный ordinary intake требует собственной readiness;
+publication его не активирует. Immutable checkpoint не изменяется ради записи
+его публикации. До/после decision или commit отсутствующее authority не
+выводится из status; unknown effects inspect-ятся до retry, changed targets
+invalidates прежнее authority.
+До proven P10 новое конкретное provenance evidence/pointer останавливает
+следующую mutation для независимой eligibility revalidation. Active authority
+недостаточно; failed eligibility запрещает remaining effects/P10/intake даже
+при неизменном Git target. Нельзя форсировать cleanup ради clean baseline.
+Только фактическое изменение tuple/target даёт TargetChanged. После proven
+P10 новое evidence требует отдельного authorized normal intake.
 
 ### Post-Implementation Architecture Review
 

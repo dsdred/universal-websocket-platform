@@ -3,6 +3,16 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
+Текущая recovery work — [TASK-058](TASK-058-RUNTIME-ACTIVATION-READINESS-REASSESSMENT.md):
+Projected In Progress / readiness STOP; явно разрешён только bounded process-only
+Negative Disposition checkpoint/publication contract. Chronology Not Proven;
+BCC Not Eligible; original result не Accepted. Latest decision/identity/gate
+resolve-ятся только из newest valid task envelope matching current manifest.
+Intake barrier сохраняется до ND-4 terminal P10 clean synchronized main. Последующий
+governance-design prerequisite Not Activated; TASK-026 остаётся Blocked.
+Ниже TASK-057 projected state сохраняет исторический source snapshot и не
+является разрешением продолжить TASK-058 readiness или переписать acceptance.
+
 - [TASK-000 — Repository Synchronization](TASK-000-REPOSITORY-SYNCHRONIZATION.md)
 - [TASK-000 — Repository Synchronization Report](TASK-000-REPOSITORY-SYNCHRONIZATION-REPORT.md)
 - [TASK-001 — DP-008 Snapshot Builder поверх DetachedLoadResult](TASK-001-DP-008-SNAPSHOT-BUILDER.md)

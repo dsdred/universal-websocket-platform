@@ -1,5 +1,18 @@
 # Текущее состояние
 
+**Текущая recovery boundary (2026-09-04):** TASK-058 — In Progress / readiness
+STOP; разрешена bounded general process-only поправка отдельного Negative
+Disposition checkpoint/publication class. Original bytes/identity сохранены
+losslessly; chronology создания до blocker Not Proven, BCC Not Eligible,
+original result не Accepted. Latest decision/identity/gate resolve-ятся только
+из newest valid task envelope matching current manifest; general rule и current
+eligibility проверяются раздельно. Intake barrier сохраняется до полного ND-4
+terminal P10 на clean synchronized main. Последующий governance-design prerequisite — Not
+Activated; prospective acceptance mechanism не создан. TASK-026 остаётся
+Blocked, implementation candidate Not Activated. TASK-057 projected/current-task
+формулировки ниже сохраняют source snapshot той task, а не current activation
+TASK-058 и не доказательство accepted-to-published identity equivalence.
+
 **Веха:** Beta — Complete the Single-Node Runtime
 **Статус реализации:** DP-005 Router и Runtime Foundation Tasks 1–10
 реализованы; TASK-M10-002 добавил полный Manager-aware production shutdown

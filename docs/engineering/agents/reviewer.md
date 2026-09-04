@@ -35,6 +35,14 @@ Reviewer проверяет:
 
 # Outputs
 
+При Attributed New-Record Bootstrap Recovery Reviewer отдельно проверяет
+generality, exact authorized process-only boundary, исходную preservation
+identity и current subject, historical chronology provenance и negative
+scenarios. Snapshot, timestamp, имя record и нынешняя ownership assertion не
+заменяют historical event-order proof. Approval process amendment не означает
+eligible blocked certification: незакрытый provenance finding сохраняет STOP.
+Commit/Publication permissions, sealing и prerequisite intake не расширяются.
+
 Reviewer принимает одно из решений:
 
 - Approved
@@ -50,6 +58,19 @@ Independent Review по актуальному diff.
 ---
 
 # Rules
+
+Для Negative Disposition Reviewer независимо проверяет general mechanism и
+затем current eligibility ND-1–ND-5: обязательный bounded recovery inventory,
+исключение доступного A/B и recoverable evidence, сохранность original bytes,
+Not Proven != Disproven, exact tuple, PROCESS-002, Scope Audit и Tester traces.
+Unresolved blocking finding запрещает decision/commit; process Approval не
+принимает original result. Reviewer проверяет отдельное Coordinator decision,
+post-decision integrity без self-hash и отсутствие intake до reconstructed
+terminal P10 clean main. Class C не ослабляет identity, user gates, Publisher
+ownership или P0-P10; его authorization extension допустим только по явному
+общему contract, не task-specific exception. General и application verdicts
+разделяются; одинаковый exact subject не требует blind replay, новый требует
+repeat affected gates.
 
 Reviewer не реализует изменения самостоятельно.
 

@@ -3,11 +3,13 @@
 ## Purpose
 
 Publisher выполняет одну уже разрешённую публикацию принятого task commit либо
-certified blocked-evidence recovery-chain в `main` и доводит её до полностью
+certified blocked-evidence recovery-chain либо Negative Disposition Checkpoint
+в `main` и доводит её до полностью
 проверенного terminal state.
 
 Точная команда `Разрешаю публиковать.` после отдельного разрешения и создания
-accepted task commit либо blocked evidence checkpoint даёт одно сохраняющее
+accepted task commit, blocked evidence checkpoint либо Negative Disposition
+Checkpoint даёт одно сохраняющее
 силу разрешение на полный pipeline:
 
 ```text
@@ -30,15 +32,22 @@ Push и merge являются checkpoint, а не terminal outcome.
 
 Разрешение относится ровно к immutable tuple:
 
-- publication class: `Accepted Task` или `Blocked Evidence Recovery`;
+- publication class: `Accepted Task`, `Blocked Evidence Recovery` или `Negative Disposition`;
 - exact branch и ordered commit target с head OID;
 - base branch `main`;
-- accepted либо certified scope.
+- accepted, certified либо negative disposition scope.
 
 Для `Blocked Evidence Recovery` target обязательно содержит exact `Blocked
 Evidence Checkpoint`, certification tuple и любой явно включённый contiguous
 process-amendment commit. Такой target не означает Coordinator Acceptance или
 Completion.
+
+Для `Negative Disposition` target содержит ровно один Negative Disposition
+Checkpoint непосредственно поверх fixed base, exact `Negative Disposition
+Recorded` tuple и post-decision integrity по ND-1–ND-5 PROCESS-001. Никаких
+дополнительных commits или implicit authority; отдельная user publication
+команда обязательна. Scope отрицательный, не accepted/certified. Все общие
+target/ownership/recovery/invalidation требования применимы к этому class.
 
 Оно не разрешает другой commit, branch, PR, force operation, bypass, rebase,
 reset, non-fast-forward pull или scope change. Разрешение прекращается только
@@ -90,7 +99,7 @@ canonical lowercase UUIDv4, который отсутствует во всех 
 handoff records этой publication; он opaque и не вычисляется из Target,
 identity или времени. Target фиксирует publication class, Task ID,
 repository/origin, exact branch, ordered range/head OID, base OID и
-accepted/certified scope identity. Snapshot фиксирует P0-P10 classifications,
+accepted/certified/negative-disposition scope identity. Snapshot фиксирует P0-P10 classifications,
 known refs/PR/head/base/merge OID и first unfinished step. User route и Accept
 не меняют эти поля, а append-only связывают их с exact destination identity.
 
@@ -192,7 +201,21 @@ certification tuple, статус task `Blocked`, отсутствие Coordinat
 Completion и отсутствие автоматической активации prerequisite. Несовпадение
 является target invalidation.
 
+Для Negative Disposition P0 дополнительно сверяет один checkpoint и его
+parent/base, неизменный disposition tuple/manifest, durable independent gates,
+negative provenance facts и отсутствие Acceptance/BCC/Completed claims. Все
+обычные clean/context/dual-probe/ownership preconditions обязательны. Dirty
+state нельзя убрать stash/reset; exact mismatch invalidates authority.
+
 ## Resume Reconstruction Guard
+
+Для Negative Disposition новый конкретный provenance pointer/proof до P10
+блокирует первую remaining mutation по ND-5 до independent eligibility
+revalidation. Active authority сама не преодолевает этот gate. Already completed
+effects reconstruct-ятся; нельзя форсировать cleanup/P10 ради intake. При
+failed eligibility original decision неприменимо, даже если Git Target тот же;
+лишь фактическое изменение tuple/Target означает TargetChanged. После proven
+P10 позднее evidence требует отдельного normal intake.
 
 Resume Guard не является checkpoint P0–P10 и не требует заново пройти условия
 initial P0. Он сначала reconstruct-ит completed checkpoints по immutable Target
@@ -342,6 +365,15 @@ commit target и подтверждение, что TASK остаётся `Block
 subsequent intake.
 
 Отчёт только об успешном push или merge запрещён как terminal outcome.
+
+Для Negative Disposition полный P0-P10 не сокращается. P10 подтверждает exact
+negative checkpoint/decision, сохранённый Not Proven либо Disproven outcome и
+только успешную публикацию negative evidence, не Acceptance/BCC/Completion.
+Лишь independently reconstructed P10 с MERGED PR/head/base/merge, ancestry,
+отсутствием task refs и clean synchronized main даёт Sealed Negative Disposition
+по ND-4. До этого active-task barrier сохраняется. Subsequent ordinary intake
+требует отдельного current user input и своей readiness; Publisher его не
+выполняет. Post-commit target не изменяется ради terminal report.
 
 ## Rules
 

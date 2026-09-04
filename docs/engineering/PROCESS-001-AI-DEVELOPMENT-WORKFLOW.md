@@ -104,6 +104,13 @@ branch/history всегда останавливают autonomous continuation.
 
 Coordinator выбирает ровно один bounded slice:
 
+До обычного resume он resolve-ит `Negative Disposition` по общему contract
+ниже. `Negative Disposition Recorded` останавливает исходную работу, но
+сохраняет active-task barrier до proven terminal P10 на clean synchronized
+main. Только `Sealed Negative Disposition` исключается из active work перед
+обычным ranking/readiness; это не positive prerequisite evidence. При missing
+или conflicting identity/outcome selection STOP, а не resume исходной task.
+
 1. возобновляет однозначно атрибутированную `In Progress` task; `Blocked` task
    возобновляется при наличии в репозитории evidence, что blocker устранён,
    либо только для bounded `Blocked Closure Certified` cycle, когда её exact
@@ -166,7 +173,8 @@ task-ветку, если она требуется. Task record являетс�
 - следующий candidate, который не становится active автоматически.
 
 Новая task и её ветка начинаются только с чистого, понятного baseline и при
-отсутствии другой active task. Единственное исключение — terminally published
+отсутствии другой active task. Помимо `Sealed Negative Disposition` по общему
+contract ниже, исключение — terminally published
 sealed blocked-evidence record из шага 2: он не является active work только для
 admission своего exact prerequisite. Для production work используется локальная
 ветка с префиксом `feature/`, для documentation-only work — с префиксом
@@ -221,7 +229,8 @@ product acceptance cycle.
     -> STOP
 
 Разрешаю коммит.
-    -> один проверенный accepted task commit либо Blocked Evidence Checkpoint
+    -> один проверенный accepted task commit, Blocked Evidence Checkpoint
+       либо Negative Disposition Checkpoint по соответствующему gate
     -> STOP
 
 Разрешаю публиковать.
@@ -246,7 +255,8 @@ GitHub outage/authentication failure и любом ином внешнем inter
 любой стадии PROCESS-001.
 
 Interruption сам по себе не является `PASS`, `FAIL`, `Approved`, `Accepted`,
-`Completed`, `Blocked Closure Certified` или завершённым checkpoint.
+`Completed`, `Blocked Closure Certified`, `Negative Disposition Recorded`
+или завершённым checkpoint.
 
 Обязательные инварианты:
 
@@ -402,7 +412,7 @@ process memory и model memory recovery state не являются.
   Interruption между review и Acceptance оставляет Acceptance непройденной;
   interruption после Acceptance требует доказать неизменность tuple.
 - **Commit Gate:** до stage/commit повторно reconstruct-ятся exact accepted или
-  certified tuple, index, worktree, HEAD и permission. Partial staging не
+  certified либо negative disposition tuple, index, worktree, HEAD и permission. Partial staging не
   является завершённым commit checkpoint.
 - **Publisher:** после publish permission применяется специализированный
   phase-aware Resume Reconstruction Guard. Он расширяет этот общий gate и не
@@ -416,8 +426,8 @@ read-only/inspect-first proofs:
 | Operation | Reconciliation before any retry |
 |---|---|
 | File mutation | Сравнить exact file bytes/content, expected pre/postcondition и полный diff; продолжать только отсутствующую часть без overwrite чужих changes |
-| Stage | Inspect index, worktree и exact accepted/certified path set; partial/unexpected index сначала классифицировать, не считать commit выполненным |
-| Commit | Inspect HEAD, parents, tree, message, log/reflog и exact accepted/certified subject-manifest identity; существующий exact commit принять как completed, duplicate commit запретить |
+| Stage | Inspect index, worktree и exact accepted/certified/negative-disposition path set; partial/unexpected index сначала классифицировать, не считать commit выполненным |
+| Commit | Inspect HEAD, parents, tree, message, log/reflog и exact accepted/certified/negative-disposition subject-manifest identity; существующий exact commit принять как completed, duplicate commit запретить |
 | Push | Inspect exact remote ref/OID; совпадающий OID доказывает completion, moved/ambiguous ref блокирует blind push |
 | PR creation | Искать exact repository/head OID/base PR до create; ambiguous response не создаёт duplicate |
 | Merge | Inspect exact PR state/head/base и merge OID; confirmed `MERGED` не merge-ится повторно |
@@ -663,6 +673,84 @@ Commit выполняется только при явном разрешени�
 
 ### Blocked Closure Certified
 
+#### Attributed New-Record Bootstrap Recovery
+
+Общий bounded recovery допускает новый evidence/task record без stage только
+по следующим условиям. Это не новая task, не product Acceptance и не способ
+считать dirty baseline чистым.
+
+1. **Eligibility.** Существует ровно одна однозначно атрибутированная active
+   task на её exact branch/trusted baseline. Record отсутствует в baseline,
+   предусмотрен исходным task contract и создан этой task до первого
+   обнаружения blocker, остановившего её работу. Полный inventory явно
+   перечисляет каждый такой untracked record; иных untracked, staged,
+   production/test, exploratory, generated, temporary или unowned changes нет.
+   Tracked evidence проходит остальные обычные условия blocked closure.
+2. **Provenance.** Coordinator раздельно доказывает ownership, exact bytes и
+   порядок creation/prior observation -> blocker discovery. Для каждого path
+   нужны исходный intake anchor, independently inspectable historical evidence
+   создания либо наблюдения exact bytes до blocker, связь с branch/base/scope
+   и независимая сверка полного inventory. Evidence и воспроизводимые способы
+   проверки сохраняются в repository handoff. Имя файла, filesystem timestamp,
+   reflog создания ветки, собственное утверждение record или текущее user
+   подтверждение ownership по отдельности либо вместе без исторического
+   evidence порядка событий недостаточны. Snapshot tree доказывает bytes, но
+   без event chain не доказывает chronology. Неизвестная chronology означает
+   Not Proven / STOP certification; blocker нельзя переопределить как начало
+   нынешнего bootstrap. Chat history не становится recovery state.
+3. **Pre-mutation preservation.** До первой recovery mutation фиксируются
+   repository/branch/base/HEAD, полный tracked/index/untracked inventory,
+   exact raw bytes/размер/blob OID каждого нового record, его projection и
+   полный canonical manifest по неизменному алгоритму этого процесса.
+   Исходные bytes должны быть losslessly reconstructable из durable repository
+   evidence: например, standard base64 snapshot в terminal envelope текущего
+   record, с исходными raw/projection/manifest identities и encoding/length.
+   Decode snapshot восстанавливает bytes для проверки, но не является
+   normalization текущего subject или заменой acceptance identity. До и после
+   каждого preservation transition независимая проверка воспроизводит все
+   исходные identities. Capture сегодня не доказывает прошлую chronology.
+4. **Mutation boundary.** Разрешены только необходимые blocker/status/closure/
+   navigation evidence и явно разрешённая минимальная общая process-recovery
+   поправка с обязательными contracts/mirrors/scenarios. Для такой поправки
+   требуется current explicit user authorization, exact recovery contract
+   внутри той же task, Architecture confirmation и bounded scope до edits.
+   Исторические contract/evidence сохраняются и отделяются от prospective
+   recovery scope. Lossless snapshot сохраняет оригинал при необходимом edit;
+   actual current raw/projection identity изменяется честно, а old verdict не
+   переносится. Новый record после blocker не выдаётся за eligible исходный.
+   Product work, устранение самого product prerequisite, новая task, cleanup/
+   сокрытие файла, intent-to-add, retrospective acceptance и special task
+   exception запрещены. Правило не вводит acceptance опубликованного subject.
+5. **Preparation is not certification.** Явно разрешённую общую поправку и
+   preservation можно подготовить и проверить в recovery существующей task,
+   даже если provenance eligibility ещё Not Proven. Это не снимает ни одного
+   условия certification, не меняет task status автоматически и не освобождает
+   intake. Если поправка требует иной fundamental identity semantics или
+   расширения commit/publication authority, её разработка STOP до отдельного
+   решения; task-local contract не заменяет общее правило.
+6. **Certification.** После bootstrap полный exact subject включает все
+   process changes и все eligible records: task records с task-record-v1,
+   остальные paths с full, без newline normalization. Свежие PROCESS-002,
+   independent Verification/Testing, Scope Audit и final Independent Review
+   проверяют amendment, preservation, provenance, полный scope и tuple.
+   Coordinator явно reconciles status/contract и сертифицирует только при
+   всех доказанных условиях Blocked Closure Certified ниже. Missing provenance,
+   FAIL, reviewer rejection или stale identity означают Not Certified / STOP.
+   Process review сам не является certification либо Coordinator Acceptance.
+7. **Intake safety.** Certification не является sealing/non-active admission.
+   Сохраняются отдельные обычные Commit и Publication gates, exact staged-tree
+   match, полный P0–P10, clean synchronized main и sealed-evidence exception
+   только для exact Not Activated prerequisite. Ни bootstrap, ни новый
+   untracked-record допуск не разрешают stage или новую task автоматически.
+8. **Interruption.** Capture и последующие handoffs append-only связывают
+   исходную identity с current subject, exact completed checks и первым
+   незавершённым checkpoint. Recovery сначала inspect/reconstruct/reconcile:
+   snapshot и current bytes проверяются, partial patch не replay-ится,
+   недоказанный outcome не считается completed. Mutation projected subject
+   invalidates affected gates; исключённые status/envelope bytes по-прежнему
+   требуют отдельной integrity/status reconciliation. Потеря original snapshot
+   или противоречивая provenance останавливает certification.
+
 Если выполнение остановлено отсутствующим prerequisite, Coordinator может
 сертифицировать blocked closure вместо Acceptance только при одновременном
 выполнении всех условий:
@@ -673,7 +761,11 @@ Commit выполняется только при явном разрешени�
    evidence;
 3. полный attributed diff содержит только необходимые blocking-discovery,
    closure и project-state evidence; production code, exploratory code,
-   generated, temporary, staged и untracked files отсутствуют;
+   generated, temporary и staged files отсутствуют. Untracked files запрещены,
+   кроме exact records, удовлетворяющих всем условиям Attributed New-Record
+   Bootstrap Recovery выше. Минимальные общие process-recovery contracts,
+   обязательные mirrors и scenarios разрешены только по той же boundary и
+   входят в полный certified evidence subject;
 4. Documentation Synchronization, применимая Verification Matrix, Scope Audit
    и независимый final Review завершены; blocking evidence признано полным и
    непротиворечивым, но product result не принят. Durable Tester handoff
@@ -722,6 +814,188 @@ review и scope gates; envelope не объявляет hash собственн�
 создать ровно один `Blocked Evidence Checkpoint`. Checkpoint является
 evidence/transition artifact, а не task Acceptance или Completion.
 
+### Negative Disposition
+
+Это отдельный общий documentation/process/evidence-only terminal-disposition
+path для задачи с недоказанной либо опровергнутой mandatory provenance. Он не
+меняет source precedence, exact identity или historical acceptance. Три класса
+строго различны:
+
+| Publication class | Required Coordinator decision | Commit artifact | Result semantics |
+|---|---|---|---|
+| Accepted Task | Coordinator Acceptance | accepted task commit | Принят scoped результат |
+| Blocked Evidence Recovery | Blocked Closure Certified | Blocked Evidence Checkpoint | Certified blocking evidence; task Blocked |
+| Negative Disposition | Negative Disposition Recorded | Negative Disposition Checkpoint | Только отрицательное disposition; результат не принят |
+
+`Negative Disposition Recorded` не является Coordinator Acceptance, Completed,
+Blocked Closure Certified, successful implementation, publication success или
+positive downstream proof. `Sealed Negative Disposition` — lifecycle outcome
+только после terminal publication, не новое значение Publisher transfer-attempt
+`Closed(reason)`. Обе отрицательные semantics сохраняют original result STOP.
+
+#### ND-1 — Eligibility and required recovery
+
+Все условия обязательны; удобство закрытия task не является eligibility:
+
+1. Есть ровно одна текущая однозначно атрибутированная task на exact branch и
+   trusted baseline. Ownership record и каждого changed path доказан независимо.
+   Normal Acceptance недоступна именно из-за mandatory provenance blocker;
+   обычная BCC eligibility также отсутствует. Если применим A или B, C reject.
+2. Exact mandatory proposition, affected historical identities и препятствие
+   completion/certification названы в projected task contract. `Not Proven`
+   означает отсутствие достаточного доказательства или опровержения;
+   `Disproven` означает воспроизводимое опровержение конкретного proposition.
+   Их нельзя взаимозаменять. Disproven ownership, capture integrity или current
+   identity запрещают C; допускается лишь опровергнутая scoped provenance при
+   независимо доказанных ownership, preservation и current identity.
+3. Independent Recovery Audit доказывает `Required Recovery Exhausted` на
+   exact baseline. Обязательный bounded inventory: original/current records и
+   envelopes, связанные repository handoffs, доступные Git refs/objects/reflogs,
+   все конкретно известные evidence pointers и предусмотренные действующими
+   contracts способы восстановления. Для каждого сохраняются commands/method,
+   exact source identity, outcome и limitations. Известный feasible retrieval
+   route, недоступный обязательный источник, unknown outcome проверки либо
+   неисследованный конкретный pointer означают Not Exhausted / STOP. Нельзя
+   исключить источник только ради C. Гипотетические неизвестные backups не
+   требуют бесконечного поиска. Exhaustion означает завершение этого bounded
+   recovery, не доказательство невозможности любого будущего evidence.
+4. Original bytes, identities, findings и recovery history сохранены losslessly
+   с воспроизводимой проверкой до/после каждого edit. Новый untracked record
+   допустим только как exact task-owned historical record этого inventory;
+   C не требует объявлять его pre-blocker chronology доказанной. Это отдельный
+   negative path, не exception к BCC. Создание replacement subject, deletion,
+   stash, reset, перенос/сокрытие record ради clean baseline запрещены.
+5. Полный diff состоит только из необходимых disposition/recovery records,
+   явно разрешённой общей process repair и обязательных mirrors/scenarios.
+   Production/test/module, exploratory, generated, temporary, unowned и staged
+   changes отсутствуют. C не скрывает failed implementation, failed testing
+   или review; evidence о них сохраняется, а наличие такого implementation
+   diff исключает данный bounded path.
+6. Нет unresolved blocking finding по process rule, disposition subject,
+   ownership, preservation, recovery exhaustion или negative semantics.
+   Recoverable blocker требует восстановления, не C. General mechanism approval
+   не означает eligibility конкретной task.
+
+#### ND-2 — Exact subject and independent gates
+
+До process mutation нужен explicit current user scope внутри существующей task,
+Architecture handoff, preservation anchor, applicability и Existing Coverage.
+Substantive scope/provenance proposition, negative semantics и recovery facts
+находятся в projected subject; metadata envelope не меняет их задним числом.
+Алгоритмы `task-record-v1`, raw no-filter hashing и canonical NUL manifest
+остаются неизменными. Нет LF/CRLF equivalence, новой projection либо reduced set.
+
+Сначала general rule проходит normative synchronization, independent governance
+Verification/Testing/scenarios, PROCESS-002, Scope Audit и final Independent
+Review. Только после Approval разрешена assessment конкретной task по ND-1.
+Application требует независимых Evidence Verification/Recovery Audit/Testing,
+выхода `Negative Disposition Synchronized`, Scope Audit и final Independent
+Review полного exact subject. Уже выполненные checks могут быть использованы
+только при доказанно том же subject, scope и evidence; material application
+edit invalidates затронутые gates. Reviewer не является автором amendment.
+
+До Coordinator decision фиксируется immutable disposition tuple: repository,
+object format, Task ID, branch, base branch/OID, current HEAD, exact ordered
+paths/projection/state/mode/OID rows и canonical manifest; original capture
+identities/reconstruction; exact provenance proposition и Not Proven/Disproven;
+blocker и Recovery Audit identity/limitations; negative downstream restrictions;
+durable Verifier/Tester/Reviewer handoffs с tested identity, commands/results,
+findings/limitations; PROCESS-002 и Scope Audit; next recommendation только
+Not Activated. Application Approval не принимает original task result.
+
+Coordinator только после всех gates append-only записывает
+`Negative Disposition Recorded` для этого tuple в terminal envelope. Post-decision
+integrity доказывает unchanged projected manifest, lossless original/history,
+predecessor envelope и status/contract consistency. Excluded metadata не
+self-attest-ит final raw bytes. Затем STOP перед отдельным Commit Gate.
+Изменение projected subject/tuple invalidates affected gates/decision; неизвестная
+metadata integrity требует reconciliation/повторного affected gate, не waiver.
+
+#### ND-3 — Commit and publication target
+
+Только отдельная точная команда `Разрешаю коммит.` после valid decision и
+post-decision integrity разрешает ровно один `Negative Disposition Checkpoint`.
+Все обычные Commit Gate preconditions сохраняются: exact current tuple и
+file set, message policy, отсутствие unexpected/post-decision changes,
+применимые final checks и exact staged-tree match включая проверенные allowed
+status/envelope bytes. Staging normalization mismatch означает STOP, не
+equivalence. Сообщение commit обозначает negative disposition, не Completion.
+Decision/Approval либо наличие dirty evidence не дают разрешения stage/commit.
+
+Для C ordered target — ровно один checkpoint commit непосредственно поверх
+зафиксированного base; необходимые process amendments входят в тот же exact
+subject. Multi-commit exception B не переносится. После commit Git objects
+доказывают final bytes/tree без записи OID внутрь того же commit.
+Отдельная точная команда `Разрешаю публиковать.` связывается с immutable Target:
+class Negative Disposition, Task ID, repository/origin, branch, checkpoint/head
+OID, base main/OID, disposition scope/manifest и decision tuple. Разрешение A/B
+или иного Target не переносится на C. Scope в общих Publisher/handoff/recovery
+правилах означает accepted, certified либо negative disposition identity
+соответствующего class; ни один class не может менять чужую semantics.
+
+Publisher применяет ВСЕ P0-P10 без сокращений: clean P0, exact context/dual
+capability probes и ownership, PR/checks/merge gate, safe cleanup, synchronized
+main, terminal report. C P0 дополнительно доказывает checkpoint parent/base,
+exact decision/manifest/evidence tuple, сохранённые provenance/negative facts и
+отсутствие ложного Acceptance/BCC/Completion. Несовпадение Target invalidates
+authorization. Все trusted-context transfers, revoke/invalidation, ownership
+и consumption правила остаются обязательными для exact C Target.
+
+#### ND-4 — Lifecycle, intake and later evidence
+
+Projected live sources сохраняют verification-stable In Progress и existing
+envelope-resolution rule. После valid decision original work STOP, но task
+продолжает блокировать intake до proven P10. Ни decision, ни commit, ни push,
+ни merge/P9 по отдельности не освобождают barrier. Разрешён только отдельно
+авторизованный disposition recovery/Commit/Publication path.
+
+После complete P10 Coordinator read-only reconstruct-ит exact negative target
+в ancestry main, exact MERGED PR/head/base/merge OIDs, отсутствие local/remote
+task refs, current clean main == origin/main, terminal report и сохранённую
+negative semantics. Только этот outcome называется `Sealed Negative Disposition`
+и исключает record из resumable active work. P10 сообщает лишь публикацию
+negative checkpoint; provenance не становится Proven, результат не Accepted.
+Post-merge edit immutable checkpoint ради sealing не нужен и не разрешён.
+При следующем применимом PROCESS-002 durable outcome отражается отдельно.
+
+Новый current user intake затем проходит обычные readiness/ranking, source
+precedence и отсутствие иной active work. C снимает только lifecycle barrier,
+не закрывает продуктовый prerequisite. Publisher/этот recovery не выбирает и
+не активирует следующую task. Dirty/unpublished/ambiguous outcome означает STOP.
+Только после proven P10 будущее historical evidence не переписывает sealed uncertainty/опровержение
+ретроактивно: требуется отдельный authorized normal intake на clean baseline.
+Этот contract не создаёт prospective acceptance опубликованного subject.
+
+#### ND-5 — Interruption and invalidation
+
+До proven P10 новый конкретный provenance pointer/proof останавливает первую
+ещё не завершённую mutation для независимой переоценки ND-1. Это class-C
+eligibility gate, не новое состояние общей authorization/ownership модели.
+Active permission для неизменного Target может сохраниться, но недостаточно
+для исполнения при suspended/ineligible C. Исторические decision/audit и уже
+выполненные effects сохраняются и inspect-first reconstruct-ятся. Если C
+eligibility утрачена, прежнее decision больше не применимо prospectively:
+все remaining mutations, P10 и intake запрещены даже при том же Git Target.
+Нельзя форсировать cleanup/negative publication ради clean baseline. Сам
+pointer не фабрикует revoke, consumption либо TargetChanged. Resume допустим
+лишь после независимых audit/review, доказавших применимость original exact
+tuple/decision; иначе STOP Coordinator/user без automatic replacement. Реально
+изменённый subject/decision tuple/Target следует обычной invalidation и новым
+gates. Правило отдельного subsequent intake для нового historical evidence
+в ND-4 применяется только после уже proven P10, не к pending publication.
+
+Inspect -> Reconstruct -> Reconcile -> Resume обязателен для каждого phase:
+до decision missing handoff означает incomplete, не decision; после decision
+до commit проверяются tuple/integrity и отдельное permission; после commit
+до publish permission existing exact commit не повторяется, publication STOP.
+После publish permission до P0 проверяются exact Target/authority/owner;
+для любого P0-P10 применяется existing phase-aware Resume Reconstruction Guard,
+включая main phase после P6. Unknown stage/commit/push/PR/merge/delete сначала
+inspect-ится, side effects не replay-ятся вслепую. Изменение subject/Target
+invalidates affected decision/permission; lost one-shot Commit permission
+следует общему правилу. После proven P10 — report/reconcile only, не replay
+и не automatic intake. Not Proven остаётся Not Proven, Disproven — Disproven.
+
 ## Commit Gate
 
 Точная команда `Разрешаю коммит.` после Coordinator Acceptance разрешает
@@ -735,11 +1009,17 @@ Coordinator обязан дополнительно подтвердить не�
 implementation и exact staged set, равный certified evidence file set.
 Сообщение commit должно обозначать blocked evidence, а не completion.
 
+Третья допустимая eligibility — `Negative Disposition Recorded` с успешной
+post-decision integrity по ND-1–ND-3. Та же отдельная точная команда разрешает
+ровно один Negative Disposition Checkpoint, без Acceptance или BCC. Все
+следующие проверки применяются к negative disposition tuple вместо accepted/
+certified tuple; отсутствие decision, permission или exact match означает STOP.
+
 Непосредственно перед commit Coordinator:
 
 1. проверяет соответствие commit message принятой policy;
 2. повторно проверяет полный exact file set;
-3. убеждается, что после acceptance либо certification не появились
+3. убеждается, что после acceptance, certification либо negative disposition не появились
    неожиданные изменения;
 4. исключает временные, generated и посторонние файлы;
 5. повторяет `git diff --check` и применимые final checks.
@@ -750,13 +1030,17 @@ GPG, DCO и sign-off не требуются, если отдельно не п�
 
 Publication readiness не является publication completion. После отдельного
 разрешения commit Coordinator передаёт Publisher immutable tuple: publication
-class (`Accepted Task` или `Blocked Evidence Recovery`), Task ID, exact branch,
+class (`Accepted Task`, `Blocked Evidence Recovery` или `Negative Disposition`), Task ID, exact branch,
 ordered commit target, base `main`, verification/scope и publication readiness.
 Для `Accepted Task` target содержит exact task commit и accepted scope. Для
 `Blocked Evidence Recovery` target содержит exact evidence checkpoint, его
 certification tuple и при необходимости contiguous process-amendment commit
 между base OID и checkpoint; task остаётся `Blocked`, а scope называется
 certified, не accepted.
+
+Для Negative Disposition применяются отдельные ND-3–ND-5: один exact checkpoint,
+negative disposition scope/tuple, полный P0-P10 и только negative terminal
+outcome. BCC/Accepted semantics и B multi-commit range не наследуются.
 
 ### Publisher Execution Environment Capability
 
@@ -818,7 +1102,7 @@ side effect до полного P0 capability proof. Release Handoff может 
 Target, identity или времени; uniqueness доказывается fresh generation плюс
 отсутствием прежнего record с тем же ID. Immutable Target содержит publication
 class, Task ID, repository/origin identity, exact branch, ordered commit range
-и head OID, base `main` OID и accepted/certified scope identity. Release
+и head OID, base `main` OID и accepted/certified/negative-disposition scope identity. Release
 checkpoint snapshot содержит classification P0-P10, known refs/PR/head/base/
 merge OID и first unfinished step на момент Release. После Release ни одно
 поле Transfer Identity или snapshot не изменяется. User route и Accept record
@@ -836,7 +1120,7 @@ merge OID и first unfinished step на момент Release. После Release
    создают;
 3. destination до mutation выполняет `Inspect -> Reconstruct -> Reconcile`,
    сверяет repository identity, publication class, Task ID, branch, ordered
-   commit target/head OID, base `main`, accepted/certified scope, clean
+   commit target/head OID, base `main`, accepted/certified/negative-disposition scope, clean
    worktree, refs, PR/merge state и первый незавершённый checkpoint;
 4. destination выполняет оба exact-context capability probe и только после их
    успеха выпускает `Accept Handoff`, цитирующий exact transfer ID,
@@ -1030,7 +1314,7 @@ branch/HEAD/worktree/refs, unblock action
 replay uncertain mutation запрещён.
 
 Dirty/ambiguous baseline является safety failure; изменение publication class,
-branch, ordered commit target/target head OID, base или accepted/certified scope
+branch, ordered commit target/target head OID, base или accepted/certified/negative-disposition scope
 invalidates exact authority. Они отличаются от SSH, `gh`,
 repository, PR, checks, merge-gate/protection и cleanup external blockers.
 
@@ -1187,6 +1471,8 @@ P0–P10 publication с clean synchronized baseline.
 
 Запрещается:
 
+- считать Negative Disposition Acceptance, BCC, Completed или positive proof;
+- снимать active-task barrier C до полного ND-4 terminal publication outcome;
 - писать код до необходимого архитектурного анализа;
 - менять архитектуру внутри implementation stage;
 - документировать предположение как факт;

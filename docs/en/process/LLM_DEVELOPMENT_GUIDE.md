@@ -107,7 +107,7 @@ No role may assume the authority assigned to another role merely to keep impleme
 
 ### Publisher
 
-The Publisher integrates one accepted task commit after explicit publication
+The Publisher integrates one admissible accepted or evidence target after explicit publication
 authorization. The exact command `Разрешаю публиковать.` authorizes the whole
 immutable-target pipeline from read-only preflight through push, Pull Request,
 checks, merge, branch cleanup, synchronized local `main`, terminal report, and
@@ -182,10 +182,35 @@ If review exposes an architectural defect, implementation pauses. The model is a
 
 A commit is created only after the scoped implementation and required verification are complete and review findings have been resolved or explicitly accepted. The commit records one completed idea.
 
+For evidence-only paths, the separate exact command `Разрешаю коммит.` may
+instead authorize one Blocked Evidence Checkpoint after Blocked Closure
+Certified, or one Negative Disposition Checkpoint after Negative Disposition
+Recorded and post-decision integrity. These are not implementation Acceptance.
+The complete gates in PROCESS-001 remain mandatory, including exact staged-tree
+matching; LF/CRLF mismatch is not equivalence. No decision grants permission.
+
 ### Publication
 
-Publication authorization is bound to one accepted task branch, exact task
-commit, base `main`, and accepted scope:
+Publication authorization is bound to the exact class, task/repository/branch,
+ordered commit target, base `main`, and class-specific scope:
+
+- `Accepted Task`: accepted task commit/scope;
+- `Blocked Evidence Recovery`: certified checkpoint/recovery-chain and scope;
+- `Negative Disposition`: one exact Negative Disposition Checkpoint directly
+  above the fixed base, its disposition tuple and negative scope.
+
+Negative Disposition follows ND-1–ND-5 in
+[PROCESS-001](../../engineering/PROCESS-001-AI-DEVELOPMENT-WORKFLOW.md).
+It requires proven ownership/preservation, an exact mandatory provenance
+blocker, unavailable normal Acceptance/BCC, independently demonstrated bounded
+Required Recovery Exhausted, full governance testing/review, PROCESS-002 and
+Scope Audit. A known feasible recovery route, unknown required-source outcome,
+product/test changes or unresolved blocking finding rejects this path.
+Not Proven remains uncertainty; Disproven retains its explicit refutation.
+Neither is positive downstream evidence or successful implementation.
+
+The separate command `Разрешаю публиковать.` remains required after the
+separately authorized checkpoint. All classes execute the same complete pipeline:
 
 ```text
 P0 read-only preflight
@@ -327,6 +352,24 @@ local deletion, and never uses force, reset, or rebase. Terminal success
 reports PR number/URL, task and merge commits, checks state, observed
 `MERGEABLE / CLEAN`, both branch deletions, `main == origin/main`, clean
 worktree/current `main`, and then STOP.
+
+For Negative Disposition, P0 additionally verifies the exact checkpoint/base,
+decision tuple, negative facts and absence of Acceptance/BCC/Completed claims.
+All capability, ownership/handoff, invalidation and phase-aware recovery rules
+above apply unchanged. P10 proves only publication of negative evidence.
+Negative Disposition Recorded stops original work but keeps the active-task
+barrier. Only reconstructed terminal P10, exact merged PR/ancestry, removed task
+refs and clean synchronized main yield Sealed Negative Disposition. A later
+separate ordinary intake still needs its own readiness; publication does not
+activate it. No immutable checkpoint is edited to record its publication.
+Before/after decision or commit, missing authority never follows from a status;
+unknown effects are inspected before retry, and changed targets invalidate it.
+Before proven P10, new concrete provenance evidence/pointers halt the next
+mutation for independent eligibility revalidation. Active authority is not
+sufficient; failed eligibility forbids remaining effects/P10/intake even with
+an unchanged Git target. Do not force cleanup to obtain a clean baseline.
+Only an actual tuple/target change triggers TargetChanged. After proven P10,
+new evidence instead requires a separate authorized normal intake.
 
 ### Post-Implementation Architecture Review
 

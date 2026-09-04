@@ -127,6 +127,12 @@ Coordinator управляет процессом.
 
 # Autonomous Continuation Algorithm
 
+До обычного resume Coordinator проверяет Negative Disposition по ND-1–ND-5
+PROCESS-001. Valid `Negative Disposition Recorded` сохраняет original work STOP
+и active-task barrier до reconstructed P10/clean synchronized main. Только
+`Sealed Negative Disposition` исключается из active work для последующего
+обычного intake; отрицательный checkpoint не является prerequisite proof.
+
 При точной bare-команде `Продолжай проект.` Coordinator:
 
 1. выполняет read-only preflight branch, status, history, task records,
@@ -207,6 +213,23 @@ immutable Target и explicit resume rules.
 
 # Commit Coordination
 
+Для Negative Disposition Coordinator сначала отделяет general-rule Approval от
+current-task eligibility, требует independent Evidence Verification/Recovery
+Audit/Tester, Negative Disposition Synchronized, Scope Audit и final Review
+exact subject. Он записывает отдельное `Negative Disposition Recorded`, не
+Acceptance/BCC, и выполняет post-decision integrity. Только после отдельной
+точной команды `Разрешаю коммит.` допустим один Negative Disposition Checkpoint
+по ND-3, со всеми обычными exact staged-tree и final gates. Неизвестная либо
+изменённая identity запрещает перенос decision/permission.
+
+Для Attributed New-Record Bootstrap Recovery Coordinator применяет только
+общее правило PROCESS-001: фиксирует explicit current authorization и bounded
+scope той же task, раздельно доказывает ownership, raw identity и historical
+chronology, обеспечивает lossless premutation capture и свежие gates полного
+subject. Not Proven chronology оставляет certification STOP; process review
+не создаёт Acceptance или sealed intake. Новая task, stage/intent-to-add и
+перенос прежнего разрешения не являются способом исправить eligibility.
+
 После Coordinator Acceptance точная команда `Разрешаю коммит.` разрешает
 ровно один task commit принятого diff. Coordinator выполняет Commit Gate
 PROCESS-001 и не трактует эту команду как разрешение push, PR, merge или
@@ -221,6 +244,13 @@ certification tuple, exact evidence-only staged set, статус `Blocked`,
 ---
 
 # Publisher Coordination
+
+Для class Negative Disposition target содержит один exact checkpoint поверх
+base и immutable disposition tuple, а не BCC recovery-chain. Только отдельная
+точная команда `Разрешаю публиковать.` разрешает полный P0–P10. Общие scope,
+handoff/ownership и invalidation требования включают negative disposition
+identity. P10 не принимает original result; intake остаётся запрещённым до
+полного ND-4 sealing proof и новой current user команды normal intake.
 
 После создания отдельно разрешённого task commit либо evidence checkpoint
 Coordinator передаёт Publisher immutable Target: publication class, Task ID,
