@@ -8,6 +8,20 @@
 
 ## Текущее состояние
 
+- Current recovery boundary (2026-09-04): TASK-058, projected In Progress /
+  readiness STOP, выполняет явно разрешённую общую process-only поправку
+  отдельного Negative Disposition checkpoint/publication class. Original bytes
+  и identity сохраняются losslessly; chronology до blocker Not Proven,
+  BCC Not Eligible, original result не Accepted. Latest decision/identity/gate
+  берутся только из newest valid task envelope matching current manifest;
+  правило и его применение проверяются раздельно. Intake barrier сохраняется
+  до полного ND-4 terminal P10 на clean synchronized main.
+  Task record является recovery anchor; последующий governance-design prerequisite
+  Not Activated, prospective acceptance mechanism не создан. TASK-026 остаётся
+  Blocked, implementation candidate Not Activated. Последующие TASK-057
+  projected/current-task формулировки ниже сохраняют source snapshot той task,
+  не current activation TASK-058 и не proof accepted-to-published equivalence.
+
 - Текущая веха: **Beta — Complete the Single-Node Runtime**
 - Статус реализации: **Control Service, single-node Runtime vertical,
   Configuration Loader boundary, DP-008 Snapshot Builder, DP-009 Runtime

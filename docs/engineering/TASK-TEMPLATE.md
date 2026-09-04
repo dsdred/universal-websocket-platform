@@ -4,6 +4,10 @@
 
 `Planned`, `In Progress`, `Blocked` или `Completed`.
 
+Для Negative Disposition projected In Progress сохраняется; отдельное
+Negative Disposition Recorded и позднейшее Sealed Negative Disposition
+resolve-ятся по ND-1–ND-5 PROCESS-001, не выдаются за Completed/BCC/Acceptance.
+
 ## Task Contract
 
 ### Task Mode
@@ -175,7 +179,7 @@ generated, formatting-only и незадокументированное planned
 ## Commit Gate
 
 - exact command `Разрешаю коммит.` получена: да/нет;
-- gate class: `Coordinator Accepted` / `Blocked Closure Certified` / not ready;
+- gate class: `Coordinator Accepted` / `Blocked Closure Certified` / `Negative Disposition Recorded` / not ready;
 - commit message policy:
 - exact file set:
 - post-acceptance/certification diff:
@@ -204,6 +208,43 @@ generated, formatting-only и незадокументированное planned
 - `Blocked Closure Certified`: да/нет, кем и когда;
 - exact checkpoint commit OID либо `not authorized/not created`:
 
+### Attributed New-Record Bootstrap Recovery (если применимо)
+
+- current explicit bootstrap authorization и exact bounded recovery scope:
+- original task contract/evidence сохранены; prospective scope отделён:
+- полный inventory и отсутствие other-active/unowned/staged/product changes:
+- каждый new record: baseline absence, original scope и ownership evidence:
+- independent historical creation/prior-byte observation -> blocker discovery
+  evidence, источник/порядок событий и воспроизводимая проверка; Not Proven
+  запрещает certification, даже если текущая attribution подтверждена:
+- premutation branch/base/HEAD, original raw bytes/length/blob OID, projection
+  и canonical rows/manifest; durable lossless snapshot и encoding:
+- original identity reconstruction до/после; current full subject отдельно:
+- allowed process/mirror/scenario changes и обязательная applicability:
+- fresh PROCESS-002, Tester, Scope Audit, final Review и status reconciliation:
+- eligibility verdict; certification отдельно от process review/Acceptance:
+- first incomplete checkpoint; no new task before ordinary sealing/intake:
+
+### Negative Disposition (если применимо)
+
+- general mechanism Approval отдельно от current-task eligibility:
+- exact mandatory provenance proposition: Not Proven / Disproven и evidence:
+- почему A/B недоступны; независимое ownership полного path set:
+- Required Recovery Exhausted: records/handoffs/refs/objects/reflogs/known
+  evidence pointers, commands/results/identities/limitations; известный
+  feasible route или недоступный обязательный источник запрещает C:
+- original bytes/identities/history losslessly reconstructable:
+- evidence/process-only diff; отсутствие product/test/module/staged/unowned:
+- exact disposition tuple/rows/manifest по ND-2 без новой projection:
+- Independent Evidence Verifier/Recovery Audit/Tester и governance scenarios:
+- Negative Disposition Synchronized; Scope Audit; final Independent Review:
+- Coordinator Negative Disposition Recorded либо missing/rejected:
+- post-decision integrity; no self-hash, no normalization:
+- original work STOP; active-task barrier до ND-4 terminal P10:
+- отдельные Commit/Publication permissions: absent/present, не из record:
+- checkpoint: not created либо externally reconstructable exact OID:
+- после P10: Sealed Negative Disposition, только negative downstream semantics:
+
 ## Process Health
 
 - trigger применим: да/нет и причина;
@@ -220,12 +261,12 @@ generated, formatting-only и незадокументированное planned
 ## Publication
 
 - publication readiness отдельно от completion;
-- publication class: `Accepted Task` / `Blocked Evidence Recovery`;
+- publication class: `Accepted Task` / `Blocked Evidence Recovery` / `Negative Disposition`;
 - repository:
 - exact branch:
 - ordered commit target и head OID:
 - base `main`:
-- accepted/certified verification и scope:
+- accepted/certified/negative-disposition verification и scope:
 - Publisher P0–P10 state или `not authorized`;
 - при blocker: completed steps, exact first unfinished step, preserved state и
   phase (`task branch` до P6 либо `main` после P6), known PR/merge OID и
@@ -289,7 +330,9 @@ task commit; durable post-publication запись выполняется тол
 ## Closure
 
 - Final status:
-- closure class: `Coordinator Accepted` / `Blocked Closure Certified`;
+- closure class: `Coordinator Accepted` / `Blocked Closure Certified` / `Negative Disposition Recorded`;
+- при Negative Disposition: original work STOP, Not Proven/Disproven сохранено,
+  не Accepted/BCC/Completed; sealing/intake только по полному ND-4 outcome:
 - при blocked closure: подтверждение, что task не Accepted/Completed и
   prerequisite не активирован;
 - Closed by:

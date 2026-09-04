@@ -4,8 +4,9 @@
 
 Эти process scenarios проверяют контракт Publisher из
 [PROCESS-001](PROCESS-001-AI-DEVELOPMENT-WORKFLOW.md) и
-[Publisher role](agents/publisher.md). Во всех сценариях accepted task commit
-либо blocked evidence checkpoint уже создан по отдельной команде
+[Publisher role](agents/publisher.md). Если scenario не проверяет отсутствие
+checkpoint, admissible accepted task commit, blocked evidence checkpoint либо
+negative disposition checkpoint уже создан по отдельной команде
 `Разрешаю коммит.`.
 
 Общий pre-publication и cross-pipeline interruption contract проверяется
@@ -107,7 +108,7 @@ Publisher не удаляет ref. P5 остаётся незавершённы�
 ## S-014 — Target invalidation
 
 Given publication class, branch, ordered commit target/head OID, base или
-accepted/certified scope изменились, read-only
+accepted/certified/negative-disposition scope изменились, read-only
 preflight останавливает pipeline до mutation. Это invalidation exact authority,
 а не внешний blocker; старое разрешение не применяется к новому target.
 
@@ -326,3 +327,21 @@ forbidden until exact Accept establishes the destination owner or valid
 `CancelledBeforeAccept` restores the releasing owner. `NoneTerminal`, `Unknown`
 or missing owner proof cannot create P10. Каждый terminal event содержит reason
 и authorization/owner disposition; fabricated ID запрещён.
+
+## Negative Disposition — S-041–S-049
+
+These documentation decision scenarios extend, not replace, S-001–S-040.
+Trace: ND-3–ND-5 PROCESS-001 and Publisher Authorization/P0/Terminal Success.
+They do not execute publication.
+
+| ID | Given / When | Required result |
+|---|---|---|
+| S-041 | Valid negative decision and separately authorized exact checkpoint, no publication permission | P0-P10 side effects forbidden; new exact publication gate required |
+| S-042 | Permission for Negative Disposition exact single checkpoint/base/tuple; all P0 proofs succeed | Full unchanged P0-P10; no A/B relabeling or extra commit range |
+| S-043 | Negative tuple changed, wrong class, extra commit, changed parent/base or stale manifest | Target invalidation; no reuse of permission |
+| S-044 | C P0 dirty, API-only/Git-only capability or unknown/released owner | STOP before mutation; all ordinary dual probes/ownership required |
+| S-045 | Interruption at each P0-P10 with known/unknown outcomes | Inspect exact remote/PR/merge/ref facts first; before P6 task phase, after P6 main phase, no replay completed mutation |
+| S-046 | C handoff/revoke/target mismatch/P10 | Same three-axis ownership/authorization protocol S-026–S-040; no new authority from negative class |
+| S-047 | Exact negative P10 plus MERGED PR/ancestry, both refs absent, clean synchronized main | Report negative-only publication and Sealed Negative Disposition; no original Acceptance/BCC/Completed or automatic next task |
+| S-048 | Negative merge/P9 but no terminal P10, dirty main, missing terminal evidence, or downstream positive use | No sealing/intake release; positive proof rejected; preserve original Not Proven/Disproven |
+| S-049 | New concrete provenance pointer arrives after decision or mid-publication, including after merge before P10 | ND-5 holds first remaining mutation; independently revalidate eligibility, preserve/reconstruct prior effects; no forced cleanup/P10, no fabricated TargetChanged if tuple unchanged; after failed eligibility STOP |

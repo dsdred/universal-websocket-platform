@@ -318,6 +318,27 @@ transfer ID даёт ownership `Unknown` и STOP.
 
 ## Coverage Matrix
 
+### New-record bootstrap decision scenarios
+
+R-037–R-048 trace to the numbered clauses of Attributed New-Record Bootstrap
+Recovery in PROCESS-001 and PROCESS-002 Durable Blocked-Closure Evidence.
+These are process proof/regression scenarios, not product implementation tests.
+
+| ID | Given / When | Required result | Trace |
+|---|---|---|---|
+| R-037 | One active task; trusted branch/base; original-scope record absent from baseline; independent exact-byte observation before blocker; complete capture and all fresh checks/status reconciliation succeed | Coordinator may certify Blocked closure without stage; no product Acceptance or new task | 1–3, 6–7 |
+| R-038 | Extra/unowned, product, temporary, generated or unlisted untracked path | Eligibility fails; naming it evidence, hiding/deleting it or stage/intent-to-add cannot bypass intake | 1, 4, 7 |
+| R-039 | Current ownership and snapshot bytes match, but chronology has only branch reflog, timestamps and record/user assertions | Chronology Not Proven; certification STOP; new capture/review cannot create historical event evidence | 2–3, 6 |
+| R-040 | Record/anchor was created after blocker discovery | Not eligible; backdating or redefining blocker as bootstrap start rejected | 1–2, 4 |
+| R-041 | Lossless original capture has encoding, size and raw/projection/manifest identities; authorized current contract edit occurs | Reconstruct all original identities; compute distinct current subject; historical snapshot is not replacement acceptance or chronology proof | 3–4, 6 |
+| R-042 | Snapshot loses/changes a byte or LF/CRLF is normalized before hashing | Preservation/identity fails; certification STOP despite similar rendered text | 3, 6, 8; canonical identity |
+| R-043 | No explicit current bootstrap authorization, or proposal adds product work, published-subject acceptance, task-specific exception or expanded commit/publication authority | Process mutation STOP; precedent/task-local contract grants no exemption | 4–5, 7 |
+| R-044 | General amendment and preservation pass, chronology remains Not Proven | Separate process result; PROCESS-002 Blocked; no Acceptance/certification or automatic task status/intake transition | 5–6; PROCESS-002 |
+| R-045 | Mandatory verification fails or Reviewer rejects current subject | Not Certified; bounded rework repeats affected checks; old PASS/Approved cannot transfer | 6, 8 |
+| R-046 | Capture/edit started but outcome unknown after interruption | Inspect actual original/current bytes and inventory; missing capture blocks dependent mutation; partial edit reconciled without blind replay | 3, 8 |
+| R-047 | After review/certification projected current subject changed, or excluded status/envelope integrity is unproven | Invalidate affected gates for projected change; separately reconcile excluded metadata; no inferred certification | 6, 8 |
+| R-048 | Certified evidence or checkpoint exists, but terminal publication/clean-main proof absent | No prerequisite activation; separate gates, full P0–P10 and exact sealed admission remain required | 7; ordinary intake |
+
 | Required area | Scenarios |
 |---|---|
 | Model/time, network, session/process crash, host restart, tool timeout/failure, GitHub outage/auth failure | R-001, R-005, R-016, R-023, R-026 |
@@ -332,8 +353,49 @@ transfer ID даёт ownership `Unknown` и STOP.
 | Blocked closure canonical subject and durable Tester evidence | R-029–R-030 |
 | Exact-context capability and user/sandbox identity separation | R-031 |
 | Trusted-context handoff interruption, ownership, return and terminal disposition | R-032–R-036 |
+| New-record eligibility, chronology, preservation, scope and certification | R-037–R-045 |
+| Interrupted bootstrap and unchanged sealed-intake gates | R-046–R-048 |
 
 ## Acceptance
+
+### Negative disposition decision scenarios
+
+R-049–R-073 exercise the distinct general ND-1–ND-5 PROCESS-001 class C.
+Each row is a reproducible governance decision trace, not a runtime test or
+evidence that publication was executed. Earlier A/B and interruption scenarios
+remain mandatory in their original scope.
+
+| ID | Given / When | Required result | Trace |
+|---|---|---|---|
+| R-049 | Normal Accepted task can use A | C reject; use ordinary A gate | ND-1.1 |
+| R-050 | Task is eligible for BCC | C reject; use B, not a negative substitute | ND-1.1 |
+| R-051 | Not Proven; known feasible recovery route remains | C reject/STOP to recover evidence | ND-1.3 |
+| R-052 | Not Proven; bounded required inventory exhausted, all other eligibility proven | C candidate only; general Approval does not decide application | ND-1, ND-2 |
+| R-053 | Scoped chronology Disproven, ownership/capture proven, recovery and other gates pass | Explicit Disproven negative candidate; never relabel Not Proven or positive proof | ND-1.2 |
+| R-054 | Ownership not proven or another task owns record | C reject, not a provenance waiver | ND-1.1, ND-1.4 |
+| R-055 | Unexplained production/test/module diff | C reject; no hiding failed implementation | ND-1.5 |
+| R-056 | Reviewer has unresolved blocking finding on disposition subject | Decision and commit reject | ND-1.6, ND-2 |
+| R-057 | All reviews pass but Coordinator decision absent | Commit Gate reject; Approved is not disposition | ND-2–ND-3 |
+| R-058 | Valid decision, user commit permission absent | Stage/commit reject | ND-3 |
+| R-059 | Exact projected subject/tuple changes after decision | Affected eligibility/decision/permission invalid; repeat affected gates | ND-2, ND-5 |
+| R-060 | Exact checkpoint exists, no publication permission | Publication reject; commit not replayed | ND-3, ND-5 |
+| R-061 | Publication permission binds a different target or A/B class | C reject; no authority transfer | ND-3 |
+| R-062 | Interruption in any P0-P10 | Inspect/Reconstruct/Reconcile/Resume exact first unfinished phase; no blind side effects | ND-5; Publisher Guard |
+| R-063 | Exact P10 proven; merged ancestry/refs/clean synchronized main match | Sealed Negative Disposition removes only active-task barrier; next separate ordinary intake checks readiness | ND-4 |
+| R-064 | Decision/commit/push/merge exists but unpublished, dirty or no P10 | Intake reject; projected In Progress never resumes original work after valid decision | ND-4 |
+| R-065 | Downstream proof cites C as accepted result or repaired prerequisite | Reject; C only establishes negative disposition | ND-1, ND-4 |
+| R-066 | Delete/stash/move/reset record to make baseline clean | Reject; preserve original history | ND-1.4 |
+| R-067 | Ownership or capture integrity is Disproven | Reject, unlike scoped provenance Disproven | ND-1.2 |
+| R-068 | Snapshot altered or LF/CRLF treated equivalent; staged bytes differ | Preservation/identity/Commit Gate reject; no normalization rule | ND-1.4, ND-2–ND-3 |
+| R-069 | Interruption before decision or after decision before commit | Before: no decision; after: verify tuple/integrity, separate one-shot permission still required | ND-5 |
+| R-070 | Commit response unknown; publish permission absent | Inspect exact Git tree/parent/OID before any retry; proven commit not repeated, publication STOP | ND-5 |
+| R-071 | Publish permission received, interruption before P0 | Reconstruct exact C Target/authority/owner; P0 still first unfinished | ND-3, ND-5 |
+| R-072 | P10 proven completed; new historical evidence then appears | Report/reconcile only; no replay/retroactive rewrite; new evidence requires separate authorized normal intake | ND-4–ND-5 |
+| R-073 | New concrete provenance pointer/proof after decision before commit, or during publication before P10 | Hold first remaining mutation; independently re-evaluate ND-1; failed eligibility forbids remaining effects/P10/intake even unchanged Git target; preserve effects/authority axes, no forced cleanup; resume only proven original tuple validity | ND-5 |
+
+Additional boundary for R-051/R-052: an inaccessible mandatory source, an
+unknown inspection outcome or an uninspected concrete pointer is Not Exhausted.
+No hypothetical-archive search is required, but known sources cannot be omitted.
 
 Contract passes only if every scenario is traceable to normative PROCESS-001,
 PROCESS-002 or role text; negative assertions (`no verdict`, `no blind retry`,

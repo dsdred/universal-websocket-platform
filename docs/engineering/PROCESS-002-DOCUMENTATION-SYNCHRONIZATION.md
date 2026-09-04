@@ -23,6 +23,7 @@
 - после изменения модели данных;
 - при передаче задачи другому агенту;
 - перед `Blocked Closure Certified`;
+- перед `Negative Disposition Recorded`;
 - по запросу Coordinator.
 
 ---
@@ -169,7 +170,8 @@ checks, push pending, temporary branch/worktree condition, первый
 resume state принадлежат Publisher blocker/terminal report и при resume
 реконструируются read-only из Git/GitHub.
 
-Причина: accepted task commit либо blocked recovery-chain является immutable
+Причина: accepted task commit, blocked recovery-chain либо Negative Disposition
+Checkpoint является immutable
 publication target.
 Записывать transient blocker state в этот commit после выдачи publish
 authority означало бы изменить OID и invalidate разрешение.
@@ -251,6 +253,26 @@ text не доказывает допустимый transition.
 
 ### Durable Blocked-Closure Evidence
 
+Для Attributed New-Record Bootstrap Recovery из PROCESS-001 Documentation
+Agent сначала сохраняет lossless premutation capture и исходные raw/projection/
+manifest identities. Ownership, exact byte retention и доказанный порядок
+creation/prior observation -> blocker discovery фиксируются раздельно.
+Отсутствующее historical chronology evidence нельзя заменить текущим capture,
+timestamp, user ownership assertion либо утверждением внутри самого record.
+Исторический record не переписывается как будто bootstrap уже существовал:
+prospective recovery contract явно отделяется, оригинальные bytes сохраняются
+losslessly, current identity считается заново без normalization.
+
+Applicability inventory включает PROCESS-001/002, task template, general
+recovery scenarios, Coordinator/Tester/Reviewer contracts, task navigation и
+project state; AGENT, Publisher/scenarios и EN/RU process guides проверяются
+на противоречия, а не меняются автоматически. Полный subject включает bounded
+process amendment и каждый eligible record, без arbitrary untracked paths.
+Подготовленная/проверенная process amendment при Not Proven provenance не
+получает выход Blocked Evidence Synchronized: результат Blocked, certification
+не пройдена. Смена status требует отдельной reconciliation; readiness и
+historical acceptance не выводятся из process repair.
+
 Перед выходом `Blocked Evidence Synchronized` Documentation Agent фиксирует
 точный subject, который будет проверяться certification pipeline. В subject
 входит task record с projection `task-record-v1`; каждый другой present
@@ -285,6 +307,35 @@ authority на изменённый diff.
 # Outputs
 
 Результатом процесса является один из статусов.
+
+## Negative Disposition Synchronized
+
+Отдельный выход для class C по ND-1–ND-5 PROCESS-001, не Blocked Evidence
+Synchronized. Он требует согласованного полного disposition subject:
+
+- projected scope/provenance proposition, Not Proven либо Disproven и их
+  negative semantics; original result STOP, без Acceptance/BCC/Completed;
+- lossless historical preservation, independently verified ownership, bounded
+  Required Recovery Exhausted inventory с exact outcomes/limitations и без
+  unresolved known feasible evidence retrieval;
+- exact current paths/rows, неизменные task-record-v1/canonical raw identity,
+  durable Evidence Verifier/Tester/Recovery Audit handoffs; отдельные Scope
+  Audit, final Review и Coordinator decision ещё не выводятся из sync;
+- applicability PROCESS-001/002, AGENT, Coordinator/Publisher/Tester/Reviewer,
+  task template, recovery и Publisher scenarios, EN/RU process guides,
+  task/index/context/current-state; остальные documents с явными причинами N/A;
+- projected live In Progress и newest-matching-envelope resolution, отсутствие
+  duplicated mutable decision/checkpoint; intake barrier до ND-4 P10 sealing;
+- stable negative publication facts отражаются только при последующем
+  применимом sync после Git/GitHub reconstruction, не edit immutable target.
+
+General-rule synchronization/Approval оцениваются до application eligibility.
+Not Proven запрещает BCC, но само по себе не запрещает этот отдельный C output,
+если все ND-1 conditions доказаны. Missing ownership, preservation, recovery
+exhaustion, stale identity либо blocking disposition finding дают Blocked.
+Этот output не является Coordinator decision, commit или publication authority.
+При неизменном subject applicable verified checks не повторяются; material
+application edit invalidates affected downstream gates. Product DoD не выполнен.
 
 ## Synchronized
 
@@ -321,6 +372,10 @@ authority на изменённый diff.
 - свежий durable Tester handoff точно привязан к manifest identity и содержит
   команды, exit/results, limitations, scope/coverage counts и reproducible
   evidence.
+- для нового untracked record eligibility, historical chronology и lossless
+  preservation по PROCESS-001 доказаны независимо; scope содержит только
+  атрибутированные records и допустимый bounded process repair. Иначе результат
+  Blocked, а не Blocked Evidence Synchronized.
 
 Выход `Blocked Evidence Synchronized` разрешает Coordinator продолжить
 certification checks, но сам не является certification, commit или
