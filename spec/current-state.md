@@ -1,14 +1,15 @@
 # Текущее состояние
 
-**Текущая boundary (2026-09-05):** TASK-058 достигла terminal P10 и является
-`Sealed Negative Disposition` на clean synchronized
-`main@8ce7b9095b2d56e065034bb031b6d5806eab87c8` через PR #60. Chronology и
-historical accepted-to-published equivalence остаются `Not Proven`; original
-result не Accepted. TASK-059 projected `In Progress` и проектирует общий IPSPA
-protocol для нового prospective evidence event над immutable published
-Git-object subject. Этот design не re-accept-ит TASK-057/058, не переписывает
-historical axis и не активирует application phase. TASK-026 остаётся Blocked,
-implementation candidate Not Activated.
+**Текущая boundary (2026-09-05):** TASK-059 Completed и опубликована
+через PR #61 по immutable local merge metadata на synchronized
+`main@600dc10b737ce2dfda550379a6ec68e3b680f959`; она определила общий IPSPA
+protocol. TASK-060 projected `In Progress`: exact event
+`9199e91e-82cf-4b94-8e9d-c81ba91015b6` прошёл fresh verification для
+четырёх named TASK-057 claims; latest event state и identity resolve только
+из newest valid envelope, совпадающего с independently recomputed `S/E`.
+Historical Equivalence TASK-057 остаётся `Not Proven`; TASK-058 —
+`Sealed Negative Disposition`; TASK-026 остаётся Blocked, а reassessment —
+Not Activated.
 
 **Веха:** Beta — Complete the Single-Node Runtime
 **Статус реализации:** DP-005 Router и Runtime Foundation Tasks 1–10
@@ -135,13 +136,14 @@ repeat Tester `PASS` 0/0/0; Independent Reviewer `APPROVED` 0/0; Scope Audit
 closure baseline TASK-045 и позднее superseded recheck TASK-026. Commit и
 publication на closure не выполнялись.
 
-**Текущее documentation state:** TASK-057 remains projected `In Progress`;
-latest verdict and checkpoint resolve only from the newest valid Recovery
-Evidence Envelope matching recomputed current bytes. Projected content records
-isolated replay-first/late-generation implementation truth without Acceptance,
-Completion, public capability, production wiring, or TASK-026 activation.
-TASK-026 remains Blocked; its post-TASK-057 readiness reassessment is `Not
-Activated`.
+**Текущее documentation state:** TASK-060 projected `In Progress`; exact IPSPA
+event для immutable TASK-057 subject прошёл fresh verification по четырём
+named claims. Latest verdict, identity и checkpoint resolve только из newest
+valid Recovery Evidence Envelope matching independently recomputed `S/E`.
+Historical Equivalence remains `Not Proven`; the exact prospective decision
+resolves only from the newest valid envelope matching recomputed `S/E`.
+TASK-026 remains Blocked, reassessment `Not Activated`; production wiring
+отсутствует.
 
 **Текущая architecture task:** отсутствует. Fresh Architect recheck TASK-026
 завершён verdict `READY — UNBLOCK TASK-026`; matrix 7/10/2/0/0/0. Это readiness

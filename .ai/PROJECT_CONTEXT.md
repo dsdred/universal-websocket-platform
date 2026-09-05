@@ -8,15 +8,16 @@
 
 ## Текущее состояние
 
-- Current boundary (2026-09-05): TASK-058 опубликована через PR #60 как
-  `Sealed Negative Disposition` на clean synchronized
-  `main@8ce7b9095b2d56e065034bb031b6d5806eab87c8`; chronology и historical
-  accepted-to-published equivalence остаются `Not Proven`, original result не
-  Accepted. Active TASK-059 проектирует общий IPSPA protocol для нового
-  independently verified prospective event над immutable published Git-object
-  subject. TASK-059 projected `In Progress`; она не re-accept-ит TASK-057/058,
-  не создаёт historical equivalence и не активирует следующий candidate.
-  TASK-026 остаётся Blocked, implementation candidate Not Activated.
+- Current boundary (2026-09-05): TASK-059 Completed и опубликована через
+  PR #61 по immutable local merge metadata на synchronized
+  `main@600dc10b737ce2dfda550379a6ec68e3b680f959`; она определила общий
+  IPSPA protocol. Active TASK-060 projected `In Progress`: exact event
+  `9199e91e-82cf-4b94-8e9d-c81ba91015b6` прошёл fresh verification для
+  четырёх named TASK-057 claims; latest state и identity resolve только из
+  newest valid envelope, совпадающего с independently recomputed `S/E`.
+  Historical Equivalence TASK-057 остаётся `Not Proven`; TASK-058
+  остаётся `Sealed Negative Disposition`; TASK-026 остаётся Blocked,
+  а его reassessment — Not Activated.
 
 - Текущая веха: **Beta — Complete the Single-Node Runtime**
 - Статус реализации: **Control Service, single-node Runtime vertical,

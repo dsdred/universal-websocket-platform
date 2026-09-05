@@ -95,12 +95,14 @@ Universal WebSocket Platform — open-source платформа для созд�
   через PR #54–#56. [TASK-055](../../tasks/TASK-055-MASTER-PLAN-GOVERNANCE-FRESHNESS.md)
   и [TASK-056](../../tasks/TASK-056-WIKI-KNOWLEDGE-MAP-FRESHNESS.md) затем
   опубликованы через PR #57 и #58. TASK-058 опубликована через PR #60 как
-  Sealed Negative Disposition; её chronology и accepted-to-published
-  equivalence остаются Not Proven. TASK-059 — текущая projected design-only
-  task, определяющая IPSPA: общий prospective evidence event над immutable
-  published Git-object bytes. Она не re-accept-ит TASK-057/058. TASK-026
-  остаётся Blocked; будущее использование IPSPA event требует отдельной
-  repository-first application и readiness reassessment.
+  Sealed Negative Disposition. TASK-059 Completed и опубликована через
+  PR #61 по immutable local merge metadata; она определяет общий IPSPA
+  protocol. [TASK-060](../../tasks/TASK-060-TASK-057-PUBLISHED-SUBJECT-PROSPECTIVE-ACCEPTANCE.md)
+  — текущая projected In Progress application: её exact event прошёл fresh
+  verification для четырёх named TASK-057 claims, а latest state resolve-ится
+  только из newest valid envelope, совпадающего с independently recomputed
+  `S/E`. Historical Equivalence TASK-057 остаётся Not Proven. TASK-026
+  остаётся Blocked; его отдельный readiness reassessment — Not Activated.
 
 ## 3. Engineering Principles
 

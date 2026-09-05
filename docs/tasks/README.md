@@ -4,12 +4,15 @@
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
 Текущая work —
-[TASK-059](TASK-059-PROSPECTIVE-PUBLISHED-SUBJECT-ACCEPTANCE-GOVERNANCE.md),
-projected `In Progress`: design-only общий IPSPA protocol для нового
-prospective evidence event над immutable published Git-object subject.
-TASK-058 уже Sealed Negative Disposition; её chronology и historical
-accepted-to-published equivalence остаются Not Proven. TASK-059 не re-accept-ит
-TASK-057/058 и не активирует application phase. TASK-026 остаётся Blocked.
+[TASK-060](TASK-060-TASK-057-PUBLISHED-SUBJECT-PROSPECTIVE-ACCEPTANCE.md),
+projected `In Progress`: exact IPSPA event
+`9199e91e-82cf-4b94-8e9d-c81ba91015b6` и immutable published TASK-057
+subject прошли fresh verification для четырёх named claims; exact
+latest state берётся только из newest valid envelope entry, совпадающей
+с independently recomputed `S/E`. TASK-059 Completed и опубликована через
+PR #61 по local merge metadata; TASK-058 остаётся Sealed Negative
+Disposition. Historical Equivalence TASK-057 остаётся Not Proven;
+TASK-026 остаётся Blocked, а reassessment — Not Activated.
 
 - [TASK-000 — Repository Synchronization](TASK-000-REPOSITORY-SYNCHRONIZATION.md)
 - [TASK-000 — Repository Synchronization Report](TASK-000-REPOSITORY-SYNCHRONIZATION-REPORT.md)
@@ -77,7 +80,8 @@ TASK-057/058 и не активирует application phase. TASK-026 остаё
 - [TASK-056 — Wiki Knowledge-Map Freshness Reconciliation](TASK-056-WIKI-KNOWLEDGE-MAP-FRESHNESS.md) — Completed, Coordinator Accepted (2026-09-02); task commit `bd87bbb8526efe1413899e8125e847d80aade09a` published through PR #58 and merged as `934a7137d4c75598df4cbf9c28fc09c0fa665e5e`; TASK-026 remained Blocked and deferred candidates were not activated by that documentation task
 - [TASK-057 — Replay-First Late-Generation Admission Implementation](TASK-057-REPLAY-FIRST-LATE-GENERATION-ADMISSION.md) — projected In Progress from `main@934a7137d4c75598df4cbf9c28fc09c0fa665e5e`; exact latest verdict, canonical identity and first incomplete checkpoint resolve only from the newest valid terminal Recovery Evidence Envelope entry matching independently recomputed current bytes, otherwise STOP; bounded DP-015/DP-020 replay-first/late-generation prerequisite implemented in isolation under verification; TASK-026 remains Blocked and its readiness reassessment is Not Activated until TASK-057 Acceptance
 - [TASK-058 — Runtime Activation Readiness Reassessment](TASK-058-RUNTIME-ACTIVATION-READINESS-REASSESSMENT.md) — Sealed Negative Disposition through PR #60 on `main@8ce7b9095b2d56e065034bb031b6d5806eab87c8`; chronology and historical accepted-to-published equivalence remain Not Proven; no Acceptance/BCC/Completion or positive prerequisite proof
-- [TASK-059 — Prospective Published-Subject Acceptance Governance](TASK-059-PROSPECTIVE-PUBLISHED-SUBJECT-ACCEPTANCE-GOVERNANCE.md) — projected In Progress; design-only IPSPA protocol, no TASK-057/058 re-acceptance and no TASK-026 activation
+- [TASK-059 — Prospective Published-Subject Acceptance Governance](TASK-059-PROSPECTIVE-PUBLISHED-SUBJECT-ACCEPTANCE-GOVERNANCE.md) — Completed, Coordinator Accepted (2026-09-05); task commit `c4c858941ceb9544e6a30454e6309a9ef159b875` published through PR #61 by local merge metadata and merged as `600dc10b737ce2dfda550379a6ec68e3b680f959`; general IPSPA protocol only
+- [TASK-060 — TASK-057 Published Subject Prospective Acceptance](TASK-060-TASK-057-PUBLISHED-SUBJECT-PROSPECTIVE-ACCEPTANCE.md) — projected In Progress; exact IPSPA event verified for four named claims, Historical Equivalence Not Proven; the exact prospective decision resolves only from the newest valid envelope matching independently recomputed `S/E`, and TASK-026 cannot activate automatically
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

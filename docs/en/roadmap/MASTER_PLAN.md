@@ -96,12 +96,14 @@ The repository currently contains an Alpha foundation rather than a production-r
   through PRs #54–#56. [TASK-055](../../tasks/TASK-055-MASTER-PLAN-GOVERNANCE-FRESHNESS.md)
   and [TASK-056](../../tasks/TASK-056-WIKI-KNOWLEDGE-MAP-FRESHNESS.md) were
   subsequently published through PRs #57 and #58. TASK-058 was published
-  through PR #60 as a Sealed Negative Disposition; its chronology and
-  accepted-to-published equivalence remain Not Proven. TASK-059 is the current
-  projected design-only task and defines IPSPA, a general prospective evidence
-  event over immutable published Git-object bytes. It does not re-accept
-  TASK-057/058. TASK-026 remains Blocked; any future use of an IPSPA event
-  requires a separate repository-first application and readiness reassessment.
+  through PR #60 as a Sealed Negative Disposition. TASK-059 is Completed and
+  published through PR #61 by immutable local merge metadata and defines the
+  general IPSPA protocol. [TASK-060](../../tasks/TASK-060-TASK-057-PUBLISHED-SUBJECT-PROSPECTIVE-ACCEPTANCE.md)
+  is the current projected In Progress application: its exact event has fresh
+  verification for four named TASK-057 claims, while the latest state resolves
+  only from the newest valid envelope matching independently recomputed `S/E`.
+  TASK-057 Historical Equivalence remains Not Proven. TASK-026 remains Blocked;
+  its separate readiness reassessment is Not Activated.
 
 ## 3. Engineering Principles
 
