@@ -59,6 +59,14 @@ Independent Review по актуальному diff.
 
 # Rules
 
+Для IPSPA Reviewer независимо проверяет eligibility, publication observation,
+authoritative Git-object bytes, full-only source manifest, separation `S/E`,
+historical/prospective axes, fresh Verifier/Tester evidence, PROCESS-002 и
+Scope Audit. Verdict привязан одновременно к exact `S` и current `E`.
+Self-inclusion, normalized/working-tree substitution, historical verdict reuse,
+unresolved finding, target mismatch или unrelated downstream claim требуют
+`Needs Revision`/STOP. Reviewer не принимает historical result заново.
+
 Для Negative Disposition Reviewer независимо проверяет general mechanism и
 затем current eligibility ND-1–ND-5: обязательный bounded recovery inventory,
 исключение доступного A/B и recoverable evidence, сохранность original bytes,

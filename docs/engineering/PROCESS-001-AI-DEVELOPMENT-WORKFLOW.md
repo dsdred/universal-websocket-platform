@@ -671,6 +671,102 @@ Closure record содержит:
 
 Commit выполняется только при явном разрешении.
 
+### Immutable Published Subject Prospective Acceptance
+
+**IPSPA** — общий evidence-event, который позволяет заново и независимо
+проверить уже опубликованный immutable Git subject. Он не исправляет и не
+переинтерпретирует historical Acceptance и не доказывает, что исторический
+verdict когда-либо относился к опубликованным bytes.
+
+#### Eligibility and identities
+
+IPSPA candidate существует только для exact tuple:
+
+`{event UUIDv4, repository/origin, publication observation, source commit,
+source tree, optional fixed deletion base, ordered source rows, source
+manifest, named claims, exclusions, fresh role assignments}`.
+
+Repository/origin и publication observation должны быть independently
+reconstructable. Commit/tree/base OID являются полными; refs и abbreviated OID
+не являются identity. Недоступный object, неоднозначный repository, mismatch
+commit/tree/path/base либо уже доказанная exact historical equivalence дают
+`Rejected/STOP` либо `Not Applicable`, а не prospective Acceptance.
+
+Historical Equivalence (`Proven | Not Proven | Disproven`) и Prospective Event
+(`Candidate | Verified | Reviewed | Accepted | Rejected/Invalidated`) — две
+независимые оси. Новый event никогда не изменяет historical axis.
+
+#### Immutable Source Subject and authoritative bytes
+
+Source Subject `S` строится только из Git objects exact source commit tree
+через object API. Checkout, working tree, filters, EOL/encoding normalization,
+decoding, archive, diff rendering и filesystem copy запрещены как source.
+Каждый present path использует projection `full`, exact tree mode и
+`git hash-object --no-filters`-equivalent blob identity. Deleted path допустим
+только относительно fixed base и использует его mode с OID `-`.
+
+Rows сортируются в ascending unsigned UTF-8 path-byte order и сериализуются
+существующей NUL-схемой
+`path\0full\0state\0mode\0oid\0`; manifest stream также хешируется как Git
+blob. `task-record-v1` в `S` запрещён. Любое изменение repository, commit,
+tree, base, path set, row, manifest, claim либо exclusion создаёт новый event,
+а не продолжение старого.
+
+#### Evidence Record and self-attestation guard
+
+Evidence Record `E` создаётся отдельно и позднее, цитирует complete `S` tuple,
+но не входит в `S`, его tree/path set или source manifest. Попытка включить
+`E` в собственный Source Subject отклоняется. `E` использует обычный current
+task evidence subject: task record с `task-record-v1`, прочие paths с `full`,
+canonical manifest и terminal Recovery Evidence Envelope. Event/decision
+metadata не attest-ит собственные final bytes; projected mutation invalidates
+затронутые gates, а доказанная append-only envelope mutation не меняет
+projected identity.
+
+#### Fresh gates and decision
+
+Historical Tester, Reviewer, Acceptance, closure, commit, merge, P10, BCC или
+Negative Disposition evidence не переносится. Для exact `S` и current `E`
+последовательно требуются:
+
+1. read-only reconstruction source objects и publication observation;
+2. independent Verifier recomputation полного source manifest;
+3. fresh applicable Testing из exact immutable tree либо explicit `N/A` с
+   причиной;
+4. PROCESS-002 synchronization;
+5. Scope Audit evidence record;
+6. Independent Review exact `S` и current `E` без unresolved blocking finding;
+7. explicit Coordinator Prospective Acceptance tuple;
+8. post-decision integrity exact `S/E` identities.
+
+Coordinator decision содержит event UUIDv4, обе identity/manifest, historical
+axis, named claims/exclusions, durable Verifier/Tester/Reviewer handoffs,
+PROCESS-002 и Scope Audit. `Accepted` означает только новый independently
+verified prospective event. Он не является BCC, Negative Disposition,
+Completion, четвёртым publication class или retroactive task Acceptance.
+
+#### Recovery, publication and downstream boundary
+
+На всех стадиях применяется `Inspect -> Reconstruct -> Reconcile -> Resume`
+и четыре общие recovery classification. Missing durable handoff означает
+incomplete. Interruption до decision не создаёт decision; после decision до
+evidence commit требуется exact unchanged decision tuple и отдельная текущая
+commit permission. Unknown stage/commit/publication сначала inspect-ится.
+
+Evidence-record commit и publication используют существующие точные команды,
+Commit Gate, publication class `Accepted Task`, Publisher ownership и полный
+P0–P10. Они публикуют `E`, не перепубликуют и не пере-accept-ят `S`.
+Изменение `S`, `E` projected subject или publication Target invalidates
+затронутые verification/decision/permission; unchanged append-only envelope
+обрабатывается существующей projection rule.
+
+Успешный IPSPA event может удовлетворить только authoritative downstream
+contract, который явно принимает exact `S` identity и named claims. Затем
+обязателен отдельный repository-first intake/reassessment. Transitive reuse,
+unrelated proof, автоматическая readiness, task activation или continuation
+запрещены. Семантика publication classes A (`Accepted Task`), B (`Blocked
+Evidence Recovery`) и C (`Negative Disposition`) не меняется.
+
 ### Blocked Closure Certified
 
 #### Attributed New-Record Bootstrap Recovery

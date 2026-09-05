@@ -186,6 +186,31 @@ generated, formatting-only и незадокументированное planned
 - temporary/generated/unrelated files:
 - final checks:
 
+### Immutable Published Subject Prospective Acceptance (если применимо)
+
+- event ID: fresh canonical lowercase UUIDv4;
+- Historical Equivalence: `Proven` / `Not Proven` / `Disproven` с evidence;
+- Prospective Event: `Candidate` / `Verified` / `Reviewed` / `Accepted` /
+  `Rejected/Invalidated`;
+- repository/origin и independently reconstructed publication observation:
+- immutable Source Subject `S`: full source commit/tree OIDs, optional fixed
+  deletion base, exact ordered path set, named claims и exclusions;
+- authoritative object-read commands; отсутствие checkout, filters,
+  normalization, archive/diff/filesystem substitution:
+- source rows `path\0full\0state\0mode\0oid\0`, unsigned UTF-8 order, object
+  format, canonical source manifest OID:
+- Evidence Record `E`: current task subject/manifest; доказательство, что `E`
+  не входит в `S`, его tree/path set или source manifest:
+- independent Verifier recomputation и exact source identity:
+- fresh applicable Tester либо explicit `N/A`, commands/results/limitations:
+- PROCESS-002; Scope Audit; Independent Review exact `S/E` и findings:
+- prospective Coordinator decision tuple и post-decision integrity:
+- interruption checkpoint и first incomplete stage:
+- source/evidence/Publisher Target invalidation state:
+- downstream authoritative contract, exact accepted claims и отдельный
+  repository-first reassessment; automatic/transitive activation запрещена:
+- historical Acceptance/BCC/Negative Disposition/A-B-C semantics unchanged:
+
 ### Blocked Evidence Checkpoint (если применимо)
 
 - task status остаётся `Blocked`:

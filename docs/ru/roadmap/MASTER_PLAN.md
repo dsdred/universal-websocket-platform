@@ -94,10 +94,13 @@ Universal WebSocket Platform — open-source платформа для созд�
   [TASK-054](../../tasks/TASK-054-DOCS-HOME-USER-GUIDANCE.md) опубликованы
   через PR #54–#56. [TASK-055](../../tasks/TASK-055-MASTER-PLAN-GOVERNANCE-FRESHNESS.md)
   и [TASK-056](../../tasks/TASK-056-WIKI-KNOWLEDGE-MAP-FRESHNESS.md) затем
-  опубликованы через PR #57 и #58. TASK-057 — текущая projected
-  implementation task: она реализует replay-first/late-generation prerequisite
-  изолированно под verification. TASK-026 остаётся Blocked до отдельной
-  reassessment после TASK-057 Acceptance.
+  опубликованы через PR #57 и #58. TASK-058 опубликована через PR #60 как
+  Sealed Negative Disposition; её chronology и accepted-to-published
+  equivalence остаются Not Proven. TASK-059 — текущая projected design-only
+  task, определяющая IPSPA: общий prospective evidence event над immutable
+  published Git-object bytes. Она не re-accept-ит TASK-057/058. TASK-026
+  остаётся Blocked; будущее использование IPSPA event требует отдельной
+  repository-first application и readiness reassessment.
 
 ## 3. Engineering Principles
 

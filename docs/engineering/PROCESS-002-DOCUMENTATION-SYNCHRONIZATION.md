@@ -308,6 +308,36 @@ authority на изменённый diff.
 
 Результатом процесса является один из статусов.
 
+## Prospective Published Subject Synchronized
+
+Для IPSPA PROCESS-001 Documentation Agent подтверждает две раздельные
+identity. Immutable Source Subject `S` берётся только из Git objects exact
+published commit/tree, использует только `full` rows, fixed deletion base и
+canonical unsigned-UTF-8/NUL manifest. Working tree, checkout/filter,
+normalization, copy и `task-record-v1` в `S` запрещены.
+
+Evidence Record `E` является отдельным current task subject и цитирует `S`, но
+не входит в его tree/path set/manifest. Его `task-record-v1` и terminal envelope
+следуют обычному non-self-attestation contract. Синхронизация сохраняет
+Historical Equivalence (`Proven`, `Not Proven`, `Disproven`) независимо от
+Prospective Event state и не переносит historical Tester/Reviewer/Acceptance,
+commit, merge, P10, BCC либо Negative Disposition как fresh evidence.
+
+Выход требует exact event/repository/commit/tree/base/path/row/manifests,
+publication observation, named claims/exclusions, fresh Verifier и applicable
+Tester handoffs, PROCESS-002 applicability и отсутствие противоречий между
+`S`, `E`, mirrors и project state. Следующий отдельный gate — Scope Audit;
+этот output не требует и не объявляет его завершённым. Output также не
+является Coordinator decision, commit/publication permission, retrospective
+Acceptance или downstream activation. Любой mismatch/unavailable
+authoritative object, self-inclusion, normalized substitute или stale role
+identity даёт `Blocked` либо `Drift Detected`.
+
+После explicit prospective Coordinator decision project state может
+фиксировать только durable capability/event facts. Использование event как
+prerequisite допустимо лишь по exact source identity и named claims в отдельно
+авторизованном repository-first reassessment.
+
 ## Negative Disposition Synchronized
 
 Отдельный выход для class C по ND-1–ND-5 PROCESS-001, не Blocked Evidence

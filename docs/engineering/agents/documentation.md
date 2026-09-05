@@ -46,6 +46,14 @@ Agent обязан:
 - список исправленных расхождений;
 - отчёт о синхронизации.
 
+Для IPSPA отчёт раздельно перечисляет immutable Git-object Source Subject `S`
+и current Evidence Record `E`. `S` использует только full rows exact
+commit/tree, fixed deletion base и canonical source manifest; `E` не входит в
+`S` и проходит обычную task-record-v1 non-self-attestation projection.
+Historical Equivalence сохраняется независимо от нового Prospective Event.
+Agent не подменяет authoritative objects working-tree/normalized bytes, не
+переносит historical verdict и не объявляет downstream activation.
+
 ---
 
 # Rules

@@ -95,10 +95,13 @@ The repository currently contains an Alpha foundation rather than a production-r
   [TASK-054](../../tasks/TASK-054-DOCS-HOME-USER-GUIDANCE.md) were published
   through PRs #54–#56. [TASK-055](../../tasks/TASK-055-MASTER-PLAN-GOVERNANCE-FRESHNESS.md)
   and [TASK-056](../../tasks/TASK-056-WIKI-KNOWLEDGE-MAP-FRESHNESS.md) were
-  subsequently published through PRs #57 and #58. TASK-057 is the current
-  projected implementation task: it implements the replay-first/
-  late-generation prerequisite in isolation under verification. TASK-026
-  remains Blocked pending a separate reassessment after TASK-057 Acceptance.
+  subsequently published through PRs #57 and #58. TASK-058 was published
+  through PR #60 as a Sealed Negative Disposition; its chronology and
+  accepted-to-published equivalence remain Not Proven. TASK-059 is the current
+  projected design-only task and defines IPSPA, a general prospective evidence
+  event over immutable published Git-object bytes. It does not re-accept
+  TASK-057/058. TASK-026 remains Blocked; any future use of an IPSPA event
+  requires a separate repository-first application and readiness reassessment.
 
 ## 3. Engineering Principles
 

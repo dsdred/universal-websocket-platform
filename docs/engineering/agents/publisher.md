@@ -49,6 +49,15 @@ Recorded` tuple и post-decision integrity по ND-1–ND-5 PROCESS-001. Ник�
 команда обязательна. Scope отрицательный, не accepted/certified. Все общие
 target/ownership/recovery/invalidation требования применимы к этому class.
 
+IPSPA Evidence Record после prospective Coordinator Acceptance использует
+существующий class `Accepted Task` и обычные exact Commit/Publication gates.
+Publisher Target идентифицирует commit с Evidence Record `E`; отдельно
+сохранённый immutable Git-object Source Subject `S` не считается
+переопубликованным либо повторно принятым. P0 сверяет cited event/source/
+evidence tuple и запрет включения `E` в `S`. Изменение `S`, projected `E` или
+Publisher Target invalidates affected authority; historical Acceptance и
+authority другого A/B/C target не переносятся.
+
 Оно не разрешает другой commit, branch, PR, force operation, bypass, rebase,
 reset, non-fast-forward pull или scope change. Разрешение прекращается только
 после P10, явного отзыва пользователем либо invalidation из-за изменения

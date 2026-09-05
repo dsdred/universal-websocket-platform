@@ -34,6 +34,15 @@ Tester подтверждает корректность реализации.
 
 # Rules
 
+Для IPSPA Tester получает exact immutable source commit/tree/base, ordered
+full-only rows, source manifest и current evidence manifest. Он независимо
+читает bytes через Git object API, пересчитывает identities и выполняет fresh
+applicable tests из exact immutable tree либо фиксирует explicit `N/A` с
+причиной. Working tree, filters/normalization, historical PASS и verdict для
+другого tree/manifest не принимаются. Handoff связывает commands/results,
+limitations и findings с exact event, `S` и `E`; mismatch, unavailable object
+или evidence self-inclusion дают STOP.
+
 Для Negative Disposition Tester проверяет ND-1–ND-5 PROCESS-001 отдельно от A/B:
 generality, все eligibility rejects, Required Recovery Exhausted с bounded
 source inventory и no-feasible-pointer proof, Not Proven/Disproven различие,

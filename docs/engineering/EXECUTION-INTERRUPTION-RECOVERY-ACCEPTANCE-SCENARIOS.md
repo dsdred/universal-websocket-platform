@@ -397,6 +397,35 @@ Additional boundary for R-051/R-052: an inaccessible mandatory source, an
 unknown inspection outcome or an uninspected concrete pointer is Not Exhausted.
 No hypothetical-archive search is required, but known sources cannot be omitted.
 
+### Immutable published-subject prospective acceptance scenarios
+
+R-074–R-091 exercise IPSPA PROCESS-001. They create no historical equivalence,
+publication permission or downstream activation.
+
+| ID | Given / When | Required result |
+|---|---|---|
+| R-074 | Historical accepted manifest equals exact published source manifest | IPSPA is N/A; existing proven equivalence is not duplicated |
+| R-075 | Historical equivalence is Not Proven and immutable published objects exist | New event may become Candidate; historical value remains Not Proven |
+| R-076 | Historical equivalence is Disproven | New Candidate may proceed, but Disproven is preserved |
+| R-077 | Normal exact source, fresh gates and decision complete | Only Prospective Event becomes Accepted for named claims |
+| R-078 | Commit/tree/path/base/row/source-manifest mismatch | Reject/STOP; no approximate equivalence |
+| R-079 | Authoritative object bytes or publication observation unavailable | Reject/STOP; working-tree or copied bytes cannot substitute |
+| R-080 | Source tuple changes during the event | Old event invalidated; changed source requires fresh UUIDv4 event |
+| R-081 | Evidence Record occurs in its own Source Subject | Reject as self-attestation |
+| R-082 | Historical Tester/Reviewer/Acceptance/merge/P10 offered as fresh gate | Reject; run fresh applicable gates on exact source |
+| R-083 | Fresh Verifier/Tester refers to another tree or manifest | Reject stale/mismatched handoff |
+| R-084 | Independent Reviewer has unresolved finding | Coordinator decision prohibited |
+| R-085 | Interruption before prospective decision | Reconstruct `S/E`; no decision exists from started work |
+| R-086 | Interruption after decision before evidence commit | Require exact unchanged decision tuple/post-decision integrity and current commit permission |
+| R-087 | Publication/ref observation changes but immutable object tuple is unchanged | Reconstruct observation; refs alone neither mutate source nor prove publication |
+| R-088 | Repository identity, UUID, source object or Publisher Target is ambiguous | Fail closed; affected event/authority cannot transfer |
+| R-089 | Checkout/filter/EOL/decoded/archive/diff bytes offered as source | Reject; object API and full-only rows are mandatory |
+| R-090 | Projected Evidence Record changes versus append-only envelope update | Projected change invalidates affected gates; proven envelope append keeps projection but requires metadata reconciliation |
+| R-091 | Accepted event is cited for unrelated prerequisite or automatic task activation | Reject; exact named downstream contract and separate intake are mandatory |
+
+These rows preserve Accepted Task, Blocked Evidence Recovery and Negative
+Disposition semantics and all earlier interruption/user-gate scenarios.
+
 Contract passes only if every scenario is traceable to normative PROCESS-001,
 PROCESS-002 or role text; negative assertions (`no verdict`, `no blind retry`,
 `no inferred permission`, `no replay completed checkpoint`) are preserved; and
