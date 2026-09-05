@@ -345,3 +345,18 @@ They do not execute publication.
 | S-047 | Exact negative P10 plus MERGED PR/ancestry, both refs absent, clean synchronized main | Report negative-only publication and Sealed Negative Disposition; no original Acceptance/BCC/Completed or automatic next task |
 | S-048 | Negative merge/P9 but no terminal P10, dirty main, missing terminal evidence, or downstream positive use | No sealing/intake release; positive proof rejected; preserve original Not Proven/Disproven |
 | S-049 | New concrete provenance pointer arrives after decision or mid-publication, including after merge before P10 | ND-5 holds first remaining mutation; independently revalidate eligibility, preserve/reconstruct prior effects; no forced cleanup/P10, no fabricated TargetChanged if tuple unchanged; after failed eligibility STOP |
+
+## IPSPA Evidence Publication — S-050–S-055
+
+These scenarios publish only an accepted Evidence Record `E` through the
+existing `Accepted Task` class. Immutable Source Subject `S` is evidence, not
+the Publisher commit being republished.
+
+| ID | Given / When | Required result |
+|---|---|---|
+| S-050 | Valid prospective decision, post-decision integrity and evidence commit exist; no publication permission | P0–P10 forbidden until the ordinary exact publish gate |
+| S-051 | Exact `S/E` tuple and Accepted Task Publisher Target pass P0 | Run unchanged full P0–P10 for `E`; never claim that `S` was republished or historically accepted |
+| S-052 | `E` is found inside `S`, or cited source/event/evidence tuple mismatches | P0 STOP; self-attestation or target invalidation cannot use old authority |
+| S-053 | Immutable `S` unchanged but projected `E` or evidence commit changes | Affected Acceptance/Publisher authority invalidated; no permission transfer |
+| S-054 | Interruption leaves commit/push/PR/merge outcome unknown | Inspect Git/GitHub first and resume exact first unfinished checkpoint; do not recreate evidence event or replay mutation |
+| S-055 | P10 for `E` succeeds and downstream cites unrelated claim | Publication confirms only `E`; unrelated proof/automatic activation rejected |

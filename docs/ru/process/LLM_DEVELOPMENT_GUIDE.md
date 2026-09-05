@@ -368,6 +368,27 @@ invalidates прежнее authority.
 Только фактическое изменение tuple/target даёт TargetChanged. После proven
 P10 новое evidence требует отдельного authorized normal intake.
 
+### Prospective Acceptance immutable опубликованного subject
+
+IPSPA — новый evidence event для уже опубликованных immutable Git bytes. Он
+никогда не исправляет historical Acceptance: Historical Equivalence (`Proven`,
+`Not Proven` или `Disproven`) остаётся независимой от prospective event.
+
+Source — exact repository, полные commit/tree OID, optional fixed deletion
+base, ordered path set и full-only canonical manifest, прочитанные через Git
+object API. Working-tree, checkout/filter, normalized, decoded, archive или
+diff bytes не authoritative. Отдельный Evidence Record цитирует source, но не
+может входить в его tree, path set или manifest.
+
+Обязательны fresh independent source verification, применимое Testing,
+documentation synchronization, Scope Audit, Independent Review, explicit
+Coordinator Prospective Acceptance и post-decision integrity. Historical
+verdicts не переносятся. Mutation source либо evidence invalidates затронутые
+gates и проходит inspect-first recovery. Accepted event может удовлетворить
+только downstream contract, который явно называет exact source и claims, после
+чего требуется отдельная repository-first reassessment. Он не создаёт четвёртый
+publication class и не активирует работу автоматически.
+
 ### Post-Implementation Architecture Review
 
 Завершённая реализация может быть проверена относительно более широкой модели компонентов, чтобы подтвердить, что локальная корректность не привела к boundary drift и не нарушила последующие допущения.

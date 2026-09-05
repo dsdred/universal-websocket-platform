@@ -371,6 +371,27 @@ an unchanged Git target. Do not force cleanup to obtain a clean baseline.
 Only an actual tuple/target change triggers TargetChanged. After proven P10,
 new evidence instead requires a separate authorized normal intake.
 
+### Prospective Acceptance of an Immutable Published Subject
+
+IPSPA is a new evidence event for already published immutable Git bytes. It
+never repairs historical Acceptance: Historical Equivalence (`Proven`, `Not
+Proven`, or `Disproven`) remains independent from the prospective event.
+
+The source is an exact repository, full commit/tree OID, optional fixed
+deletion base, ordered path set, and full-only canonical manifest read through
+Git object APIs. Working-tree, checkout/filter, normalized, decoded, archive,
+or diff bytes are not authoritative. A separate Evidence Record cites the
+source but cannot occur in its source tree, path set, or manifest.
+
+Fresh independent source verification, applicable testing, documentation
+synchronization, Scope Audit, Independent Review, explicit Coordinator
+Prospective Acceptance, and post-decision integrity are mandatory. Historical
+verdicts do not transfer. Source or evidence mutation invalidates affected
+gates and is recovered inspect-first. An accepted event may satisfy only a
+downstream contract that explicitly names its exact source and claims, followed
+by a separate repository-first reassessment. It creates no fourth publication
+class and does not activate work automatically.
+
 ### Post-Implementation Architecture Review
 
 The completed implementation may be reviewed against the broader component model to confirm that local correctness did not introduce boundary drift or invalidate downstream assumptions.

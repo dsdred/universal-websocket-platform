@@ -213,6 +213,22 @@ immutable Target и explicit resume rules.
 
 # Commit Coordination
 
+## Prospective Published-Subject Coordination
+
+Для IPSPA Coordinator отдельно сохраняет Historical Equivalence и новый
+Prospective Event. Он допускает candidate только по exact immutable Git-object
+Source Subject, fresh UUIDv4, independently reconstructed publication и
+отдельному Evidence Record, который не входит в source manifest. Working-tree
+bytes, historical verdicts и self-inclusion отклоняются.
+
+Coordinator требует fresh Verifier, applicable Tester, PROCESS-002, Scope
+Audit и Independent Review exact source/evidence identities. Только после них
+он записывает explicit Prospective Acceptance tuple и проверяет post-decision
+integrity. Изменение source/evidence target invalidates affected gates.
+Успешный event может использоваться только exact downstream contract после
+отдельного repository-first intake; он не активирует task и не меняет A/B/C,
+historical Acceptance, BCC или Negative Disposition.
+
 Для Negative Disposition Coordinator сначала отделяет general-rule Approval от
 current-task eligibility, требует independent Evidence Verification/Recovery
 Audit/Tester, Negative Disposition Synchronized, Scope Audit и final Review

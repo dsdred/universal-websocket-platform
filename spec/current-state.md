@@ -1,17 +1,14 @@
 # Текущее состояние
 
-**Текущая recovery boundary (2026-09-04):** TASK-058 — In Progress / readiness
-STOP; разрешена bounded general process-only поправка отдельного Negative
-Disposition checkpoint/publication class. Original bytes/identity сохранены
-losslessly; chronology создания до blocker Not Proven, BCC Not Eligible,
-original result не Accepted. Latest decision/identity/gate resolve-ятся только
-из newest valid task envelope matching current manifest; general rule и current
-eligibility проверяются раздельно. Intake barrier сохраняется до полного ND-4
-terminal P10 на clean synchronized main. Последующий governance-design prerequisite — Not
-Activated; prospective acceptance mechanism не создан. TASK-026 остаётся
-Blocked, implementation candidate Not Activated. TASK-057 projected/current-task
-формулировки ниже сохраняют source snapshot той task, а не current activation
-TASK-058 и не доказательство accepted-to-published identity equivalence.
+**Текущая boundary (2026-09-05):** TASK-058 достигла terminal P10 и является
+`Sealed Negative Disposition` на clean synchronized
+`main@8ce7b9095b2d56e065034bb031b6d5806eab87c8` через PR #60. Chronology и
+historical accepted-to-published equivalence остаются `Not Proven`; original
+result не Accepted. TASK-059 projected `In Progress` и проектирует общий IPSPA
+protocol для нового prospective evidence event над immutable published
+Git-object subject. Этот design не re-accept-ит TASK-057/058, не переписывает
+historical axis и не активирует application phase. TASK-026 остаётся Blocked,
+implementation candidate Not Activated.
 
 **Веха:** Beta — Complete the Single-Node Runtime
 **Статус реализации:** DP-005 Router и Runtime Foundation Tasks 1–10

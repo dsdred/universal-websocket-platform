@@ -3,15 +3,13 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая recovery work — [TASK-058](TASK-058-RUNTIME-ACTIVATION-READINESS-REASSESSMENT.md):
-Projected In Progress / readiness STOP; явно разрешён только bounded process-only
-Negative Disposition checkpoint/publication contract. Chronology Not Proven;
-BCC Not Eligible; original result не Accepted. Latest decision/identity/gate
-resolve-ятся только из newest valid task envelope matching current manifest.
-Intake barrier сохраняется до ND-4 terminal P10 clean synchronized main. Последующий
-governance-design prerequisite Not Activated; TASK-026 остаётся Blocked.
-Ниже TASK-057 projected state сохраняет исторический source snapshot и не
-является разрешением продолжить TASK-058 readiness или переписать acceptance.
+Текущая work —
+[TASK-059](TASK-059-PROSPECTIVE-PUBLISHED-SUBJECT-ACCEPTANCE-GOVERNANCE.md),
+projected `In Progress`: design-only общий IPSPA protocol для нового
+prospective evidence event над immutable published Git-object subject.
+TASK-058 уже Sealed Negative Disposition; её chronology и historical
+accepted-to-published equivalence остаются Not Proven. TASK-059 не re-accept-ит
+TASK-057/058 и не активирует application phase. TASK-026 остаётся Blocked.
 
 - [TASK-000 — Repository Synchronization](TASK-000-REPOSITORY-SYNCHRONIZATION.md)
 - [TASK-000 — Repository Synchronization Report](TASK-000-REPOSITORY-SYNCHRONIZATION-REPORT.md)
@@ -78,6 +76,8 @@ governance-design prerequisite Not Activated; TASK-026 остаётся Blocked.
 - [TASK-055 — Mirrored MASTER_PLAN Governance Freshness Reconciliation](TASK-055-MASTER-PLAN-GOVERNANCE-FRESHNESS.md) — Completed, Coordinator Accepted (2026-09-02); task commit `da44e0ab22aa94a223628afdc9b20e61a1337e02` published through PR #57 and merged as `9884d8458bc99ce61439c286c810d7e2cd2f91ae`; TASK-026 remains Blocked and runtime/DP/proposal candidates remain Not Activated
 - [TASK-056 — Wiki Knowledge-Map Freshness Reconciliation](TASK-056-WIKI-KNOWLEDGE-MAP-FRESHNESS.md) — Completed, Coordinator Accepted (2026-09-02); task commit `bd87bbb8526efe1413899e8125e847d80aade09a` published through PR #58 and merged as `934a7137d4c75598df4cbf9c28fc09c0fa665e5e`; TASK-026 remained Blocked and deferred candidates were not activated by that documentation task
 - [TASK-057 — Replay-First Late-Generation Admission Implementation](TASK-057-REPLAY-FIRST-LATE-GENERATION-ADMISSION.md) — projected In Progress from `main@934a7137d4c75598df4cbf9c28fc09c0fa665e5e`; exact latest verdict, canonical identity and first incomplete checkpoint resolve only from the newest valid terminal Recovery Evidence Envelope entry matching independently recomputed current bytes, otherwise STOP; bounded DP-015/DP-020 replay-first/late-generation prerequisite implemented in isolation under verification; TASK-026 remains Blocked and its readiness reassessment is Not Activated until TASK-057 Acceptance
+- [TASK-058 — Runtime Activation Readiness Reassessment](TASK-058-RUNTIME-ACTIVATION-READINESS-REASSESSMENT.md) — Sealed Negative Disposition through PR #60 on `main@8ce7b9095b2d56e065034bb031b6d5806eab87c8`; chronology and historical accepted-to-published equivalence remain Not Proven; no Acceptance/BCC/Completion or positive prerequisite proof
+- [TASK-059 — Prospective Published-Subject Acceptance Governance](TASK-059-PROSPECTIVE-PUBLISHED-SUBJECT-ACCEPTANCE-GOVERNANCE.md) — projected In Progress; design-only IPSPA protocol, no TASK-057/058 re-acceptance and no TASK-026 activation
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.
