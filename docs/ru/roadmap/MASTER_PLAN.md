@@ -98,11 +98,12 @@ Universal WebSocket Platform — open-source платформа для созд�
   Sealed Negative Disposition. TASK-059 Completed и опубликована через
   PR #61 по immutable local merge metadata; она определяет общий IPSPA
   protocol. [TASK-060](../../tasks/TASK-060-TASK-057-PUBLISHED-SUBJECT-PROSPECTIVE-ACCEPTANCE.md)
-  — текущая projected In Progress application: её exact event прошёл fresh
-  verification для четырёх named TASK-057 claims, а latest state resolve-ится
-  только из newest valid envelope, совпадающего с independently recomputed
-  `S/E`. Historical Equivalence TASK-057 остаётся Not Proven. TASK-026
-  остаётся Blocked; его отдельный readiness reassessment — Not Activated.
+  Completed, Coordinator Accepted и опубликована через PR #62; exact event
+  `9199e91e-82cf-4b94-8e9d-c81ba91015b6` prospectively accepts четыре named
+  claims TASK-057, а Historical Equivalence остаётся Not Proven.
+  [TASK-061](../../tasks/TASK-061-RUNTIME-ACTIVATION-READINESS-REASSESSMENT.md)
+  — текущая projected In Progress reassessment и возвращает `READY — UNBLOCK`
+  с matrix 7/10/2/0/0/0. TASK-026 Ready to Reactivate, но Not Activated.
 
 ## 3. Engineering Principles
 
@@ -428,13 +429,14 @@ Architectural debt относится к границам, которые ост
   завершена как `Completed — Coordinator Accepted (2026-08-25)`, repeat
   Reviewer Approved 0/0, и фиксирует additive contract. TASK-047 реализует эту
   bounded prerequisite admission tracked-Start managed-parent изолированно.
-  implementation cycle TASK-026 — Blocked после того, как repeat Architecture
+  implementation cycle TASK-026 была Blocked после того, как repeat Architecture
   superseded readiness для live execution. TASK-049 — завершённая и
   Coordinator-Accepted design-only DP-015/DP-020 refinement replay-first
-  admission и late generation. TASK-057 реализует её отдельную isolated
-  prerequisite под verification; TASK-026 остаётся Blocked до отдельной
-  post-acceptance readiness reassessment. DP-016 остаётся Approved/Planned,
-  Integration и Production Activation — неактивными.
+  admission и late generation. TASK-057 реализует isolated prerequisite, а
+  TASK-060 prospectively accepts четыре exact claims. TASK-061 возвращает
+  `READY — UNBLOCK` с matrix 7/10/2/0/0/0. TASK-026 Ready to Reactivate, но Not
+  Activated. DP-016 остаётся Approved/Planned, Integration и Production
+  Activation — неактивными.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Message Persistence, Delivery и Plugin всё ещё требуют focused design.

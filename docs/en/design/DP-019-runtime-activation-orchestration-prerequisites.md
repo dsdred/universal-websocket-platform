@@ -9,8 +9,8 @@
   capability, sequential phase core, and command-boundary Continue/pending-Stop
   rendezvous implemented in isolation; Slice 3 managed gates and continuation
   and the DP-021 exact-scope invoker implemented and independently verified in
-  isolation; TASK-057 replay-first/late-generation admission implemented in
-  isolation under verification
+  isolation; TASK-057 replay-first/late-generation admission implemented and
+  prospectively accepted in isolation
 
 This focused design closes only the integration-contract ambiguity discovered
 by TASK-026. The repository implements the isolated DP-015 parent/phase core,
@@ -39,9 +39,10 @@ supersedes that readiness for live execution: repeat Architecture Confirmation
 returned `NEEDS DECISION` / `SPLIT REQUIRED` because the historical DP-015/
 DP-020 admission could not provide replay-first inspection and late generation
 allocation. TASK-049 is the completed and Coordinator-Accepted design-only
-refinement; TASK-057 implements its separate isolated prerequisite under
-verification. TASK-026 remains Blocked pending separate post-acceptance
-readiness reassessment. DP-019 remains Approved/Planned overall.
+refinement; TASK-057 implements its separate isolated prerequisite, and
+TASK-060 prospectively accepts its four exact claims. TASK-061 returns `READY —
+UNBLOCK` with matrix 7/10/2/0/0/0. TASK-026 is Ready to Reactivate but Not
+Activated. DP-019 remains Approved/Planned overall.
 
 ## 2. Purpose
 
@@ -562,12 +563,12 @@ historically records `UNBLOCK TASK-026`. The superseding TASK-026 recheck
 identifies the DP-015 tracked-Start managed-parent plus preclaimed `StopOld`
 admission prerequisite. TASK-046 defines that additive contract and TASK-047
 implements it in isolation. Fresh TASK-026 reassessment accepts the READY
-boundary as historical evidence. Repeat Architecture Confirmation now blocks
+boundary as historical evidence. Repeat Architecture Confirmation then blocked
 TASK-026 on a separate DP-015/DP-020 replay-first admission and late-generation
-refinement. That design refinement was completed as TASK-049 and Coordinator
-Accepted on 2026-08-28; TASK-057 implements its separate isolated prerequisite
-under verification. TASK-026 remains Blocked pending separate readiness
-reassessment after TASK-057 Acceptance. The
+refinement. TASK-049 completed the refinement, TASK-057 implemented its isolated
+prerequisite, and TASK-060 prospectively accepted its four exact claims.
+TASK-061 returns `READY — UNBLOCK`; TASK-026 is Ready to Reactivate but Not
+Activated. The
 historical focused readiness decomposition is recorded in the mirrored
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), with
 Design Status Draft and Implementation Status Planned overall, with Slice 3

@@ -9,8 +9,8 @@
   capability, sequential phase core и command-boundary Continue/pending-Stop
   rendezvous реализованы изолированно; managed gates и continuation Среза 3,
   а также exact-scope invoker DP-021 реализованы и независимо верифицированы
-  изолированно; replay-first/late-generation admission TASK-057 реализован
-  изолированно под verification
+  изолированно; replay-first/late-generation admission TASK-057 реализован и
+  prospectively accepted изолированно
 
 Этот focused design закрывает только неоднозначность integration-contract,
 обнаруженную TASK-026. Репозиторий реализует isolated parent/phase core DP-015,
@@ -38,8 +38,9 @@ readiness для live execution: repeat Architecture Confirmation вернула
 DECISION` / `SPLIT REQUIRED`, потому что historical admission DP-015/DP-020 не
 обеспечивал replay-first inspection и late generation allocation. TASK-049 —
 завершённая и Coordinator-Accepted design-only refinement; TASK-057 реализует
-её отдельную isolated prerequisite под verification. TASK-026 остаётся Blocked
-до отдельной post-acceptance readiness reassessment. DP-019 остаётся
+её отдельную isolated prerequisite, а TASK-060 prospectively accepts четыре
+exact claims. TASK-061 возвращает `READY — UNBLOCK` с matrix 7/10/2/0/0/0.
+TASK-026 Ready to Reactivate, но Not Activated. DP-019 остаётся
 Approved/Planned overall.
 
 ## 2. Назначение
@@ -552,12 +553,12 @@ proofs и исторически фиксирует `UNBLOCK TASK-026`. Supersed
 определяет DP-015 prerequisite tracked-Start managed-parent плюс preclaimed
 `StopOld` admission. TASK-046 фиксирует этот additive contract, а TASK-047
 реализует его изолированно. Fresh reassessment TASK-026 принимает READY
-boundary как historical evidence. Repeat Architecture Confirmation теперь
-блокирует TASK-026 отдельной DP-015/DP-020 refinement replay-first admission и
-late generation. Design refinement завершена как TASK-049 и принята Coordinator
-2026-08-28; TASK-057 реализует её отдельную isolated prerequisite под
-verification. TASK-026 остаётся Blocked до отдельной readiness reassessment
-после TASK-057 Acceptance. Historical
+boundary как historical evidence. Repeat Architecture Confirmation затем
+блокировала TASK-026 отдельной DP-015/DP-020 refinement replay-first admission и
+late generation. TASK-049 завершила refinement, TASK-057 реализовала isolated
+prerequisite, а TASK-060 prospectively accepted четыре exact claims. TASK-061
+возвращает `READY — UNBLOCK`; TASK-026 Ready to Reactivate, но Not Activated.
+Historical
 focused readiness decomposition зафиксирована в зеркальном
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), со
 статусом Design Status Draft и Implementation Status Planned overall, где

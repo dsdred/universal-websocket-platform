@@ -4,15 +4,15 @@
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
 Текущая work —
-[TASK-060](TASK-060-TASK-057-PUBLISHED-SUBJECT-PROSPECTIVE-ACCEPTANCE.md),
-projected `In Progress`: exact IPSPA event
-`9199e91e-82cf-4b94-8e9d-c81ba91015b6` и immutable published TASK-057
-subject прошли fresh verification для четырёх named claims; exact
-latest state берётся только из newest valid envelope entry, совпадающей
-с independently recomputed `S/E`. TASK-059 Completed и опубликована через
-PR #61 по local merge metadata; TASK-058 остаётся Sealed Negative
-Disposition. Historical Equivalence TASK-057 остаётся Not Proven;
-TASK-026 остаётся Blocked, а reassessment — Not Activated.
+[TASK-061](TASK-061-RUNTIME-ACTIVATION-READINESS-REASSESSMENT.md), projected
+`In Progress`: independent Architect verdict `READY — UNBLOCK`, matrix
+7 Direct / 10 Compositional / 2 Missing core / 0 Missing prerequisite / 0
+Missing external / 0 Deferred. Exact latest state берётся только из newest
+valid envelope entry, совпадающей с independently recomputed subject. TASK-060
+Completed, Coordinator Accepted и опубликована через PR #62; её exact event
+`9199e91e-82cf-4b94-8e9d-c81ba91015b6` prospectively accepts четыре bounded
+TASK-057 claims. Historical Equivalence остаётся Not Proven; TASK-058 — Sealed
+Negative Disposition. TASK-026 теперь Ready to Reactivate, но Not Activated.
 
 - [TASK-000 — Repository Synchronization](TASK-000-REPOSITORY-SYNCHRONIZATION.md)
 - [TASK-000 — Repository Synchronization Report](TASK-000-REPOSITORY-SYNCHRONIZATION-REPORT.md)
@@ -41,7 +41,7 @@ TASK-026 остаётся Blocked, а reassessment — Not Activated.
 - [TASK-023 — Runtime Management Routing Implementation](TASK-023-RUNTIME-MANAGEMENT-ROUTING.md) — Completed, Coordinator Accepted
 - [TASK-024 — Runtime Operational Identity Persistence Implementation](TASK-024-RUNTIME-OPERATIONAL-IDENTITY-PERSISTENCE.md) — Completed, Coordinator Accepted
 - [TASK-025 — Runtime Management Command Idempotency Implementation](TASK-025-RUNTIME-COMMAND-IDEMPOTENCY.md) — Completed, Coordinator Accepted
-- [TASK-026 — Runtime Activation, Replacement, and Rollback Implementation](TASK-026-RUNTIME-ACTIVATION-REPLACEMENT-ROLLBACK.md) — Blocked (2026-08-27); historical accepted readiness `READY — UNBLOCK TASK-026` was superseded for live execution by repeat Architecture `NEEDS DECISION` / `SPLIT REQUIRED`: TASK-049 completed the replay-first inspection and late-generation design refinement, and TASK-057 now implements that prerequisite in isolation under verification; DP-016 remains Approved/Planned, TASK-026 remains Blocked pending separate post-acceptance readiness reassessment, and no TASK-026 implementation/Acceptance/Completion/commit/publication is claimed
+- [TASK-026 — Runtime Activation, Replacement, and Rollback Implementation](TASK-026-RUNTIME-ACTIVATION-REPLACEMENT-ROLLBACK.md) — Ready to Reactivate — Not Activated (2026-09-06); TASK-061 Architect verdict `READY — UNBLOCK`, matrix 7/10/2/0/0/0, proves no separate prerequisite remains; DP-016 stays Approved/Planned and no TASK-026 implementation/Acceptance/Completion/commit/publication is claimed
 - [TASK-027 — Runtime Activation Orchestration Prerequisites Design](TASK-027-RUNTIME-ACTIVATION-ORCHESTRATION-PREREQUISITES-DESIGN.md) — Completed, Coordinator Accepted
 - [TASK-028 — Runtime Command Parent/Phase Prerequisites Implementation](TASK-028-RUNTIME-COMMAND-PARENT-PHASE-PREREQUISITES.md) — Completed, Coordinator Accepted; TASK-026 remains Blocked
 - [TASK-029 — Runtime Command Continue and Pending-Stop Prerequisite](TASK-029-RUNTIME-COMMAND-CONTINUE-PENDING-STOP.md) — Completed, Coordinator Accepted; TASK-026 remains Blocked
@@ -78,10 +78,11 @@ TASK-026 остаётся Blocked, а reassessment — Not Activated.
 - [TASK-054 — Documentation Home User Guidance Reconciliation](TASK-054-DOCS-HOME-USER-GUIDANCE.md) — Completed, Coordinator Accepted (2026-09-01); task commit `07f9cc7e8a5aac4e24b52795f21fdeca5b9d5b14` published through PR #56 and merged as `64601fc26dd57c0ebd09f1db39f9851b6b16643e`; TASK-026 remains Blocked and its implementation prerequisite remains Not Activated
 - [TASK-055 — Mirrored MASTER_PLAN Governance Freshness Reconciliation](TASK-055-MASTER-PLAN-GOVERNANCE-FRESHNESS.md) — Completed, Coordinator Accepted (2026-09-02); task commit `da44e0ab22aa94a223628afdc9b20e61a1337e02` published through PR #57 and merged as `9884d8458bc99ce61439c286c810d7e2cd2f91ae`; TASK-026 remains Blocked and runtime/DP/proposal candidates remain Not Activated
 - [TASK-056 — Wiki Knowledge-Map Freshness Reconciliation](TASK-056-WIKI-KNOWLEDGE-MAP-FRESHNESS.md) — Completed, Coordinator Accepted (2026-09-02); task commit `bd87bbb8526efe1413899e8125e847d80aade09a` published through PR #58 and merged as `934a7137d4c75598df4cbf9c28fc09c0fa665e5e`; TASK-026 remained Blocked and deferred candidates were not activated by that documentation task
-- [TASK-057 — Replay-First Late-Generation Admission Implementation](TASK-057-REPLAY-FIRST-LATE-GENERATION-ADMISSION.md) — projected In Progress from `main@934a7137d4c75598df4cbf9c28fc09c0fa665e5e`; exact latest verdict, canonical identity and first incomplete checkpoint resolve only from the newest valid terminal Recovery Evidence Envelope entry matching independently recomputed current bytes, otherwise STOP; bounded DP-015/DP-020 replay-first/late-generation prerequisite implemented in isolation under verification; TASK-026 remains Blocked and its readiness reassessment is Not Activated until TASK-057 Acceptance
+- [TASK-057 — Replay-First Late-Generation Admission Implementation](TASK-057-REPLAY-FIRST-LATE-GENERATION-ADMISSION.md) — immutable task commit `50c24ea209f69aae7a531aa72080bcf53542cdb5` published through PR #59; Historical Equivalence remains Not Proven, while exact four bounded claims are prospectively accepted by TASK-060 event `9199e91e-82cf-4b94-8e9d-c81ba91015b6`
 - [TASK-058 — Runtime Activation Readiness Reassessment](TASK-058-RUNTIME-ACTIVATION-READINESS-REASSESSMENT.md) — Sealed Negative Disposition through PR #60 on `main@8ce7b9095b2d56e065034bb031b6d5806eab87c8`; chronology and historical accepted-to-published equivalence remain Not Proven; no Acceptance/BCC/Completion or positive prerequisite proof
 - [TASK-059 — Prospective Published-Subject Acceptance Governance](TASK-059-PROSPECTIVE-PUBLISHED-SUBJECT-ACCEPTANCE-GOVERNANCE.md) — Completed, Coordinator Accepted (2026-09-05); task commit `c4c858941ceb9544e6a30454e6309a9ef159b875` published through PR #61 by local merge metadata and merged as `600dc10b737ce2dfda550379a6ec68e3b680f959`; general IPSPA protocol only
-- [TASK-060 — TASK-057 Published Subject Prospective Acceptance](TASK-060-TASK-057-PUBLISHED-SUBJECT-PROSPECTIVE-ACCEPTANCE.md) — projected In Progress; exact IPSPA event verified for four named claims, Historical Equivalence Not Proven; the exact prospective decision resolves only from the newest valid envelope matching independently recomputed `S/E`, and TASK-026 cannot activate automatically
+- [TASK-060 — TASK-057 Published Subject Prospective Acceptance](TASK-060-TASK-057-PUBLISHED-SUBJECT-PROSPECTIVE-ACCEPTANCE.md) — Completed, Coordinator Accepted (2026-09-06); task commit `bd7356152ee62d5b8de7b8e9a7fa49c3890a4ae5` published through PR #62 and merged as `cc5e7598029a659ee0f4c382cd01627a753a3200`; exact event accepts only four bounded claims, Historical Equivalence remains Not Proven
+- [TASK-061 — Runtime Activation Readiness Reassessment](TASK-061-RUNTIME-ACTIVATION-READINESS-REASSESSMENT.md) — projected In Progress; independent Architect verdict `READY — UNBLOCK`, matrix 7 Direct / 10 Compositional / 2 Missing core / 0 Missing prerequisite / 0 Missing external / 0 Deferred; TASK-026 is Ready to Reactivate — Not Activated
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

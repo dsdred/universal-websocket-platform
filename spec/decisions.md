@@ -7,9 +7,10 @@
 - TASK-049 — завершённая и Coordinator-Accepted (2026-08-28) design-only
   refinement в Draft DP-020 и Approved DP-015 для replay-first orchestration
   admission и late generation allocation. TASK-057 реализует этот отдельный
-  prerequisite изолированно и остаётся projected `In Progress` под post-sync
-  verification; TASK-026 остаётся Blocked до отдельной readiness reassessment
-  после TASK-057 Acceptance.
+  prerequisite изолированно; TASK-060 prospectively accepts четыре exact claims
+  через event `9199e91e-82cf-4b94-8e9d-c81ba91015b6`, а Historical Equivalence
+  остаётся `Not Proven`. TASK-061 возвращает `READY — UNBLOCK` с matrix
+  7/10/2/0/0/0; TASK-026 Ready to Reactivate, но Not Activated.
 
 - [`ADR 0001: Базовая реализация Control Service`](../docs/ru/adr/0001-bootstrap-control-service.md)
 - [`ADR 0002: Configuration DSL`](../docs/ru/adr/0002-configuration-dsl.md)
@@ -99,13 +100,13 @@ prerequisite с historical matrix 7 Direct / 9 Compositional / 2 Missing core /
 1 Missing prerequisite / 0 Deferred. TASK-046 фиксирует additive contract, а
 TASK-047 реализует его изолированно. Fresh reassessment принимает `READY —
 UNBLOCK TASK-026` с matrix 7/10/2/0/0/0 как historical readiness evidence.
-DP-016 остаётся Approved/Planned; текущий implementation cycle TASK-026 теперь
-  Blocked после repeat Architecture `NEEDS DECISION` / `SPLIT REQUIRED`, которая
+DP-016 остаётся Approved/Planned; implementation cycle TASK-026 была Blocked
+  после repeat Architecture `NEEDS DECISION` / `SPLIT REQUIRED`, которая
   выявила отсутствие replay-first inspection и late generation allocation.
   TASK-049 — завершённая и Coordinator-Accepted design-only refinement;
-  TASK-057 реализует этот isolated prerequisite под verification. TASK-026 не
-  активируется автоматически и требует отдельной readiness reassessment после
-  TASK-057 Acceptance.
+  TASK-057 реализует isolated prerequisite, TASK-060 prospectively accepts
+  четыре exact claims, а TASK-061 возвращает `READY — UNBLOCK` с matrix
+  7/10/2/0/0/0. TASK-026 Ready to Reactivate, но Not Activated.
 
 Approved DP-019 определяет focused internal integration contract, необходимый
 для реализации DP-016 без ослабления proofs: exact authorization tuple
@@ -283,9 +284,9 @@ Coordinator Accepted (2026-08-24)`, repeat Reviewer `APPROVED` 0/0, Scope Audit
 preclaimed `StopOld` admission. TASK-047 реализует contract изолированно.
 Fresh TASK-026 Design-only reassessment принимает `READY — UNBLOCK TASK-026` с
 matrix 7/10/2/0/0/0 как historical readiness evidence. Последующий
-implementation cycle теперь Blocked repeat Architecture `NEEDS DECISION` /
+implementation cycle была Blocked repeat Architecture `NEEDS DECISION` /
 `SPLIT REQUIRED` на DP-015/DP-020 refinement replay-first admission и late
   generation. Design refinement завершена как TASK-049 и принята Coordinator
-  2026-08-28; TASK-057 реализует отдельный isolated prerequisite и остаётся
-  projected `In Progress` под verification. TASK-057 Acceptance/Completion ещё
-  отсутствуют, а TASK-026 остаётся Blocked до отдельной readiness reassessment.
+  2026-08-28; TASK-057 реализует isolated prerequisite, TASK-060 prospectively
+  accepts четыре exact claims, а TASK-061 возвращает `READY — UNBLOCK` с matrix
+  7/10/2/0/0/0. TASK-026 Ready to Reactivate, но Not Activated.

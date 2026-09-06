@@ -8,16 +8,18 @@
 
 ## Текущее состояние
 
-- Current boundary (2026-09-05): TASK-059 Completed и опубликована через
-  PR #61 по immutable local merge metadata на synchronized
-  `main@600dc10b737ce2dfda550379a6ec68e3b680f959`; она определила общий
-  IPSPA protocol. Active TASK-060 projected `In Progress`: exact event
-  `9199e91e-82cf-4b94-8e9d-c81ba91015b6` прошёл fresh verification для
-  четырёх named TASK-057 claims; latest state и identity resolve только из
-  newest valid envelope, совпадающего с independently recomputed `S/E`.
-  Historical Equivalence TASK-057 остаётся `Not Proven`; TASK-058
-  остаётся `Sealed Negative Disposition`; TASK-026 остаётся Blocked,
-  а его reassessment — Not Activated.
+- Current boundary (2026-09-06): TASK-060 Completed, Coordinator Accepted и
+  опубликована через PR #62 как task commit
+  `bd7356152ee62d5b8de7b8e9a7fa49c3890a4ae5` в synchronized
+  `main@cc5e7598029a659ee0f4c382cd01627a753a3200`. Exact IPSPA event
+  `9199e91e-82cf-4b94-8e9d-c81ba91015b6` prospectively accepts четыре
+  bounded TASK-057 claims; Historical Equivalence остаётся `Not Proven`.
+  Active TASK-061 projected `In Progress`; independent Architect verdict
+  `READY — UNBLOCK`, matrix 7 Direct / 10 Compositional / 2 Missing core / 0
+  Missing prerequisite / 0 Missing external / 0 Deferred. Latest TASK-061
+  state resolves only from the newest valid envelope matching independently
+  recomputed subject. TASK-058 остаётся `Sealed Negative Disposition`;
+  TASK-026 — Ready to Reactivate, но Not Activated.
 
 - Текущая веха: **Beta — Complete the Single-Node Runtime**
 - Статус реализации: **Control Service, single-node Runtime vertical,
@@ -81,9 +83,11 @@
   inspection and late generation allocation. TASK-049 завершила и Coordinator
   Accepted design-only refinement этого contract; TASK-051 reconciled that
   design onto current `main` and was terminally published through PR #53.
-  TASK-057 now implements the separate prerequisite in isolation and remains
-  projected `In Progress` under post-sync verification; TASK-026 remains
-  Blocked pending separate readiness reassessment after TASK-057 Acceptance.
+  TASK-057 implements the separate prerequisite in isolation; exact four
+  claims are prospectively accepted by TASK-060 event
+  `9199e91e-82cf-4b94-8e9d-c81ba91015b6`. TASK-061 independently returns
+  `READY — UNBLOCK` with matrix 7/10/2/0/0/0; TASK-026 is Ready to Reactivate
+  but remains Not Activated.
   TASK-044 `Completed — Coordinator Accepted (2026-08-24)`,
   repeat Reviewer APPROVED 0/0, Scope Audit 16/0/0, PROCESS-002 Synchronized.
   HTTP, concrete policy, external command storage, recovery/reporting
@@ -118,10 +122,12 @@
   (2026-08-28); immutable target
   `4a040b4e86ec2f4361ec765657e46cd0f36bf349`. Предыдущая TASK-046 —
   Tracked-Start Managed-Parent Admission Design — завершена и принята
-  (2026-08-25); TASK-026 остаётся Blocked; implementation candidate was later
-  activated as projected TASK-057 and is implemented in isolation under
-  verification**
-- Текущая architecture task: **отсутствует**
+  (2026-08-25); TASK-026 оставалась Blocked на closure этих design tasks.
+  TASK-057 впоследствии реализовала isolated prerequisite, а TASK-060
+  prospectively accepted четыре exact claims**
+- Текущая architecture task: **TASK-061; independent Architect verdict `READY
+  — UNBLOCK`, matrix 7/10/2/0/0/0. TASK-026 Ready to Reactivate, но Not
+  Activated**
 - TASK-049 publication boundary: **TASK-049 Completed — Coordinator Accepted;
   immutable target `4a040b4e86ec2f4361ec765657e46cd0f36bf349`
   on branch `docs/task-049-replay-first-late-generation-design`; publication
@@ -176,17 +182,11 @@
   Coordinator Closure Audit PASS; Task Contract, exact scope 26/0/0,
   Verification Matrix, PROCESS-002, status consistency и repository-state
   audit подтверждены; Commit Gate, commit, push и publication не выполнялись**
-- Текущая development task: **TASK-057 — Replay-First Late-Generation
-  Admission Implementation; projected `In Progress` from
-  `main@934a7137d4c75598df4cbf9c28fc09c0fa665e5e`. Exact latest verdict,
-  canonical identity and first incomplete checkpoint resolve only from the
-  newest valid terminal Recovery Evidence Envelope entry matching independently
-  recomputed current bytes, otherwise STOP. The DP-015/DP-020 prerequisite is
-  implemented in isolation; fresh Tester returned `PASS WITH LIMITATION` 0/0
-  and repeat Initial Independent Review `APPROVED` 0/0 before PROCESS-002.
-  Documentation synchronization invalidates that pre-sync manifest and requires
-  fresh post-sync verification. TASK-026 remains Blocked; terminalization,
-  orchestrator and production wiring remain absent**
+- Текущая development task: **отсутствует. TASK-057 immutable source
+  опубликован через PR #59; Historical Equivalence остаётся Not Proven, но
+  четыре exact claims prospectively accepted event TASK-060. TASK-026 готова
+  к отдельной реактивации, но Not Activated; terminalization, orchestrator и
+  production wiring отсутствуют**
 - TASK-032 acceptance evidence: **Completed — Coordinator Accepted после
   rework; DP-020 deferred slice 2 реализован изолированно в
   `internal/runtimelaunchflow`: ManagedFlow/NewManaged/StartManaged, immutable
@@ -267,11 +267,11 @@
   external / 0 Deferred; no separate prerequisite; DP-016 remains Approved /
   Planned; Tester PASS 0/0/0; repeat Reviewer APPROVED 0/0; Scope Audit
   16/0/0; PROCESS-002 Synchronized; later superseded by the TASK-026 recheck**
-- Текущая рекомендация: **TASK-026 readiness reassessment only after TASK-057
-  Coordinator Acceptance; `Not Activated`. Documentation findings в
-  DP-001–DP-006, Authentication proposals и DP-009 также остаются Not
-  Activated. TASK-057 не активирует TASK-026, terminal orchestration или
-  production wiring автоматически**
+- Текущая рекомендация: **после Coordinator Acceptance TASK-061 — отдельный
+  normal intake TASK-026 Runtime Activation Implementation; Ready to Reactivate,
+  `Not Activated`. Documentation findings в DP-001–DP-006, Authentication
+  proposals и DP-009 также остаются Not Activated. TASK-061 не активирует
+  TASK-026, terminal orchestration или production wiring автоматически**
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы
   изолированно; Repeat Independent Review Approved, blocking/non-blocking 0;
@@ -287,14 +287,13 @@
   task commit `bd87bbb8526efe1413899e8125e847d80aade09a` published through PR #58
   and merged as `934a7137d4c75598df4cbf9c28fc09c0fa665e5e`. TASK-026 remained Blocked
   and deferred candidates were not activated by that documentation task**
-- Текущее documentation state: **TASK-057 projected `In Progress`; current
+- Текущее documentation state: **TASK-061 projected `In Progress`; current
   verdict and checkpoint come only from the newest valid Recovery Evidence
-  Envelope matching recomputed bytes. Projected content records isolated
-  implementation truth without Acceptance, Completion, public capability,
-  production wiring, or TASK-026 activation**
-- Текущая architecture task: **отсутствует. Fresh Architect recheck TASK-026
-  завершён verdict `READY — UNBLOCK TASK-026`; matrix 7/10/2/0/0/0; это
-  readiness evidence, а не implementation Acceptance/Completion**
+  Envelope matching recomputed subject. It records readiness only, without
+  TASK-026 activation, implementation, public capability, or production wiring**
+- Текущая architecture task: **TASK-061 readiness reassessment; independent
+  Architect verdict `READY — UNBLOCK`, matrix 7/10/2/0/0/0. Это readiness
+  evidence, а не TASK-026 implementation Acceptance/Completion**
 - Trusted baseline TASK-009: **clean synchronized
   `main@63b961eeb59af9205c3c3d0b68d3f4bd7b8ac25c`; локальная ветка
   `feature/task-009-runtime-lifecycle-owner`; task record создан первым
@@ -552,15 +551,12 @@
   и production wiring отсутствуют
 - Design Status DP-016 — **Approved**, Implementation Status — **Planned**;
   activation/replacement/rollback ordering определён только на design level;
-  fresh TASK-026 reassessment принимает `READY — UNBLOCK TASK-026` с 7 Direct /
-  10 Compositional / 2 Missing core / 0 Missing prerequisite / 0 Missing
-  external / 0 Deferred как historical readiness evidence; текущий cycle
-  TASK-026 remains Blocked after repeat Architecture `NEEDS DECISION` / `SPLIT
-  REQUIRED`; DP-015/DP-020 replay-first admission and late-generation design
-  completed as TASK-049 and was reconciled by published TASK-051. TASK-057
-  implements that isolated prerequisite under verification, but TASK-026 stays
-  Blocked until a separate post-acceptance readiness reassessment; orchestrator,
-  API, recovery and production wiring are absent
+  TASK-060 prospectively accepts четыре exact TASK-057 claims through event
+  `9199e91e-82cf-4b94-8e9d-c81ba91015b6`, Historical Equivalence остаётся `Not
+  Proven`; TASK-061 returns `READY — UNBLOCK` with matrix 7 Direct / 10
+  Compositional / 2 Missing core / 0 Missing prerequisite / 0 Missing external /
+  0 Deferred. TASK-026 Ready to Reactivate, но Not Activated; orchestrator, API,
+  recovery and production wiring are absent
 - Design Status DP-017 — **Approved**, Implementation Status — **Planned**;
   recovery/reconciliation определены только на design level; recovery store,
   execution-evidence adapter, executor, API и production wiring отсутствуют

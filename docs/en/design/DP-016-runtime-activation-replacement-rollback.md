@@ -28,13 +28,16 @@ managed-parent plus preclaimed `StopOld` admission prerequisite. TASK-046
 records its additive contract and TASK-047 implements it in isolation. Fresh
 TASK-026 reassessment accepts `READY — UNBLOCK TASK-026` with 7 Direct / 10
 Compositional / 2 Missing core / 0 Missing prerequisite / 0 Missing external /
-0 Deferred. That readiness is now superseded for live execution by repeat
+0 Deferred. That readiness was superseded for live execution by repeat
 Architecture Confirmation `NEEDS DECISION` / `SPLIT REQUIRED`: the historical
 DP-015/DP-020 admission could not provide exact replay-first inspection and
 late generation allocation. TASK-049 is the completed and Coordinator-Accepted
-design-only refinement; TASK-057 implements its isolated prerequisite under
-verification. TASK-026 remains Blocked pending separate post-acceptance
-readiness reassessment. DP-016 remains Approved/Planned and unimplemented.
+design-only refinement; TASK-057 implements its isolated prerequisite, and
+TASK-060 prospectively accepts its four exact claims. TASK-061 now returns
+`READY — UNBLOCK` with the same exact 7/10/2/0/0/0 matrix. Rows 2 and 14 remain
+future orchestrator core, not readiness prerequisites under section 25.
+TASK-026 is Ready to Reactivate but Not Activated. DP-016 remains
+Approved/Planned and unimplemented.
 
 ## 2. Purpose
 
@@ -543,12 +546,12 @@ superseding TASK-026 recheck identifies the DP-015 tracked-Start managed-parent
 plus preclaimed `StopOld` admission prerequisite. TASK-046 defines that
 additive contract and TASK-047 implements it in isolation. Fresh TASK-026
 reassessment accepts the READY boundary as historical evidence. Repeat
-Architecture Confirmation now blocks TASK-026 on the separate DP-015/DP-020
-replay-first admission and late-generation refinement. That design refinement
-was completed as TASK-049 and Coordinator Accepted on 2026-08-28; TASK-057
-implements its separate isolated prerequisite under verification. TASK-026
-remains Blocked pending a separate readiness reassessment after TASK-057
-Acceptance, and no reduced DP-016 slice is permitted.
+Architecture Confirmation then blocked TASK-026 on the separate DP-015/DP-020
+replay-first admission and late-generation refinement. TASK-049 completed that
+refinement, TASK-057 implemented its isolated prerequisite, and TASK-060
+prospectively accepted its four exact claims. TASK-061 returns `READY —
+UNBLOCK`; TASK-026 is Ready to Reactivate but Not Activated, and no reduced
+DP-016 slice is permitted.
 
 ## 29. Decision
 

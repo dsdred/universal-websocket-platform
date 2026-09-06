@@ -2,20 +2,21 @@
 
 ## Status
 
-`Blocked — missing DP-015/DP-020 orchestration-admission refinement
-(2026-08-27)`.
+`Ready to Reactivate — Not Activated (2026-09-06)`.
 
-The separately accepted and published readiness verdict `READY — UNBLOCK
-TASK-026`, with matrix 7 Direct / 10 Compositional / 2 Missing core / 0 Missing
-prerequisite / 0 Missing external / 0 Deferred, is preserved as historical
-evidence. The current implementation cycle supersedes that readiness for live
-execution: repeat Architecture Confirmation returned `NEEDS DECISION` and
-`SPLIT REQUIRED` because the current DP-015/DP-020 eager-generation and
-combined inspect/claim boundaries cannot satisfy exact replay-first admission
-and late generation allocation. The rejected implementation was removed, so
-production and test diff is zero. DP-016 remains Approved/Planned. A separate
-narrow DP-015/DP-020 design and isolated implementation prerequisite is `Not
-Activated` and has no Task ID.
+TASK-061 independently reassessed the complete unchanged DP-016 section 25
+matrix after exact prospective event
+`9199e91e-82cf-4b94-8e9d-c81ba91015b6` accepted the four bounded TASK-057
+claims. Its Architect verdict is `READY — UNBLOCK`: 7 Direct / 10
+Compositional / 2 Missing core / 0 Missing prerequisite / 0 Missing external /
+0 Deferred. The former replay-first/late-generation prerequisite is satisfied;
+Historical Equivalence remains `Not Proven`, and TASK-058 remains Sealed
+Negative Disposition with no positive-proof semantics. The two Missing-core
+rows are the same-target decisions owned by the future DP-016 orchestrator
+under DP-015 section 13.2 and DP-016 sections 11, 16, and 25; they are TASK-026
+implementation work, not separate readiness prerequisites. DP-016 remains
+Approved/Planned, production and test diff remains zero, and TASK-026 is not
+reactivated until a separate normal intake.
 
 ## Task Contract
 

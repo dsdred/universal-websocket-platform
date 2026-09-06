@@ -9,14 +9,18 @@
   parent/phase sequential core, and command-boundary Continue/pending-Stop
   rendezvous implemented in isolation; Slice 3 managed gates and continuation
   implemented and independently accepted in isolation; TASK-057 replay-first/
-  late-generation admission implemented in isolation under verification; the
+  late-generation admission implemented and prospectively accepted in isolation; the
   complete DP-019 extension remains Planned
 
 TASK-049 completed the design-only refinement of the replay-first
 orchestration-admission and late-generation contract in section 13.2 and was
 Coordinator Accepted on 2026-08-28. TASK-057 implements that separate contract
-in isolation and remains projected `In Progress` under post-sync verification.
-DP-015 remains Approved with Partial implementation.
+in isolation; TASK-060 prospectively accepts its four exact claims through event
+`9199e91e-82cf-4b94-8e9d-c81ba91015b6`, while Historical Equivalence remains
+`Not Proven`. TASK-061 returns `READY — UNBLOCK` with matrix 7 Direct / 10
+Compositional / 2 Missing core / 0 Missing prerequisite / 0 Missing external /
+0 Deferred. TASK-026 is Ready to Reactivate but Not Activated. DP-015 remains
+Approved with Partial implementation.
 
 This approved design defines the durable idempotency boundary for state-changing
 Runtime management commands. Package `internal/runtimecommandidempotency`
@@ -65,10 +69,11 @@ prerequisite / 0 Missing external / 0 Deferred. The current TASK-026 cycle
 superseded that readiness for live execution: repeat Architecture Confirmation
 returned `NEEDS DECISION` / `SPLIT REQUIRED` because the then-current eager
 generation and combined inspect/claim could not provide exact replay-first admission and late
-allocation. TASK-026 is Blocked. TASK-049 is the completed and Coordinator-
+allocation. TASK-026 was Blocked. TASK-049 is the completed and Coordinator-
 Accepted design-only DP-015/DP-020 refinement; TASK-057 implements its isolated
-prerequisite under verification. DP-015 status is unchanged, and TASK-026
-requires a separate post-acceptance readiness reassessment.
+prerequisite and TASK-060 prospectively accepts its four exact claims. TASK-061
+returns `READY — UNBLOCK`; DP-015 status is unchanged and TASK-026 is Ready to
+Reactivate but Not Activated.
 
 ## 4. Scope
 
@@ -675,10 +680,10 @@ boundary as historical evidence. Repeat Architecture Confirmation now blocks
 TASK-026 on the separate replay-first admission and late-generation
 DP-015/DP-020 refinement described above. The design refinement was completed
 as TASK-049 and Coordinator Accepted on 2026-08-28; TASK-057 implements its
-separate replay-first/late-generation prerequisite in isolation under
-verification. The isolated package changes no lifecycle contract and is not
-connected to the DP-013 Directory. TASK-026 remains Blocked pending separate
-readiness reassessment after TASK-057 Acceptance.
+separate replay-first/late-generation prerequisite in isolation, prospectively
+accepted by TASK-060. The isolated package changes no lifecycle contract and is
+not connected to the DP-013 Directory. TASK-061 returns `READY — UNBLOCK` with
+matrix 7/10/2/0/0/0; TASK-026 is Ready to Reactivate but Not Activated.
 
 ## 28. Decision
 
