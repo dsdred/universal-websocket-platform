@@ -20,9 +20,10 @@ reassessment TASK-026 принимает `READY — UNBLOCK TASK-026` с matrix
 Architecture Confirmation вернула `NEEDS DECISION` / `SPLIT REQUIRED`, потому
 что historical admission DP-015/DP-020 не обеспечивал replay-first inspection
 и late generation allocation. TASK-049 — завершённая и Coordinator-Accepted
-design-only refinement; TASK-057 реализует её isolated prerequisite под
-verification. TASK-026 остаётся Blocked до отдельной post-acceptance readiness
-reassessment. Этот DP остаётся Draft/Partial.
+design-only refinement; TASK-057 реализует isolated prerequisite, а TASK-060
+prospectively accepts четыре exact claims. TASK-061 возвращает `READY —
+UNBLOCK` с matrix 7/10/2/0/0/0. TASK-026 Ready to Reactivate, но Not Activated.
+Этот DP остаётся Draft/Partial.
 
 ## 2. Назначение
 
@@ -451,9 +452,9 @@ reassessment принимает `READY — UNBLOCK TASK-026` как historical e
 Repeat Architecture Confirmation теперь блокирует TASK-026 отдельной
 DP-015/DP-020 refinement replay-first admission и late generation. Design
 refinement завершена как TASK-049 и принята Coordinator 2026-08-28; TASK-057
-реализует её отдельную isolated prerequisite под verification. TASK-026
-остаётся Blocked до отдельной readiness reassessment после TASK-057 Acceptance;
-implementation TASK-026 здесь не утверждается.
+реализует isolated prerequisite, а TASK-060 prospectively accepts четыре exact
+claims. TASK-061 возвращает `READY — UNBLOCK`; TASK-026 Ready to Reactivate, но
+Not Activated; implementation TASK-026 здесь не утверждается.
 
 ## 18. Решение
 

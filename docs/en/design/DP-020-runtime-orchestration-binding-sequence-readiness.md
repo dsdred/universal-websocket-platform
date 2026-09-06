@@ -7,13 +7,14 @@
 - **Design Status:** Draft
 - **Implementation Status:** Planned overall; Slice 3 implemented and
   independently accepted in isolation; TASK-057 replay-first/late-generation
-  slice implemented in isolation under verification
+  slice implemented and prospectively accepted in isolation
 
 TASK-049 completed the design-only refinement of the replay-first admission and
 late-generation provider contract in section 8.5 and was Coordinator Accepted
-on 2026-08-28. TASK-057 implements that separate slice in isolation and remains
-projected `In Progress` under post-sync verification. DP-020 remains
-Draft/Planned overall.
+on 2026-08-28. TASK-057 implements that separate slice in isolation and TASK-060
+prospectively accepts its four exact claims. TASK-061 returns `READY — UNBLOCK`
+with matrix 7/10/2/0/0/0; TASK-026 is Ready to Reactivate but Not Activated.
+DP-020 remains Draft/Planned overall.
 
 Implementation progress: TASK-031 and TASK-032 produced Coordinator-Accepted
 isolated partial implementations of Slices 1 and 2, and TASK-034 defined their
@@ -47,10 +48,11 @@ UNBLOCK TASK-026` with matrix 7/10/2/0/0/0. The current cycle supersedes that
 readiness for live execution: repeat Architecture Confirmation returned `NEEDS
 DECISION` / `SPLIT REQUIRED` because the then-current eager generation and
 combined inspect/claim could not provide replay-first admission and late allocation.
-TASK-026 is Blocked. TASK-049 is the completed and Coordinator-Accepted
+TASK-026 was Blocked. TASK-049 is the completed and Coordinator-Accepted
 design-only DP-015/DP-020 refinement; TASK-057 implements its isolated
-prerequisite under verification. DP-020 remains Draft/Planned overall, and
-TASK-026 requires separate post-acceptance readiness reassessment.
+prerequisite and TASK-060 prospectively accepts its four exact claims. TASK-061
+returns `READY — UNBLOCK`; TASK-026 is Ready to Reactivate but Not Activated.
+DP-020 remains Draft/Planned overall.
 
 ## 2. Purpose
 
@@ -803,8 +805,9 @@ Not Activated at that reassessment checkpoint. Repeat Architecture
 Confirmation identified the separate DP-015/DP-020 replay-first admission and
 late-generation refinement as TASK-026's missing prerequisite. That design was
 completed as TASK-049 and Coordinator Accepted on 2026-08-28; TASK-057
-implements the isolated slice under verification. TASK-026 remains Blocked
-pending separate readiness reassessment after TASK-057 Acceptance. Historical
+implements the isolated slice and TASK-060 prospectively accepts its four exact
+claims. TASK-061 returns `READY — UNBLOCK`; TASK-026 is Ready to Reactivate but
+Not Activated. Historical
 Slice 4 remains completed and accepted as TASK-038.
 
 ## 15. Consequences

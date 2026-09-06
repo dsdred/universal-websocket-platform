@@ -21,8 +21,9 @@ repeat Architecture Confirmation returned `NEEDS DECISION` / `SPLIT REQUIRED`
 because the historical DP-015/DP-020 admission could not provide replay-first
 inspection and late generation allocation. TASK-049 is the completed and
 Coordinator-Accepted design-only refinement; TASK-057 implements its isolated
-prerequisite under verification. TASK-026 remains Blocked pending separate
-post-acceptance readiness reassessment. This DP remains Draft/Partial.
+prerequisite and TASK-060 prospectively accepts its four exact claims. TASK-061
+returns `READY — UNBLOCK` with matrix 7/10/2/0/0/0. TASK-026 is Ready to
+Reactivate but Not Activated. This DP remains Draft/Partial.
 
 ## 2. Purpose
 
@@ -454,9 +455,9 @@ reassessment accepts `READY — UNBLOCK TASK-026` as historical evidence. Repeat
 Architecture Confirmation now blocks TASK-026 on the separate DP-015/DP-020
 replay-first admission and late-generation refinement. That design refinement
 was completed as TASK-049 and Coordinator Accepted on 2026-08-28; TASK-057
-implements its separate isolated prerequisite under verification. TASK-026
-remains Blocked pending separate readiness reassessment after TASK-057
-Acceptance. No TASK-026 implementation is asserted here.
+implements its separate isolated prerequisite and TASK-060 prospectively accepts
+its four exact claims. TASK-061 returns `READY — UNBLOCK`; TASK-026 is Ready to
+Reactivate but Not Activated. No TASK-026 implementation is asserted here.
 
 ## 18. Decision
 

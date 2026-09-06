@@ -7,13 +7,14 @@
 - **Статус проектирования:** Draft
 - **Статус реализации:** Planned overall; Срез 3 реализован и независимо
   принят изолированно; replay-first/late-generation slice TASK-057 реализован
-  изолированно под verification
+  и prospectively accepted изолированно
 
 TASK-049 завершила design-only refinement contract replay-first admission и
 позднего generation provider в разделе 8.5; Coordinator Acceptance получена
-2026-08-28. TASK-057 реализует этот отдельный slice изолированно и остаётся
-projected `In Progress` под post-sync verification. DP-020 остаётся
-Draft/Planned overall.
+2026-08-28. TASK-057 реализует этот отдельный slice изолированно, а TASK-060
+prospectively accepts четыре exact claims. TASK-061 возвращает `READY —
+UNBLOCK` с matrix 7/10/2/0/0/0; TASK-026 Ready to Reactivate, но Not Activated.
+DP-020 остаётся Draft/Planned overall.
 
 Прогресс реализации: TASK-031 и TASK-032 создали изолированные частичные
 реализации Срезов 1 и 2, исторически принятые Coordinator, а TASK-034 определила
@@ -49,10 +50,11 @@ TASK-047 реализует её изолированно. Fresh reassessment TA
 readiness для live execution: repeat Architecture Confirmation вернула `NEEDS
 DECISION` / `SPLIT REQUIRED`, потому что тогдашние eager generation и combined
 inspect/claim не обеспечивали replay-first admission и late allocation.
-TASK-026 заблокирована. TASK-049 — завершённая и Coordinator-Accepted
-design-only DP-015/DP-020 refinement; TASK-057 реализует её isolated
-prerequisite под verification. DP-020 остаётся Draft/Planned overall, а
-TASK-026 требует отдельной post-acceptance readiness reassessment.
+TASK-026 была заблокирована. TASK-049 — завершённая и Coordinator-Accepted
+design-only DP-015/DP-020 refinement; TASK-057 реализует isolated prerequisite,
+а TASK-060 prospectively accepts четыре exact claims. TASK-061 возвращает
+`READY — UNBLOCK`; TASK-026 Ready to Reactivate, но Not Activated. DP-020
+остаётся Draft/Planned overall.
 
 ## 2. Назначение
 
@@ -798,8 +800,9 @@ READY boundary; на том checkpoint implementation оставалась Not A
 Repeat Architecture Confirmation определила отдельную DP-015/DP-020 refinement
 replay-first admission и late generation как missing prerequisite TASK-026.
 Design refinement завершена как TASK-049 и принята Coordinator 2026-08-28;
-TASK-057 реализует isolated slice под verification. TASK-026 остаётся Blocked
-до отдельной readiness reassessment после TASK-057 Acceptance. Historical
+TASK-057 реализует isolated slice, а TASK-060 prospectively accepts четыре
+exact claims. TASK-061 возвращает `READY — UNBLOCK`; TASK-026 Ready to
+Reactivate, но Not Activated. Historical
 Срез 4 остаётся завершённым и принятым как TASK-038.
 
 ## 15. Последствия
