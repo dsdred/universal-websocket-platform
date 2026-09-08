@@ -24,9 +24,9 @@ Coordinator-Accepted design-only refinement; TASK-057 implements its isolated
 prerequisite and TASK-060 prospectively accepts its four exact claims. TASK-061
 remains immutable historical accepted readiness with `READY — UNBLOCK` and
 matrix 7/10/2/0/0/0. Fresh TASK-026 evidence identifies a separate DP-015
-parent-terminalization prerequisite outside this invoker boundary. TASK-026 is
-Blocked; the repair remains Not Activated without a Task ID. This DP remains
-Draft/Partial.
+parent-terminalization prerequisite outside this invoker boundary. TASK-062
+implements that repair in isolation and is pending independent review;
+TASK-026 remains Blocked and is not reactivated. This DP remains Draft/Partial.
 
 ## 2. Purpose
 
@@ -461,8 +461,9 @@ was completed as TASK-049 and Coordinator Accepted on 2026-08-28; TASK-057
 implements its separate isolated prerequisite and TASK-060 prospectively accepts
 its four exact claims. TASK-061 historical `READY — UNBLOCK` and matrix remain
 unchanged. Fresh TASK-026 evidence requires one separate DP-015
-parent-terminalization repair outside DP-021. TASK-026 is Blocked and the
-prerequisite is Not Activated. No TASK-026 implementation is asserted here.
+parent-terminalization repair outside DP-021. TASK-062 implements it in
+isolation and is pending independent review; TASK-026 remains Blocked and is
+not reactivated. No TASK-026 implementation is asserted here.
 
 ## 18. Decision
 

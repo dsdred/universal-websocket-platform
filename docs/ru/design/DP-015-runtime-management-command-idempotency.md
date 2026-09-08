@@ -23,8 +23,10 @@ verdict `READY — UNBLOCK` и matrix 7 Direct / 10 Compositional / 2 Missing co
 end-to-end evidence доказывает, что её row 15 недостаточна для current live
 readiness: existing parent terminal gate не может terminalize definitive
 post-`StopOld`, pre-`StartTarget` cancellation при намеренно отсутствующем
-`StartTarget`. TASK-026 Blocked; bounded DP-015 repair остаётся Not Activated
-без Task ID. DP-015 остаётся Approved с Partial implementation.
+`StartTarget`. TASK-062 активирует и реализует этот bounded DP-015 repair
+изолированно с focused regression proof и ожидает independent review. TASK-026
+остаётся Blocked и не реактивирована. DP-015 остаётся Approved с Partial
+implementation.
 
 Этот approved design определяет durable idempotency boundary для
 state-changing management commands Runtime. Package
@@ -77,8 +79,9 @@ allocation. TASK-026 была заблокирована. TASK-049 — заве�
 Accepted design-only DP-015/DP-020 refinement; TASK-057 реализует её isolated
 prerequisite, а TASK-060 prospectively accepts четыре exact claims. TASK-061
 исторически возвращает `READY — UNBLOCK`; статус DP-015 не меняется. Fresh
-TASK-026 evidence определяет отдельный parent-terminalization repair выше,
-поэтому TASK-026 Blocked, а prerequisite Not Activated.
+TASK-026 evidence определяет отдельный parent-terminalization repair выше.
+TASK-062 реализует его изолированно и ожидает independent review; TASK-026
+остаётся Blocked и не реактивирована.
 
 ## 4. Область
 
@@ -692,8 +695,9 @@ Directory. Historical `READY — UNBLOCK` TASK-061 и matrix 7/10/2/0/0/0
 existing gate: durably recorded definitive pre-`StartTarget`
 Cancelled/Stopped winner может omit `StartTarget` после terminal всех
 фактически существующих phases, а mismatched, nonterminal, absent-winner и
-indeterminate states сохраняются fail closed. TASK-026 Blocked; repair и его
-focused regression proof остаются Not Activated без Task ID.
+indeterminate states сохраняются fail closed. TASK-062 реализует этот repair и
+его focused regression proof изолированно и ожидает independent review.
+TASK-026 остаётся Blocked и не реактивирована.
 
 ## 28. Решение
 

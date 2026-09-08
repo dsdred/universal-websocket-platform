@@ -45,9 +45,9 @@ immutable historical accepted readiness with `READY — UNBLOCK` and matrix
 7/10/2/0/0/0. Fresh TASK-026 end-to-end evidence proves historical row 15
 insufficient for current live readiness: the existing DP-015 parent terminal
 gate rejects definitive post-`StopOld`, pre-`StartTarget` cancellation with no
-`StartTarget`. TASK-026 is Blocked; the bounded repair and focused regression
-proof remain Not Activated without a Task ID. DP-019 remains Approved/Planned
-overall.
+`StartTarget`. TASK-062 activates and implements the bounded repair in isolation
+with focused regression proof and is pending independent review. TASK-026
+remains Blocked and is not reactivated. DP-019 remains Approved/Planned overall.
 
 ## 2. Purpose
 
@@ -573,9 +573,10 @@ TASK-026 on a separate DP-015/DP-020 replay-first admission and late-generation
 refinement. TASK-049 completed the refinement, TASK-057 implemented its isolated
 prerequisite, and TASK-060 prospectively accepted its four exact claims.
 TASK-061 historical `READY — UNBLOCK` and matrix remain unchanged. Fresh
-TASK-026 evidence requires one separate DP-015 parent-terminalization repair;
-TASK-026 is Blocked and the prerequisite is Not Activated. The
-historical focused readiness decomposition is recorded in the mirrored
+TASK-026 evidence requires one separate DP-015 parent-terminalization repair.
+TASK-062 implements it in isolation and is pending independent review;
+TASK-026 remains Blocked and is not reactivated. The historical focused
+readiness decomposition is recorded in the mirrored
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), with
 Design Status Draft and Implementation Status Planned overall, with Slice 3
 implemented and independently accepted in isolation.

@@ -16,8 +16,9 @@ prospectively accepts четыре exact claims. TASK-061 остаётся immut
 historical accepted readiness с `READY — UNBLOCK` и matrix 7/10/2/0/0/0. Fresh
 TASK-026 end-to-end evidence доказывает, что historical row 15 недостаточна для
 current live readiness, и определяет один отдельный DP-015
-parent-terminalization prerequisite. TASK-026 Blocked; repair остаётся Not
-Activated без Task ID. DP-020 остаётся Draft/Planned overall.
+parent-terminalization prerequisite. TASK-062 активирует и реализует repair
+изолированно с focused regression proof и ожидает independent review. TASK-026
+остаётся Blocked и не реактивирована. DP-020 остаётся Draft/Planned overall.
 
 Прогресс реализации: TASK-031 и TASK-032 создали изолированные частичные
 реализации Срезов 1 и 2, исторически принятые Coordinator, а TASK-034 определила
@@ -57,8 +58,9 @@ TASK-026 была заблокирована. TASK-049 — завершённа�
 design-only DP-015/DP-020 refinement; TASK-057 реализует isolated prerequisite,
 а TASK-060 prospectively accepts четыре exact claims. Historical `READY —
 UNBLOCK` TASK-061 и matrix остаются неизменными. Fresh TASK-026 evidence
-требует одного отдельного DP-015 parent-terminalization repair; TASK-026
-Blocked, prerequisite Not Activated. DP-020 остаётся Draft/Planned overall.
+требует одного отдельного DP-015 parent-terminalization repair. TASK-062
+реализует его изолированно и ожидает independent review; TASK-026 остаётся
+Blocked и не реактивирована. DP-020 остаётся Draft/Planned overall.
 
 ## 2. Назначение
 
@@ -807,8 +809,8 @@ Design refinement завершена как TASK-049 и принята Coordinat
 TASK-057 реализует isolated slice, а TASK-060 prospectively accepts четыре
 exact claims. Historical `READY — UNBLOCK` TASK-061 и matrix остаются
 неизменными. Fresh TASK-026 evidence требует одного отдельного DP-015
-parent-terminalization repair; TASK-026 Blocked, prerequisite Not Activated.
-Historical
+parent-terminalization repair. TASK-062 реализует его изолированно и ожидает
+independent review; TASK-026 остаётся Blocked и не реактивирована. Historical
 Срез 4 остаётся завершённым и принятым как TASK-038.
 
 ## 15. Последствия

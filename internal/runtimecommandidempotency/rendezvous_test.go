@@ -67,6 +67,136 @@ func TestContinueGateStopFirstCreatesNoStartTarget(t *testing.T) {
 	}
 }
 
+func TestTerminalStopOldContinueCancellationOmitsStartTarget(t *testing.T) {
+	boundary := newTestBoundary(t)
+	scope := testScope(t, "management", "stop-old-continue-cancel", OperationReplace)
+	intent := replaceIntent(t, 55)
+	admission, err := boundary.ExecuteParent(context.Background(), scope, "parent", intent, allow,
+		func(execution *ParentExecution) error {
+			stop, stopErr := execution.InspectOrExecuteStopOld(success(t))
+			if stopErr != nil || stop.Record().State() != CommandStateTerminal {
+				return errors.New("StopOld did not become terminal")
+			}
+			if _, publishErr := execution.PublishTerminal(parentOutcome(t, ParentOutcomeCancelled)); !errors.Is(publishErr, ErrInstanceBlocked) {
+				return errors.New("terminal StopOld without a winner omitted StartTarget")
+			}
+			ctx, cancel := context.WithCancel(context.Background())
+			cancel()
+			phase, prevented, continueErr := execution.ContinueOrExecuteStartTarget(ctx,
+				func(*StartTargetExecution) (TerminalOutcome, error) {
+					return TerminalOutcome{}, errors.New("cancelled Continue invoked StartTarget")
+				})
+			if !errors.Is(continueErr, context.Canceled) || !prevented || phase != (PhaseAdmission{}) {
+				return errors.New("Continue cancellation did not win before StartTarget")
+			}
+			if _, publishErr := execution.PublishTerminal(parentOutcome(t, ParentOutcomeStopped)); !errors.Is(publishErr, ErrInstanceBlocked) {
+				return errors.New("Continue cancellation accepted a mismatched parent category")
+			}
+			_, publishErr := execution.PublishTerminal(parentOutcome(t, ParentOutcomeCancelled))
+			return publishErr
+		})
+	if err != nil || admission.Record().State() != CommandStateTerminal {
+		t.Fatalf("cancelled parent = %#v, %v", admission, err)
+	}
+	if outcome, ok := admission.Record().Outcome(); !ok || outcome.Category() != ParentOutcomeCancelled {
+		t.Fatalf("cancelled parent outcome = %#v, %v", outcome, ok)
+	}
+	replay, err := boundary.ExecuteParent(context.Background(), scope, "parent", intent, allow,
+		func(*ParentExecution) error {
+			t.Fatal("terminal parent replay received execution")
+			return nil
+		})
+	if err != nil || replay.Kind() != AdmissionReplay {
+		t.Fatalf("cancelled parent replay = %#v, %v", replay, err)
+	}
+	ledger := boundary.storage.ledger(scope.instanceScope())
+	ledger.mu.Lock()
+	defer ledger.mu.Unlock()
+	startID, _ := newPhaseIdentity(commandIdentity{scope: scope, key: "parent"}, PhaseStartTarget)
+	if ledger.phases[startID] != nil {
+		t.Fatal("Continue cancellation created StartTarget")
+	}
+}
+
+func TestTerminalStopOldStopFirstWinnerOmitsStartTarget(t *testing.T) {
+	boundary := newTestBoundary(t)
+	parentScope := testScope(t, "management", "stop-old-stop-first", OperationReplace)
+	stopScope := testScope(t, "management", "stop-old-stop-first", OperationStop)
+	intent := replaceIntent(t, 56)
+	parentEntered := make(chan struct{})
+	continueNow := make(chan struct{})
+	type parentExecutionResult struct {
+		admission ParentAdmission
+		err       error
+	}
+	parentResult := make(chan parentExecutionResult, 1)
+	go func() {
+		admission, err := boundary.ExecuteParent(context.Background(), parentScope, "parent", intent, allow,
+			func(execution *ParentExecution) error {
+				stop, stopErr := execution.InspectOrExecuteStopOld(success(t))
+				if stopErr != nil || stop.Record().State() != CommandStateTerminal {
+					return errors.New("StopOld did not become terminal")
+				}
+				close(parentEntered)
+				<-continueNow
+				phase, prevented, continueErr := execution.ContinueOrExecuteStartTarget(context.Background(),
+					func(*StartTargetExecution) (TerminalOutcome, error) {
+						return TerminalOutcome{}, errors.New("Stop-first invoked StartTarget")
+					})
+				if continueErr != nil || !prevented || phase != (PhaseAdmission{}) {
+					return errors.New("Stop-first did not prevent StartTarget")
+				}
+				if _, publishErr := execution.PublishTerminal(parentOutcome(t, ParentOutcomeCancelled)); !errors.Is(publishErr, ErrInstanceBlocked) {
+					return errors.New("Stop-first accepted a mismatched parent category")
+				}
+				_, publishErr := execution.PublishTerminal(parentOutcome(t, ParentOutcomeStopped))
+				return publishErr
+			})
+		parentResult <- parentExecutionResult{admission: admission, err: err}
+	}()
+	<-parentEntered
+	var stopCalls atomic.Int32
+	stopResult := make(chan executionResult, 1)
+	go func() {
+		admission, err := boundary.Execute(context.Background(), stopScope, "stop", NewStopIntent(), allow,
+			func() (TerminalOutcome, error) {
+				stopCalls.Add(1)
+				return terminalOutcome(t, OutcomeSucceeded, "must-not-run"), nil
+			})
+		stopResult <- executionResult{admission: admission, err: err}
+	}()
+	waitForCommandRecord(t, boundary, stopScope, "stop")
+	close(continueNow)
+	if got := <-stopResult; got.err != nil || got.admission.Record().State() != CommandStateTerminal {
+		t.Fatalf("Stop-first admission = %#v, %v", got.admission, got.err)
+	}
+	parent := <-parentResult
+	if parent.err != nil || parent.admission.Record().State() != CommandStateTerminal {
+		t.Fatalf("stopped parent = %#v, %v", parent.admission, parent.err)
+	}
+	if outcome, ok := parent.admission.Record().Outcome(); !ok || outcome.Category() != ParentOutcomeStopped {
+		t.Fatalf("stopped parent outcome = %#v, %v", outcome, ok)
+	}
+	if stopCalls.Load() != 0 {
+		t.Fatalf("Stop-first invoked lifecycle %d times", stopCalls.Load())
+	}
+	replay, err := boundary.ExecuteParent(context.Background(), parentScope, "parent", intent, allow,
+		func(*ParentExecution) error {
+			t.Fatal("terminal parent replay received execution")
+			return nil
+		})
+	if err != nil || replay.Kind() != AdmissionReplay {
+		t.Fatalf("stopped parent replay = %#v, %v", replay, err)
+	}
+	ledger := boundary.storage.ledger(parentScope.instanceScope())
+	ledger.mu.Lock()
+	defer ledger.mu.Unlock()
+	startID, _ := newPhaseIdentity(commandIdentity{scope: parentScope, key: "parent"}, PhaseStartTarget)
+	if ledger.phases[startID] != nil {
+		t.Fatal("Stop-first created StartTarget")
+	}
+}
+
 func TestStartTargetFirstRendezvousUsesOriginalStopStackOnce(t *testing.T) {
 	boundary := newTestBoundary(t)
 	parentScope := testScope(t, "management", "start-first", OperationRollback)

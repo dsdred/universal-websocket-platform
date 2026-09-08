@@ -4,15 +4,13 @@
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
 Текущая work —
-[TASK-026](TASK-026-RUNTIME-ACTIVATION-REPLACEMENT-ROLLBACK.md), `Blocked —
-Newly Proven DP-015 Parent-Terminalization Prerequisite`. TASK-061 завершена,
-Coordinator Accepted и опубликована через PR #63; её immutable historical
-verdict/matrix остаются `READY — UNBLOCK`, 7 Direct / 10 Compositional / 2
-Missing core / 0 Missing prerequisite / 0 Missing external / 0 Deferred. Fresh
-TASK-026 end-to-end evidence proves historical row 15 insufficient for current
-live readiness. Separate bounded DP-015 parent-terminalization repair and
-focused regression proof remain `Not Activated` without a Task ID. TASK-026
-Acceptance/Completion and prerequisite implementation are not claimed.
+[TASK-062](TASK-062-RUNTIME-COMMAND-PARENT-TERMINALIZATION.md), `In Progress —
+Verification complete; awaiting Independent Review`: bounded DP-015 parent-
+terminalization repair and focused regression proof. TASK-026 remains Blocked
+and is not resumed by this prerequisite task. Its exact blocked-evidence
+checkpoint was published through
+PR #64 and merged as `a0fba042a97de0f63ddd2fc2336308114b976bbf`, which
+provides the clean synchronized intake baseline for TASK-062.
 
 - [TASK-000 — Repository Synchronization](TASK-000-REPOSITORY-SYNCHRONIZATION.md)
 - [TASK-000 — Repository Synchronization Report](TASK-000-REPOSITORY-SYNCHRONIZATION-REPORT.md)
@@ -41,7 +39,7 @@ Acceptance/Completion and prerequisite implementation are not claimed.
 - [TASK-023 — Runtime Management Routing Implementation](TASK-023-RUNTIME-MANAGEMENT-ROUTING.md) — Completed, Coordinator Accepted
 - [TASK-024 — Runtime Operational Identity Persistence Implementation](TASK-024-RUNTIME-OPERATIONAL-IDENTITY-PERSISTENCE.md) — Completed, Coordinator Accepted
 - [TASK-025 — Runtime Management Command Idempotency Implementation](TASK-025-RUNTIME-COMMAND-IDEMPOTENCY.md) — Completed, Coordinator Accepted
-- [TASK-026 — Runtime Activation, Replacement, and Rollback Implementation](TASK-026-RUNTIME-ACTIVATION-REPLACEMENT-ROLLBACK.md) — Blocked — Newly Proven DP-015 Parent-Terminalization Prerequisite (2026-09-07); TASK-061 remains immutable historical accepted readiness evidence with exact matrix 7/10/2/0/0/0; separate bounded repair and focused regression proof are Not Activated without a Task ID; DP-016 stays Approved/Planned and no TASK-026 Acceptance/Completion/commit/publication is claimed
+- [TASK-026 — Runtime Activation, Replacement, and Rollback Implementation](TASK-026-RUNTIME-ACTIVATION-REPLACEMENT-ROLLBACK.md) — Blocked — Newly Proven DP-015 Parent-Terminalization Prerequisite (2026-09-07); TASK-061 remains immutable historical accepted readiness evidence with exact matrix 7/10/2/0/0/0; TASK-062 implements the separate bounded repair in isolation and is pending independent review; DP-016 stays Approved/Planned and no TASK-026 reactivation/Acceptance/Completion is claimed
 - [TASK-027 — Runtime Activation Orchestration Prerequisites Design](TASK-027-RUNTIME-ACTIVATION-ORCHESTRATION-PREREQUISITES-DESIGN.md) — Completed, Coordinator Accepted
 - [TASK-028 — Runtime Command Parent/Phase Prerequisites Implementation](TASK-028-RUNTIME-COMMAND-PARENT-PHASE-PREREQUISITES.md) — Completed, Coordinator Accepted; TASK-026 remains Blocked
 - [TASK-029 — Runtime Command Continue and Pending-Stop Prerequisite](TASK-029-RUNTIME-COMMAND-CONTINUE-PENDING-STOP.md) — Completed, Coordinator Accepted; TASK-026 remains Blocked
@@ -83,6 +81,7 @@ Acceptance/Completion and prerequisite implementation are not claimed.
 - [TASK-059 — Prospective Published-Subject Acceptance Governance](TASK-059-PROSPECTIVE-PUBLISHED-SUBJECT-ACCEPTANCE-GOVERNANCE.md) — Completed, Coordinator Accepted (2026-09-05); task commit `c4c858941ceb9544e6a30454e6309a9ef159b875` published through PR #61 by local merge metadata and merged as `600dc10b737ce2dfda550379a6ec68e3b680f959`; general IPSPA protocol only
 - [TASK-060 — TASK-057 Published Subject Prospective Acceptance](TASK-060-TASK-057-PUBLISHED-SUBJECT-PROSPECTIVE-ACCEPTANCE.md) — Completed, Coordinator Accepted (2026-09-06); task commit `bd7356152ee62d5b8de7b8e9a7fa49c3890a4ae5` published through PR #62 and merged as `cc5e7598029a659ee0f4c382cd01627a753a3200`; exact event accepts only four bounded claims, Historical Equivalence remains Not Proven
 - [TASK-061 — Runtime Activation Readiness Reassessment](TASK-061-RUNTIME-ACTIVATION-READINESS-REASSESSMENT.md) — Completed — Coordinator Accepted (2026-09-07); task commit `eb4717dd295988c6633668c04141082991c7636f` published through PR #63 and merged as `67e81f8b5b86cfbd9da1e616af9d27fda9c093f8`; immutable historical verdict `READY — UNBLOCK`, matrix 7 Direct / 10 Compositional / 2 Missing core / 0 Missing prerequisite / 0 Missing external / 0 Deferred; fresh TASK-026 evidence does not rewrite this accepted record
+- [TASK-062 — Runtime Command Parent Terminalization Repair](TASK-062-RUNTIME-COMMAND-PARENT-TERMINALIZATION.md) — In Progress (2026-09-08); implementation and verification complete, awaiting Independent Review; TASK-026 remains Blocked and is not automatically resumed
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.
