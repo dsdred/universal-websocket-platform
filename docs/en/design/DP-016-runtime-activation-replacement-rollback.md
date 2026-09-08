@@ -39,9 +39,10 @@ immutable historical accepted readiness with `READY — UNBLOCK` and the exact
 TASK-026 end-to-end evidence proves historical row 15 insufficient for current
 live readiness because the existing DP-015 parent terminal gate cannot
 terminalize definitive cancellation after terminal `StopOld` with no
-`StartTarget`. TASK-026 is Blocked; the bounded repair and focused regression
-proof remain Not Activated without a Task ID. DP-016 remains Approved/Planned
-and unimplemented.
+`StartTarget`. TASK-062 activates and implements the bounded repair in isolation
+with focused regression proof and is pending independent review. TASK-026
+remains Blocked and is not reactivated. DP-016 remains Approved/Planned and
+unimplemented.
 
 ## 2. Purpose
 
@@ -556,7 +557,8 @@ refinement, TASK-057 implemented its isolated prerequisite, and TASK-060
 prospectively accepted its four exact claims. TASK-061 historical `READY —
 UNBLOCK` and matrix remain unchanged. Fresh TASK-026 evidence requires one
 separate DP-015 parent-terminalization prerequisite before live implementation
-may resume. TASK-026 is Blocked, the repair is Not Activated, and no reduced
+may resume. TASK-062 implements that prerequisite in isolation and is pending
+independent review. TASK-026 remains Blocked and is not reactivated; no reduced
 DP-016 slice is permitted.
 
 ## 29. Decision

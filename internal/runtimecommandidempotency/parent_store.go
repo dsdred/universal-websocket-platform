@@ -402,10 +402,11 @@ func (p *ParentExecution) phaseOrderAllowsLocked(kind PhaseKind) bool {
 }
 
 // PublishTerminal publishes one definitive parent result. It cannot supply or
-// replace child facts: if any phase exists, StartTarget and every existing
-// phase must already be terminal. A cancellation winner permits only Cancelled;
-// an exact converged rendezvous Stop or pre-phase Stop-first winner permits only
-// Stopped. Post-phase StartNoClaim maps its immutable explicit
+// replace child facts: every phase that exists must already be terminal, and a
+// missing StartTarget is allowed only for a definitive pre-phase cancellation
+// or Stop winner after terminal StopOld. A cancellation winner permits only
+// Cancelled; an exact converged rendezvous Stop or pre-phase Stop-first winner
+// permits only Stopped. Post-phase StartNoClaim maps its immutable explicit
 // Cancelled/Rejected/Failed cause without treating the satisfied Stop as
 // converged.
 func (p *ParentExecution) PublishTerminal(
@@ -458,8 +459,9 @@ func (p *ParentExecution) PublishTerminal(
 		return ParentRecordView{}, ErrInstanceBlocked
 	}
 	if stop != nil || start != nil {
-		if start == nil || start.state != CommandStateTerminal ||
-			(stop != nil && stop.state != CommandStateTerminal) {
+		if (stop != nil && stop.state != CommandStateTerminal) ||
+			(start == nil && !mayOmitStartTarget(rendezvous, stop, outcome)) ||
+			(start != nil && start.state != CommandStateTerminal) {
 			return ParentRecordView{}, ErrInstanceBlocked
 		}
 	}
@@ -470,6 +472,21 @@ func (p *ParentExecution) PublishTerminal(
 	record.hasOutcome = true
 	delete(p.ledger.liveParents, p.identity)
 	return record.view(), nil
+}
+
+func mayOmitStartTarget(
+	rendezvous *startRendezvous,
+	stop *phaseRecord,
+	outcome ParentTerminalOutcome,
+) bool {
+	if rendezvous == nil || stop == nil || stop.state != CommandStateTerminal {
+		return false
+	}
+	if rendezvous.continueCancelled || rendezvous.stopCancelledBeforePhase {
+		return outcome.category == ParentOutcomeCancelled
+	}
+	return (rendezvous.stopConverged || rendezvous.stopFirstWon) &&
+		outcome.category == ParentOutcomeStopped
 }
 
 func (p *ParentExecution) expire() {

@@ -43,8 +43,9 @@ exact claims. TASK-061 остаётся immutable historical accepted readiness 
 `READY — UNBLOCK` и matrix 7/10/2/0/0/0. Fresh TASK-026 end-to-end evidence
 доказывает, что historical row 15 недостаточна для current live readiness:
 existing DP-015 parent terminal gate rejects definitive post-`StopOld`,
-pre-`StartTarget` cancellation без `StartTarget`. TASK-026 Blocked; bounded
-repair и focused regression proof остаются Not Activated без Task ID. DP-019
+pre-`StartTarget` cancellation без `StartTarget`. TASK-062 активирует и
+реализует bounded repair изолированно с focused regression proof и ожидает
+independent review. TASK-026 остаётся Blocked и не реактивирована. DP-019
 остаётся Approved/Planned overall.
 
 ## 2. Назначение
@@ -563,8 +564,9 @@ late generation. TASK-049 завершила refinement, TASK-057 реализо
 prerequisite, а TASK-060 prospectively accepted четыре exact claims.
 Historical `READY — UNBLOCK` TASK-061 и matrix остаются неизменными. Fresh
 TASK-026 evidence требует одного отдельного DP-015 parent-terminalization
-repair; TASK-026 Blocked, prerequisite Not Activated. Historical
-focused readiness decomposition зафиксирована в зеркальном
+repair. TASK-062 реализует его изолированно и ожидает independent review;
+TASK-026 остаётся Blocked и не реактивирована. Historical focused readiness
+decomposition зафиксирована в зеркальном
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), со
 статусом Design Status Draft и Implementation Status Planned overall, где
 Срез 3 реализован и независимо принят изолированно.

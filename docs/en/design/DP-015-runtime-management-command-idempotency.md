@@ -23,9 +23,10 @@ core / 0 Missing prerequisite / 0 Missing external / 0 Deferred. Fresh
 TASK-026 end-to-end evidence proves its row 15 insufficient for current live
 readiness: the existing parent terminal gate cannot terminalize definitive
 post-`StopOld`, pre-`StartTarget` cancellation while `StartTarget` is
-intentionally absent. TASK-026 is Blocked; the bounded DP-015 repair remains
-Not Activated without a Task ID. DP-015 remains Approved with Partial
-implementation.
+intentionally absent. TASK-062 activates and implements that bounded DP-015
+repair in isolation with focused regression proof and is pending independent
+review. TASK-026 remains Blocked and is not reactivated. DP-015 remains
+Approved with Partial implementation.
 
 This approved design defines the durable idempotency boundary for state-changing
 Runtime management commands. Package `internal/runtimecommandidempotency`
@@ -78,8 +79,9 @@ allocation. TASK-026 was Blocked. TASK-049 is the completed and Coordinator-
 Accepted design-only DP-015/DP-020 refinement; TASK-057 implements its isolated
 prerequisite and TASK-060 prospectively accepts its four exact claims. TASK-061
 historically returns `READY — UNBLOCK`; DP-015 status is unchanged. Fresh
-TASK-026 evidence identifies the separate parent-terminalization repair above,
-so TASK-026 is Blocked and that prerequisite is Not Activated.
+TASK-026 evidence identifies the separate parent-terminalization repair above.
+TASK-062 implements it in isolation and is pending independent review;
+TASK-026 remains Blocked and is not reactivated.
 
 ## 4. Scope
 
@@ -693,8 +695,9 @@ and matrix 7/10/2/0/0/0 remain unchanged. Fresh TASK-026 proof requires one
 bounded existing-gate repair: permit a durably recorded definitive
 pre-`StartTarget` Cancelled/Stopped winner to omit `StartTarget` after every
 phase that actually exists is terminal, while mismatched, nonterminal, absent-
-winner, and indeterminate states remain fail closed. TASK-026 is Blocked; the
-repair and its focused regression proof remain Not Activated without a Task ID.
+winner, and indeterminate states remain fail closed. TASK-062 implements this
+repair and its focused regression proof in isolation and is pending independent
+review. TASK-026 remains Blocked and is not reactivated.
 
 ## 28. Decision
 

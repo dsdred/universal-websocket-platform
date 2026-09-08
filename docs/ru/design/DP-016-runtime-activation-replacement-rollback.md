@@ -38,9 +38,10 @@ historical accepted readiness с `READY — UNBLOCK` и exact matrix
 7/10/2/0/0/0. Строки 2 и 14 остаются core future orchestrator. Fresh TASK-026
 end-to-end evidence доказывает, что historical row 15 недостаточна для current
 live readiness: existing DP-015 parent terminal gate не может terminalize
-definitive cancellation после terminal `StopOld` без `StartTarget`. TASK-026
-Blocked; bounded repair и focused regression proof остаются Not Activated без
-Task ID. DP-016 остаётся Approved/Planned и не реализована.
+definitive cancellation после terminal `StopOld` без `StartTarget`. TASK-062
+активирует и реализует bounded repair изолированно с focused regression proof и
+ожидает independent review. TASK-026 остаётся Blocked и не реактивирована.
+DP-016 остаётся Approved/Planned и не реализована.
 
 ## 2. Назначение
 
@@ -547,7 +548,8 @@ refinement, TASK-057 реализовала isolated prerequisite, TASK-060 pros
 accepted четыре exact claims. Historical `READY — UNBLOCK` TASK-061 и matrix
 остаются неизменными. Fresh TASK-026 evidence требует одного отдельного DP-015
 parent-terminalization prerequisite до возобновления live implementation.
-TASK-026 Blocked, repair Not Activated; reduced slice DP-016 запрещён.
+TASK-062 реализует prerequisite изолированно и ожидает independent review.
+TASK-026 остаётся Blocked и не реактивирована; reduced slice DP-016 запрещён.
 
 ## 29. Решение
 

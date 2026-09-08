@@ -105,9 +105,9 @@ Universal WebSocket Platform — open-source платформа для созд�
   завершена, Coordinator Accepted и опубликована через PR #63; её immutable
   historical verdict остаётся `READY — UNBLOCK` с matrix 7/10/2/0/0/0. Fresh
   TASK-026 end-to-end evidence доказывает, что historical row 15 недостаточна
-  для current live readiness. TASK-026 Blocked by one separate DP-015
-  parent-terminalization prerequisite, который остаётся Not Activated без Task
-  ID.
+  для current live readiness. TASK-062 активирует и реализует отдельный bounded
+  DP-015 parent-terminalization prerequisite изолированно и ожидает independent
+  review. TASK-026 остаётся Blocked и не реактивирована.
 
 ## 3. Engineering Principles
 
@@ -440,9 +440,10 @@ Architectural debt относится к границам, которые ост
   TASK-060 prospectively accepts четыре exact claims. TASK-061 сохраняет
   immutable historical `READY — UNBLOCK` с matrix 7/10/2/0/0/0. Fresh TASK-026
   evidence определяет один отдельный DP-015 parent-terminalization repair до
-  возобновления live implementation. TASK-026 Blocked; repair Not Activated
-  без Task ID. DP-016 остаётся Approved/Planned, Integration и Production
-  Activation — неактивными.
+  возобновления live implementation. TASK-062 реализует repair изолированно и
+  ожидает independent review. TASK-026 остаётся Blocked и не реактивирована.
+  DP-016 остаётся Approved/Planned, Integration и Production Activation —
+  неактивными.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Message Persistence, Delivery и Plugin всё ещё требуют focused design.
