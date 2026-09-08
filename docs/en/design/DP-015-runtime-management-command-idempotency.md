@@ -17,10 +17,15 @@ orchestration-admission and late-generation contract in section 13.2 and was
 Coordinator Accepted on 2026-08-28. TASK-057 implements that separate contract
 in isolation; TASK-060 prospectively accepts its four exact claims through event
 `9199e91e-82cf-4b94-8e9d-c81ba91015b6`, while Historical Equivalence remains
-`Not Proven`. TASK-061 returns `READY — UNBLOCK` with matrix 7 Direct / 10
-Compositional / 2 Missing core / 0 Missing prerequisite / 0 Missing external /
-0 Deferred. TASK-026 is Ready to Reactivate but Not Activated. DP-015 remains
-Approved with Partial implementation.
+`Not Proven`. TASK-061 remains immutable historical accepted readiness with
+verdict `READY — UNBLOCK` and matrix 7 Direct / 10 Compositional / 2 Missing
+core / 0 Missing prerequisite / 0 Missing external / 0 Deferred. Fresh
+TASK-026 end-to-end evidence proves its row 15 insufficient for current live
+readiness: the existing parent terminal gate cannot terminalize definitive
+post-`StopOld`, pre-`StartTarget` cancellation while `StartTarget` is
+intentionally absent. TASK-026 is Blocked; the bounded DP-015 repair remains
+Not Activated without a Task ID. DP-015 remains Approved with Partial
+implementation.
 
 This approved design defines the durable idempotency boundary for state-changing
 Runtime management commands. Package `internal/runtimecommandidempotency`
@@ -72,8 +77,9 @@ generation and combined inspect/claim could not provide exact replay-first admis
 allocation. TASK-026 was Blocked. TASK-049 is the completed and Coordinator-
 Accepted design-only DP-015/DP-020 refinement; TASK-057 implements its isolated
 prerequisite and TASK-060 prospectively accepts its four exact claims. TASK-061
-returns `READY — UNBLOCK`; DP-015 status is unchanged and TASK-026 is Ready to
-Reactivate but Not Activated.
+historically returns `READY — UNBLOCK`; DP-015 status is unchanged. Fresh
+TASK-026 evidence identifies the separate parent-terminalization repair above,
+so TASK-026 is Blocked and that prerequisite is Not Activated.
 
 ## 4. Scope
 
@@ -682,8 +688,13 @@ DP-015/DP-020 refinement described above. The design refinement was completed
 as TASK-049 and Coordinator Accepted on 2026-08-28; TASK-057 implements its
 separate replay-first/late-generation prerequisite in isolation, prospectively
 accepted by TASK-060. The isolated package changes no lifecycle contract and is
-not connected to the DP-013 Directory. TASK-061 returns `READY — UNBLOCK` with
-matrix 7/10/2/0/0/0; TASK-026 is Ready to Reactivate but Not Activated.
+not connected to the DP-013 Directory. TASK-061 historical `READY — UNBLOCK`
+and matrix 7/10/2/0/0/0 remain unchanged. Fresh TASK-026 proof requires one
+bounded existing-gate repair: permit a durably recorded definitive
+pre-`StartTarget` Cancelled/Stopped winner to omit `StartTarget` after every
+phase that actually exists is terminal, while mismatched, nonterminal, absent-
+winner, and indeterminate states remain fail closed. TASK-026 is Blocked; the
+repair and its focused regression proof remain Not Activated without a Task ID.
 
 ## 28. Decision
 

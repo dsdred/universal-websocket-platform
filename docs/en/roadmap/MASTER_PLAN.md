@@ -103,9 +103,12 @@ The repository currently contains an Alpha foundation rather than a production-r
   `9199e91e-82cf-4b94-8e9d-c81ba91015b6` prospectively accepts four named
   TASK-057 claims while Historical Equivalence remains Not Proven.
   [TASK-061](../../tasks/TASK-061-RUNTIME-ACTIVATION-READINESS-REASSESSMENT.md)
-  is the current projected In Progress reassessment and returns `READY —
-  UNBLOCK` with matrix 7/10/2/0/0/0. TASK-026 is Ready to Reactivate but Not
-  Activated.
+  is Completed, Coordinator Accepted, and published through PR #63; its
+  immutable historical verdict remains `READY — UNBLOCK` with matrix
+  7/10/2/0/0/0. Fresh TASK-026 end-to-end evidence proves historical row 15
+  insufficient for current live readiness. TASK-026 is Blocked by one separate
+  DP-015 parent-terminalization prerequisite, which remains Not Activated
+  without a Task ID.
 
 ## 3. Engineering Principles
 
@@ -437,9 +440,12 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   DP-020 replay-first admission and late-generation refinement and was
   Coordinator Accepted on 2026-08-28. TASK-057 implements its separate isolated
   prerequisite and TASK-060 prospectively accepts its four exact claims.
-  TASK-061 returns `READY — UNBLOCK` with matrix 7/10/2/0/0/0. TASK-026 is
-  Ready to Reactivate but Not Activated. DP-016 remains Approved/Planned, and
-  Integration and Production Activation remain inactive.
+  TASK-061 preserves immutable historical `READY — UNBLOCK` with matrix
+  7/10/2/0/0/0. Fresh TASK-026 evidence identifies one separate DP-015
+  parent-terminalization repair before live implementation may resume.
+  TASK-026 is Blocked; the repair is Not Activated without a Task ID. DP-016
+  remains Approved/Planned, and Integration and Production Activation remain
+  inactive.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Message Persistence, Delivery, and Plugin contracts still require focused design.

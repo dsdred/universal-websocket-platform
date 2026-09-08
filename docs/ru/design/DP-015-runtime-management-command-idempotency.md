@@ -17,10 +17,14 @@ admission и позднего выделения generation в разделе 13
 Acceptance получена 2026-08-28. TASK-057 реализует этот отдельный contract
 изолированно; TASK-060 prospectively accepts четыре exact claims через event
 `9199e91e-82cf-4b94-8e9d-c81ba91015b6`, а Historical Equivalence остаётся
-`Not Proven`. TASK-061 возвращает `READY — UNBLOCK` с matrix 7 Direct / 10
-Compositional / 2 Missing core / 0 Missing prerequisite / 0 Missing external /
-0 Deferred. TASK-026 Ready to Reactivate, но Not Activated. DP-015 остаётся
-Approved с Partial implementation.
+`Not Proven`. TASK-061 остаётся immutable historical accepted readiness с
+verdict `READY — UNBLOCK` и matrix 7 Direct / 10 Compositional / 2 Missing core
+/ 0 Missing prerequisite / 0 Missing external / 0 Deferred. Fresh TASK-026
+end-to-end evidence доказывает, что её row 15 недостаточна для current live
+readiness: existing parent terminal gate не может terminalize definitive
+post-`StopOld`, pre-`StartTarget` cancellation при намеренно отсутствующем
+`StartTarget`. TASK-026 Blocked; bounded DP-015 repair остаётся Not Activated
+без Task ID. DP-015 остаётся Approved с Partial implementation.
 
 Этот approved design определяет durable idempotency boundary для
 state-changing management commands Runtime. Package
@@ -72,8 +76,9 @@ generation и combined inspect/claim не обеспечивали exact replay-
 allocation. TASK-026 была заблокирована. TASK-049 — завершённая и Coordinator-
 Accepted design-only DP-015/DP-020 refinement; TASK-057 реализует её isolated
 prerequisite, а TASK-060 prospectively accepts четыре exact claims. TASK-061
-возвращает `READY — UNBLOCK`; статус DP-015 не меняется, TASK-026 Ready to
-Reactivate, но Not Activated.
+исторически возвращает `READY — UNBLOCK`; статус DP-015 не меняется. Fresh
+TASK-026 evidence определяет отдельный parent-terminalization repair выше,
+поэтому TASK-026 Blocked, а prerequisite Not Activated.
 
 ## 4. Область
 
@@ -682,8 +687,13 @@ late generation, описанным выше. Design refinement завершен
 принята Coordinator 2026-08-28; TASK-057 реализует её отдельный replay-first/
 late-generation prerequisite изолированно, prospectively accepted TASK-060.
 Isolated package не изменяет lifecycle contracts и не подключён к DP-013
-Directory. TASK-061 возвращает `READY — UNBLOCK` с matrix 7/10/2/0/0/0;
-TASK-026 Ready to Reactivate, но Not Activated.
+Directory. Historical `READY — UNBLOCK` TASK-061 и matrix 7/10/2/0/0/0
+остаются неизменными. Fresh TASK-026 proof требует одного bounded repair
+existing gate: durably recorded definitive pre-`StartTarget`
+Cancelled/Stopped winner может omit `StartTarget` после terminal всех
+фактически существующих phases, а mismatched, nonterminal, absent-winner и
+indeterminate states сохраняются fail closed. TASK-026 Blocked; repair и его
+focused regression proof остаются Not Activated без Task ID.
 
 ## 28. Решение
 

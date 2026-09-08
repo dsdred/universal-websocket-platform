@@ -12,9 +12,12 @@
 TASK-049 completed the design-only refinement of the replay-first admission and
 late-generation provider contract in section 8.5 and was Coordinator Accepted
 on 2026-08-28. TASK-057 implements that separate slice in isolation and TASK-060
-prospectively accepts its four exact claims. TASK-061 returns `READY — UNBLOCK`
-with matrix 7/10/2/0/0/0; TASK-026 is Ready to Reactivate but Not Activated.
-DP-020 remains Draft/Planned overall.
+prospectively accepts its four exact claims. TASK-061 remains immutable
+historical accepted readiness with `READY — UNBLOCK` and matrix 7/10/2/0/0/0.
+Fresh TASK-026 end-to-end evidence proves historical row 15 insufficient for
+current live readiness and identifies one separate DP-015 parent-terminalization
+prerequisite. TASK-026 is Blocked; the repair remains Not Activated without a
+Task ID. DP-020 remains Draft/Planned overall.
 
 Implementation progress: TASK-031 and TASK-032 produced Coordinator-Accepted
 isolated partial implementations of Slices 1 and 2, and TASK-034 defined their
@@ -51,8 +54,10 @@ combined inspect/claim could not provide replay-first admission and late allocat
 TASK-026 was Blocked. TASK-049 is the completed and Coordinator-Accepted
 design-only DP-015/DP-020 refinement; TASK-057 implements its isolated
 prerequisite and TASK-060 prospectively accepts its four exact claims. TASK-061
-returns `READY — UNBLOCK`; TASK-026 is Ready to Reactivate but Not Activated.
-DP-020 remains Draft/Planned overall.
+historical `READY — UNBLOCK` and matrix remain unchanged. Fresh TASK-026
+evidence requires one separate DP-015 parent-terminalization repair; TASK-026
+is Blocked and the prerequisite is Not Activated. DP-020 remains Draft/Planned
+overall.
 
 ## 2. Purpose
 
@@ -806,8 +811,9 @@ Confirmation identified the separate DP-015/DP-020 replay-first admission and
 late-generation refinement as TASK-026's missing prerequisite. That design was
 completed as TASK-049 and Coordinator Accepted on 2026-08-28; TASK-057
 implements the isolated slice and TASK-060 prospectively accepts its four exact
-claims. TASK-061 returns `READY — UNBLOCK`; TASK-026 is Ready to Reactivate but
-Not Activated. Historical
+claims. TASK-061 historical `READY — UNBLOCK` and matrix remain unchanged.
+Fresh TASK-026 evidence requires one separate DP-015 parent-terminalization
+repair; TASK-026 is Blocked and the prerequisite is Not Activated. Historical
 Slice 4 remains completed and accepted as TASK-038.
 
 ## 15. Consequences

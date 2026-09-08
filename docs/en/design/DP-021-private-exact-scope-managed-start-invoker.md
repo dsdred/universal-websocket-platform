@@ -22,8 +22,11 @@ because the historical DP-015/DP-020 admission could not provide replay-first
 inspection and late generation allocation. TASK-049 is the completed and
 Coordinator-Accepted design-only refinement; TASK-057 implements its isolated
 prerequisite and TASK-060 prospectively accepts its four exact claims. TASK-061
-returns `READY — UNBLOCK` with matrix 7/10/2/0/0/0. TASK-026 is Ready to
-Reactivate but Not Activated. This DP remains Draft/Partial.
+remains immutable historical accepted readiness with `READY — UNBLOCK` and
+matrix 7/10/2/0/0/0. Fresh TASK-026 evidence identifies a separate DP-015
+parent-terminalization prerequisite outside this invoker boundary. TASK-026 is
+Blocked; the repair remains Not Activated without a Task ID. This DP remains
+Draft/Partial.
 
 ## 2. Purpose
 
@@ -456,8 +459,10 @@ Architecture Confirmation now blocks TASK-026 on the separate DP-015/DP-020
 replay-first admission and late-generation refinement. That design refinement
 was completed as TASK-049 and Coordinator Accepted on 2026-08-28; TASK-057
 implements its separate isolated prerequisite and TASK-060 prospectively accepts
-its four exact claims. TASK-061 returns `READY — UNBLOCK`; TASK-026 is Ready to
-Reactivate but Not Activated. No TASK-026 implementation is asserted here.
+its four exact claims. TASK-061 historical `READY — UNBLOCK` and matrix remain
+unchanged. Fresh TASK-026 evidence requires one separate DP-015
+parent-terminalization repair outside DP-021. TASK-026 is Blocked and the
+prerequisite is Not Activated. No TASK-026 implementation is asserted here.
 
 ## 18. Decision
 
