@@ -12,9 +12,12 @@
 TASK-049 завершила design-only refinement contract replay-first admission и
 позднего generation provider в разделе 8.5; Coordinator Acceptance получена
 2026-08-28. TASK-057 реализует этот отдельный slice изолированно, а TASK-060
-prospectively accepts четыре exact claims. TASK-061 возвращает `READY —
-UNBLOCK` с matrix 7/10/2/0/0/0; TASK-026 Ready to Reactivate, но Not Activated.
-DP-020 остаётся Draft/Planned overall.
+prospectively accepts четыре exact claims. TASK-061 остаётся immutable
+historical accepted readiness с `READY — UNBLOCK` и matrix 7/10/2/0/0/0. Fresh
+TASK-026 end-to-end evidence доказывает, что historical row 15 недостаточна для
+current live readiness, и определяет один отдельный DP-015
+parent-terminalization prerequisite. TASK-026 Blocked; repair остаётся Not
+Activated без Task ID. DP-020 остаётся Draft/Planned overall.
 
 Прогресс реализации: TASK-031 и TASK-032 создали изолированные частичные
 реализации Срезов 1 и 2, исторически принятые Coordinator, а TASK-034 определила
@@ -52,9 +55,10 @@ DECISION` / `SPLIT REQUIRED`, потому что тогдашние eager gener
 inspect/claim не обеспечивали replay-first admission и late allocation.
 TASK-026 была заблокирована. TASK-049 — завершённая и Coordinator-Accepted
 design-only DP-015/DP-020 refinement; TASK-057 реализует isolated prerequisite,
-а TASK-060 prospectively accepts четыре exact claims. TASK-061 возвращает
-`READY — UNBLOCK`; TASK-026 Ready to Reactivate, но Not Activated. DP-020
-остаётся Draft/Planned overall.
+а TASK-060 prospectively accepts четыре exact claims. Historical `READY —
+UNBLOCK` TASK-061 и matrix остаются неизменными. Fresh TASK-026 evidence
+требует одного отдельного DP-015 parent-terminalization repair; TASK-026
+Blocked, prerequisite Not Activated. DP-020 остаётся Draft/Planned overall.
 
 ## 2. Назначение
 
@@ -801,8 +805,10 @@ Repeat Architecture Confirmation определила отдельную DP-015/
 replay-first admission и late generation как missing prerequisite TASK-026.
 Design refinement завершена как TASK-049 и принята Coordinator 2026-08-28;
 TASK-057 реализует isolated slice, а TASK-060 prospectively accepts четыре
-exact claims. TASK-061 возвращает `READY — UNBLOCK`; TASK-026 Ready to
-Reactivate, но Not Activated. Historical
+exact claims. Historical `READY — UNBLOCK` TASK-061 и matrix остаются
+неизменными. Fresh TASK-026 evidence требует одного отдельного DP-015
+parent-terminalization repair; TASK-026 Blocked, prerequisite Not Activated.
+Historical
 Срез 4 остаётся завершённым и принятым как TASK-038.
 
 ## 15. Последствия

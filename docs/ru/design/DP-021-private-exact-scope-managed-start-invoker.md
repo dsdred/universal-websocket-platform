@@ -21,9 +21,11 @@ Architecture Confirmation вернула `NEEDS DECISION` / `SPLIT REQUIRED`, п
 что historical admission DP-015/DP-020 не обеспечивал replay-first inspection
 и late generation allocation. TASK-049 — завершённая и Coordinator-Accepted
 design-only refinement; TASK-057 реализует isolated prerequisite, а TASK-060
-prospectively accepts четыре exact claims. TASK-061 возвращает `READY —
-UNBLOCK` с matrix 7/10/2/0/0/0. TASK-026 Ready to Reactivate, но Not Activated.
-Этот DP остаётся Draft/Partial.
+prospectively accepts четыре exact claims. TASK-061 остаётся immutable
+historical accepted readiness с `READY — UNBLOCK` и matrix 7/10/2/0/0/0.
+Fresh TASK-026 evidence определяет отдельный DP-015 parent-terminalization
+prerequisite вне boundary этого invoker. TASK-026 Blocked; repair остаётся Not
+Activated без Task ID. Этот DP остаётся Draft/Partial.
 
 ## 2. Назначение
 
@@ -453,8 +455,10 @@ Repeat Architecture Confirmation теперь блокирует TASK-026 отд
 DP-015/DP-020 refinement replay-first admission и late generation. Design
 refinement завершена как TASK-049 и принята Coordinator 2026-08-28; TASK-057
 реализует isolated prerequisite, а TASK-060 prospectively accepts четыре exact
-claims. TASK-061 возвращает `READY — UNBLOCK`; TASK-026 Ready to Reactivate, но
-Not Activated; implementation TASK-026 здесь не утверждается.
+claims. Historical `READY — UNBLOCK` TASK-061 и matrix остаются неизменными.
+Fresh TASK-026 evidence требует одного отдельного DP-015
+parent-terminalization repair вне DP-021. TASK-026 Blocked, prerequisite Not
+Activated; implementation TASK-026 здесь не утверждается.
 
 ## 18. Решение
 

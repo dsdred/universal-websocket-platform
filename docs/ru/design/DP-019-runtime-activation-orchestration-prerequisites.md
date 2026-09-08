@@ -39,9 +39,13 @@ DECISION` / `SPLIT REQUIRED`, потому что historical admission DP-015/DP
 обеспечивал replay-first inspection и late generation allocation. TASK-049 —
 завершённая и Coordinator-Accepted design-only refinement; TASK-057 реализует
 её отдельную isolated prerequisite, а TASK-060 prospectively accepts четыре
-exact claims. TASK-061 возвращает `READY — UNBLOCK` с matrix 7/10/2/0/0/0.
-TASK-026 Ready to Reactivate, но Not Activated. DP-019 остаётся
-Approved/Planned overall.
+exact claims. TASK-061 остаётся immutable historical accepted readiness с
+`READY — UNBLOCK` и matrix 7/10/2/0/0/0. Fresh TASK-026 end-to-end evidence
+доказывает, что historical row 15 недостаточна для current live readiness:
+existing DP-015 parent terminal gate rejects definitive post-`StopOld`,
+pre-`StartTarget` cancellation без `StartTarget`. TASK-026 Blocked; bounded
+repair и focused regression proof остаются Not Activated без Task ID. DP-019
+остаётся Approved/Planned overall.
 
 ## 2. Назначение
 
@@ -556,9 +560,10 @@ proofs и исторически фиксирует `UNBLOCK TASK-026`. Supersed
 boundary как historical evidence. Repeat Architecture Confirmation затем
 блокировала TASK-026 отдельной DP-015/DP-020 refinement replay-first admission и
 late generation. TASK-049 завершила refinement, TASK-057 реализовала isolated
-prerequisite, а TASK-060 prospectively accepted четыре exact claims. TASK-061
-возвращает `READY — UNBLOCK`; TASK-026 Ready to Reactivate, но Not Activated.
-Historical
+prerequisite, а TASK-060 prospectively accepted четыре exact claims.
+Historical `READY — UNBLOCK` TASK-061 и matrix остаются неизменными. Fresh
+TASK-026 evidence требует одного отдельного DP-015 parent-terminalization
+repair; TASK-026 Blocked, prerequisite Not Activated. Historical
 focused readiness decomposition зафиксирована в зеркальном
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), со
 статусом Design Status Draft и Implementation Status Planned overall, где
