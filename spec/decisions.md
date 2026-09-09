@@ -11,10 +11,12 @@
   через event `9199e91e-82cf-4b94-8e9d-c81ba91015b6`, а Historical Equivalence
   остаётся `Not Proven`. TASK-061 immutable historical verdict остаётся `READY
   — UNBLOCK` с matrix 7/10/2/0/0/0. Fresh TASK-026 end-to-end evidence proves
-  row 15 insufficient for current live readiness. TASK-062 активирует и
-  реализует отдельный bounded DP-015 parent-terminalization prerequisite
-  изолированно и ожидает independent review; TASK-026 остаётся Blocked и не
-  реактивирована.
+  row 15 insufficient for then-current live readiness. TASK-062 реализовала,
+  независимо приняла и опубликовала отдельный bounded DP-015 parent-
+  terminalization prerequisite через PR #65. TASK-063 restores row 15 as
+  Compositional and returns current `READY — UNBLOCK TASK-026`, matrix
+  7/10/2/0/0/0. TASK-026 is Ready to Reactivate but remains Not Activated;
+  rows 2 and 14 remain its implementation obligations.
 
 - [`ADR 0001: Базовая реализация Control Service`](../docs/ru/adr/0001-bootstrap-control-service.md)
 - [`ADR 0002: Configuration DSL`](../docs/ru/adr/0002-configuration-dsl.md)
@@ -41,9 +43,9 @@
   Status Approved. Статус не повышается реализацией или commit. DP-012 и
   DP-013 реализованы изолированно; DP-014, primitive boundary DP-015 и partial
   DP-019 parent/phase sequential core и command-boundary Continue/pending-Stop
-  rendezvous, TASK-057 replay-first/late-generation admission и TASK-062
-  bounded parent-terminalization repair реализованы изолированно. TASK-062
-  ожидает independent review. DP-015 Implementation Status остаётся Partial;
+  rendezvous, TASK-057 replay-first/late-generation admission и принятый/
+  опубликованный TASK-062 bounded parent-terminalization repair реализованы
+  изолированно. DP-015 Implementation Status остаётся Partial;
   полный DP-015/DP-019 extension и DP-016–DP-019 сохраняют Planned overall там,
   где это указано их отдельным статусом.
 
@@ -113,8 +115,9 @@ DP-016 остаётся Approved/Planned; implementation cycle TASK-026 была
   четыре exact claims, а TASK-061 historical accepted result остаётся `READY —
   UNBLOCK` с matrix 7/10/2/0/0/0. Fresh TASK-026 evidence requires a separate
   bounded DP-015 parent-terminalization repair before live implementation can
-  resume. TASK-062 implements it in isolation and is pending independent
-  review; TASK-026 remains Blocked and is not reactivated.
+  resume. TASK-062 implemented, independently accepted, and published it in
+  isolation. TASK-063 returns current `READY — UNBLOCK` with matrix
+  7/10/2/0/0/0; TASK-026 is Ready to Reactivate but remains Not Activated.
 
 Approved DP-019 определяет focused internal integration contract, необходимый
 для реализации DP-016 без ослабления proofs: exact authorization tuple
@@ -299,5 +302,6 @@ implementation cycle была Blocked repeat Architecture `NEEDS DECISION` /
   accepts четыре exact claims, а TASK-061 сохраняет immutable historical
   `READY — UNBLOCK` с matrix 7/10/2/0/0/0. Fresh TASK-026 end-to-end proof
   identifies one DP-015 parent-terminalization prerequisite. TASK-062
-  implements it in isolation and is pending independent review; TASK-026
-  remains Blocked and is not reactivated.
+  implemented, independently accepted, and published it in isolation. TASK-063
+  restores current `READY — UNBLOCK` with matrix 7/10/2/0/0/0; TASK-026 is
+  Ready to Reactivate but remains Not Activated.

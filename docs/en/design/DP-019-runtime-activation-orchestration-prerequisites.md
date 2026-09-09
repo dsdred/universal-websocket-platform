@@ -42,12 +42,14 @@ allocation. TASK-049 is the completed and Coordinator-Accepted design-only
 refinement; TASK-057 implements its separate isolated prerequisite, and
 TASK-060 prospectively accepts its four exact claims. TASK-061 remains
 immutable historical accepted readiness with `READY — UNBLOCK` and matrix
-7/10/2/0/0/0. Fresh TASK-026 end-to-end evidence proves historical row 15
-insufficient for current live readiness: the existing DP-015 parent terminal
-gate rejects definitive post-`StopOld`, pre-`StartTarget` cancellation with no
-`StartTarget`. TASK-062 activates and implements the bounded repair in isolation
-with focused regression proof and is pending independent review. TASK-026
-remains Blocked and is not reactivated. DP-019 remains Approved/Planned overall.
+7/10/2/0/0/0. Fresh TASK-026 end-to-end evidence proved historical row 15
+insufficient for then-current live readiness: the existing DP-015 parent terminal
+gate rejected definitive post-`StopOld`, pre-`StartTarget` cancellation with no
+`StartTarget`. TASK-062 implemented the bounded repair with focused regression
+proof, was independently accepted, and was published through PR #65. TASK-063
+restores row 15 to Compositional and returns current `READY — UNBLOCK TASK-026`,
+matrix 7/10/2/0/0/0. TASK-026 is Ready to Reactivate but remains Not Activated.
+DP-019 remains Approved/Planned overall.
 
 ## 2. Purpose
 
@@ -574,8 +576,9 @@ refinement. TASK-049 completed the refinement, TASK-057 implemented its isolated
 prerequisite, and TASK-060 prospectively accepted its four exact claims.
 TASK-061 historical `READY — UNBLOCK` and matrix remain unchanged. Fresh
 TASK-026 evidence requires one separate DP-015 parent-terminalization repair.
-TASK-062 implements it in isolation and is pending independent review;
-TASK-026 remains Blocked and is not reactivated. The historical focused
+TASK-062 implemented, independently accepted, and published it in isolation;
+TASK-063 reports current `READY — UNBLOCK` 7/10/2/0/0/0. TASK-026 is Ready to
+Reactivate but remains Not Activated. The historical focused
 readiness decomposition is recorded in the mirrored
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), with
 Design Status Draft and Implementation Status Planned overall, with Slice 3

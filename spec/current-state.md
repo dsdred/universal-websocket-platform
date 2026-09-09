@@ -11,10 +11,12 @@ Compositional / 2 Missing core / 0 Missing prerequisite / 0 Missing external /
 0 Deferred. Fresh TASK-026 end-to-end evidence доказывает, что historical row
 15 недостаточна для current live readiness: existing DP-015 parent terminal
 gate rejects definitive cancellation after terminal `StopOld`, когда
-required-by-contract `StartTarget` отсутствует. TASK-062 активирует и реализует
-отдельный bounded DP-015 repair изолированно с focused regression proof и
-ожидает independent review. TASK-026 остаётся `Blocked — Newly Proven DP-015
-Parent-Terminalization Prerequisite` и не реактивирована. TASK-058 остаётся
+required-by-contract `StartTarget` отсутствует. TASK-062 реализовала,
+независимо приняла и опубликовала отдельный bounded DP-015 repair через PR #65.
+Fresh TASK-063 reassessment возвращает `READY — UNBLOCK TASK-026` с matrix
+7/10/2/0/0/0: row 15 снова Compositional, Missing prerequisite — 0, а rows 2 и
+14 остаются TASK-026 implementation obligations. TASK-026 — `Ready to
+Reactivate — Not Activated`. TASK-058 остаётся
 `Sealed Negative Disposition`.
 
 **Веха:** Beta — Complete the Single-Node Runtime
@@ -57,10 +59,10 @@ refinement; TASK-051 reconciled it onto current `main` and was terminally
 published through PR #53. TASK-057 implements the separate prerequisite in
 isolation, and TASK-060 prospectively accepts its four exact claims. TASK-061
 historically returns `READY — UNBLOCK` with matrix 7/10/2/0/0/0. Fresh
-TASK-026 evidence blocks live execution on a separate DP-015
-parent-terminalization repair; TASK-062 implements it in isolation and is
-pending independent review, while TASK-026 remains Blocked and is not
-reactivated.
+TASK-026 evidence identified a separate DP-015 parent-terminalization repair.
+TASK-062 implemented, independently accepted, and published it in isolation;
+TASK-063 restores current readiness to `READY — UNBLOCK`, matrix 7/10/2/0/0/0.
+TASK-026 is Ready to Reactivate but remains Not Activated.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
@@ -95,9 +97,9 @@ and non-reusable. TASK-026 remained Blocked at those design-task closures.
 TASK-057 subsequently implemented the isolated prerequisite, and TASK-060
 prospectively accepted its four exact claims.
 
-**Текущая architecture task:** отсутствует. Approved semantics достаточны для
-TASK-062. TASK-061 сохраняется как immutable historical readiness evidence;
-TASK-026 остаётся Blocked и не реактивирована.
+**Текущая architecture task:** TASK-063 — In Progress. Independent Architect
+returns `READY — UNBLOCK TASK-026`, matrix 7/10/2/0/0/0; row 15 is
+Compositional, Missing prerequisite is 0, and TASK-026 remains Not Activated.
 Draft DP-021 остаётся Partial; TASK-043 реализует concrete invoker изолированно
 и завершена/принята. TASK-042 task commit `ebf4421` опубликован через PR #42 и
 merged как `ded3aa0`.
@@ -111,10 +113,11 @@ PASS. Acceptance не реализует prerequisites и не снимает TA
 опубликован через PR #27 и merged как
 `2c017aace7e56a4747d3cecbe8ff3f6cf53e009f`.
 
-**Текущая development task:** TASK-062 — In Progress; bounded DP-015 parent
-terminal gate repair и focused regression proof реализованы изолированно и
-ожидают independent review. TASK-026 остаётся Blocked и не реактивирована;
-orchestrator and production wiring are absent.
+**Текущая development task:** отсутствует. TASK-062 — последняя завершённая
+development task: `Completed — Coordinator Accepted (2026-09-08)`, task commit
+`07f70f0a4bb076a3b47324c41de28a80e14ed73f` published through PR #65 and
+merged as `2f1de022f7821cf9a4b65fe408c42349060f523e`. Orchestrator and production
+wiring are absent.
 
 **TASK-031:** `Completed — Coordinator Accepted`. Bounded isolated DP-020
 deferred slice 1 реализован в `internal/runtimecommandidempotency` на branch
@@ -142,15 +145,19 @@ repeat Tester `PASS` 0/0/0; Independent Reviewer `APPROVED` 0/0; Scope Audit
 closure baseline TASK-045 и позднее superseded recheck TASK-026. Commit и
 publication на closure не выполнялись.
 
-**Текущее documentation state:** TASK-062 PROCESS-002 status synchronized как
-In Progress isolated DP-015 repair pending independent review. TASK-061
-immutable historical readiness сохраняется; TASK-026 остаётся Blocked и не
-реактивирована.
+**Текущее documentation state:** TASK-063 synchronizes accepted/published
+TASK-062 and current `READY — UNBLOCK` 7/10/2/0/0/0. TASK-061/TASK-062
+historical evidence remains unchanged; TASK-026 is Ready to Reactivate, Not
+Activated.
 
-**Текущая architecture task:** отсутствует. Fresh independent TASK-026
-reconciliation returned `SPLIT REQUIRED — NEW IMPLEMENTATION PREREQUISITE`;
-TASK-061 historical verdict/matrix остаются неизменными. Draft DP-021 сохраняет
-Partial Implementation Status после isolated implementation TASK-043.
+**Текущая architecture task:** TASK-063 — In Progress. Fresh independent
+reassessment returns `READY — UNBLOCK TASK-026`, matrix 7/10/2/0/0/0; row 15
+is Compositional, Missing prerequisite is 0, and rows 2/14 remain TASK-026
+implementation obligations. TASK-026 is Ready to Reactivate but Not Activated.
+The prior `SPLIT REQUIRED — NEW IMPLEMENTATION PREREQUISITE` is historical
+TASK-026 evidence resolved by accepted/published TASK-062. TASK-061 historical
+verdict/matrix remain unchanged. Draft DP-021 retains Partial Implementation
+Status after isolated TASK-043 implementation.
 
 **Trusted baseline TASK-009:** clean synchronized
 `main@63b961eeb59af9205c3c3d0b68d3f4bd7b8ac25c`; локальная ветка
@@ -691,9 +698,10 @@ late-generation design completed as TASK-049 and was reconciled by published
 TASK-051. TASK-057 implements the isolated prerequisite; TASK-060 subsequently
 prospectively accepts its four exact claims. TASK-061 historical `READY —
 UNBLOCK` and matrix remain unchanged; fresh TASK-026 evidence requires the
-separate DP-015 parent-terminalization repair. TASK-062 implements it in
-isolation and is pending independent review; TASK-026 remains Blocked and is
-not reactivated.
+separate DP-015 parent-terminalization repair. TASK-062 implemented,
+independently accepted, and published it in isolation; TASK-063 returns current
+`READY — UNBLOCK` with matrix 7/10/2/0/0/0. TASK-026 is Ready to Reactivate but
+remains Not Activated.
 
 **TASK-046:** `Completed — Coordinator Accepted (2026-08-25)`. Repeat Reviewer
 `Approved 0/0`; Scope Audit 15/0/0; PROCESS-002 Synchronized. Approved DP-015
@@ -729,9 +737,10 @@ late-generation design completed as TASK-049 and was reconciled by published
 TASK-051. TASK-057 implements the isolated prerequisite; TASK-060 subsequently
 prospectively accepts its four exact claims. TASK-061 historical `READY —
 UNBLOCK` and matrix remain unchanged; fresh TASK-026 evidence requires the
-separate DP-015 parent-terminalization repair. TASK-062 implements it in
-isolation and is pending independent review; TASK-026 remains Blocked and is
-not reactivated. Independent Tester —
+separate DP-015 parent-terminalization repair. TASK-062 implemented,
+independently accepted, and published it in isolation; TASK-063 returns current
+`READY — UNBLOCK` with matrix 7/10/2/0/0/0. TASK-026 is Ready to Reactivate but
+remains Not Activated. Independent Tester —
 `PASS WITH ENVIRONMENT LIMITATION` 0/0; final Reviewer — `APPROVED` 0/0;
 Scope Audit 18/0/0; PROCESS-002 Synchronized.
 

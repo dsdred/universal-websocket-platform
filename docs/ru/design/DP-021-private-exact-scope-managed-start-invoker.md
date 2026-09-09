@@ -24,9 +24,10 @@ design-only refinement; TASK-057 реализует isolated prerequisite, а TA
 prospectively accepts четыре exact claims. TASK-061 остаётся immutable
 historical accepted readiness с `READY — UNBLOCK` и matrix 7/10/2/0/0/0.
 Fresh TASK-026 evidence определяет отдельный DP-015 parent-terminalization
-prerequisite вне boundary этого invoker. TASK-062 реализует repair изолированно
-и ожидает independent review; TASK-026 остаётся Blocked и не реактивирована.
-Этот DP остаётся Draft/Partial.
+prerequisite вне boundary этого invoker. TASK-062 реализовала, независимо
+приняла и опубликовала repair изолированно; TASK-063 восстанавливает current
+`READY — UNBLOCK` 7/10/2/0/0/0. TASK-026 Ready to Reactivate, но остаётся Not
+Activated. Этот DP остаётся Draft/Partial.
 
 ## 2. Назначение
 
@@ -458,8 +459,9 @@ refinement завершена как TASK-049 и принята Coordinator 2026
 реализует isolated prerequisite, а TASK-060 prospectively accepts четыре exact
 claims. Historical `READY — UNBLOCK` TASK-061 и matrix остаются неизменными.
 Fresh TASK-026 evidence требует одного отдельного DP-015
-parent-terminalization repair вне DP-021. TASK-062 реализует его изолированно и
-ожидает independent review; TASK-026 остаётся Blocked и не реактивирована;
+parent-terminalization repair вне DP-021. TASK-062 реализовала, независимо
+приняла и опубликовала его изолированно; TASK-063 возвращает current `READY —
+UNBLOCK` 7/10/2/0/0/0. TASK-026 Ready to Reactivate, но остаётся Not Activated;
 implementation TASK-026 здесь не утверждается.
 
 ## 18. Решение
