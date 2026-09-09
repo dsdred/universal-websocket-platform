@@ -36,12 +36,14 @@ design-only refinement; TASK-057 реализует isolated prerequisite, а TA
 prospectively accepts её четыре exact claims. TASK-061 остаётся immutable
 historical accepted readiness с `READY — UNBLOCK` и exact matrix
 7/10/2/0/0/0. Строки 2 и 14 остаются core future orchestrator. Fresh TASK-026
-end-to-end evidence доказывает, что historical row 15 недостаточна для current
-live readiness: existing DP-015 parent terminal gate не может terminalize
-definitive cancellation после terminal `StopOld` без `StartTarget`. TASK-062
-активирует и реализует bounded repair изолированно с focused regression proof и
-ожидает independent review. TASK-026 остаётся Blocked и не реактивирована.
-DP-016 остаётся Approved/Planned и не реализована.
+end-to-end evidence доказала, что historical row 15 недостаточна для
+then-current live readiness: existing DP-015 parent terminal gate не мог
+terminalize definitive cancellation после terminal `StopOld` без
+`StartTarget`. TASK-062 реализовала bounded repair с focused regression proof,
+независимо принята и опубликована через PR #65. TASK-063 восстанавливает row 15
+как Compositional и возвращает current `READY — UNBLOCK TASK-026`, matrix
+7/10/2/0/0/0. TASK-026 Ready to Reactivate, но остаётся Not Activated. DP-016
+остаётся Approved/Planned и не реализована.
 
 ## 2. Назначение
 
@@ -548,8 +550,10 @@ refinement, TASK-057 реализовала isolated prerequisite, TASK-060 pros
 accepted четыре exact claims. Historical `READY — UNBLOCK` TASK-061 и matrix
 остаются неизменными. Fresh TASK-026 evidence требует одного отдельного DP-015
 parent-terminalization prerequisite до возобновления live implementation.
-TASK-062 реализует prerequisite изолированно и ожидает independent review.
-TASK-026 остаётся Blocked и не реактивирована; reduced slice DP-016 запрещён.
+TASK-062 реализовала, независимо приняла и опубликовала prerequisite
+изолированно. TASK-063 возвращает current `READY — UNBLOCK` с matrix
+7/10/2/0/0/0; TASK-026 Ready to Reactivate, но остаётся Not Activated, а
+reduced slice DP-016 запрещён.
 
 ## 29. Решение
 

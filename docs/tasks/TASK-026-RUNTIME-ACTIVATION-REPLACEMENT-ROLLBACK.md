@@ -2,7 +2,7 @@
 
 ## Status
 
-`Blocked — Newly Proven DP-015 Parent-Terminalization Prerequisite (2026-09-07)`.
+`Ready to Reactivate — Not Activated (2026-09-09)`.
 
 TASK-061 independently reassessed the complete unchanged DP-016 section 25
 matrix after exact prospective event
@@ -27,8 +27,15 @@ contracts forbid that path from creating. The repair changes an existing seam
 excluded by this Task Contract and is therefore a separate implementation
 prerequisite, not a TASK-026 scope extension. The exact evidence and bounded
 repair contract are recorded in the terminal Recovery Evidence Envelope.
-TASK-026 is Blocked pending separate prerequisite intake, implementation, and
-independent acceptance. No DP status or published TASK-061 record is changed.
+That 2026-09-07 state was subsequently resolved by TASK-062, which implemented,
+independently accepted, and published the bounded repair through PR #65. Fresh
+TASK-063 independent Architecture reassessment restores row 15 to
+Compositional and returns **`READY — UNBLOCK TASK-026`** with matrix 7 Direct /
+10 Compositional / 2 Missing core / 0 Missing prerequisite / 0 Missing external
+/ 0 Deferred. Rows 2 and 14 remain this task's orchestrator-owned implementation
+obligations. No DP status or published TASK-061/TASK-062 record is changed.
+TASK-026 is ready for a later separate normal reactivation intake but is not
+activated by TASK-063.
 
 ## Task Contract
 
@@ -2507,3 +2514,22 @@ the excluded Status body or terminal envelope, any change to the 19-path set,
 ordered rows, OIDs, blocker, or tuple invalidates the affected gates and this
 certification. The next repository-defined gate is the explicit Commit Gate;
 without the exact user command `Разрешаю коммит.` the required action is STOP.
+
+### TASK-063 Current Readiness Reconciliation (2026-09-09)
+
+- TASK-062 is `Completed — Coordinator Accepted`; exact task commit
+  `07f70f0a4bb076a3b47324c41de28a80e14ed73f` is published through PR #65 and
+  merged as `2f1de022f7821cf9a4b65fe408c42349060f523e`.
+- Independent TASK-063 Architecture reassessment on that baseline returns
+  **`READY — UNBLOCK TASK-026`**, findings `0/0`, matrix **7 Direct / 10
+  Compositional / 2 Missing core / 0 Missing prerequisite / 0 Missing external
+  / 0 Deferred**.
+- The sole newly proven prerequisite is eliminated. Row 15 is again
+  Compositional; rows 2 and 14 remain TASK-026 implementation obligations. No
+  new architecture blocker or DP/ARCH contract/status change is required.
+- Current TASK-026 state is **`Ready to Reactivate — Not Activated`**. This
+  evidence does not activate implementation, authorize product/test mutation,
+  or alter any immutable historical TASK-061/TASK-062 evidence.
+- The next repository-defined transition is a separate normal intake that
+  explicitly resumes this existing bounded Implementation contract. It remains
+  Not Activated until then.

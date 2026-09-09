@@ -36,13 +36,14 @@ design-only refinement; TASK-057 implements its isolated prerequisite, and
 TASK-060 prospectively accepts its four exact claims. TASK-061 remains
 immutable historical accepted readiness with `READY — UNBLOCK` and the exact
 7/10/2/0/0/0 matrix. Rows 2 and 14 remain future orchestrator core. Fresh
-TASK-026 end-to-end evidence proves historical row 15 insufficient for current
-live readiness because the existing DP-015 parent terminal gate cannot
+TASK-026 end-to-end evidence proved historical row 15 insufficient for
+then-current live readiness because the existing DP-015 parent terminal gate could not
 terminalize definitive cancellation after terminal `StopOld` with no
-`StartTarget`. TASK-062 activates and implements the bounded repair in isolation
-with focused regression proof and is pending independent review. TASK-026
-remains Blocked and is not reactivated. DP-016 remains Approved/Planned and
-unimplemented.
+`StartTarget`. TASK-062 implemented the bounded repair with focused regression
+proof, was independently accepted, and was published through PR #65. TASK-063
+restores row 15 to Compositional and returns current `READY — UNBLOCK TASK-026`,
+matrix 7/10/2/0/0/0. TASK-026 is Ready to Reactivate but remains Not Activated.
+DP-016 remains Approved/Planned and unimplemented.
 
 ## 2. Purpose
 
@@ -557,9 +558,10 @@ refinement, TASK-057 implemented its isolated prerequisite, and TASK-060
 prospectively accepted its four exact claims. TASK-061 historical `READY —
 UNBLOCK` and matrix remain unchanged. Fresh TASK-026 evidence requires one
 separate DP-015 parent-terminalization prerequisite before live implementation
-may resume. TASK-062 implements that prerequisite in isolation and is pending
-independent review. TASK-026 remains Blocked and is not reactivated; no reduced
-DP-016 slice is permitted.
+may resume. TASK-062 implemented, independently accepted, and published that
+prerequisite in isolation. TASK-063 reports current `READY — UNBLOCK` with
+matrix 7/10/2/0/0/0; TASK-026 is Ready to Reactivate but remains Not Activated,
+and no reduced DP-016 slice is permitted.
 
 ## 29. Decision
 

@@ -20,13 +20,15 @@ in isolation; TASK-060 prospectively accepts its four exact claims through event
 `Not Proven`. TASK-061 remains immutable historical accepted readiness with
 verdict `READY — UNBLOCK` and matrix 7 Direct / 10 Compositional / 2 Missing
 core / 0 Missing prerequisite / 0 Missing external / 0 Deferred. Fresh
-TASK-026 end-to-end evidence proves its row 15 insufficient for current live
-readiness: the existing parent terminal gate cannot terminalize definitive
+TASK-026 end-to-end evidence proved its row 15 insufficient for then-current
+live readiness: the existing parent terminal gate could not terminalize definitive
 post-`StopOld`, pre-`StartTarget` cancellation while `StartTarget` is
-intentionally absent. TASK-062 activates and implements that bounded DP-015
-repair in isolation with focused regression proof and is pending independent
-review. TASK-026 remains Blocked and is not reactivated. DP-015 remains
-Approved with Partial implementation.
+intentionally absent. TASK-062 implemented that bounded DP-015 repair with
+focused regression proof, was independently accepted, and was published through
+PR #65. TASK-063 restores row 15 to Compositional and returns current
+`READY — UNBLOCK TASK-026`, matrix 7/10/2/0/0/0. TASK-026 is Ready to
+Reactivate but remains Not Activated. DP-015 remains Approved with Partial
+implementation.
 
 This approved design defines the durable idempotency boundary for state-changing
 Runtime management commands. Package `internal/runtimecommandidempotency`
@@ -80,8 +82,9 @@ Accepted design-only DP-015/DP-020 refinement; TASK-057 implements its isolated
 prerequisite and TASK-060 prospectively accepts its four exact claims. TASK-061
 historically returns `READY — UNBLOCK`; DP-015 status is unchanged. Fresh
 TASK-026 evidence identifies the separate parent-terminalization repair above.
-TASK-062 implements it in isolation and is pending independent review;
-TASK-026 remains Blocked and is not reactivated.
+TASK-062 implemented, independently accepted, and published it in isolation;
+TASK-063 reports current `READY — UNBLOCK` 7/10/2/0/0/0. TASK-026 is Ready to
+Reactivate but remains Not Activated.
 
 ## 4. Scope
 
@@ -695,9 +698,10 @@ and matrix 7/10/2/0/0/0 remain unchanged. Fresh TASK-026 proof requires one
 bounded existing-gate repair: permit a durably recorded definitive
 pre-`StartTarget` Cancelled/Stopped winner to omit `StartTarget` after every
 phase that actually exists is terminal, while mismatched, nonterminal, absent-
-winner, and indeterminate states remain fail closed. TASK-062 implements this
-repair and its focused regression proof in isolation and is pending independent
-review. TASK-026 remains Blocked and is not reactivated.
+winner, and indeterminate states remain fail closed. TASK-062 implemented this
+repair and its focused regression proof in isolation and is independently
+accepted/published. TASK-063 restores row 15 to Compositional; TASK-026 is
+Ready to Reactivate but remains Not Activated.
 
 ## 28. Decision
 

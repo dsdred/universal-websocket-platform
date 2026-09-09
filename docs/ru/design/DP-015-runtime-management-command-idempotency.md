@@ -20,13 +20,14 @@ Acceptance получена 2026-08-28. TASK-057 реализует этот о�
 `Not Proven`. TASK-061 остаётся immutable historical accepted readiness с
 verdict `READY — UNBLOCK` и matrix 7 Direct / 10 Compositional / 2 Missing core
 / 0 Missing prerequisite / 0 Missing external / 0 Deferred. Fresh TASK-026
-end-to-end evidence доказывает, что её row 15 недостаточна для current live
-readiness: existing parent terminal gate не может terminalize definitive
+end-to-end evidence доказала, что её row 15 недостаточна для then-current live
+readiness: existing parent terminal gate не мог terminalize definitive
 post-`StopOld`, pre-`StartTarget` cancellation при намеренно отсутствующем
-`StartTarget`. TASK-062 активирует и реализует этот bounded DP-015 repair
-изолированно с focused regression proof и ожидает independent review. TASK-026
-остаётся Blocked и не реактивирована. DP-015 остаётся Approved с Partial
-implementation.
+`StartTarget`. TASK-062 реализовала этот bounded DP-015 repair с focused
+regression proof, независимо принята и опубликована через PR #65. TASK-063
+восстанавливает row 15 как Compositional и возвращает current `READY — UNBLOCK
+TASK-026`, matrix 7/10/2/0/0/0. TASK-026 Ready to Reactivate, но остаётся Not
+Activated. DP-015 остаётся Approved с Partial implementation.
 
 Этот approved design определяет durable idempotency boundary для
 state-changing management commands Runtime. Package
@@ -80,8 +81,9 @@ Accepted design-only DP-015/DP-020 refinement; TASK-057 реализует её 
 prerequisite, а TASK-060 prospectively accepts четыре exact claims. TASK-061
 исторически возвращает `READY — UNBLOCK`; статус DP-015 не меняется. Fresh
 TASK-026 evidence определяет отдельный parent-terminalization repair выше.
-TASK-062 реализует его изолированно и ожидает independent review; TASK-026
-остаётся Blocked и не реактивирована.
+TASK-062 реализовала, независимо приняла и опубликовала его изолированно;
+TASK-063 возвращает current `READY — UNBLOCK` 7/10/2/0/0/0. TASK-026 Ready to
+Reactivate, но остаётся Not Activated.
 
 ## 4. Область
 
@@ -695,9 +697,10 @@ Directory. Historical `READY — UNBLOCK` TASK-061 и matrix 7/10/2/0/0/0
 existing gate: durably recorded definitive pre-`StartTarget`
 Cancelled/Stopped winner может omit `StartTarget` после terminal всех
 фактически существующих phases, а mismatched, nonterminal, absent-winner и
-indeterminate states сохраняются fail closed. TASK-062 реализует этот repair и
-его focused regression proof изолированно и ожидает independent review.
-TASK-026 остаётся Blocked и не реактивирована.
+indeterminate states сохраняются fail closed. TASK-062 реализовала этот repair
+и focused regression proof изолированно, независимо принята и опубликована.
+TASK-063 восстанавливает row 15 как Compositional; TASK-026 Ready to Reactivate,
+но остаётся Not Activated.
 
 ## 28. Решение
 
