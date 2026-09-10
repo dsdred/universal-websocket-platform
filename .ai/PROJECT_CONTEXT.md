@@ -8,7 +8,18 @@
 
 ## Текущее состояние
 
-- Current boundary (2026-09-09): TASK-061 завершена как `Completed —
+- Current boundary (2026-09-09): TASK-063 завершена как `Completed —
+  Coordinator Accepted`, task commit
+  `499054be6745c967848b5aac0f3ff6a64dfbe7a9` опубликован через PR #66 в
+  `main@2404c3439f44b9b0b22f87d87029695f921fee62`. Separate normal intake
+  реактивировал TASK-026, но independent Reviewer A-001 и Architecture
+  Reconciliation доказали missing DP-015 durable Satisfied-outcome
+  prerequisite. TASK-026 — `Blocked`, prerequisite — `Not Activated`;
+  сохранённая незавершённая implementation удалена из working tree, поэтому
+  current production/test/module/dependency diff равен 0. DP-016 остаётся
+  Approved / Planned; Coordinator Acceptance не пройдена.
+
+- Published readiness baseline before TASK-026 reactivation: TASK-061 завершена как `Completed —
   Coordinator Accepted`, committed as
   `eb4717dd295988c6633668c04141082991c7636f` и опубликована через PR #63 в
   `main@67e81f8b5b86cfbd9da1e616af9d27fda9c093f8`; TASK-026 blocked-evidence
@@ -42,9 +53,9 @@
   management routing изолированно; Approved DP-014 и `internal/runtimeidentity`
   реализуют in-memory Runtime Instance aggregate store изолированно; Approved
   DP-015 и `internal/runtimecommandidempotency` реализуют primitive command
-  claim/replay boundary изолированно. Approved/Planned DP-016–DP-018 закрывают focused
-  design gates ARCH-004 §19(4)–(6) для activation/replacement/rollback,
-  recovery/reconciliation и operational error reporting/redaction. Approved/
+  claim/replay boundary изолированно. Approved/Planned DP-016–DP-018 закрывают
+  focused design gates ARCH-004 §19(4)–(6) для activation/replacement/rollback, recovery/
+  reconciliation и operational error reporting/redaction. Approved/
   Planned overall DP-019 определяет parent/phase, authorization и private
   Start-claim continuation prerequisites DP-016. TASK-028 реализует partial
   parent/phase sequential core, а TASK-029 — command-boundary Continue и
@@ -61,8 +72,9 @@
   claim/bind с revision threading и managed Flow outcomes; independent code
   proof PASS 0/0, Independent Reviewer APPROVED 0/0, Coordinator Acceptance
   завершена. TASK-043 реализует concrete private composition invoker
-  изолированно; future callback/terminal publication, orchestration и
-  production wiring отсутствуют. Slice 4 активирован как design/readiness TASK-038; его verdict
+  изолированно; callback/terminal publication, orchestration и production
+  wiring отсутствуют. Slice 4
+  активирован как design/readiness TASK-038; его verdict
   `TASK-026 REMAINS BLOCKED` после Reviewer B-001/B-002 rework принят
   Coordinator; repeat Reviewer APPROVED 0/0. Первый bounded candidate
   завершён как design-update TASK-039 с Coordinator Acceptance: принятый Draft
@@ -83,8 +95,9 @@
   repository-first reassessment принимает `READY — UNBLOCK TASK-026` с matrix
   7 Direct / 10 Compositional / 2 Missing core / 0 Missing prerequisite / 0
   Missing external / 0 Deferred как historical readiness evidence. DP-016
-  остаётся Approved/Planned; текущий implementation cycle TASK-026 теперь
-  Blocked после repeat Architecture `NEEDS DECISION` / `SPLIT REQUIRED`:
+  остаётся Approved; на этом historical reassessment её implementation была
+  Planned, а implementation cycle TASK-026 стал Blocked после repeat
+  Architecture `NEEDS DECISION` / `SPLIT REQUIRED`:
   historical admission DP-015/DP-020 did not provide exact replay-first
   inspection and late generation allocation. TASK-049 завершила и Coordinator
   Accepted design-only refinement этого contract; TASK-051 reconciled that
@@ -95,8 +108,9 @@
   historical `READY — UNBLOCK` with matrix 7/10/2/0/0/0. Fresh TASK-026
   evidence identified a separate DP-015 parent-terminalization repair. TASK-062
   implemented, independently accepted, and published it in isolation. TASK-063
-  restores current readiness to `READY — UNBLOCK`, matrix 7/10/2/0/0/0;
-  TASK-026 is Ready to Reactivate but remains Not Activated.
+  restored readiness to `READY — UNBLOCK`, matrix 7/10/2/0/0/0. Later
+  TASK-026 review proved the missing DP-015 durable Satisfied-outcome
+  prerequisite; TASK-026 is Blocked and the prerequisite is Not Activated.
   TASK-044 `Completed — Coordinator Accepted (2026-08-24)`,
   repeat Reviewer APPROVED 0/0, Scope Audit 16/0/0, PROCESS-002 Synchronized.
   HTTP, concrete policy, external command storage, recovery/reporting
@@ -134,9 +148,10 @@
   (2026-08-25); TASK-026 оставалась Blocked на closure этих design tasks.
   TASK-057 впоследствии реализовала isolated prerequisite, а TASK-060
   prospectively accepted четыре exact claims**
-- Текущая architecture task: **TASK-063 — In Progress; independent Architect
-  verdict `READY — UNBLOCK TASK-026`, matrix 7/10/2/0/0/0, row 15
-  Compositional, Missing prerequisite 0. TASK-026 остаётся Not Activated**
+- Последняя завершённая architecture task: **TASK-063 — Completed — Coordinator
+  Accepted; independent Architect verdict `READY — UNBLOCK TASK-026`, matrix
+  7/10/2/0/0/0. Later TASK-026 evidence superseded live readiness: TASK-026 is
+  Blocked by the Not Activated DP-015 durable Satisfied-outcome prerequisite**
 - TASK-049 publication boundary: **TASK-049 Completed — Coordinator Accepted;
   immutable target `4a040b4e86ec2f4361ec765657e46cd0f36bf349`
   on branch `docs/task-049-replay-first-late-generation-design`; publication
@@ -191,7 +206,9 @@
   Coordinator Closure Audit PASS; Task Contract, exact scope 26/0/0,
   Verification Matrix, PROCESS-002, status consistency и repository-state
   audit подтверждены; Commit Gate, commit, push и publication не выполнялись**
-- Текущая development task: **отсутствует. TASK-062 — последняя завершённая:
+- Текущая development task: **TASK-026 — Blocked by missing DP-015 durable
+  Satisfied-outcome prerequisite (Not Activated); no current implementation
+  diff. TASK-062 — последняя завершённая:
   Completed — Coordinator Accepted (2026-09-08), task commit `07f70f0a...`
   опубликован через PR #65 и merged как `2f1de022f...`; orchestrator и
   production wiring отсутствуют**
@@ -294,12 +311,12 @@
   task commit `bd87bbb8526efe1413899e8125e847d80aade09a` published through PR #58
   and merged as `934a7137d4c75598df4cbf9c28fc09c0fa665e5e`. TASK-026 remained Blocked
   and deferred candidates were not activated by that documentation task**
-- Текущее documentation state: **TASK-063 синхронизирует accepted/published
-  TASK-062 и current `READY — UNBLOCK` 7/10/2/0/0/0. TASK-061/TASK-062
-  historical evidence неизменно; TASK-026 Ready to Reactivate, Not Activated**
-- Текущая architecture task: **TASK-063 — In Progress; fresh independent
-  verdict `READY — UNBLOCK TASK-026`; newly proven prerequisite устранён,
-  новых blockers нет**
+- Текущее documentation state: **TASK-026 синхронизирует evidence-only Blocked
+  state по missing DP-015 durable Satisfied-outcome prerequisite; prerequisite
+  Not Activated, production/test/module/dependency diff 0**
+- Последняя architecture task: **TASK-063 — Completed — Coordinator Accepted;
+  fresh independent verdict `READY — UNBLOCK TASK-026`; later TASK-026 evidence
+  proved a distinct DP-015 durable Satisfied-outcome blocker**
 - Trusted baseline TASK-009: **clean synchronized
   `main@63b961eeb59af9205c3c3d0b68d3f4bd7b8ac25c`; локальная ветка
   `feature/task-009-runtime-lifecycle-owner`; task record создан первым
@@ -563,9 +580,10 @@
   Direct / 10 Compositional / 2 Missing core / 0 Missing prerequisite / 0
   Missing external / 0 Deferred. TASK-062 implemented, independently accepted,
   and published the separately proven DP-015 parent-terminalization
-  prerequisite in isolation. TASK-063 restores current readiness with the same
-  7/10/2/0/0/0 matrix; TASK-026 is Ready to Reactivate but Not Activated;
-  orchestrator, API, recovery and production wiring are absent
+  prerequisite in isolation. TASK-063 restored readiness with the same
+  7/10/2/0/0/0 matrix; later TASK-026 evidence proved the missing DP-015
+  durable Satisfied-outcome prerequisite. TASK-026 is Blocked, the prerequisite
+  is Not Activated, and orchestrator, API, recovery and production wiring are absent
 - Design Status DP-017 — **Approved**, Implementation Status — **Planned**;
   recovery/reconciliation определены только на design level; recovery store,
   execution-evidence adapter, executor, API и production wiring отсутствуют

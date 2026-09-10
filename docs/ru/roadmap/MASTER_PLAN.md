@@ -107,9 +107,11 @@ Universal WebSocket Platform — open-source платформа для созд�
   TASK-026 end-to-end evidence доказала, что historical row 15 недостаточна для
   then-current live readiness. TASK-062 реализовала отдельный bounded DP-015
   parent-terminalization prerequisite изолированно, независимо принята и
-  опубликована через PR #65. TASK-063 восстанавливает current `READY — UNBLOCK
-  TASK-026` с matrix 7/10/2/0/0/0; TASK-026 Ready to Reactivate, но остаётся Not
-  Activated.
+  опубликована через PR #65. TASK-063 восстановила `READY — UNBLOCK TASK-026`
+  с matrix 7/10/2/0/0/0 и опубликована через PR #66. Последующий review
+  TASK-026 доказал отдельный prerequisite durable Satisfied-outcome DP-015.
+  TASK-026 Blocked, prerequisite Not Activated, текущая production/test
+  implementation TASK-026 отсутствует.
 
 ## 3. Engineering Principles
 
@@ -351,13 +353,14 @@ Architectural debt относится к границам, которые ост
   закрывает section 19(3) на design level; external storage, API, recovery,
   integration и wiring отсутствуют. Design-only TASK-018 добавляет Approved
   [DP-016](../design/DP-016-runtime-activation-replacement-rollback.md) с
-  Implementation Status Planned как candidate contract section 19(4). Он
+  Implementation Status Planned как contract section 19(4). Он
   упорядочивает exact-version initial activation, replacement и explicit
   rollback через Stop-to-proven-release и fresh Launch Attempt без Host overlap
   или automatic fallback. Он требует private Start-claim continuation
-  DP-011/DP-013 после claim Owner и до Load; current isolated Flow не реализует
-  этот seam. Approved status закрывает section 19(4) на design level и не
-  создаёт implementation. Design-only TASK-019 добавляет Approved
+  DP-011/DP-013 после claim Owner и до Load. Accepted prerequisite seams
+  существуют изолированно, но orchestrator TASK-026 отсутствует в current tree;
+  public API, persistence, recovery и production wiring также отсутствуют.
+  Design-only TASK-019 добавляет Approved
   [DP-017](../design/DP-017-runtime-recovery-reconciliation.md) с
   Implementation Status Planned как candidate contract section 19(5). Он
   определяет exact fail-closed restart assessment, один durable recovery claim,
@@ -445,7 +448,8 @@ Architectural debt относится к границам, которые ост
   возобновления live implementation. TASK-062 реализовала, независимо приняла и
   опубликовала repair изолированно. TASK-063 восстанавливает row 15 как
   Compositional и возвращает current `READY — UNBLOCK` с matrix 7/10/2/0/0/0.
-  TASK-026 Ready to Reactivate, но остаётся Not Activated. DP-016 остаётся
+  Последующий review TASK-026 доказал missing prerequisite durable Satisfied-
+  outcome DP-015; TASK-026 Blocked, prerequisite Not Activated, DP-016 остаётся
   Approved/Planned, Integration и Production Activation — неактивными.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.

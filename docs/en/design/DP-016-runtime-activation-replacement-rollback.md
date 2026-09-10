@@ -7,10 +7,10 @@
 - **Design Status:** Approved
 - **Implementation Status:** Planned
 
-This approved design defines a planned ordering
-contract for activation, replacement, and explicit rollback of one Runtime
-Instance. No activation/replacement orchestrator or its workflow persistence,
-API, recovery worker, or production wiring exists as a result of this document.
+This approved design defines a planned ordering contract for activation,
+replacement, and explicit rollback of one Runtime Instance. No current
+activation/replacement orchestrator, workflow persistence, public API,
+recovery worker, or production wiring exists.
 Accepted DP-020 Slices 1–3 now implement the DP-019 exact authorization,
 managed command/Flow/Owner-claim, continuation, and DP-014 binding seams in
 isolation. TASK-038 found implementation still architecture-blocked because
@@ -20,8 +20,8 @@ DP-010 expected-attempt Stop design; completed and Coordinator-Accepted
 TASK-040 implements and verifies it in isolation, with repeat final Reviewer
 `APPROVED` 0/0. TASK-043 implements the private exact-scope invoker in
 isolation. Post-Owner DP-014 and DP-015 terminal publication remains part of
-this planned orchestrator; the orchestrator and production wiring remain
-absent. Completed and Coordinator-Accepted TASK-044 (2026-08-24) historically
+the planned orchestrator; the orchestrator and production wiring are absent.
+Completed and Coordinator-Accepted TASK-044 (2026-08-24) historically
 returned `UNBLOCK TASK-026` after reassessing TASK-040/TASK-043. A superseding
 TASK-026 reactivation recheck identified the DP-015 tracked-Start
 managed-parent plus preclaimed `StopOld` admission prerequisite. TASK-046
@@ -42,8 +42,10 @@ terminalize definitive cancellation after terminal `StopOld` with no
 `StartTarget`. TASK-062 implemented the bounded repair with focused regression
 proof, was independently accepted, and was published through PR #65. TASK-063
 restores row 15 to Compositional and returns current `READY — UNBLOCK TASK-026`,
-matrix 7/10/2/0/0/0. TASK-026 is Ready to Reactivate but remains Not Activated.
-DP-016 remains Approved/Planned and unimplemented.
+matrix 7/10/2/0/0/0. TASK-026 was then reactivated, but independent review
+proved a missing DP-015 durable Satisfied-outcome prerequisite. TASK-026 is
+Blocked, that prerequisite is Not Activated, and the unaccepted orchestrator
+implementation is absent from the current tree.
 
 ## 2. Purpose
 
@@ -79,8 +81,8 @@ primitive DP-015 boundary, partial DP-019 parent/phase sequential core, and
 command-boundary Continue/pending-Stop rendezvous, managed command gates,
 continuation, and DP-014 attempt/generation binding sequence are implemented
 and independently accepted in isolation. Approved DP-016 and DP-017 remain
-Planned overall; TASK-043 implements the concrete composition invoker in
-isolation, while the callback/terminal orchestrator and production composition
+Planned overall. TASK-043 implements the concrete composition invoker in
+isolation, while callback/terminal orchestration and production composition
 remain absent.
 
 ## 4. Scope
@@ -313,9 +315,9 @@ Stop winning converges before Load; `Continue` winning releases Flow, and a
 later Stop reaches the claimed attempt normally. No admission or Owner lock is
 held across persistence, wait, or Stop convergence. The current managed Flow,
 continuation, binding gate, and TASK-043 concrete DP-013 composition-private
-invoker implement these seams in isolation. DP-016 remains Planned overall
-because callback integration, terminal publication, orchestrator, and
-production wiring are absent.
+invoker implement these seams in isolation. DP-016 remains Planned overall:
+callback integration, terminal publication, the orchestrator, and production
+wiring are absent from the current tree.
 
 ## 16. Explicit Rollback
 
@@ -533,13 +535,13 @@ Deferred to focused designs or implementation tasks:
 
 ## 28. Implementation Boundary
 
-Implementation Status is Planned. The repository contains isolated Lifecycle
-Owner, launch flow, source adapter, Draft DP-013 routing, Approved DP-014
+Implementation Status is Planned. The repository contains the isolated
+Lifecycle Owner, launch flow, source adapter, Draft DP-013 routing, Approved DP-014
 aggregate storage, and Approved DP-015 command storage including the isolated
 parent/phase Continue/pending-Stop rendezvous. DP-016 through DP-018 remain
-Planned. It contains no activation/replacement orchestrator, external
-durable command/aggregate/workflow storage, public management API, recovery
-executor, or production wiring.
+Planned. It contains no activation/replacement orchestrator, external durable
+command/aggregate/workflow storage, public management API, recovery executor,
+or production wiring.
 
 Approval closes the section 19(4) design gate but does not implement or wire
 the contract. TASK-038 confirmed TASK-026 remained Blocked first by the then
@@ -560,8 +562,10 @@ UNBLOCK` and matrix remain unchanged. Fresh TASK-026 evidence requires one
 separate DP-015 parent-terminalization prerequisite before live implementation
 may resume. TASK-062 implemented, independently accepted, and published that
 prerequisite in isolation. TASK-063 reports current `READY — UNBLOCK` with
-matrix 7/10/2/0/0/0; TASK-026 is Ready to Reactivate but remains Not Activated,
-and no reduced DP-016 slice is permitted.
+matrix 7/10/2/0/0/0. TASK-026 was reactivated separately, but its independent
+review proved a missing DP-015 durable Satisfied-outcome prerequisite. TASK-026
+is Blocked, the prerequisite is Not Activated, and no current DP-016
+implementation is claimed.
 
 ## 29. Decision
 

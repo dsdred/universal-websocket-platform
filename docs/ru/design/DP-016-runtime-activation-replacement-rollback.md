@@ -7,10 +7,10 @@
 - **Design Status:** Approved
 - **Implementation Status:** Planned
 
-Этот approved design определяет planned
-ordering contract activation, replacement и explicit rollback одного Runtime
-Instance. Этот документ не создаёт activation/replacement orchestrator или
-его workflow persistence, API, recovery worker или production wiring.
+Этот approved design определяет planned ordering contract activation,
+replacement и explicit rollback одного Runtime Instance. Current orchestrator
+activation/replacement, workflow persistence, public API, recovery worker и
+production wiring отсутствуют.
 Принятые Срезы 1–3 DP-020 теперь изолированно реализуют exact authorization,
 managed command/Flow/Owner-claim, continuation и binding DP-014 из DP-019.
 TASK-038 установила, что implementation всё ещё architecture-blocked,
@@ -19,8 +19,8 @@ Attempt. Завершённая и Coordinator-Accepted TASK-039 фиксиру�
 expected-attempt Stop в Draft DP-010; завершённая и Coordinator-Accepted
 TASK-040 реализует и верифицирует его изолированно, repeat final Reviewer
 `APPROVED` 0/0. TASK-043 реализует private exact-scope invoker изолированно.
-Terminal publication DP-014 и DP-015 после Owner остаётся частью этого planned
-orchestrator; orchestrator и production wiring остаются отсутствующими.
+Terminal publication DP-014 и DP-015 после Owner остаётся частью planned
+orchestrator; orchestrator и production wiring отсутствуют.
 Завершённая и Coordinator-Accepted TASK-044 (2026-08-24) исторически вернула
 `UNBLOCK TASK-026` после повторной оценки TASK-040/TASK-043. Superseding recheck
 реактивации TASK-026 определяет DP-015 prerequisite tracked-Start managed-parent
@@ -42,8 +42,10 @@ terminalize definitive cancellation после terminal `StopOld` без
 `StartTarget`. TASK-062 реализовала bounded repair с focused regression proof,
 независимо принята и опубликована через PR #65. TASK-063 восстанавливает row 15
 как Compositional и возвращает current `READY — UNBLOCK TASK-026`, matrix
-7/10/2/0/0/0. TASK-026 Ready to Reactivate, но остаётся Not Activated. DP-016
-остаётся Approved/Planned и не реализована.
+7/10/2/0/0/0. Затем TASK-026 была реактивирована, но independent review
+доказал missing prerequisite durable Satisfied-outcome DP-015. TASK-026
+Blocked, prerequisite Not Activated, а непринятая implementation orchestrator
+отсутствует в current tree.
 
 ## 2. Назначение
 
@@ -77,9 +79,9 @@ Proposal уточняет, но не переопределяет:
 DP-015, partial parent/phase sequential core DP-019, command-boundary
 Continue/pending-Stop rendezvous, managed command gates, continuation и binding
 sequence attempt/generation DP-014 реализованы и независимо приняты
-изолированно. Approved DP-016 и DP-017 остаются Planned overall; TASK-043
+изолированно. Approved DP-016 и DP-017 остаются Planned overall. TASK-043
 реализует concrete composition invoker изолированно, а callback/terminal
-orchestrator и production composition остаются отсутствующими.
+orchestrator и production composition отсутствуют.
 
 ## 4. Область
 
@@ -309,9 +311,9 @@ binding final per-Instance gate упорядочивает new Stop claim и `Co
 Stop обычно достигает claimed attempt. Admission/Owner lock не удерживается во
 время persistence, wait или convergence Stop. Current managed Flow,
 continuation, binding gate и concrete composition-private invoker DP-013
-TASK-043 реализуют эти seams изолированно. DP-016 остаётся Planned overall,
-поскольку callback integration, terminal publication, orchestrator и
-production wiring отсутствуют.
+TASK-043 реализуют эти seams изолированно. DP-016 остаётся Planned overall:
+callback integration, terminal publication, orchestrator и production wiring
+отсутствуют в current tree.
 
 ## 16. Explicit rollback
 
@@ -529,9 +531,9 @@ Implementation Status — Planned. Repository содержит isolated Lifecycl
 launch flow, source adapter, routing Draft DP-013, aggregate storage Approved
 DP-014 и command storage Approved DP-015, включая isolated parent/phase
 Continue/pending-Stop rendezvous. DP-016–DP-018 остаются Planned.
-Activation/replacement orchestrator, external durable
-command/aggregate/workflow storage, public management API, recovery executor и
-production wiring отсутствуют.
+Activation/replacement orchestrator, external durable command/aggregate/
+workflow storage, public management API, recovery executor и production wiring
+отсутствуют.
 
 Approval закрывает design gate section 19(4), но не реализует и не подключает
 contract. TASK-038 подтвердила, что TASK-026 оставалась Blocked прежде всего
@@ -552,8 +554,9 @@ accepted четыре exact claims. Historical `READY — UNBLOCK` TASK-061 и m
 parent-terminalization prerequisite до возобновления live implementation.
 TASK-062 реализовала, независимо приняла и опубликовала prerequisite
 изолированно. TASK-063 возвращает current `READY — UNBLOCK` с matrix
-7/10/2/0/0/0; TASK-026 Ready to Reactivate, но остаётся Not Activated, а
-reduced slice DP-016 запрещён.
+7/10/2/0/0/0. TASK-026 отдельно реактивирована, но independent review доказал
+missing prerequisite durable Satisfied-outcome DP-015. TASK-026 Blocked,
+prerequisite Not Activated, current implementation DP-016 не заявляется.
 
 ## 29. Решение
 
