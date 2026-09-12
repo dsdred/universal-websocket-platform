@@ -162,34 +162,67 @@ func TestReplayFirstSatisfiedClaimsThenRevalidatesExactFacts(t *testing.T) {
 	scope := testScope(t, "domain-a", "satisfied", OperationStart)
 	intent := startIntent(t, 41)
 	candidate, _ := NewSatisfiedCandidate(7, "attempt-a", 41)
-	var revalidations, providers, flows atomic.Int32
+	var decisions, revalidations, providers, flows atomic.Int32
+	decide := func(context.Context) (AbsentCandidate, error) {
+		decisions.Add(1)
+		return candidate, nil
+	}
+	revalidate := func(_ context.Context, got AbsentCandidate) (CandidateRevalidation, error) {
+		revalidations.Add(1)
+		if got.ExpectedAggregateRevision() != 7 || got.LaunchAttemptID() != "attempt-a" ||
+			got.ConfigurationVersionID() != 41 {
+			t.Fatalf("revalidation facts = %#v", got)
+		}
+		ledger := boundary.storage.existingLedger(scope.instanceScope())
+		ledger.mu.Lock()
+		record := ledger.records[commandIdentity{scope: scope, key: "command"}]
+		claimed := record != nil && record.state == CommandStateClaimed
+		ledger.mu.Unlock()
+		if !claimed {
+			t.Fatal("revalidation ran before claim")
+		}
+		return CandidateRevalidated, nil
+	}
 	admission, disposition, err := boundary.ExecuteReplayFirstManagedStart(
 		context.Background(), scope, "command", intent, allowOrchestration,
-		func(context.Context) (AbsentCandidate, error) { return candidate, nil },
-		func(_ context.Context, got AbsentCandidate) (CandidateRevalidation, error) {
-			revalidations.Add(1)
-			if got.ExpectedAggregateRevision() != 7 || got.LaunchAttemptID() != "attempt-a" ||
-				got.ConfigurationVersionID() != 41 {
-				t.Fatalf("revalidation facts = %#v", got)
-			}
-			ledger := boundary.storage.existingLedger(scope.instanceScope())
-			ledger.mu.Lock()
-			record := ledger.records[commandIdentity{scope: scope, key: "command"}]
-			claimed := record != nil && record.state == CommandStateClaimed
-			ledger.mu.Unlock()
-			if !claimed {
-				t.Fatal("revalidation ran before claim")
-			}
-			return CandidateRevalidated, nil
-		}, countingProvider("generation-a", &providers), countingManagedStart(t, boundary, &flows),
+		decide, revalidate, countingProvider("generation-a", &providers), countingManagedStart(t, boundary, &flows),
 	)
-	if err != nil || disposition != ReplayFirstAdmitted || admission.Record().State() != CommandStateTerminal {
+	if err != nil || disposition != ReplayFirstAdmitted || admission.Kind() != AdmissionClaimed ||
+		admission.Record().State() != CommandStateTerminal {
 		t.Fatalf("satisfied = %#v/%v/%v", admission, disposition, err)
 	}
 	outcome, ok := admission.Record().Outcome()
-	if !ok || outcome.LaunchAttemptID() != "attempt-a" || revalidations.Load() != 1 ||
+	if !ok || outcome.Category() != OutcomeSatisfied || outcome.LaunchAttemptID() != "attempt-a" ||
+		decisions.Load() != 1 || revalidations.Load() != 1 ||
 		providers.Load() != 0 || flows.Load() != 0 {
-		t.Fatalf("outcome/calls = %#v/%v %d/%d/%d", outcome, ok, revalidations.Load(), providers.Load(), flows.Load())
+		t.Fatalf("outcome/calls = %#v/%v %d/%d/%d/%d", outcome, ok, decisions.Load(), revalidations.Load(), providers.Load(), flows.Load())
+	}
+
+	replay, disposition, err := boundary.ExecuteReplayFirstManagedStart(
+		context.Background(), scope, "command", intent, allowOrchestration,
+		decide, revalidate, countingProvider("generation-a", &providers), countingManagedStart(t, boundary, &flows),
+	)
+	if err != nil || disposition != ReplayFirstAdmitted || replay.Kind() != AdmissionReplay {
+		t.Fatalf("same-boundary replay = %#v/%v/%v", replay, disposition, err)
+	}
+	replayedOutcome, ok := replay.Record().Outcome()
+	if !ok || replayedOutcome.Category() != OutcomeSatisfied || replayedOutcome.LaunchAttemptID() != "attempt-a" ||
+		decisions.Load() != 1 || revalidations.Load() != 1 || providers.Load() != 0 || flows.Load() != 0 {
+		t.Fatalf("same-boundary replay outcome/calls = %#v/%v %d/%d/%d/%d", replayedOutcome, ok, decisions.Load(), revalidations.Load(), providers.Load(), flows.Load())
+	}
+
+	reconstructed := newBoundary(t, boundary.storage)
+	replay, disposition, err = reconstructed.ExecuteReplayFirstManagedStart(
+		context.Background(), scope, "command", intent, allowOrchestration,
+		decide, revalidate, countingProvider("generation-b", &providers), countingManagedStart(t, reconstructed, &flows),
+	)
+	if err != nil || disposition != ReplayFirstAdmitted || replay.Kind() != AdmissionReplay {
+		t.Fatalf("reconstructed replay = %#v/%v/%v", replay, disposition, err)
+	}
+	replayedOutcome, ok = replay.Record().Outcome()
+	if !ok || replayedOutcome.Category() != OutcomeSatisfied || replayedOutcome.LaunchAttemptID() != "attempt-a" ||
+		decisions.Load() != 1 || revalidations.Load() != 1 || providers.Load() != 0 || flows.Load() != 0 {
+		t.Fatalf("reconstructed replay outcome/calls = %#v/%v %d/%d/%d/%d", replayedOutcome, ok, decisions.Load(), revalidations.Load(), providers.Load(), flows.Load())
 	}
 }
 

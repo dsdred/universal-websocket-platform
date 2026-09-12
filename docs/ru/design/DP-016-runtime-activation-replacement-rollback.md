@@ -43,9 +43,10 @@ terminalize definitive cancellation после terminal `StopOld` без
 независимо принята и опубликована через PR #65. TASK-063 восстанавливает row 15
 как Compositional и возвращает current `READY — UNBLOCK TASK-026`, matrix
 7/10/2/0/0/0. Затем TASK-026 была реактивирована, но independent review
-доказал missing prerequisite durable Satisfied-outcome DP-015. TASK-026
-Blocked, prerequisite Not Activated, а непринятая implementation orchestrator
-отсутствует в current tree.
+доказал missing prerequisite durable Satisfied-outcome DP-015. TASK-064
+реализует и принята Coordinator изолированно для этого bounded prerequisite;
+commit и publication не авторизованы. TASK-026 остаётся Blocked, а
+непринятая implementation orchestrator отсутствует в current tree.
 
 ## 2. Назначение
 
@@ -555,8 +556,9 @@ parent-terminalization prerequisite до возобновления live impleme
 TASK-062 реализовала, независимо приняла и опубликовала prerequisite
 изолированно. TASK-063 возвращает current `READY — UNBLOCK` с matrix
 7/10/2/0/0/0. TASK-026 отдельно реактивирована, но independent review доказал
-missing prerequisite durable Satisfied-outcome DP-015. TASK-026 Blocked,
-prerequisite Not Activated, current implementation DP-016 не заявляется.
+missing prerequisite durable Satisfied-outcome DP-015. TASK-026 Blocked.
+TASK-064 принята Coordinator изолированно для prerequisite; current
+implementation DP-016 не заявляется, commit/publication не авторизованы.
 
 ## 29. Решение
 

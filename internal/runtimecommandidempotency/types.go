@@ -215,6 +215,8 @@ type OutcomeCategory string
 const (
 	// OutcomeSucceeded reports definitive operation success.
 	OutcomeSucceeded OutcomeCategory = "succeeded"
+	// OutcomeSatisfied reports that the exact target already required no lifecycle mutation.
+	OutcomeSatisfied OutcomeCategory = "satisfied"
 	// OutcomeRejected reports a definitive no-mutation lifecycle rejection.
 	OutcomeRejected OutcomeCategory = "rejected"
 	// OutcomeFailed reports a definitive lifecycle failure.
@@ -233,7 +235,8 @@ func NewTerminalOutcome(
 	category OutcomeCategory,
 	launchAttemptID runtimeconfigload.LaunchAttemptID,
 ) (TerminalOutcome, error) {
-	if category != OutcomeSucceeded && category != OutcomeRejected && category != OutcomeFailed {
+	if category != OutcomeSucceeded && category != OutcomeSatisfied &&
+		category != OutcomeRejected && category != OutcomeFailed {
 		return TerminalOutcome{}, ErrInvalidSubmission
 	}
 	return TerminalOutcome{category: category, launchAttemptID: launchAttemptID}, nil
@@ -248,7 +251,8 @@ func (o TerminalOutcome) LaunchAttemptID() runtimeconfigload.LaunchAttemptID {
 }
 
 func (o TerminalOutcome) valid() bool {
-	return o.category == OutcomeSucceeded || o.category == OutcomeRejected || o.category == OutcomeFailed
+	return o.category == OutcomeSucceeded || o.category == OutcomeSatisfied ||
+		o.category == OutcomeRejected || o.category == OutcomeFailed
 }
 
 // AdmissionKind classifies one authorized submission. No Admission exposes a

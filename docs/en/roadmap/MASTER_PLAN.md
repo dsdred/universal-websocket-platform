@@ -111,8 +111,9 @@ The repository currently contains an Alpha foundation rather than a production-r
   independently accepted, and was published through PR #65. TASK-063 restored
   `READY — UNBLOCK TASK-026` with matrix 7/10/2/0/0/0 and was published through
   PR #66. A later TASK-026 review proved a distinct DP-015 durable Satisfied-
-  outcome prerequisite. TASK-026 is Blocked, the prerequisite is Not Activated,
-  and no current TASK-026 production or test implementation exists.
+  outcome prerequisite. TASK-064 implements and is Coordinator Accepted in
+  isolation; commit and publication were not authorized. TASK-026 stays
+  Blocked and no current TASK-026 production or test implementation exists.
 
 ## 3. Engineering Principles
 
@@ -451,9 +452,10 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   TASK-062 implemented, independently accepted, and published the repair in
   isolation. TASK-063 restores row 15 to Compositional and returns current
   `READY — UNBLOCK` with matrix 7/10/2/0/0/0. A later TASK-026 review proved
-  the missing DP-015 durable Satisfied-outcome prerequisite; TASK-026 is
-  Blocked, the prerequisite is Not Activated, DP-016 remains Approved/Planned,
-  and Integration and Production Activation remain inactive.
+  the missing DP-015 durable Satisfied-outcome prerequisite. TASK-064 is
+  Coordinator Accepted in isolation for that bounded repair; commit and
+  publication were not authorized. TASK-026 stays Blocked, DP-016 remains
+  Approved/Planned, and Integration and Production Activation remain inactive.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Message Persistence, Delivery, and Plugin contracts still require focused design.

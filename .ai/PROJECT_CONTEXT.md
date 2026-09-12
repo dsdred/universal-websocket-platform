@@ -8,7 +8,17 @@
 
 ## Текущее состояние
 
-- Current boundary (2026-09-09): TASK-063 завершена как `Completed —
+- Current boundary (2026-09-10): TASK-064 — `Completed — Coordinator Accepted`
+  in isolation. Изолированный DP-015 prerequisite
+  сохраняет primitive same-target `Satisfied` как distinct durable terminal
+  outcome; focused, package stress, full repository, vet и module checks
+  проходят. Independent Tester и Reviewer подтвердили subject; commit и
+  publication не авторизованы.
+  TASK-026 остаётся Blocked, её orchestration implementation отсутствует и не
+  реактивирована. Baseline TASK-064 — terminally published TASK-026 blocked-
+  evidence через PR #67 в
+  `main@0f0e02016bcc5d084ffcee55fa6e24aeaa724fd9`.
+- Historical boundary (2026-09-09): TASK-063 завершена как `Completed —
   Coordinator Accepted`, task commit
   `499054be6745c967848b5aac0f3ff6a64dfbe7a9` опубликован через PR #66 в
   `main@2404c3439f44b9b0b22f87d87029695f921fee62`. Separate normal intake
@@ -206,9 +216,10 @@
   Coordinator Closure Audit PASS; Task Contract, exact scope 26/0/0,
   Verification Matrix, PROCESS-002, status consistency и repository-state
   audit подтверждены; Commit Gate, commit, push и publication не выполнялись**
-- Текущая development task: **TASK-026 — Blocked by missing DP-015 durable
-  Satisfied-outcome prerequisite (Not Activated); no current implementation
-  diff. TASK-062 — последняя завершённая:
+- Текущая development task: **TASK-064 — Completed — Coordinator Accepted in
+  isolation. Bounded DP-015 durable Satisfied-outcome
+  prerequisite implemented and locally verified; TASK-026 remains Blocked and
+  has no current implementation diff. TASK-062 — последняя завершённая:
   Completed — Coordinator Accepted (2026-09-08), task commit `07f70f0a...`
   опубликован через PR #65 и merged как `2f1de022f...`; orchestrator и
   production wiring отсутствуют**
@@ -292,10 +303,9 @@
   external / 0 Deferred; no separate prerequisite; DP-016 remains Approved /
   Planned; Tester PASS 0/0/0; repeat Reviewer APPROVED 0/0; Scope Audit
   16/0/0; PROCESS-002 Synchronized; later superseded by the TASK-026 recheck**
-- Текущая рекомендация: **завершить verification/review/Coordinator closure
-  TASK-063, затем отдельным normal intake реактивировать существующий bounded
-  Implementation contract TASK-026. TASK-026, terminal orchestration и
-  production wiring автоматически не активируются**
+- Текущая рекомендация: **после отдельной публикации выполнить новый
+  repository-first readiness/reactivation intake TASK-026. TASK-026, terminal
+  orchestration и production wiring автоматически не активируются**
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы
   изолированно; Repeat Independent Review Approved, blocking/non-blocking 0;
@@ -311,9 +321,10 @@
   task commit `bd87bbb8526efe1413899e8125e847d80aade09a` published through PR #58
   and merged as `934a7137d4c75598df4cbf9c28fc09c0fa665e5e`. TASK-026 remained Blocked
   and deferred candidates were not activated by that documentation task**
-- Текущее documentation state: **TASK-026 синхронизирует evidence-only Blocked
-  state по missing DP-015 durable Satisfied-outcome prerequisite; prerequisite
-  Not Activated, production/test/module/dependency diff 0**
+- Текущее documentation state: **TASK-064 синхронизирует реализованный и
+  локально верифицированный bounded DP-015 durable Satisfied-outcome
+  prerequisite без заявления independent acceptance; TASK-026 остаётся
+  Blocked и не имеет current production/test/module/dependency implementation**
 - Последняя architecture task: **TASK-063 — Completed — Coordinator Accepted;
   fresh independent verdict `READY — UNBLOCK TASK-026`; later TASK-026 evidence
   proved a distinct DP-015 durable Satisfied-outcome blocker**

@@ -1,15 +1,15 @@
 # Текущее состояние
 
-**Текущая boundary (2026-09-09):** TASK-063 завершена как `Completed —
-Coordinator Accepted`; task commit
-`499054be6745c967848b5aac0f3ff6a64dfbe7a9` опубликован через PR #66 и merged
-как `2404c3439f44b9b0b22f87d87029695f921fee62`. Separate normal intake
-реактивировал TASK-026, но independent Reviewer A-001 и Architecture
-Reconciliation доказали missing DP-015 durable Satisfied-outcome prerequisite.
-TASK-026 — `Blocked`, prerequisite — `Not Activated`; сохранённая незавершённая
-implementation удалена из working tree, current production/test/module/
-dependency diff равен 0. DP-016 остаётся Approved / Planned; Coordinator
-Acceptance не пройдена.
+**Текущая boundary (2026-09-10):** TASK-064 — `Completed — Coordinator
+Accepted` в изоляции. Изолированный DP-015 prerequisite
+теперь сохраняет primitive same-target `Satisfied` как distinct durable
+terminal outcome; focused, package stress, full repository, vet и module checks
+проходят. Independent Tester и Reviewer подтвердили subject; commit и
+publication не авторизованы.
+TASK-026 остаётся `Blocked`, её orchestration implementation отсутствует и не
+реактивирована. Baseline TASK-064 — terminally published TASK-026 blocked-
+evidence через PR #67 в `main@0f0e02016bcc5d084ffcee55fa6e24aeaa724fd9`.
+DP-016 остаётся Approved / Planned.
 
 **Published readiness baseline before reactivation:** TASK-061 завершена как `Completed —
 Coordinator Accepted`, committed as
@@ -74,7 +74,9 @@ TASK-026 evidence identified a separate DP-015 parent-terminalization repair.
 TASK-062 implemented, independently accepted, and published it in isolation;
 TASK-063 restored readiness to `READY — UNBLOCK`, matrix 7/10/2/0/0/0. Later
 TASK-026 evidence proved the missing DP-015 durable Satisfied-outcome
-prerequisite; TASK-026 is Blocked and the prerequisite is Not Activated.
+prerequisite. TASK-064 implements and is Coordinator Accepted in isolation for
+that bounded repair; TASK-026 remains Blocked until separate published-intake
+reactivation.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
@@ -126,9 +128,10 @@ PASS. Acceptance не реализует prerequisites и не снимает TA
 опубликован через PR #27 и merged как
 `2c017aace7e56a4747d3cecbe8ff3f6cf53e009f`.
 
-**Текущая development task:** TASK-026 — Blocked by missing DP-015 durable
-Satisfied-outcome prerequisite (Not Activated), with no current implementation
-diff. TASK-062 — последняя завершённая
+**Текущая development task:** TASK-064 — Completed — Coordinator Accepted in
+isolation. The bounded DP-015 durable Satisfied-outcome
+prerequisite is implemented and locally verified; TASK-026 remains Blocked and
+has no current implementation diff. TASK-062 — последняя завершённая
 development task: `Completed — Coordinator Accepted (2026-09-08)`, task commit
 `07f70f0a4bb076a3b47324c41de28a80e14ed73f` published through PR #65 and
 merged as `2f1de022f7821cf9a4b65fe408c42349060f523e`. Orchestrator and production
@@ -160,9 +163,10 @@ repeat Tester `PASS` 0/0/0; Independent Reviewer `APPROVED` 0/0; Scope Audit
 closure baseline TASK-045 и позднее superseded recheck TASK-026. Commit и
 publication на closure не выполнялись.
 
-**Текущее documentation state:** TASK-026 synchronizes an evidence-only Blocked
-state for the missing DP-015 durable Satisfied-outcome prerequisite. The
-prerequisite is Not Activated and production/test/module/dependency diff is 0.
+**Текущее documentation state:** TASK-064 synchronizes the implemented,
+independently verified, and Coordinator Accepted bounded DP-015 durable
+Satisfied-outcome prerequisite. TASK-026 remains Blocked and has no current
+production/test/module/dependency implementation.
 
 **Последняя architecture task:** TASK-063 — Completed — Coordinator Accepted.
 Fresh independent reassessment returned `READY — UNBLOCK TASK-026`, matrix
