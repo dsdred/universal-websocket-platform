@@ -227,7 +227,7 @@ func (b *Boundary) ExecuteReplayFirstManagedStart(
 				if !revalidateSatisfiedSafely(revalidate, ctx, candidate) {
 					return TerminalOutcome{}, ErrIndeterminateExecution
 				}
-				return NewTerminalOutcome(OutcomeSucceeded, candidate.launchAttemptID)
+				return NewTerminalOutcome(OutcomeSatisfied, candidate.launchAttemptID)
 			})
 		return admission, ReplayFirstAdmitted, claimErr
 	case CandidateExecutePrimitive:

@@ -43,9 +43,11 @@ terminalize definitive cancellation after terminal `StopOld` with no
 proof, was independently accepted, and was published through PR #65. TASK-063
 restores row 15 to Compositional and returns current `READY — UNBLOCK TASK-026`,
 matrix 7/10/2/0/0/0. TASK-026 was then reactivated, but independent review
-proved a missing DP-015 durable Satisfied-outcome prerequisite. TASK-026 is
-Blocked, that prerequisite is Not Activated, and the unaccepted orchestrator
-implementation is absent from the current tree.
+proved a missing DP-015 durable Satisfied-outcome prerequisite. TASK-064
+implements and is Coordinator Accepted in isolation for that bounded
+prerequisite; commit and publication were not authorized. TASK-026 stays
+Blocked, and the unaccepted orchestrator implementation is absent from the
+current tree.
 
 ## 2. Purpose
 
@@ -564,8 +566,9 @@ may resume. TASK-062 implemented, independently accepted, and published that
 prerequisite in isolation. TASK-063 reports current `READY — UNBLOCK` with
 matrix 7/10/2/0/0/0. TASK-026 was reactivated separately, but its independent
 review proved a missing DP-015 durable Satisfied-outcome prerequisite. TASK-026
-is Blocked, the prerequisite is Not Activated, and no current DP-016
-implementation is claimed.
+is Blocked. TASK-064 is Coordinator Accepted in isolation for that prerequisite;
+no current DP-016 implementation is claimed, and commit/publication were not
+authorized.
 
 ## 29. Decision
 

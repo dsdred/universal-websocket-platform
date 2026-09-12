@@ -110,8 +110,9 @@ Universal WebSocket Platform — open-source платформа для созд�
   опубликована через PR #65. TASK-063 восстановила `READY — UNBLOCK TASK-026`
   с matrix 7/10/2/0/0/0 и опубликована через PR #66. Последующий review
   TASK-026 доказал отдельный prerequisite durable Satisfied-outcome DP-015.
-  TASK-026 Blocked, prerequisite Not Activated, текущая production/test
-  implementation TASK-026 отсутствует.
+  TASK-064 реализует и принята Coordinator изолированно для этого bounded
+  prerequisite; commit и publication не авторизованы. TASK-026 остаётся
+  Blocked, её текущая production/test implementation отсутствует.
 
 ## 3. Engineering Principles
 
@@ -449,8 +450,10 @@ Architectural debt относится к границам, которые ост
   опубликовала repair изолированно. TASK-063 восстанавливает row 15 как
   Compositional и возвращает current `READY — UNBLOCK` с matrix 7/10/2/0/0/0.
   Последующий review TASK-026 доказал missing prerequisite durable Satisfied-
-  outcome DP-015; TASK-026 Blocked, prerequisite Not Activated, DP-016 остаётся
-  Approved/Planned, Integration и Production Activation — неактивными.
+  outcome DP-015. TASK-064 принята Coordinator изолированно для этого bounded
+  prerequisite; commit и publication не авторизованы. TASK-026 остаётся
+  Blocked, DP-016 — Approved/Planned, Integration и Production Activation —
+  неактивными.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Message Persistence, Delivery и Plugin всё ещё требуют focused design.

@@ -26,8 +26,12 @@ post-`StopOld`, pre-`StartTarget` cancellation при намеренно отс�
 `StartTarget`. TASK-062 реализовала этот bounded DP-015 repair с focused
 regression proof, независимо принята и опубликована через PR #65. TASK-063
 восстанавливает row 15 как Compositional и возвращает current `READY — UNBLOCK
-TASK-026`, matrix 7/10/2/0/0/0. TASK-026 Ready to Reactivate, но остаётся Not
-Activated. DP-015 остаётся Approved с Partial implementation.
+TASK-026`, matrix 7/10/2/0/0/0. Последующий review TASK-026 доказал, что
+primitive same-target result `Satisfied` не сохраняется отдельным durable
+command outcome и поэтому replay-ится как `Succeeded`. TASK-026 Blocked.
+TASK-064 реализует bounded repair durable Satisfied-outcome DP-015 и принята
+Coordinator изолированно; commit и publication не авторизованы. DP-015
+остаётся Approved с Partial implementation.
 
 Этот approved design определяет durable idempotency boundary для
 state-changing management commands Runtime. Package
@@ -82,8 +86,11 @@ prerequisite, а TASK-060 prospectively accepts четыре exact claims. TASK-
 исторически возвращает `READY — UNBLOCK`; статус DP-015 не меняется. Fresh
 TASK-026 evidence определяет отдельный parent-terminalization repair выше.
 TASK-062 реализовала, независимо приняла и опубликовала его изолированно;
-TASK-063 возвращает current `READY — UNBLOCK` 7/10/2/0/0/0. TASK-026 Ready to
-Reactivate, но остаётся Not Activated.
+TASK-063 возвращает historical `READY — UNBLOCK` 7/10/2/0/0/0. Последующий
+review TASK-026 доказал distinct missing prerequisite durable primitive
+Satisfied-outcome. TASK-026 Blocked. TASK-064 реализует и принята Coordinator
+изолированно только для этого bounded prerequisite; commit/publication ещё не
+авторизованы.
 
 ## 4. Область
 
@@ -699,8 +706,13 @@ Cancelled/Stopped winner может omit `StartTarget` после terminal вс�
 фактически существующих phases, а mismatched, nonterminal, absent-winner и
 indeterminate states сохраняются fail closed. TASK-062 реализовала этот repair
 и focused regression proof изолированно, независимо принята и опубликована.
-TASK-063 восстанавливает row 15 как Compositional; TASK-026 Ready to Reactivate,
-но остаётся Not Activated.
+TASK-063 восстанавливает row 15 как Compositional в historical readiness
+evidence. Последующий review TASK-026 доказал, что primitive
+`SatisfiedCandidate` durable схлопывается в `OutcomeSucceeded`, поэтому replay
+не может сохранить distinct result Satisfied. TASK-064 реализует и принята
+Coordinator изолированно для active bounded repair existing seam, включая
+proofs replay в той же boundary и после reconstruction storage. TASK-026
+остаётся Blocked.
 
 ## 28. Решение
 

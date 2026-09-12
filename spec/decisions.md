@@ -4,6 +4,13 @@
 
 ## Принятые решения
 
+- TASK-064 реализует и принята Coordinator отдельный bounded DP-015 durable
+  primitive Satisfied-outcome prerequisite: `OutcomeSatisfied` сохраняется
+  после exact post-claim revalidation и replay-ится с тем же Launch Attempt ID
+  в текущей и reconstructed storage boundary без новых lifecycle callbacks.
+  TASK-026 остаётся Blocked и не реактивирована, DP-016 — Approved / Planned;
+  commit и publication TASK-064 не авторизованы.
+
 - TASK-063 завершена и опубликована через PR #66 с independent Architect
   verdict `READY — UNBLOCK TASK-026`, matrix 7/10/2/0/0/0. Separate normal
   intake 2026-09-09 реактивировал TASK-026 в неизменной bounded boundary, но
@@ -25,7 +32,9 @@
   Compositional and returned `READY — UNBLOCK TASK-026`, matrix 7/10/2/0/0/0.
   At TASK-063 closure TASK-026 was Ready to Reactivate; later reactivation
   proved that rows 2 and 14 require the distinct DP-015 durable Satisfied-
-  outcome prerequisite and returned TASK-026 to Blocked.
+  outcome prerequisite and returned TASK-026 to Blocked. TASK-064 now
+  implements and locally verifies that bounded prerequisite, but independent
+  acceptance remains pending.
 
 - [`ADR 0001: Базовая реализация Control Service`](../docs/ru/adr/0001-bootstrap-control-service.md)
 - [`ADR 0002: Configuration DSL`](../docs/ru/adr/0002-configuration-dsl.md)
@@ -52,8 +61,9 @@
   Status Approved. Статус не повышается реализацией или commit. DP-012 и
   DP-013 реализованы изолированно; DP-014, primitive boundary DP-015 и partial
   DP-019 parent/phase sequential core и command-boundary Continue/pending-Stop
-  rendezvous, TASK-057 replay-first/late-generation admission и принятый/
-  опубликованный TASK-062 bounded parent-terminalization repair реализованы
+  rendezvous, TASK-057 replay-first/late-generation admission, принятый/
+  опубликованный TASK-062 bounded parent-terminalization repair и локально
+  верифицированный TASK-064 durable primitive Satisfied outcome реализованы
   изолированно. DP-015 Implementation Status остаётся Partial; полный
   DP-015/DP-019 extension и DP-016–DP-019 сохраняют Planned overall.
 
@@ -96,9 +106,11 @@ per-Instance barrier для unresolved command, mandatory tracked-Start Stop и
   truthful indeterminate outcome. Package `internal/runtimecommandidempotency`
   реализует claim/replay store и TASK-057 replay-first inspection,
   claim/revalidation, late-generation provider custody и managed-rendezvous
-  ordering изолированно на process-local in-memory storage; external schema,
-  API, recovery и production wiring отсутствуют. Design gate §19(3) закрыт;
-  DP-015 Implementation Status остаётся Partial.
+  ordering изолированно на process-local in-memory storage. TASK-064 добавляет
+  distinct durable primitive `Satisfied` outcome и replay-equivalence proofs;
+  TASK-064 принята Coordinator изолированно. External schema, API,
+  recovery и production wiring отсутствуют. Design gate §19(3) закрыт; DP-015
+  Implementation Status остаётся Partial.
 
 Approved DP-016 определяет focused contract ARCH-004
 §19(4): exact-version activation, ordered replacement через
@@ -127,8 +139,9 @@ DECISION` / `SPLIT REQUIRED`, которая
   resume. TASK-062 implemented, independently accepted, and published it in
   isolation. TASK-063 returned `READY — UNBLOCK` with matrix 7/10/2/0/0/0; at
   its closure TASK-026 was Ready to Reactivate. Later reactivation proved the
-  distinct DP-015 durable Satisfied-outcome prerequisite; TASK-026 is Blocked
-  and the prerequisite is Not Activated.
+  distinct DP-015 durable Satisfied-outcome prerequisite. TASK-064 implements
+  and is Coordinator Accepted in isolation for that prerequisite; TASK-026 is
+  Blocked and commit/publication are not authorized.
 
 Approved DP-019 определяет focused internal integration contract, необходимый
 для реализации DP-016 без ослабления proofs: exact authorization tuple
