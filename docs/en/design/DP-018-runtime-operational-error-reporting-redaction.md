@@ -434,8 +434,8 @@ This Approved design closes the focused architecture design gate for ARCH-004
 section 19(6). Approved DP-014 through DP-017 close the predecessor focused
 design gates in sections 19(2)–(5). The dependency-ordered design set is
 approved, but no reporting, management integration, or Production Activation
-exists. DP-013, DP-014, and DP-015 are implemented only as bounded isolated
-packages; DP-016 and DP-017 remain Planned.
+exists. DP-013 through DP-016 are implemented only as bounded isolated
+packages; DP-017 remains Planned.
 
 ## 24. Explicit Deferrals
 

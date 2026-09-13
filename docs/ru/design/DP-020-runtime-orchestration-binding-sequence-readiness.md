@@ -19,8 +19,10 @@ then-current live readiness, и определила один отдельный
 terminalization prerequisite. TASK-062 реализовала repair с focused regression
 proof, независимо принята и опубликована через PR #65. TASK-063 восстанавливает
 row 15 как Compositional и возвращает current `READY — UNBLOCK TASK-026`,
-matrix 7/10/2/0/0/0. TASK-026 Ready to Reactivate, но остаётся Not Activated.
-DP-020 остаётся Draft/Planned overall.
+matrix 7/10/2/0/0/0. TASK-064 позднее опубликовала distinct durable
+Satisfied-outcome prerequisite через PR #68; TASK-026 теперь реализует,
+независимо верифицирует и Coordinator Accepts isolated orchestrator. DP-020 остаётся Draft/Planned
+overall.
 
 Прогресс реализации: TASK-031 и TASK-032 создали изолированные частичные
 реализации Срезов 1 и 2, исторически принятые Coordinator, а TASK-034 определила
@@ -62,8 +64,10 @@ design-only DP-015/DP-020 refinement; TASK-057 реализует isolated prere
 UNBLOCK` TASK-061 и matrix остаются неизменными. Fresh TASK-026 evidence
 требовала одного отдельного DP-015 parent-terminalization repair. TASK-062
 реализовала, независимо приняла и опубликовала его изолированно; TASK-063
-возвращает current `READY — UNBLOCK` 7/10/2/0/0/0. TASK-026 Ready to Reactivate,
-но остаётся Not Activated. DP-020 остаётся Draft/Planned overall.
+возвращает historical `READY — UNBLOCK` 7/10/2/0/0/0. TASK-064 позднее
+опубликовала distinct durable Satisfied-outcome prerequisite через PR #68;
+TASK-026 теперь реализует, независимо верифицирует и Coordinator Accepts
+isolated orchestrator. DP-020 остаётся Draft/Planned overall.
 
 ## 2. Назначение
 
@@ -216,12 +220,13 @@ Draft/Partial [DP-021](DP-021-private-exact-scope-managed-start-invoker.md).
 Следующее существующее decomposition остаётся authoritative context: DP-021
 фиксирует ownership `runtimemanagement`, custody preconstructed Flow, единственную
 operation `InvokeManagedStart`, cancellation delegation, capability custody,
-failure behavior и отсутствие legacy fallback. Future orchestrator-owned
-callback closure DP-015 задачи TASK-026 вызывает этот invoker как sole
+failure behavior и отсутствие legacy fallback. Orchestrator-owned callback
+closure DP-015 задачи TASK-026 вызывает этот invoker как sole
 lifecycle subcall и владеет mapping `TerminalOutcome`, publication и
 terminalization вне DP-021; сам invoker не является callback. TASK-043
-реализует только этот invoker изолированно; callback, terminal work или
-orchestrator не активируются.
+реализует только этот invoker изолированно. TASK-026 теперь реализует callback,
+terminal work и orchestrator изолированно; production composition не
+активирована.
 
 ### 8.1 Package split и направление invocation
 
@@ -690,8 +695,9 @@ TASK-035.
 Текущий статус среза: partial isolated implementation. TASK-032 исторически
 реализует seam managed Flow, Срез 2R TASK-035 предоставляет полный
 authoritative binding repair, а TASK-043 реализует concrete exact-scope invoker
-изолированно. Future callback custody и terminal integration остаются вне
-implemented proof этого среза.
+изолированно. Callback custody и terminal integration остаются вне собственного
+implemented proof этого среза; их отдельное isolated proof предоставляет
+TASK-026.
 
 - Добавить managed construction и per-call seam `StartManaged` и immutable
   значения `StartExecutionBinding` / `OwnerClaimView`, opaque handle
@@ -795,12 +801,11 @@ Implementation Status остаётся Planned overall. Сама design-зада
 неоднозначность command-gate и continuation API Среза 3. TASK-037 реализует и
 независимо принимает Срез 3 изолированно. Репозиторий содержит принятый Draft
 design, завершённую TASK-040 isolated implementation atomic expected-attempt
-Owner Stop и isolated concrete private exact-scope composition invoker
-TASK-043, определённый Draft DP-021, но всё ещё не содержит оркестратор
-активации, external persistence,
-API, worker recovery и production wiring. Последующая
+Owner Stop, isolated concrete private exact-scope composition invoker TASK-043,
+определённый Draft DP-021, и isolated activation orchestrator TASK-026 с
 terminal publication DP-014 и terminalization command/phase DP-015 после
-результата Owner принадлежат orchestrator TASK-026. TASK-044 исторически
+результата Owner. External persistence, API, worker recovery и production
+wiring остаются отсутствующими. TASK-044 исторически
 фиксирует `UNBLOCK TASK-026`; superseding recheck TASK-026 подтверждает missing
 DP-015 prerequisite tracked-Start managed-parent плюс preclaimed `StopOld`
 admission и исправляет matrix на 7 Direct / 9 Compositional / 2 Missing core /
@@ -814,8 +819,10 @@ exact claims. Historical `READY — UNBLOCK` TASK-061 и matrix остаются
 неизменными. Fresh TASK-026 evidence требует одного отдельного DP-015
 parent-terminalization repair. TASK-062 реализовала, независимо приняла и
 опубликовала его изолированно; TASK-063 возвращает current `READY — UNBLOCK`
-7/10/2/0/0/0. TASK-026 Ready to Reactivate, но остаётся Not Activated. Historical
-Срез 4 остаётся завершённым и принятым как TASK-038.
+7/10/2/0/0/0. TASK-064 позднее опубликовала distinct durable Satisfied-outcome
+prerequisite через PR #68; TASK-026 теперь реализует и независимо верифицирует
+isolated orchestrator. Historical Срез 4 остаётся завершённым и принятым как
+TASK-038.
 
 ## 15. Последствия
 

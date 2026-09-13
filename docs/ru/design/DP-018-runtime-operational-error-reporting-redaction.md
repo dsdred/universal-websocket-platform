@@ -428,9 +428,8 @@ Production Activation.
 Этот Approved design закрывает focused architecture design gate ARCH-004
 section 19(6). Approved DP-014–DP-017 закрывают predecessor focused design
 gates sections 19(2)–(5). Dependency-ordered design set approved, но reporting,
-management integration и Production Activation отсутствуют. DP-013, DP-014 и
-DP-015 реализованы только как bounded isolated packages; DP-016 и DP-017
-остаются Planned.
+management integration и Production Activation отсутствуют. DP-013–DP-016
+реализованы только как bounded isolated packages; DP-017 остаётся Planned.
 
 ## 24. Явно отложенное
 

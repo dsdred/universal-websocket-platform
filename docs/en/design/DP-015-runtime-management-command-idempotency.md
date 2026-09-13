@@ -29,10 +29,10 @@ PR #65. TASK-063 restores row 15 to Compositional and returns current
 `READY — UNBLOCK TASK-026`, matrix 7/10/2/0/0/0. A later TASK-026 review
 proved that the primitive same-target `Satisfied` result is not preserved as a
 distinct durable command outcome and therefore replays as `Succeeded`.
-TASK-026 is Blocked. TASK-064 implements the bounded DP-015 durable
-Satisfied-outcome repair and is Coordinator Accepted in isolation; no commit or
-publication was authorized. DP-015 remains Approved with Partial
-implementation.
+TASK-064 implements the bounded DP-015 durable Satisfied-outcome repair, is
+independently accepted, and is published through PR #68. TASK-026 subsequently
+implements and independently verifies the isolated DP-016
+orchestrator. DP-015 remains Approved with Partial implementation.
 
 This approved design defines the durable idempotency boundary for state-changing
 Runtime management commands. Package `internal/runtimecommandidempotency`
@@ -69,9 +69,10 @@ managed adapter, and managed Flow/OwnerClaimView seam in isolation. TASK-037
 implements the managed parent/StartTarget adapter, common managed gates,
 concrete continuation, DP-014 attempt/generation binding sequence, and exact
 managed Flow outcome adaptation and are independently accepted in isolation.
-TASK-043 implements and independently verifies the concrete private
-composition invoker in isolation. Later terminal publication, the orchestrator,
-and Approved DP-016 retain Implementation Status Planned.
+TASK-043 implements and independently verifies the concrete private composition
+invoker in isolation. TASK-026 now implements and independently verifies the
+terminal publication and DP-016 orchestrator in isolation; production
+composition remains absent.
 TASK-046 records the additive tracked-Start managed-parent admission contract,
 and TASK-047 implements it in isolation through
 `Boundary.ExecuteManagedParentFromTrackedStart` and its callback-scoped
@@ -89,9 +90,9 @@ TASK-026 evidence identifies the separate parent-terminalization repair above.
 TASK-062 implemented, independently accepted, and published it in isolation;
 TASK-063 reports historical `READY — UNBLOCK` 7/10/2/0/0/0. A later TASK-026
 review proved the distinct missing durable primitive Satisfied-outcome
-prerequisite. TASK-026 is Blocked. TASK-064 implements and is Coordinator
-Accepted in isolation for only that bounded prerequisite; commit/publication
-remain unauthorized.
+prerequisite. TASK-064 implements, independently accepts, and publishes only
+that bounded prerequisite through PR #68. TASK-026 subsequently implements,
+independently verifies, and Coordinator Accepts the isolated orchestrator.
 
 ## 4. Scope
 
@@ -712,8 +713,9 @@ readiness evidence. A later TASK-026 review proved that a primitive
 `SatisfiedCandidate` is durably collapsed to `OutcomeSucceeded`, so replay
 cannot preserve the distinct Satisfied result. TASK-064 implements and is
 Coordinator Accepted in isolation for the bounded existing-seam repair,
-including same-boundary and reconstructed-storage replay proofs. TASK-026
-remains Blocked.
+including same-boundary and reconstructed-storage replay proofs, and is
+published through PR #68. TASK-026 subsequently implements and independently
+verifies the isolated orchestrator.
 
 ## 28. Decision
 

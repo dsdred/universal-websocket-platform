@@ -347,9 +347,10 @@ Exact requested version сохраняется. Directory не вызывает 
 
 Возвращённые `StartOutcome` и error возвращаются без изменения.
 
-Future implementation DP-016/DP-017 сохраняет exported surface
-`Directory.Start` без изменения, но требует один private management-only seam
-Start-claim continuation в stored Flow. Exact management composition снабжает
+Реализованная изолированно orchestration DP-016 и planned recovery DP-017
+сохраняют exported surface `Directory.Start` без изменения и используют один
+private management-only seam Start-claim continuation в stored Flow. Exact
+management composition снабжает
 continuation borrowed capabilities coordination pending Stop DP-015 и
 conditional execution binding DP-014, а также opaque Control Service execution
 generation. Directory не allocate generation, не обращается прямо к
@@ -410,9 +411,9 @@ reference на этот preconstructed Flow. Invoker раскрывает тол
 `InvokeManagedStart`, создаёт zero Flow, не
 выполняет second policy authorization, не хранит per-call capability, никогда
 не вызывает command Boundary и не добавляет public operation Directory.
-TASK-043 реализует этот exact invoker изолированно; future callback custody,
-terminal work, orchestration, production composition и wiring остаются
-отсутствующими.
+TASK-043 реализует этот exact invoker изолированно. TASK-026 теперь реализует
+callback custody, terminal work и orchestration изолированно; production
+composition и wiring остаются отсутствующими.
 
 Если linked path `Directory.Start` возвращает definitive cancellation/error до
 claim Owner, он сигнализирует `StartNoClaim` original pending Stop call stack.
@@ -599,9 +600,9 @@ routing, identity и command packages через explicit Control Service bounda
 Loader, provenance Snapshot и schema compatibility уже разрешены ARCH-005 и
 DP-007 — DP-012. Прецедент isolated implementation DP-010 — DP-012 не создаёт
 исключение из gate ARCH-004 с более высоким status. Approved DP-014–DP-018
-определяют dependency-ordered contracts. DP-014 и DP-015 теперь предоставляют
+определяют dependency-ordered contracts. DP-014–DP-016 теперь предоставляют
 isolated process-local packages; external adapters, schemas, wiring и
-implementations DP-016–DP-018 отсутствуют.
+implementations DP-017/DP-018 отсутствуют.
 
 ## 27. Proofs изолированной реализации
 
@@ -693,9 +694,9 @@ reporting, integration Control Service и Production Activation отсутств
 dependencies, включая composition существующих isolated private Start-claim
 continuation и execution-generation binding/load gate, определённых Approved
 DP-019. Concrete composition-private invoker точно определён Draft DP-021, а
-его Implementation Status — Partial, реализован изолированно TASK-043. Future
-callback/terminal/orchestrator integration и production composition остаются
-отсутствующими.
+его Implementation Status — Partial, реализован изолированно TASK-043. TASK-026
+теперь реализует callback/terminal/orchestrator integration изолированно;
+production composition остаётся отсутствующей.
 
 ## 30. Решение
 

@@ -110,9 +110,9 @@ Universal WebSocket Platform — open-source платформа для созд�
   опубликована через PR #65. TASK-063 восстановила `READY — UNBLOCK TASK-026`
   с matrix 7/10/2/0/0/0 и опубликована через PR #66. Последующий review
   TASK-026 доказал отдельный prerequisite durable Satisfied-outcome DP-015.
-  TASK-064 реализует и принята Coordinator изолированно для этого bounded
-  prerequisite; commit и publication не авторизованы. TASK-026 остаётся
-  Blocked, её текущая production/test implementation отсутствует.
+  TASK-064 реализует, независимо принимает и публикует его через PR #68.
+  TASK-026 после этого реализует, независимо верифицирует и Coordinator Accepts
+  isolated orchestrator и все 19 proof rows; commit/publication не выполнены.
 
 ## 3. Engineering Principles
 
@@ -353,14 +353,14 @@ Architectural debt относится к границам, которые ост
   tracked-Start Stop и truthful indeterminate outcomes. Approved status
   закрывает section 19(3) на design level; external storage, API, recovery,
   integration и wiring отсутствуют. Design-only TASK-018 добавляет Approved
-  [DP-016](../design/DP-016-runtime-activation-replacement-rollback.md) с
-  Implementation Status Planned как contract section 19(4). Он
+  [DP-016](../design/DP-016-runtime-activation-replacement-rollback.md), теперь
+  Implemented in isolation TASK-026, как contract section 19(4). Он
   упорядочивает exact-version initial activation, replacement и explicit
   rollback через Stop-to-proven-release и fresh Launch Attempt без Host overlap
   или automatic fallback. Он требует private Start-claim continuation
-  DP-011/DP-013 после claim Owner и до Load. Accepted prerequisite seams
-  существуют изолированно, но orchestrator TASK-026 отсутствует в current tree;
-  public API, persistence, recovery и production wiring также отсутствуют.
+  DP-011/DP-013 после claim Owner и до Load. TASK-026 реализует и независимо
+  верифицирует isolated orchestrator; public API, persistence, recovery и
+  production wiring остаются отсутствующими.
   Design-only TASK-019 добавляет Approved
   [DP-017](../design/DP-017-runtime-recovery-reconciliation.md) с
   Implementation Status Planned как candidate contract section 19(5). Он
@@ -450,10 +450,10 @@ Architectural debt относится к границам, которые ост
   опубликовала repair изолированно. TASK-063 восстанавливает row 15 как
   Compositional и возвращает current `READY — UNBLOCK` с matrix 7/10/2/0/0/0.
   Последующий review TASK-026 доказал missing prerequisite durable Satisfied-
-  outcome DP-015. TASK-064 принята Coordinator изолированно для этого bounded
-  prerequisite; commit и publication не авторизованы. TASK-026 остаётся
-  Blocked, DP-016 — Approved/Planned, Integration и Production Activation —
-  неактивными.
+  outcome DP-015. TASK-064 независимо принята и опубликована через PR #68 для
+  этого bounded prerequisite. TASK-026 после этого реализует и Coordinator
+  Accepts isolated orchestrator, а DP-016 — Approved/Implemented in isolation.
+  Integration и Production Activation остаются неактивными.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Message Persistence, Delivery и Plugin всё ещё требуют focused design.

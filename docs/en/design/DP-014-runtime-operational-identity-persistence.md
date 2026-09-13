@@ -506,7 +506,8 @@ separate responsibilities. The primitive DP-015 boundary is Implemented in
 isolation by `internal/runtimecommandidempotency`; its partial DP-019
 parent/phase sequential core and command-boundary Continue/pending-Stop
 rendezvous are also implemented there in isolation. DP-014 attempt/generation
-binding and DP-016 through DP-018 remain Planned.
+binding and DP-016 orchestration are implemented in isolation; DP-017 and
+DP-018 remain Planned.
 
 ## 24. Explicit Deferrals
 
@@ -550,7 +551,7 @@ ConfigurationVersion, and never reuses its child identity within the Instance
 history. RuntimeInstanceID is unique within the operational management domain.
 
 Before external preparation, a claimed attempt may conditionally receive one
-immutable opaque execution-generation binding owned by DP-014. The planned
+immutable opaque execution-generation binding owned by DP-014. The implemented
 DP-011 continuation coordinates the binding capability, DP-016 defines the
 final binding/load gate, and DP-017 consumes the binding during recovery. The
 binding is retained as correlation history and never proves liveness or

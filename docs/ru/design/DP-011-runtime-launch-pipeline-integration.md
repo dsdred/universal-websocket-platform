@@ -6,10 +6,10 @@
 
 **Design Status:** Draft
 
-**Implementation Status:** base Flow, managed surface Start-claim continuation
-и concrete composition-private invoker реализованы и независимо приняты
-изолированно; callback/orchestrator composition и production integration
-остаются Planned
+**Implementation Status:** base Flow, managed surface Start-claim continuation,
+concrete composition-private invoker и callback/orchestrator composition DP-016
+реализованы и независимо верифицированы изолированно; production integration
+остаётся Planned
 
 **Статус архитектуры:** сфокусированный integration contract поверх
 утверждённых ARCH-004 и ARCH-005 и существующих Draft DP-007–DP-010.
@@ -22,8 +22,9 @@ production launch capability реализованной и не повышает
 Draft DP. Тот же package теперь также изолированно реализует additive
 `ManagedFlow`, `StartClaimContinuation` и per-call managed Start surface.
 TASK-043 реализует и независимо верифицирует concrete composition-private
-invoker DP-013, который вызывает эти seams, изолированно;
-callback/orchestrator composition и production wiring отсутствуют.
+invoker DP-013, который вызывает эти seams, изолированно. TASK-026 теперь
+реализует и независимо верифицирует callback/orchestrator composition
+изолированно; production wiring отсутствует.
 
 ## 2. Назначение
 
@@ -242,8 +243,9 @@ Owner.
 - не вызывает Loader, Builder, Owner.Start или Launcher;
 - возвращает exact error caller.
 
-Management orchestration DP-016 и recovery DP-017 требуют один future private
-**Start-claim continuation gate**. Он не переносит claim authority из Owner.
+Реализованная изолированно management orchestration DP-016 и planned recovery
+DP-017 используют один private **Start-claim continuation gate**. Он не
+переносит claim authority из Owner.
 Сразу после successful return preparation из `Owner.PrepareStart` и до начала
 Load, Build или Launcher work Flow должен синхронно предложить immutable view
 exact claim management continuation, связанному с primitive или linked Start
@@ -344,7 +346,9 @@ authority, порядок attempt publication/binding и закрытые outcom
 continuation. Он не меняет Owner-first claim и synchronous preparation
 semantics Flow. TASK-037 реализует и независимо принимает эту continuation и
 binding sequence изолированно. TASK-043 реализует concrete
-composition-private invoker изолированно; orchestrator DP-016 отсутствует.
+composition-private invoker изолированно; TASK-026 теперь компонует его в
+независимо верифицированном isolated orchestrator DP-016. Production
+composition отсутствует.
 
 ## 11. Synchronous operation и caller lifetime
 
@@ -614,9 +618,9 @@ failures.
   authorization-before-mutation и exact Owner/Flow routing в production path;
 - существующие isolated aggregate/command stores DP-014/DP-015 вместе с
   требуемой external/process-restart durability;
-- Planned orchestrator activation/replacement/rollback DP-016, включая private
-  Start-claim continuation DP-011/DP-013 и требуемый DP-017
-  execution-binding/load gate;
+- production composition реализованного изолированно orchestrator
+  activation/replacement/rollback DP-016, включая private Start-claim
+  continuation DP-011/DP-013 и требуемый DP-017 execution-binding/load gate;
 - implementation Approved/Planned recovery/reconciliation contract DP-017 либо
   явный startup rejection, пока эта implementation отсутствует;
 - implementation Approved/Planned operational reporting/redaction contract
@@ -636,8 +640,8 @@ implementation является отдельно проверенным prerequi
 - HTTP/CLI/API surface и authorization;
 - external durable persistence schema и transactions;
 - process-restart command/result persistence, retention и recovery;
-- orchestration activation/replacement/rollback и composition существующих
-  private Start-claim continuation и execution-binding/load gate через
+- production composition и wiring isolated orchestrator activation/replacement/
+  rollback, его private Start-claim continuation, execution-binding/load gate и
   concrete composition-private invoker;
 - retry, backoff, restart, replacement, rollback policy и reconciliation;
 - terminal supervision Host и unexpected failure;

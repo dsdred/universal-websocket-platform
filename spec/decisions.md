@@ -4,12 +4,15 @@
 
 ## Принятые решения
 
-- TASK-064 реализует и принята Coordinator отдельный bounded DP-015 durable
+- TASK-064 реализует, независимо верифицирует и публикует через PR #68
+  отдельный bounded DP-015 durable
   primitive Satisfied-outcome prerequisite: `OutcomeSatisfied` сохраняется
   после exact post-claim revalidation и replay-ится с тем же Launch Attempt ID
   в текущей и reconstructed storage boundary без новых lifecycle callbacks.
-  TASK-026 остаётся Blocked и не реактивирована, DP-016 — Approved / Planned;
-  commit и publication TASK-064 не авторизованы.
+  После terminal publication отдельный intake реактивировал TASK-026; isolated
+  orchestrator and 19/19 proofs are implemented, independently verified, and
+  Coordinator Accepted. DP-016 остаётся Approved / Implemented in isolation;
+  commit/publication TASK-026 не выполнены.
 
 - TASK-063 завершена и опубликована через PR #66 с independent Architect
   verdict `READY — UNBLOCK TASK-026`, matrix 7/10/2/0/0/0. Separate normal
@@ -32,9 +35,10 @@
   Compositional and returned `READY — UNBLOCK TASK-026`, matrix 7/10/2/0/0/0.
   At TASK-063 closure TASK-026 was Ready to Reactivate; later reactivation
   proved that rows 2 and 14 require the distinct DP-015 durable Satisfied-
-  outcome prerequisite and returned TASK-026 to Blocked. TASK-064 now
-  implements and locally verifies that bounded prerequisite, but independent
-  acceptance remains pending.
+  outcome prerequisite and returned TASK-026 to Blocked. TASK-064 subsequently
+  implemented, independently accepted, and published that bounded prerequisite
+  through PR #68; current TASK-026 supplies the independently verified and
+  Coordinator-Accepted isolated orchestrator.
 
 - [`ADR 0001: Базовая реализация Control Service`](../docs/ru/adr/0001-bootstrap-control-service.md)
 - [`ADR 0002: Configuration DSL`](../docs/ru/adr/0002-configuration-dsl.md)
@@ -62,10 +66,12 @@
   DP-013 реализованы изолированно; DP-014, primitive boundary DP-015 и partial
   DP-019 parent/phase sequential core и command-boundary Continue/pending-Stop
   rendezvous, TASK-057 replay-first/late-generation admission, принятый/
-  опубликованный TASK-062 bounded parent-terminalization repair и локально
-  верифицированный TASK-064 durable primitive Satisfied outcome реализованы
-  изолированно. DP-015 Implementation Status остаётся Partial; полный
-  DP-015/DP-019 extension и DP-016–DP-019 сохраняют Planned overall.
+  опубликованный TASK-062 bounded parent-terminalization repair и опубликованный
+  TASK-064 durable primitive Satisfied outcome реализованы изолированно.
+  TASK-026 реализует и независимо верифицирует isolated orchestrator DP-016.
+  DP-015 Implementation Status остаётся Partial; DP-016 — Implemented in
+  isolation; полный DP-015/DP-019 extension и DP-017–DP-019 сохраняют Planned
+  overall.
 
 ## Ожидающие отдельного решения
 
@@ -139,9 +145,11 @@ DECISION` / `SPLIT REQUIRED`, которая
   resume. TASK-062 implemented, independently accepted, and published it in
   isolation. TASK-063 returned `READY — UNBLOCK` with matrix 7/10/2/0/0/0; at
   its closure TASK-026 was Ready to Reactivate. Later reactivation proved the
-  distinct DP-015 durable Satisfied-outcome prerequisite. TASK-064 implements
-  and is Coordinator Accepted in isolation for that prerequisite; TASK-026 is
-  Blocked and commit/publication are not authorized.
+  distinct DP-015 durable Satisfied-outcome prerequisite. TASK-064 implements,
+  independently accepts, and publishes that prerequisite through PR #68;
+  TASK-026 now implements the isolated orchestrator and is Completed —
+  Coordinator Accepted after independent Tester, PROCESS-002, Scope Audit, and
+  final Reviewer gates; commit/publication are not completed.
 
 Approved DP-019 определяет focused internal integration contract, необходимый
 для реализации DP-016 без ослабления proofs: exact authorization tuple
@@ -278,8 +286,9 @@ threading в generation bind и fresh revision-sandwich convergence; managed Flo
 Reviewer — `APPROVED` 0/0; Coordinator Acceptance — `Accepted`, поэтому
 TASK-037 завершена как `Completed — Coordinator Accepted`. Approved
 DP-014/DP-015/DP-019 semantics не меняются. TASK-043 реализует concrete private
-composition invoker изолированно; future callback, terminal publication,
-DP-015 terminalization, orchestration и production wiring отсутствуют.
+composition invoker изолированно; на момент её завершения callback, terminal
+publication, DP-015 terminalization и orchestration ещё отсутствовали. TASK-026
+теперь реализует их изолированно; production wiring отсутствует.
 
 TASK-038 активирует только design/readiness reassessment Среза 4. Матрица всех
 19 proofs §25 DP-016 после Reviewer B-001/B-002 rework классифицирована как
@@ -329,5 +338,6 @@ implementation cycle была Blocked repeat Architecture `NEEDS DECISION` /
   implemented, independently accepted, and published it in isolation. TASK-063
   restored `READY — UNBLOCK` with matrix 7/10/2/0/0/0; at its closure TASK-026
   was Ready to Reactivate. Later reactivation proved the distinct DP-015
-  durable Satisfied-outcome prerequisite; TASK-026 is Blocked and the
-  prerequisite is Not Activated.
+  durable Satisfied-outcome prerequisite. TASK-064 subsequently implemented,
+  independently accepted, and published it through PR #68; TASK-026 now
+  implements and independently verifies the isolated orchestrator.

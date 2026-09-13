@@ -10,8 +10,9 @@
 Этот focused proposal определяет один composition-private invocation contract
 DP-013. TASK-043 реализует этот object изолированно в существующем package; он
 не добавляет public API, transport, policy, persistence или production wiring.
-Approved DP-014–DP-019 остаются неизменными, а TASK-026 остаётся
-нереализованной. Завершённая и Coordinator-Accepted TASK-044 (2026-08-24)
+Approved DP-014–DP-019 остаются неизменными. TASK-026 теперь реализует и
+независимо верифицирует isolated orchestrator. Завершённая и
+Coordinator-Accepted TASK-044 (2026-08-24)
 исторически фиксирует `UNBLOCK TASK-026`. Superseding recheck TASK-026
 определяет missing DP-015 prerequisite tracked-Start managed-parent плюс
 preclaimed `StopOld` admission; TASK-047 реализует её изолированно. Fresh
@@ -25,16 +26,18 @@ prospectively accepts четыре exact claims. TASK-061 остаётся immut
 historical accepted readiness с `READY — UNBLOCK` и matrix 7/10/2/0/0/0.
 Fresh TASK-026 evidence определяет отдельный DP-015 parent-terminalization
 prerequisite вне boundary этого invoker. TASK-062 реализовала, независимо
-приняла и опубликовала repair изолированно; TASK-063 восстанавливает current
-`READY — UNBLOCK` 7/10/2/0/0/0. TASK-026 Ready to Reactivate, но остаётся Not
-Activated. Этот DP остаётся Draft/Partial.
+приняла и опубликовала repair изолированно; TASK-063 восстанавливает historical
+`READY — UNBLOCK` 7/10/2/0/0/0. TASK-064 позднее опубликовала distinct durable
+Satisfied-outcome prerequisite через PR #68; TASK-026 теперь использует этот
+invoker внутри independently verified isolated orchestrator. Этот DP остаётся
+Draft/Partial.
 
 ## 2. Назначение
 
 Определить exact internal object, соединяющий immutable management scope
 DP-013 с одним already-constructed scope-bound managed Flow и принятыми seams
-authorization/command binding как sole lifecycle subcall future
-orchestrator-owned callback closure TASK-026, не делая сам invoker callback и
+authorization/command binding как sole lifecycle subcall orchestrator-owned
+callback closure TASK-026, не делая сам invoker callback и
 без создания ещё одного Flow, lifecycle, authorization, command или
 orchestration owner.
 
@@ -70,7 +73,7 @@ Design охватывает только:
 - exact invocation validation до Owner mutation;
 - synchronous delegation одному stored managed Flow;
 - upstream mapping primitive Start и linked parent/`StartTarget`;
-- type-correct boundary между future orchestrator-owned callback closure
+- type-correct boundary между orchestrator-owned callback closure
   DP-015 задачи TASK-026, `StartOutcome` invoker и mapping/publication terminal
   result вне DP-021;
 - custody и lifetime per-call capability;
@@ -156,7 +159,7 @@ InvokeManagedStart(
 Execute не добавляется.
 
 Invoker не является callback DP-015 и никогда не возвращает DP-015
-`TerminalOutcome`. Future composition TASK-026 владеет callback closure,
+`TerminalOutcome`. Composition TASK-026 владеет callback closure,
 переданным managed primitive или linked adapter DP-015. Этот closure делает
 `InvokeManagedStart` своим sole lifecycle subcall, получает exact
 `StartOutcome` и error, а любое последующее mapping, terminal publication
@@ -220,7 +223,7 @@ Authorization не принадлежит invoker.
 
 Для каждой initial, in-progress и replay submission DP-015 вычисляет exact
 six-field request `AuthorizeOrchestration` до inspection или mutation команды.
-Только newly committed claim передаёт future orchestrator-owned callback
+Только newly committed claim передаёт orchestrator-owned callback
 closure полный binding. Closure вызывает invoker один раз как sole lifecycle
 subcall. Invoker проверяет принятый tuple против stored scope; он не вызывает policy второй раз,
 не cache authority, не интерпретирует denial заново и не авторизует linked
@@ -245,7 +248,7 @@ Replay и in-progress observations не получают callback closure и п�
 
 ### 11.1 Primitive Start
 
-Future composition TASK-026 передаёт orchestrator-owned callback closure в
+Composition TASK-026 передаёт orchestrator-owned callback closure в
 `Boundary.ExecuteManagedStart`. DP-015 создаёт primitive binding с
 `ActivateExactTarget`, без identity parent/phase, с одной exact aggregate
 revision, execution generation и live rendezvous. Closure вызывает один
@@ -257,7 +260,7 @@ scope-bound invoker ровно один раз как sole lifecycle subcall, п
 Composition сначала входит в `Boundary.ExecuteManagedParent`, затем использует
 только его callback-scoped `ManagedParentExecution` и
 `ContinueOrExecuteManagedStartTarget`. DP-015 выводит exact identities parent и
-ordinal-one `StartTarget` и создаёт linked binding. Future orchestrator-owned
+ordinal-one `StartTarget` и создаёт linked binding. Orchestrator-owned
 callback closure этой phase вызывает ту же scope-bound operation
 `InvokeManagedStart` как sole lifecycle subcall, затем владеет result
 mapping/publication вне DP-021.
@@ -273,7 +276,7 @@ Legacy `Execute`, `ExecuteParent`, `ContinueOrExecuteStartTarget`, public
 ## 12. Lifecycle Per-call Capability
 
 `StartExecutionBinding` является immutable structural value, переданным DP-015
-future orchestrator-owned callback closure на original synchronous
+orchestrator-owned callback closure на original synchronous
 permit-holding stack. Closure lends его invoker для sole lifecycle subcall;
 invoker передаёт value unchanged в `StartManaged`.
 
@@ -314,7 +317,7 @@ runtimemanagement composition Binding(Target, Owner, Loader)
 
 ```text
 runtimecommandidempotency managed adapter
-    -> future TASK-026 orchestrator-owned callback closure
+    -> TASK-026 orchestrator-owned callback closure
         -> runtimemanagement private invoker, sole lifecycle subcall
             -> runtimelaunchflow.ManagedFlow
             -> exact StartOutcome/error back to closure
@@ -324,7 +327,7 @@ runtimecommandidempotency managed adapter
 `runtimemanagement` может зависеть от `runtimelaunchflow`,
 `runtimelifecycle` и dependency-leaf `runtimeorchestrationbinding`. Для
 реализации invoker он не импортирует `runtimecommandidempotency`,
-`runtimeidentity`, transport или future orchestrator. Invoker никогда не
+`runtimeidentity`, transport или orchestrator. Invoker никогда не
 вызывает вверх command boundary. Dependency-leaf package binding продолжает не
 зависеть ни от одного higher package. `runtimelaunchflow` не зависит обратно от
 `runtimemanagement`; preconstructed reference не создаёт cycle.
@@ -341,7 +344,7 @@ Design различает:
   scope/request/binding; zero Owner mutation;
 - **managed Flow outcome/error** — invoker возвращает без изменения;
 - **panic validation dependencies или Flow** — не конвертируется в success;
-  он проходит через future orchestrator-owned closure до существующей
+  он проходит через orchestrator-owned closure до существующей
   panic-safe callback boundary DP-015, оставляющей command/phase unresolved и
   expiring permit/rendezvous/callback authority;
 - **`runtime.Goexit`** — unwinds synchronous closure; deferred expiry DP-015
@@ -352,7 +355,7 @@ Design различает:
 
 Invoker не wrap/relabel exact downstream Owner outcome/error, не возвращает
 `TerminalOutcome` и не выводит terminal command truth. Он возвращает exact
-`StartOutcome`/error future orchestrator-owned closure TASK-026. Этот closure
+`StartOutcome`/error orchestrator-owned closure TASK-026. Этот closure
 владеет mapping в terminal outcome DP-015, terminal publication DP-014 и
 terminalization command/phase DP-015 вне DP-021.
 
@@ -367,7 +370,7 @@ proof зависят от custody:
 - production composition создаёт один managed Flow ровно один раз из scope
   Binding, audit тот же Owner/Loader/Target, затем создаёт invoker с этим
   preconstructed Flow;
-- только future orchestrator-owned callback closure TASK-026, получающий fresh
+- только orchestrator-owned callback closure TASK-026, получающий fresh
   binding DP-015, может вызвать invoker ровно один раз как sole lifecycle
   subcall;
 - ни transport, public method Directory, registry, service locator, long-lived
@@ -376,11 +379,11 @@ proof зависят от custody:
   invocation invoker.
 
 Если production composition не может доказать эту custody и отсутствие bypass,
-integration fail closed и TASK-026 остаётся blocked.
+production integration fail closed; isolated proof TASK-026 не меняется.
 
 ## 16. Acceptance Proofs
 
-Последующая implementation должна доказать все 18 строк:
+Conforming implementation должна доказать все 18 строк:
 
 1. composition вызывает `NewManaged` ровно один раз с тем же Binding
    Owner/Loader/Target, возвращает error unchanged и не создаёт duplicate или
@@ -394,18 +397,18 @@ integration fail closed и TASK-026 остаётся blocked.
 4. `StartExecutionBinding.Valid()` является только structural и никогда не
    считается proof live permit, rendezvous, callback, generation или custody;
 5. DP-015 авторизует каждую initial/replay submission до inspection, передаёт
-   только newly committed claim future callback closure TASK-026, а invoker не
+   только newly committed claim callback closure TASK-026, а invoker не
    делает second policy call;
-6. primitive adapter вызывает future orchestrator-owned closure, sole
+6. primitive adapter вызывает orchestrator-owned closure, sole
    lifecycle subcall которого достигает stored Flow один раз через invoker с
    unchanged request и binding;
-7. linked parent/`StartTarget` adapter вызывает future orchestrator-owned phase
+7. linked parent/`StartTarget` adapter вызывает orchestrator-owned phase
    closure, sole lifecycle subcall которого достигает того же invoker/Flow один
    раз с unchanged request и binding;
 8. invoker никогда не является callback DP-015, не вызывает Boundary и
    возвращает `StartOutcome`/error, а не `TerminalOutcome`;
 9. exact `StartOutcome` и error identities Flow возвращаются unchanged через
-   invoker future orchestrator-owned closure;
+   invoker orchestrator-owned closure;
 10. mapping в `TerminalOutcome`, terminal publication DP-014 и terminalization
     command/phase DP-015 выполняются только этим closure вне DP-021;
 11. already-cancelled non-nil context достигает Flow и создаёт exact
@@ -442,10 +445,11 @@ context и unchanged identity downstream outcome/error. Invoker хранит т�
 copied domain/Target и один borrowed preconstructed managed Flow и не дублирует
 construction Flow.
 
-Эта isolated implementation не предоставляет future callback closure DP-015,
-integration callback custody/replay, terminal result mapping, terminal
-publication DP-014, terminalization command/phase DP-015, orchestrator
-DP-016/TASK-026, production composition audit или production wiring.
+Сама isolated implementation invoker из TASK-043 не предоставляет callback
+closure DP-015, integration callback custody/replay, terminal result mapping,
+terminal publication DP-014, terminalization command/phase DP-015 или
+orchestrator DP-016/TASK-026. TASK-026 теперь предоставляет эти элементы
+изолированно; production composition audit и production wiring отсутствуют.
 
 TASK-043 завершена как `Completed — Coordinator Accepted (2026-08-21)` и не
 активирует следующую task. TASK-044 исторически фиксирует `UNBLOCK TASK-026`;
@@ -461,8 +465,10 @@ claims. Historical `READY — UNBLOCK` TASK-061 и matrix остаются не�
 Fresh TASK-026 evidence требует одного отдельного DP-015
 parent-terminalization repair вне DP-021. TASK-062 реализовала, независимо
 приняла и опубликовала его изолированно; TASK-063 возвращает current `READY —
-UNBLOCK` 7/10/2/0/0/0. TASK-026 Ready to Reactivate, но остаётся Not Activated;
-implementation TASK-026 здесь не утверждается.
+UNBLOCK` 7/10/2/0/0/0. TASK-064 позднее опубликовала distinct durable
+Satisfied-outcome prerequisite через PR #68; TASK-026 теперь использует этот
+invoker внутри isolated orchestrator; production integration здесь не
+утверждается.
 
 ## 18. Решение
 

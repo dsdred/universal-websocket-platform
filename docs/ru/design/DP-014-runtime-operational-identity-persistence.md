@@ -501,8 +501,8 @@ reporting. Approved [DP-015](DP-015-runtime-management-command-idempotency.md),
 эти отдельные ответственности. Primitive boundary DP-015 реализован
 изолированно `internal/runtimecommandidempotency`; partial parent/phase
 sequential core DP-019 и command-boundary Continue/pending-Stop rendezvous также
-реализованы там изолированно. Binding attempt/generation DP-014 и
-DP-016–DP-018 остаются Planned.
+реализованы там изолированно. Binding attempt/generation DP-014 и orchestration
+DP-016 реализованы изолированно; DP-017 и DP-018 остаются Planned.
 
 ## 24. Явно отложено
 
@@ -546,7 +546,7 @@ history Instance. RuntimeInstanceID уникален внутри operational ma
 domain.
 
 До external preparation claimed attempt может conditionally получить один
-immutable opaque execution-generation binding, owned DP-014. Planned
+immutable opaque execution-generation binding, owned DP-014. Реализованная
 continuation DP-011 координирует binding capability, DP-016 определяет final
 binding/load gate, а DP-017 использует binding во время recovery. Binding
 сохраняется как correlation history и никогда не доказывает liveness или
