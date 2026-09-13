@@ -26,9 +26,10 @@ the accepted Draft DP-010 design for that operation; completed and
 Coordinator-Accepted TASK-040 implements and verifies it in isolation, with
 repeat final Reviewer `APPROVED` 0/0. TASK-043 implements the concrete private
 exact-scope composition invoker in isolation without amending this Approved
-decision. Post-Owner terminal publication belongs to the later
-TASK-026 orchestrator itself; that orchestrator, external persistence, API,
-recovery worker, and production wiring remain absent. Completed and
+decision. Post-Owner terminal publication belongs to the TASK-026 orchestrator
+itself. TASK-026 now implements and independently verifies that orchestrator in
+isolation; external persistence, API, recovery worker, and production wiring
+remain absent. Completed and
 Coordinator-Accepted TASK-044 (2026-08-24) historically records `UNBLOCK
 TASK-026`. A superseding TASK-026 reactivation recheck identified one DP-015
 conformance prerequisite: atomic tracked-Start managed-parent admission with
@@ -48,7 +49,9 @@ gate rejected definitive post-`StopOld`, pre-`StartTarget` cancellation with no
 `StartTarget`. TASK-062 implemented the bounded repair with focused regression
 proof, was independently accepted, and was published through PR #65. TASK-063
 restores row 15 to Compositional and returns current `READY — UNBLOCK TASK-026`,
-matrix 7/10/2/0/0/0. TASK-026 is Ready to Reactivate but remains Not Activated.
+matrix 7/10/2/0/0/0. TASK-064 later implemented, independently accepted, and
+published the distinct durable Satisfied-outcome prerequisite through PR #68;
+TASK-026 now implements and independently verifies the isolated orchestrator.
 DP-019 remains Approved/Planned overall.
 
 ## 2. Purpose
@@ -249,8 +252,9 @@ implemented in isolation; the command-boundary Continue/pending-Stop surface is
 also implemented there in isolation. The managed continuation and exact
 attempt/generation binding sequence are implemented and independently accepted
 in isolation. TASK-043 implements the composition-private invoker in isolation;
-terminal publication and terminalization, orchestrator, and production wiring
-remain absent, so overall Implementation Status remains Planned.
+TASK-026 now implements terminal publication, terminalization, and the
+orchestrator in isolation. Production wiring remains absent, so DP-019 overall
+Implementation Status remains Planned.
 
 Conceptually it provides:
 
@@ -536,7 +540,8 @@ A prerequisite implementation must prove at minimum:
 23. existing ordinary admissions do not regress and different Instances
     continue independently.
 
-These proofs do not prove DP-016 orchestration itself.
+These DP-019 proofs alone do not prove DP-016 orchestration; TASK-026 supplies
+that separate isolated proof.
 
 ## 22. Implementation Boundary
 
@@ -561,9 +566,10 @@ Owner Stop must precede the concrete private scoped invoker. Completed and
 Coordinator-Accepted TASK-039 records its accepted Draft DP-010 design;
 completed and Coordinator-Accepted TASK-040 implements and verifies it in
 isolation, with repeat final Reviewer `APPROVED` 0/0. TASK-043 implements that
-invoker in isolation. The repository still lacks later terminal publication
-and command/phase terminalization, activation orchestrator, and production
-composition audit required by the complete design.
+invoker in isolation. TASK-026 now implements terminal publication, command/
+phase terminalization, and the activation orchestrator in isolation. The
+repository still lacks the production composition audit required by the
+complete design.
 
 TASK-044 subsequently reassesses the complete unmodified DP-016 proofs and
 historically records `UNBLOCK TASK-026`. The superseding TASK-026 recheck
@@ -577,16 +583,18 @@ prerequisite, and TASK-060 prospectively accepted its four exact claims.
 TASK-061 historical `READY — UNBLOCK` and matrix remain unchanged. Fresh
 TASK-026 evidence requires one separate DP-015 parent-terminalization repair.
 TASK-062 implemented, independently accepted, and published it in isolation;
-TASK-063 reports current `READY — UNBLOCK` 7/10/2/0/0/0. TASK-026 is Ready to
-Reactivate but remains Not Activated. The historical focused
+TASK-063 reports historical `READY — UNBLOCK` 7/10/2/0/0/0. TASK-064 later
+published the distinct durable Satisfied-outcome prerequisite through PR #68,
+and TASK-026 now implements, independently verifies, and Coordinator Accepts
+the isolated orchestrator. The historical focused
 readiness decomposition is recorded in the mirrored
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), with
 Design Status Draft and Implementation Status Planned overall, with Slice 3
 implemented and independently accepted in isolation.
 The downstream exact private-invoker refinement is recorded in Draft
 [DP-021](DP-021-private-exact-scope-managed-start-invoker.md), with Partial
-Implementation Status after TASK-043; it does not amend this Approved contract
-or implement the remaining orchestration/terminal work.
+Implementation Status after TASK-043; it does not amend this Approved contract.
+TASK-026 supplies the separate isolated orchestration/terminal work.
 
 ## 23. Consequences
 

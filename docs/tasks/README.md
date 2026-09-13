@@ -3,16 +3,14 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая work —
-[TASK-064](TASK-064-RUNTIME-COMMAND-SATISFIED-OUTCOME.md), `Completed —
-Coordinator Accepted in isolation`: отдельный bounded
-prerequisite Approved DP-015 сохраняет primitive same-target `Satisfied` как
-distinct durable terminal outcome; focused/stress/full verification и
-independent Tester/Reviewer проходят. Commit и publication не авторизованы.
-[TASK-026](TASK-026-RUNTIME-ACTIVATION-REPLACEMENT-ROLLBACK.md)
-остаётся `Blocked — Missing DP-015 Durable Satisfied-Outcome Prerequisite`;
-её production/test implementation отсутствует, Coordinator Acceptance не
-пройдена, и TASK-026 не реактивирована.
+Последняя завершённая work —
+[TASK-026](TASK-026-RUNTIME-ACTIVATION-REPLACEMENT-ROLLBACK.md), `Completed —
+Coordinator Accepted (2026-09-13)`: отдельная
+[TASK-064](TASK-064-RUNTIME-COMMAND-SATISFIED-OUTCOME.md) terminally published
+через PR #68 distinct durable primitive `Satisfied` outcome. Isolated
+orchestrator TASK-026 и 19/19 proof coverage реализованы; independent Tester,
+PROCESS-002, Scope Audit 31/0/0 и final Reviewer проходят. Commit/publication
+не выполнены; следующая task не активирована.
 
 - [TASK-000 — Repository Synchronization](TASK-000-REPOSITORY-SYNCHRONIZATION.md)
 - [TASK-000 — Repository Synchronization Report](TASK-000-REPOSITORY-SYNCHRONIZATION-REPORT.md)
@@ -41,7 +39,7 @@ independent Tester/Reviewer проходят. Commit и publication не авт�
 - [TASK-023 — Runtime Management Routing Implementation](TASK-023-RUNTIME-MANAGEMENT-ROUTING.md) — Completed, Coordinator Accepted
 - [TASK-024 — Runtime Operational Identity Persistence Implementation](TASK-024-RUNTIME-OPERATIONAL-IDENTITY-PERSISTENCE.md) — Completed, Coordinator Accepted
 - [TASK-025 — Runtime Management Command Idempotency Implementation](TASK-025-RUNTIME-COMMAND-IDEMPOTENCY.md) — Completed, Coordinator Accepted
-- [TASK-026 — Runtime Activation, Replacement, and Rollback Implementation](TASK-026-RUNTIME-ACTIVATION-REPLACEMENT-ROLLBACK.md) — Blocked — Missing DP-015 Durable Satisfied-Outcome Prerequisite (Not Activated); no current production/test implementation diff, Coordinator Acceptance not passed
+- [TASK-026 — Runtime Activation, Replacement, and Rollback Implementation](TASK-026-RUNTIME-ACTIVATION-REPLACEMENT-ROLLBACK.md) — Completed, Coordinator Accepted (2026-09-13); isolated orchestrator implemented; independent Tester PASS WITH ENVIRONMENT LIMITATION 0/0, PROCESS-002 Synchronized, Scope Audit 31/0/0, final Reviewer APPROVED 0/0; commit/publication unperformed
 - [TASK-027 — Runtime Activation Orchestration Prerequisites Design](TASK-027-RUNTIME-ACTIVATION-ORCHESTRATION-PREREQUISITES-DESIGN.md) — Completed, Coordinator Accepted
 - [TASK-028 — Runtime Command Parent/Phase Prerequisites Implementation](TASK-028-RUNTIME-COMMAND-PARENT-PHASE-PREREQUISITES.md) — Completed, Coordinator Accepted; TASK-026 remains Blocked
 - [TASK-029 — Runtime Command Continue and Pending-Stop Prerequisite](TASK-029-RUNTIME-COMMAND-CONTINUE-PENDING-STOP.md) — Completed, Coordinator Accepted; TASK-026 remains Blocked
@@ -85,7 +83,7 @@ independent Tester/Reviewer проходят. Commit и publication не авт�
 - [TASK-061 — Runtime Activation Readiness Reassessment](TASK-061-RUNTIME-ACTIVATION-READINESS-REASSESSMENT.md) — Completed — Coordinator Accepted (2026-09-07); task commit `eb4717dd295988c6633668c04141082991c7636f` published through PR #63 and merged as `67e81f8b5b86cfbd9da1e616af9d27fda9c093f8`; immutable historical verdict `READY — UNBLOCK`, matrix 7 Direct / 10 Compositional / 2 Missing core / 0 Missing prerequisite / 0 Missing external / 0 Deferred; fresh TASK-026 evidence does not rewrite this accepted record
 - [TASK-062 — Runtime Command Parent Terminalization Repair](TASK-062-RUNTIME-COMMAND-PARENT-TERMINALIZATION.md) — Completed — Coordinator Accepted (2026-09-08); task commit `07f70f0a4bb076a3b47324c41de28a80e14ed73f` published through PR #65 and merged as `2f1de022f7821cf9a4b65fe408c42349060f523e`; bounded DP-015 repair implemented and accepted in isolation
 - [TASK-063 — Runtime Activation Readiness Reassessment after Parent Terminalization Repair](TASK-063-RUNTIME-ACTIVATION-READINESS-REASSESSMENT.md) — Completed — Coordinator Accepted (2026-09-09); task commit `499054be6745c967848b5aac0f3ff6a64dfbe7a9` published through PR #66 and merged as `2404c3439f44b9b0b22f87d87029695f921fee62`; independent Architect verdict `READY — UNBLOCK TASK-026`, matrix 7/10/2/0/0/0
-- [TASK-064 — Runtime Command Durable Satisfied Outcome](TASK-064-RUNTIME-COMMAND-SATISFIED-OUTCOME.md) — Completed — Coordinator Accepted in isolation; bounded DP-015 prerequisite only; commit/publication not authorized; TASK-026 remains Blocked and is not activated
+- [TASK-064 — Runtime Command Durable Satisfied Outcome](TASK-064-RUNTIME-COMMAND-SATISFIED-OUTCOME.md) — Completed — Coordinator Accepted in isolation; task commit `60b3dd03a23a995227726fa2f4094295c8f15f0f` published through PR #68 and merged as `9483232bde262cd69ba7146a44ee9f251a65cb40`; bounded DP-015 prerequisite only; TASK-026 subsequently reactivated by separate intake
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

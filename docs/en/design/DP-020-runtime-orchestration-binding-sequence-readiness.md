@@ -19,8 +19,11 @@ then-current live readiness and identified one separate DP-015 parent-
 terminalization prerequisite. TASK-062 implemented the repair with focused
 regression proof, was independently accepted, and was published through PR #65.
 TASK-063 restores row 15 to Compositional and returns current `READY — UNBLOCK
-TASK-026`, matrix 7/10/2/0/0/0. TASK-026 is Ready to Reactivate but remains Not
-Activated. DP-020 remains Draft/Planned overall.
+TASK-026`, matrix 7/10/2/0/0/0. TASK-064 later published the distinct durable
+Satisfied-outcome prerequisite through PR #68; TASK-026 now implements,
+independently verifies, and Coordinator Accepts the isolated orchestrator.
+DP-020 remains
+Draft/Planned overall.
 
 Implementation progress: TASK-031 and TASK-032 produced Coordinator-Accepted
 isolated partial implementations of Slices 1 and 2, and TASK-034 defined their
@@ -60,8 +63,10 @@ prerequisite and TASK-060 prospectively accepts its four exact claims. TASK-061
 historical `READY — UNBLOCK` and matrix remain unchanged. Fresh TASK-026
 evidence required one separate DP-015 parent-terminalization repair. TASK-062
 implemented, independently accepted, and published it in isolation; TASK-063
-reports current `READY — UNBLOCK` 7/10/2/0/0/0. TASK-026 is Ready to Reactivate
-but remains Not Activated. DP-020 remains Draft/Planned overall.
+reports historical `READY — UNBLOCK` 7/10/2/0/0/0. TASK-064 later published
+the distinct durable Satisfied-outcome prerequisite through PR #68; TASK-026
+now implements, independently verifies, and Coordinator Accepts the isolated
+orchestrator. DP-020 remains Draft/Planned overall.
 
 ## 2. Purpose
 
@@ -219,12 +224,13 @@ Draft/Partial [DP-021](DP-021-private-exact-scope-managed-start-invoker.md).
 The following existing decomposition remains authoritative context: DP-021
 fixes `runtimemanagement` ownership, preconstructed-Flow custody, the sole
 `InvokeManagedStart` operation, cancellation delegation, capability custody,
-failure behavior, and absence of legacy fallback. A future TASK-026
-orchestrator-owned DP-015 callback closure calls that invoker as its sole
+failure behavior, and absence of legacy fallback. The TASK-026 orchestrator-
+owned DP-015 callback closure calls that invoker as its sole
 lifecycle subcall and owns `TerminalOutcome` mapping, publication, and
 terminalization outside DP-021; the invoker is not itself the callback.
-TASK-043 implements only that invoker in isolation; no callback, terminal work,
-or orchestrator is activated.
+TASK-043 implements only that invoker in isolation. TASK-026 now implements the
+callback, terminal work, and orchestrator in isolation; production composition
+is not activated.
 
 ### 8.1 Package split and invocation direction
 
@@ -692,8 +698,9 @@ Slice 2R.
 Current slice status: partial isolated implementation. TASK-032 historically
 implemented the managed Flow seam, TASK-035 Slice 2R supplies the complete
 authoritative binding repair, and TASK-043 implements the concrete exact-scope
-invoker in isolation. Future callback custody and terminal integration remain
-outside this slice's implemented proof.
+invoker in isolation. Callback custody and terminal integration remain outside
+this slice's own implemented proof; TASK-026 supplies their separate isolated
+proof.
 
 - Add the managed construction and `StartManaged` per-call seam and the
   `StartExecutionBinding` / `OwnerClaimView` immutable values, the opaque
@@ -800,11 +807,11 @@ independently accepts its Slice 2R repair in isolation, and TASK-036 resolves
 the remaining Slice-3 command-gate and continuation API ambiguity. TASK-037
 implements and independently accepts Slice 3 in isolation. The
 repository contains the accepted Draft design, completed TASK-040 isolated
-implementation of atomic expected-attempt Owner Stop, and the TASK-043
-isolated concrete private exact-scope composition invoker defined by Draft
-DP-021, but still lacks the activation orchestrator,
-external persistence, API, recovery worker, and production wiring. Later DP-014 terminal publication and DP-015 command/phase
-terminalization after the Owner result belong to the TASK-026 orchestrator.
+implementation of atomic expected-attempt Owner Stop, the TASK-043 isolated
+concrete private exact-scope composition invoker defined by Draft DP-021, and
+the TASK-026 isolated activation orchestrator with DP-014 terminal publication
+and DP-015 command/phase terminalization after the Owner result. External
+persistence, API, recovery worker, and production wiring remain absent.
 TASK-044 historically records `UNBLOCK TASK-026`; the superseding TASK-026
 recheck confirms the missing DP-015 tracked-Start managed-parent plus
 preclaimed `StopOld` admission prerequisite and corrects the matrix to 7 Direct
@@ -818,9 +825,10 @@ implements the isolated slice and TASK-060 prospectively accepts its four exact
 claims. TASK-061 historical `READY — UNBLOCK` and matrix remain unchanged.
 Fresh TASK-026 evidence requires one separate DP-015 parent-terminalization
 repair. TASK-062 implemented, independently accepted, and published it in
-isolation; TASK-063 reports current `READY — UNBLOCK` 7/10/2/0/0/0. TASK-026
-is Ready to Reactivate but remains Not Activated. Historical Slice 4 remains
-completed and accepted as TASK-038.
+isolation; TASK-063 reports historical `READY — UNBLOCK` 7/10/2/0/0/0.
+TASK-064 later published the distinct durable Satisfied-outcome prerequisite
+through PR #68; TASK-026 now implements and independently verifies the isolated
+orchestrator. Historical Slice 4 remains completed and accepted as TASK-038.
 
 ## 15. Consequences
 

@@ -40,9 +40,9 @@ Accepted ADRs and Active or Frozen architecture remain authoritative. DP-013
 remains Draft and is implemented in isolation. Approved DP-014 and the
 primitive DP-015 boundary, partial DP-019 parent/phase sequential core, and
 command-boundary Continue/pending-Stop rendezvous, managed command gates,
-continuation, and DP-014 attempt/generation binding sequence are implemented
-and independently accepted in isolation. Approved DP-016 and DP-017 remain
-Planned overall; recovery and production composition remain absent.
+continuation, DP-014 attempt/generation binding sequence, and DP-016
+orchestration are implemented and independently verified in isolation. DP-017
+remains Planned; recovery and production composition remain absent.
 
 ## 4. Scope
 
@@ -201,8 +201,8 @@ erase the already committed attempt/Starting mutation. A different generation,
 stale revision, conflicting or inactive state, unavailable store, or unknown
 result requires an exact re-read and then exact terminal convergence or
 `Blocked`, never `BindingFailed`. The continuation's final per-Instance gate
-then orders Stop against release to Load. This prerequisite refines planned
-DP-016 ordering without authorizing implementation.
+then orders Stop against release to Load. This prerequisite refines the DP-016
+ordering without authorizing DP-017 implementation.
 
 While Owner is still live, that coherently proven exact binding absence is not
 recovery and does not authorize direct durable terminalization. The continuation returns

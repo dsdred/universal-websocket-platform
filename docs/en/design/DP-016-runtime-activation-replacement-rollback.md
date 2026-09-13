@@ -5,12 +5,12 @@
 ## 1. Status
 
 - **Design Status:** Approved
-- **Implementation Status:** Planned
+- **Implementation Status:** Implemented in isolation
 
-This approved design defines a planned ordering contract for activation,
-replacement, and explicit rollback of one Runtime Instance. No current
-activation/replacement orchestrator, workflow persistence, public API,
-recovery worker, or production wiring exists.
+This approved design defines the ordering contract for activation, replacement,
+and explicit rollback of one Runtime Instance. TASK-026 now implements and
+independently verifies the isolated internal orchestrator; workflow persistence,
+public API, recovery worker, and production wiring remain absent.
 Accepted DP-020 Slices 1–3 now implement the DP-019 exact authorization,
 managed command/Flow/Owner-claim, continuation, and DP-014 binding seams in
 isolation. TASK-038 found implementation still architecture-blocked because
@@ -19,8 +19,8 @@ Attempt. Completed and Coordinator-Accepted TASK-039 records the accepted Draft
 DP-010 expected-attempt Stop design; completed and Coordinator-Accepted
 TASK-040 implements and verifies it in isolation, with repeat final Reviewer
 `APPROVED` 0/0. TASK-043 implements the private exact-scope invoker in
-isolation. Post-Owner DP-014 and DP-015 terminal publication remains part of
-the planned orchestrator; the orchestrator and production wiring are absent.
+isolation. TASK-026 now composes post-Owner DP-014 and DP-015 terminal
+publication inside the isolated orchestrator; production wiring remains absent.
 Completed and Coordinator-Accepted TASK-044 (2026-08-24) historically
 returned `UNBLOCK TASK-026` after reassessing TASK-040/TASK-043. A superseding
 TASK-026 reactivation recheck identified the DP-015 tracked-Start
@@ -35,7 +35,8 @@ late generation allocation. TASK-049 is the completed and Coordinator-Accepted
 design-only refinement; TASK-057 implements its isolated prerequisite, and
 TASK-060 prospectively accepts its four exact claims. TASK-061 remains
 immutable historical accepted readiness with `READY — UNBLOCK` and the exact
-7/10/2/0/0/0 matrix. Rows 2 and 14 remain future orchestrator core. Fresh
+7/10/2/0/0/0 matrix. At that historical checkpoint, rows 2 and 14 were the
+remaining future orchestrator core. Fresh
 TASK-026 end-to-end evidence proved historical row 15 insufficient for
 then-current live readiness because the existing DP-015 parent terminal gate could not
 terminalize definitive cancellation after terminal `StopOld` with no
@@ -44,10 +45,10 @@ proof, was independently accepted, and was published through PR #65. TASK-063
 restores row 15 to Compositional and returns current `READY — UNBLOCK TASK-026`,
 matrix 7/10/2/0/0/0. TASK-026 was then reactivated, but independent review
 proved a missing DP-015 durable Satisfied-outcome prerequisite. TASK-064
-implements and is Coordinator Accepted in isolation for that bounded
-prerequisite; commit and publication were not authorized. TASK-026 stays
-Blocked, and the unaccepted orchestrator implementation is absent from the
-current tree.
+implements, independently accepts, and publishes that bounded prerequisite
+through PR #68. TASK-026 subsequently implements, independently verifies, and
+Coordinator Accepts the isolated orchestrator after synchronized documentation,
+Scope Audit 31/0/0, and final Reviewer approval.
 
 ## 2. Purpose
 
@@ -82,10 +83,9 @@ remains Draft and is implemented in isolation. Approved DP-014 and the
 primitive DP-015 boundary, partial DP-019 parent/phase sequential core, and
 command-boundary Continue/pending-Stop rendezvous, managed command gates,
 continuation, and DP-014 attempt/generation binding sequence are implemented
-and independently accepted in isolation. Approved DP-016 and DP-017 remain
-Planned overall. TASK-043 implements the concrete composition invoker in
-isolation, while callback/terminal orchestration and production composition
-remain absent.
+and independently accepted in isolation. Approved DP-016 is now implemented in
+isolation by TASK-026; DP-017 remains Planned. TASK-043 implements the concrete
+composition invoker in isolation, while production composition remains absent.
 
 ## 4. Scope
 
@@ -317,9 +317,9 @@ Stop winning converges before Load; `Continue` winning releases Flow, and a
 later Stop reaches the claimed attempt normally. No admission or Owner lock is
 held across persistence, wait, or Stop convergence. The current managed Flow,
 continuation, binding gate, and TASK-043 concrete DP-013 composition-private
-invoker implement these seams in isolation. DP-016 remains Planned overall:
-callback integration, terminal publication, the orchestrator, and production
-wiring are absent from the current tree.
+invoker implement these seams in isolation. TASK-026 now composes callback
+integration, terminal publication, and the DP-016 orchestrator in isolation;
+production wiring remains absent from the current tree.
 
 ## 16. Explicit Rollback
 
@@ -482,7 +482,8 @@ mechanics must prove the contract without expanding it.
 
 ## 25. Acceptance Proofs
 
-A future implementation must prove at minimum:
+A conforming implementation must prove at minimum; TASK-026 supplies all 19
+proofs for the isolated implementation:
 
 1. initial activation creates one exact version-pinned attempt;
 2. exact Running target returns satisfied with zero mutation;
@@ -519,9 +520,10 @@ storage-client-restart scenarios. They do not authorize production activation.
 This Approved design closes the focused architecture design gate for ARCH-004
 section 19(4). Approved DP-014, DP-015, DP-017, and DP-018 close the other
 focused design gates in sections 19(2), 19(3), 19(5), and 19(6). The complete
-approved set defines ordering. Isolated process-local DP-014/DP-015 stores
-exist, but no activation orchestrator, external durable workflow persistence,
-recovery, reporting, integration, or Production Activation exists.
+approved set defines ordering. Isolated process-local DP-014/DP-015 stores and
+the TASK-026 activation orchestrator exist, but external durable workflow
+persistence, recovery, reporting, integration, and Production Activation do
+not.
 
 ## 27. Explicit Deferrals
 
@@ -537,13 +539,13 @@ Deferred to focused designs or implementation tasks:
 
 ## 28. Implementation Boundary
 
-Implementation Status is Planned. The repository contains the isolated
+Implementation Status is Implemented in isolation. The repository contains the isolated
 Lifecycle Owner, launch flow, source adapter, Draft DP-013 routing, Approved DP-014
 aggregate storage, and Approved DP-015 command storage including the isolated
-parent/phase Continue/pending-Stop rendezvous. DP-016 through DP-018 remain
-Planned. It contains no activation/replacement orchestrator, external durable
-command/aggregate/workflow storage, public management API, recovery executor,
-or production wiring.
+parent/phase Continue/pending-Stop rendezvous, plus the TASK-026 internal
+activation/replacement/rollback orchestrator and its proof tests. DP-017 and
+DP-018 remain Planned. It contains no external durable command/aggregate/
+workflow storage, public management API, recovery executor, or production wiring.
 
 Approval closes the section 19(4) design gate but does not implement or wire
 the contract. TASK-038 confirmed TASK-026 remained Blocked first by the then
@@ -565,10 +567,10 @@ separate DP-015 parent-terminalization prerequisite before live implementation
 may resume. TASK-062 implemented, independently accepted, and published that
 prerequisite in isolation. TASK-063 reports current `READY — UNBLOCK` with
 matrix 7/10/2/0/0/0. TASK-026 was reactivated separately, but its independent
-review proved a missing DP-015 durable Satisfied-outcome prerequisite. TASK-026
-is Blocked. TASK-064 is Coordinator Accepted in isolation for that prerequisite;
-no current DP-016 implementation is claimed, and commit/publication were not
-authorized.
+review proved a missing DP-015 durable Satisfied-outcome prerequisite. TASK-064
+implements, independently accepts, and publishes that prerequisite through PR
+#68. TASK-026 subsequently implements, independently verifies, and Coordinator
+Accepts the isolated DP-016 orchestrator. No production integration is claimed.
 
 ## 29. Decision
 

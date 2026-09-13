@@ -25,9 +25,10 @@ TASK-038 определяет factual readiness gap: реализованный 
 TASK-039 фиксирует принятый design этой operation в Draft DP-010; завершённая и
 Coordinator-Accepted TASK-040 реализует и верифицирует его изолированно, repeat
 final Reviewer `APPROVED` 0/0. TASK-043 реализует concrete private exact-scope
-composition invoker изолированно, не изменяя этот Approved decision. Terminal publication после
-Owner относится к самому последующему orchestrator TASK-026; этот orchestrator,
-external persistence, API, recovery worker и production wiring отсутствуют.
+composition invoker изолированно, не изменяя этот Approved decision. Terminal
+publication после Owner относится к orchestrator TASK-026. TASK-026 теперь
+реализует и независимо верифицирует этот orchestrator изолированно; external
+persistence, API, recovery worker и production wiring отсутствуют.
 Завершённая и Coordinator-Accepted TASK-044 (2026-08-24) исторически фиксирует
 `UNBLOCK TASK-026`. Superseding recheck реактивации TASK-026 определяет одну
 DP-015 conformance prerequisite: atomic tracked-Start managed-parent admission
@@ -46,8 +47,10 @@ existing DP-015 parent terminal gate rejected definitive post-`StopOld`,
 pre-`StartTarget` cancellation без `StartTarget`. TASK-062 реализовала bounded
 repair с focused regression proof, независимо принята и опубликована через PR
 #65. TASK-063 восстанавливает row 15 как Compositional и возвращает current
-`READY — UNBLOCK TASK-026`, matrix 7/10/2/0/0/0. TASK-026 Ready to Reactivate,
-но остаётся Not Activated. DP-019 остаётся Approved/Planned overall.
+`READY — UNBLOCK TASK-026`, matrix 7/10/2/0/0/0. TASK-064 позднее реализовала,
+независимо приняла и опубликовала distinct durable Satisfied-outcome
+prerequisite через PR #68; TASK-026 теперь реализует и независимо верифицирует
+isolated orchestrator. DP-019 остаётся Approved/Planned overall.
 
 ## 2. Назначение
 
@@ -244,9 +247,9 @@ strict sequential core реализованы изолированно; command-
 Continue/pending-Stop surface также реализован там изолированно. Managed
 continuation и exact binding sequence attempt/generation реализованы и
 независимо приняты изолированно. TASK-043 реализует composition-private invoker
-изолированно; terminal publication/terminalization, orchestrator и production
-wiring остаются отсутствующими, поэтому overall Implementation Status остаётся
-Planned.
+изолированно; TASK-026 теперь реализует terminal publication, terminalization
+и orchestrator изолированно. Production wiring отсутствует, поэтому overall
+Implementation Status DP-019 остаётся Planned.
 
 Conceptually он предоставляет:
 
@@ -525,7 +528,8 @@ Prerequisite implementation обязана доказать минимум:
 23. existing ordinary admissions не регрессируют, а разные Instances
     продолжают выполняться независимо.
 
-Эти proofs не доказывают сам DP-016 orchestrator.
+Сами по себе эти proofs DP-019 не доказывают orchestrator DP-016; отдельное
+isolated proof предоставляет TASK-026.
 
 ## 22. Граница реализации
 
@@ -550,9 +554,10 @@ expected-attempt Owner Stop должен предшествовать concrete p
 invoker. Завершённая и Coordinator-Accepted TASK-039 фиксирует его принятый
 design в Draft DP-010; завершённая и Coordinator-Accepted TASK-040 реализует и
 верифицирует его изолированно, repeat final Reviewer `APPROVED` 0/0. TASK-043
-реализует этот invoker изолированно. Репозиторий всё ещё не содержит
-последующую terminal publication и terminalization command/phase, activation
-orchestrator и production composition audit полного design.
+реализует этот invoker изолированно. TASK-026 теперь реализует terminal
+publication, terminalization command/phase и activation orchestrator
+изолированно. Репозиторий всё ещё не содержит production composition audit
+полного design.
 
 TASK-044 впоследствии повторно оценивает полный неизменённый набор DP-016
 proofs и исторически фиксирует `UNBLOCK TASK-026`. Superseding recheck TASK-026
@@ -567,15 +572,16 @@ Historical `READY — UNBLOCK` TASK-061 и matrix остаются неизме�
 TASK-026 evidence требует одного отдельного DP-015 parent-terminalization
 repair. TASK-062 реализовала, независимо приняла и опубликовала его
 изолированно; TASK-063 возвращает current `READY — UNBLOCK` 7/10/2/0/0/0.
-TASK-026 Ready to Reactivate, но остаётся Not Activated. Historical focused readiness
-decomposition зафиксирована в зеркальном
+TASK-064 позднее опубликовала distinct durable Satisfied-outcome prerequisite
+через PR #68, и TASK-026 теперь реализует, независимо верифицирует и Coordinator
+Accepts isolated orchestrator. Historical focused readiness decomposition зафиксирована в зеркальном
 [DP-020](DP-020-runtime-orchestration-binding-sequence-readiness.md), со
 статусом Design Status Draft и Implementation Status Planned overall, где
 Срез 3 реализован и независимо принят изолированно.
 Downstream refinement exact private invoker зафиксирован в Draft
 [DP-021](DP-021-private-exact-scope-managed-start-invoker.md) со статусом
-Implementation Partial после TASK-043; он не изменяет этот Approved contract и
-не реализует remaining orchestration/terminal work.
+Implementation Partial после TASK-043; он не изменяет этот Approved contract.
+TASK-026 предоставляет отдельную isolated orchestration/terminal work.
 
 ## 23. Последствия
 

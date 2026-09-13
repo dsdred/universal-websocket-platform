@@ -111,9 +111,10 @@ The repository currently contains an Alpha foundation rather than a production-r
   independently accepted, and was published through PR #65. TASK-063 restored
   `READY — UNBLOCK TASK-026` with matrix 7/10/2/0/0/0 and was published through
   PR #66. A later TASK-026 review proved a distinct DP-015 durable Satisfied-
-  outcome prerequisite. TASK-064 implements and is Coordinator Accepted in
-  isolation; commit and publication were not authorized. TASK-026 stays
-  Blocked and no current TASK-026 production or test implementation exists.
+  outcome prerequisite. TASK-064 implements, independently accepts, and
+  publishes it through PR #68. TASK-026 subsequently implements, independently
+  verifies, and Coordinator Accepts the isolated orchestrator and all 19 proof
+  rows; commit/publication remain unperformed.
 
 ## 3. Engineering Principles
 
@@ -353,15 +354,14 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   Start Stop exception, and truthful indeterminate outcomes. Its Approved
   status closes section 19(3) at the design level; external storage,
   API, recovery, integration, and wiring remain absent. Design-only TASK-018 adds Approved
-  [DP-016](../design/DP-016-runtime-activation-replacement-rollback.md), with
-  Implementation Status Planned, as the section 19(4) contract.
+  [DP-016](../design/DP-016-runtime-activation-replacement-rollback.md), now
+  Implemented in isolation by TASK-026, as the section 19(4) contract.
   It orders exact-version initial activation, replacement, and explicit rollback
   around Stop-to-proven-release and a fresh Launch Attempt, without Host overlap
   or automatic fallback. It requires a private DP-011/DP-013 Start-claim
-  continuation after Owner claim and before Load. Accepted prerequisite seams
-  exist in isolation, but the TASK-026 orchestrator is absent from the current
-  tree; public API, persistence, recovery, and production wiring also remain
-  absent. Design-only TASK-019 adds Approved
+  continuation after Owner claim and before Load. TASK-026 implements and
+  independently verifies the isolated orchestrator; public API, persistence,
+  recovery, and production wiring remain absent. Design-only TASK-019 adds Approved
   [DP-017](../design/DP-017-runtime-recovery-reconciliation.md), with
   Implementation Status Planned, as the candidate section 19(5) contract. It
   defines exact fail-closed restart assessment, one durable recovery claim,
@@ -453,9 +453,10 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   isolation. TASK-063 restores row 15 to Compositional and returns current
   `READY — UNBLOCK` with matrix 7/10/2/0/0/0. A later TASK-026 review proved
   the missing DP-015 durable Satisfied-outcome prerequisite. TASK-064 is
-  Coordinator Accepted in isolation for that bounded repair; commit and
-  publication were not authorized. TASK-026 stays Blocked, DP-016 remains
-  Approved/Planned, and Integration and Production Activation remain inactive.
+  independently accepted and published through PR #68 for that bounded repair.
+  TASK-026 subsequently implements and Coordinator Accepts the isolated
+  orchestrator, and DP-016 is Approved/Implemented in isolation. Integration
+  and Production Activation remain inactive.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Message Persistence, Delivery, and Plugin contracts still require focused design.

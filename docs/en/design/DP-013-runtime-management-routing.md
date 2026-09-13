@@ -347,9 +347,10 @@ The exact requested version is preserved. Directory does not call
 
 The returned `StartOutcome` and error are returned unchanged.
 
-The future DP-016/DP-017 implementation keeps this exported `Directory.Start`
-surface unchanged but requires one private management-only Start-claim
-continuation seam in the stored Flow. The exact management composition supplies
+The implemented-in-isolation DP-016 orchestration and planned DP-017 recovery
+keep this exported `Directory.Start` surface unchanged and use one private
+management-only Start-claim continuation seam in the stored Flow. The exact
+management composition supplies
 that continuation with borrowed capabilities for DP-015 pending-Stop
 coordination and DP-014 conditional execution binding. It also supplies the
 opaque Control Service execution generation. Directory does not allocate the
@@ -410,8 +411,9 @@ reference to that preconstructed Flow. The invoker exposes only synchronous
 `InvokeManagedStart`, creates zero Flow, performs no
 second policy authorization, stores no per-call capability, never calls the
 command Boundary, and adds no public Directory operation. TASK-043 implements
-this exact invoker in isolation; future callback custody, terminal work,
-orchestration, production composition, and wiring remain absent.
+this exact invoker in isolation. TASK-026 now implements callback custody,
+terminal work, and orchestration in isolation; production composition and
+wiring remain absent.
 
 If the linked `Directory.Start` path returns a definitive cancellation or error
 before Owner claim, it signals `StartNoClaim` to the original pending Stop call
@@ -598,9 +600,9 @@ Loader, Snapshot provenance, and schema compatibility are already resolved by
 ARCH-005 and DP-007 through DP-012. The isolated implementation precedent of
 DP-010 through DP-012 does not create an exception to the higher-status
 ARCH-004 gate. Approved DP-014 through DP-018 define the dependency-ordered
-contracts. DP-014 and DP-015 now provide isolated process-local packages;
-external adapters, schemas, wiring, and DP-016 through DP-018 implementations
-remain absent.
+contracts. DP-014 through DP-016 now provide isolated process-local packages;
+external adapters, schemas, wiring, and DP-017/DP-018 implementations remain
+absent.
 
 ## 27. Isolated implementation proofs
 
@@ -691,8 +693,8 @@ dependencies, including composition of the existing isolated private
 Start-claim continuation and execution-generation binding/load gate defined by
 Approved DP-019. Draft DP-021 defines the exact composition-private invoker and
 its Implementation Status is Partial — implemented in isolation by TASK-043.
-Future callback/terminal/orchestrator integration and production composition
-remain absent.
+TASK-026 now implements callback/terminal/orchestrator integration in isolation;
+production composition remains absent.
 
 ## 30. Decision
 

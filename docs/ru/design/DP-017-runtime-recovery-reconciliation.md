@@ -38,9 +38,9 @@ authoritative execution evidence, публикует только доказан
 Accepted ADR и Active/Frozen architecture остаются authoritative. DP-013
 остаётся Draft и реализован изолированно. Approved DP-014 и primitive boundary
 DP-015, partial parent/phase sequential core DP-019, command-boundary
-Continue/pending-Stop rendezvous, managed command gates, continuation и binding
-sequence attempt/generation DP-014 реализованы и независимо приняты
-изолированно. Approved DP-016 и DP-017 остаются Planned overall; recovery и
+Continue/pending-Stop rendezvous, managed command gates, continuation, binding
+sequence attempt/generation DP-014 и orchestration DP-016 реализованы и
+независимо верифицированы изолированно. DP-017 остаётся Planned; recovery и
 production composition отсутствуют.
 
 ## 4. Область действия
@@ -199,7 +199,7 @@ generation, stale revision, conflicting или inactive state, unavailable store
 либо unknown result требуют exact re-read и затем exact terminal convergence
 или `Blocked`, но никогда не `BindingFailed`. Final per-Instance gate
 continuation затем упорядочивает Stop и release к Load. Этот prerequisite
-уточняет planned DP-016 ordering, не разрешая implementation.
+уточняет ordering DP-016, не разрешая implementation DP-017.
 
 Пока Owner live, такое coherently proven exact binding absence не является
 recovery и не разрешает direct durable terminalization. Continuation возвращает

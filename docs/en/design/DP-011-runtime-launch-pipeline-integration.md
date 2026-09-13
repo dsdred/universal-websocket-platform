@@ -7,9 +7,9 @@
 **Design Status:** Draft
 
 **Implementation Status:** Base Flow, the managed Start-claim continuation
-surface, and the concrete composition-private invoker are implemented and
-independently accepted in isolation; callback/orchestrator composition and
-production integration remain Planned
+surface, the concrete composition-private invoker, and the DP-016 callback/
+orchestrator composition are implemented and independently verified in
+isolation; production integration remains Planned
 
 **Architecture Status:** focused integration contract over approved ARCH-004
 and ARCH-005 and the existing Draft DP-007 through DP-010.
@@ -23,8 +23,8 @@ status of any related Draft DP. The same package now also implements the
 additive `ManagedFlow`, `StartClaimContinuation`, and per-call managed Start
 surface in isolation. TASK-043 implements and independently verifies the
 concrete DP-013 composition-private invoker that calls those seams in
-isolation; callback/orchestrator composition and production wiring remain
-absent.
+isolation. TASK-026 now implements and independently verifies the callback/
+orchestrator composition in isolation; production wiring remains absent.
 
 ## 2. Purpose
 
@@ -247,9 +247,9 @@ When `PrepareStart` returns an error, the Flow:
 - does not call Loader, Builder, Owner.Start, or Launcher;
 - returns the exact error to the caller.
 
-DP-016 management orchestration and DP-017 recovery require one future private
-**Start-claim continuation gate**. It does not move claim authority out of
-Owner. Immediately after `Owner.PrepareStart` returns a successful preparation
+The implemented-in-isolation DP-016 management orchestration and planned DP-017
+recovery use one private **Start-claim continuation gate**. It does not move
+claim authority out of Owner. Immediately after `Owner.PrepareStart` returns a successful preparation
 and before Load, Build, or Launcher work begins, Flow must synchronously offer
 an immutable view of that exact claim to the management continuation associated
 with the primitive or linked Start command. The Flow-provided view contains
@@ -351,8 +351,9 @@ authority, attempt-publication/binding order, and closed continuation outcomes.
 It does not change this Flow's Owner-first claim or synchronous preparation
 semantics. TASK-037 implements and independently accepts that continuation and
 binding sequence in isolation. TASK-043 implements the concrete
-composition-private invoker in isolation; the DP-016 orchestrator remains
-absent.
+composition-private invoker in isolation; TASK-026 now composes it in the
+independently verified isolated DP-016 orchestrator. Production composition
+remains absent.
 
 ## 11. Synchronous Operation and Caller Lifetime
 
@@ -625,9 +626,9 @@ must compose and verify:
   seam, and exact Owner/Flow routing in the production path;
 - the existing isolated DP-014/DP-015 aggregate and command stores together
   with the required external/process-restart durability;
-- the Planned DP-016 activation/replacement/rollback orchestrator, including
-  the private DP-011/DP-013 Start-claim continuation and DP-017-required
-  execution-binding/load gate;
+- production composition of the implemented-in-isolation DP-016 activation/
+  replacement/rollback orchestrator, including the private DP-011/DP-013
+  Start-claim continuation and DP-017-required execution-binding/load gate;
 - implementation of the Approved/Planned DP-017 recovery/reconciliation
   contract, or explicit startup rejection while that implementation is absent;
 - implementation of the Approved/Planned DP-018 operational reporting and
@@ -647,9 +648,9 @@ Deferred:
 - HTTP/CLI/API surface and authorization;
 - external durable persistence schema and transactions;
 - process-restart command/result persistence, retention, and recovery;
-- activation/replacement/rollback orchestration and composition of the
-  existing private Start-claim continuation and execution-binding/load gate
-  through the concrete composition-private invoker;
+- production composition and wiring of the isolated activation/replacement/
+  rollback orchestrator and its existing private Start-claim continuation,
+  execution-binding/load gate, and concrete composition-private invoker;
 - retry, backoff, restart, replacement, rollback policy, and reconciliation;
 - terminal Host supervision and unexpected failure;
 - timeout/force policy for a blocking Source;

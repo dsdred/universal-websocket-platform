@@ -28,10 +28,11 @@ regression proof, независимо принята и опубликован�
 восстанавливает row 15 как Compositional и возвращает current `READY — UNBLOCK
 TASK-026`, matrix 7/10/2/0/0/0. Последующий review TASK-026 доказал, что
 primitive same-target result `Satisfied` не сохраняется отдельным durable
-command outcome и поэтому replay-ится как `Succeeded`. TASK-026 Blocked.
-TASK-064 реализует bounded repair durable Satisfied-outcome DP-015 и принята
-Coordinator изолированно; commit и publication не авторизованы. DP-015
-остаётся Approved с Partial implementation.
+command outcome и поэтому replay-ится как `Succeeded`. TASK-064 реализует
+bounded repair durable Satisfied-outcome DP-015, независимо принята и
+опубликована через PR #68. TASK-026 после этого реализует и независимо
+верифицирует isolated orchestrator DP-016. DP-015 остаётся Approved с Partial
+implementation.
 
 Этот approved design определяет durable idempotency boundary для
 state-changing management commands Runtime. Package
@@ -69,8 +70,9 @@ managed adapter и seam managed Flow/OwnerClaimView. TASK-037 реализует
 continuation, binding sequence attempt/generation DP-014 и exact адаптацию
 outcomes managed Flow, реализованные и независимо принятые изолированно.
 TASK-043 реализует и независимо верифицирует concrete private composition
-invoker изолированно. Последующая terminal publication, orchestrator и
-Approved DP-016 сохраняют Implementation Status Planned.
+invoker изолированно. TASK-026 теперь реализует и независимо верифицирует
+terminal publication и orchestrator DP-016 изолированно; production composition
+остаётся отсутствующей.
 TASK-046 фиксирует additive contract admission tracked-Start managed-parent, а
 TASK-047 реализует его изолированно через
 `Boundary.ExecuteManagedParentFromTrackedStart` и callback-scoped capability
@@ -88,9 +90,9 @@ TASK-026 evidence определяет отдельный parent-terminalization
 TASK-062 реализовала, независимо приняла и опубликовала его изолированно;
 TASK-063 возвращает historical `READY — UNBLOCK` 7/10/2/0/0/0. Последующий
 review TASK-026 доказал distinct missing prerequisite durable primitive
-Satisfied-outcome. TASK-026 Blocked. TASK-064 реализует и принята Coordinator
-изолированно только для этого bounded prerequisite; commit/publication ещё не
-авторизованы.
+Satisfied-outcome. TASK-064 реализует, независимо принимает и публикует только
+этот bounded prerequisite через PR #68. TASK-026 после этого реализует,
+независимо верифицирует и Coordinator Accepts isolated orchestrator.
 
 ## 4. Область
 
@@ -709,10 +711,10 @@ indeterminate states сохраняются fail closed. TASK-062 реализо
 TASK-063 восстанавливает row 15 как Compositional в historical readiness
 evidence. Последующий review TASK-026 доказал, что primitive
 `SatisfiedCandidate` durable схлопывается в `OutcomeSucceeded`, поэтому replay
-не может сохранить distinct result Satisfied. TASK-064 реализует и принята
-Coordinator изолированно для active bounded repair existing seam, включая
-proofs replay в той же boundary и после reconstruction storage. TASK-026
-остаётся Blocked.
+не может сохранить distinct result Satisfied. TASK-064 реализует и независимо
+принимает bounded repair existing seam, включая proofs replay в той же boundary
+и после reconstruction storage, и публикует его через PR #68. TASK-026 после
+этого реализует и независимо верифицирует isolated orchestrator.
 
 ## 28. Решение
 
