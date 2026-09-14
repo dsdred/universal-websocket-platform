@@ -12,7 +12,8 @@
   После terminal publication отдельный intake реактивировал TASK-026; isolated
   orchestrator and 19/19 proofs are implemented, independently verified, and
   Coordinator Accepted. DP-016 остаётся Approved / Implemented in isolation;
-  commit/publication TASK-026 не выполнены.
+  task commit `77c9ee1abe5e34ec20e49fd3c1bc760f9d9d605a` опубликован через PR #69 и
+  merged как `84c7dac0d6c323de2e46b931d918f076932e74df`.
 
 - TASK-063 завершена и опубликована через PR #66 с independent Architect
   verdict `READY — UNBLOCK TASK-026`, matrix 7/10/2/0/0/0. Separate normal
@@ -126,8 +127,8 @@ phase-specific concurrency/cancellation. Для обязательного Stop-
 claim и до Load; managed Flow/continuation, binding sequence и concrete
 composition-private invoker TASK-043 реализованы изолированно. DP-016 не
 создаёт lifecycle implementation, API, recovery или production wiring.
-Approved DP-016 закрывает design gate §19(4); implementation остаётся
-отсутствующей. Historical TASK-044 `UNBLOCK TASK-026` superseded recheck:
+Approved DP-016 закрывает design gate §19(4); само это design decision не
+создавало implementation. Historical TASK-044 `UNBLOCK TASK-026` superseded recheck:
 DP-015 tracked-Start managed-parent плюс preclaimed `StopOld` admission
 prerequisite с historical matrix 7 Direct / 9 Compositional / 2 Missing core /
 1 Missing prerequisite / 0 Deferred. TASK-046 фиксирует additive contract, а
@@ -149,7 +150,9 @@ DECISION` / `SPLIT REQUIRED`, которая
   independently accepts, and publishes that prerequisite through PR #68;
   TASK-026 now implements the isolated orchestrator and is Completed —
   Coordinator Accepted after independent Tester, PROCESS-002, Scope Audit, and
-  final Reviewer gates; commit/publication are not completed.
+  final Reviewer gates. Task commit
+  `77c9ee1abe5e34ec20e49fd3c1bc760f9d9d605a` is published through PR #69 and
+  merged as `84c7dac0d6c323de2e46b931d918f076932e74df`.
 
 Approved DP-019 определяет focused internal integration contract, необходимый
 для реализации DP-016 без ослабления proofs: exact authorization tuple
@@ -200,8 +203,9 @@ Start-claim continuation изолированно; TASK-043 добавляет c
 composition-private invoker в `internal/runtimemanagement` без изменения
 ожидающих решения production boundaries.
 
-TASK-026 зафиксирована как `Blocked by Architecture`; упрощённый adapter
-Variant B отклонён, Coordinator Acceptance/commit/publication запрещены.
+At the historical initial architecture-discovery checkpoint TASK-026 была
+зафиксирована как `Blocked by Architecture`; упрощённый adapter Variant B был
+отклонён, а Coordinator Acceptance/commit/publication были запрещены.
 Design-only TASK-027 устраняет только design ambiguity через DP-019; следующая
 implementation prerequisites не активируется автоматически.
 TASK-027 завершена как `Completed — Coordinator Accepted` после независимого

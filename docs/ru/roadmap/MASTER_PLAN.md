@@ -112,7 +112,10 @@ Universal WebSocket Platform — open-source платформа для созд�
   TASK-026 доказал отдельный prerequisite durable Satisfied-outcome DP-015.
   TASK-064 реализует, независимо принимает и публикует его через PR #68.
   TASK-026 после этого реализует, независимо верифицирует и Coordinator Accepts
-  isolated orchestrator и все 19 proof rows; commit/publication не выполнены.
+  isolated orchestrator и все 19 proof rows. Task commit
+  `77c9ee1abe5e34ec20e49fd3c1bc760f9d9d605a` опубликован через PR #69 и
+  merged как `84c7dac0d6c323de2e46b931d918f076932e74df`; эта публикация не
+  активирует следующую product task.
 
 ## 3. Engineering Principles
 
