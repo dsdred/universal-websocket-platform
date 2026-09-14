@@ -1,13 +1,14 @@
 # Текущее состояние
 
 **Текущая boundary (2026-09-13):** TASK-026 — `Completed — Coordinator
-Accepted` в изоляции после опубликованной через PR #68 TASK-064 на baseline
-`main@9483232bde262cd69ba7146a44ee9f251a65cb40`. Изолированный DP-015 prerequisite
-сохраняет primitive same-target `Satisfied` как distinct durable terminal
-outcome; TASK-026 композирует его в isolated orchestrator и проходит 19/19
-proofs, independent Tester, PROCESS-002, Scope Audit 31/0/0 и final Reviewer.
-DP-016 остаётся Approved с Implementation Status Implemented in isolation;
-commit/publication TASK-026 не выполнены, следующая task не активирована.
+Accepted` в изоляции после опубликованной через PR #68 TASK-064. Task commit
+`77c9ee1abe5e34ec20e49fd3c1bc760f9d9d605a` опубликован через PR #69 и merged
+как synchronized `main@84c7dac0d6c323de2e46b931d918f076932e74df`.
+Изолированный DP-015 prerequisite сохраняет primitive same-target `Satisfied`
+как distinct durable terminal outcome; TASK-026 композирует его в isolated
+orchestrator и проходит 19/19 proofs, independent Tester, PROCESS-002, Scope
+Audit 31/0/0 и final Reviewer. DP-016 остаётся Approved с Implementation
+Status Implemented in isolation; следующая task не активирована.
 
 **Published readiness baseline before reactivation:** TASK-061 завершена как `Completed —
 Coordinator Accepted`, committed as
@@ -80,7 +81,7 @@ orchestrator.
 **Release:** v0.1.0-alpha
 **Architecture Review:** Findings TASK-ARCH-REVIEW-010 реализованы в TASK-M10-002; DP-001, DP-002 и DP-006 сохраняют Draft до отдельного status review
 
-**Последняя завершённая development task:** TASK-047 — Tracked-Start
+**Historical completed development prerequisite:** TASK-047 — Tracked-Start
 Managed-Parent Admission Implementation; `Completed — Coordinator Accepted
 (2026-08-25)`; independent Tester `PASS WITH ENVIRONMENT LIMITATION` 0/0;
 final Reviewer `APPROVED` 0/0; Scope Audit 18/0/0; PROCESS-002 Synchronized.
@@ -114,7 +115,8 @@ prospectively accepted its four exact claims.
 **Последняя завершённая architecture task:** TASK-063 — Completed — Coordinator
 Accepted. Independent Architect returned `READY — UNBLOCK TASK-026`, matrix
 7/10/2/0/0/0; later TASK-026 evidence proved a distinct DP-015 durable
-Satisfied-outcome blocker.
+Satisfied-outcome blocker. TASK-064 subsequently implemented and published the
+prerequisite; TASK-026 then completed and was published through PR #69.
 Draft DP-021 остаётся Partial; TASK-043 реализует concrete invoker изолированно
 и завершена/принята. TASK-042 task commit `ebf4421` опубликован через PR #42 и
 merged как `ded3aa0`.
@@ -132,12 +134,14 @@ PASS. Acceptance не реализует prerequisites и не снимает TA
 (2026-09-13) after published TASK-064 prerequisite. Isolated orchestrator and
 19/19 proof coverage are implemented; independent Tester PASS WITH ENVIRONMENT
 LIMITATION, PROCESS-002 Synchronized, Scope Audit 31/0/0, and final Reviewer
-APPROVED 0/0. Commit/publication remain unperformed.
+APPROVED 0/0. Task commit
+`77c9ee1abe5e34ec20e49fd3c1bc760f9d9d605a` was published through PR #69 and
+merged as `84c7dac0d6c323de2e46b931d918f076932e74df`.
 TASK-062 — ранее завершённая
 development task: `Completed — Coordinator Accepted (2026-09-08)`, task commit
 `07f70f0a4bb076a3b47324c41de28a80e14ed73f` published through PR #65 and
-merged as `2f1de022f7821cf9a4b65fe408c42349060f523e`. Orchestrator and production
-wiring are absent.
+merged as `2f1de022f7821cf9a4b65fe408c42349060f523e`. At that historical closure the
+orchestrator and production wiring were absent.
 
 **TASK-031:** `Completed — Coordinator Accepted`. Bounded isolated DP-020
 deferred slice 1 реализован в `internal/runtimecommandidempotency` на branch
@@ -152,11 +156,12 @@ CGO/gcc, substitute stress `-count=100` PASS); Independent Review Approved with
 Findings 0/2 (resolved); Verification Matrix, PROCESS-002, Scope Audit 7/0/0
 PASS. Commit, push, PR, merge и publication не выполнялись.
 
-**Последняя завершённая documentation task:** TASK-056 — Wiki Knowledge-Map
-Freshness Reconciliation; `Completed — Coordinator Accepted (2026-09-02)`;
-task commit `bd87bbb8526efe1413899e8125e847d80aade09a` published through PR #58
-and merged as `934a7137d4c75598df4cbf9c28fc09c0fa665e5e`. TASK-026 remained Blocked
-and deferred candidates were not activated by that documentation task.
+**Последняя завершённая documentation task:** TASK-065 — TASK-026 Publication
+State Reconciliation; `Completed — Coordinator Accepted (2026-09-14)`.
+Documentation-only synchronization records TASK-026 task commit
+`77c9ee1abe5e34ec20e49fd3c1bc760f9d9d605a`, PR #69, and merge
+`84c7dac0d6c323de2e46b931d918f076932e74df`; product capability is unchanged
+and no next task is activated.
 
 Историческая TASK-045 — TASK-026 Reactivation
 Status Reconciliation; `Completed — Coordinator Accepted (2026-08-24)`;
@@ -165,18 +170,20 @@ repeat Tester `PASS` 0/0/0; Independent Reviewer `APPROVED` 0/0; Scope Audit
 closure baseline TASK-045 и позднее superseded recheck TASK-026. Commit и
 publication на closure не выполнялись.
 
-**Текущее documentation state:** TASK-064 implements, independently verifies,
-and terminally publishes the bounded DP-015 durable Satisfied-outcome
-prerequisite. TASK-026 is Completed — Coordinator Accepted with the isolated
-orchestrator and synchronized independently verified boundary. No next task is
-activated.
+**Текущее documentation state:** TASK-065 completed the documentation-only
+reconciliation of TASK-026 publication through PR #69. TASK-026 remains
+Completed — Coordinator Accepted with the isolated orchestrator and
+synchronized independently verified boundary; task commit
+`77c9ee1abe5e34ec20e49fd3c1bc760f9d9d605a` is merged as
+`84c7dac0d6c323de2e46b931d918f076932e74df`. Product capability is unchanged
+and no next task is activated.
 
 **Последняя architecture task:** TASK-063 — Completed — Coordinator Accepted.
 Fresh independent reassessment returned `READY — UNBLOCK TASK-026`, matrix
 7/10/2/0/0/0. Later TASK-026 review proved that rows 2/14 require the distinct
 DP-015 durable Satisfied-outcome prerequisite, now published by TASK-064;
-TASK-026 now implements the isolated orchestrator and has passed independent
-Tester and initial Reviewer gates.
+TASK-026 now implements the isolated orchestrator, has passed all independent
+gates, and is published through PR #69.
 The prior `SPLIT REQUIRED — NEW IMPLEMENTATION PREREQUISITE` is historical
 TASK-026 evidence resolved by accepted/published TASK-062. TASK-061 historical
 verdict/matrix remain unchanged. Draft DP-021 retains Partial Implementation

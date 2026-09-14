@@ -114,7 +114,10 @@ The repository currently contains an Alpha foundation rather than a production-r
   outcome prerequisite. TASK-064 implements, independently accepts, and
   publishes it through PR #68. TASK-026 subsequently implements, independently
   verifies, and Coordinator Accepts the isolated orchestrator and all 19 proof
-  rows; commit/publication remain unperformed.
+  rows. Task commit `77c9ee1abe5e34ec20e49fd3c1bc760f9d9d605a`
+  was published through PR #69 and merged as
+  `84c7dac0d6c323de2e46b931d918f076932e74df`; no next product task is
+  activated by that publication.
 
 ## 3. Engineering Principles
 
