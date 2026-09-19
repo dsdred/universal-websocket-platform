@@ -3,7 +3,22 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
+Текущая task отсутствует: автономный цикл остановлен на Coordinator Acceptance,
+следующая task не активирована и требует отдельного явного решения.
+
 Последняя завершённая documentation-only work —
+[TASK-066](TASK-066-RUNTIME-EXECUTION-CONTAINMENT-EVIDENCE-DESIGN.md),
+`Completed — Coordinator Accepted (2026-09-20)`, `Design-only`: задача
+зафиксировала bounded technology-neutral
+execution-containment/evidence boundary, который требуется DP-017 section 11,
+зеркальным Draft/Planned DP-022. DP-022 остаётся Draft, containment capability, containment ledger и evidence
+adapter не реализованы, поэтому prerequisite DP-017 по-прежнему неотвечен;
+DP-017 и DP-018 implementation, production integration и Production Activation
+не активированы. Commit и publication не авторизованы и не выполнялись;
+следующая task не выбрана — первым кандидатом остаётся отдельное явное DP-022
+Approval решение.
+
+Предыдущая завершённая documentation-only work —
 [TASK-065](TASK-065-TASK-026-PUBLICATION-STATE-RECONCILIATION.md), `Completed —
 Coordinator Accepted (2026-09-14)`: синхронизирован стабильный publication
 outcome TASK-026 после PR #69; product capability не изменилась, следующая
@@ -92,6 +107,7 @@ PROCESS-002, Scope Audit 31/0/0 и final Reviewer проходят. Task commit
 - [TASK-063 — Runtime Activation Readiness Reassessment after Parent Terminalization Repair](TASK-063-RUNTIME-ACTIVATION-READINESS-REASSESSMENT.md) — Completed — Coordinator Accepted (2026-09-09); task commit `499054be6745c967848b5aac0f3ff6a64dfbe7a9` published through PR #66 and merged as `2404c3439f44b9b0b22f87d87029695f921fee62`; independent Architect verdict `READY — UNBLOCK TASK-026`, matrix 7/10/2/0/0/0
 - [TASK-064 — Runtime Command Durable Satisfied Outcome](TASK-064-RUNTIME-COMMAND-SATISFIED-OUTCOME.md) — Completed — Coordinator Accepted in isolation; task commit `60b3dd03a23a995227726fa2f4094295c8f15f0f` published through PR #68 and merged as `9483232bde262cd69ba7146a44ee9f251a65cb40`; bounded DP-015 prerequisite only; TASK-026 subsequently reactivated by separate intake
 - [TASK-065 — TASK-026 Publication State Reconciliation](TASK-065-TASK-026-PUBLICATION-STATE-RECONCILIATION.md) — Completed — Coordinator Accepted (2026-09-14); documentation-only synchronization of task commit `77c9ee1abe5e34ec20e49fd3c1bc760f9d9d605a`, PR #69, and merge `84c7dac0d6c323de2e46b931d918f076932e74df`; product capability unchanged; no next task activated
+- [TASK-066 — Runtime Execution Containment and Evidence Design](TASK-066-RUNTIME-EXECUTION-CONTAINMENT-EVIDENCE-DESIGN.md) — Completed — Coordinator Accepted (2026-09-20); Design-only; зеркальный Draft/Planned DP-022 зафиксирован, независимые Verification, PROCESS-002, Scope Audit, final Review и Coordinator Acceptance проходят; DP-022 остаётся Draft и ничего не реализует, поэтому prerequisite DP-017 неотвечен; implementation, DP-017/DP-018, production integration и Production Activation remain Not Activated; commit и publication не авторизованы; следующая task не выбрана
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

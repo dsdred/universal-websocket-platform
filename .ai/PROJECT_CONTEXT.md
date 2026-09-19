@@ -8,6 +8,24 @@
 
 ## Текущее состояние
 
+- Current task: none. The preceding autonomous cycle closed at Coordinator
+  Acceptance; no next task is activated, and commit/publication authorization is
+  absent
+- Latest completed task (2026-09-20): **TASK-066 — Runtime Execution Containment
+  and Evidence Design; `Completed — Coordinator Accepted (2026-09-20)`,
+  Design-only; branch
+  `docs/task-066-runtime-execution-containment-evidence-design`, trusted
+  baseline `05b1775179802bbd0ba3f60bfaf82001edb7b6ad`. Архитектурное решение
+  подтверждено (Architecture Confirmation, blockers 0), зеркальный Draft/Planned
+  DP-022 «Runtime Execution Containment and Evidence» — containment/evidence
+  prerequisite, требуемый DP-017 §11 — зафиксирован, независимо верифицирован и
+  принят Coordinator как design-only deliverable. Продуктовая capability не
+  изменена: containment capability, containment ledger и evidence adapter не
+  реализованы, процесс завершения generation ничем не наблюдается. DP-022
+  остаётся Draft/Planned — Approval требует отдельного явного решения по
+  дизайн-статусу, и DP-017 сохраняет неотвеченный §11 prerequisite; DP-017/DP-018
+  implementation, production integration и Production Activation остаются
+  Not Activated. Commit и publication не авторизованы и не выполнялись**
 - Current boundary (2026-09-13): TASK-026 — `Completed — Coordinator Accepted`
   in isolation. Task commit
   `77c9ee1abe5e34ec20e49fd3c1bc760f9d9d605a` was published through PR #69

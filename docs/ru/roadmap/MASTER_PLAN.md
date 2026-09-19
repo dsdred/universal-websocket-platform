@@ -456,7 +456,13 @@ Architectural debt относится к границам, которые ост
   outcome DP-015. TASK-064 независимо принята и опубликована через PR #68 для
   этого bounded prerequisite. TASK-026 после этого реализует и Coordinator
   Accepts isolated orchestrator, а DP-016 — Approved/Implemented in isolation.
-  Integration и Production Activation остаются неактивными.
+  Integration и Production Activation остаются неактивными. Design-only
+  TASK-066 вводит зеркальный Draft DP-022 — границу execution containment и
+  evidence, которую DP-017 §11 требует как prerequisite. DP-022 имеет статус
+  Draft и Implementation Status Planned; containment capability, ledger и
+  evidence adapter отсутствуют, поэтому prerequisite DP-017 остаётся
+  неотвеченным, а DP-017, DP-018 и production integration остаются
+  Not Activated.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Message Persistence, Delivery и Plugin всё ещё требуют focused design.
