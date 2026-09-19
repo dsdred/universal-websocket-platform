@@ -57,6 +57,8 @@
 ## Определённые архитектурные границы
 
 - ADR-0003 определяет component boundaries Runtime и Provider-based composition.
+- DP-020–DP-022 сохраняют Design Status Draft; реализация DP-022 отсутствует, и
+  статус не повышается authoring, commit или Coordinator Acceptance task.
 - ARCH-004 определяет Runtime Instance, Launch Attempt и deployment identity
   model; минимальный in-process Runtime Lifecycle Owner и process-local
   isolated operational identity/command stores реализованы, а external durable
@@ -345,3 +347,21 @@ implementation cycle была Blocked repeat Architecture `NEEDS DECISION` /
   durable Satisfied-outcome prerequisite. TASK-064 subsequently implemented,
   independently accepted, and published it through PR #68; TASK-026 now
   implements and independently verifies the isolated orchestrator.
+
+TASK-066 — завершённая Design-only задача (`Completed — Coordinator Accepted
+(2026-09-20)`). Создан зеркальный Draft/Planned
+[DP-022: Граница containment исполнения Runtime и evidence](../docs/ru/design/DP-022-runtime-execution-containment-and-evidence.md),
+который определяет containment/evidence prerequisite, требуемый DP-017 §11:
+эксклюзивная containment capability для одного containment domain, ровно одна
+execution generation на успешное acquisition, durable containment ledger с
+явным supersession-фактом, termination proof конкретной предыдущей generation и
+отдельный shutdown-completion evidence, закрытый набор исходов с `Unknown` при
+любой неопределённости. Решение остаётся Draft: Approval требует отдельного
+явного решения по дизайн-статусу, а DP-017 implementation, DP-018 reporting и
+production integration остаются Not Activated. Containment capability,
+containment ledger и evidence adapter не реализованы; ни один текущий
+компонент не может доказать завершение предыдущей generation. Задача прошла
+независимые Verification, PROCESS-002, Scope Audit и final Review; Coordinator
+Acceptance подтверждает только принятие design-only deliverable и не повышает
+ни Design Status DP-022, ни Implementation Status, ни не активирует commit,
+publication или следующую task.

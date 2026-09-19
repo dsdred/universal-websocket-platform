@@ -1,5 +1,24 @@
 # Текущее состояние
 
+**Текущая design task:** отсутствует; автономный цикл остановлен на Coordinator
+Acceptance и не активирует следующую task.
+
+**Последняя завершённая design task (2026-09-20):** TASK-066 — `Completed —
+Coordinator Accepted (2026-09-20)`, Design-only, на task-ветке
+`docs/task-066-runtime-execution-containment-evidence-design` с baseline
+`05b1775179802bbd0ba3f60bfaf82001edb7b6ad`. Подтверждённое архитектурное решение
+зафиксировано зеркальным Draft/Planned
+[DP-022: Граница containment исполнения Runtime и evidence](../docs/ru/design/DP-022-runtime-execution-containment-and-evidence.md) —
+containment/evidence prerequisite, требуемый DP-017 §11; задача прошла
+независимые Verification, PROCESS-002, Scope Audit, final Review и Coordinator
+Acceptance. Реализация отсутствует: containment capability, containment ledger и
+evidence adapter не созданы, наблюдение завершения execution generation ничем не
+обеспечивается. DP-022 остаётся Draft/Planned — Approval есть отдельное явное
+решение по дизайн-статусу, поэтому DP-017 сохраняет Approved/Planned с
+неотвеченным §11 prerequisite; DP-017 и DP-018 implementation, production
+integration и Production Activation остаются Not Activated. Commit и publication
+не авторизованы и не выполнялись. Продуктовая capability не изменена.
+
 **Текущая boundary (2026-09-13):** TASK-026 — `Completed — Coordinator
 Accepted` в изоляции после опубликованной через PR #68 TASK-064. Task commit
 `77c9ee1abe5e34ec20e49fd3c1bc760f9d9d605a` опубликован через PR #69 и merged
@@ -51,6 +70,9 @@ Start/Stop boundary DP-015 реализованы изолированно packa
 command-boundary Continue/pending-Stop rendezvous DP-019 также реализованы там
 изолированно, а полный extension остаётся Planned. DP-016 имеет Implementation
 Status Implemented in isolation; DP-017–DP-019 остаются Planned overall.
+Зеркальный Draft DP-022 определяет containment/evidence boundary, требуемый
+DP-017 §11; он не Approved и ничего не реализует, поэтому prerequisite DP-017
+остаётся неотвеченным.
 Dedicated DP-016 orchestration реализована TASK-026 изолированно; DP-017
 recovery, DP-018 reporting, callback closure, external
 schema/HTTP API/persistence, concrete authorization policy, management wiring

@@ -459,7 +459,12 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   independently accepted and published through PR #68 for that bounded repair.
   TASK-026 subsequently implements and Coordinator Accepts the isolated
   orchestrator, and DP-016 is Approved/Implemented in isolation. Integration
-  and Production Activation remain inactive.
+  and Production Activation remain inactive. Design-only TASK-066 introduces
+  the mirrored Draft DP-022 execution-containment and evidence boundary that
+  DP-017 section 11 requires as a prerequisite. DP-022 is Draft with
+  Implementation Status Planned; no containment capability, ledger, or evidence
+  adapter exists, so the DP-017 prerequisite remains unsatisfied and DP-017,
+  DP-018 and production integration remain Not Activated.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Message Persistence, Delivery, and Plugin contracts still require focused design.
