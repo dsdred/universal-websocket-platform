@@ -4,14 +4,15 @@
 
 ## 1. Статус
 
-- **Design Status:** Draft
+- **Design Status:** Approved
 - **Implementation Status:** Planned
 
 Это предложение определяет execution-containment и evidence boundary, которую
 Approved DP-017 section 11 требует до реализации recovery reconciliation. Оно
-является Draft: пока оно не Approved, prerequisite DP-017 section 11 о
-существовании approved containment boundary остаётся неудовлетворённым, и
-реализация DP-017 остаётся неактивированной.
+Approved как эта граница, поэтому prerequisite DP-017 section 11 о
+существовании approved containment boundary удовлетворён на уровне дизайна. Это
+ничего не говорит о реализации, которая отсутствует: реализация DP-017 остаётся
+неактивированной.
 
 Ни один package, store, schema, adapter, API, scanner, supervisor, production
 wiring или runtime behavior не существует как результат этого документа. Ничто
@@ -21,10 +22,10 @@ wiring или runtime behavior не существует как результа
 ## 2. Назначение
 
 Определить один bounded, technology-neutral ответ на вопрос, который задаёт
-Approved DP-017 section 11 и на который сейчас не отвечает ни один authoritative
-source: что делает execution generation уникальной и текущей, и какая authority
-может доказать, что exact generation, названный durable execution binding
-attempt, уже terminated.
+Approved DP-017 section 11 и на который до этого документа не отвечал ни один
+authoritative source: что делает execution generation уникальной и текущей, и
+какая authority может доказать, что exact generation, названный durable
+execution binding attempt, уже terminated.
 
 Design должен позволить поздней replacement Control Service различать для одного
 exact Runtime Instance между execution, которое всё ещё live, execution, чьё
@@ -470,10 +471,11 @@ Service, поэтому single composition root ADR-0003 и freeze ARCH-002
 
 ## 18. Scope isolation и security
 
-Чтения evidence и ledger scoped ровно к одному containment domain и внутри него —
-к одному operational management domain, Workspace, Configuration, Runtime
-Instance, Launch Attempt и execution generation. Cross-domain evidence запрещены
-даже когда они доступны и favorable.
+Чтения evidence и ledger scoped ровно к одному containment domain — одному
+operational management domain, обслуживаемому одним Control Service вместе с
+принадлежащим ему durable identity state, — и внутри него — к одному Workspace,
+Configuration, Runtime Instance, Launch Attempt и execution generation.
+Cross-domain evidence запрещены даже когда они доступны и favorable.
 
 Результаты несут только opaque identities и закрытые semantic категории. Они
 никогда не несут credentials, Secrets, payload configuration или Snapshot, raw
@@ -627,16 +629,19 @@ provider seam DP-020, потребляемый изолированным orches
 отдельного компонента, evidence adapter, production composition wiring и
 кодового пути, который мог бы наблюдать termination процесса или generation.
 
-Этот документ поэтому оставляет DP-017 в Approved/Planned с неудовлетворённым
-prerequisite section 11: Draft не является approved containment boundary.
-Approval DP-022 требует явного решения через project design status процесс;
-acceptance задачи со стороны Documentation, Tester, Reviewer или Coordinator не
-повышает Design Status этого документа и никогда не повышает Implementation
-Status. Эта граница также ничего не активирует: DP-017 recovery, DP-018
-reporting, production integration и Production Activation остаются
-`Not Activated` и отсутствуют, а downstream consumption containment evidence
-относится к более поздней, отдельно approved границе. Ни один gate ARCH-004
-section 19 здесь не заявляется и не переоткрывается.
+Этот документ есть Approved design граница, поэтому DP-017 section 11 теперь
+имеет authoritative containment boundary для потребления; сам DP-017 остаётся
+Approved/Planned и неактивированным. Статус получен явным решением через project
+design status процесс; acceptance задачи со стороны Documentation, Tester,
+Reviewer или Coordinator не повышает Design Status этого документа и никогда не
+повышает Implementation Status. Approval ничего не активирует: containment
+capability, ledger и evidence adapter отсутствуют, поэтому exact
+prior-generation termination proof, требуемый DP-017 section 11, по-прежнему не
+может быть получен ни одним компонентом, а DP-017 recovery, DP-018 reporting,
+production integration и Production Activation остаются `Not Activated` и
+отсутствуют; downstream consumption containment evidence относится к более
+поздней, отдельно approved границе. Ни один gate ARCH-004 section 19 здесь не
+заявляется и не переоткрывается.
 
 ## 26. Решение
 

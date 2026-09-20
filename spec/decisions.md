@@ -57,7 +57,8 @@
 ## Определённые архитектурные границы
 
 - ADR-0003 определяет component boundaries Runtime и Provider-based composition.
-- DP-020–DP-022 сохраняют Design Status Draft; реализация DP-022 отсутствует, и
+- DP-020 и DP-021 сохраняют Design Status Draft. DP-022 имеет Design Status
+  Approved по отдельному решению TASK-067; реализация DP-022 отсутствует, и
   статус не повышается authoring, commit или Coordinator Acceptance task.
 - ARCH-004 определяет Runtime Instance, Launch Attempt и deployment identity
   model; минимальный in-process Runtime Lifecycle Owner и process-local
@@ -349,19 +350,45 @@ implementation cycle была Blocked repeat Architecture `NEEDS DECISION` /
   implements and independently verifies the isolated orchestrator.
 
 TASK-066 — завершённая Design-only задача (`Completed — Coordinator Accepted
-(2026-09-20)`). Создан зеркальный Draft/Planned
-[DP-022: Граница containment исполнения Runtime и evidence](../docs/ru/design/DP-022-runtime-execution-containment-and-evidence.md),
-который определяет containment/evidence prerequisite, требуемый DP-017 §11:
+(2026-09-20)`). Создан зеркальный DP-022
+[DP-022: Граница containment исполнения Runtime и evidence](../docs/ru/design/DP-022-runtime-execution-containment-and-evidence.md)
+(на момент задачи — Draft/Planned), который определяет containment/evidence
+prerequisite, требуемый DP-017 §11:
 эксклюзивная containment capability для одного containment domain, ровно одна
 execution generation на успешное acquisition, durable containment ledger с
 явным supersession-фактом, termination proof конкретной предыдущей generation и
 отдельный shutdown-completion evidence, закрытый набор исходов с `Unknown` при
-любой неопределённости. Решение остаётся Draft: Approval требует отдельного
-явного решения по дизайн-статусу, а DP-017 implementation, DP-018 reporting и
-production integration остаются Not Activated. Containment capability,
+любой неопределённости. На момент TASK-066 решение оставалось Draft: Approval
+требует отдельного явного решения по дизайн-статусу. Containment capability,
 containment ledger и evidence adapter не реализованы; ни один текущий
 компонент не может доказать завершение предыдущей generation. Задача прошла
 независимые Verification, PROCESS-002, Scope Audit и final Review; Coordinator
 Acceptance подтверждает только принятие design-only deliverable и не повышает
 ни Design Status DP-022, ни Implementation Status, ни не активирует commit,
 publication или следующую task.
+
+TASK-067 — завершённая `Design-update` задача (`Completed — Coordinator
+Accepted (2026-09-21)`), формальное Design Status решение по DP-022; порядок
+stages по прецеденту TASK-021. Architect проверил DP-022 против Active
+ARCH-004, Approved ADR и требования DP-017 §11 и принял на stage
+Architecture Confirmation явное решение:
+Design Status `Approved`, Implementation Status `Planned`. Решение прошло
+независимые Verification, PROCESS-002, Scope Audit 13/0/0 и final Review
+(round-1 blocking C1 adjudicated `Disproven`; round-2 APPROVED, 0 blocking);
+Coordinator Acceptance 2026-09-21 приняла exact design subject
+`ab95d3d1c460e88df3222c3dfaf4dfb0048cf87c`. Acceptance не повышает
+Implementation Status, не активирует DP-017/DP-018, production integration
+или Production Activation и не разрешает commit/publication (не авторизованы,
+не выполнялись). Ownership не
+изменяется: composition уже владеет generation и containment/termination proof
+по Approved DP-017 §6 и DP-014 §10, поэтому Approval не требует semantic
+amendment ни ARCH-004, ни ADR, ни иного Approved DP; ARCH-004 §19 по-прежнему
+содержит шесть focused-design gates, а process isolation, automatic restart,
+scheduling и clustering остаются не prerequisite для initial in-process
+single-node реализации. Termination proof предыдущей generation остаётся
+неполучаемым в коде: repository default adapter level есть `None`, и
+разделы DP-022 §17/§20 разрешают в этом случае только
+`Unknown(GuaranteeNotDeclared)`, а не ложный proof.
+Решение ничего не активирует: DP-017 recovery, DP-018 reporting, production
+integration и Production Activation остаются Not Activated, product capability
+не изменена. Следующая task не выбрана и не активирована.

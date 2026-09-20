@@ -218,6 +218,15 @@ prior generation больше не owned и не runnable. Это не дока�
 Runtime cleanup, successful Stop, readiness или потерянную terminal command
 publication.
 
+Approved containment boundary, называемая здесь, —
+[DP-022](DP-022-runtime-execution-containment-and-evidence.md): её sections
+8–13 определяют exclusive containment capability, одну live execution generation
+на containment domain, durable containment ledger, чей supersession fact есть
+единственное доказательство termination exact prior generation, и отдельный
+Host-owned shutdown-completion evidence. Это approved design граница, а не
+реализованная: containment capability, ledger и evidence adapter отсутствуют,
+поэтому реализация DP-017 остаётся неактивированной.
+
 Replacement Control Service не фабрикует Host reference, не hydrate Owner, не
 probe port с выводом Running и не adopt execution. Proven generation termination
 используется только для phase-sensitive process-loss failure facts и clearing
