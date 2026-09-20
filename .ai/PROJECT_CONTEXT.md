@@ -8,24 +8,47 @@
 
 ## Текущее состояние
 
-- Current task: none. The preceding autonomous cycle closed at Coordinator
-  Acceptance; no next task is activated, and commit/publication authorization is
-  absent
-- Latest completed task (2026-09-20): **TASK-066 — Runtime Execution Containment
+- Current task: none. The autonomous cycle closed at Coordinator Acceptance of
+  TASK-067; no next task is activated, and commit/publication authorization is
+  absent (the exact commands `Разрешаю коммит.` / `Разрешаю публиковать.` were
+  never issued for this task)
+- Latest completed task (2026-09-21): **TASK-067 — Runtime Execution
+  Containment Design Status Decision; `Completed — Coordinator Accepted
+  (2026-09-21)`, Design-update; branch
+  `docs/task-067-dp-022-design-status-decision`, trusted baseline
+  `2c899a2069167c0d83b7c2d3cb8ffb13e862bfb9`. Architect выполнил
+  dependency-ordered trace DP-022 против Active ARCH-004, Approved ADR и
+  требования DP-017 §11 и принял явное Design Status решение: DP-022 повышен
+  Draft → Approved, Implementation Status остаётся Planned. Решение прошло
+  независимые Verification, PROCESS-002 (включая reconciliation publication
+  facts TASK-066), Scope Audit 13/0/0 и final Review в двух rounds (blocking
+  finding C1 adjudicated `Disproven`); принятый decision subject — manifest
+  `ab95d3d1c460e88df3222c3dfaf4dfb0048cf87c`. Продуктовая capability не
+  изменена: containment capability, containment ledger и evidence adapter не
+  реализованы, termination proof предыдущей generation при default adapter
+  level `None` даёт только `Unknown(GuaranteeNotDeclared)`; DP-017 §11 имеет
+  approved boundary на уровне дизайна. DP-017/DP-018 implementation,
+  production integration и Production Activation остаются Not Activated.
+  Commit и publication не авторизованы и не выполнялись**
+- Previous completed task (2026-09-20): **TASK-066 — Runtime Execution Containment
   and Evidence Design; `Completed — Coordinator Accepted (2026-09-20)`,
   Design-only; branch
   `docs/task-066-runtime-execution-containment-evidence-design`, trusted
   baseline `05b1775179802bbd0ba3f60bfaf82001edb7b6ad`. Архитектурное решение
-  подтверждено (Architecture Confirmation, blockers 0), зеркальный Draft/Planned
-  DP-022 «Runtime Execution Containment and Evidence» — containment/evidence
-  prerequisite, требуемый DP-017 §11 — зафиксирован, независимо верифицирован и
-  принят Coordinator как design-only deliverable. Продуктовая capability не
-  изменена: containment capability, containment ledger и evidence adapter не
-  реализованы, процесс завершения generation ничем не наблюдается. DP-022
-  остаётся Draft/Planned — Approval требует отдельного явного решения по
-  дизайн-статусу, и DP-017 сохраняет неотвеченный §11 prerequisite; DP-017/DP-018
-  implementation, production integration и Production Activation остаются
-  Not Activated. Commit и publication не авторизованы и не выполнялись**
+  подтверждено (Architecture Confirmation, blockers 0), зеркальный DP-022
+  «Runtime Execution Containment and Evidence» — containment/evidence
+  prerequisite, требуемый DP-017 §11 — зафиксирован на момент closure как
+  Draft/Planned, независимо верифицирован и принят Coordinator как design-only
+  deliverable. Продуктовая capability не изменена: containment capability,
+  containment ledger и evidence adapter не реализованы, процесс завершения
+  generation ничем не наблюдается. На момент closure commit и publication не
+  выполнялись — это historical closure state; задача позднее опубликована:
+  task commit `a727562ec948686ba494305f00bf2a49d72a420c` через PR #71 (`MERGED`,
+  mergedAt `2026-09-19T22:51:16Z`) и merged как
+  `2c899a2069167c0d83b7c2d3cb8ffb13e862bfb9`. Design Status DP-022 повышен
+  Draft → Approved отдельным решением TASK-067; DP-017 §11 prerequisite
+  отвечен на уровне approved design boundary, implementation остаётся
+  неактивированной**
 - Current boundary (2026-09-13): TASK-026 — `Completed — Coordinator Accepted`
   in isolation. Task commit
   `77c9ee1abe5e34ec20e49fd3c1bc760f9d9d605a` was published through PR #69

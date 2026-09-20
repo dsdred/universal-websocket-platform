@@ -221,6 +221,15 @@ proof establishes that no Host from the prior generation remains owned or
 runnable. It does not prove graceful Runtime cleanup, successful Stop,
 readiness, or the terminal command publication that was lost.
 
+The approved containment boundary named here is
+[DP-022](DP-022-runtime-execution-containment-and-evidence.md): its sections
+8–13 define the exclusive containment capability, one live execution generation
+per containment domain, the durable containment ledger whose supersession fact
+is the only proof that an exact prior generation terminated, and the separate
+Host-owned shutdown-completion evidence. It is an approved design boundary, not
+an implemented one: no containment capability, ledger, or evidence adapter
+exists, so DP-017 implementation remains unactivated.
+
 The replacement Control Service must not fabricate a Host reference, hydrate
 an Owner, probe a port and call it Running, or adopt any execution. It may use
 proven generation termination only to publish phase-sensitive process-loss

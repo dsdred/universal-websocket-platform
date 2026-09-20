@@ -1,23 +1,48 @@
 # Текущее состояние
 
-**Текущая design task:** отсутствует; автономный цикл остановлен на Coordinator
-Acceptance и не активирует следующую task.
+**Текущая design task:** отсутствует — cycle TASK-067 закрыт на Coordinator
+Acceptance; следующая task не активирована (для DP-017 implementation slice
+требуется отдельный repository-first intake).
 
-**Последняя завершённая design task (2026-09-20):** TASK-066 — `Completed —
+**Последняя завершённая design task (2026-09-21):** TASK-067 — `Completed —
+Coordinator Accepted (2026-09-21)`, `Design-update`, на task-ветке
+`docs/task-067-dp-022-design-status-decision` с baseline
+`2c899a2069167c0d83b7c2d3cb8ffb13e862bfb9`. Architect выполнил
+dependency-ordered trace DP-022 против Active ARCH-004, Approved ADR и
+требования DP-017 §11 и принял явное Design Status решение: DP-022 повышен
+Draft → **Approved**, Implementation Status остаётся **Planned**. Решение
+прошло независимые Verification (`VERIFICATION PASS`), PROCESS-002
+(`Synchronized`, включая reconciliation publication facts TASK-066),
+Scope Audit `13/0/0` и final Review в двух rounds (blocking finding C1
+первого review adjudicated как `Disproven` с тройным воспроизведением
+manifest). Acceptance повышает только Design Status DP-022: containment
+capability, containment ledger и evidence adapter по-прежнему не реализованы,
+`GenerationTerminated` при repository default adapter level `None`
+доказуем только как `Unknown(GuaranteeNotDeclared)`; DP-017 §11 имеет
+approved boundary на уровне дизайна, и весь DP-017 prerequisite-набор
+(termination proof, ledger, shutdown-completion evidence) остаётся
+implementation-time obligation. Coordinator Acceptance не активирует DP-017
+recovery, DP-018 reporting, production integration или Production
+Activation; commit и publication не авторизованы и не выполнялись; product
+capability не изменена.
+
+**Предыдущая завершённая design task (2026-09-20):** TASK-066 — `Completed —
 Coordinator Accepted (2026-09-20)`, Design-only, на task-ветке
 `docs/task-066-runtime-execution-containment-evidence-design` с baseline
 `05b1775179802bbd0ba3f60bfaf82001edb7b6ad`. Подтверждённое архитектурное решение
-зафиксировано зеркальным Draft/Planned
+зафиксировано зеркальным
 [DP-022: Граница containment исполнения Runtime и evidence](../docs/ru/design/DP-022-runtime-execution-containment-and-evidence.md) —
 containment/evidence prerequisite, требуемый DP-017 §11; задача прошла
 независимые Verification, PROCESS-002, Scope Audit, final Review и Coordinator
 Acceptance. Реализация отсутствует: containment capability, containment ledger и
 evidence adapter не созданы, наблюдение завершения execution generation ничем не
-обеспечивается. DP-022 остаётся Draft/Planned — Approval есть отдельное явное
-решение по дизайн-статусу, поэтому DP-017 сохраняет Approved/Planned с
-неотвеченным §11 prerequisite; DP-017 и DP-018 implementation, production
-integration и Production Activation остаются Not Activated. Commit и publication
-не авторизованы и не выполнялись. Продуктовая capability не изменена.
+обеспечивается. Design Status DP-022 повышен Draft → Approved отдельным
+решением TASK-067; Implementation Status остаётся Planned, а DP-017 §11 имеет
+теперь approved boundary только на уровне дизайна. DP-017 и DP-018
+implementation, production integration и Production Activation остаются
+Not Activated. Commit и publication на момент closure TASK-066 не выполнялись —
+это historical fact closure state; последующая разрешённая публикация
+reconstruct-ится из Git/GitHub. Продуктовая capability не изменена.
 
 **Текущая boundary (2026-09-13):** TASK-026 — `Completed — Coordinator
 Accepted` в изоляции после опубликованной через PR #68 TASK-064. Task commit
@@ -70,9 +95,10 @@ Start/Stop boundary DP-015 реализованы изолированно packa
 command-boundary Continue/pending-Stop rendezvous DP-019 также реализованы там
 изолированно, а полный extension остаётся Planned. DP-016 имеет Implementation
 Status Implemented in isolation; DP-017–DP-019 остаются Planned overall.
-Зеркальный Draft DP-022 определяет containment/evidence boundary, требуемый
-DP-017 §11; он не Approved и ничего не реализует, поэтому prerequisite DP-017
-остаётся неотвеченным.
+Зеркальный DP-022 с Design Status Approved (повышен TASK-067) определяет
+containment/evidence boundary, требуемый DP-017 §11; он ничего не реализует,
+поэтому containment ledger, capability и evidence adapter отсутствуют, а
+реализация DP-017 остаётся неактивированной.
 Dedicated DP-016 orchestration реализована TASK-026 изолированно; DP-017
 recovery, DP-018 reporting, callback closure, external
 schema/HTTP API/persistence, concrete authorization policy, management wiring

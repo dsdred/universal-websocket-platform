@@ -4,14 +4,15 @@
 
 ## 1. Status
 
-- **Design Status:** Draft
+- **Design Status:** Approved
 - **Implementation Status:** Planned
 
 This proposal defines the execution-containment and evidence boundary that
 Approved DP-017 section 11 requires before recovery reconciliation can be
-implemented. It is a Draft: while it is not Approved, the DP-017 section 11
-prerequisite for an approved containment boundary remains unsatisfied, and
-DP-017 implementation stays unactivated.
+implemented. It is Approved as that boundary, so the DP-017 section 11
+prerequisite for an approved containment boundary is satisfied at design level.
+That says nothing about implementation, which remains absent: DP-017
+implementation stays unactivated.
 
 No package, store, schema, adapter, API, scanner, supervisor, production wiring,
 or runtime behavior exists as a result of this document. Nothing here states or
@@ -20,10 +21,10 @@ implies that Control Service can already observe process termination.
 ## 2. Purpose
 
 Define one bounded, technology-neutral answer to a question that Approved
-DP-017 section 11 asks and no authoritative source currently answers: what
-makes an execution generation unique and current, and what authority may prove
-that the exact generation named by an attempt's durable execution binding has
-terminated.
+DP-017 section 11 asks and no authoritative source answered before this
+document: what makes an execution generation unique and current, and what
+authority may prove that the exact generation named by an attempt's durable
+execution binding has terminated.
 
 The design must let a later replacement Control Service distinguish, for one
 exact Runtime Instance, between execution that is still live, execution whose
@@ -450,10 +451,11 @@ preserved.
 
 ## 18. Scope isolation and security
 
-Evidence and ledger reads are scoped to exactly one containment domain and,
-within it, one operational management domain, Workspace, Configuration, Runtime
-Instance, Launch Attempt, and execution generation. Cross-domain evidence is
-prohibited even when it is available and favorable.
+Evidence and ledger reads are scoped to exactly one containment domain — one
+operational management domain served by one Control Service together with the
+durable identity state it owns — and, within it, one Workspace, Configuration,
+Runtime Instance, Launch Attempt, and execution generation. Cross-domain
+evidence is prohibited even when it is available and favorable.
 
 Results carry only opaque identities and closed semantic categories. They never
 carry credentials, Secrets, configuration or Snapshot payloads, raw internal
@@ -601,16 +603,18 @@ no generation authority as a distinct component, no evidence adapter, no
 production composition wiring, and no code path that can observe process or
 generation termination.
 
-This document therefore leaves DP-017 at Approved/Planned with its section 11
-prerequisite unsatisfied: a Draft is not an approved containment boundary.
-Approval of DP-022 requires an explicit decision through the project's design
-status process; Documentation, Tester, Reviewer, or Coordinator acceptance of a
-task does not raise this document's Design Status and never raises Implementation
-Status. This boundary also activates nothing: DP-017 recovery, DP-018 reporting,
-production integration, and Production Activation remain `Not Activated` and
-absent, and downstream consumption of containment evidence is a later,
-separately approved boundary. No ARCH-004 section 19 gate is claimed or
-re-opened here.
+This document is an Approved design boundary, so DP-017 section 11 now has an
+authoritative containment boundary to consume; DP-017 itself stays
+Approved/Planned and unactivated. The status came from an explicit decision
+through the project's design status process; Documentation, Tester, Reviewer, or
+Coordinator acceptance of a task does not raise this document's Design Status
+and never raises Implementation Status. Approval activates nothing: no
+containment capability, ledger, or evidence adapter exists, so the exact
+prior-generation termination proof that DP-017 section 11 requires still cannot
+be produced by any component, and DP-017 recovery, DP-018 reporting, production
+integration, and Production Activation remain `Not Activated` and absent, and
+downstream consumption of containment evidence is a later, separately approved
+boundary. No ARCH-004 section 19 gate is claimed or re-opened here.
 
 ## 26. Decision
 
