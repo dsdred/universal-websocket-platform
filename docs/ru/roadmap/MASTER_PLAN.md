@@ -462,7 +462,13 @@ Architectural debt относится к границам, которые ост
   утверждает: DP-022 имеет статус Approved и Implementation Status Planned;
   containment capability, ledger и evidence adapter отсутствуют, поэтому
   termination proof пока не может быть получен ни одним компонентом, а DP-017,
-  DP-018 и production integration остаются Not Activated.
+  DP-018 и production integration остаются Not Activated. TASK-068 утверждает
+  зеркальный DP-023 как initial implementation boundary: одна process-lifetime
+  exclusive capability, один same-domain durable expected-tail append ledger и
+  одна opaque generation образуют единый safety-atomic bootstrap slice. Его
+  Implementation Status остаётся Planned; exact evidence, composition,
+  recovery, reporting и activation упорядочены как последующие slices и
+  остаются неактивными.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Message Persistence, Delivery и Plugin всё ещё требуют focused design.

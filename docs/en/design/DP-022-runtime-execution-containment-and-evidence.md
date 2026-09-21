@@ -14,6 +14,11 @@ prerequisite for an approved containment boundary is satisfied at design level.
 That says nothing about implementation, which remains absent: DP-017
 implementation stays unactivated.
 
+[DP-023](DP-023-runtime-process-containment-bootstrap.md) is the Approved,
+Planned implementation boundary for the initial capability/ledger/generation
+bootstrap. It makes that first code slice eligible for a separate intake but
+does not implement this proposal or its evidence outcomes.
+
 No package, store, schema, adapter, API, scanner, supervisor, production wiring,
 or runtime behavior exists as a result of this document. Nothing here states or
 implies that Control Service can already observe process termination.
@@ -543,8 +548,9 @@ Deferred to separate approved designs or implementation tasks:
   orphan detection, adoption, and termination protocol;
 - process supervision, scheduling, clustering, cross-node quorum, and any
   multi-holder domain;
-- storage engine, schema, transactions, migrations, retention, compaction, and
-  deployment layout for the ledger and capability;
+- concrete storage engine, schema encoding, migrations, retention, compaction,
+  and deployment layout beyond the guarantee class and atomic bootstrap
+  approved by DP-023;
 - Control Service startup sequencing, signal handling, shutdown orchestration,
   production wiring, and Production Activation;
 - recovery claim, permit, assessment, reconciliation, and barrier mechanics,
@@ -602,6 +608,11 @@ orchestration path. There is no containment capability, no containment ledger,
 no generation authority as a distinct component, no evidence adapter, no
 production composition wiring, and no code path that can observe process or
 generation termination.
+
+DP-023 now approves the process-lifetime capability, durable expected-tail
+ledger transition, generation-authority package boundary, crash cuts, and first
+implementation slice. Its Implementation Status is also Planned; therefore the
+absence statement above and every downstream gate remain unchanged.
 
 This document is an Approved design boundary, so DP-017 section 11 now has an
 authoritative containment boundary to consume; DP-017 itself stays

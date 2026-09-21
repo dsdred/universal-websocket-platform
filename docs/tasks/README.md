@@ -3,9 +3,14 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая task — отсутствует: автономный cycle закрыт на Coordinator Acceptance
-TASK-067; следующая task не активирована (для DP-017 implementation slice
-требуется отдельный repository-first intake).
+Текущая task —
+[TASK-068](TASK-068-RUNTIME-CONTAINMENT-IMPLEMENTATION-READINESS.md),
+`In Progress`; exact current checkpoint определяется terminal Recovery Evidence
+Envelope task record, Design-only / Readiness. Independent Architect утвердил зеркальный
+DP-023 (`Approved / Planned`) и первый bounded code slice: process-lifetime
+exclusive capability, durable expected-tail ledger append и одна opaque
+generation реализуются вместе как safety-atomic bootstrap. Никакой code task,
+implementation, evidence, recovery или activation этим не активированы.
 
 Последняя завершённая documentation-only work —
 [TASK-067](TASK-067-RUNTIME-EXECUTION-CONTAINMENT-DESIGN-STATUS-DECISION.md),
@@ -23,8 +28,11 @@ implementation, production integration и Production Activation не
 активированы. Decision subject принят по manifest
 `ab95d3d1c460e88df3222c3dfaf4dfb0048cf87c` после независимых Verification,
 PROCESS-002, Scope Audit `13/0/0` и final Review в двух rounds (blocking
-finding C1 первого review adjudicated `Disproven`). Commit и publication не
-авторизованы и не выполнялись; следующая task не выбрана и не активирована.
+finding C1 первого review adjudicated `Disproven`). На момент closure commit и
+publication не были авторизованы и не выполнялись — это historical closure
+state. Последующая публикация подтверждена локальным Git: task commit
+`a7218683c34c1097f20065c1e1e03e24e07e122d` опубликован через PR #72 и merged
+как `82a03be49635690cec06d90679eb4d8b4801bade`.
 
 Предыдущая завершённая documentation-only work —
 [TASK-066](TASK-066-RUNTIME-EXECUTION-CONTAINMENT-EVIDENCE-DESIGN.md),
@@ -133,7 +141,8 @@ PROCESS-002, Scope Audit 31/0/0 и final Reviewer проходят. Task commit
 - [TASK-064 — Runtime Command Durable Satisfied Outcome](TASK-064-RUNTIME-COMMAND-SATISFIED-OUTCOME.md) — Completed — Coordinator Accepted in isolation; task commit `60b3dd03a23a995227726fa2f4094295c8f15f0f` published through PR #68 and merged as `9483232bde262cd69ba7146a44ee9f251a65cb40`; bounded DP-015 prerequisite only; TASK-026 subsequently reactivated by separate intake
 - [TASK-065 — TASK-026 Publication State Reconciliation](TASK-065-TASK-026-PUBLICATION-STATE-RECONCILIATION.md) — Completed — Coordinator Accepted (2026-09-14); documentation-only synchronization of task commit `77c9ee1abe5e34ec20e49fd3c1bc760f9d9d605a`, PR #69, and merge `84c7dac0d6c323de2e46b931d918f076932e74df`; product capability unchanged; no next task activated
 - [TASK-066 — Runtime Execution Containment and Evidence Design](TASK-066-RUNTIME-EXECUTION-CONTAINMENT-EVIDENCE-DESIGN.md) — Completed — Coordinator Accepted (2026-09-20); Design-only; зеркальный DP-022 зафиксирован как Draft/Planned на момент closure, независимые Verification, PROCESS-002, Scope Audit, final Review и Coordinator Acceptance пройдены; task commit `a727562ec948686ba494305f00bf2a49d72a420c` опубликован через PR #71 (`MERGED`, mergedAt `2026-09-19T22:51:16Z`) и merged как `2c899a2069167c0d83b7c2d3cb8ffb13e862bfb9` — на момент closure commit и publication не выполнялись, это historical closure state; Design Status DP-022 повышен Draft → Approved отдельным решением TASK-067, а не Acceptance этой задачи; containment capability, ledger и evidence adapter по-прежнему не реализованы, DP-017/DP-018 implementation, production integration и Production Activation remain Not Activated
-- [TASK-067 — Runtime Execution Containment Design Status Decision](TASK-067-RUNTIME-EXECUTION-CONTAINMENT-DESIGN-STATUS-DECISION.md) — Completed — Coordinator Accepted (2026-09-21); `Design-update`; Design Status DP-022 повышен Draft → Approved при Implementation Status `Planned`; независимые Verification, PROCESS-002, Scope Audit 13/0/0 и final Review (две rounds, C1 `Disproven`) пройдены, decision subject `ab95d3d1c460e88df3222c3dfaf4dfb0048cf87c`; containment capability, ledger и evidence adapter не реализованы; DP-017/DP-018, production integration и Production Activation не активированы; commit и publication не авторизованы
+- [TASK-067 — Runtime Execution Containment Design Status Decision](TASK-067-RUNTIME-EXECUTION-CONTAINMENT-DESIGN-STATUS-DECISION.md) — Completed — Coordinator Accepted (2026-09-21); `Design-update`; Design Status DP-022 повышен Draft → Approved при Implementation Status `Planned`; независимые Verification, PROCESS-002, Scope Audit 13/0/0 и final Review (две rounds, C1 `Disproven`) пройдены, decision subject `ab95d3d1c460e88df3222c3dfaf4dfb0048cf87c`; containment capability, ledger и evidence adapter не реализованы; DP-017/DP-018, production integration и Production Activation не активированы; commit/publication не были авторизованы и не выполнялись на момент closure — это historical closure state; task commit `a7218683c34c1097f20065c1e1e03e24e07e122d` позднее опубликован через PR #72 и merged как `82a03be49635690cec06d90679eb4d8b4801bade`
+- [TASK-068 — Initial Runtime Containment Implementation Boundary and Slice Decomposition](TASK-068-RUNTIME-CONTAINMENT-IMPLEMENTATION-READINESS.md) — In Progress; Design-only / Readiness; exact checkpoint and verdict resolve from the terminal Recovery Evidence Envelope; DP-023 Approved/Planned; no code task or capability activated
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

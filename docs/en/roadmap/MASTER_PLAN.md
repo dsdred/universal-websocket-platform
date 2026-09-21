@@ -465,7 +465,12 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   DP-022 is Approved with Implementation Status Planned; no containment
   capability, ledger, or evidence adapter exists, so no termination proof can
   be produced yet and DP-017, DP-018 and production integration remain Not
-  Activated.
+  Activated. TASK-068 approves mirrored DP-023 as the initial implementation
+  boundary: one process-lifetime exclusive capability, one same-domain durable
+  expected-tail ledger append, and one opaque generation form a single
+  safety-atomic bootstrap slice. Its Implementation Status remains Planned;
+  exact evidence, composition, recovery, reporting, and activation are ordered
+  later slices and remain inactive.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Message Persistence, Delivery, and Plugin contracts still require focused design.

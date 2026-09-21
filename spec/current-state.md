@@ -1,8 +1,16 @@
 # Текущее состояние
 
-**Текущая design task:** отсутствует — cycle TASK-067 закрыт на Coordinator
-Acceptance; следующая task не активирована (для DP-017 implementation slice
-требуется отдельный repository-first intake).
+**Текущая design task:** TASK-068 — Initial Runtime Containment Implementation
+Boundary and Slice Decomposition, `In Progress`; exact current checkpoint
+определяется terminal Recovery Evidence Envelope task record, Design-only /
+Readiness на ветке
+`docs/task-068-runtime-containment-implementation-readiness` от synchronized
+baseline `82a03be49635690cec06d90679eb4d8b4801bade`. Independent Architect утвердил
+зеркальный [DP-023: Bootstrap process-containment Runtime](../docs/ru/design/DP-023-runtime-process-containment-bootstrap.md),
+`Approved / Planned`: process-lifetime exclusive capability, durable same-domain
+expected-tail append ledger и одна opaque generation образуют неделимый первый
+bootstrap slice. Implementation, evidence reader, composition, DP-017 recovery,
+reporting и activation отсутствуют; следующий code task не активирован.
 
 **Последняя завершённая design task (2026-09-21):** TASK-067 — `Completed —
 Coordinator Accepted (2026-09-21)`, `Design-update`, на task-ветке
@@ -23,8 +31,11 @@ approved boundary на уровне дизайна, и весь DP-017 prerequis
 (termination proof, ledger, shutdown-completion evidence) остаётся
 implementation-time obligation. Coordinator Acceptance не активирует DP-017
 recovery, DP-018 reporting, production integration или Production
-Activation; commit и publication не авторизованы и не выполнялись; product
-capability не изменена.
+Activation; на момент closure commit и publication не были авторизованы и не
+выполнялись — это historical closure state. Последующая публикация
+подтверждается локальным Git: task commit
+`a7218683c34c1097f20065c1e1e03e24e07e122d` опубликован через PR #72 и merged
+как `82a03be49635690cec06d90679eb4d8b4801bade`; product capability не изменена.
 
 **Предыдущая завершённая design task (2026-09-20):** TASK-066 — `Completed —
 Coordinator Accepted (2026-09-20)`, Design-only, на task-ветке
