@@ -56,10 +56,21 @@
 
 ## Определённые архитектурные границы
 
+- TASK-068 утверждает зеркальный DP-023 (`Approved / Planned`) как initial
+  implementation boundary DP-022: host-kernel-enforced process-lifetime
+  exclusive capability, durable same-domain append-only expected-tail ledger и
+  одна fresh opaque generation являются одним safety-atomic bootstrap. Первый
+  последующий code slice ограничен package `internal/runtimecontainment`, одним
+  real local adapter, fatal fencing и subprocess/crash/restart/concurrency/
+  durability proofs. Evidence reader, composition, DP-017 recovery, DP-018,
+  production integration и activation остаются отдельными неактивированными
+  slices; product capability не изменена.
 - ADR-0003 определяет component boundaries Runtime и Provider-based composition.
 - DP-020 и DP-021 сохраняют Design Status Draft. DP-022 имеет Design Status
-  Approved по отдельному решению TASK-067; реализация DP-022 отсутствует, и
-  статус не повышается authoring, commit или Coordinator Acceptance task.
+  Approved по отдельному решению TASK-067; DP-023 имеет Design Status Approved
+  по явному решению Architect TASK-068. Реализация обоих отсутствует, и
+  Implementation Status не повышается authoring, commit или Coordinator
+  Acceptance task.
 - ARCH-004 определяет Runtime Instance, Launch Attempt и deployment identity
   model; минимальный in-process Runtime Lifecycle Owner и process-local
   isolated operational identity/command stores реализованы, а external durable
@@ -378,8 +389,10 @@ Design Status `Approved`, Implementation Status `Planned`. Решение про
 Coordinator Acceptance 2026-09-21 приняла exact design subject
 `ab95d3d1c460e88df3222c3dfaf4dfb0048cf87c`. Acceptance не повышает
 Implementation Status, не активирует DP-017/DP-018, production integration
-или Production Activation и не разрешает commit/publication (не авторизованы,
-не выполнялись). Ownership не
+или Production Activation. На момент closure commit/publication не были
+авторизованы и не выполнялись — это historical closure state; task commit
+`a7218683c34c1097f20065c1e1e03e24e07e122d` позднее опубликован через PR #72 и
+merged как `82a03be49635690cec06d90679eb4d8b4801bade`. Ownership не
 изменяется: composition уже владеет generation и containment/termination proof
 по Approved DP-017 §6 и DP-014 §10, поэтому Approval не требует semantic
 amendment ни ARCH-004, ни ADR, ни иного Approved DP; ARCH-004 §19 по-прежнему

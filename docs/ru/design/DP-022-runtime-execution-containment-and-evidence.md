@@ -14,6 +14,11 @@ Approved как эта граница, поэтому prerequisite DP-017 sectio
 ничего не говорит о реализации, которая отсутствует: реализация DP-017 остаётся
 неактивированной.
 
+[DP-023](DP-023-runtime-process-containment-bootstrap.md) — Approved, Planned
+implementation boundary initial bootstrap capability/ledger/generation. Она
+делает первый code slice допустимым для отдельного intake, но не реализует это
+предложение или его evidence outcomes.
+
 Ни один package, store, schema, adapter, API, scanner, supervisor, production
 wiring или runtime behavior не существует как результат этого документа. Ничто
 здесь не утверждает и не подразумевает, что Control Service уже способен
@@ -564,8 +569,9 @@ append-only supersession, точную привязку tuple и fail-closed п�
   обнаружение live-orphan, adoption и протокол termination;
 - process supervision, scheduling, clustering, cross-node quorum и любой
   multi-holder domain;
-- storage engine, schema, transactions, migrations, retention, compaction и
-  deployment layout для ledger и capability;
+- concrete storage engine, schema encoding, migrations, retention, compaction и
+  deployment layout сверх guarantee class и atomic bootstrap, утверждённых
+  DP-023;
 - sequencing запуска Control Service, signal handling, shutdown orchestration,
   production wiring и Production Activation;
 - recovery claim, permit, assessment, reconciliation и mechanics barrier,
@@ -628,6 +634,11 @@ provider seam DP-020, потребляемый изолированным orches
 существует containment capability, containment ledger, generation authority как
 отдельного компонента, evidence adapter, production composition wiring и
 кодового пути, который мог бы наблюдать termination процесса или generation.
+
+DP-023 теперь утверждает process-lifetime capability, durable expected-tail
+ledger transition, package boundary generation authority, crash cuts и первый
+implementation slice. Его Implementation Status также Planned; поэтому
+отсутствие выше и все downstream gates остаются без изменений.
 
 Этот документ есть Approved design граница, поэтому DP-017 section 11 теперь
 имеет authoritative containment boundary для потребления; сам DP-017 остаётся

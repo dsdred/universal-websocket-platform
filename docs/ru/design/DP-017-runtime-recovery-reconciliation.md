@@ -227,6 +227,12 @@ Host-owned shutdown-completion evidence. Это approved design граница, 
 реализованная: containment capability, ledger и evidence adapter отсутствуют,
 поэтому реализация DP-017 остаётся неактивированной.
 
+[DP-023](DP-023-runtime-process-containment-bootstrap.md) отдельно утверждает
+initial process-lifetime capability, durable ledger transition и bootstrap
+generation authority. Он Planned и намеренно исключает evidence reader,
+composition gate и recovery; поэтому executable prerequisite этого section пока
+не удовлетворён.
+
 Replacement Control Service не фабрикует Host reference, не hydrate Owner, не
 probe port с выводом Running и не adopt execution. Proven generation termination
 используется только для phase-sensitive process-loss failure facts и clearing
@@ -539,6 +545,10 @@ Implementation Status — Planned. Repository содержит isolated process-
 Runtime aggregate и command stores, но не содержит external durable или
 process-restart store, recovery claim, execution-evidence adapter, recovery
 executor, public management API или production wiring.
+
+DP-023 делает containment bootstrap Ready boundary для отдельного первого code
+slice, но implementation отсутствует. Exact evidence reading, composition
+wiring и все mutation DP-017 остаются последующими dependency-ordered slices.
 
 Текущие in-process Runtime components не переживают Control Service process
 termination и не предоставляют restart-time recovery capability. Создание

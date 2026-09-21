@@ -8,10 +8,16 @@
 
 ## Текущее состояние
 
-- Current task: none. The autonomous cycle closed at Coordinator Acceptance of
-  TASK-067; no next task is activated, and commit/publication authorization is
-  absent (the exact commands `Разрешаю коммит.` / `Разрешаю публиковать.` were
-  never issued for this task)
+- Current task: **TASK-068 — Initial Runtime Containment Implementation Boundary
+  and Slice Decomposition**, `In Progress` with exact current checkpoint
+  resolved from its terminal Recovery Evidence Envelope, Design-only / Readiness on
+  branch `docs/task-068-runtime-containment-implementation-readiness`, trusted
+  baseline `82a03be49635690cec06d90679eb4d8b4801bade`. Independent Architect
+  approved mirrored DP-023 (`Approved / Planned`): one process-lifetime
+  exclusive capability, durable same-domain expected-tail ledger append and one
+  opaque generation form the indivisible first bootstrap slice. Evidence,
+  composition, DP-017 recovery, reporting and activation are later slices and
+  remain inactive. Commit/publication authority is absent
 - Latest completed task (2026-09-21): **TASK-067 — Runtime Execution
   Containment Design Status Decision; `Completed — Coordinator Accepted
   (2026-09-21)`, Design-update; branch
@@ -28,8 +34,11 @@
   реализованы, termination proof предыдущей generation при default adapter
   level `None` даёт только `Unknown(GuaranteeNotDeclared)`; DP-017 §11 имеет
   approved boundary на уровне дизайна. DP-017/DP-018 implementation,
-  production integration и Production Activation остаются Not Activated.
-  Commit и publication не авторизованы и не выполнялись**
+  production integration и Production Activation остаются Not Activated. На
+  момент closure commit и publication не были авторизованы и не выполнялись —
+  это historical closure state; последующая публикация подтверждена локальным
+  Git: task commit `a7218683c34c1097f20065c1e1e03e24e07e122d` опубликован через
+  PR #72 и merged как `82a03be49635690cec06d90679eb4d8b4801bade`**
 - Previous completed task (2026-09-20): **TASK-066 — Runtime Execution Containment
   and Evidence Design; `Completed — Coordinator Accepted (2026-09-20)`,
   Design-only; branch
