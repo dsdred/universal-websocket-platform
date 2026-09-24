@@ -5,12 +5,23 @@
 ## 1. Status
 
 - **Design Status:** Approved
-- **Implementation Status:** Planned
+- **Implementation Status:** Implemented in isolation
 
 TASK-068 approves this implementation boundary and decomposition. Approval makes
 one later code slice Ready for a separate intake; it does not create a package,
 adapter, ledger, generation authority, positive evidence, or production
 capability.
+
+TASK-069 implements the isolated Windows-only first slice in the worktree:
+independent trusted descriptor validation,
+existing-only pre-provisioned anchor/bbolt ledger, a non-inheritable Windows
+`Global\\` Event, exact successor append/inspection, identity checks, and
+fail-closed tests. Coordinator explicitly set this implementation status
+through TASK-069. Mutable Tester/Reviewer verdicts and subject identities
+resolve only from that task's newest valid matching envelope and are not
+duplicated here; the latest verification, review and Acceptance checkpoint is
+envelope-owned. The package is not wired into Control Service; evidence reading, recovery,
+reporting, provisioning, and Production Activation remain absent.
 
 ## 2. Purpose
 
@@ -57,6 +68,7 @@ or activation.
 - `ReadExactExecutionEvidence` or shutdown-completion evidence composition;
 - child, remote, container, cluster, adoption, or supervision protocols;
 - ledger retention, compaction, migration, deletion, or arbitrary repair;
+- implementation of production domain provisioning or production startup wiring;
 - Control Service integration, public DTO, authorization, or Production
   Activation.
 
@@ -83,6 +95,9 @@ The guarantee requires all of the following:
 7. the capability holder is the only configured ledger writer for the domain;
 8. guarantee, namespace, storage, corruption, or inspection uncertainty grants
    no authority and no positive evidence.
+9. the domain's authoritative storage root and pre-provisioned anchor are
+   immutable for that domain; loss or replacement cannot be mistaken for first
+   use.
 
 A database session lock, file marker, PID file, expiring lease, or process-local
 mutex is insufficient unless its concrete contract and subprocess tests prove
@@ -115,6 +130,57 @@ The same normalized domain identity selects both the exclusive capability and
 its ledger. Namespace mismatch, aliasing, replacement, or uncertain resolution
 is fatal; implementation must not continue under a newly resolved namespace.
 
+### 8.1 Provisioned domain and storage authority
+
+An authoritative immutable storage root is part of provisioning the containment
+domain. Trusted deployment provisioning binds one normalized Domain to one
+storage authority and an existing domain anchor/ledger in that root before
+Runtime bootstrap. The anchor records the Domain and an opaque, non-reused
+storage-authority identity as namespace/provenance metadata; it is not a
+generation record or a second source of Runtime truth. A canonical path derived
+from Domain inside the root is only a locator, not proof that the located
+storage is the original authority. Changing the root or reprovisioning the same
+Domain does not create legitimate first use.
+
+Runtime bootstrap receives an immutable trusted provisioning descriptor from
+the deployment boundary, independently of the candidate root, anchor, ledger,
+or any bytes stored beneath that root. The descriptor binds the normalized
+Domain to the expected canonical root, the expected physical root identity, and
+the expected opaque storage-authority identity. Candidate storage supplies only
+observed values; it must never supply, derive, override, or repair any expected
+descriptor value and cannot attest its own authority. Bootstrap validates the
+observed canonical and physical root identities, anchor Domain and
+storage-authority identity, and ledger binding against the descriptor before
+`ProvisionedEmpty` or authority is possible. An alternate or copied store fails
+closed even when its anchor and ledger are internally consistent.
+
+`ProvisionedEmpty` means that the trusted anchor and ledger already exist and
+validate as the provisioned authority, while the ledger has no generation
+entry. It is the sole state from which a first generation with no predecessor
+may be committed. A missing anchor, ledger, or directory is never
+`ProvisionedEmpty`. Runtime opens the provisioned storage existing-only; it
+does not create, repair, migrate, relocate, replace, or rebind a Domain, anchor,
+root, or ledger.
+
+The deployment/provisioning authority must preserve the Domain-to-root and
+storage-authority binding across restarts and prevent unauthorized deletion,
+replacement, cloning, relocation, and rollback of the anchor and ledger as one
+unit. It must never reissue the same storage-authority identity or treat loss
+of a previously provisioned Domain as a new Domain. Bootstrap may validate
+observable root, anchor, Domain, authority-identity, and ledger mismatches; it
+cannot detect a perfectly consistent joint rollback or clone by reading only
+the rolled-back/duplicated storage. The declared `ProcessContainment` guarantee
+therefore depends on the trusted deployment/storage boundary preventing that
+undetectable case. An environment unable to establish this boundary cannot
+declare the guarantee or expose authority. Production provisioning and wiring
+are outside the first implementation slice.
+
+Missing, mismatched, replaced, relocated, stale, or alternate candidate
+storage, and uncertainty about which root is authoritative, fail closed. A
+pre-acquisition failure grants no authority; after capability acquisition the
+domain is `FatalFenced` and the process terminates. Neither case permits a
+fallback root or automatic reprovisioning.
+
 ## 9. Safety-atomic bootstrap
 
 Capability acquisition, fresh generation creation, and durable ledger
@@ -124,10 +190,12 @@ and durable append need not share a physical transaction.
 Authority exists only after all conditions hold:
 
 1. the process exclusively holds the domain capability;
-2. one fresh opaque generation candidate has been created;
-3. the exact successor entry is durably committed while capability remains
+2. the existing provisioned anchor and ledger have been opened and validated
+   under that capability in the authoritative storage root;
+3. one fresh opaque generation candidate has been created;
+4. the exact successor entry is durably committed while capability remains
    held;
-4. exact inspection confirms that candidate as the current ledger tail.
+5. exact inspection confirms that candidate as the current ledger tail.
 
 The durable successor commit is the logical linearization point. Raw capability
 acquisition and a private candidate are provisional and grant no generation
@@ -145,8 +213,10 @@ record predecessor = Gprev
 thereby record Gprev superseded
 ```
 
-The first generation has no predecessor. Append compares the exact expected
-tail. A committed generation is never rewritten, removed, reordered, or reused.
+The first generation has no predecessor only when the expected state is the
+validated `ProvisionedEmpty` state. Append compares the exact expected tail or
+that explicit empty state. A committed generation is never rewritten, removed,
+reordered, or reused.
 Only the exact candidate may be retried after an inspected definite absence.
 
 ## 11. Crash and indeterminate cuts
@@ -155,6 +225,7 @@ Only the exact candidate may be retried after an inspected definite absence.
 | --- | --- |
 | before exclusive acquisition | no mutation, generation, or authority |
 | acquisition fails or is ambiguous | domain unavailable; no ledger write or downstream work |
+| provisioned anchor/ledger absent, mismatched, replaced, relocated, stale, alternate, or uninspectable | no first-use inference; fail closed, and fatal-fence if capability is held |
 | capability held before candidate creation | provisional only; crash leaves no durable generation |
 | candidate created before append | candidate remains private and unbound |
 | definite append failure and inspected tail unchanged | retry the exact candidate while capability remains held |
@@ -176,7 +247,8 @@ state for its lifetime. No consumer receives the raw handle. There is no normal
 cleanup operation that releases it.
 
 Loss, revocation, guarantee downgrade, namespace ambiguity, unreconciled append,
-or corruption permanently changes the process-domain state to `FatalFenced`.
+storage-authority uncertainty, or corruption permanently changes the
+process-domain state to `FatalFenced` after acquisition.
 Fencing closes admission, disables generation provision and positive evidence,
 and requires process termination. The process cannot reacquire authority in
 place.
@@ -193,7 +265,7 @@ It contains no PID, time, address, Host state, lifecycle phase, command,
 attempt, recovery claim, operator annotation, payload, or user data. The ledger
 is append-only, single-writer, domain-isolated, and durable across process
 termination. Loss, partial state, duplicate identity, impossible predecessor,
-or unverified tail is unavailable/fatal—not an empty ledger and not positive
+or unverified tail is unavailable/fatal—not `ProvisionedEmpty` and not positive
 termination evidence.
 
 ## 14. Conceptual API
@@ -201,7 +273,7 @@ termination evidence.
 The public package semantics are deliberately narrow:
 
 ```text
-AcquireProcessContainment(domain) -> ActiveAuthority | Unavailable | FatalFenced
+AcquireProcessContainment(domain, trustedProvisioningDescriptor) -> ActiveAuthority | Unavailable | FatalFenced
 
 ActiveAuthority.CurrentGeneration() -> exact committed current generation
 ActiveAuthority.GuaranteeLevel() -> ProcessContainment
@@ -212,6 +284,7 @@ Private driver semantics are:
 
 ```text
 AcquireExclusiveProcessLifetime(domain)
+OpenExistingProvisionedAnchor(heldCapability, domain, trustedProvisioningDescriptor)
 ReadLedgerTail(heldCapability, domain)
 AppendSuccessor(heldCapability, domain, expectedTail, exactCandidate)
 InspectExactAppend(heldCapability, domain, exactCandidate)
@@ -230,9 +303,10 @@ internal/runtimecontainment
 ```
 
 It owns opaque domain/generation types, invalid-zero semantics, the capability
-state machine, ledger records and expected-tail append, candidate creation,
-guarantee identity, fatal fencing, one concrete initial local adapter, and its
-subprocess/crash conformance harness.
+state machine, existing-only anchor validation, ledger records and
+expected-tail append, candidate creation, guarantee identity, fatal fencing,
+one concrete initial local adapter, and its subprocess/crash conformance
+harness.
 
 Dependency direction is:
 
@@ -263,18 +337,22 @@ the current Control Service composition already enforces them.
 
 ## 17. First implementation slice
 
-The next eligible intake is **Runtime Process-Containment Bootstrap
-Implementation**:
+The first implementation slice is **Runtime Process-Containment Bootstrap over
+a Pre-Provisioned Domain Anchor**:
 
 - one `internal/runtimecontainment` package;
 - one real local adapter satisfying section 6;
+- existing-only open and validation of the pre-provisioned domain anchor and
+  ledger under the trusted storage authority in section 8.1;
 - the safety-atomic protocol in sections 9–11;
 - fatal fencing from section 12;
 - subprocess, restart, crash-cut, concurrency, durability, identity-reuse, and
-  corruption proofs.
+  corruption proofs, including missing/deleted anchor, alternate root,
+  replacement, relocation, stale copy, and two candidate stores.
 
-Evidence reading, DP-014 changes, provider wiring, recovery, reporting, public
-API, production integration, and activation remain explicit non-goals.
+Evidence reading, DP-014 changes, provider wiring, production provisioner,
+recovery, reporting, public API, production integration, and activation remain
+explicit non-goals.
 
 ## 18. Proof matrix
 
@@ -298,6 +376,17 @@ one winner, independent domains, forced termination, one successor per restart,
 every crash cut, indeterminate append inspection, committed-but-unacknowledged
 append convergence, corruption and namespace mismatch, identity reuse rejection,
 absence of release/reacquire API, race checks, and repository regression tests.
+The harness provisions the anchor before invoking bootstrap and proves a first
+generation only from validated `ProvisionedEmpty`; missing/deleted anchor,
+alternate root, mismatched identity, replacement, relocation, stale copy, and
+two candidate stores fail closed. Tests of observable mismatch do not claim to
+detect an undetectable joint rollback/clone; the adapter must declare and
+verify its deployment/storage trust precondition before claiming the guarantee.
+Tests also provide expected canonical root, physical root identity, and
+storage-authority identity only through the independent trusted provisioning
+descriptor. A candidate anchor or store that copies or self-reports matching
+expected values cannot replace that descriptor; alternate/copied storage fails
+closed against it even when internally consistent.
 
 ## 19. Ordered downstream decomposition
 
@@ -328,18 +417,24 @@ exposure of a partial authority.
 
 ## 21. Implementation boundary
 
-Implementation Status remains `Planned`. The repository contains no
-`internal/runtimecontainment` package, conforming capability, containment
-ledger, authoritative generation bootstrap, or positive evidence reader.
-Approval of this design and TASK-068 acceptance may justify a separate code-task
-intake only. They do not change current runtime behavior or satisfy DP-017.
+Implementation Status is `Implemented in isolation`. The TASK-069 worktree
+contains the Windows-only `internal/runtimecontainment` slice with a conforming
+capability, pre-provisioned anchor/bbolt ledger, authoritative generation
+bootstrap, unsupported-platform fail-closed stub, and focused proofs. It is not
+composed into Control Service and has no positive evidence reader. Therefore
+current production composition behavior and DP-017 are unchanged; evidence,
+recovery, reporting, provisioning, integration, and Production Activation
+remain later work.
 
 ## 22. Decision
 
 UWP will establish initial `ProcessContainment` through one process-lifetime
-exclusive capability and one same-domain durable append-only ledger. The first
-implementation slice must acquire the capability, create one opaque generation,
-and durably append and inspect its exact successor record before exposing
-authority. Any ambiguous guarantee or unreconciled state fails closed and
-terminates the process; evidence, composition, recovery, reporting, and
-activation remain later decisions.
+exclusive capability and one same-domain durable append-only ledger in a
+trusted, pre-provisioned, immutable storage authority. The first implementation
+slice must acquire the capability, validate the existing anchor and ledger,
+create one opaque generation, and durably append and inspect its exact successor
+record before exposing authority. The first generation requires validated
+`ProvisionedEmpty`; missing or uncertain storage is never first use. Any
+ambiguous guarantee or unreconciled state fails closed; after acquisition it
+fatal-fences and terminates the process. Evidence, composition, recovery,
+reporting, provisioning implementation, and activation remain later work.

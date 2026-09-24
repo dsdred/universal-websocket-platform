@@ -14,15 +14,16 @@ Approved как эта граница, поэтому prerequisite DP-017 sectio
 ничего не говорит о реализации, которая отсутствует: реализация DP-017 остаётся
 неактивированной.
 
-[DP-023](DP-023-runtime-process-containment-bootstrap.md) — Approved, Planned
-implementation boundary initial bootstrap capability/ledger/generation. Она
-делает первый code slice допустимым для отдельного intake, но не реализует это
-предложение или его evidence outcomes.
+[DP-023](DP-023-runtime-process-containment-bootstrap.md) — Approved,
+Implemented-in-isolation boundary initial bootstrap capability/ledger/
+generation. TASK-069 реализует этот Windows-only substrate в worktree. Latest
+verification, review и Acceptance checkpoint и subject identity resolve-ятся
+только из newest valid matching envelope TASK-069 и здесь не дублируются. Slice
+не реализует evidence outcomes этого предложения.
 
-Ни один package, store, schema, adapter, API, scanner, supervisor, production
-wiring или runtime behavior не существует как результат этого документа. Ничто
-здесь не утверждает и не подразумевает, что Control Service уже способен
-наблюдать termination процесса.
+Evidence adapter, scanner, supervisor, production wiring и composed runtime
+behavior отсутствуют. Ничто здесь не утверждает и не подразумевает, что Control
+Service уже способен наблюдать termination процесса.
 
 ## 2. Назначение
 
@@ -124,6 +125,11 @@ execution-generation containment. В initial topology это operational managem
 domain, обслуживаемый одним Control Service, вместе с durable identity state,
 которым он владеет. Domain — это не Runtime Instance, Workspace, Configuration
 или метка host-машины.
+
+Для initial process boundary этот durable scope включает один immutable
+authoritative storage root и заранее provisioned привязку Domain-to-storage
+authority. DP-023 section 8.1 определяет её bootstrap и deployment trust
+contract. Отсутствие storage не доказывает, что Domain является новой.
 
 **Containment capability** — исключительно удерживаемая authority быть live
 generation одного containment domain. Она acquired одним Control Service process
@@ -309,6 +315,15 @@ capability, и то, что более поздний exclusive acquisition ег
    section 11 оставляет вне области действия, и не хранит ни одного process
    identifier, адреса или пути.
 
+Для initial bootstrap `ProvisionedEmpty` — это существующий, проверенный,
+заранее provisioned anchor и ledger без generation entry согласно DP-023
+section 8.1. Missing, replaced, relocated, stale или alternate store не
+является empty ledger и не даёт authority. Anchor — metadata storage provenance
+вне generation records; он не добавляет Runtime facts в ledger. Доверенная
+deployment/storage граница предотвращает ненаблюдаемый joint rollback или
+cloning anchor и ledger; runtime validation сама по себе не доказывает, что
+согласованная копия является исходной.
+
 ## 12. Доказательство termination
 
 Для exact prior generation, названного execution binding attempt,
@@ -460,7 +475,7 @@ Adapter отвечает на evidence запросы только на объя
 | Уровень | Покрывает | Может сообщать | Требуемые гарантии |
 | --- | --- | --- | --- |
 | `None` | adapter отсутствует либо не может связать tuple | только `Unknown` | никаких; default состояние репозитория |
-| `ProcessContainment` | initial single-node in-process границу | `GenerationLive`, `GenerationTerminated`, `CoveredResourcesAbsent`, `HostShutdownCompleted`, читаемые через facts DP-014/DP-015 | exclusive single-holder acquisition; release только при termination процесса без потери или двойной выдачи; отсутствие использования clock; locality ledger по section 11 |
+| `ProcessContainment` | initial single-node in-process границу | `GenerationLive`, `GenerationTerminated`, `CoveredResourcesAbsent`, `HostShutdownCompleted`, читаемые через facts DP-014/DP-015 | exclusive single-holder acquisition; release только при termination процесса без потери или двойной выдачи; отсутствие использования clock; locality ledger и pre-provisioned storage authority по section 11 и DP-023 section 8.1 |
 | `ExecutionIsolation` | будущую approved child или remote границу | дополнительно `LiveUnownedExecution` | всё из `ProcessContainment` плюс approved протокол adoption и termination, которого не существует |
 
 Каждый adapter должен объявить, для каждого уровня: какой domain он связывает,
@@ -628,27 +643,30 @@ append-only supersession, точную привязку tuple и fail-closed п�
 
 ## 25. Граница реализации
 
-Реализовано сегодня изолированно: opaque identity type `ExecutionGeneration`,
-conditional attempt-to-generation binding операция DP-014 и request-exactly-once
-provider seam DP-020, потребляемый изолированным orchestration путём. Не
-существует containment capability, containment ledger, generation authority как
-отдельного компонента, evidence adapter, production composition wiring и
-кодового пути, который мог бы наблюдать termination процесса или generation.
+Реализованы изолированно сегодня: opaque
+identity type `ExecutionGeneration`, conditional attempt-to-generation binding
+операция DP-014, request-exactly-once provider seam DP-020 и Windows-only
+bootstrap package slice DP-023 из TASK-069. Последний устанавливает private
+capability, ledger и generation authority только внутри package. Latest
+verification, review и Acceptance checkpoint определяется только newest valid
+matching envelope TASK-069. Evidence adapter, production composition wiring и
+code path, который мог бы expose termination evidence Control Service,
+отсутствуют.
 
-DP-023 теперь утверждает process-lifetime capability, durable expected-tail
-ledger transition, package boundary generation authority, crash cuts и первый
-implementation slice. Его Implementation Status также Planned; поэтому
-отсутствие выше и все downstream gates остаются без изменений.
+DP-023 — Approved/Implemented in isolation по explicit Coordinator status
+decision через TASK-069. Mutable role verdicts и identities resolve-ятся из
+newest valid matching envelope этой task. Все evidence и downstream gates
+остаются без изменений; сам DP-022 остаётся Planned.
 
 Этот документ есть Approved design граница, поэтому DP-017 section 11 теперь
 имеет authoritative containment boundary для потребления; сам DP-017 остаётся
 Approved/Planned и неактивированным. Статус получен явным решением через project
 design status процесс; acceptance задачи со стороны Documentation, Tester,
 Reviewer или Coordinator не повышает Design Status этого документа и никогда не
-повышает Implementation Status. Approval ничего не активирует: containment
-capability, ledger и evidence adapter отсутствуют, поэтому exact
+повышает Implementation Status. Isolated bootstrap candidate не активирует
+evidence: evidence adapter и composition отсутствуют, поэтому exact
 prior-generation termination proof, требуемый DP-017 section 11, по-прежнему не
-может быть получен ни одним компонентом, а DP-017 recovery, DP-018 reporting,
+может потребляться ни одним компонентом, а DP-017 recovery, DP-018 reporting,
 production integration и Production Activation остаются `Not Activated` и
 отсутствуют; downstream consumption containment evidence относится к более
 поздней, отдельно approved границе. Ни один gate ARCH-004 section 19 здесь не
