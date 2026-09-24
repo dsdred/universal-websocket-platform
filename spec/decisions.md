@@ -68,9 +68,12 @@
 - ADR-0003 определяет component boundaries Runtime и Provider-based composition.
 - DP-020 и DP-021 сохраняют Design Status Draft. DP-022 имеет Design Status
   Approved по отдельному решению TASK-067; DP-023 имеет Design Status Approved
-  по явному решению Architect TASK-068. Реализация обоих отсутствует, и
-  Implementation Status не повышается authoring, commit или Coordinator
-  Acceptance task.
+  по явному решению Architect TASK-068. TASK-069 содержит isolated Windows-only
+  worktree slice первого bootstrap DP-023. По explicit Coordinator decision
+  DP-023 имеет Implementation Status
+  `Implemented in isolation`; DP-022 остаётся `Planned`, потому что evidence
+  outcomes, production composition и activation отсутствуют. Статус не
+  повышается самим authoring или commit.
 - ARCH-004 определяет Runtime Instance, Launch Attempt и deployment identity
   model; минимальный in-process Runtime Lifecycle Owner и process-local
   isolated operational identity/command stores реализованы, а external durable
@@ -89,6 +92,23 @@
   overall.
 
 ## Ожидающие отдельного решения
+
+Historical TASK-069 blocker `ARCH-B-001` доказал необходимость independently
+delivered immutable trusted provisioning descriptor, который связывает
+expected canonical root, physical root identity и storage-authority identity и
+не позволяет candidate storage self-attest expected values. Bounded mirrored
+DP-022/DP-023 amendment закрепляет existing-only anchor/ledger и fail-closed
+missing/mismatch/alternate/copied-store semantics. Fresh Architect review
+фактических amended EN/RU bytes — `APPROVED`, blocking findings 0, иных
+известных design/readiness prerequisites нет. TASK-069 теперь `In Progress` в
+exact Windows-only first slice: isolated worktree slice реализован. По explicit
+Coordinator decision DP-023 — `Approved / Implemented in isolation`; DP-022
+остаётся `Approved / Planned`. Mutable Tester/Reviewer checkpoint и identity
+resolve-ятся только из newest valid matching envelope TASK-069 и здесь не
+дублируются. Slice не wired в Control Service; evidence/recovery/reporting/
+Production Activation отсутствуют. TASK-068 Acceptance/publication неизменны;
+latest verification, review и Acceptance checkpoint TASK-069 определяется
+только newest valid matching envelope.
 
 Delivery, Message Persistence, Plugin ABI, production deployment adapters, operational
 diagnostics и supervision требуют сфокусированных решений в соответствующих

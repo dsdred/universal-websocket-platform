@@ -462,15 +462,28 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   and Production Activation remain inactive. Design-only TASK-066 introduces
   the mirrored DP-022 execution-containment and evidence boundary that
   DP-017 section 11 requires as a prerequisite, and TASK-067 approves it:
-  DP-022 is Approved with Implementation Status Planned; no containment
-  capability, ledger, or evidence adapter exists, so no termination proof can
-  be produced yet and DP-017, DP-018 and production integration remain Not
-  Activated. TASK-068 approves mirrored DP-023 as the initial implementation
+  DP-022 is Approved with Implementation Status Planned. TASK-069 implements an
+  isolated Windows-only bootstrap substrate, but no evidence adapter
+  or composition exists, so no termination evidence can be consumed and
+  DP-017, DP-018 and production integration remain Not Activated. TASK-068
+  approves mirrored DP-023 as the initial implementation
   boundary: one process-lifetime exclusive capability, one same-domain durable
   expected-tail ledger append, and one opaque generation form a single
-  safety-atomic bootstrap slice. Its Implementation Status remains Planned;
+  safety-atomic bootstrap slice. Its Implementation Status is now Implemented
+  in isolation by explicit Coordinator decision through TASK-069;
   exact evidence, composition, recovery, reporting, and activation are ordered
-  later slices and remain inactive.
+  later slices and remain inactive. TASK-069 historically stopped on
+  `ARCH-B-001`; bounded DP-022/DP-023 amendments now require an immutable
+  trusted provisioning descriptor delivered independently of candidate
+  storage, an existing-only anchor/ledger, and fail-closed storage identity
+  validation. Fresh Architect review is `APPROVED`, blocking findings 0, with
+  no further known design/readiness prerequisite. TASK-069 is Unblocked / In
+  Progress for the exact Windows-only first slice. DP-023 is
+  Approved/Implemented in isolation. The latest verification, review and
+  Acceptance checkpoint and subject identity resolve only from TASK-069's
+  newest valid matching envelope and are not duplicated here. The slice is not
+  wired into Control Service;
+  evidence, recovery, reporting, and Production Activation remain absent.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Message Persistence, Delivery, and Plugin contracts still require focused design.

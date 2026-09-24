@@ -1,18 +1,40 @@
 # Текущее состояние
 
-**Текущая design task:** TASK-068 — Initial Runtime Containment Implementation
-Boundary and Slice Decomposition, `In Progress`; exact current checkpoint
-определяется terminal Recovery Evidence Envelope task record, Design-only /
-Readiness на ветке
-`docs/task-068-runtime-containment-implementation-readiness` от synchronized
-baseline `82a03be49635690cec06d90679eb4d8b4801bade`. Independent Architect утвердил
-зеркальный [DP-023: Bootstrap process-containment Runtime](../docs/ru/design/DP-023-runtime-process-containment-bootstrap.md),
-`Approved / Planned`: process-lifetime exclusive capability, durable same-domain
-expected-tail append ledger и одна opaque generation образуют неделимый первый
-bootstrap slice. Implementation, evidence reader, composition, DP-017 recovery,
-reporting и activation отсутствуют; следующий code task не активирован.
+**Текущая implementation task:** TASK-069 — Runtime Process-Containment
+Bootstrap Implementation, `In Progress`; exact current Tester/Reviewer
+checkpoint и subject identity определяются только newest valid matching
+Recovery Evidence Envelope в TASK-069; на ветке
+`feature/task-069-runtime-process-containment-bootstrap` от synchronized
+baseline `d3666ffea13a1866d86d7e8df9d4125aaade20c1`. Historical `ARCH-B-001`
+устранён bounded amendment DP-022/DP-023 и independent immutable trusted
+provisioning descriptor. Fresh Architect review фактических EN/RU bytes —
+`APPROVED`, blocking findings 0, иных известных design/readiness prerequisites
+нет. Exact first slice Windows-only: existing-only pre-provisioned
+anchor/ledger, Windows `Global\\` Event, bbolt custom opener без `O_CREATE`,
+canonical/physical root и file identity validation и fail-closed proofs. Exact
+isolated worktree slice существует в `internal/runtimecontainment`
+с тремя focused test files и bbolt/Windows syscall dependencies. Он не wired в
+Control Service. Mutable verification/review verdict и identity здесь не
+дублируются и resolve-ятся из newest valid matching envelope TASK-069. Зеркальный
+[DP-023: Bootstrap process-containment Runtime](../docs/ru/design/DP-023-runtime-process-containment-bootstrap.md)
+теперь `Approved / Implemented in isolation` по explicit Coordinator decision;
+DP-022 остаётся `Approved / Planned`. Evidence reader, composition, DP-017
+recovery, reporting, production integration и activation отсутствуют и
+неактивны. Latest verification, review и Acceptance checkpoint определяется
+только newest valid matching TASK-069 envelope и здесь не дублируется.
 
-**Последняя завершённая design task (2026-09-21):** TASK-067 — `Completed —
+**Последняя завершённая design task (2026-09-21):** TASK-068 — Initial Runtime
+Containment Implementation Boundary and Slice Decomposition, `Completed —
+Coordinator Accepted (2026-09-21)`, Design-only / Readiness, на task-ветке
+`docs/task-068-runtime-containment-implementation-readiness` с baseline
+`82a03be49635690cec06d90679eb4d8b4801bade`. Independent Architect утвердил
+DP-023 (`Approved / Planned`) и неделимый первый bootstrap slice без изменения
+product capability. Последующая публикация подтверждается локальным Git: task
+commit `924f71c6a7ee3a89d4f15bd74dda6ee4ba4c4df7` опубликован через PR #73 и
+merged как `d3666ffea13a1866d86d7e8df9d4125aaade20c1`; прежние local/remote task refs
+отсутствуют. TASK-069 активирована отдельным intake, а не Acceptance TASK-068.
+
+**Предыдущая завершённая design task (2026-09-21):** TASK-067 — `Completed —
 Coordinator Accepted (2026-09-21)`, `Design-update`, на task-ветке
 `docs/task-067-dp-022-design-status-decision` с baseline
 `2c899a2069167c0d83b7c2d3cb8ffb13e862bfb9`. Architect выполнил
@@ -23,8 +45,8 @@ Draft → **Approved**, Implementation Status остаётся **Planned**. Ре
 (`Synchronized`, включая reconciliation publication facts TASK-066),
 Scope Audit `13/0/0` и final Review в двух rounds (blocking finding C1
 первого review adjudicated как `Disproven` с тройным воспроизведением
-manifest). Acceptance повышает только Design Status DP-022: containment
-capability, containment ledger и evidence adapter по-прежнему не реализованы,
+manifest). На момент closure Acceptance повысила только Design Status DP-022:
+containment capability, containment ledger и evidence adapter не были реализованы,
 `GenerationTerminated` при repository default adapter level `None`
 доказуем только как `Unknown(GuaranteeNotDeclared)`; DP-017 §11 имеет
 approved boundary на уровне дизайна, и весь DP-017 prerequisite-набор
@@ -45,9 +67,9 @@ Coordinator Accepted (2026-09-20)`, Design-only, на task-ветке
 [DP-022: Граница containment исполнения Runtime и evidence](../docs/ru/design/DP-022-runtime-execution-containment-and-evidence.md) —
 containment/evidence prerequisite, требуемый DP-017 §11; задача прошла
 независимые Verification, PROCESS-002, Scope Audit, final Review и Coordinator
-Acceptance. Реализация отсутствует: containment capability, containment ledger и
-evidence adapter не созданы, наблюдение завершения execution generation ничем не
-обеспечивается. Design Status DP-022 повышен Draft → Approved отдельным
+Acceptance. На момент closure реализация отсутствовала: containment capability,
+containment ledger и evidence adapter не были созданы, наблюдение завершения
+execution generation ничем не обеспечивалось. Design Status DP-022 повышен Draft → Approved отдельным
 решением TASK-067; Implementation Status остаётся Planned, а DP-017 §11 имеет
 теперь approved boundary только на уровне дизайна. DP-017 и DP-018
 implementation, production integration и Production Activation остаются

@@ -5,12 +5,23 @@
 ## 1. Статус
 
 - **Design Status:** Approved
-- **Implementation Status:** Planned
+- **Implementation Status:** Implemented in isolation
 
 TASK-068 утверждает эту implementation boundary и decomposition. Approval делает
 один последующий code slice Ready для отдельного intake; он не создаёт package,
 adapter, ledger, generation authority, positive evidence или production
 capability.
+
+TASK-069 реализует в worktree изолированный Windows-only первый slice:
+validation независимого trusted descriptor,
+existing-only заранее provisioned anchor/bbolt ledger, non-inheritable Windows
+`Global\\` Event, exact successor append/inspection, identity checks и
+fail-closed tests. Coordinator явно установил этот Implementation Status через
+TASK-069. Mutable Tester/Reviewer verdicts и subject identities resolve-ятся
+только из newest valid matching envelope этой task и здесь не дублируются;
+latest verification, review и Acceptance checkpoint определяется этим
+envelope. Package не wired в Control Service; evidence reading, recovery,
+reporting, provisioning и Production Activation отсутствуют.
 
 ## 2. Назначение
 
@@ -57,6 +68,7 @@ Approved ownership rule выше, побеждает источник с бол�
 - `ReadExactExecutionEvidence` или composition shutdown-completion evidence;
 - child, remote, container, cluster, adoption или supervision protocols;
 - retention, compaction, migration, deletion или arbitrary repair ledger;
+- реализация production provisioning domain или production startup wiring;
 - integration Control Service, public DTO, authorization или Production
   Activation.
 
@@ -82,6 +94,8 @@ Initial implementation guarantee:
 7. capability holder является единственным configured writer ledger для domain;
 8. неопределённость guarantee, namespace, storage, corruption или inspection не
    даёт authority и positive evidence.
+9. authoritative storage root и заранее provisioned anchor являются immutable
+   для domain; loss или replacement нельзя принять за first use.
 
 Database session lock, file marker, PID file, expiring lease или process-local
 mutex недостаточны, если их concrete contract и subprocess tests не доказывают
@@ -114,6 +128,57 @@ opaque, non-zero и non-reusable. Ни одна из них не выводит�
 Namespace mismatch, aliasing, replacement или uncertain resolution являются
 fatal; implementation не продолжает работу под заново разрешённым namespace.
 
+### 8.1 Provisioned domain и storage authority
+
+Authoritative immutable storage root входит в provisioning containment domain.
+Доверенный deployment provisioning до Runtime bootstrap связывает одну
+normalized Domain с одной storage authority и существующим domain anchor/ledger
+в этом root. Anchor содержит Domain и opaque, non-reused storage-authority
+identity как metadata namespace/provenance; он не является generation record
+или вторым источником истины о Runtime. Canonical path, полученный из Domain
+внутри root, лишь находит storage, но не доказывает, что это исходная authority.
+Смена root или повторный provisioning той же Domain не создают legitimate
+first use.
+
+Runtime bootstrap получает от deployment boundary immutable trusted
+provisioning descriptor независимо от candidate root, anchor, ledger и любых
+bytes внутри этого root. Descriptor связывает normalized Domain с expected
+canonical root, expected physical root identity и expected opaque
+storage-authority identity. Candidate storage предоставляет только observed
+values; он никогда не поставляет, не выводит, не переопределяет и не repair-ит
+expected values descriptor и не может удостоверять собственную authority.
+Перед `ProvisionedEmpty` или выдачей authority bootstrap сверяет observed
+canonical/physical root identities, Domain и storage-authority identity anchor,
+а также binding ledger с descriptor. Alternate или copied store выполняет fail
+closed, даже если его anchor и ledger внутренне согласованы.
+
+`ProvisionedEmpty` означает, что trusted anchor и ledger уже существуют и
+проверены как provisioned authority, но ledger ещё не содержит generation
+entry. Только из этого состояния можно commit first generation без
+predecessor. Отсутствующий anchor, ledger или directory никогда не являются
+`ProvisionedEmpty`. Runtime открывает provisioned storage только existing-only;
+он не создаёт, не ремонтирует, не мигрирует, не перемещает, не заменяет и не
+перепривязывает Domain, anchor, root или ledger.
+
+Deployment/provisioning authority обязана сохранять привязку Domain-to-root и
+storage-authority через restarts и предотвращать несанкционированные deletion,
+replacement, cloning, relocation и rollback anchor и ledger как единого
+целого. Она никогда не переиспользует storage-authority identity и не считает
+потерю ранее provisioned Domain созданием новой Domain. Bootstrap может
+проверить наблюдаемые несовпадения root, anchor, Domain, authority identity и
+ledger; он не может обнаружить идеально согласованный joint rollback или
+clone, читая только откатанное или клонированное storage. Поэтому заявленная
+гарантия `ProcessContainment` опирается на доверенную deployment/storage
+границу, предотвращающую этот ненаблюдаемый случай. Среда, которая не может
+установить эту границу, не может заявлять гарантию или выдавать authority.
+Реализация production provisioning и wiring вне первого implementation slice.
+
+Missing, mismatched, replaced, relocated, stale или alternate candidate
+storage и неопределённость authoritative root выполняют fail closed. Failure
+до acquisition не даёт authority; после acquisition domain переходит в
+`FatalFenced`, а process завершается. Fallback root и automatic reprovisioning
+запрещены в обоих случаях.
+
 ## 9. Safety-atomic bootstrap
 
 Acquisition capability, создание fresh generation и durable ledger transition —
@@ -123,9 +188,11 @@ Acquisition capability, создание fresh generation и durable ledger tran
 Authority существует только после выполнения всех условий:
 
 1. process исключительно держит capability domain;
-2. создан ровно один fresh opaque generation candidate;
-3. exact successor entry durably committed при удерживаемой capability;
-4. exact inspection подтверждает candidate как current ledger tail.
+2. existing provisioned anchor и ledger открыты и проверены под этой
+   capability в authoritative storage root;
+3. создан ровно один fresh opaque generation candidate;
+4. exact successor entry durably committed при удерживаемой capability;
+5. exact inspection подтверждает candidate как current ledger tail.
 
 Durable successor commit — logical linearization point. Raw acquisition
 capability и private candidate являются provisional и не дают generation
@@ -143,8 +210,10 @@ record predecessor = Gprev
 thereby record Gprev superseded
 ```
 
-First generation не имеет predecessor. Append сравнивает exact expected tail.
-Committed generation никогда не rewritten, removed, reordered или reused.
+First generation не имеет predecessor только тогда, когда expected state —
+проверенное `ProvisionedEmpty`. Append сравнивает exact expected tail либо это
+явное empty state. Committed generation никогда не rewritten, removed,
+reordered или reused.
 После inspected definite absence можно retry только exact candidate.
 
 ## 11. Crash и indeterminate cuts
@@ -153,6 +222,7 @@ Committed generation никогда не rewritten, removed, reordered или re
 | --- | --- |
 | до exclusive acquisition | нет mutation, generation или authority |
 | acquisition fails или ambiguous | domain unavailable; нет ledger write или downstream work |
+| provisioned anchor/ledger отсутствует, mismatched, replaced, relocated, stale, alternate или uninspectable | нет вывода о first use; fail closed, а при удерживаемой capability — fatal fence |
 | capability held до создания candidate | только provisional; crash не оставляет durable generation |
 | candidate создан до append | candidate остаётся private и unbound |
 | definite append failure и inspected tail не изменился | retry exact candidate при удерживаемой capability |
@@ -173,8 +243,9 @@ Authoritative process удерживает capability в private strongly reacha
 всю свою lifetime. Ни один consumer не получает raw handle. Normal cleanup
 operation для release отсутствует.
 
-Loss, revocation, guarantee downgrade, namespace ambiguity, unreconciled append
-или corruption навсегда переводят process-domain state в `FatalFenced`.
+Loss, revocation, guarantee downgrade, namespace ambiguity, unreconciled append,
+storage-authority uncertainty или corruption навсегда переводят process-domain
+state в `FatalFenced` после acquisition.
 Fencing закрывает admission, отключает generation provision и positive evidence
 и требует process termination. Process не может reacquire authority in place.
 
@@ -190,7 +261,7 @@ Fencing закрывает admission, отключает generation provision и
 attempt, recovery claim, operator annotation, payload или user data. Ledger
 append-only, single-writer, domain-isolated и durable через process termination.
 Loss, partial state, duplicate identity, impossible predecessor или unverified
-tail означают unavailable/fatal, а не empty ledger и не positive termination
+tail означают unavailable/fatal, а не `ProvisionedEmpty` и не positive termination
 evidence.
 
 ## 14. Концептуальный API
@@ -198,7 +269,7 @@ evidence.
 Public package semantics намеренно узки:
 
 ```text
-AcquireProcessContainment(domain) -> ActiveAuthority | Unavailable | FatalFenced
+AcquireProcessContainment(domain, trustedProvisioningDescriptor) -> ActiveAuthority | Unavailable | FatalFenced
 
 ActiveAuthority.CurrentGeneration() -> exact committed current generation
 ActiveAuthority.GuaranteeLevel() -> ProcessContainment
@@ -209,6 +280,7 @@ Private driver semantics:
 
 ```text
 AcquireExclusiveProcessLifetime(domain)
+OpenExistingProvisionedAnchor(heldCapability, domain, trustedProvisioningDescriptor)
 ReadLedgerTail(heldCapability, domain)
 AppendSuccessor(heldCapability, domain, expectedTail, exactCandidate)
 InspectExactAppend(heldCapability, domain, exactCandidate)
@@ -227,9 +299,9 @@ internal/runtimecontainment
 ```
 
 Он владеет opaque domain/generation types, invalid-zero semantics, capability
-state machine, records ledger и expected-tail append, candidate creation,
-guarantee identity, fatal fencing, одним concrete initial local adapter и его
-subprocess/crash conformance harness.
+state machine, existing-only проверкой anchor, records ledger и expected-tail
+append, candidate creation, guarantee identity, fatal fencing, одним concrete
+initial local adapter и его subprocess/crash conformance harness.
 
 Dependency direction:
 
@@ -260,18 +332,22 @@ current composition Control Service уже их обеспечивает.
 
 ## 17. Первый implementation slice
 
-Следующий допустимый intake — **Runtime Process-Containment Bootstrap
-Implementation**:
+Первый implementation slice — **Runtime Process-Containment Bootstrap over a
+Pre-Provisioned Domain Anchor**:
 
 - один package `internal/runtimecontainment`;
 - один real local adapter, удовлетворяющий section 6;
+- existing-only open и validation заранее provisioned domain anchor и ledger
+  под trusted storage authority из section 8.1;
 - safety-atomic protocol sections 9–11;
 - fatal fencing из section 12;
 - subprocess, restart, crash-cut, concurrency, durability, identity-reuse и
-  corruption proofs.
+  corruption proofs, включая missing/deleted anchor, alternate root,
+  replacement, relocation, stale copy и два candidate stores.
 
-Evidence reading, изменения DP-014, provider wiring, recovery, reporting, public
-API, production integration и activation остаются явными non-goals.
+Evidence reading, изменения DP-014, provider wiring, production provisioner,
+recovery, reporting, public API, production integration и activation остаются
+явными non-goals.
 
 ## 18. Матрица доказательств
 
@@ -296,6 +372,17 @@ restart, каждый crash cut, inspection indeterminate append,
 committed-but-unacknowledged append convergence, corruption и namespace
 mismatch, rejection identity reuse, отсутствие release/reacquire API, race
 checks и repository regression tests.
+Harness provision-ит anchor до вызова bootstrap и доказывает first generation
+только из проверенного `ProvisionedEmpty`; missing/deleted anchor, alternate
+root, mismatched identity, replacement, relocation, stale copy и два candidate
+stores выполняют fail closed. Тесты наблюдаемого mismatch не заявляют
+обнаружение ненаблюдаемого joint rollback/clone; adapter обязан объявить и
+проверить свою deployment/storage trust precondition до заявления guarantee.
+Тесты также получают expected canonical root, physical root identity и
+storage-authority identity только через независимый trusted provisioning
+descriptor. Candidate anchor или store, копирующий либо self-reporting
+совпадающие expected values, не заменяет descriptor; alternate/copied storage
+fail closed against it, даже если внутренне согласован.
 
 ## 19. Ordered downstream decomposition
 
@@ -326,17 +413,25 @@ authority.
 
 ## 21. Граница реализации
 
-Implementation Status остаётся `Planned`. Repository не содержит package
-`internal/runtimecontainment`, conforming capability, containment ledger,
-authoritative generation bootstrap или positive evidence reader. Approval этого
-design и Acceptance TASK-068 могут только обосновать отдельный code-task intake.
-Они не меняют current runtime behavior и не удовлетворяют DP-017.
+Implementation Status — `Implemented in isolation`. Worktree TASK-069 содержит
+Windows-only slice `internal/runtimecontainment` с conforming
+capability, pre-provisioned anchor/bbolt ledger, authoritative generation
+bootstrap, fail-closed stub для unsupported platforms и focused proofs. Он не
+composed в Control Service; positive evidence reader отсутствует. Поэтому
+current production composition behavior и DP-017 не меняются; evidence,
+recovery, reporting, provisioning, integration и Production Activation
+остаются последующими работами.
 
 ## 22. Решение
 
 UWP установит initial `ProcessContainment` через одну process-lifetime exclusive
-capability и один same-domain durable append-only ledger. Первый implementation
-slice обязан acquire capability, создать одну opaque generation, durably append
-и inspect её exact successor record до exposure authority. Любая ambiguous
-guarantee или unreconciled state fail closed и terminate process; evidence,
-composition, recovery, reporting и activation остаются последующими решениями.
+capability и один same-domain durable append-only ledger в доверенной, заранее
+provisioned immutable storage authority. Первый implementation slice обязан
+acquire capability, проверить existing anchor и ledger, создать одну opaque
+generation, durably append и inspect её exact successor record до exposure
+authority. First generation требует проверенного `ProvisionedEmpty`;
+отсутствующее или неопределённое storage никогда не является first use. Любая
+ambiguous guarantee или unreconciled state выполняет fail closed; после
+acquisition process fatal-fenced и завершается. Evidence, composition,
+recovery, reporting, реализация provisioning и activation остаются
+последующими работами.
