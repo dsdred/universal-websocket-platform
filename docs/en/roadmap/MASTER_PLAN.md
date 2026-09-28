@@ -477,13 +477,22 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   trusted provisioning descriptor delivered independently of candidate
   storage, an existing-only anchor/ledger, and fail-closed storage identity
   validation. Fresh Architect review is `APPROVED`, blocking findings 0, with
-  no further known design/readiness prerequisite. TASK-069 is Unblocked / In
-  Progress for the exact Windows-only first slice. DP-023 is
-  Approved/Implemented in isolation. The latest verification, review and
-  Acceptance checkpoint and subject identity resolve only from TASK-069's
-  newest valid matching envelope and are not duplicated here. The slice is not
-  wired into Control Service;
-  evidence, recovery, reporting, and Production Activation remain absent.
+  no further known design/readiness prerequisite for that first slice. TASK-069
+  completed the exact Windows-only bootstrap, was Coordinator Accepted by its
+  newest valid matching envelope, and is published in synchronized
+  `main@8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. DP-023 is
+  Approved/Implemented in isolation. TASK-070 then activated the next exact
+  generation-evidence-reader slice; its historical Architecture Confirmation
+  found `TASK-070/ARCH-B-001`. The user-authorized focused mirrored DP-022
+  refinement received independent Architecture Confirmation on actual EN/RU
+  bytes (`APPROVED`, 0 blocking) on 2026-09-28. It fixes one-result projection,
+  later DP-014 binding ownership, single-use freshness and mandatory fatal
+  fencing. No further known architecture prerequisite exists for the isolated
+  reader. DP-022 Implementation Status is Partial by explicit Coordinator
+  decision for this verified isolated candidate only. TASK-070 is In Progress,
+  without Coordinator Acceptance. The bootstrap is not wired into Control
+  Service; full-tuple evidence, recovery, reporting,
+  and Production Activation remain absent.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Message Persistence, Delivery, and Plugin contracts still require focused design.

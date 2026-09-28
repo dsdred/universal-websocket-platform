@@ -1,27 +1,28 @@
 # Текущее состояние
 
-**Текущая implementation task:** TASK-069 — Runtime Process-Containment
-Bootstrap Implementation, `In Progress`; exact current Tester/Reviewer
-checkpoint и subject identity определяются только newest valid matching
-Recovery Evidence Envelope в TASK-069; на ветке
-`feature/task-069-runtime-process-containment-bootstrap` от synchronized
-baseline `d3666ffea13a1866d86d7e8df9d4125aaade20c1`. Historical `ARCH-B-001`
-устранён bounded amendment DP-022/DP-023 и independent immutable trusted
-provisioning descriptor. Fresh Architect review фактических EN/RU bytes —
-`APPROVED`, blocking findings 0, иных известных design/readiness prerequisites
-нет. Exact first slice Windows-only: existing-only pre-provisioned
-anchor/ledger, Windows `Global\\` Event, bbolt custom opener без `O_CREATE`,
-canonical/physical root и file identity validation и fail-closed proofs. Exact
-isolated worktree slice существует в `internal/runtimecontainment`
-с тремя focused test files и bbolt/Windows syscall dependencies. Он не wired в
-Control Service. Mutable verification/review verdict и identity здесь не
-дублируются и resolve-ятся из newest valid matching envelope TASK-069. Зеркальный
+**Текущая implementation task:** TASK-070 — Runtime Containment Exact
+Generation Evidence Reader, `In Progress`, на ветке
+`feature/task-070-runtime-containment-evidence-reader` от synchronized baseline
+`8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. Documentation Baseline прошёл,
+но historical Architecture Confirmation выявил `ARCH-B-001`. Разрешённое
+пользователем зеркальное уточнение DP-022 прошло независимый Architecture
+Confirmation фактических EN/RU bytes 2026-09-28: `APPROVED`, 0 blocking.
+Уточнены выбор одного outcome, later DP-014 binding seam, single-use freshness
+и обязательное fatal fencing; иных известных architecture prerequisites для
+изолированного reader slice нет. TASK-070 теперь `In Progress`: implementation
+и verification ещё выполняются, Coordinator Acceptance, commit и publication
+readiness отсутствуют.
+
+**Последняя завершённая implementation task (2026-09-25):** TASK-069 — Runtime
+Process-Containment Bootstrap Implementation, `Completed — Coordinator
+Accepted` по newest valid matching Recovery Evidence Envelope. Windows-only
+`internal/runtimecontainment` bootstrap опубликован task commit
+`046ddcfaa0a5f73e8821de71b578a0db4d2a3ecd` и merged в synchronized
+`main@8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. Зеркальный
 [DP-023: Bootstrap process-containment Runtime](../docs/ru/design/DP-023-runtime-process-containment-bootstrap.md)
-теперь `Approved / Implemented in isolation` по explicit Coordinator decision;
-DP-022 остаётся `Approved / Planned`. Evidence reader, composition, DP-017
-recovery, reporting, production integration и activation отсутствуют и
-неактивны. Latest verification, review и Acceptance checkpoint определяется
-только newest valid matching TASK-069 envelope и здесь не дублируется.
+имеет `Approved / Implemented in isolation`; DP-022 — `Approved /
+Partial` только для изолированного candidate reader TASK-070. Control Service wiring, full-tuple evidence, DP-017 recovery, reporting,
+production integration и Production Activation отсутствуют.
 
 **Последняя завершённая design task (2026-09-21):** TASK-068 — Initial Runtime
 Containment Implementation Boundary and Slice Decomposition, `Completed —

@@ -3,6 +3,7 @@
 package runtimecontainment
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"testing"
@@ -31,12 +32,20 @@ func TestWindowsEventIsExclusiveNonInheritableAndLossFences(t *testing.T) {
 		_ = windows.CloseHandle(second.handle)
 		t.Fatal("second live holder acquired the same domain")
 	}
-	authority := &ActiveAuthority{keeper: &keeper{capability: first, db: db, domain: domain, descriptor: descriptor}}
+	current, err := newGeneration()
+	if err != nil {
+		t.Fatal(err)
+	}
+	authority := &ActiveAuthority{generation: current, keeper: &keeper{capability: first, db: db, domain: domain, descriptor: descriptor}}
 	if !authority.IsAuthoritative() {
 		t.Fatal("fresh capability is not authoritative")
 	}
 	if err := windows.SetEvent(first.handle); err != nil {
 		t.Fatal(err)
+	}
+	fact := authority.ReadGeneration(context.Background(), domain, authority.CurrentGeneration())
+	if fact.Kind() != EvidenceUnknown || fact.Reason() != UnknownUnavailable {
+		t.Fatalf("lost capability read: kind=%v reason=%q", fact.Kind(), fact.Reason())
 	}
 	if authority.IsAuthoritative() || !authority.keeper.fenced.Load() {
 		t.Fatal("capability loss did not permanently fence authority")

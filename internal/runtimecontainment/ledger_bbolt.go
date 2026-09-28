@@ -162,6 +162,27 @@ func readTail(db *bolt.DB, domain Domain) (generation, bool, error) {
 	return tail, empty, err
 }
 
+// inspectGenerationMember observes the validated tail and exact membership in
+// one read transaction. It never writes or treats a missing record as proof.
+func inspectGenerationMember(db *bolt.DB, domain Domain, named generation) (generation, bool, error) {
+	var tail generation
+	var member bool
+	err := db.View(func(tx *bolt.Tx) error {
+		var empty bool
+		var readErr error
+		tail, empty, readErr = readTailTx(tx, domain)
+		if readErr != nil {
+			return readErr
+		}
+		if empty {
+			return errLedgerInvalid
+		}
+		member = tx.Bucket(generationBucket).Get(named.value[:]) != nil
+		return nil
+	})
+	return tail, member, err
+}
+
 func readTailTx(tx *bolt.Tx, domain Domain) (generation, bool, error) {
 	entries, state := tx.Bucket(generationBucket), tx.Bucket(stateBucket)
 	if entries == nil || state == nil {

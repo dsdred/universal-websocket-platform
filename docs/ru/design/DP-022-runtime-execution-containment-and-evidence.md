@@ -5,25 +5,29 @@
 ## 1. Статус
 
 - **Design Status:** Approved
-- **Implementation Status:** Planned
+- **Implementation Status:** Partial (только изолированный exact-generation reader)
 
 Это предложение определяет execution-containment и evidence boundary, которую
 Approved DP-017 section 11 требует до реализации recovery reconciliation. Оно
 Approved как эта граница, поэтому prerequisite DP-017 section 11 о
 существовании approved containment boundary удовлетворён на уровне дизайна. Это
-ничего не говорит о реализации, которая отсутствует: реализация DP-017 остаётся
-неактивированной.
+design-level удовлетворение не реализует DP-017: recovery reconciliation
+отсутствует и остаётся неактивированной.
 
 [DP-023](DP-023-runtime-process-containment-bootstrap.md) — Approved,
 Implemented-in-isolation boundary initial bootstrap capability/ledger/
-generation. TASK-069 реализует этот Windows-only substrate в worktree. Latest
+generation. TASK-069 реализовала этот Windows-only substrate изолированно и
+опубликовала его в synchronized
+`main@8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. Latest
 verification, review и Acceptance checkpoint и subject identity resolve-ятся
 только из newest valid matching envelope TASK-069 и здесь не дублируются. Slice
 не реализует evidence outcomes этого предложения.
 
-Evidence adapter, scanner, supervisor, production wiring и composed runtime
-behavior отсутствуют. Ничто здесь не утверждает и не подразумевает, что Control
-Service уже способен наблюдать termination процесса.
+TASK-070 теперь содержит изолированный candidate generation-fact reader под
+verification после независимо одобренного focused уточнения sections 12 и
+14–19. Принятый full-tuple evidence adapter, scanner, supervisor, production
+wiring и composed runtime behavior отсутствуют. Control Service ещё не может
+наблюдать termination процесса через эту границу.
 
 ## 2. Назначение
 
@@ -326,9 +330,13 @@ cloning anchor и ledger; runtime validation сама по себе не док�
 
 ## 12. Доказательство termination
 
-Для exact prior generation, названного execution binding attempt,
-`GenerationTerminated` доказывается тогда и только тогда, когда все следующие
-условия выполнены для одного coherent чтения одного domain:
+Generation authority может вывести scoped к domain факт termination одного
+exact записанного prior generation. Этот факт становится execution evidence
+для attempt только после того, как последующая composition coherently проверит
+exact DP-014 binding в том же domain согласно section 14. Для exact prior
+generation, названного таким binding, `GenerationTerminated` доказывается
+тогда и только тогда, когда все следующие условия выполнены для одного
+coherent чтения одного domain:
 
 1. читающий процесс сейчас держит containment capability этого domain, acquired
    эксклюзивно в этой process generation;
@@ -388,26 +396,81 @@ Host-owned shutdown completion — это другой fact с другим пр
 
 ## 14. Evidence query contract
 
-Evidence производится одной read-only capability, эквивалентной
-`ReadExactExecutionEvidence` DP-017 section 24. Её semantic contract:
+Упорядоченный DP-023 section 19 item 2 — это private чтение generation fact в
+`internal/runtimecontainment`, а не полная операция DP-017 section 24
+`ReadExactExecutionEvidence`. Оно принимает только одну полную exact пару
+`(containment domain, execution generation)` от своей active authority. На
+initial уровне `ProcessContainment` оно возвращает ровно один результат:
+`GenerationLive`, `GenerationTerminated` или `Unknown(reason)`. Одно coherent
+observation проверяет удерживаемую capability, независимо предоставленный
+provisioning descriptor, ledger того же domain и exact current tail. Current
+identity даёт только `GenerationLive`; отличающийся identity даёт
+`GenerationTerminated` только если его запись находится в проверенной цепочке
+predecessors этого tail. Отсутствующая запись никогда не доказывает
+termination. Повторная проверка до возврата запрещает positive result после
+обнаруженной потери authority. Чтение не обращается к DP-014/DP-015 и не
+заявляет result, привязанный к attempt. Оно не создаёт и не записывает
+generation, ledger entry, binding, admission state или recovery fact. Section
+19 определяет обязательное исключение для safety fencing.
 
-- входом является exact tuple `(containment domain, Runtime Instance, Launch
-  Attempt, execution generation)`; неполный или частично разрешённый tuple
-  отклоняется как `Unknown(ScopeMismatch)` до любого observation;
-- выходом является ровно один результат из закрытой модели в section 15;
-- операция не выполняет mutation, ничего не allocate и не bind, ничего не
-  открывает и не предоставляет authority за пределами чтения;
-- результат привязан к tuple, который его породил, и одноразовый: поздний
-  потребитель должен выполнить повторное чтение, потому что cached или replayed
-  результат является `Unknown(Stale)`;
-- запрос может быть отвечен только generation authority того domain, который он
-  называет, либо adapter, чей объявленный уровень гарантий покрывает этот
-  случай;
-- конкурентные чтения разрешены и независимы; долгие чтения не держат lock
-  aggregate, command, Owner или admission, и любая последующая conditional
-  publication заново валидирует revisions по DP-017 section 16;
-- не существует операций batch, scan, discovery, enumeration или «nearest
-  match».
+Для этого private read неверный или чужой input и отсутствие ledger membership
+дают `Unknown(ScopeMismatch)`; cancellation даёт `Unknown(Cancelled)`;
+неподдерживаемая topology даёт `Unknown(UnsupportedTopology)`; отсутствие
+объявленной гарантии даёт `Unknown(GuaranteeNotDeclared)`; потеря capability
+или storage даёт `Unknown(Unavailable)`; противоречивая структура ledger даёт
+`Unknown(Contradictory)`; чтение с неопределимым результатом даёт
+`Unknown(Indeterminate)`. Обнаруженные после acquisition faults последних
+трёх классов также вызывают fencing по section 19. Caller не может выбрать
+более благоприятный reason либо positive result после такого fault.
+
+Последующая composition Control Service владеет полной evidence operation.
+Она получает одно coherent чтение DP-014 aggregate с exact Workspace,
+Configuration, Runtime Instance, Launch Attempt, immutable execution binding
+и aggregate revision, проверяет, что binding называет запрошенный generation
+в том же containment domain, и вызывает private generation reader authority
+с этим domain/generation. Она не передаёт DP-014 facts в
+`runtimecontainment`, не импортирует DP-014 в этот package и не считает ledger
+вторым attempt store. Missing/partial/stale/contradictory binding или revision
+даёт `Unknown` с применимым reason section 15 до любого positive full-tuple
+evidence. Composition и её DP-014 reader относятся к последующим slices, а
+не к package reader item 2.
+
+Полная операция принимает exact tuple `(containment domain, Runtime Instance,
+Launch Attempt, execution generation)` плюс один явный вопрос:
+`GenerationStatus`, `CoveredResourceAbsence` или `ShutdownCompletion`.
+Неполный tuple или неизвестный вопрос даёт `Unknown(ScopeMismatch)`. Вопрос
+существует только в рамках invocation и не меняет binding или ledger. Для
+coherent terminated generation `GenerationStatus` выбирает
+`GenerationTerminated`; `CoveredResourceAbsence` выбирает
+`CoveredResourcesAbsent` по следствию covered class section 7; а
+`ShutdownCompletion` выбирает `HostShutdownCompleted` только с отдельным
+exact Owner terminal fact section 13, иначе `Unknown(Absent)`.
+`GenerationStatus` для current generation выбирает `GenerationLive`;
+отсутствие ресурсов и shutdown completion не следуют из current liveness.
+Таким образом, один invocation возвращает ровно один outcome section 15 и
+никогда не выбирает между одновременно истинными facts по свежести или
+удобству.
+
+Каждый full-tuple invocation выполняет свежее чтение binding и generation и
+создаёт один private, scoped к invocation одноразовый evidence handle,
+привязанный к tuple, вопросу, exact aggregate revision и свежему read
+identity. Handle не сохраняется, не сериализуется, не кэшируется и не
+передаётся. Первое использование атомарно помечает его использованным и
+повторно проверяет связанный revision, live authority и exact ledger tail;
+позднее либо
+конкурентное использование, изменённый revision/authority или предложенный
+cached result даёт `Unknown(Stale)` и требует нового полного запроса. Это
+правило single-use принадлежит последующей composition; generation-fact
+reader item 2 не выдаёт повторно используемый full-tuple proof handle.
+Создание и потребление ephemeral handle не меняет containment, lifecycle,
+command или recovery truth. Любая последующая conditional publication всё
+равно повторно проверяет exact revisions по DP-017 section 16.
+
+Только authority названного domain либо adapter, чьи объявленные гарантии
+покрывают этот случай, может ответить на generation read. Конкурентные
+чтения независимы и не держат aggregate, command, Owner или admission lock
+через observation. На обоих уровнях нет batch, scan, discovery,
+enumeration или nearest-match операции.
 
 ## 15. Закрытые outcomes evidence
 
@@ -424,16 +487,22 @@ Evidence производится одной read-only capability, эквива�
 `Stale`, `ScopeMismatch`, `Contradictory`, `Indeterminate`, `Cancelled`,
 `UnsupportedTopology`, `GuaranteeNotDeclared`.
 
-Приоритет намеренно минимален:
+Приоритет детерминирован в пределах явного вопроса section 14:
 
-1. unbound observation вообще не является входом;
-2. любое несовпадение tuple, ledger или binding разрешается в
-   `Unknown(ScopeMismatch)`;
-3. любые два входа, которые расходятся, разрешаются в `Unknown(Contradictory)`;
-4. никакое правило ordering, свежести, большинства, уверенности или стоимости не
-   может выбрать winner между расходящимися facts;
-5. `Unknown` является терминальным для этого чтения: он никогда не понижается до
-   догадки и не повышается повторением.
+1. unbound observation не является входом; неполный/чужой tuple, binding или
+   ledger membership даёт `Unknown(ScopeMismatch)`;
+2. обнаруженная потеря capability/storage, corrupt либо contradictory
+   ledger/binding, stale revision/result, cancellation и необъявленная
+   гарантия дают свой закрытый reason `Unknown` до любого positive result;
+   обнаруженный fatal fault имеет приоритет над конкурентной cancellation;
+3. только после всех применимых проверок явный вопрос выбирает один positive
+   outcome по section 14. `GenerationTerminated` подразумевает отсутствие
+   covered resources, но возвращается только для `GenerationStatus`;
+   `CoveredResourcesAbsent` является projection для
+   `CoveredResourceAbsence`, а не конкурирующим независимым ответом;
+4. никакое правило свежести, большинства, уверенности или стоимости не
+   выбирает между расходящимися facts. `Unknown` терминален для этого чтения
+   и не повышается повторением.
 
 `LiveUnownedExecution` недостижим в initial in-process topology, которая не
 определяет уровня adapter, способного о нём сообщить; он назван, чтобы будущий
@@ -483,19 +552,21 @@ Adapter отвечает на evidence запросы только на объя
 чём основана его гарантия release-on-termination, и как он ведёт себя при
 unavailability, contradiction, partial read, panic и cancellation. Любое
 необъявленное или непроверяемое property делает уровень непригодным и даёт
-`Unknown(GuaranteeNotDeclared)`. Adapter никогда не mutate, никогда не закрывает
-barrier, никогда не классифицирует recovery set и никогда не становится owner;
+`Unknown(GuaranteeNotDeclared)`. Evidence read никогда не пишет domain,
+ledger, binding, lifecycle, command либо recovery facts; обязательное fatal
+fencing section 19 остаётся safety transition authority. Adapter никогда не
+открывает barrier, не классифицирует recovery set и не становится owner;
 generation authority, который его потребляет, остаётся внутри composition Control
 Service, поэтому single composition root ADR-0003 и freeze ARCH-002
 сохраняются.
 
 ## 18. Scope isolation и security
 
-Чтения evidence и ledger scoped ровно к одному containment domain — одному
-operational management domain, обслуживаемому одним Control Service вместе с
-принадлежащим ему durable identity state, — и внутри него — к одному Workspace,
-Configuration, Runtime Instance, Launch Attempt и execution generation.
-Cross-domain evidence запрещены даже когда они доступны и favorable.
+Private generation-fact read scoped ровно к одному containment domain и
+execution generation. Последующее полное evidence read дополнительно
+проверяет один Workspace, Configuration, Runtime Instance и Launch Attempt
+через DP-014 по section 14. Cross-domain и cross-Workspace evidence
+запрещены даже когда они доступны и favorable.
 
 Результаты несут только opaque identities и закрытые semantic категории. Они
 никогда не несут credentials, Secrets, payload configuration или Snapshot, raw
@@ -507,10 +578,9 @@ reporting и redaction остаются за DP-018 и ARCH-004 section 19(6).
 
 ## 19. Cancellation и concurrency
 
-1. Cancellation чтения evidence даёт `Unknown(Cancelled)` и не выполняет
-   mutation. Он никогда не release capability, никогда не доказывает termination,
-   никогда не разрешает contradiction и никогда не авторизует вызывающую сторону
-   продолжать.
+1. Cancellation чтения evidence даёт `Unknown(Cancelled)`, если fatal fault не
+   обнаружен. Она никогда не release capability, не доказывает termination,
+   не разрешает contradiction и не авторизует вызывающую сторону продолжать.
 2. Cancellation lifecycle пути регулируется DP-016 и DP-017; он не изменяет
    containment facts.
 3. Acquisition сериализуется самой исключительностью: конкурентные acquisitions в
@@ -519,9 +589,17 @@ reporting и redaction остаются за DP-018 и ARCH-004 section 19(6).
 4. Конкурентные чтения evidence независимы и никогда не блокируют admission; они
    никогда не держат locks через чтение, и любая последующая conditional
    publication заново валидирует revisions по DP-017 section 16.
-5. Конкурентный читатель никогда не получает authority mutation, а writer,
-   который изменяет tuple, ledger или binding между чтением и использованием,
-   инвалидирует это чтение.
+5. Конкурентный читатель никогда не получает authority на mutation domain, а
+   writer, изменивший tuple, ledger или binding между чтением и использованием,
+   инвалидирует это чтение. После acquisition обнаружение во время чтения
+   потери capability, снижения гарантии, неопределённости namespace/storage
+   authority, corrupt либо unreconciled ledger необратимо вызывает DP-023
+   section 12 `FatalFenced` до возврата. Fencing отключает positive evidence и
+   требует завершения process; чтение возвращает закрытый reason `Unknown` и
+   никогда не retry, repair или reacquire. Неверный caller input и только
+   cancellation не вызывают fencing. Этот in-memory safety transition —
+   единственное исключение из правила отсутствия domain mutation; он не
+   является записью ledger, lifecycle или recovery.
 
 ## 20. Матрица failure
 
@@ -532,7 +610,7 @@ reporting и redaction остаются за DP-018 и ARCH-004 section 19(6).
 | capability lost или revoked во время жизни | admission closed, никакого нового binding, никакого in-place re-acquisition | продолжать обслуживание, self-heal или restart автоматически |
 | названное generation не имеет записи в ledger | `Unknown(ScopeMismatch)` | трактовать отсутствие как termination |
 | запись ledger равна current generation | `GenerationLive` | сообщить о собственном termination |
-| ledger и current holder различаются и гарантии исключительности держатся | `GenerationTerminated` | выводить cleanup или успех Stop |
+| exact запись запрошенного prior generation находится в проверенной цепочке predecessors current holder при exclusive guarantee | `GenerationTerminated` для `GenerationStatus`; `CoveredResourcesAbsent` только для `CoveredResourceAbsence` | выводить cleanup или успех Stop |
 | adapter не может доказать release-on-termination | `Unknown(GuaranteeNotDeclared)` | откатиться к clock, PID или probe |
 | два чтения расходятся | `Unknown(Contradictory)` | выбрать свежее, большинство или удобное |
 | cached чтение переиспользовано позже | `Unknown(Stale)` | переиспользовать как current truth |
@@ -628,9 +706,11 @@ append-only supersession, точную привязку tuple и fail-closed п�
 13. binding, называющий generation, отсутствующий в ledger domain, даёт
     `Unknown(ScopeMismatch)`;
 14. contradictory, stale, cancelled, unavailable и unsupported-topology входы
-    каждый дают свой точный reason `Unknown` и никакой mutation;
-15. чтения evidence не выполняют mutation, не открывают admission и не выдают
-    authority;
+    каждый дают свой точный reason `Unknown` без записи domain;
+15. чтения evidence не пишут ledger, lifecycle, command либо recovery facts,
+    не открывают admission и не выдают authority; обнаруженные после
+    acquisition fatal faults необратимо fence authority до возврата по
+    DP-023 section 12;
 16. конкурентные читатели никогда не сериализуются и не обходят revalidation
     revisions DP-017;
 17. ни один adapter ниже `ProcessContainment` не может дать положительный
@@ -638,7 +718,7 @@ append-only supersession, точную привязку tuple и fail-closed п�
 18. ledger не содержит ни одного из запрещённых полей section 11;
 19. cross-domain и cross-Workspace evidence никогда не используются, и результаты
     не раскрывают запрещённого payload;
-20. EN/RU contract, матрицы, outcome names, уровни гарантий и статус Planned
+20. EN/RU contract, матрицы, outcome names, уровни гарантий и статус Partial
     остаются aligned.
 
 ## 25. Граница реализации
@@ -649,14 +729,18 @@ identity type `ExecutionGeneration`, conditional attempt-to-generation binding
 bootstrap package slice DP-023 из TASK-069. Последний устанавливает private
 capability, ledger и generation authority только внутри package. Latest
 verification, review и Acceptance checkpoint определяется только newest valid
-matching envelope TASK-069. Evidence adapter, production composition wiring и
-code path, который мог бы expose termination evidence Control Service,
-отсутствуют.
+matching envelope TASK-069. Изолированный candidate generation-fact reader
+TASK-070 уже находится в `internal/runtimecontainment` под verification.
+Full-tuple evidence composition, production wiring и code path, который мог бы
+expose termination evidence Control Service, отсутствуют.
 
 DP-023 — Approved/Implemented in isolation по explicit Coordinator status
 decision через TASK-069. Mutable role verdicts и identities resolve-ятся из
 newest valid matching envelope этой task. Все evidence и downstream gates
-остаются без изменений; сам DP-022 остаётся Planned.
+остаются без изменений. Coordinator явно устанавливает Implementation Status
+DP-022 как Partial для проверенного изолированного generation-fact reader при
+условии final Review и Acceptance TASK-070. Этот статус не заявляет full-tuple
+evidence или production activation.
 
 Этот документ есть Approved design граница, поэтому DP-017 section 11 теперь
 имеет authoritative containment boundary для потребления; сам DP-017 остаётся
@@ -664,7 +748,7 @@ Approved/Planned и неактивированным. Статус получе�
 design status процесс; acceptance задачи со стороны Documentation, Tester,
 Reviewer или Coordinator не повышает Design Status этого документа и никогда не
 повышает Implementation Status. Isolated bootstrap candidate не активирует
-evidence: evidence adapter и composition отсутствуют, поэтому exact
+full evidence: full-tuple adapter и composition отсутствуют, поэтому exact
 prior-generation termination proof, требуемый DP-017 section 11, по-прежнему не
 может потребляться ни одним компонентом, а DP-017 recovery, DP-018 reporting,
 production integration и Production Activation остаются `Not Activated` и
