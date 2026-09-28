@@ -475,12 +475,22 @@ Architectural debt относится к границам, которые ост
   provisioning descriptor, доставленный независимо от candidate storage,
   existing-only anchor/ledger и fail-closed storage identity validation. Fresh
   Architect review — `APPROVED`, blocking findings 0, иных известных
-  design/readiness prerequisites нет. TASK-069 — Unblocked / In Progress для
-  exact Windows-only first slice. DP-023 — Approved/Implemented in isolation.
-  Latest verification, review и Acceptance checkpoint и subject identity
-  resolve-ятся только из newest valid matching envelope TASK-069 и здесь не
-  дублируются. Slice не wired в Control Service;
-  evidence, recovery, reporting и Production Activation отсутствуют.
+  design/readiness prerequisites для first slice нет. TASK-069 завершила exact
+  Windows-only bootstrap, Coordinator Accepted по newest valid matching
+  envelope и опубликована в synchronized
+  `main@8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. DP-023 —
+  Approved/Implemented in isolation. TASK-070 затем активировала следующий
+  exact generation-evidence-reader slice; historical Architecture Confirmation
+  выявил `TASK-070/ARCH-B-001`. Разрешённое пользователем focused зеркальное
+  уточнение DP-022 прошло независимый Architecture Confirmation фактических
+  EN/RU bytes (`APPROVED`, 0 blocking) 2026-09-28. Оно фиксирует one-result
+  projection, later DP-014 binding ownership, single-use freshness и
+  обязательное fatal fencing. Иных известных architecture prerequisites для
+  изолированного reader нет. Implementation Status DP-022 — Partial по явному
+  Coordinator decision только для проверенного изолированного candidate.
+  TASK-070 — In Progress, без Coordinator Acceptance. Bootstrap не wired в
+  Control Service; full-tuple evidence, recovery, reporting и
+  Production Activation отсутствуют.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Message Persistence, Delivery и Plugin всё ещё требуют focused design.

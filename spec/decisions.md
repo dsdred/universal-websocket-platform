@@ -68,12 +68,14 @@
 - ADR-0003 определяет component boundaries Runtime и Provider-based composition.
 - DP-020 и DP-021 сохраняют Design Status Draft. DP-022 имеет Design Status
   Approved по отдельному решению TASK-067; DP-023 имеет Design Status Approved
-  по явному решению Architect TASK-068. TASK-069 содержит isolated Windows-only
-  worktree slice первого bootstrap DP-023. По explicit Coordinator decision
-  DP-023 имеет Implementation Status
-  `Implemented in isolation`; DP-022 остаётся `Planned`, потому что evidence
-  outcomes, production composition и activation отсутствуют. Статус не
-  повышается самим authoring или commit.
+  по явному решению Architect TASK-068. TASK-069 реализовала, независимо
+  проверила, приняла и опубликовала isolated Windows-only first bootstrap
+  DP-023 в `main@8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. По explicit Coordinator
+  decision DP-023 имеет Implementation Status
+  `Implemented in isolation`; DP-022 имеет `Partial` только для проверенного
+  изолированного reader candidate TASK-070 по отдельному Coordinator decision;
+  full-tuple evidence outcomes, production composition и activation отсутствуют.
+  Статус не повышается самим authoring или commit.
 - ARCH-004 определяет Runtime Instance, Launch Attempt и deployment identity
   model; минимальный in-process Runtime Lifecycle Owner и process-local
   isolated operational identity/command stores реализованы, а external durable
@@ -100,15 +102,29 @@ expected canonical root, physical root identity и storage-authority identity и
 DP-022/DP-023 amendment закрепляет existing-only anchor/ledger и fail-closed
 missing/mismatch/alternate/copied-store semantics. Fresh Architect review
 фактических amended EN/RU bytes — `APPROVED`, blocking findings 0, иных
-известных design/readiness prerequisites нет. TASK-069 теперь `In Progress` в
-exact Windows-only first slice: isolated worktree slice реализован. По explicit
-Coordinator decision DP-023 — `Approved / Implemented in isolation`; DP-022
-остаётся `Approved / Planned`. Mutable Tester/Reviewer checkpoint и identity
-resolve-ятся только из newest valid matching envelope TASK-069 и здесь не
-дублируются. Slice не wired в Control Service; evidence/recovery/reporting/
-Production Activation отсутствуют. TASK-068 Acceptance/publication неизменны;
-latest verification, review и Acceptance checkpoint TASK-069 определяется
-только newest valid matching envelope.
+известных design/readiness prerequisites для first slice не было. TASK-069
+завершила exact Windows-only bootstrap, получила Coordinator Acceptance по
+newest valid matching envelope и опубликована task commit
+`046ddcfaa0a5f73e8821de71b578a0db4d2a3ecd` в
+`main@8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. DP-023 — `Approved /
+Implemented in isolation`; DP-022 теперь `Approved / Partial` только для
+изолированного reader candidate TASK-070. Slice не wired в Control Service;
+full-tuple evidence/recovery/reporting/Production Activation
+отсутствуют.
+
+Historical TASK-070 Architecture Confirmation обнаружил отдельный blocker
+`TASK-070/ARCH-B-001` для exact evidence-reader slice. Разрешённое
+пользователем focused зеркальное уточнение Approved DP-022 прошёл независимый
+Architecture Confirmation фактических EN/RU bytes 2026-09-28: `APPROVED`, 0
+blocking. First-slice private `(domain, generation)` reader отделён от later
+composition-owned full-tuple DP-014 binding validation; explicit question
+задаёт projection `GenerationTerminated`/`CoveredResourcesAbsent`, later
+full-tuple evidence получает одноразовую freshness identity, а обнаруженный
+fatal fault вызывает обязательное DP-023 fencing без durable/product write.
+Все четыре пункта blocker закрыты; иных известных architecture prerequisites
+для package reader нет. TASK-070 — `In Progress`: изолированный reader candidate
+реализован и проверен с явным ограничением race-tool; final Review и
+Coordinator Acceptance ещё не завершены.
 
 Delivery, Message Persistence, Plugin ABI, production deployment adapters, operational
 diagnostics и supervision требуют сфокусированных решений в соответствующих

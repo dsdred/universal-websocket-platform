@@ -226,15 +226,18 @@ The approved containment boundary named here is
 8–13 define the exclusive containment capability, one live execution generation
 per containment domain, the durable containment ledger whose supersession fact
 is the only proof that an exact prior generation terminated, and the separate
-Host-owned shutdown-completion evidence. It is an approved design boundary, not
-an implemented one: no containment capability, ledger, or evidence adapter
-exists, so DP-017 implementation remains unactivated.
+Host-owned shutdown-completion evidence. The containment capability and ledger
+are implemented only in the isolated DP-023 bootstrap package; no full-tuple
+evidence adapter or production composition exists. DP-017 implementation
+remains unactivated.
 
 [DP-023](DP-023-runtime-process-containment-bootstrap.md) separately approves
 the initial process-lifetime capability, durable ledger transition, and
-generation-authority bootstrap. It is Planned and intentionally excludes the
-evidence reader, composition gate, and recovery; therefore it does not yet
-satisfy this section's executable prerequisite.
+generation-authority bootstrap. Its first slice is Implemented in isolation by
+TASK-069. An isolated exact-generation reader is a TASK-070 candidate under
+verification; the bootstrap still excludes full-tuple evidence composition,
+production wiring, and recovery, so this section's executable prerequisite is
+not yet satisfied.
 
 The replacement Control Service must not fabricate a Host reference, hydrate
 an Owner, probe a port and call it Running, or adopt any execution. It may use
@@ -558,9 +561,10 @@ process-local Runtime aggregate and command stores, but no external durable or
 process-restart store, recovery claim, execution-evidence adapter, recovery
 executor, public management API, or production wiring.
 
-DP-023 makes the containment bootstrap a Ready boundary for a separate first
-code slice, but no implementation exists. Exact evidence reading, composition
-wiring, and every DP-017 mutation remain later dependency-ordered slices.
+TASK-069 implemented the DP-023 containment bootstrap in isolation. TASK-070
+has an isolated exact-generation reader candidate under verification; no
+full-tuple evidence composition, production wiring, or DP-017 mutation exists.
+These remain later dependency-ordered slices.
 
 The current in-process Runtime components do not survive Control Service
 process termination and expose no restart-time recovery capability. Creating

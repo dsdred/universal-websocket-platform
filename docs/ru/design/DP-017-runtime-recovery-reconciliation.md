@@ -223,15 +223,18 @@ Approved containment boundary, называемая здесь, —
 8–13 определяют exclusive containment capability, одну live execution generation
 на containment domain, durable containment ledger, чей supersession fact есть
 единственное доказательство termination exact prior generation, и отдельный
-Host-owned shutdown-completion evidence. Это approved design граница, а не
-реализованная: containment capability, ledger и evidence adapter отсутствуют,
-поэтому реализация DP-017 остаётся неактивированной.
+Host-owned shutdown-completion evidence. Containment capability и ledger
+реализованы только в изолированном bootstrap package DP-023; full-tuple
+evidence adapter и production composition отсутствуют. Реализация DP-017
+остаётся неактивированной.
 
 [DP-023](DP-023-runtime-process-containment-bootstrap.md) отдельно утверждает
 initial process-lifetime capability, durable ledger transition и bootstrap
-generation authority. Он Planned и намеренно исключает evidence reader,
-composition gate и recovery; поэтому executable prerequisite этого section пока
-не удовлетворён.
+generation authority. Его первый slice Implemented in isolation через
+TASK-069. Изолированный exact-generation reader — candidate TASK-070 под
+verification; bootstrap по-прежнему исключает full-tuple evidence composition,
+production wiring и recovery, поэтому executable prerequisite этого section
+пока не удовлетворён.
 
 Replacement Control Service не фабрикует Host reference, не hydrate Owner, не
 probe port с выводом Running и не adopt execution. Proven generation termination
@@ -546,9 +549,10 @@ Runtime aggregate и command stores, но не содержит external durable
 process-restart store, recovery claim, execution-evidence adapter, recovery
 executor, public management API или production wiring.
 
-DP-023 делает containment bootstrap Ready boundary для отдельного первого code
-slice, но implementation отсутствует. Exact evidence reading, composition
-wiring и все mutation DP-017 остаются последующими dependency-ordered slices.
+TASK-069 реализовала containment bootstrap DP-023 изолированно. TASK-070 имеет
+candidate изолированного exact-generation reader под verification; full-tuple
+evidence composition, production wiring и mutation DP-017 отсутствуют. Они
+остаются последующими dependency-ordered slices.
 
 Текущие in-process Runtime components не переживают Control Service process
 termination и не предоставляют restart-time recovery capability. Создание

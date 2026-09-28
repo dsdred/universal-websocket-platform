@@ -5,25 +5,28 @@
 ## 1. Status
 
 - **Design Status:** Approved
-- **Implementation Status:** Planned
+- **Implementation Status:** Partial (isolated exact-generation reader only)
 
 This proposal defines the execution-containment and evidence boundary that
 Approved DP-017 section 11 requires before recovery reconciliation can be
 implemented. It is Approved as that boundary, so the DP-017 section 11
 prerequisite for an approved containment boundary is satisfied at design level.
-That says nothing about implementation, which remains absent: DP-017
-implementation stays unactivated.
+That design-level satisfaction does not implement DP-017: recovery
+reconciliation remains absent and unactivated.
 
 [DP-023](DP-023-runtime-process-containment-bootstrap.md) is the Approved,
 Implemented-in-isolation boundary for the initial capability/ledger/generation
-bootstrap. TASK-069 implements that Windows-only substrate in its worktree.
+bootstrap. TASK-069 implemented that Windows-only substrate in isolation and
+published it in synchronized `main@8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`.
 The latest verification, review and Acceptance checkpoint and subject identity
 resolve only from TASK-069's newest valid matching envelope and are not
 duplicated here. The slice does not implement this proposal's evidence outcomes.
 
-No evidence adapter, scanner, supervisor, production wiring, or composed
-runtime behavior exists. Nothing here states or implies that Control Service
-can already observe process termination.
+TASK-070 now contains an isolated generation-fact reader candidate under
+verification, following the independently approved focused refinement of
+sections 12 and 14–19. No accepted full-tuple evidence adapter, scanner,
+supervisor, production wiring or composed runtime behavior exists. Control
+Service cannot yet observe process termination through this boundary.
 
 ## 2. Purpose
 
@@ -316,9 +319,12 @@ that a consistent copy is original.
 
 ## 12. Termination proof
 
-For the exact prior generation named by an attempt's execution binding,
-`GenerationTerminated` is proven when and only when all of the following hold
-for one coherent read of one domain:
+The generation authority can derive a domain-scoped termination fact for one
+exact recorded prior generation. That fact becomes execution evidence for an
+attempt only after the later composition has coherently validated the exact
+DP-014 binding in the same domain as section 14 requires. For the exact prior
+generation so named, `GenerationTerminated` is proven when and only when all of
+the following hold for one coherent read of one domain:
 
 1. the reading process currently holds that domain's containment capability,
    exclusively acquired in this process generation;
@@ -374,23 +380,78 @@ derivation between them.
 
 ## 14. Evidence query contract
 
-Evidence is produced by one read-only capability equivalent to DP-017 section 24
-`ReadExactExecutionEvidence`. Its semantic contract:
+The ordered DP-023 section 19 item 2 is a private generation-fact read in
+`internal/runtimecontainment`, not the complete DP-017 section 24
+`ReadExactExecutionEvidence` operation. It accepts only one complete exact
+`(containment domain, execution generation)` pair from its active authority.
+For the initial `ProcessContainment` level it returns exactly one of
+`GenerationLive`, `GenerationTerminated`, or `Unknown(reason)`. It validates the
+held capability, independently supplied provisioning descriptor, same-domain
+ledger and exact current tail as one coherent observation. A current identity
+returns only `GenerationLive`; a different identity returns
+`GenerationTerminated` only if its entry is in the validated predecessor chain
+of that tail. A missing entry never proves termination. Revalidation before
+return prevents a positive result after detected authority loss. It neither
+reads DP-014/DP-015 nor claims an attempt-bound result. No generation, ledger
+entry, binding, admission state or recovery fact is created or written by the
+read. Section 19 defines its mandatory safety-fence exception.
 
-- input is the exact tuple `(containment domain, Runtime Instance, Launch
-  Attempt, execution generation)`; an incomplete or partially resolved tuple is
-  rejected as `Unknown(ScopeMismatch)` before any observation;
-- output is exactly one result from the closed model in section 15;
-- the operation performs no mutation, allocates or binds nothing, opens nothing,
-  and grants no authority beyond reading;
-- the result is bound to the tuple that produced it and is single-use: a later
-  consumer must re-read, because a cached or replayed result is `Unknown(Stale)`;
-- the query may be answered only by the generation authority of the domain it
-  names, or by an adapter whose declared guarantee level covers that case;
-- concurrent reads are permitted and independent; long reads hold no aggregate,
-  command, Owner, or admission lock, and any downstream conditional publication
-  still revalidates revisions under DP-017 section 16;
-- there is no batch, scan, discovery, enumeration, or "nearest match" operation.
+For this private read, invalid or foreign input and absent ledger membership
+give `Unknown(ScopeMismatch)`; cancelled work gives `Unknown(Cancelled)`;
+unsupported topology gives `Unknown(UnsupportedTopology)`; an absent declared
+guarantee gives `Unknown(GuaranteeNotDeclared)`; capability or storage loss
+gives `Unknown(Unavailable)`; contradictory ledger structure gives
+`Unknown(Contradictory)`; and an inspection whose truth cannot be determined
+gives `Unknown(Indeterminate)`. Detected post-acquisition faults in the last
+three classes also fence as section 19 requires. No caller can select a more
+favorable reason or positive result after such a fault.
+
+The later Control Service composition owns the full evidence operation. It
+obtains one coherent DP-014 aggregate read containing the exact Workspace,
+Configuration, Runtime Instance, Launch Attempt, immutable execution binding
+and aggregate revision, verifies that the binding names the requested
+generation in the same containment domain, and calls the authority's private
+generation reader with that domain/generation. It never supplies DP-014 facts
+to `runtimecontainment`, imports DP-014 into that package, or treats a ledger
+record as a second attempt store. A missing/partial/stale/contradictory binding
+or revision yields `Unknown`, with the applicable section 15 reason, before
+any positive full-tuple evidence. Composition and its DP-014 reader are later
+slices, not part of the item 2 package reader.
+
+The full operation takes the exact tuple `(containment domain, Runtime
+Instance, Launch Attempt, execution generation)` plus one explicit question:
+`GenerationStatus`, `CoveredResourceAbsence`, or `ShutdownCompletion`. An
+incomplete tuple or unknown question yields `Unknown(ScopeMismatch)`. The
+question is invocation-local and changes neither the binding nor the ledger.
+For a coherent terminated generation, `GenerationStatus` selects
+`GenerationTerminated`; `CoveredResourceAbsence` selects
+`CoveredResourcesAbsent` by the section 7 covered-class implication; and
+`ShutdownCompletion` selects `HostShutdownCompleted` only with the separate
+exact Owner terminal fact of section 13, otherwise `Unknown(Absent)`.
+`GenerationStatus` for the current generation selects `GenerationLive`;
+neither resource absence nor shutdown completion follows from current
+liveness. Thus one invocation returns exactly one section 15 outcome and never
+chooses between simultaneously true facts by recency or convenience.
+
+Each full-tuple invocation performs a fresh binding and generation read and
+creates one private, invocation-scoped, use-once evidence handle bound to the
+tuple, question, exact aggregate revision and fresh read identity. The handle
+is not persisted, serialized, cached or transferable. Its first consumption
+atomically marks it used and revalidates the bound revision, live authority and
+exact ledger tail;
+later or concurrent consumption, a changed revision/authority, or an offered
+cached result yields `Unknown(Stale)` and requires a new full query. This
+single-use rule belongs to the later composition; the item 2 generation-fact
+reader exposes no reusable full-tuple proof handle. Creating and consuming an
+ephemeral handle does not mutate containment, lifecycle, command or recovery
+truth. Any later conditional publication still revalidates exact revisions
+under DP-017 section 16.
+
+Only the authority for the named domain or an adapter whose declared level
+covers the case may answer the generation read. Concurrent reads are
+independent and hold no aggregate, command, Owner or admission lock across the
+observation. No batch, scan, discovery, enumeration or nearest-match operation
+exists at either layer.
 
 ## 15. Closed evidence outcomes
 
@@ -407,15 +468,21 @@ Evidence is produced by one read-only capability equivalent to DP-017 section 24
 `ScopeMismatch`, `Contradictory`, `Indeterminate`, `Cancelled`,
 `UnsupportedTopology`, `GuaranteeNotDeclared`.
 
-Precedence is deliberately minimal:
+Precedence is deterministic within the explicit question of section 14:
 
-1. an unbound observation is not an input at all;
-2. any tuple, ledger, or binding mismatch resolves to `Unknown(ScopeMismatch)`;
-3. any two inputs that disagree resolve to `Unknown(Contradictory)`;
-4. no ordering, recency, majority, confidence, or cost rule may select a
-   winner between disagreeing facts;
-5. `Unknown` is terminal for that read: it is never degraded into a guess and
-   never upgraded by repetition.
+1. an unbound observation is not an input; incomplete/foreign tuple, binding
+   or ledger membership resolves to `Unknown(ScopeMismatch)`;
+2. detected capability/storage loss, corrupt or contradictory ledger/binding,
+   stale revision/result, cancellation and undeclared guarantee each resolve
+   to their closed `Unknown` reason before any positive result; a detected
+   fatal fault takes precedence over concurrent cancellation;
+3. only after all applicable checks pass does the explicit question select
+   one positive result as section 14 specifies. `GenerationTerminated` implies
+   covered-resource absence but is returned only for `GenerationStatus`;
+   `CoveredResourcesAbsent` is the projection for
+   `CoveredResourceAbsence`, never an independent competing answer;
+4. no recency, majority, confidence or cost rule selects between disagreeing
+   facts. `Unknown` is terminal for that read and never upgraded by repetition.
 
 `LiveUnownedExecution` is unreachable in the initial in-process topology, which
 defines no adapter level able to report it; it is named so that a future adapter
@@ -464,19 +531,21 @@ to the exact tuple, what it can and cannot observe, the basis of its
 release-on-termination guarantee, and its behavior under unavailability,
 contradiction, partial read, panic, and cancellation. Any undeclared or
 unverifiable property makes the level unusable and yields
-`Unknown(GuaranteeNotDeclared)`. An adapter never mutates, never closes a
-barrier, never classifies a recovery set, and never becomes an owner; the
+`Unknown(GuaranteeNotDeclared)`. An evidence read never writes domain, ledger,
+binding, lifecycle, command or recovery facts; the mandatory fatal fence of
+section 19 remains an authority safety transition. An adapter never opens a
+barrier, classifies a recovery set or becomes an owner; the
 generation authority that consumes it stays inside the Control Service
 composition, so ADR-0003's single composition root and ARCH-002's freeze are
 preserved.
 
 ## 18. Scope isolation and security
 
-Evidence and ledger reads are scoped to exactly one containment domain — one
-operational management domain served by one Control Service together with the
-durable identity state it owns — and, within it, one Workspace, Configuration,
-Runtime Instance, Launch Attempt, and execution generation. Cross-domain
-evidence is prohibited even when it is available and favorable.
+The private generation-fact read is scoped to exactly one containment domain
+and execution generation. The later full evidence read additionally validates
+one Workspace, Configuration, Runtime Instance and Launch Attempt through
+DP-014 as section 14 requires. Cross-domain or cross-Workspace evidence is
+prohibited even when it is available and favorable.
 
 Results carry only opaque identities and closed semantic categories. They never
 carry credentials, Secrets, configuration or Snapshot payloads, raw internal
@@ -488,9 +557,9 @@ redaction remain DP-018 and ARCH-004 section 19(6).
 
 ## 19. Cancellation and concurrency
 
-1. Cancellation of an evidence read yields `Unknown(Cancelled)` and performs no
-   mutation. It never releases a capability, never proves termination, never
-   resolves a contradiction, and never authorizes a caller to proceed.
+1. Cancellation of an evidence read yields `Unknown(Cancelled)` if no fatal
+   fault was detected. It never releases a capability, proves termination,
+   resolves a contradiction or authorizes a caller to proceed.
 2. Cancellation of a lifecycle path is governed by DP-016 and DP-017; it does
    not change containment facts.
 3. Acquisition is serialized by exclusivity itself: concurrent acquisitions in
@@ -499,9 +568,16 @@ redaction remain DP-018 and ARCH-004 section 19(6).
 4. Concurrent evidence reads are independent and never block admission; they
    never hold locks across the read, and any downstream conditional publication
    revalidates revisions under DP-017 section 16.
-5. A concurrent reader never obtains mutation authority, and a writer that
-   changes the tuple, ledger, or binding between read and use invalidates the
-   read.
+5. A concurrent reader never obtains domain mutation authority, and a writer
+   that changes the tuple, ledger or binding between read and use invalidates
+   the read. After acquisition, detection during a read of capability loss,
+   guarantee downgrade, namespace/storage-authority uncertainty, corrupt or
+   unreconciled ledger permanently triggers DP-023 section 12 `FatalFenced`
+   before return. Fencing disables positive evidence and requires process
+   termination; the read returns a closed `Unknown` reason and never retries,
+   repairs or reacquires. Invalid caller input and cancellation alone do not
+   fence. This in-memory safety transition is the sole exception to the
+   no-domain-mutation rule; it is not a ledger, lifecycle or recovery write.
 
 ## 20. Failure matrix
 
@@ -512,7 +588,7 @@ redaction remain DP-018 and ARCH-004 section 19(6).
 | capability lost or revoked during life | admission closed, no new binding, no in-place re-acquisition | continue serving, self-heal, or restart automatically |
 | named generation has no ledger entry | `Unknown(ScopeMismatch)` | treat absence as termination |
 | ledger entry equals the current generation | `GenerationLive` | report self-termination |
-| ledger and current holder differ and exclusivity guarantees hold | `GenerationTerminated` | infer cleanup or Stop success |
+| exact queried prior entry is in the validated predecessor chain of the current holder under the exclusive guarantee | `GenerationTerminated` for `GenerationStatus`; `CoveredResourcesAbsent` only for `CoveredResourceAbsence` | infer cleanup or Stop success |
 | adapter cannot prove release-on-termination | `Unknown(GuaranteeNotDeclared)` | fall back to clock, PID, or probe |
 | two reads disagree | `Unknown(Contradictory)` | pick recent, majority, or convenient |
 | cached read reused later | `Unknown(Stale)` | reuse as current truth |
@@ -604,15 +680,16 @@ A future implementation of this boundary must prove at minimum:
 13. a binding naming a generation absent from the domain ledger yields
     `Unknown(ScopeMismatch)`;
 14. contradictory, stale, cancelled, unavailable, and unsupported-topology
-    inputs each yield their exact `Unknown` reason and no mutation;
-15. evidence reads perform no mutation, open no admission, and grant no
-    authority;
+    inputs each yield their exact `Unknown` reason and no domain write;
+15. evidence reads write no ledger, lifecycle, command or recovery fact, open
+    no admission and grant no authority; detected post-acquisition fatal faults
+    permanently fence before return under DP-023 section 12;
 16. concurrent readers never serialize or bypass DP-017 revision revalidation;
 17. no adapter below `ProcessContainment` can produce a positive result;
 18. the ledger carries none of the prohibited fields of section 11;
 19. cross-domain and cross-Workspace evidence is never used, and results
     disclose no prohibited payload;
-20. EN/RU contract, matrices, outcome names, guarantee levels, and Planned
+20. EN/RU contract, matrices, outcome names, guarantee levels, and Partial
     status remain aligned.
 
 ## 25. Implementation boundary
@@ -624,13 +701,18 @@ provider seam, and TASK-069's Windows-only DP-023 bootstrap package slice. The
 latter establishes its private capability, ledger, and generation authority
 only inside that package. The latest verification, review and Acceptance
 checkpoint resolves only from TASK-069's newest valid matching envelope. There
-is no evidence adapter, production composition wiring, or code path that can
-expose termination evidence to Control Service.
+is an isolated TASK-070 generation-fact reader candidate inside
+`internal/runtimecontainment`, under verification. Full-tuple evidence
+composition, production wiring and any code path exposing termination evidence
+to Control Service remain absent.
 
 DP-023 is Approved/Implemented in isolation by explicit Coordinator status
 decision through TASK-069. Mutable role verdicts and identities resolve from
 that task's newest valid matching envelope. Every evidence and downstream gate
-remains unchanged; DP-022 itself stays Planned.
+remains unchanged. The Coordinator explicitly sets DP-022 Implementation
+Status to Partial for the verified isolated generation-fact reader, subject to
+TASK-070 final Review and Acceptance. This status does not claim full-tuple
+evidence or production activation.
 
 This document is an Approved design boundary, so DP-017 section 11 now has an
 authoritative containment boundary to consume; DP-017 itself stays
@@ -638,7 +720,7 @@ Approved/Planned and unactivated. The status came from an explicit decision
 through the project's design status process; Documentation, Tester, Reviewer, or
 Coordinator acceptance of a task does not raise this document's Design Status
 and never raises Implementation Status. An isolated bootstrap candidate does
-not activate evidence: no evidence adapter or composition exists, so the exact
+not activate full evidence: no full-tuple adapter or composition exists, so the exact
 prior-generation termination proof that DP-017 section 11 requires still cannot
 be consumed by any component, and DP-017 recovery, DP-018 reporting, production
 integration, and Production Activation remain `Not Activated` and absent, and

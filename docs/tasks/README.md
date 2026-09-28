@@ -4,24 +4,25 @@
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
 Текущая task —
-[TASK-069](TASK-069-RUNTIME-PROCESS-CONTAINMENT-BOOTSTRAP.md), `In Progress`;
-exact current Tester/Reviewer checkpoint и subject identity определяются только
-newest valid matching Recovery Evidence Envelope task record; Implementation,
-на ветке
-`feature/task-069-runtime-process-containment-bootstrap` от trusted baseline
-`d3666ffea13a1866d86d7e8df9d4125aaade20c1`. Fresh Architect verdict по
-amended DP-022/DP-023 — `APPROVED`, blocking findings 0, иных известных
-design/readiness prerequisites нет. Exact first slice Windows-only:
-independent trusted provisioning descriptor, existing-only anchor/ledger,
-Windows `Global\\` Event, bbolt без `O_CREATE`, identity validation и
-fail-closed proofs. Exact isolated worktree slice существует в package
-`internal/runtimecontainment` с тремя focused tests и bbolt/Windows syscall
-dependencies. Mutable Tester/Reviewer checkpoint и identity здесь не
-дублируются и resolve-ятся из newest valid matching TASK-069 envelope. DP-023 —
-`Approved / Implemented in isolation`, DP-022 остаётся `Approved / Planned`.
-Slice не wired в Control Service; Production Activation отсутствует, latest
-verification, review и Acceptance checkpoint определяется только newest valid
-matching TASK-069 envelope.
+[TASK-070](TASK-070-RUNTIME-CONTAINMENT-EVIDENCE-READER.md), `In Progress`,
+Implementation, на ветке
+`feature/task-070-runtime-containment-evidence-reader` от trusted baseline
+`8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. Documentation Baseline завершён,
+и historical Architecture Confirmation обнаружил `ARCH-B-001`. Разрешённое
+пользователем focused зеркальное уточнение DP-022 прошло независимый
+Architecture Confirmation фактических EN/RU bytes: `APPROVED`, 0 blocking;
+все четыре пункта закрыты, иных известных prerequisites для исходного reader
+slice нет. Реализация продолжается в той же TASK-070; Acceptance отсутствует.
+
+Последняя завершённая product work —
+[TASK-069](TASK-069-RUNTIME-PROCESS-CONTAINMENT-BOOTSTRAP.md), `Completed —
+Coordinator Accepted (2026-09-25)` по newest valid matching Recovery Evidence
+Envelope. Windows-only DP-023 bootstrap реализован изолированно; task commit
+`046ddcfaa0a5f73e8821de71b578a0db4d2a3ecd` опубликован и merged в
+`main@8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. DP-023 — `Approved /
+Implemented in isolation`, DP-022 — `Approved / Partial` только для
+изолированного reader candidate TASK-070; Control Service wiring, full-tuple evidence, recovery, reporting и Production Activation
+отсутствуют.
 
 Последняя завершённая documentation-only work —
 [TASK-068](TASK-068-RUNTIME-CONTAINMENT-IMPLEMENTATION-READINESS.md),
@@ -164,7 +165,8 @@ PROCESS-002, Scope Audit 31/0/0 и final Reviewer проходят. Task commit
 - [TASK-066 — Runtime Execution Containment and Evidence Design](TASK-066-RUNTIME-EXECUTION-CONTAINMENT-EVIDENCE-DESIGN.md) — Completed — Coordinator Accepted (2026-09-20); Design-only; зеркальный DP-022 зафиксирован как Draft/Planned на момент closure, независимые Verification, PROCESS-002, Scope Audit, final Review и Coordinator Acceptance пройдены; task commit `a727562ec948686ba494305f00bf2a49d72a420c` опубликован через PR #71 (`MERGED`, mergedAt `2026-09-19T22:51:16Z`) и merged как `2c899a2069167c0d83b7c2d3cb8ffb13e862bfb9` — на момент closure commit и publication не выполнялись, это historical closure state; Design Status DP-022 повышен Draft → Approved отдельным решением TASK-067, а не Acceptance этой задачи; на момент closure containment capability, ledger и evidence adapter не были реализованы; current TASK-069 candidate не активирует DP-017/DP-018, production integration или Production Activation
 - [TASK-067 — Runtime Execution Containment Design Status Decision](TASK-067-RUNTIME-EXECUTION-CONTAINMENT-DESIGN-STATUS-DECISION.md) — Completed — Coordinator Accepted (2026-09-21); `Design-update`; Design Status DP-022 повышен Draft → Approved при Implementation Status `Planned`; независимые Verification, PROCESS-002, Scope Audit 13/0/0 и final Review (две rounds, C1 `Disproven`) пройдены, decision subject `ab95d3d1c460e88df3222c3dfaf4dfb0048cf87c`; containment capability, ledger и evidence adapter не были реализованы на момент closure; current TASK-069 candidate не активирует DP-017/DP-018, production integration или Production Activation; commit/publication не были авторизованы и не выполнялись на момент closure — это historical closure state; task commit `a7218683c34c1097f20065c1e1e03e24e07e122d` позднее опубликован через PR #72 и merged как `82a03be49635690cec06d90679eb4d8b4801bade`
 - [TASK-068 — Initial Runtime Containment Implementation Boundary and Slice Decomposition](TASK-068-RUNTIME-CONTAINMENT-IMPLEMENTATION-READINESS.md) — Completed — Coordinator Accepted (2026-09-21); Design-only / Readiness; DP-023 Approved/Planned and first bootstrap slice accepted without product capability change; task commit `924f71c6a7ee3a89d4f15bd74dda6ee4ba4c4df7` published through PR #73 and merged as `d3666ffea13a1866d86d7e8df9d4125aaade20c1`
-- [TASK-069 — Runtime Process-Containment Bootstrap Implementation](TASK-069-RUNTIME-PROCESS-CONTAINMENT-BOOTSTRAP.md) — In Progress; exact Windows-only isolated worktree slice on `feature/task-069-runtime-process-containment-bootstrap` from trusted baseline `d3666ffea13a1866d86d7e8df9d4125aaade20c1`; DP-023 Approved/Implemented in isolation; latest verification, review and Acceptance checkpoint and identity resolve from the newest valid matching task envelope; not wired into production
+- [TASK-069 — Runtime Process-Containment Bootstrap Implementation](TASK-069-RUNTIME-PROCESS-CONTAINMENT-BOOTSTRAP.md) — Completed — Coordinator Accepted (2026-09-25) by newest valid matching envelope; task commit `046ddcfaa0a5f73e8821de71b578a0db4d2a3ecd` merged into `main@8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`; DP-023 Approved/Implemented in isolation; not wired into production
+- [TASK-070 — Runtime Containment Exact Generation Evidence Reader](TASK-070-RUNTIME-CONTAINMENT-EVIDENCE-READER.md) — In Progress; independently approved focused mirrored DP-022 refinement closes all four `ARCH-B-001` points; isolated reader candidate implemented and verified with an explicit race-tool limitation, final Review/Acceptance pending
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

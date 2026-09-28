@@ -2,6 +2,7 @@ package runtimecontainment
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -54,6 +55,14 @@ func TestContainmentHelper(t *testing.T) {
 			os.Exit(23)
 		}
 		fmt.Println("ACTIVE " + authority.CurrentGeneration())
+		if prior := os.Getenv("UWP_QUERY_PRIOR"); prior != "" {
+			fact := authority.ReadGeneration(context.Background(), domain, prior)
+			if fact.Kind() == EvidenceGenerationTerminated {
+				fmt.Println("PRIOR-TERMINATED")
+			} else {
+				fmt.Println("PRIOR-UNKNOWN " + string(fact.Reason()))
+			}
+		}
 		if os.Getenv("UWP_HOLD") == "1" {
 			for {
 				time.Sleep(time.Second)
@@ -66,6 +75,25 @@ func TestContainmentHelper(t *testing.T) {
 		return
 	}
 	fmt.Println("UNAVAILABLE")
+}
+
+func TestSubprocessRestartReadsExactPriorGeneration(t *testing.T) {
+	requireWindows(t)
+	domain := testDomain(t)
+	config := provisionForTest(t, domain, t.TempDir())
+	first := runHelper(t, domain, config)
+	if !strings.HasPrefix(first, "ACTIVE ") {
+		t.Fatalf("first generation: %q", first)
+	}
+	command := helperCommand(domain, config, false)
+	command.Env = append(command.Env, "UWP_QUERY_PRIOR="+strings.TrimPrefix(first, "ACTIVE "))
+	output, err := command.CombinedOutput()
+	if err != nil {
+		t.Fatalf("restart reader: %v\n%s", err, output)
+	}
+	if !strings.Contains(string(output), "PRIOR-TERMINATED") {
+		t.Fatalf("restart did not prove exact prior termination: %s", output)
+	}
 }
 
 func TestSubprocessConcurrencyCrashRestartAndDomainIsolation(t *testing.T) {

@@ -8,28 +8,27 @@
 
 ## Текущее состояние
 
-- Current task: **TASK-069 — Runtime Process-Containment Bootstrap
-  Implementation**, `In Progress`; exact current Tester/Reviewer checkpoint and
-  subject identity resolve only from the newest valid matching Recovery
-  Evidence Envelope in TASK-069; Implementation, on branch
-  `feature/task-069-runtime-process-containment-bootstrap`, trusted baseline
-  `d3666ffea13a1866d86d7e8df9d4125aaade20c1`. Historical `ARCH-B-001` was
-  resolved by the bounded DP-022/DP-023 amendment and independent immutable
-  trusted provisioning descriptor. Fresh Architect review of the actual EN/RU
-  bytes is `APPROVED`, blocking findings 0, with zero further known
-  design/readiness prerequisites. The exact first slice is Windows-only:
-  existing-only pre-provisioned anchor/ledger, Windows `Global\\` Event, bbolt
-  custom opener without `O_CREATE`, canonical/physical root and file identity
-  validation and fail-closed proofs. The exact isolated worktree slice exists
-  in `internal/runtimecontainment` with three focused test files and
-  bbolt/Windows syscall dependencies. Coordinator explicitly set DP-023 to
-  `Approved / Implemented in isolation`; DP-022 remains `Approved / Planned`.
-  Mutable verification/review verdicts and identities are not duplicated here
-  and resolve from TASK-069's newest valid matching envelope. The slice is not
-  wired into Control Service; evidence, recovery, reporting and Production
-  Activation remain absent. The latest verification, review and Acceptance
-  checkpoint is envelope-owned and is not duplicated here
-- Latest completed task (2026-09-21): **TASK-068 — Initial Runtime Containment
+- Current task: **TASK-070 — Runtime Containment Exact Generation Evidence
+  Reader**, `In Progress`, on branch
+  `feature/task-070-runtime-containment-evidence-reader` from trusted baseline
+  `8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. Documentation Baseline passed,
+  and the historical Architecture Confirmation found `ARCH-B-001` in DP-022.
+  The 2026-09-28 user-authorized mirrored DP-022 refinement was independently
+  confirmed `APPROVED`, blocking findings 0, against actual EN/RU bytes; it
+  fixes result projection, later DP-014 binding ownership, one-use freshness
+  and mandatory fatal fencing. No other known architecture prerequisite for
+  the isolated generation reader remains. Implementation and verification are
+  in progress; TASK-070 has no Acceptance, commit or publication readiness
+- Latest completed task (2026-09-25): **TASK-069 — Runtime Process-Containment
+  Bootstrap Implementation**, `Completed — Coordinator Accepted` by the newest
+  valid matching Recovery Evidence Envelope. The accepted Windows-only
+  `internal/runtimecontainment` bootstrap was published as task commit
+  `046ddcfaa0a5f73e8821de71b578a0db4d2a3ecd` and merged into synchronized
+  `main@8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. DP-023 is `Approved /
+  Implemented in isolation`; DP-022 is `Approved / Partial` only for TASK-070's
+  isolated reader candidate. Control Service wiring, full-tuple evidence, recovery, reporting and Production Activation are
+  absent**
+- Previous completed task (2026-09-21): **TASK-068 — Initial Runtime Containment
   Implementation Boundary and Slice Decomposition; `Completed — Coordinator
   Accepted (2026-09-21)`, Design-only / Readiness; branch
   `docs/task-068-runtime-containment-implementation-readiness`, trusted
