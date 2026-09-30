@@ -3,18 +3,24 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая task —
-[TASK-070](TASK-070-RUNTIME-CONTAINMENT-EVIDENCE-READER.md), `In Progress`,
-Implementation, на ветке
-`feature/task-070-runtime-containment-evidence-reader` от trusted baseline
-`8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. Documentation Baseline завершён,
-и historical Architecture Confirmation обнаружил `ARCH-B-001`. Разрешённое
-пользователем focused зеркальное уточнение DP-022 прошло независимый
-Architecture Confirmation фактических EN/RU bytes: `APPROVED`, 0 blocking;
-все четыре пункта закрыты, иных известных prerequisites для исходного reader
-slice нет. Реализация продолжается в той же TASK-070; Acceptance отсутствует.
+Текущая process task —
+[TASK-072](TASK-072-PUBLISHER-HANDOFF-STORE-RECOVERY.md), `In Progress`,
+Design-update на `docs/task-072-handoff-store-recovery` от
+`c058da69f2296e52a8e32cc25e195190389dbca7`. Только bounded Publisher handoff-store
+repair. Latest gate/closure берётся из newest valid terminal Recovery Evidence
+Envelope этой task matching independently recomputed subject manifest.
+Это не product/readiness task или publication permission.
 
-Последняя завершённая product work —
+Последняя завершённая product task —
+[TASK-070](TASK-070-RUNTIME-CONTAINMENT-EVIDENCE-READER.md), `Completed —
+Coordinator Accepted` по matching envelope; опубликованный task commit
+`82b7cce` merged в local synchronized
+`main@c058da69f2296e52a8e32cc25e195190389dbca7`.
+Изолированный generation reader не добавляет full shutdown composer, DP-017
+recovery, production wiring или Activation. TASK-071 остаётся в separate frozen
+publication context без изменения bytes/Target/probes/effects этой process task.
+
+Предыдущая завершённая product work —
 [TASK-069](TASK-069-RUNTIME-PROCESS-CONTAINMENT-BOOTSTRAP.md), `Completed —
 Coordinator Accepted (2026-09-25)` по newest valid matching Recovery Evidence
 Envelope. Windows-only DP-023 bootstrap реализован изолированно; task commit

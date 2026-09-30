@@ -149,7 +149,15 @@ Release snapshot, независимые authorization/ownership/attempt axes и
 append-only durable operational record определены PROCESS-001. Любой closed
 attempt фиксирует reason и authorization/owner disposition; недоступный или
 неоднозначный record означает ownership `Unknown` и запрещает все publication
-mutations.
+mutations. Canonical native transcript qualification и source-authored
+StoreBootstrap определены Canonical Transcript Store Bootstrap and Recovery
+PROCESS-001. Source без direct store write использует собственный native
+message transport с independent persisted readback. Configured-but-proven-unused
+backend и inaccessible actual record/unknown emission различаются; второй
+случай запрещает replacement bootstrap. Source event нельзя изготовить
+пользователю/destination. Actual exact-ID user Route следует после durable
+Release; broad recovery request не pre-route-ит будущий ID. Pending durability
+оставляет ownership Unknown и запрещает mutations до native reconciliation.
 
 P10 требует доказанного `Active/Owned(execution-context)` у exact actor;
 `Released/InTransitNone` запрещает terminalization до exact Accept либо valid
@@ -188,7 +196,9 @@ local/remote facts, классифицирует checkpoints и продолжа
 которого не доказан. `Started` не означает `Completed`, interruption не создаёт
 verdict/status, а unknown side effect сначала reconciled inspect-first.
 
-Chat history не является recovery state. Task record обязан давать persistent
+Ordinary chat history не является recovery state. Qualified native Publisher
+operational transcript допускается только по PROCESS-001 и не заменяет
+repository task/role handoff. Task record обязан давать persistent
 anchor, но status claim без independently reproducible evidence не доказывает
 checkpoint и не выдаёт user permission. Для Publisher сохраняется его более
 строгий phase-aware Resume Reconstruction Guard.

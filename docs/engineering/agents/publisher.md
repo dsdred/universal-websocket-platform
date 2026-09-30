@@ -174,6 +174,34 @@ attempt. Если exact record
 publication mutations STOP. Начатое сообщение или session memory record не
 заменяют.
 
+### Canonical Native Transcript Bootstrap
+
+Publisher применяет Canonical Transcript Store Bootstrap and Recovery
+PROCESS-001. Concrete original Codex task transcript с native read_thread
+turn/item/context evidence и complete provider-owned backing JSONL может быть
+canonical store после qualification; file/hash/summary сами недостаточны.
+StoreDescriptor связывает original native gate/P0/current source identity,
+concrete read/reopen/emit methods, persistence, independent readers и полный
+current native tail/inventory. User/destination не создают source Release.
+
+Source без direct store write сам emits bootstrap/Release через native message
+transport; durable native readback доказывает событие. First bootstrap
+допускает inaccessible configured-unused backend только при complete-chain
+`Proven Not Started`; actual prior record/started/unknown write требует
+original-record recovery, не replacement. Pending Release/Accept durability
+означает Unknown и запрещает mutation/re-emission до reconciliation.
+Credential-blocked source честно сохраняет remote Unknown/stale и не повторяет
+failed auth ради Release; destination dual probes остаются обязательными.
+Actual native user Route следует после proven Release и цитирует exact
+UUID/Target/native locator/destination/prior gate; broad recovery request
+не является Route. Exact native destination Accept с durable readback —
+linearization. Перед Accept/mutation перечитывается newest complete tail.
+Reopen original task восстанавливает доступ, не principal/capability; если
+native provenance/access восстановить нельзя, StoreUnavailable/Unknown/STOP.
+По current user recovery request accepted repair manifest допускает только
+prospective read-only recovery прежнего Target до repair commit; отдельные
+repair gates и действующие запреты publication effects сохраняются.
+
 Handoff переносит существующую authorization только для неизменного Target и
 не создаёт permission, Coordinator Acceptance либо Commit Gate. Target
 mismatch, другой HEAD/range/scope, duplicate destination, missing explicit

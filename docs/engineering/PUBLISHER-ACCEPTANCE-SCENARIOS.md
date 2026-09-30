@@ -360,3 +360,23 @@ the Publisher commit being republished.
 | S-053 | Immutable `S` unchanged but projected `E` or evidence commit changes | Affected Acceptance/Publisher authority invalidated; no permission transfer |
 | S-054 | Interruption leaves commit/push/PR/merge outcome unknown | Inspect Git/GitHub first and resume exact first unfinished checkpoint; do not recreate evidence event or replay mutation |
 | S-055 | P10 for `E` succeeds and downstream cites unrelated claim | Publication confirms only `E`; unrelated proof/automatic activation rejected |
+
+## Canonical Native Handoff Store — S-056–S-064
+
+Каждая строка — воспроизводимый decision trace по PROCESS-001 §Canonical
+Transcript Store Bootstrap and Recovery и existing Target/state protocol.
+Fixtures — native record/context facts, а не fabricated operational events.
+Сценарии проверяют generic contract; они не доказывают capability live store и
+не запускают probes, Release/Accept или публикацию.
+
+| ID | Given / When | Required evidence, resulting state and next operation |
+|---|---|---|
+| S-056 | Source, Coordinator и destination имеют один qualified original native store; Target unchanged | Independent reads совпадающих original gate/P0, native actor/context, payload/order/current tail; source bootstrap/Release, actual user Route, destination own dual probes и durable native Accept → Active/Owned(destination)/Accepted; перед mutation current tail revalidated |
+| S-057 | Source не имеет GitHub credentials, native store/transport доступен | Source native identity и durable Release достаточны для Active/InTransitNone/Released; remote facts остаются Unknown/stale без повторного failed auth ради Release; destination самостоятельно reconstruct-ит remote facts и проходит оба probe; credential metadata/one probe не дают Accept |
+| S-058 | Source не имеет доступа к configured backend либо native transport/history | Complete known-source/session/store inventory доказывает все handoff writes Proven Not Started → configured/unused/inaccessible, first source-native bootstrap допустим без чтения backend. Actual prior record/started/unknown write → Unknown, restore original record. При total native unavailability restore/reopen original provider task в recorded source context, requalify; если невозможно → StoreUnavailable/Unknown/STOP, не replacement source |
+| S-059 | Destination/user writes Release с source actor field, копирует source text либо вручную inserts JSONL | Native role/run/current execution-context linkage не совпадает; событие отвергается, receipt не создаёт source provenance. Proven unchanged exact owner сохраняется; ambiguous/contradictory chain → Unknown/STOP; first source Release не фабрикуется |
+| S-060 | Interruption после emission Release до Route | Independent native readback exact Release → Active/InTransitNone/Released, только actual exact-ID user Route может продолжить. Unknown emission → pending durability/Unknown/STOP до native reconciliation; ни новый UUID, ни повтор Release вслепую не разрешены |
+| S-061 | Interruption после actual native Route до durable Accept | Exact Release/Route/current chain без Accept → Active/InTransitNone/Released; destination продолжает incomplete assessment и оба probes, не mutation. Possible emitted Accept сначала native-read reconciled; proven durable exact Accept → Owned(recorded destination), иначе Unknown/STOP, без blind re-emission |
+| S-062 | Reused/stale UUID, conflicting native tail/actors или newer event после старого read | Complete current history/ID inventory проверяется; reused/closed/accepted ID не route/accept повторно. Stale prefix не доказывает current state; conflicting owner/tail → Unknown/STOP; невозможно выбрать удобный owner или заменить record |
+| S-063 | User authorization unchanged, но Target branch/head/base/range/class/repository/task/scope изменён | Existing Target mismatch → InvalidatedByTargetChange/NoneTerminal и Closed(TargetChanged); bootstrap/readback не восстанавливают прежнюю authorization, old permission не переносится |
+| S-064 | Ownership Unknown после потерянного/неоднозначного record | Complete original gate/P0/current native chain и весь known inventory reconstruct-ят только proven state: Unissued recorded source, Released InTransitNone, Accepted recorded destination, valid closed/P10 exact return/terminal disposition. Missing pointer/unknown write/partial history остаются Unknown/STOP; generic repair Approval не является live qualification |
