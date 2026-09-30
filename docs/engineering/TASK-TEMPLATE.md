@@ -319,6 +319,16 @@ generated, formatting-only и незадокументированное planned
   `Unissued/Released/Accepted/Closed(reason)` axes; predecessor/tail, actor,
   resulting states and terminal reason/disposition recorded; unavailable/
   ambiguous record means ownership `Unknown` and STOP;
+- canonical transcript store/bootstrap evidence: concrete provider/original
+  conversation locator, native read/reopen/emit methods, backing-history
+  identity, native actor/context/gate/P0 anchors, ordered event locators,
+  current tail/prefix and independent persistence/readback evidence;
+  configured-unused backend vs actual record/attempt inventory, Proven Not
+  Started/unknown classification, source-native StoreBootstrap/Release and
+  exact accepted repair manifest if prospective recovery uses it; reader
+  receipt never creates source event, pending durability forbids mutation,
+  actual user Route after durable Release cites exact ID/Target/locator;
+  complete-chain Unknown reconstruction only, no replacement prior record;
 - return/terminal evidence: exact `CancelledBeforeAccept` directive and
   no-Accept reconciliation, accepted reverse fresh-ID releasing owner, Target
   invalidation, user revoke, or proven P10; resulting authorization/owner and

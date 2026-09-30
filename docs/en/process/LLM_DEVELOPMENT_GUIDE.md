@@ -306,6 +306,34 @@ source, destination, and Coordinator. If it is unavailable, ambiguous, or
 conflicting, ownership is `Unknown` and all publication mutations STOP. This
 is procedural exclusivity, not a machine or distributed lock.
 
+The default canonical handoff store is the original provider-owned native
+persistent execution transcript after qualification under
+[PROCESS-001](../../engineering/PROCESS-001-AI-DEVELOPMENT-WORKFLOW.md#canonical-transcript-store-bootstrap-and-recovery).
+For Codex, native read_thread IDs, ordered context/command events and the
+complete original session JSONL are two views of one store. A descriptor names
+the provider, original conversation, concrete read/reopen/emit methods, event
+locators, current tail, persistence and independent readers. Copied chat,
+summaries, arbitrary files or a claimed actor cannot prove native provenance.
+
+Source may emit its own bootstrap/Release through native message transport
+without direct backend write access; independent durable readback proves the
+event. A configured inaccessible backend proven unused by the complete native
+history and known-store/attempt inventory does not block first bootstrap.
+An inaccessible actual record, started/unknown emission or incomplete history
+requires original-record restoration; a replacement record cannot select an
+owner. Bootstrap reconstructs existing authority, never grants permission.
+
+Pending durability forbids all mutations and blind re-emission until native
+reconciliation. An actual native user Route follows durable Release and cites
+the exact UUID, Target, Release locator, destination and prior publish gate;
+a request to recover an as-yet unissued ID is not Route. Destination verifies
+the complete current chain, both own-context probes and emits its own native
+Accept; durable readback proves ownership. Reopen restores original access,
+not the execution principal or capability. Unrecoverable provenance/access
+remains `StoreUnavailable/Unknown/STOP`; no backend is assumed. Accepted repair
+bytes may support explicitly requested prospective read-only recovery before
+repair commit; separate repair gates and current effect restrictions remain.
+
 Projected live-state sources remain verification-stable `In Progress`. The
 exact latest verdict, identity, and first incomplete checkpoint come only from
 the newest valid terminal envelope entry matching an independently recomputed

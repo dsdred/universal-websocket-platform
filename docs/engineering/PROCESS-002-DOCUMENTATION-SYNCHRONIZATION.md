@@ -43,7 +43,10 @@ Documentation Agent использует:
 - документацию проекта;
 - результаты предыдущих задач.
 
-История чата может использоваться только как вспомогательный источник.
+Обычная история чата может использоваться только как вспомогательный источник.
+Qualified native Publisher operational transcript имеет узкое назначение по
+Canonical Transcript Store Bootstrap and Recovery PROCESS-001; он не заменяет
+repository sources, task anchor или role handoffs.
 
 Порядок источников истины, правила статусов и языковая политика определены в
 [PROCESS-001](PROCESS-001-AI-DEVELOPMENT-WORKFLOW.md). Этот процесс не может
@@ -210,6 +213,19 @@ independently inspectable. Authorization `Active/Consumed/Revoked/Invalidated`,
 ownership `Owned/InTransitNone/NoneTerminal/Unknown` и attempt
 `Unissued/Released/Accepted/Closed(reason)` не выводятся из project-state text.
 Недоступный или неоднозначный record означает ownership `Unknown` и STOP.
+Canonical store qualification/bootstrap выполняются только по PROCESS-001.
+Concrete Codex native transcript/API и provider-owned backing JSONL являются
+одним store, не двумя источниками ownership. Descriptor, original gate/P0
+native anchors, actual actor/context linkage, complete current tail и
+independent readback фиксируются в operational transcript, без изменений
+immutable target/task bytes. Недоступный configured-but-proven-unused backend
+допускает first native bootstrap при доказанном `Proven Not Started` inventory;
+inaccessible actual record/unknown write не допускает replacement.
+Source сам native-emits Release; reader receipt не создаёт source provenance.
+Pending durability запрещает mutations до native reconciliation. Exact actual
+user Route после durable Release и durable destination Accept сохраняются.
+Generic accepted repair manifest не доказывает actual store qualification и
+не переносит существующую authorization на commit/publication repair task.
 
 Projected task/context/current-state/index сохраняют verification-stable
 `In Progress` и envelope-resolution rule. Они не копируют изменчивый latest

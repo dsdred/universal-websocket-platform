@@ -3,18 +3,40 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая task —
-[TASK-070](TASK-070-RUNTIME-CONTAINMENT-EVIDENCE-READER.md), `In Progress`,
-Implementation, на ветке
-`feature/task-070-runtime-containment-evidence-reader` от trusted baseline
-`8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. Documentation Baseline завершён,
-и historical Architecture Confirmation обнаружил `ARCH-B-001`. Разрешённое
-пользователем focused зеркальное уточнение DP-022 прошло независимый
-Architecture Confirmation фактических EN/RU bytes: `APPROVED`, 0 blocking;
-все четыре пункта закрыты, иных известных prerequisites для исходного reader
-slice нет. Реализация продолжается в той же TASK-070; Acceptance отсутствует.
+Текущая integration reconciliation —
+[TASK-071](TASK-071-RUNTIME-OWNER-SHUTDOWN-PROVENANCE.md), `In Progress`,
+на ветке `feature/task-071-owner-shutdown-provenance`. Intended parents:
+`b653337dc93eb9419648246e447813dc168a16ea` и current integration
+`main@fb6341e48f6abdea0f2c2b23ea4c949a16ed3a70`; historical publication base
+`c058da69f2296e52a8e32cc25e195190389dbca7` не переписывается.
+Latest composite gate/closure определяется newest valid append-only Recovery
+Evidence Envelope entry TASK-071 matching independently recomputed 33-path
+composite subject: exact ordered path/projection/state/mode/OID rows и intended
+parent tuple из integration entries. Missing/stale/mismatched evidence — STOP.
+Трёхфайловый bounded rework имеет отдельный неизменный manifest
+`86de55dfe803f42f815bc46fd4fbb899dbf3592e`; его Acceptance не заменяет composite
+Acceptance. Этот index не выдаёт commit/publication permission или новый Target.
 
-Последняя завершённая product work —
+Опубликованный process repair —
+[TASK-072](TASK-072-PUBLISHER-HANDOFF-STORE-RECOVERY.md), bounded docs-only
+Publisher handoff-store repair на `docs/task-072-handoff-store-recovery` от
+`c058da69f2296e52a8e32cc25e195190389dbca7`. Историческая Acceptance относится
+к immutable source subject `00108732096fc68ad06391dab709edd962c1ebf1` task
+commit `60ee9bec4dde3df08620f1a9d54b28da3f5b4c62`, опубликованному через PR #76
+в `main@fb6341e48f6abdea0f2c2b23ea4c949a16ed3a70`. Это historical source, не
+current live resolver TASK-072 в изменившемся integration tree. Product/readiness
+scope и publication authority другого Target этим repair не создаются.
+
+Последняя опубликованная product task —
+[TASK-070](TASK-070-RUNTIME-CONTAINMENT-EVIDENCE-READER.md), `Completed —
+Coordinator Accepted`; task commit `82b7cce` merged в
+`main@c058da69f2296e52a8e32cc25e195190389dbca7`. Isolated generation reader не
+добавляет full shutdown composer, DP-017 recovery, production wiring или
+Activation. Historical accepted TASK-071 source сохраняется отдельно от
+не созданного нового integration/publication Target; live gates берутся только
+из текущего TASK-071 composite envelope.
+
+Предыдущая завершённая product work —
 [TASK-069](TASK-069-RUNTIME-PROCESS-CONTAINMENT-BOOTSTRAP.md), `Completed —
 Coordinator Accepted (2026-09-25)` по newest valid matching Recovery Evidence
 Envelope. Windows-only DP-023 bootstrap реализован изолированно; task commit
@@ -166,7 +188,7 @@ PROCESS-002, Scope Audit 31/0/0 и final Reviewer проходят. Task commit
 - [TASK-067 — Runtime Execution Containment Design Status Decision](TASK-067-RUNTIME-EXECUTION-CONTAINMENT-DESIGN-STATUS-DECISION.md) — Completed — Coordinator Accepted (2026-09-21); `Design-update`; Design Status DP-022 повышен Draft → Approved при Implementation Status `Planned`; независимые Verification, PROCESS-002, Scope Audit 13/0/0 и final Review (две rounds, C1 `Disproven`) пройдены, decision subject `ab95d3d1c460e88df3222c3dfaf4dfb0048cf87c`; containment capability, ledger и evidence adapter не были реализованы на момент closure; current TASK-069 candidate не активирует DP-017/DP-018, production integration или Production Activation; commit/publication не были авторизованы и не выполнялись на момент closure — это historical closure state; task commit `a7218683c34c1097f20065c1e1e03e24e07e122d` позднее опубликован через PR #72 и merged как `82a03be49635690cec06d90679eb4d8b4801bade`
 - [TASK-068 — Initial Runtime Containment Implementation Boundary and Slice Decomposition](TASK-068-RUNTIME-CONTAINMENT-IMPLEMENTATION-READINESS.md) — Completed — Coordinator Accepted (2026-09-21); Design-only / Readiness; DP-023 Approved/Planned and first bootstrap slice accepted without product capability change; task commit `924f71c6a7ee3a89d4f15bd74dda6ee4ba4c4df7` published through PR #73 and merged as `d3666ffea13a1866d86d7e8df9d4125aaade20c1`
 - [TASK-069 — Runtime Process-Containment Bootstrap Implementation](TASK-069-RUNTIME-PROCESS-CONTAINMENT-BOOTSTRAP.md) — Completed — Coordinator Accepted (2026-09-25) by newest valid matching envelope; task commit `046ddcfaa0a5f73e8821de71b578a0db4d2a3ecd` merged into `main@8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`; DP-023 Approved/Implemented in isolation; not wired into production
-- [TASK-070 — Runtime Containment Exact Generation Evidence Reader](TASK-070-RUNTIME-CONTAINMENT-EVIDENCE-READER.md) — In Progress; independently approved focused mirrored DP-022 refinement closes all four `ARCH-B-001` points; isolated reader candidate implemented and verified with an explicit race-tool limitation, final Review/Acceptance pending
+- Historical imported candidate projection from `main@fb6341e48f6abdea0f2c2b23ea4c949a16ed3a70`, not current routing: [TASK-070 — Runtime Containment Exact Generation Evidence Reader](TASK-070-RUNTIME-CONTAINMENT-EVIDENCE-READER.md) — In Progress; independently approved focused mirrored DP-022 refinement closes all four `ARCH-B-001` points; isolated reader candidate implemented and verified with an explicit race-tool limitation, final Review/Acceptance pending
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

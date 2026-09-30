@@ -352,7 +352,7 @@ These are process proof/regression scenarios, not product implementation tests.
 | Cross-platform canonical identity | R-028 |
 | Blocked closure canonical subject and durable Tester evidence | R-029–R-030 |
 | Exact-context capability and user/sandbox identity separation | R-031 |
-| Trusted-context handoff interruption, ownership, return and terminal disposition | R-032–R-036 |
+| Trusted-context handoff interruption, ownership, return, canonical store bootstrap | R-032–R-036, R-092–R-097 |
 | New-record eligibility, chronology, preservation, scope and certification | R-037–R-045 |
 | Interrupted bootstrap and unchanged sealed-intake gates | R-046–R-048 |
 
@@ -429,4 +429,19 @@ Disposition semantics and all earlier interruption/user-gate scenarios.
 Contract passes only if every scenario is traceable to normative PROCESS-001,
 PROCESS-002 or role text; negative assertions (`no verdict`, `no blind retry`,
 `no inferred permission`, `no replay completed checkpoint`) are preserved; and
-Publisher S-001–S-040 remain valid.
+Publisher S-001–S-055 remain valid.
+
+### Canonical transcript bootstrap/recovery — R-092–R-097
+
+Trace: PROCESS-001 §Canonical Transcript Store Bootstrap and Recovery;
+Publisher S-056–S-064. Это generic decision proofs на native evidence fixtures,
+не real issuance/probes или proof qualification текущего transcript.
+
+| ID | Given / When | Required result |
+|---|---|---|
+| R-092 | Source context reconnects after interruption; configured external store inaccessible, no handoff ever started | Restore/read original provider task and complete known continuation history; independent gate/P0/identity/current-tail/inventory proves Unissued/Proven Not Started → source may native-bootstrap, preserving Active/Owned(recorded source); backend access alone не required |
+| R-093 | Source emitted Release, readback interrupted before receipt | Reconcile exact native payload/actor/order before new event; durable Release → InTransitNone/Released and requires actual user Route; missing/uncertain durability → Unknown/STOP, не fresh ID/blind retry |
+| R-094 | Actual Route exists; assessment/probe/Accept emission interrupted | Complete newest native tail determines presence/absence/unknown exact Accept; do not infer ownership from started command/probe success; preserve existing ID and only incomplete assessment; unknown emitted Accept blocks both owners |
+| R-095 | Native summary/copy/local edited file substitutes original history or tail changed during read | Qualification fails; read actual native complete chain with context linkage and stable prefix/current tail; manual insert/rewrite/conflict → Unknown/STOP, user assertion/digest alone not proof |
+| R-096 | Known inaccessible actual record or started/outcome-unknown external write discovered during first bootstrap | Stop bootstrap, keep Unknown; restore/read/reconcile original record. Descriptor/history cannot discard concrete pointer; proven-unused configured backend is a distinct allowed R-092 case |
+| R-097 | Generic repair accepted locally but uncommitted; current user requests original publication recovery | Cite accepted exact repair manifest, independently qualify native store and replay authority; no automatic Release/Route/Accept, no new original publication permission for unchanged Target, no permission transfer to repair commit/publication, current effect freeze remains |

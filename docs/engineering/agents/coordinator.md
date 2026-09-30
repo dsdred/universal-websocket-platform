@@ -305,6 +305,17 @@ login/token transfer внутри sandbox и не считает наличие 
 side effects с момента Release Handoff. Новый Commit Gate или Acceptance для
 неизменного Target не выполняются.
 
+До trusted-context handoff Coordinator независимо проверяет canonical native
+StoreDescriptor, original gate/P0/source identity linkage, complete native
+history/current tail и prior-store/record/attempt inventory по Canonical
+Transcript Store Bootstrap and Recovery PROCESS-001. Backend configuration с
+доказанным `Proven Not Started` не равна inaccessible actual record. Coordinator
+может подтвердить native source event receipt, но не выдать Release от имени
+source или дополнить actual user Route будущим ID. Pending durability/unknown
+write требует reconciliation; actual store qualification не выводится из
+Approval process amendment. Existing authorization и ownership сохраняются
+отдельно; commit/publication repair task требуют своих ordinary gates.
+
 ---
 
 # Stop Conditions

@@ -8,29 +8,57 @@
 
 ## Текущее состояние
 
-- Latest completed task (2026-09-30): **TASK-071 — Runtime Owner Shutdown
+- Current bounded rework: **TASK-071 — Runtime Owner Shutdown Provenance and
+  Exact Attempt Snapshot**, `In Progress`, on branch
+  `feature/task-071-owner-shutdown-provenance`. Reconciliation sources are
+  historical accepted HEAD `b653337dc93eb9419648246e447813dc168a16ea` and
+  current integration `main@fb6341e48f6abdea0f2c2b23ea4c949a16ed3a70`.
+  Latest rework checkpoint is the newest valid Recovery Evidence Envelope
+  entry in TASK-071 matching the independently recomputed three-path subject
+  manifest. This projection does not grant Verification/Review/Acceptance.
+- Published process repair (2026-09-30): **TASK-072 — Publisher Handoff Store
+  Bootstrap and Recovery**, accepted docs-only PROCESS-001 repair, task commit
+  `60ee9bec4dde3df08620f1a9d54b28da3f5b4c62`, published through PR #76 into
+  `main@fb6341e48f6abdea0f2c2b23ea4c949a16ed3a70`. It defines canonical
+  native persistent transcript qualification, bootstrap/recovery and fail-closed
+  handoff ownership. Actual store qualification remains a per-attempt gate;
+  repair does not change product capability, readiness or DP status and does
+  not authorize publication of another Target.
+- Historical accepted implementation (2026-09-30): **TASK-071 — Runtime Owner Shutdown
   Provenance and Exact Attempt Snapshot**, `Completed — Coordinator Accepted`, on branch
   `feature/task-071-owner-shutdown-provenance` from trusted synchronized
   baseline `c058da69f2296e52a8e32cc25e195190389dbca7`. The bounded mirrored
   DP-014/016/017/022/023 repair passed independent Architecture Confirmation
-  `APPROVED — NO NEW PREREQUISITE`, blocking findings 0. The isolated
-  isolated implementation adds immutable
+  `APPROVED — NO NEW PREREQUISITE`, blocking findings 0. Accepted source commit
+  `b653337dc93eb9419648246e447813dc168a16ea` adds isolated immutable
   `OwnerShutdownCompleted|NoHostProduced|RecoveryReconciled`, authority-specific
   terminal publication, private coherent exact-attempt snapshot/revalidation,
   minimal runtimeactivation mapping and adversarial tests. Full tests,
   affected-package `-count=25`, full vet, formatting and diff check pass;
   independent final Reviewer returned `APPROVED`, blocking findings 0, Scope
-  Audit `21/0/0`. Race is unavailable without a C compiler. The user authorized
-  one TASK-071 commit; push and publication remain unauthorized. The full
-  composer and later slices remain `Not Activated`.
-- Latest completed task (2026-09-29): **TASK-070 — Runtime Containment Exact
+  Audit `21/0/0`. Race is unavailable without a C compiler. These are historical
+  accepted-source facts, not a claim that TASK-071 is merged into current main.
+  The current rework changes only project-state reconciliation and append-only
+  task evidence. The full composer, durable production adapter,
+  provider/admission wiring, DP-017 recovery and Production Activation remain
+  `Not Activated`.
+- Previous published product task (2026-09-29): **TASK-070 — Runtime Containment Exact
   Generation Evidence Reader**, `Completed — Coordinator Accepted`. Task commit
   `82b7cce29ea9bca350b7945ac51a2531135d1a21` was published through PR #75
   and merged into synchronized
   `main@c058da69f2296e52a8e32cc25e195190389dbca7`. DP-023 remains `Approved /
   Implemented in isolation`; DP-022 is `Approved / Partial` for the isolated
   bootstrap and exact-generation reader. Control Service wiring, full-tuple
-  evidence, recovery, reporting and Production Activation are absent.**
+  evidence, recovery, reporting and Production Activation are absent.
+- Previous completed product task (2026-09-25): **TASK-069 — Runtime
+  Process-Containment Bootstrap Implementation**, `Completed — Coordinator
+  Accepted` by the newest valid matching Recovery Evidence Envelope. The
+  accepted Windows-only `internal/runtimecontainment` bootstrap was published
+  as task commit `046ddcfaa0a5f73e8821de71b578a0db4d2a3ecd` and merged into
+  `main@8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. DP-023 is `Approved /
+  Implemented in isolation`; DP-022 is `Approved / Partial` for the isolated
+  TASK-070 reader. Full-tuple evidence, Control Service wiring, recovery,
+  reporting and Production Activation remain absent.
 - Previous completed task (2026-09-21): **TASK-068 — Initial Runtime Containment
   Implementation Boundary and Slice Decomposition; `Completed — Coordinator
   Accepted (2026-09-21)`, Design-only / Readiness; branch

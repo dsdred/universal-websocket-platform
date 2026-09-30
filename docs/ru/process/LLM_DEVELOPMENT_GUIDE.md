@@ -302,6 +302,34 @@ destination и Coordinator. Если он недоступен, неоднозн
 ownership = `Unknown` и все publication mutations STOP. Это procedural
 exclusivity, а не machine или distributed lock.
 
+Default canonical handoff store — original provider-owned native persistent
+execution transcript после qualification по
+[PROCESS-001](../../engineering/PROCESS-001-AI-DEVELOPMENT-WORKFLOW.md#canonical-transcript-store-bootstrap-and-recovery).
+Для Codex native read_thread IDs, ordered context/command events и complete
+original session JSONL являются двумя представлениями одного store. Descriptor
+фиксирует provider, original conversation, конкретные read/reopen/emit methods,
+event locators, current tail, persistence и independent readers. Copied chat,
+summaries, arbitrary files и claimed actor не доказывают native provenance.
+
+Source может сам emit bootstrap/Release через native message transport без
+direct backend write; independent durable readback доказывает событие.
+Configured inaccessible backend, чьё unused состояние доказано complete native
+history и known-store/attempt inventory, не блокирует first bootstrap.
+Inaccessible actual record, started/unknown emission или incomplete history
+требуют восстановления original record; replacement record не выбирает owner.
+Bootstrap reconstruct-ит existing authority, не выдаёт permission.
+
+Pending durability запрещает mutations и blind re-emission до native
+reconciliation. Actual native user Route следует после durable Release и
+цитирует exact UUID, Target, Release locator, destination и prior publish gate;
+запрос recovery ещё не выпущенного ID не является Route. Destination проверяет
+complete current chain, оба own-context probe и сам native-emits Accept;
+durable readback доказывает ownership. Reopen восстанавливает original access,
+а не execution principal или capability. Невосстановимые provenance/access
+оставляют `StoreUnavailable/Unknown/STOP`; backend не предполагается. Accepted
+repair bytes могут поддерживать явно запрошенный prospective read-only recovery
+до repair commit; отдельные repair gates и текущие effect restrictions действуют.
+
 Projected live-state sources сохраняют verification-stable `In Progress`.
 Exact latest verdict, identity и first incomplete checkpoint берутся только из
 newest valid terminal envelope entry, совпадающей с independently recomputed
