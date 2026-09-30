@@ -392,14 +392,16 @@ closed against it even when internally consistent.
 
 1. DP-023 process-containment bootstrap.
 2. DP-022 exact generation evidence reader.
-3. DP-022 shutdown-completion evidence composition.
-4. containment composition/admission/provider gate.
-5. DP-017 read-only recovery assessment.
-6. DP-017 durable recovery claim and admission barrier.
-7. DP-017 attempt and primitive-command reconciliation.
-8. DP-017 linked phase and parent reconciliation.
-9. DP-017 coherent release and barrier reopening.
-10. DP-018 reporting, then production integration and Production Activation.
+3. DP-014 Owner terminal provenance plus the private coherent exact-attempt
+   snapshot and fresh revision revalidation.
+4. DP-022 full shutdown-completion evidence composition and use-once handle.
+5. containment composition/admission/provider gate.
+6. DP-017 read-only recovery assessment.
+7. DP-017 durable recovery claim and admission barrier.
+8. DP-017 attempt and primitive-command reconciliation.
+9. DP-017 linked phase and parent reconciliation.
+10. DP-017 coherent release and barrier reopening.
+11. DP-018 reporting, then production integration and Production Activation.
 
 Every later slice requires a fresh intake and prerequisite check. This order
 activates none of them.
@@ -421,8 +423,10 @@ Implementation Status is `Implemented in isolation`. The TASK-069 worktree
 contains the Windows-only `internal/runtimecontainment` slice with a conforming
 capability, pre-provisioned anchor/bbolt ledger, authoritative generation
 bootstrap, unsupported-platform fail-closed stub, and focused proofs. It is not
-composed into Control Service and has no positive evidence reader. Therefore
-current production composition behavior and DP-017 are unchanged; evidence,
+composed into Control Service. Completed TASK-070 adds only the isolated exact
+generation reader, and TASK-071 adds only the isolated DP-014 provenance/read
+prerequisite; no positive full-tuple evidence composer exists. Therefore
+current production composition behavior and DP-017 are unchanged; composition,
 recovery, reporting, provisioning, integration, and Production Activation
 remain later work.
 

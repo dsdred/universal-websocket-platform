@@ -8,26 +8,29 @@
 
 ## Текущее состояние
 
-- Current task: **TASK-070 — Runtime Containment Exact Generation Evidence
-  Reader**, `In Progress`, on branch
-  `feature/task-070-runtime-containment-evidence-reader` from trusted baseline
-  `8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. Documentation Baseline passed,
-  and the historical Architecture Confirmation found `ARCH-B-001` in DP-022.
-  The 2026-09-28 user-authorized mirrored DP-022 refinement was independently
-  confirmed `APPROVED`, blocking findings 0, against actual EN/RU bytes; it
-  fixes result projection, later DP-014 binding ownership, one-use freshness
-  and mandatory fatal fencing. No other known architecture prerequisite for
-  the isolated generation reader remains. Implementation and verification are
-  in progress; TASK-070 has no Acceptance, commit or publication readiness
-- Latest completed task (2026-09-25): **TASK-069 — Runtime Process-Containment
-  Bootstrap Implementation**, `Completed — Coordinator Accepted` by the newest
-  valid matching Recovery Evidence Envelope. The accepted Windows-only
-  `internal/runtimecontainment` bootstrap was published as task commit
-  `046ddcfaa0a5f73e8821de71b578a0db4d2a3ecd` and merged into synchronized
-  `main@8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. DP-023 is `Approved /
-  Implemented in isolation`; DP-022 is `Approved / Partial` only for TASK-070's
-  isolated reader candidate. Control Service wiring, full-tuple evidence, recovery, reporting and Production Activation are
-  absent**
+- Latest completed task (2026-09-30): **TASK-071 — Runtime Owner Shutdown
+  Provenance and Exact Attempt Snapshot**, `Completed — Coordinator Accepted`, on branch
+  `feature/task-071-owner-shutdown-provenance` from trusted synchronized
+  baseline `c058da69f2296e52a8e32cc25e195190389dbca7`. The bounded mirrored
+  DP-014/016/017/022/023 repair passed independent Architecture Confirmation
+  `APPROVED — NO NEW PREREQUISITE`, blocking findings 0. The isolated
+  isolated implementation adds immutable
+  `OwnerShutdownCompleted|NoHostProduced|RecoveryReconciled`, authority-specific
+  terminal publication, private coherent exact-attempt snapshot/revalidation,
+  minimal runtimeactivation mapping and adversarial tests. Full tests,
+  affected-package `-count=25`, full vet, formatting and diff check pass;
+  independent final Reviewer returned `APPROVED`, blocking findings 0, Scope
+  Audit `21/0/0`. Race is unavailable without a C compiler. The user authorized
+  one TASK-071 commit; push and publication remain unauthorized. The full
+  composer and later slices remain `Not Activated`.
+- Latest completed task (2026-09-29): **TASK-070 — Runtime Containment Exact
+  Generation Evidence Reader**, `Completed — Coordinator Accepted`. Task commit
+  `82b7cce29ea9bca350b7945ac51a2531135d1a21` was published through PR #75
+  and merged into synchronized
+  `main@c058da69f2296e52a8e32cc25e195190389dbca7`. DP-023 remains `Approved /
+  Implemented in isolation`; DP-022 is `Approved / Partial` for the isolated
+  bootstrap and exact-generation reader. Control Service wiring, full-tuple
+  evidence, recovery, reporting and Production Activation are absent.**
 - Previous completed task (2026-09-21): **TASK-068 — Initial Runtime Containment
   Implementation Boundary and Slice Decomposition; `Completed — Coordinator
   Accepted (2026-09-21)`, Design-only / Readiness; branch
@@ -659,7 +662,9 @@
   concrete policy, full integration и production wiring отсутствуют
 - Design Status DP-014 — **Approved**, Implementation Status — **Implemented in
   isolation**; in-memory Runtime Instance aggregate store `internal/runtimeidentity`
-  реализован изолированно; external storage, HTTP API, recovery и production
+  реализован изолированно вместе с immutable Owner/recovery terminal
+  provenance и private coherent exact-attempt snapshot/revalidation; external
+  storage, full evidence composer, recovery workflow, HTTP API и production
   wiring отсутствуют
 - Design Status DP-015 — **Approved**, primitive Start/Stop boundary, partial
   parent/phase sequential core DP-019, command-boundary Continue/pending-Stop

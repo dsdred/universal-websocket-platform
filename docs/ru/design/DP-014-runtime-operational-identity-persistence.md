@@ -88,6 +88,11 @@ child identity и exact version pin immutable. Lifecycle phase и outcome facts
 **Последний подтверждённый fact** — desired или actual lifecycle fact, явно
 опубликованный Runtime Lifecycle Owner в определённой linearization point.
 
+**Terminal completion basis** — immutable provenance, commit вместе с одним
+terminal outcome Launch Attempt. Его closed values:
+`OwnerShutdownCompleted`, `NoHostProduced` и `RecoveryReconciled`. Отсутствие
+до terminal publication не является четвёртым значением.
+
 **Indeterminate outcome** означает, что caller не может определить, была ли
 requested atomic publication committed.
 
@@ -123,7 +128,9 @@ Aggregate сохраняет только facts, требуемые ARCH-004:
   immutable opaque execution-generation binding, требуемый Approved
   [DP-017](DP-017-runtime-recovery-reconciliation.md);
 - committed phase и terminal outcome facts, необходимые для различения
-  claimed, running, stop-claimed, stopped и failed attempts.
+  claimed, running, stop-claimed, stopped и failed attempts;
+- для каждого terminal attempt ровно один immutable terminal completion basis,
+  commit атомарно с его terminal phase и aggregate revision.
 
 Persistence contract не копирует payload Configuration, Snapshot, Secret
 values, pointer Host, context, goroutine, PID, socket или state Session.
@@ -259,9 +266,11 @@ revision. Repeated или stale stop claims не создают другого s
 
 Phase-sensitive publication Stop следует этим правилам:
 
-- attempt в `Preparing`, который не создал owned Host, может атомарно
-  опубликовать desired `Stopped`, actual `Stopped` и historical outcome
-  stopped-before-running;
+- claim Stop из `Preparing`, `Launching` или `Running` публикует desired
+  `Stopped` и actual `Stopping`, сохраняет association active attempt и сам по
+  себе не создаёт terminal phase или basis;
+- attempt, не создавший owned Host, становится terminal только после exact
+  Owner outcome, публикующего `NoHostProduced`;
 - attempt в `Launching` или `Running` сначала публикует same-attempt claim Stop
   и actual `Stopping`, затем публикует terminal outcome только из confirmed
   shutdown result;
@@ -272,7 +281,8 @@ Phase-sensitive publication Stop следует этим правилам:
 Confirmed terminal publication атомарно:
 
 - проверяет exact aggregate, revision и identity attempt;
-- фиксирует phase-sensitive stopped или failed outcome;
+- фиксирует phase-sensitive stopped или failed outcome и ровно один terminal
+  completion basis;
 - публикует последний подтверждённый Owner actual fact;
 - очищает reference active attempt только когда Owner доказывает отсутствие
   Host resources или что startup не создал owned Host;
@@ -286,6 +296,33 @@ resources освобождены или startup не создал их. Fact fai
 historical outcome `Failed` может быть опубликован только когда
 phase-sensitive contract также доказывает отсутствие Host resources или что
 startup не создал owned Host.
+
+Terminal basis имеет один monotonic transition: из отсутствия в одно exact
+value. После commit он immutable. Same-fact replay может наблюдать committed
+value без mutation; relabel, upgrade или downgrade отклоняется с zero mutation.
+Authority и смысл каждого value:
+
+- только Runtime Lifecycle Owner может публиковать
+  `OwnerShutdownCompleted`, только для exact attempt с immutable execution
+  binding, который владел Host, и только после успешного завершения этим Host
+  его owned shutdown contract;
+- только Runtime Lifecycle Owner может публиковать `NoHostProduced`, и только
+  когда его exact terminal outcome доказывает, что attempt никогда не создал и
+  не получил owned Host;
+- только recovery/reconciliation DP-017 может публиковать
+  `RecoveryReconciled`, и только когда approved evidence conditionally
+  terminalizes exact attempt. Это value фиксирует recovery provenance и не
+  утверждает успешный shutdown Host.
+
+Publication capability обязана сохранять эти разные authorities; caller-
+selected value, позволяющее recovery имитировать Owner publication, не
+соответствует contract. Recovery может использовать уже committed Owner basis,
+но не может создать, заменить или повысить какой-либо basis до
+`OwnerShutdownCompleted` или `NoHostProduced`. `StopStopped`, phase attempt
+`Stopped`, отсутствие ресурсов, generation termination, успех command, time,
+PID, port или probe result самостоятельно не выбирают
+`OwnerShutdownCompleted`. Stop failure или cleanup-unproven
+`AttemptStopping` остаётся non-terminal без terminal basis.
 
 ## 13. Desired, actual и liveness
 
@@ -399,6 +436,17 @@ child под другим aggregate.
 Reads являются только observation. Они не получают lifecycle ownership, не
 обновляют liveness, не исправляют state и не продвигают revision.
 
+Private exact-attempt snapshot может составляться из этих existing reads. Он
+возвращает один exact Workspace, Configuration, Runtime Instance, Launch
+Attempt, ConfigurationVersion, execution generation, phase, terminal basis и
+aggregate revision. Когда aggregate и history читаются раздельно, применяется
+revision-stable observation aggregate/history/aggregate; missing, duplicate,
+foreign, partially bound, contradictory или revision-incoherent facts
+отклоняются. Fresh revalidation этого snapshot возвращает stale при любом
+изменении aggregate revision. Snapshot и revalidation являются private
+observation-only mechanics: они не создают evidence, command, lifecycle или
+recovery record и не выдают authority.
+
 ## 19. Security и redaction
 
 Каждая operation scoped к exact operational management domain и identity
@@ -466,7 +514,8 @@ Implementation должна доказать минимум:
 6. exact immutable execution-generation binding после claim и до Load;
 7. binding mismatch, stale revision или indeterminate inspection не разрешает
    external preparation;
-8. exact conditional publications Running, Stop и terminal;
+8. exact conditional publications Running, Stop и terminal, где terminal phase
+   и ровно один valid immutable completion basis commit атомарно;
 9. stale и mismatched operations выполняют zero mutation;
 10. concurrent claims одного Instance создают не более одной accepted mutation;
 11. разные Instances выполняются независимо;
@@ -477,7 +526,11 @@ Implementation должна доказать минимум:
 15. persisted actual state или execution binding никогда не используется как
     liveness proof после потери Owner;
 16. redaction и domain isolation предотвращают cross-scope disclosure;
-17. не появляется второй lifecycle owner, ownership Host, schema promise или
+17. recovery publication может фиксировать только `RecoveryReconciled` и не
+    может создать, заменить или повысить Owner provenance;
+18. private exact-attempt snapshot и fresh revision revalidation отклоняют
+    incomplete, foreign, duplicate, contradictory или stale observations;
+19. не появляется второй lifecycle owner, ownership Host, schema promise или
     hidden service locator.
 
 Proofs включают технически доступные concurrency, race, failure-injection,
@@ -527,6 +580,12 @@ Implementation Status — Implemented in isolation. Package
 process-local in-memory Runtime Instance aggregate store с proof conditional
 revision и append-only history Launch Attempt. Он не подключён к management
 routing DP-013 или production composition.
+
+TASK-071 расширяет эту isolated implementation immutable three-value terminal
+completion basis, authority-specific publication surfaces Owner/recovery и
+private coherent exact-attempt snapshot с fresh revision revalidation. Эти
+добавления остаются process-local facts и observation mechanics DP-014; они не
+являются full evidence composer DP-022.
 
 External durable storage, schema, adapter, API, hydration, recovery, management
 wiring и Production Activation отсутствуют. Изолированный package не заявляет

@@ -114,6 +114,10 @@ of an old Launch Attempt.
 
 **Proven release** means the Lifecycle Owner has confirmed that the preceding
 attempt owns no Host resources, as required by ARCH-004 and DP-014.
+Resource absence is broader than the exact `OwnerShutdownCompleted` terminal
+basis and never implies that basis: an exact Owner-confirmed no-Host outcome is
+instead `NoHostProduced`, while a recovery terminal projection is
+`RecoveryReconciled`.
 
 **Continue gate** is the per-Instance linearization boundary between an
 accepted Stop intent and claim of the orchestration's linked Start phase.
@@ -352,7 +356,10 @@ The required semantic linearization points are:
 1. durable primitive command claim or parent orchestration claim and permit;
 2. linked old-attempt Stop phase claim and phase permit when active attempt
    exists;
-3. old-attempt terminal publication with proven release;
+3. DP-014 old-attempt terminal phase and basis publication from the exact Owner
+   outcome: successful owned-Host shutdown maps to
+   `OwnerShutdownCompleted`, while an exact terminal outcome proving no Host was
+   produced maps to `NoHostProduced`;
 4. Continue gate ordering independent Stop claim against linked Start-phase
    claim;
 5. one DP-013 invocation by the newly issued Start-phase permit, followed by
@@ -367,6 +374,14 @@ The required semantic linearization points are:
 Each DP-014 publication uses exact expected aggregate revision. Long Load,
 Build, Start, Stop, or wait work never executes under a command-admission or
 aggregate lock.
+
+The normal completion order is exact Owner outcome, then the DP-014 terminal
+phase-plus-basis commit, then the DP-015 primitive or linked phase/parent
+terminal outcome. The mapping uses the exact Owner fact for the exact attempt;
+`StopStopped`, aggregate `Stopped`, or resource absence alone is insufficient.
+Failure or loss of the following DP-015 publication cannot erase, weaken, or
+relabel an already committed DP-014 Owner basis. DP-015 remains downstream
+command truth rather than a second source of shutdown provenance.
 
 ## 19. Failure Matrix
 
@@ -510,7 +525,9 @@ proofs for the isolated implementation:
     by DP-017 commits after attempt claim and before Load, or preparation does
     not begin;
 18. different Instances progress independently;
-19. EN/RU contract, failure matrix, gates, and planned status remain aligned.
+19. a crash or failure after DP-014 Owner-basis commit and before DP-015
+    terminal publication preserves that basis without inventing command truth;
+20. EN/RU contract, failure matrix, gates, and planned status remain aligned.
 
 Proofs include technically available concurrency, race, failure injection, and
 storage-client-restart scenarios. They do not authorize production activation.
@@ -546,6 +563,10 @@ parent/phase Continue/pending-Stop rendezvous, plus the TASK-026 internal
 activation/replacement/rollback orchestrator and its proof tests. DP-017 and
 DP-018 remain Planned. It contains no external durable command/aggregate/
 workflow storage, public management API, recovery executor, or production wiring.
+
+TASK-071 minimally updates the isolated orchestrator call sites so exact Owner
+terminal kinds map to the corresponding DP-014 basis before DP-015 command
+publication. It adds no full evidence composition or production wiring.
 
 Approval closes the section 19(4) design gate but does not implement or wire
 the contract. TASK-038 confirmed TASK-026 remained Blocked first by the then

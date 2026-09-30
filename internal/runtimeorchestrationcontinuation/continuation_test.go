@@ -403,7 +403,7 @@ func TestAfterOwnerClaimConflictingAttemptFactsBlockWithoutRetry(t *testing.T) {
 				revision = running.Revision()
 			}
 			if mode == "terminal-reuse" {
-				terminal, _ := s.ConditionalPublishTerminal("instance-a", revision, attempt, true)
+				terminal, _ := s.OwnerTerminalPublisher().ConditionalPublishNoHostProduced("instance-a", revision, attempt, true)
 				revision = terminal.Revision()
 			}
 			trace := &traceIdentityStore{store: s}

@@ -29,7 +29,7 @@ type identityStore interface {
 	ReadLaunchAttemptHistory(runtimeconfigload.RuntimeInstanceID) ([]runtimeidentity.LaunchAttemptRecord, error)
 	ConditionalClaimStop(runtimeconfigload.RuntimeInstanceID, runtimeidentity.Revision, runtimeconfigload.LaunchAttemptID) (runtimeidentity.PublishResult, error)
 	ConditionalPublishRunning(runtimeconfigload.RuntimeInstanceID, runtimeidentity.Revision, runtimeconfigload.LaunchAttemptID) (runtimeidentity.PublishResult, error)
-	ConditionalPublishTerminal(runtimeconfigload.RuntimeInstanceID, runtimeidentity.Revision, runtimeconfigload.LaunchAttemptID, bool) (runtimeidentity.PublishResult, error)
+	OwnerTerminalPublisher() runtimeidentity.OwnerTerminalPublication
 }
 type lifecycleOwner interface {
 	Observe() runtimelifecycle.Observation
@@ -101,6 +101,7 @@ type Orchestrator struct {
 	target     runtimemanagement.Target
 	versions   versionStore
 	identity   identityStore
+	terminals  runtimeidentity.OwnerTerminalPublication
 	owner      lifecycleOwner
 	commands   *runtimecommandidempotency.Boundary
 	start      managedStartInvoker
@@ -113,10 +114,14 @@ func New(domain string, target runtimemanagement.Target, versions versionStore, 
 	if domain == "" || target.WorkspaceID() == 0 || target.ConfigurationID() == 0 || target.RuntimeInstanceID() == "" || versions == nil || identity == nil || owner == nil || commands == nil || start == nil || authorize == nil || generation == nil {
 		return nil, ErrInvalidRequest
 	}
+	terminals := identity.OwnerTerminalPublisher()
+	if terminals == nil {
+		return nil, ErrInvalidRequest
+	}
 	if observation := owner.Observe(); observation.WorkspaceID() != target.WorkspaceID() || observation.ConfigurationID() != target.ConfigurationID() || observation.RuntimeInstanceID() != target.RuntimeInstanceID() {
 		return nil, ErrInvalidRequest
 	}
-	return &Orchestrator{domain: domain, target: target, versions: versions, identity: identity, owner: owner, commands: commands, start: start, authorize: authorize, generation: generation}, nil
+	return &Orchestrator{domain: domain, target: target, versions: versions, identity: identity, terminals: terminals, owner: owner, commands: commands, start: start, authorize: authorize, generation: generation}, nil
 }
 
 // ActivateExact activates one exact Published target or observes satisfaction/progress.
@@ -306,9 +311,13 @@ func (o *Orchestrator) publishStart(outcome runtimelifecycle.StartOutcome, versi
 	active, ok := view.ActiveAttempt()
 	if !ok || active != fact.LaunchAttemptID() {
 		if outcome.Kind() == runtimelifecycle.StartStoppedBeforeRunning && view.ActualState() == runtimeidentity.ActualStateStopped {
+			expectedBasis := runtimeidentity.TerminalCompletionNoHostProduced
+			if fact.TerminalKind() == runtimelifecycle.AttemptStopped {
+				expectedBasis = runtimeidentity.TerminalCompletionOwnerShutdownCompleted
+			}
 			history, historyErr := o.identity.ReadLaunchAttemptHistory(o.target.RuntimeInstanceID())
 			for _, attempt := range history {
-				if historyErr == nil && attempt.LaunchAttemptID() == fact.LaunchAttemptID() && attempt.ConfigurationVersionID() == versionID && attempt.Phase() == runtimeidentity.AttemptPhaseStopped {
+				if historyErr == nil && attempt.LaunchAttemptID() == fact.LaunchAttemptID() && attempt.ConfigurationVersionID() == versionID && attempt.Phase() == runtimeidentity.AttemptPhaseStopped && attempt.TerminalCompletionBasis() == expectedBasis {
 					return nil
 				}
 			}
@@ -320,9 +329,37 @@ func (o *Orchestrator) publishStart(outcome runtimelifecycle.StartOutcome, versi
 	case runtimelifecycle.StartRunning:
 		published, err = o.identity.ConditionalPublishRunning(o.target.RuntimeInstanceID(), view.Revision(), active)
 	case runtimelifecycle.StartStoppedBeforeRunning:
-		published, err = o.identity.ConditionalPublishTerminal(o.target.RuntimeInstanceID(), view.Revision(), active, true)
-	case runtimelifecycle.StartPreparationFailed, runtimelifecycle.StartLaunchFailed:
-		published, err = o.identity.ConditionalPublishTerminal(o.target.RuntimeInstanceID(), view.Revision(), active, false)
+		switch fact.TerminalKind() {
+		case runtimelifecycle.AttemptStopped:
+			claim, claimErr := o.identity.ConditionalClaimStop(o.target.RuntimeInstanceID(), view.Revision(), active)
+			if claimErr != nil || !claim.Committed() {
+				return errors.Join(errIncoherentState, claimErr)
+			}
+			published, err = o.terminals.ConditionalPublishShutdownCompleted(o.target.RuntimeInstanceID(), claim.Revision(), active)
+		case runtimelifecycle.AttemptStoppedBeforeRunning:
+			published, err = o.terminals.ConditionalPublishNoHostProduced(o.target.RuntimeInstanceID(), view.Revision(), active, true)
+		case runtimelifecycle.AttemptStopFailed:
+			claim, claimErr := o.identity.ConditionalClaimStop(o.target.RuntimeInstanceID(), view.Revision(), active)
+			if claimErr != nil || !claim.Committed() {
+				return errors.Join(errIncoherentState, claimErr)
+			}
+			published, err = o.terminals.ConditionalPublishStopFailure(o.target.RuntimeInstanceID(), claim.Revision(), active)
+			if err == nil && published.Committed() {
+				return errIncoherentState
+			}
+		default:
+			return errIncoherentState
+		}
+	case runtimelifecycle.StartPreparationFailed:
+		if fact.TerminalKind() != runtimelifecycle.AttemptPreparationFailed {
+			return errIncoherentState
+		}
+		published, err = o.terminals.ConditionalPublishNoHostProduced(o.target.RuntimeInstanceID(), view.Revision(), active, false)
+	case runtimelifecycle.StartLaunchFailed:
+		if fact.TerminalKind() != runtimelifecycle.AttemptLaunchFailed {
+			return errIncoherentState
+		}
+		published, err = o.terminals.ConditionalPublishNoHostProduced(o.target.RuntimeInstanceID(), view.Revision(), active, false)
 	default:
 		return errIncoherentState
 	}
@@ -378,7 +415,9 @@ func (o *Orchestrator) parentCandidate(request Request, facts observed) (runtime
 			return runtimecommandidempotency.NewNoClaimCandidate(), nil
 		}
 		startScope, _ := runtimecommandidempotency.NewScope(o.domain, o.target.WorkspaceID(), o.target.ConfigurationID(), o.target.RuntimeInstanceID(), runtimecommandidempotency.OperationStart)
-		return runtimecommandidempotency.NewExecuteParentFromTrackedStartCandidate(revision+1, startScope, request.trackedStartKey, request.trackedRevision)
+		// Starting Stop now commits a nonterminal DP-014 Stop claim before the
+		// exact Owner outcome, then commits the terminal Owner basis.
+		return runtimecommandidempotency.NewExecuteParentFromTrackedStartCandidate(revision+2, startScope, request.trackedStartKey, request.trackedRevision)
 	}
 	if facts.running {
 		revision += 2
@@ -442,7 +481,7 @@ func (o *Orchestrator) runParent(ctx context.Context, versionID uint64, facts ob
 }
 func (o *Orchestrator) stopOld(ctx context.Context, facts observed) (runtimecommandidempotency.TerminalOutcome, error) {
 	revision := facts.view.Revision()
-	if facts.running {
+	if facts.running || facts.starting {
 		claim, err := o.identity.ConditionalClaimStop(o.target.RuntimeInstanceID(), revision, facts.attempt.LaunchAttemptID())
 		if err != nil || !claim.Committed() {
 			return runtimecommandidempotency.TerminalOutcome{}, errors.Join(errIncoherentState, err)
@@ -453,13 +492,29 @@ func (o *Orchestrator) stopOld(ctx context.Context, facts observed) (runtimecomm
 	if err != nil || stopped.Kind() == runtimelifecycle.StopAttemptMismatch {
 		return runtimecommandidempotency.TerminalOutcome{}, errors.Join(errIncoherentState, err)
 	}
-	if attempt, ok := stopped.Attempt(); ok && attempt.LaunchAttemptID() != facts.attempt.LaunchAttemptID() {
+	attempt, ok := stopped.Attempt()
+	if !ok || attempt.LaunchAttemptID() != facts.attempt.LaunchAttemptID() {
 		return runtimecommandidempotency.TerminalOutcome{}, errIncoherentState
 	}
-	if stopped.Kind() == runtimelifecycle.StopFailed && facts.starting {
+	var published runtimeidentity.PublishResult
+	switch stopped.Kind() {
+	case runtimelifecycle.StopStopped:
+		switch attempt.TerminalKind() {
+		case runtimelifecycle.AttemptStopped:
+			published, err = o.terminals.ConditionalPublishShutdownCompleted(o.target.RuntimeInstanceID(), revision, facts.attempt.LaunchAttemptID())
+		case runtimelifecycle.AttemptStoppedBeforeRunning, runtimelifecycle.AttemptPreparationFailed, runtimelifecycle.AttemptLaunchFailed:
+			published, err = o.terminals.ConditionalPublishNoHostProduced(o.target.RuntimeInstanceID(), revision, facts.attempt.LaunchAttemptID(), true)
+		default:
+			return runtimecommandidempotency.TerminalOutcome{}, errIncoherentState
+		}
+	case runtimelifecycle.StopFailed:
+		if attempt.TerminalKind() != runtimelifecycle.AttemptStopFailed {
+			return runtimecommandidempotency.TerminalOutcome{}, errIncoherentState
+		}
+		published, err = o.terminals.ConditionalPublishStopFailure(o.target.RuntimeInstanceID(), revision, facts.attempt.LaunchAttemptID())
+	default:
 		return runtimecommandidempotency.TerminalOutcome{}, errIncoherentState
 	}
-	published, err := o.identity.ConditionalPublishTerminal(o.target.RuntimeInstanceID(), revision, facts.attempt.LaunchAttemptID(), stopped.Kind() == runtimelifecycle.StopStopped)
 	if err != nil || !published.Committed() {
 		return runtimecommandidempotency.TerminalOutcome{}, errors.Join(errIncoherentState, err)
 	}

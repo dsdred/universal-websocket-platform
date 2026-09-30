@@ -206,7 +206,9 @@ func TestReplaceAndRollbackReleaseOldBeforeFreshAttempt(t *testing.T) {
 	}
 	assertRunning(t, f.identity, f.owner, f.target.RuntimeInstanceID(), versionOne, "attempt-3")
 	history, _ := f.identity.ReadLaunchAttemptHistory(f.target.RuntimeInstanceID())
-	if len(history) != 3 || history[0].Phase() != runtimeidentity.AttemptPhaseStopped || history[1].Phase() != runtimeidentity.AttemptPhaseStopped || history[2].Phase() != runtimeidentity.AttemptPhaseRunning {
+	if len(history) != 3 || history[0].Phase() != runtimeidentity.AttemptPhaseStopped || history[1].Phase() != runtimeidentity.AttemptPhaseStopped || history[2].Phase() != runtimeidentity.AttemptPhaseRunning ||
+		history[0].TerminalCompletionBasis() != runtimeidentity.TerminalCompletionOwnerShutdownCompleted ||
+		history[1].TerminalCompletionBasis() != runtimeidentity.TerminalCompletionOwnerShutdownCompleted {
 		t.Fatalf("attempt history = %#v", history)
 	}
 }
@@ -289,7 +291,7 @@ func TestSameTargetStartingIsInProgressWithoutClaim(t *testing.T) {
 		t.Fatalf("same-target Starting decision mutated state")
 	}
 	_, _ = f.owner.StopExpectedAttempt(context.Background(), attemptID)
-	_, _ = f.identity.ConditionalPublishTerminal(f.target.RuntimeInstanceID(), view.Revision(), attemptID, true)
+	_, _ = f.identity.OwnerTerminalPublisher().ConditionalPublishNoHostProduced(f.target.RuntimeInstanceID(), view.Revision(), attemptID, true)
 }
 
 func TestGenerationFailureLeavesClaimUnresolvedBeforeOwnerOrLoad(t *testing.T) {
@@ -347,7 +349,7 @@ func TestStartupFailurePublishesFailedWithoutAutomaticRollback(t *testing.T) {
 	}
 	view, _ := f.identity.ReadRuntimeInstance(f.target.RuntimeInstanceID())
 	history, _ := f.identity.ReadLaunchAttemptHistory(f.target.RuntimeInstanceID())
-	if view.ActualState() != runtimeidentity.ActualStateFailed || len(history) != 1 || history[0].Phase() != runtimeidentity.AttemptPhaseFailed {
+	if view.ActualState() != runtimeidentity.ActualStateFailed || len(history) != 1 || history[0].Phase() != runtimeidentity.AttemptPhaseFailed || history[0].TerminalCompletionBasis() != runtimeidentity.TerminalCompletionNoHostProduced {
 		t.Fatalf("failure facts = %#v/%#v", view, history)
 	}
 }
@@ -400,8 +402,123 @@ func TestTrackedStartingReplacementUsesPreclaimedStopAndFreshAttempt(t *testing.
 	}
 	assertRunning(t, f.identity, f.owner, f.target.RuntimeInstanceID(), versionTwo, "attempt-2")
 	history, _ := f.identity.ReadLaunchAttemptHistory(f.target.RuntimeInstanceID())
-	if len(history) != 2 || history[0].Phase() != runtimeidentity.AttemptPhaseStopped || history[1].Phase() != runtimeidentity.AttemptPhaseRunning {
+	if len(history) != 2 || history[0].Phase() != runtimeidentity.AttemptPhaseStopped || history[0].TerminalCompletionBasis() != runtimeidentity.TerminalCompletionNoHostProduced || history[1].Phase() != runtimeidentity.AttemptPhaseRunning {
 		t.Fatalf("tracked replacement history = %#v", history)
+	}
+}
+
+func TestTrackedStartingClaimsDP014StopBeforeOwnerOutcome(t *testing.T) {
+	f := newFixture(t)
+	preparation, err := f.owner.PrepareStart(runtimelifecycle.NewStartRequest(testWorkspace, testConfiguration, versionOne))
+	if err != nil {
+		t.Fatal(err)
+	}
+	attemptID := preparation.LoadRequest().LaunchAttemptID()
+	claim, err := f.identity.ConditionalClaimLaunchAttempt(f.target.RuntimeInstanceID(), 1, attemptID, versionOne)
+	if err != nil || !claim.Committed() {
+		t.Fatalf("identity claim = %#v/%v", claim, err)
+	}
+	bound, err := f.identity.ConditionalBindExecutionGeneration(f.target.RuntimeInstanceID(), claim.Revision(), attemptID, "starting-generation")
+	if err != nil || !bound.Committed() {
+		t.Fatalf("generation binding = %#v/%v", bound, err)
+	}
+	view, _ := f.identity.ReadRuntimeInstance(f.target.RuntimeInstanceID())
+	history, _ := f.identity.ReadLaunchAttemptHistory(f.target.RuntimeInstanceID())
+	if len(history) != 1 || f.owner.Observe().ActualState() != runtimelifecycle.ActualStarting {
+		t.Fatalf("precondition = %#v/%#v", history, f.owner.Observe())
+	}
+
+	orchestrator := *f.orchestrator
+	orchestrator.owner = unavailableStopOwner{next: f.owner}
+	_, err = orchestrator.stopOld(context.Background(), observed{
+		view:      view,
+		attempt:   history[0],
+		hasActive: true,
+		starting:  true,
+	})
+	if err == nil {
+		t.Fatal("stopOld with unavailable exact Owner outcome succeeded")
+	}
+
+	after, _ := f.identity.ReadRuntimeInstance(f.target.RuntimeInstanceID())
+	afterHistory, _ := f.identity.ReadLaunchAttemptHistory(f.target.RuntimeInstanceID())
+	if after.ActualState() != runtimeidentity.ActualStateStopping || len(afterHistory) != 1 ||
+		afterHistory[0].Phase() != runtimeidentity.AttemptPhaseStopping ||
+		afterHistory[0].TerminalCompletionBasis() != "" {
+		t.Fatalf("Starting Stop claim did not remain provenance-free: view=%#v history=%#v", after, afterHistory)
+	}
+}
+
+type cutAfterOwnerTerminalStore struct {
+	*runtimeidentity.Store
+	err error
+}
+
+func (s cutAfterOwnerTerminalStore) OwnerTerminalPublisher() runtimeidentity.OwnerTerminalPublication {
+	return cutAfterOwnerTerminalPublisher{next: s.Store.OwnerTerminalPublisher(), err: s.err}
+}
+
+type cutAfterOwnerTerminalPublisher struct {
+	next runtimeidentity.OwnerTerminalPublication
+	err  error
+}
+
+func (p cutAfterOwnerTerminalPublisher) ConditionalPublishShutdownCompleted(
+	id runtimeconfigload.RuntimeInstanceID,
+	revision runtimeidentity.Revision,
+	attemptID runtimeconfigload.LaunchAttemptID,
+) (runtimeidentity.PublishResult, error) {
+	result, err := p.next.ConditionalPublishShutdownCompleted(id, revision, attemptID)
+	if err == nil && result.Committed() {
+		return runtimeidentity.PublishResult{}, p.err
+	}
+	return result, err
+}
+
+func (p cutAfterOwnerTerminalPublisher) ConditionalPublishNoHostProduced(
+	id runtimeconfigload.RuntimeInstanceID,
+	revision runtimeidentity.Revision,
+	attemptID runtimeconfigload.LaunchAttemptID,
+	terminalStopped bool,
+) (runtimeidentity.PublishResult, error) {
+	return p.next.ConditionalPublishNoHostProduced(id, revision, attemptID, terminalStopped)
+}
+
+func (p cutAfterOwnerTerminalPublisher) ConditionalPublishStopFailure(
+	id runtimeconfigload.RuntimeInstanceID,
+	revision runtimeidentity.Revision,
+	attemptID runtimeconfigload.LaunchAttemptID,
+) (runtimeidentity.PublishResult, error) {
+	return p.next.ConditionalPublishStopFailure(id, revision, attemptID)
+}
+
+func TestOwnerShutdownBasisSurvivesCutBeforeDP015TerminalPublication(t *testing.T) {
+	f := newFixture(t)
+	if _, err := f.orchestrator.ActivateExact(context.Background(), mustRequest(t, "activate-before-cut", versionOne)); err != nil {
+		t.Fatal(err)
+	}
+	cutErr := errors.New("lost after DP-014 commit")
+	cutStore := cutAfterOwnerTerminalStore{Store: f.identity, err: cutErr}
+	orchestrator, err := New(testDomain, f.target, f.versions, cutStore, f.owner, f.boundary, f.invoker,
+		func(context.Context, runtimeorchestrationbinding.OrchestrationAuthorizationRequest) error { return nil },
+		func(context.Context) (runtimeorchestrationbinding.ExecutionGeneration, error) {
+			t.Fatal("target generation allocated across unresolved Stop cut")
+			return "", nil
+		})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result, err := orchestrator.ReplaceExact(context.Background(), mustRequest(t, "replace-cut", versionTwo))
+	if result.Category() != ResultUnresolved || !errors.Is(err, runtimecommandidempotency.ErrIndeterminateExecution) {
+		t.Fatalf("ReplaceExact(cut) = %#v/%v", result, err)
+	}
+	view, _ := f.identity.ReadRuntimeInstance(f.target.RuntimeInstanceID())
+	history, _ := f.identity.ReadLaunchAttemptHistory(f.target.RuntimeInstanceID())
+	if view.ActualState() != runtimeidentity.ActualStateStopped || len(history) != 1 ||
+		history[0].Phase() != runtimeidentity.AttemptPhaseStopped ||
+		history[0].TerminalCompletionBasis() != runtimeidentity.TerminalCompletionOwnerShutdownCompleted {
+		t.Fatalf("DP-014 Owner basis lost at DP-015 cut: view=%#v history=%#v", view, history)
 	}
 }
 

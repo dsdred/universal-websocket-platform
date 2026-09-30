@@ -309,6 +309,22 @@ For a proven terminated bound generation:
 - otherwise the active association and truthful non-terminal or Failed fact
   remain and the set stays unresolved.
 
+Every terminal attempt fact created by recovery carries
+`RecoveryReconciled`. Recovery may inspect and rely on an exact pre-existing
+immutable `OwnerShutdownCompleted` or `NoHostProduced` basis, but it never
+rewrites that attempt fact and can neither create nor promote either Owner
+basis. Generation termination and resource absence therefore produce only
+recovery-proven Failed/interrupted truth. A recovery-created
+`RecoveryReconciled` basis records that projection and never asserts successful
+Host shutdown.
+
+Historical `Stopped` and stopped/satisfied command reconciliation remain
+permitted only when the authoritative input already contains the exact
+pre-existing `OwnerShutdownCompleted` basis for the same bound attempt and
+generation. Recovery consumes that Owner fact; it does not manufacture a new
+basis. When recovery itself terminalizes an unresolved attempt, the new basis
+is always `RecoveryReconciled` and cannot later be promoted to an Owner basis.
+
 Clearing the active-attempt reference uses DP-014 exact revision and is allowed
 only with proven resource absence. Historical identity and version pin never
 change.
@@ -365,7 +381,9 @@ While the durable recovery barrier remains closed, publications proceed
 monotonically:
 
 1. re-read and verify exact aggregate, attempt, command, and recovery revisions;
-2. conditionally publish the phase-sensitive attempt/aggregate terminal fact;
+2. conditionally publish the phase-sensitive attempt/aggregate terminal fact
+   with `RecoveryReconciled`, or observe an exact pre-existing immutable Owner
+   basis without rewriting it;
 3. conditionally terminalize primitive or linked phase commands from that fact;
 4. conditionally terminalize the parent after all existing phases;
 5. coherently verify the entire set at the resulting revisions;
@@ -526,7 +544,9 @@ A future implementation must prove at minimum:
 19. barrier opens only for one coherent fully terminal set;
 20. cancellation and indeterminate outcomes leave admission closed;
 21. different Instances recover independently;
-22. EN/RU contract, matrices, gates, and Planned status remain aligned.
+22. every recovery-created terminal basis is `RecoveryReconciled`, and recovery
+    cannot create, replace, or promote an Owner basis;
+23. EN/RU contract, matrices, gates, and Planned status remain aligned.
 
 Proofs include technically available concurrency, race, failure-injection,
 durability, process-restart, and recovery-restart scenarios. They do not
@@ -561,10 +581,12 @@ process-local Runtime aggregate and command stores, but no external durable or
 process-restart store, recovery claim, execution-evidence adapter, recovery
 executor, public management API, or production wiring.
 
-TASK-069 implemented the DP-023 containment bootstrap in isolation. TASK-070
-has an isolated exact-generation reader candidate under verification; no
-full-tuple evidence composition, production wiring, or DP-017 mutation exists.
-These remain later dependency-ordered slices.
+TASK-069 implemented the DP-023 containment bootstrap in isolation, and
+completed TASK-070 implemented the isolated exact-generation reader. TASK-071
+adds only the DP-014 recovery-provenance validation surface; it implements no
+DP-017 assessment, claim, barrier, executor, or terminalization workflow. No
+full-tuple evidence composition or production wiring exists. These remain later
+dependency-ordered slices.
 
 The current in-process Runtime components do not survive Control Service
 process termination and expose no restart-time recovery capability. Creating

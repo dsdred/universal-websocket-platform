@@ -1,28 +1,32 @@
 # Текущее состояние
 
-**Текущая implementation task:** TASK-070 — Runtime Containment Exact
-Generation Evidence Reader, `In Progress`, на ветке
-`feature/task-070-runtime-containment-evidence-reader` от synchronized baseline
-`8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. Documentation Baseline прошёл,
-но historical Architecture Confirmation выявил `ARCH-B-001`. Разрешённое
-пользователем зеркальное уточнение DP-022 прошло независимый Architecture
-Confirmation фактических EN/RU bytes 2026-09-28: `APPROVED`, 0 blocking.
-Уточнены выбор одного outcome, later DP-014 binding seam, single-use freshness
-и обязательное fatal fencing; иных известных architecture prerequisites для
-изолированного reader slice нет. TASK-070 теперь `In Progress`: implementation
-и verification ещё выполняются, Coordinator Acceptance, commit и publication
-readiness отсутствуют.
+**Последняя завершённая implementation task (2026-09-30):** TASK-071 — Runtime
+Owner Shutdown Provenance and Exact Attempt Snapshot, `Completed — Coordinator
+Accepted`, на ветке
+`feature/task-071-owner-shutdown-provenance` от synchronized baseline
+`c058da69f2296e52a8e32cc25e195190389dbca7`. Подтверждённый existing design
+defect исправлен bounded mirrored update DP-014/016/017/022/023; независимый
+Architecture Confirmation фактических EN/RU bytes дал `APPROVED — NO NEW
+PREREQUISITE`, 0 blocking. Isolated implementation добавляет
+immutable `OwnerShutdownCompleted|NoHostProduced|RecoveryReconciled`,
+authority-specific terminal publications, private coherent exact-attempt
+snapshot/revalidation и minimal runtimeactivation mapping. Full tests,
+25-кратный affected-package stress, full vet, formatting и diff check проходят;
+final independent Reviewer `APPROVED`, blocking findings 0, Scope Audit
+`21/0/0`. Race detector недоступен в этой среде без C compiler. Пользователь
+разрешил один TASK-071 commit; push и publication не авторизованы. Full
+`HostShutdownCompleted` composer и все последующие slices остаются `Not
+Activated`.
 
-**Последняя завершённая implementation task (2026-09-25):** TASK-069 — Runtime
-Process-Containment Bootstrap Implementation, `Completed — Coordinator
-Accepted` по newest valid matching Recovery Evidence Envelope. Windows-only
-`internal/runtimecontainment` bootstrap опубликован task commit
-`046ddcfaa0a5f73e8821de71b578a0db4d2a3ecd` и merged в synchronized
-`main@8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. Зеркальный
-[DP-023: Bootstrap process-containment Runtime](../docs/ru/design/DP-023-runtime-process-containment-bootstrap.md)
-имеет `Approved / Implemented in isolation`; DP-022 — `Approved /
-Partial` только для изолированного candidate reader TASK-070. Control Service wiring, full-tuple evidence, DP-017 recovery, reporting,
-production integration и Production Activation отсутствуют.
+**Предыдущая завершённая implementation task (2026-09-29):** TASK-070 — Runtime
+Containment Exact Generation Evidence Reader, `Completed — Coordinator
+Accepted`. Task commit `82b7cce29ea9bca350b7945ac51a2531135d1a21`
+опубликован через PR #75 и merged в synchronized
+`main@c058da69f2296e52a8e32cc25e195190389dbca7`. DP-023 остаётся `Approved /
+Implemented in isolation`; DP-022 — `Approved / Partial` для isolated bootstrap
+и exact-generation reader. Full-tuple evidence composition, Control Service
+wiring, DP-017 recovery, reporting, production integration и Production
+Activation отсутствуют.
 
 **Последняя завершённая design task (2026-09-21):** TASK-068 — Initial Runtime
 Containment Implementation Boundary and Slice Decomposition, `Completed —
@@ -900,9 +904,11 @@ Activation отсутствуют.
 
 Runtime Operational Identity Persistence DP-014 имеет Design Status Approved и
 Implementation Status Implemented in isolation. Package `internal/runtimeidentity`
-реализует все девять conceptual operations §21 и удовлетворяет всем acceptance
-proofs §22 как in-memory store изолированно; external storage, HTTP API,
-production wiring и Production Activation отсутствуют.
+реализует все девять conceptual operations §21, immutable terminal completion
+basis, authority-specific publication surfaces и private coherent exact-attempt
+snapshot/revalidation как in-memory store изолированно; external storage, HTTP
+API, recovery workflow, full evidence composer, production wiring и Production
+Activation отсутствуют.
 
 Runtime Management Command Idempotency DP-015 имеет Design Status Approved;
 primitive Start/Stop boundary, partial parent/phase sequential core DP-019 и
@@ -1120,7 +1126,9 @@ Activation отсутствуют.
 - Изолированный `internal/runtimemanagement` реализует DP-013 exact routing и
   authorization-before-mutation без Control Service integration
 - Изолированный `internal/runtimeidentity` реализует DP-014 process-local
-  in-memory Runtime Instance aggregate и append-only Launch Attempt history
+  in-memory Runtime Instance aggregate, append-only Launch Attempt history,
+  immutable Owner/recovery terminal provenance и private exact-attempt
+  snapshot/revalidation
 - Изолированный `internal/runtimecommandidempotency` реализует DP-015
   process-local command claim/replay store и unresolved admission barriers
 
