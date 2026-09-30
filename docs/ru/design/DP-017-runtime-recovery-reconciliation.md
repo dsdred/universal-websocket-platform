@@ -302,6 +302,22 @@ active и unresolved.
 - иначе active association и truthful non-terminal/Failed fact сохраняются, а
   set остаётся unresolved.
 
+Каждый terminal attempt fact, созданный recovery, имеет
+`RecoveryReconciled`. Recovery может inspect и использовать exact pre-existing
+immutable basis `OwnerShutdownCompleted` или `NoHostProduced`, но никогда не
+перезаписывает этот attempt fact и не может создать либо повысить ни один Owner
+basis. Поэтому generation termination и resource absence дают только
+recovery-proven Failed/interrupted truth. Созданный recovery basis
+`RecoveryReconciled` фиксирует эту projection и никогда не утверждает успешный
+shutdown Host.
+
+Historical `Stopped` и reconciliation stopped/satisfied command остаются
+разрешены только когда authoritative input уже содержит exact pre-existing
+basis `OwnerShutdownCompleted` для того же bound attempt и generation.
+Recovery использует этот Owner fact, но не создаёт новый basis. Когда recovery
+сам terminalizes unresolved attempt, новый basis всегда
+`RecoveryReconciled` и позднее не может быть повышен до Owner basis.
+
 Clearing active-attempt reference использует exact DP-014 revision и разрешён
 только при proven resource absence. Historical identity/version pin неизменны.
 
@@ -355,7 +371,9 @@ Distributed transaction между aggregate/command stores не предпол�
 
 1. повторно прочитать и проверить exact aggregate, attempt, command и recovery
    revisions;
-2. conditionally publish phase-sensitive attempt/aggregate terminal fact;
+2. conditionally publish phase-sensitive attempt/aggregate terminal fact с
+   `RecoveryReconciled` либо наблюдать exact pre-existing immutable Owner basis
+   без его перезаписи;
 3. conditionally terminalize primitive или linked phase commands из этого fact;
 4. conditionally terminalize parent после всех existing phases;
 5. coherently проверить весь set на resulting revisions;
@@ -514,7 +532,9 @@ Future implementation должна доказать как минимум:
 19. barrier открывается только для coherent fully terminal set;
 20. cancellation/indeterminate outcomes оставляют admission closed;
 21. different Instances recover независимо;
-22. EN/RU contract, matrices, gates и Planned status aligned.
+22. каждый recovery-created terminal basis равен `RecoveryReconciled`, а
+    recovery не может создать, заменить или повысить Owner basis;
+23. EN/RU contract, matrices, gates и Planned status aligned.
 
 Proofs включают технически доступные concurrency, race, failure-injection,
 durability, process-restart и recovery-restart scenarios. Они не разрешают
@@ -549,10 +569,12 @@ Runtime aggregate и command stores, но не содержит external durable
 process-restart store, recovery claim, execution-evidence adapter, recovery
 executor, public management API или production wiring.
 
-TASK-069 реализовала containment bootstrap DP-023 изолированно. TASK-070 имеет
-candidate изолированного exact-generation reader под verification; full-tuple
-evidence composition, production wiring и mutation DP-017 отсутствуют. Они
-остаются последующими dependency-ordered slices.
+TASK-069 реализовала containment bootstrap DP-023 изолированно, а завершённая
+TASK-070 реализовала isolated exact-generation reader. TASK-071 добавляет
+только validation surface recovery provenance DP-014; она не реализует
+assessment, claim, barrier, executor или terminalization workflow DP-017.
+Full-tuple evidence composition и production wiring отсутствуют. Они остаются
+последующими dependency-ordered slices.
 
 Текущие in-process Runtime components не переживают Control Service process
 termination и не предоставляют restart-time recovery capability. Создание

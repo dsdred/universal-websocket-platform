@@ -51,6 +51,14 @@ var (
 	// ErrInvalidIdentity is returned when a required identity field is empty or
 	// otherwise invalid.
 	ErrInvalidIdentity = errors.New("invalid identity")
+
+	// ErrAttemptNotFound is returned when an exact-attempt observation does not
+	// contain the requested LaunchAttemptID.
+	ErrAttemptNotFound = errors.New("launch attempt not found")
+
+	// ErrIncoherentAttemptSnapshot is returned when detached aggregate/history
+	// facts cannot form one exact, internally consistent attempt snapshot.
+	ErrIncoherentAttemptSnapshot = errors.New("incoherent launch attempt snapshot")
 )
 
 // Revision is an opaque, monotonically advancing concurrency token. It
@@ -90,6 +98,42 @@ const (
 // isTerminal reports whether the phase represents a terminal historical state.
 func (p AttemptPhase) isTerminal() bool {
 	return p == AttemptPhaseStopped || p == AttemptPhaseFailed
+}
+
+func (p AttemptPhase) valid() bool {
+	switch p {
+	case AttemptPhaseClaimed, AttemptPhaseLaunching, AttemptPhaseRunning,
+		AttemptPhaseStopping, AttemptPhaseStopped, AttemptPhaseFailed:
+		return true
+	default:
+		return false
+	}
+}
+
+// TerminalCompletionBasis is the immutable provenance committed with one
+// terminal Launch Attempt outcome. The zero value means that no terminal basis
+// has been published; it is not a fourth basis value.
+type TerminalCompletionBasis string
+
+const (
+	// TerminalCompletionOwnerShutdownCompleted records that the Runtime
+	// Lifecycle Owner confirmed successful completion of an owned Host's
+	// shutdown contract for the exact attempt.
+	TerminalCompletionOwnerShutdownCompleted TerminalCompletionBasis = "OwnerShutdownCompleted"
+
+	// TerminalCompletionNoHostProduced records the Owner-confirmed terminal fact
+	// that the exact attempt never produced or acquired an owned Host.
+	TerminalCompletionNoHostProduced TerminalCompletionBasis = "NoHostProduced"
+
+	// TerminalCompletionRecoveryReconciled records a future DP-017 recovery
+	// terminal projection. It never asserts successful Host shutdown.
+	TerminalCompletionRecoveryReconciled TerminalCompletionBasis = "RecoveryReconciled"
+)
+
+func (b TerminalCompletionBasis) valid() bool {
+	return b == TerminalCompletionOwnerShutdownCompleted ||
+		b == TerminalCompletionNoHostProduced ||
+		b == TerminalCompletionRecoveryReconciled
 }
 
 // DesiredState records the last accepted management intent.
@@ -147,9 +191,17 @@ type LaunchAttemptRecord struct {
 	// phase is the current lifecycle phase.
 	phase AttemptPhase
 
+	// stopClaimedFrom retains the phase from which Stop responsibility was
+	// claimed. It is used only to validate an exact Owner no-Host outcome.
+	stopClaimedFrom AttemptPhase
+
 	// executionGeneration is the optional immutable opaque binding allocated by
 	// the Control Service. Empty means no binding has been stored.
 	executionGeneration ExecutionGeneration
+
+	// terminalCompletionBasis is committed atomically with a terminal phase.
+	// Empty means the attempt is not terminal.
+	terminalCompletionBasis TerminalCompletionBasis
 }
 
 // RuntimeInstanceID returns the immutable parent identity.
@@ -177,6 +229,12 @@ func (r LaunchAttemptRecord) Phase() AttemptPhase {
 // has been stored.
 func (r LaunchAttemptRecord) ExecutionGeneration() ExecutionGeneration {
 	return r.executionGeneration
+}
+
+// TerminalCompletionBasis returns the immutable terminal provenance, or the
+// zero value when the attempt is not terminal.
+func (r LaunchAttemptRecord) TerminalCompletionBasis() TerminalCompletionBasis {
+	return r.terminalCompletionBasis
 }
 
 // RuntimeInstanceView is one coherent read of a Runtime Instance aggregate. All

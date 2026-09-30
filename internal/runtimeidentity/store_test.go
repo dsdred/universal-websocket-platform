@@ -1,6 +1,8 @@
 package runtimeidentity
 
 import (
+	"errors"
+	"reflect"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -167,7 +169,8 @@ func TestConditionalClaimLaunchAttempt_AttemptIDNonReuse(t *testing.T) {
 	// Terminal the attempt so actual is Stopped again.
 	view, _ := s.ReadRuntimeInstance("ri-reuse")
 	activeID, _ := view.ActiveAttempt()
-	s.ConditionalClaimStop("ri-reuse", view.Revision(), activeID)
+	stopping, _ := s.ConditionalClaimStop("ri-reuse", view.Revision(), activeID)
+	s.OwnerTerminalPublisher().ConditionalPublishNoHostProduced("ri-reuse", stopping.Revision(), activeID, true)
 	// Now try to reuse the same attempt ID.
 	view2, _ := s.ReadRuntimeInstance("ri-reuse")
 	_, err := s.ConditionalClaimLaunchAttempt("ri-reuse", view2.Revision(), "la-once", 5)
@@ -182,9 +185,12 @@ func TestReadLaunchAttemptHistory_AppendOnlyAcrossMultipleAttempts(t *testing.T)
 	s := newStoreWithInstance(t, "ri-history", 1, 2)
 	// First attempt: stopped-before-running.
 	claimResult := mustClaim(t, s, "ri-history", "la-first", 5)
-	_, err := s.ConditionalClaimStop("ri-history", claimResult.Revision(), "la-first")
+	stopping, err := s.ConditionalClaimStop("ri-history", claimResult.Revision(), "la-first")
 	if err != nil {
 		t.Fatalf("ClaimStop(la-first) error = %v", err)
+	}
+	if _, err = s.OwnerTerminalPublisher().ConditionalPublishNoHostProduced("ri-history", stopping.Revision(), "la-first", true); err != nil {
+		t.Fatalf("PublishNoHostProduced(la-first) error = %v", err)
 	}
 	// Second attempt: claim + terminal failed.
 	view1, _ := s.ReadRuntimeInstance("ri-history")
@@ -192,18 +198,19 @@ func TestReadLaunchAttemptHistory_AppendOnlyAcrossMultipleAttempts(t *testing.T)
 	if err != nil {
 		t.Fatalf("claim la-second error = %v", err)
 	}
-	_, err = s.ConditionalPublishTerminal("ri-history", claimResult2.Revision(), "la-second", false)
+	_, err = s.OwnerTerminalPublisher().ConditionalPublishNoHostProduced("ri-history", claimResult2.Revision(), "la-second", false)
 	if err != nil {
 		t.Fatalf("PublishTerminal(failed) error = %v", err)
 	}
 	// Third attempt: running → stopped.
 	view2, _ := s.ReadRuntimeInstance("ri-history")
 	claimResult3 := mustClaimAt(t, s, "ri-history", view2.Revision(), "la-third", 7)
-	s.ConditionalPublishRunning("ri-history", claimResult3.Revision(), "la-third")
+	bindResult3, _ := s.ConditionalBindExecutionGeneration("ri-history", claimResult3.Revision(), "la-third", "gen-third")
+	s.ConditionalPublishRunning("ri-history", bindResult3.Revision(), "la-third")
 	view3, _ := s.ReadRuntimeInstance("ri-history")
 	s.ConditionalClaimStop("ri-history", view3.Revision(), "la-third")
 	view4, _ := s.ReadRuntimeInstance("ri-history")
-	s.ConditionalPublishTerminal("ri-history", view4.Revision(), "la-third", true)
+	s.OwnerTerminalPublisher().ConditionalPublishShutdownCompleted("ri-history", view4.Revision(), "la-third")
 
 	history, err := s.ReadLaunchAttemptHistory("ri-history")
 	if err != nil {
@@ -319,7 +326,7 @@ func TestConditionalPublishRunning_TransitionsToRunning(t *testing.T) {
 	}
 }
 
-func TestConditionalClaimStop_ClaimedPhaseStopsBeforeRunning(t *testing.T) {
+func TestConditionalClaimStop_ClaimedPhaseRequiresExactOwnerOutcome(t *testing.T) {
 	s := newStoreWithInstance(t, "ri-stop-pre", 1, 2)
 	claimResult := mustClaim(t, s, "ri-stop-pre", "la-sp", 5)
 	result, err := s.ConditionalClaimStop("ri-stop-pre", claimResult.Revision(), "la-sp")
@@ -327,15 +334,24 @@ func TestConditionalClaimStop_ClaimedPhaseStopsBeforeRunning(t *testing.T) {
 		t.Fatalf("ClaimStop(Claimed) error = %v, committed = %t", err, result.Committed())
 	}
 	view, _ := s.ReadRuntimeInstance("ri-stop-pre")
-	if view.ActualState() != ActualStateStopped {
-		t.Fatalf("actual = %q, want Stopped", view.ActualState())
+	if view.ActualState() != ActualStateStopping {
+		t.Fatalf("actual = %q, want Stopping", view.ActualState())
 	}
-	if _, active := view.ActiveAttempt(); active {
-		t.Fatal("active attempt still set after stopped-before-running")
+	if activeID, active := view.ActiveAttempt(); !active || activeID != "la-sp" {
+		t.Fatalf("active attempt = %q/%t, want la-sp/true", activeID, active)
 	}
 	history, _ := s.ReadLaunchAttemptHistory("ri-stop-pre")
-	if history[0].Phase() != AttemptPhaseStopped {
-		t.Fatalf("phase = %q, want Stopped", history[0].Phase())
+	if history[0].Phase() != AttemptPhaseStopping || history[0].TerminalCompletionBasis() != "" {
+		t.Fatalf("stop claim minted terminal truth: %#v", history[0])
+	}
+	terminal, err := s.OwnerTerminalPublisher().ConditionalPublishNoHostProduced("ri-stop-pre", result.Revision(), "la-sp", true)
+	if err != nil || !terminal.Committed() {
+		t.Fatalf("Owner NoHostProduced = %#v/%v", terminal, err)
+	}
+	view, _ = s.ReadRuntimeInstance("ri-stop-pre")
+	history, _ = s.ReadLaunchAttemptHistory("ri-stop-pre")
+	if view.ActualState() != ActualStateStopped || history[0].Phase() != AttemptPhaseStopped || history[0].TerminalCompletionBasis() != TerminalCompletionNoHostProduced {
+		t.Fatalf("exact Owner outcome not terminal: view=%#v attempt=%#v", view, history[0])
 	}
 }
 
@@ -357,12 +373,13 @@ func TestConditionalClaimStop_RunningPhaseTransitionsToStopping(t *testing.T) {
 	}
 }
 
-func TestConditionalPublishTerminal_StoppedClearsActiveAttempt(t *testing.T) {
+func TestConditionalPublishOwnerShutdownCompleted_ClearsActiveAttempt(t *testing.T) {
 	s := newStoreWithInstance(t, "ri-term-stop", 1, 2)
 	claimResult := mustClaim(t, s, "ri-term-stop", "la-ts", 5)
-	runResult, _ := s.ConditionalPublishRunning("ri-term-stop", claimResult.Revision(), "la-ts")
+	bindResult, _ := s.ConditionalBindExecutionGeneration("ri-term-stop", claimResult.Revision(), "la-ts", "gen-ts")
+	runResult, _ := s.ConditionalPublishRunning("ri-term-stop", bindResult.Revision(), "la-ts")
 	stopResult, _ := s.ConditionalClaimStop("ri-term-stop", runResult.Revision(), "la-ts")
-	result, err := s.ConditionalPublishTerminal("ri-term-stop", stopResult.Revision(), "la-ts", true)
+	result, err := s.OwnerTerminalPublisher().ConditionalPublishShutdownCompleted("ri-term-stop", stopResult.Revision(), "la-ts")
 	if err != nil || !result.Committed() {
 		t.Fatalf("PublishTerminal(Stopped) error = %v, committed = %t", err, result.Committed())
 	}
@@ -373,12 +390,16 @@ func TestConditionalPublishTerminal_StoppedClearsActiveAttempt(t *testing.T) {
 	if _, active := view.ActiveAttempt(); active {
 		t.Fatal("active attempt still set after terminal Stopped")
 	}
+	history, _ := s.ReadLaunchAttemptHistory("ri-term-stop")
+	if history[0].TerminalCompletionBasis() != TerminalCompletionOwnerShutdownCompleted {
+		t.Fatalf("basis = %q", history[0].TerminalCompletionBasis())
+	}
 }
 
-func TestConditionalPublishTerminal_FailedDefinitive(t *testing.T) {
+func TestConditionalPublishOwnerNoHostProduced_FailedDefinitive(t *testing.T) {
 	s := newStoreWithInstance(t, "ri-term-fail", 1, 2)
 	claimResult := mustClaim(t, s, "ri-term-fail", "la-tf", 5)
-	result, err := s.ConditionalPublishTerminal("ri-term-fail", claimResult.Revision(), "la-tf", false)
+	result, err := s.OwnerTerminalPublisher().ConditionalPublishNoHostProduced("ri-term-fail", claimResult.Revision(), "la-tf", false)
 	if err != nil || !result.Committed() {
 		t.Fatalf("PublishTerminal(Failed) error = %v, committed = %t", err, result.Committed())
 	}
@@ -390,8 +411,8 @@ func TestConditionalPublishTerminal_FailedDefinitive(t *testing.T) {
 		t.Fatal("active attempt still set after definitive Failed")
 	}
 	history, _ := s.ReadLaunchAttemptHistory("ri-term-fail")
-	if history[0].Phase() != AttemptPhaseFailed {
-		t.Fatalf("phase = %q, want Failed", history[0].Phase())
+	if history[0].Phase() != AttemptPhaseFailed || history[0].TerminalCompletionBasis() != TerminalCompletionNoHostProduced {
+		t.Fatalf("attempt = %#v, want Failed/NoHostProduced", history[0])
 	}
 }
 
@@ -423,7 +444,7 @@ func TestAllOperations_StaleRevisionZeroMutation(t *testing.T) {
 	if err != ErrStaleRevision {
 		t.Fatalf("Stop stale: %v, want ErrStaleRevision", err)
 	}
-	_, err = s.ConditionalPublishTerminal("ri-stale-all", staleRev2, "la-real", true)
+	_, err = s.OwnerTerminalPublisher().ConditionalPublishShutdownCompleted("ri-stale-all", staleRev2, "la-real")
 	if err != ErrStaleRevision {
 		t.Fatalf("Terminal stale: %v, want ErrStaleRevision", err)
 	}
@@ -445,7 +466,10 @@ func TestAllOperations_InstanceNotFoundReturnsError(t *testing.T) {
 		{"Bind", func() error { _, err := s.ConditionalBindExecutionGeneration("no-such", 1, "la", "g"); return err }},
 		{"Running", func() error { _, err := s.ConditionalPublishRunning("no-such", 1, "la"); return err }},
 		{"Stop", func() error { _, err := s.ConditionalClaimStop("no-such", 1, "la"); return err }},
-		{"Terminal", func() error { _, err := s.ConditionalPublishTerminal("no-such", 1, "la", true); return err }},
+		{"Terminal", func() error {
+			_, err := s.OwnerTerminalPublisher().ConditionalPublishShutdownCompleted("no-such", 1, "la")
+			return err
+		}},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -560,11 +584,11 @@ func TestReadRuntimeInstance_CoherentRevision(t *testing.T) {
 
 // ─── §22 Proof 13: definitive failure publishes nothing ──────────────────────
 
-func TestConditionalPublishTerminal_DefinitiveFailurePublishesNothing(t *testing.T) {
+func TestConditionalPublishOwnerShutdownCompleted_DefinitiveFailurePublishesNothing(t *testing.T) {
 	s := newStoreWithInstance(t, "ri-def-fail", 1, 2)
 	view0, _ := s.ReadRuntimeInstance("ri-def-fail")
 	// Terminal on non-existent active attempt: definitive rejection, zero mutation.
-	_, err := s.ConditionalPublishTerminal("ri-def-fail", view0.Revision(), "la-nonexistent", true)
+	_, err := s.OwnerTerminalPublisher().ConditionalPublishShutdownCompleted("ri-def-fail", view0.Revision(), "la-nonexistent")
 	if err != ErrNoActiveAttempt {
 		t.Fatalf("error = %v, want ErrNoActiveAttempt", err)
 	}
@@ -610,9 +634,10 @@ func TestActualState_IsHistoricalFact_NotLivenessProof(t *testing.T) {
 	// verification that the store does NOT perform liveness checks.
 	s := newStoreWithInstance(t, "ri-liveness", 1, 2)
 	claimResult := mustClaim(t, s, "ri-liveness", "la-live", 5)
-	runResult, _ := s.ConditionalPublishRunning("ri-liveness", claimResult.Revision(), "la-live")
+	bindResult, _ := s.ConditionalBindExecutionGeneration("ri-liveness", claimResult.Revision(), "la-live", "gen-live")
+	runResult, _ := s.ConditionalPublishRunning("ri-liveness", bindResult.Revision(), "la-live")
 	stopResult, _ := s.ConditionalClaimStop("ri-liveness", runResult.Revision(), "la-live")
-	_, _ = s.ConditionalPublishTerminal("ri-liveness", stopResult.Revision(), "la-live", true)
+	_, _ = s.OwnerTerminalPublisher().ConditionalPublishShutdownCompleted("ri-liveness", stopResult.Revision(), "la-live")
 	view, _ := s.ReadRuntimeInstance("ri-liveness")
 	// Actual is Stopped — a historical fact, not a live probe.
 	if view.ActualState() != ActualStateStopped {
@@ -666,12 +691,12 @@ func TestStore_HasNoSecondLifecycleOwnerOrServiceLocator(t *testing.T) {
 func TestConditionalPublishRunning_TerminalPhaseRejected(t *testing.T) {
 	s := newStoreWithInstance(t, "ri-run-term", 1, 2)
 	claimResult := mustClaim(t, s, "ri-run-term", "la-rt", 5)
-	// Claim Stop while in Claimed → terminal Stopped.
+	// Claim Stop while in Claimed remains non-terminal until exact Owner output.
 	stopResult, _ := s.ConditionalClaimStop("ri-run-term", claimResult.Revision(), "la-rt")
-	// Now try to publish Running — no active attempt.
+	// Now try to publish Running — the active attempt is Stopping.
 	_, err := s.ConditionalPublishRunning("ri-run-term", stopResult.Revision(), "la-rt")
-	if err != ErrNoActiveAttempt {
-		t.Fatalf("error = %v, want ErrNoActiveAttempt", err)
+	if err != ErrInvalidAttemptPhase {
+		t.Fatalf("error = %v, want ErrInvalidAttemptPhase", err)
 	}
 }
 
@@ -684,10 +709,10 @@ func TestConditionalClaimStop_NoActiveAttemptRejected(t *testing.T) {
 	}
 }
 
-func TestConditionalPublishTerminal_NoActiveAttemptRejected(t *testing.T) {
+func TestConditionalPublishOwnerShutdownCompleted_NoActiveAttemptRejected(t *testing.T) {
 	s := newStoreWithInstance(t, "ri-term-none", 1, 2)
 	view, _ := s.ReadRuntimeInstance("ri-term-none")
-	_, err := s.ConditionalPublishTerminal("ri-term-none", view.Revision(), "la-none", true)
+	_, err := s.OwnerTerminalPublisher().ConditionalPublishShutdownCompleted("ri-term-none", view.Revision(), "la-none")
 	if err != ErrNoActiveAttempt {
 		t.Fatalf("error = %v, want ErrNoActiveAttempt", err)
 	}
@@ -706,15 +731,17 @@ func TestConditionalBindExecutionGeneration_NoActiveAttemptRejected(t *testing.T
 
 func TestSentinelErrorStrings(t *testing.T) {
 	cases := map[error]string{
-		ErrInstanceNotFound:      "runtime instance not found",
-		ErrInstanceAlreadyExists: "runtime instance already exists",
-		ErrStaleRevision:         "stale aggregate revision",
-		ErrActiveAttemptExists:   "active launch attempt already exists",
-		ErrNoActiveAttempt:       "no active launch attempt",
-		ErrAttemptIDReused:       "launch attempt ID reused within instance history",
-		ErrInvalidAttemptPhase:   "invalid launch attempt phase for operation",
-		ErrBindingAlreadyExists:  "execution generation binding already exists",
-		ErrInvalidIdentity:       "invalid identity",
+		ErrInstanceNotFound:          "runtime instance not found",
+		ErrInstanceAlreadyExists:     "runtime instance already exists",
+		ErrStaleRevision:             "stale aggregate revision",
+		ErrActiveAttemptExists:       "active launch attempt already exists",
+		ErrNoActiveAttempt:           "no active launch attempt",
+		ErrAttemptIDReused:           "launch attempt ID reused within instance history",
+		ErrInvalidAttemptPhase:       "invalid launch attempt phase for operation",
+		ErrBindingAlreadyExists:      "execution generation binding already exists",
+		ErrInvalidIdentity:           "invalid identity",
+		ErrAttemptNotFound:           "launch attempt not found",
+		ErrIncoherentAttemptSnapshot: "incoherent launch attempt snapshot",
 	}
 	for sentinel, want := range cases {
 		if sentinel.Error() != want {
@@ -725,13 +752,13 @@ func TestSentinelErrorStrings(t *testing.T) {
 
 // ─── Regression: stop-failure retains active attempt (AttemptStopping) ───────
 
-func TestConditionalPublishTerminal_StopFailureRetainsActiveAttempt(t *testing.T) {
+func TestConditionalPublishOwnerStopFailure_RetainsActiveAttempt(t *testing.T) {
 	s := newStoreWithInstance(t, "ri-stop-fail", 1, 2)
 	claimResult := mustClaim(t, s, "ri-stop-fail", "la-sf", 5)
 	runResult, _ := s.ConditionalPublishRunning("ri-stop-fail", claimResult.Revision(), "la-sf")
 	stopResult, _ := s.ConditionalClaimStop("ri-stop-fail", runResult.Revision(), "la-sf")
 	// Publish Failed from Stopping: cleanup-unproven; active retained.
-	result, err := s.ConditionalPublishTerminal("ri-stop-fail", stopResult.Revision(), "la-sf", false)
+	result, err := s.OwnerTerminalPublisher().ConditionalPublishStopFailure("ri-stop-fail", stopResult.Revision(), "la-sf")
 	if err != nil || !result.Committed() {
 		t.Fatalf("PublishTerminal(Failed from Stopping) error = %v, committed = %t", err, result.Committed())
 	}
@@ -745,12 +772,97 @@ func TestConditionalPublishTerminal_StopFailureRetainsActiveAttempt(t *testing.T
 	}
 }
 
+func TestTerminalCompletionBasis_DistinguishesSameStoppedPhase(t *testing.T) {
+	s := newStoreWithInstance(t, "ri-basis", 1, 2)
+	first := mustClaim(t, s, "ri-basis", "la-no-host", 5)
+	firstStopping, err := s.ConditionalClaimStop("ri-basis", first.Revision(), "la-no-host")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.OwnerTerminalPublisher().ConditionalPublishNoHostProduced("ri-basis", firstStopping.Revision(), "la-no-host", true); err != nil {
+		t.Fatal(err)
+	}
+
+	view, _ := s.ReadRuntimeInstance("ri-basis")
+	second := mustClaimAt(t, s, "ri-basis", view.Revision(), "la-owner-stop", 6)
+	bound, _ := s.ConditionalBindExecutionGeneration("ri-basis", second.Revision(), "la-owner-stop", "gen-owner-stop")
+	running, _ := s.ConditionalPublishRunning("ri-basis", bound.Revision(), "la-owner-stop")
+	stopping, _ := s.ConditionalClaimStop("ri-basis", running.Revision(), "la-owner-stop")
+	if _, err := s.OwnerTerminalPublisher().ConditionalPublishShutdownCompleted("ri-basis", stopping.Revision(), "la-owner-stop"); err != nil {
+		t.Fatal(err)
+	}
+
+	history, _ := s.ReadLaunchAttemptHistory("ri-basis")
+	if len(history) != 2 || history[0].Phase() != AttemptPhaseStopped || history[1].Phase() != AttemptPhaseStopped ||
+		history[0].TerminalCompletionBasis() != TerminalCompletionNoHostProduced ||
+		history[1].TerminalCompletionBasis() != TerminalCompletionOwnerShutdownCompleted {
+		t.Fatalf("same-phase provenance collapsed: %#v", history)
+	}
+}
+
+func TestConditionalPublishRecoveryReconciled_CannotUpgradeOwnerProvenance(t *testing.T) {
+	s := newStoreWithInstance(t, "ri-recovery-basis", 1, 2)
+	claim := mustClaim(t, s, "ri-recovery-basis", "la-recovery", 5)
+	bound, _ := s.ConditionalBindExecutionGeneration("ri-recovery-basis", claim.Revision(), "la-recovery", "gen-recovery")
+	recovery := s.RecoveryTerminalPublisher()
+	if _, exposesOwnerMethods := recovery.(OwnerTerminalPublication); exposesOwnerMethods {
+		t.Fatal("recovery capability also exposes Owner terminal publication")
+	}
+	recovered, err := recovery.ConditionalPublishReconciled("ri-recovery-basis", bound.Revision(), "la-recovery")
+	if err != nil || !recovered.Committed() {
+		t.Fatalf("recovery publication = %#v/%v", recovered, err)
+	}
+	before, _ := s.ReadLaunchAttemptHistory("ri-recovery-basis")
+	if len(before) != 1 || before[0].Phase() != AttemptPhaseFailed || before[0].TerminalCompletionBasis() != TerminalCompletionRecoveryReconciled {
+		t.Fatalf("recovery fact = %#v", before)
+	}
+
+	if _, err := s.OwnerTerminalPublisher().ConditionalPublishShutdownCompleted("ri-recovery-basis", recovered.Revision(), "la-recovery"); !errors.Is(err, ErrNoActiveAttempt) {
+		t.Fatalf("recovery-to-owner upgrade = %v, want ErrNoActiveAttempt", err)
+	}
+	after, _ := s.ReadLaunchAttemptHistory("ri-recovery-basis")
+	if !reflect.DeepEqual(before, after) {
+		t.Fatalf("upgrade attempt mutated immutable basis: before=%#v after=%#v", before, after)
+	}
+}
+
+func TestOwnerTerminalCapabilities_RejectFalseProvenanceWithoutMutation(t *testing.T) {
+	t.Run("shutdown-without-generation", func(t *testing.T) {
+		s := newStoreWithInstance(t, "ri-owner-unbound", 1, 2)
+		claim := mustClaim(t, s, "ri-owner-unbound", "la-unbound", 5)
+		stopping, _ := s.ConditionalClaimStop("ri-owner-unbound", claim.Revision(), "la-unbound")
+		if _, err := s.OwnerTerminalPublisher().ConditionalPublishShutdownCompleted("ri-owner-unbound", stopping.Revision(), "la-unbound"); !errors.Is(err, ErrInvalidAttemptPhase) {
+			t.Fatalf("error = %v, want ErrInvalidAttemptPhase", err)
+		}
+		history, _ := s.ReadLaunchAttemptHistory("ri-owner-unbound")
+		if history[0].Phase() != AttemptPhaseStopping || history[0].TerminalCompletionBasis() != "" {
+			t.Fatalf("false shutdown mutated attempt: %#v", history[0])
+		}
+	})
+
+	t.Run("no-host-after-running", func(t *testing.T) {
+		s := newStoreWithInstance(t, "ri-no-host-running", 1, 2)
+		claim := mustClaim(t, s, "ri-no-host-running", "la-running", 5)
+		bound, _ := s.ConditionalBindExecutionGeneration("ri-no-host-running", claim.Revision(), "la-running", "gen-running")
+		running, _ := s.ConditionalPublishRunning("ri-no-host-running", bound.Revision(), "la-running")
+		stopping, _ := s.ConditionalClaimStop("ri-no-host-running", running.Revision(), "la-running")
+		if _, err := s.OwnerTerminalPublisher().ConditionalPublishNoHostProduced("ri-no-host-running", stopping.Revision(), "la-running", true); !errors.Is(err, ErrInvalidAttemptPhase) {
+			t.Fatalf("error = %v, want ErrInvalidAttemptPhase", err)
+		}
+		history, _ := s.ReadLaunchAttemptHistory("ri-no-host-running")
+		if history[0].Phase() != AttemptPhaseStopping || history[0].TerminalCompletionBasis() != "" {
+			t.Fatalf("false no-host mutated attempt: %#v", history[0])
+		}
+	})
+}
+
 // ─── Regression: after terminal, new claim is possible ───────────────────────
 
 func TestAfterTerminalStopped_NewClaimIsAllowed(t *testing.T) {
 	s := newStoreWithInstance(t, "ri-after-stop", 1, 2)
 	claimResult := mustClaim(t, s, "ri-after-stop", "la-first-as", 5)
-	s.ConditionalClaimStop("ri-after-stop", claimResult.Revision(), "la-first-as")
+	stopping, _ := s.ConditionalClaimStop("ri-after-stop", claimResult.Revision(), "la-first-as")
+	s.OwnerTerminalPublisher().ConditionalPublishNoHostProduced("ri-after-stop", stopping.Revision(), "la-first-as", true)
 	view, _ := s.ReadRuntimeInstance("ri-after-stop")
 	claimResult2, err := s.ConditionalClaimLaunchAttempt("ri-after-stop", view.Revision(), "la-second-as", 6)
 	if err != nil || !claimResult2.Committed() {

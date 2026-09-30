@@ -162,10 +162,11 @@ superseded более поздним exclusive acquisition.
 названный generation, отличный от current, больше не держит containment
 capability и поэтому terminated.
 
-**Shutdown-completion evidence** — coherently прочитанный durable fact,
-принадлежащий DP-014 и DP-015, о том, что Runtime Lifecycle Owner завершил
-Host-owned shutdown contract для одного exact Launch Attempt внутри одного exact
-bound generation.
+**Shutdown-completion evidence** — coherently прочитанный durable terminal
+basis DP-014 `OwnerShutdownCompleted`, опубликованный Runtime Lifecycle Owner
+для одного exact Launch Attempt внутри одного exact generation. Command truth
+DP-015 является downstream/corroborating, а не обязательным вторым источником
+positive evidence.
 
 **Unbound observation** — любой signal, который невозможно соотносить с exact
 `(domain, generation, attempt)` tuple. Это не execution evidence.
@@ -370,25 +371,42 @@ generation, которое он не записал в этом domain. Отсу
 
 Host-owned shutdown completion — это другой fact с другим производителем.
 
-1. Оно устанавливается только durable terminal fact, который сам Runtime
-   Lifecycle Owner опубликовал для exact attempt внутри exact bound generation,
-   после того как Host завершил свой owned shutdown contract, как уже требуют
-   DP-016 и DP-017 section 13.
-2. Его допустимость в качестве recovery evidence дополнительно требует
-   `GenerationTerminated` для того же generation, чтобы запись нельзя было
-   прочитать, пока Host, который она описывает, всё ещё может быть live.
+1. Оно устанавливается только immutable terminal basis DP-014
+   `OwnerShutdownCompleted`, который сам Runtime Lifecycle Owner опубликовал для
+   exact attempt внутри exact bound generation после завершения Host его owned
+   shutdown contract, как требуют DP-016 и DP-017 section 13.
+2. Допустимость также требует `GenerationTerminated` для того же generation,
+   чтобы fact нельзя было использовать, пока описываемый Host ещё может быть
+   live.
 3. Не вводится ни нового store, ни типа записи, ни второго пути публикации.
-   Durable attempt и command facts, принадлежащие DP-014 и DP-015, и есть тот
-   fact; DP-022 определяет только, когда их чтение является законным
-   evidence.
-4. Fact, записанный recovery или reconciliation путём, никогда не является
+   Authoritative producer — existing terminal fact attempt DP-014. DP-015
+   является downstream/corroborating command truth, а не обязательным вторым
+   источником positive shutdown evidence.
+4. Missing или unresolved publication DP-015 на crash cut DP-014/DP-015 не
+   отменяет уже committed `OwnerShutdownCompleted`; success DP-015 не заменяет
+   отсутствующий Owner basis. Более широкое observation с contradictory
+   terminal fact DP-015 остаётся `Unknown(Contradictory)` и не может переписать
+   DP-014.
+5. Basis `NoHostProduced` или `RecoveryReconciled` никогда не является
    shutdown-completion evidence. Выход recovery не может удостоверить то, о чём
-   его просят судить, поэтому данный design запрещает такое циклическое
-   использование явно.
-5. Отсутствие записи не является evidence незавершения. Termination плюс
+   его просят судить, поэтому design явно запрещает такое циклическое
+   использование.
+6. Отсутствие записи не является evidence незавершения. Termination плюс
    отсутствующий допустимый shutdown-completion fact дают лишь truthful
    resource-absence и interrupted outcomes, которые DP-017 уже предписывает, и
    никогда `Stopped`.
+
+Следовательно, `HostShutdownCompleted(tuple)` positive только когда один
+coherent exact-attempt snapshot доказывает exact containment domain, Workspace,
+Configuration, Runtime Instance, Launch Attempt, immutable execution binding,
+terminal phase и basis `OwnerShutdownCompleted`; binding равен запрошенному
+execution generation; а generation authority возвращает
+`GenerationTerminated` для того же domain и generation. Непосредственно перед
+return и повторно при consumption будущего use-once handle composition обязана
+freshly revalidate exact aggregate revision, live authority и exact ledger
+tail. Любой иной либо отсутствующий basis, partial/mismatched tuple, stale
+revision, изменившийся authority или contradictory fact fail closed через
+existing outcomes `Unknown`.
 
 Следовательно `resource absence != Host-owned shutdown completion` здесь
 структурно: у двух заключений разные производители, разные доказательства и
@@ -443,8 +461,8 @@ Launch Attempt, execution generation)` плюс один явный вопрос
 coherent terminated generation `GenerationStatus` выбирает
 `GenerationTerminated`; `CoveredResourceAbsence` выбирает
 `CoveredResourcesAbsent` по следствию covered class section 7; а
-`ShutdownCompletion` выбирает `HostShutdownCompleted` только с отдельным
-exact Owner terminal fact section 13, иначе `Unknown(Absent)`.
+`ShutdownCompletion` выбирает `HostShutdownCompleted` только с отдельным exact
+basis `OwnerShutdownCompleted` section 13, иначе `Unknown(Absent)`.
 `GenerationStatus` для current generation выбирает `GenerationLive`;
 отсутствие ресурсов и shutdown completion не следуют из current liveness.
 Таким образом, один invocation возвращает ровно один outcome section 15 и
@@ -479,7 +497,7 @@ enumeration или nearest-match операции.
 | `GenerationLive` | опрашиваемое generation является собственным current generation читателя и его capability удерживается | что любое более раннее generation terminated; любое lifecycle completion |
 | `GenerationTerminated` | exact названный prior generation superseded через exclusive re-acquisition в этом domain | graceful cleanup, успех Stop, outcome command, shutdown completion |
 | `CoveredResourcesAbsent` | ни один ресурс covered класса terminated generation не остаётся удерживаемым или достижимым | отсутствие uncovered класса; успешный release приложением |
-| `HostShutdownCompleted` | durable terminal fact Owner доказывает, что owned shutdown contract Host завершился для exact attempt в exact terminated generation | что recovery может reopen admission, что более поздняя phase может выполниться, либо любое более раннее claim о readiness |
+| `HostShutdownCompleted` | basis DP-014 `OwnerShutdownCompleted` доказывает, что owned shutdown contract Host завершился для exact attempt в exact terminated generation | что recovery может reopen admission, что более поздняя phase может выполниться, либо любое более раннее claim о readiness |
 | `LiveUnownedExecution` | adapter, чей approved уровень сообщает об этом, наблюдал execution, которым current процесс не владеет | manageability, права adoption, identity владельца или безопасное действие termination |
 | `Unknown(reason)` | ничего | любой из выводов выше |
 
@@ -544,7 +562,7 @@ Adapter отвечает на evidence запросы только на объя
 | Уровень | Покрывает | Может сообщать | Требуемые гарантии |
 | --- | --- | --- | --- |
 | `None` | adapter отсутствует либо не может связать tuple | только `Unknown` | никаких; default состояние репозитория |
-| `ProcessContainment` | initial single-node in-process границу | `GenerationLive`, `GenerationTerminated`, `CoveredResourcesAbsent`, `HostShutdownCompleted`, читаемые через facts DP-014/DP-015 | exclusive single-holder acquisition; release только при termination процесса без потери или двойной выдачи; отсутствие использования clock; locality ledger и pre-provisioned storage authority по section 11 и DP-023 section 8.1 |
+| `ProcessContainment` | initial single-node in-process границу | `GenerationLive`, `GenerationTerminated`, `CoveredResourcesAbsent`, `HostShutdownCompleted`, читаемые через Owner basis DP-014, а DP-015 только corroborating | exclusive single-holder acquisition; release только при termination процесса без потери или двойной выдачи; отсутствие использования clock; locality ledger и pre-provisioned storage authority по section 11 и DP-023 section 8.1 |
 | `ExecutionIsolation` | будущую approved child или remote границу | дополнительно `LiveUnownedExecution` | всё из `ProcessContainment` плюс approved протокол adoption и termination, которого не существует |
 
 Каждый adapter должен объявить, для каждого уровня: какой domain он связывает,
@@ -617,7 +635,7 @@ reporting и redaction остаются за DP-018 и ARCH-004 section 19(6).
 | запрос cancelled | `Unknown(Cancelled)` | брать favorable outcome по умолчанию |
 | binding называет generation другого domain | `Unknown(ScopeMismatch)` | cross-domain inference |
 | Host отсутствует, shutdown-completion fact нет | только отсутствие covered-ресурсов | публиковать или выводить `Stopped` |
-| durable terminal fact Owner плюс termination proof | `HostShutdownCompleted` | пропускать любую из двух половин доказательства |
+| exact basis DP-014 `OwnerShutdownCompleted` плюс same-generation termination proof и fresh revalidation | `HostShutdownCompleted` | пропускать predicate или требовать DP-015 вторым источником |
 | durable terminal fact записан recovery | не является evidence | циклическая сертификация |
 | будущий adapter сообщает unowned live execution | `LiveUnownedExecution` | adoption, replay или forced termination |
 | ресурс uncovered класса может существовать | `Unknown`, и barrier остаётся закрытым | полагать, что containment покрывает его |
@@ -635,7 +653,8 @@ reporting и redaction остаются за DP-018 и ARCH-004 section 19(6).
 | live Host ownership и lifecycle decisions | Runtime Lifecycle Owner (ARCH-004 section 9) | не затронуто; evidence никогда не передаёт это |
 | ресурсы Host | Runtime Host | не затронуто; containment лишь ограничивает их lifetime |
 | recovery classification, claim, permit, barrier | DP-017 | поставляет только facts и гарантии |
-| durable outcomes command и attempt | DP-014, DP-015, DP-016 | определяет, когда они считаются evidence |
+| terminal completion basis | DP-014; Runtime Lifecycle Owner выбирает два Owner basis, DP-017 выбирает только `RecoveryReconciled` | принимает только exact `OwnerShutdownCompleted` как shutdown provenance |
+| durable outcomes command | DP-015 и DP-016 | downstream/corroborating truth; никогда не обязательный второй positive source и не замена DP-014 |
 | operator reporting и redaction | DP-018, ARCH-004 section 19(6) | явно вне области действия |
 
 ## 22. Technology Neutrality
@@ -699,10 +718,11 @@ append-only supersession, точную привязку tuple и fail-closed п�
    или outcome command;
 10. отсутствие covered-класса сообщается без заявления отсутствия
     uncovered-класса;
-11. `HostShutdownCompleted` требует durable terminal fact Owner и termination
-    proof того же exact generation;
-12. durable fact, записанный recovery, никогда не принимается как shutdown
-    evidence;
+11. `HostShutdownCompleted` требует exact basis DP-014
+    `OwnerShutdownCompleted`, termination proof того же exact generation и
+    fresh revalidation revision/authority/tail;
+12. `NoHostProduced`, `RecoveryReconciled`, success DP-015 или durable fact,
+    записанный recovery, никогда не принимается вместо shutdown evidence;
 13. binding, называющий generation, отсутствующий в ledger domain, даёт
     `Unknown(ScopeMismatch)`;
 14. contradictory, stale, cancelled, unavailable и unsupported-topology входы
@@ -729,18 +749,20 @@ identity type `ExecutionGeneration`, conditional attempt-to-generation binding
 bootstrap package slice DP-023 из TASK-069. Последний устанавливает private
 capability, ledger и generation authority только внутри package. Latest
 verification, review и Acceptance checkpoint определяется только newest valid
-matching envelope TASK-069. Изолированный candidate generation-fact reader
-TASK-070 уже находится в `internal/runtimecontainment` под verification.
-Full-tuple evidence composition, production wiring и code path, который мог бы
-expose termination evidence Control Service, отсутствуют.
+matching envelope TASK-069. Завершённая TASK-070 добавляет isolated
+generation-fact reader в `internal/runtimecontainment`. TASK-071 добавляет
+isolated Owner terminal provenance DP-014 и private exact-attempt
+snapshot/revalidation prerequisite. Full-tuple evidence composition,
+production wiring и code path, который мог бы expose termination evidence
+Control Service, отсутствуют.
 
 DP-023 — Approved/Implemented in isolation по explicit Coordinator status
 decision через TASK-069. Mutable role verdicts и identities resolve-ятся из
 newest valid matching envelope этой task. Все evidence и downstream gates
 остаются без изменений. Coordinator явно устанавливает Implementation Status
-DP-022 как Partial для проверенного изолированного generation-fact reader при
-условии final Review и Acceptance TASK-070. Этот статус не заявляет full-tuple
-evidence или production activation.
+DP-022 как Partial для принятого isolated generation-fact reader. Prerequisite
+DP-014 TASK-071 не повышает этот статус и не заявляет full-tuple evidence или
+production activation.
 
 Этот документ есть Approved design граница, поэтому DP-017 section 11 теперь
 имеет authoritative containment boundary для потребления; сам DP-017 остаётся
@@ -767,9 +789,13 @@ Termination exact prior generation, названного durable attempt binding
 durable containment ledger — никогда с помощью clock, lease, записи process
 table, PID, address, port, probe или stored lifecycle state.
 
-Host-owned shutdown completion доказывается другим fact, произведённым Runtime
-Lifecycle Owner и durable через DP-014 и DP-015, и допустимым в качестве evidence
-только вместе с доказательством termination того же generation. Поэтому resource
+Host-owned shutdown completion доказывается exact basis
+`OwnerShutdownCompleted`, произведённым Runtime Lifecycle Owner и authoritative
+сохранённым DP-014. Outcome command DP-015 является downstream corroborating
+command truth: он не является ни обязательным вторым shutdown evidence, ни
+заменой Owner basis DP-014. Owner basis допустим только вместе с
+`GenerationTerminated` для того же generation и fresh revalidation revision и
+authority exact attempt непосредственно перед использованием evidence. Поэтому resource
 absence никогда не доказывает shutdown completion, а отсутствие записи никогда не
 доказывает незавершения. Любой другой случай — это `Unknown`, и `Unknown` ничего
 не adopt, ничего не replay, ничего не admits и не изобретает terminal truth.

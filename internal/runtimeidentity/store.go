@@ -85,6 +85,39 @@ type Store struct {
 	instances map[runtimeconfigload.RuntimeInstanceID]*runtimeInstanceAggregate
 }
 
+// OwnerTerminalPublication is the narrow mutation capability held by Runtime
+// Lifecycle Owner composition. It cannot publish recovery provenance.
+type OwnerTerminalPublication interface {
+	ConditionalPublishShutdownCompleted(runtimeconfigload.RuntimeInstanceID, Revision, runtimeconfigload.LaunchAttemptID) (PublishResult, error)
+	ConditionalPublishNoHostProduced(runtimeconfigload.RuntimeInstanceID, Revision, runtimeconfigload.LaunchAttemptID, bool) (PublishResult, error)
+	ConditionalPublishStopFailure(runtimeconfigload.RuntimeInstanceID, Revision, runtimeconfigload.LaunchAttemptID) (PublishResult, error)
+}
+
+// RecoveryTerminalPublication is the disjoint mutation capability reserved for
+// future DP-017 recovery composition. Its method set cannot select an Owner
+// terminal basis.
+type RecoveryTerminalPublication interface {
+	ConditionalPublishReconciled(runtimeconfigload.RuntimeInstanceID, Revision, runtimeconfigload.LaunchAttemptID) (PublishResult, error)
+}
+
+type ownerTerminalPublisher struct{ store *Store }
+type recoveryTerminalPublisher struct{ store *Store }
+
+var _ OwnerTerminalPublication = ownerTerminalPublisher{}
+var _ RecoveryTerminalPublication = recoveryTerminalPublisher{}
+
+// OwnerTerminalPublisher returns only the Owner terminal-publication method
+// set. Composition must not provide this capability to recovery.
+func (s *Store) OwnerTerminalPublisher() OwnerTerminalPublication {
+	return ownerTerminalPublisher{store: s}
+}
+
+// RecoveryTerminalPublisher returns only the recovery terminal-publication
+// method set; the returned value has no Owner publication method.
+func (s *Store) RecoveryTerminalPublisher() RecoveryTerminalPublication {
+	return recoveryTerminalPublisher{store: s}
+}
+
 // NewStore constructs an empty in-memory Store ready to accept operations.
 func NewStore() *Store {
 	return &Store{
@@ -425,11 +458,11 @@ func (s *Store) ConditionalPublishRunning(
 // ConditionalClaimStop atomically claims Stop for the exact active attempt.
 //
 // Phase-sensitive rules (DP-014 §12):
-//   - If the active attempt is in Claimed phase (no Host resources), this
-//     atomically publishes desired Stopped, actual Stopped, phase Stopped, and
-//     clears the active attempt reference (stopped-before-running).
-//   - If the active attempt is in Launching or Running phase, this publishes
-//     desired Stopped, actual Stopping, and phase Stopping.
+//   - for Claimed, Launching, or Running, this records the source phase,
+//     publishes desired Stopped and actual Stopping, and advances the attempt
+//     to Stopping;
+//   - it never creates a terminal phase or terminal-completion basis. An exact
+//     subsequent Owner outcome must use the Owner terminal capability.
 //
 // A rejected claim performs zero mutation (DP-014 §12, §22 proofs 8, 9).
 func (s *Store) ConditionalClaimStop(
@@ -461,15 +494,9 @@ func (s *Store) ConditionalClaimStop(
 	}
 	// Phase-sensitive stop claim.
 	switch active.phase {
-	case AttemptPhaseClaimed:
-		// Stopped-before-running: no Host resources were ever owned.
-		active.phase = AttemptPhaseStopped
-		agg.desired = DesiredStateStopped
-		agg.actual = ActualStateStopped
-		agg.hasActiveAttempt = false
-		agg.activeAttemptID = ""
-	case AttemptPhaseLaunching, AttemptPhaseRunning:
+	case AttemptPhaseClaimed, AttemptPhaseLaunching, AttemptPhaseRunning:
 		// Transfer Stop responsibility; actual becomes Stopping.
+		active.stopClaimedFrom = active.phase
 		active.phase = AttemptPhaseStopping
 		agg.desired = DesiredStateStopped
 		agg.actual = ActualStateStopping
@@ -482,31 +509,112 @@ func (s *Store) ConditionalClaimStop(
 
 // ─── §21 Operation 9: ConditionalPublishTerminal ──────────────────────────────
 
-// ConditionalPublishTerminal atomically validates and publishes a terminal
-// outcome for the exact active attempt.
-//
-// Phase-sensitive rules (DP-014 §12):
-//   - AttemptPhaseStopped: attempt is already in terminal Stopped; re-entrant
-//     publication of the same terminal fact is treated as a definitive rejection
-//     because the active reference has already been cleared.
-//   - AttemptPhaseStopping: the attempt may receive a terminal Stopped or Failed
-//     outcome. Stopped clears the active reference (Host resources proven
-//     absent). Failed retains the active reference (AttemptStopping with
-//     stop-failure / cleanup-unproven).
-//   - Other non-terminal phases: the attempt may receive Failed (definitive
-//     failure with no Host resources).
-//
-// terminalStopped=true publishes Stopped; terminalStopped=false publishes Failed.
-//
-// A rejected publication performs zero mutation (DP-014 §12, §14, §22 proofs
-// 8, 9, 13).
-func (s *Store) ConditionalPublishTerminal(
+// ConditionalPublishOwnerShutdownCompleted commits the exact successful Owner
+// shutdown provenance with terminal Stopped. The attempt must have an immutable
+// execution-generation binding; only the Owner-facing capability exposes this
+// operation.
+func (p ownerTerminalPublisher) ConditionalPublishShutdownCompleted(
+	id runtimeconfigload.RuntimeInstanceID,
+	expectedRevision Revision,
+	attemptID runtimeconfigload.LaunchAttemptID,
+) (PublishResult, error) {
+	if p.store == nil {
+		return PublishResult{}, ErrInvalidIdentity
+	}
+	return p.store.conditionalPublishTerminal(id, expectedRevision, attemptID,
+		AttemptPhaseStopped, TerminalCompletionOwnerShutdownCompleted,
+		func(active *LaunchAttemptRecord) bool {
+			return active.executionGeneration != "" && active.phase == AttemptPhaseStopping
+		})
+}
+
+// ConditionalPublishOwnerNoHostProduced commits an exact Owner-confirmed
+// terminal outcome for an attempt that never produced or acquired an owned
+// Host. terminalStopped selects Stopped; false selects Failed.
+func (p ownerTerminalPublisher) ConditionalPublishNoHostProduced(
 	id runtimeconfigload.RuntimeInstanceID,
 	expectedRevision Revision,
 	attemptID runtimeconfigload.LaunchAttemptID,
 	terminalStopped bool,
 ) (PublishResult, error) {
+	if p.store == nil {
+		return PublishResult{}, ErrInvalidIdentity
+	}
+	phase := AttemptPhaseFailed
+	if terminalStopped {
+		phase = AttemptPhaseStopped
+	}
+	return p.store.conditionalPublishTerminal(id, expectedRevision, attemptID,
+		phase, TerminalCompletionNoHostProduced,
+		func(active *LaunchAttemptRecord) bool {
+			return active.phase == AttemptPhaseClaimed || active.phase == AttemptPhaseLaunching ||
+				(active.phase == AttemptPhaseStopping &&
+					(active.stopClaimedFrom == AttemptPhaseClaimed || active.stopClaimedFrom == AttemptPhaseLaunching))
+		})
+}
+
+// ConditionalPublishRecoveryReconciled commits only recovery provenance for a
+// future DP-017 terminal projection. It cannot select or upgrade an Owner basis.
+// The bounded TASK-071 slice exposes this DP-014 validation surface but does not
+// implement a recovery executor.
+func (p recoveryTerminalPublisher) ConditionalPublishReconciled(
+	id runtimeconfigload.RuntimeInstanceID,
+	expectedRevision Revision,
+	attemptID runtimeconfigload.LaunchAttemptID,
+) (PublishResult, error) {
+	if p.store == nil {
+		return PublishResult{}, ErrInvalidIdentity
+	}
+	return p.store.conditionalPublishTerminal(id, expectedRevision, attemptID,
+		AttemptPhaseFailed, TerminalCompletionRecoveryReconciled,
+		func(active *LaunchAttemptRecord) bool { return !active.phase.isTerminal() })
+}
+
+// ConditionalPublishOwnerStopFailure records cleanup-unproven Owner truth
+// without terminalizing the attempt or selecting a terminal basis.
+func (p ownerTerminalPublisher) ConditionalPublishStopFailure(
+	id runtimeconfigload.RuntimeInstanceID,
+	expectedRevision Revision,
+	attemptID runtimeconfigload.LaunchAttemptID,
+) (PublishResult, error) {
+	if p.store == nil {
+		return PublishResult{}, ErrInvalidIdentity
+	}
 	if id == "" || attemptID == "" {
+		return PublishResult{}, ErrInvalidIdentity
+	}
+	agg, err := p.store.getAggregate(id)
+	if err != nil {
+		return PublishResult{}, err
+	}
+	agg.mu.Lock()
+	defer agg.mu.Unlock()
+
+	if agg.revision != expectedRevision {
+		return PublishResult{}, ErrStaleRevision
+	}
+	active := agg.activeAttemptPtr()
+	if active == nil || active.launchAttemptID != attemptID {
+		return PublishResult{}, ErrNoActiveAttempt
+	}
+	if active.phase != AttemptPhaseStopping || active.terminalCompletionBasis != "" {
+		return PublishResult{}, ErrInvalidAttemptPhase
+	}
+	agg.actual = ActualStateFailed
+	agg.desired = DesiredStateStopped
+	newRevision := agg.advanceRevision()
+	return PublishResult{revision: newRevision, committed: true}, nil
+}
+
+func (s *Store) conditionalPublishTerminal(
+	id runtimeconfigload.RuntimeInstanceID,
+	expectedRevision Revision,
+	attemptID runtimeconfigload.LaunchAttemptID,
+	terminalPhase AttemptPhase,
+	basis TerminalCompletionBasis,
+	permitted func(*LaunchAttemptRecord) bool,
+) (PublishResult, error) {
+	if id == "" || attemptID == "" || !terminalPhase.isTerminal() || !basis.valid() || permitted == nil {
 		return PublishResult{}, ErrInvalidIdentity
 	}
 	agg, err := s.getAggregate(id)
@@ -516,54 +624,27 @@ func (s *Store) ConditionalPublishTerminal(
 	agg.mu.Lock()
 	defer agg.mu.Unlock()
 
-	// Revision check.
 	if agg.revision != expectedRevision {
 		return PublishResult{}, ErrStaleRevision
 	}
-	// Active attempt check.
 	active := agg.activeAttemptPtr()
-	if active == nil {
+	if active == nil || active.launchAttemptID != attemptID {
 		return PublishResult{}, ErrNoActiveAttempt
 	}
-	if active.launchAttemptID != attemptID {
-		return PublishResult{}, ErrNoActiveAttempt
+	if active.terminalCompletionBasis != "" || !permitted(active) {
+		return PublishResult{}, ErrInvalidAttemptPhase
 	}
 
-	if terminalStopped {
-		// Terminal Stopped: Host resources are proven absent.
-		// Allowed from Stopping (after Stop claim) or Claimed (stopped-before-running
-		// was not yet published via ConditionalClaimStop).
-		switch active.phase {
-		case AttemptPhaseStopping, AttemptPhaseClaimed, AttemptPhaseLaunching, AttemptPhaseRunning:
-		default:
-			return PublishResult{}, ErrInvalidAttemptPhase
-		}
-		active.phase = AttemptPhaseStopped
+	active.phase = terminalPhase
+	active.terminalCompletionBasis = basis
+	agg.desired = DesiredStateStopped
+	if terminalPhase == AttemptPhaseStopped {
 		agg.actual = ActualStateStopped
-		agg.desired = DesiredStateStopped
-		agg.hasActiveAttempt = false
-		agg.activeAttemptID = ""
 	} else {
-		// Terminal Failed: definitive failure; proven no Host resources remain.
-		// Allowed from any non-terminal phase.
-		if active.phase.isTerminal() {
-			return PublishResult{}, ErrInvalidAttemptPhase
-		}
-		switch active.phase {
-		case AttemptPhaseStopping:
-			// Stop-failure / cleanup-unproven: retain active association per
-			// DP-014 §12 (AttemptStopping with stop-failure fact).
-			active.phase = AttemptPhaseStopping
-			agg.actual = ActualStateFailed
-		default:
-			// Definitive failure with no Host resources.
-			active.phase = AttemptPhaseFailed
-			agg.actual = ActualStateFailed
-			agg.desired = DesiredStateStopped
-			agg.hasActiveAttempt = false
-			agg.activeAttemptID = ""
-		}
+		agg.actual = ActualStateFailed
 	}
+	agg.hasActiveAttempt = false
+	agg.activeAttemptID = ""
 	newRevision := agg.advanceRevision()
 	return PublishResult{revision: newRevision, committed: true}, nil
 }

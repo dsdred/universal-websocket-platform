@@ -388,14 +388,16 @@ fail closed against it, даже если внутренне согласова�
 
 1. DP-023 process-containment bootstrap.
 2. DP-022 exact generation evidence reader.
-3. DP-022 composition shutdown-completion evidence.
-4. containment composition/admission/provider gate.
-5. DP-017 read-only recovery assessment.
-6. DP-017 durable recovery claim и admission barrier.
-7. DP-017 reconciliation attempt и primitive command.
-8. DP-017 reconciliation linked phase и parent.
-9. DP-017 coherent release и reopening barrier.
-10. DP-018 reporting, затем production integration и Production Activation.
+3. DP-014 Owner terminal provenance плюс private coherent exact-attempt
+   snapshot и fresh revision revalidation.
+4. DP-022 full composition shutdown-completion evidence и use-once handle.
+5. containment composition/admission/provider gate.
+6. DP-017 read-only recovery assessment.
+7. DP-017 durable recovery claim и admission barrier.
+8. DP-017 reconciliation attempt и primitive command.
+9. DP-017 reconciliation linked phase и parent.
+10. DP-017 coherent release и reopening barrier.
+11. DP-018 reporting, затем production integration и Production Activation.
 
 Каждый последующий slice требует fresh intake и prerequisite check. Этот порядок
 не активирует ни один из них.
@@ -417,10 +419,12 @@ Implementation Status — `Implemented in isolation`. Worktree TASK-069 соде
 Windows-only slice `internal/runtimecontainment` с conforming
 capability, pre-provisioned anchor/bbolt ledger, authoritative generation
 bootstrap, fail-closed stub для unsupported platforms и focused proofs. Он не
-composed в Control Service; positive evidence reader отсутствует. Поэтому
-current production composition behavior и DP-017 не меняются; evidence,
-recovery, reporting, provisioning, integration и Production Activation
-остаются последующими работами.
+composed в Control Service. Завершённая TASK-070 добавляет только isolated exact
+generation reader, а TASK-071 — только isolated prerequisite provenance/read
+DP-014; positive full-tuple evidence composer отсутствует. Поэтому current
+production composition behavior и DP-017 не меняются; composition, recovery,
+reporting, provisioning, integration и Production Activation остаются
+последующими работами.
 
 ## 22. Решение
 

@@ -115,6 +115,10 @@ resurrection старого Launch Attempt.
 
 **Proven release** означает подтверждение Lifecycle Owner, что предыдущий
 attempt не владеет Host resources согласно ARCH-004 и DP-014.
+Resource absence шире exact terminal basis `OwnerShutdownCompleted` и никогда
+не подразумевает этот basis: exact Owner-confirmed no-Host outcome вместо этого
+имеет `NoHostProduced`, а recovery terminal projection —
+`RecoveryReconciled`.
 
 **Continue gate** — per-Instance linearization boundary между accepted Stop
 intent и claim linked Start phase orchestration.
@@ -350,7 +354,10 @@ fact.
 1. durable primitive command claim или parent orchestration claim и permit;
 2. linked old-attempt Stop phase claim и phase permit, когда active attempt
    существует;
-3. old-attempt terminal publication с proven release;
+3. publication DP-014 terminal phase и basis old attempt из exact Owner
+   outcome: успешный shutdown owned Host отображается в
+   `OwnerShutdownCompleted`, а exact terminal outcome, доказывающий, что Host не
+   был создан, — в `NoHostProduced`;
 4. Continue gate ordering claim independent Stop и claim linked Start phase;
 5. один invocation DP-013 newly issued Start-phase permit, после которого Owner
    claim exact new Launch Attempt/version pin;
@@ -364,6 +371,14 @@ fact.
 Каждая publication DP-014 использует exact expected aggregate revision. Long
 Load, Build, Start, Stop или wait work не выполняется под command-admission или
 aggregate lock.
+
+Нормальный completion order: exact Owner outcome, затем commit DP-014 terminal
+phase плюс basis, затем terminal outcome primitive либо linked phase/parent
+DP-015. Mapping использует exact Owner fact для exact attempt; `StopStopped`,
+aggregate `Stopped` или resource absence отдельно недостаточны. Failure или
+потеря последующей publication DP-015 не может стереть, ослабить или relabel уже
+committed Owner basis DP-014. DP-015 остаётся downstream command truth, а не
+вторым источником shutdown provenance.
 
 ## 19. Failure matrix
 
@@ -504,7 +519,9 @@ Conforming implementation должна доказать минимум; TASK-026
     DP-017, commit после attempt claim и до Load, иначе preparation не
     начинается;
 18. разные Instances выполняются независимо;
-19. EN/RU contract, failure matrix, gates и planned status aligned.
+19. crash или failure после commit Owner basis DP-014 и до terminal publication
+    DP-015 сохраняет этот basis без создания command truth;
+20. EN/RU contract, failure matrix, gates и planned status aligned.
 
 Proofs включают доступные concurrency, race, failure injection и
 storage-client-restart scenarios. Они не разрешают production activation.
@@ -539,6 +556,11 @@ Continue/pending-Stop rendezvous, а также internal orchestrator TASK-026
 activation/replacement/rollback и его proof tests. DP-017 и DP-018 остаются
 Planned. External durable command/aggregate/workflow storage, public management
 API, recovery executor и production wiring отсутствуют.
+
+TASK-071 минимально обновляет call sites isolated orchestrator, чтобы exact
+terminal kinds Owner отображались в соответствующий basis DP-014 до command
+publication DP-015. Full evidence composition или production wiring не
+добавляются.
 
 Approval закрывает design gate section 19(4), но не реализует и не подключает
 contract. TASK-038 подтвердила, что TASK-026 оставалась Blocked прежде всего
