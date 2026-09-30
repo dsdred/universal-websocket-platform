@@ -388,8 +388,10 @@ envelope и exact file set. Эта двухфазная схема не созд
 digest и не ослабляет Review/Commit Gate.
 
 Task record является recovery anchor, но его утверждение `completed` само по
-себе не доказывает completion. Chat history, незаписанный terminal output,
-process memory и model memory recovery state не являются.
+себе не доказывает completion. Ordinary chat history, незаписанный terminal
+output, process memory и model memory recovery state не являются. Узкое
+исключение — qualified native Publisher operational transcript по Canonical
+Transcript Store Bootstrap and Recovery; repository task anchor он не заменяет.
 
 ### Stage Reconstruction
 
@@ -1205,11 +1207,15 @@ merge OID и first unfinished step на момент Release. После Release
 добавляют immutable destination execution identity, но обязаны цитировать тот
 же ID, Target, source identity и Release snapshot.
 
-1. source повторно inspect-ит repository и remote state read-only, создаёт
+1. source повторно inspect-ит доступный repository и remote state read-only, создаёт
    unique opaque non-secret transfer ID ровно для этой release instance и
    выпускает `Release Handoff` с ID, immutable Target, execution identity,
    completed/unknown P-checkpoints, known PR/ref/merge OID, first unfinished
-   step, blocker classification и запретом mutation source context;
+   step, blocker classification и запретом mutation source context. При
+   недоступных credentials source использует local facts и prior native remote
+   evidence, отмечая ненаблюдаемые remote facts как `Unknown`/stale; повторять
+   failed auth probe только ради Release не требуется. Destination самостоятельно
+   reconstruct-ит remote facts и проходит оба exact-context capability probe;
 2. пользователь явно маршрутизирует exact transfer ID плюс immutable Target в
    named trusted destination и явно ссылается на ранее разрешённую publication; repository
    record, profile metadata или доступный remote side effect сами authority не
@@ -1253,7 +1259,141 @@ persistent execution transcript или иной governance-approved operational 
 допустим только если обеспечивает эти свойства; repository/task bytes не
 изменяются ради handoff. Если record отсутствует, недоступен, противоречив или
 не позволяет однозначно доказать current state, ownership = `Unknown` и все
-publication mutations STOP.
+publication mutations STOP. Bootstrap/reconstruction возможен только по
+следующему правилу; неизвестный prior record нельзя заменить пустой записью.
+
+#### Canonical Transcript Store Bootstrap and Recovery
+
+Canonical operational handoff store по умолчанию — native persistent
+user-visible execution transcript исходной publication conversation/history
+branch, после qualification. В нём сохраняются operational events и terminal
+publication evidence вне immutable Target и project-state documents. Ordinary
+chat memory, rendered/copied text, export и вручную созданный log qualification
+не проходят. Новый backend, автоматическая доступность или machine lock не
+предполагаются; защита от host-level tampering не утверждается.
+
+Конкретный существующий путь для Codex — original task transcript: provider
+`Codex`, exact thread/history-branch ID, native `mcp__codex_app__read_thread`
+с turn/item IDs, ordered items и необходимыми outputs через `includeOutputs`,
+плюс complete provider-owned session JSONL с тем же `session_meta.id`.
+Native API и backing JSONL — два представления одного canonical store.
+Exact backing path и native read/reopen/emit methods фиксируются в descriptor;
+guessed path, summaries без exact events, другая conversation/fork или копия
+не заменяют original history. Reopen original task через native navigation/read
+восстанавливает history access, но не меняет Windows execution principal.
+
+Source и Coordinator до Release независимо проверяют `StoreDescriptor`:
+provider/store identity, original conversation/history locator, конкретные
+native read/reopen/emit methods, native event locator/order/tail convention,
+persistence/readback evidence, independent source/destination/Coordinator read
+methods и полный inventory известных prior stores, records и attempts.
+Qualification требует одновременно:
+
+1. Native author role и event/run linkage сохраняются platform. Original user
+   publish gate и initial P0 связывают exact Target с source; current source
+   event связывается с actual execution identity через correlated native local
+   identity command/result этого context. Actor field, username assertion,
+   source-текст в user/destination message не создают source provenance.
+2. Native event имеет provider ID либо stable native position, exact persisted
+   payload, turn/context/call linkage и predecessor ID/digest/tail. Hash arbitrary
+   file и timestamp сами не доказывают происхождение или chronology.
+   Provider-owned log corroborate-ится native API/original task history;
+   manual insertion/edit, missing segment, conflicting fork или rewritten
+   prefix запрещают qualification. Это procedural, не cryptographic guarantee.
+3. Complete relevant history, включая известные continuation sessions, и
+   newest tail reread-ятся после reopen/interruption, имеют stable prefix и
+   independently доступны source, Coordinator и destination до Accept.
+   Положительный результат readback должен содержать actual event, а не summary
+   его предполагаемого результата. Reader проверяет native role/context и
+   полный payload, связывая версии/positions и order. Started output либо
+   обещанная будущая persistence не являются durable event.
+
+Source без direct filesystem/store API write использует native message
+transport своей original conversation: source сам emits `StoreBootstrap` и
+Release, platform сохраняет native events, independent readback подтверждает
+actor, exact payload и chronology. Destination/Coordinator могут добавить
+verification receipt с original native locator; они не выпускают, не
+переписывают и не копируют Release от имени source. Source должен иметь
+доказанный native emit/history-read path; наличие другого способного reader
+не позволяет этому reader стать source.
+
+`StoreBootstrap` связывает descriptor, unchanged полный Target, source identity,
+native references на original user publish gate и initial P0/source events,
+known-store/record/attempt inventory и verified current tail. Для первого
+применения amendment добавляется exact accepted process-repair subject identity.
+Inventory раздельно классифицирует configured backend, actual record pointer
+и attempted operation. First bootstrap разрешён только когда complete native
+source history и все known continuation sessions/pointers независимо доказывают
+`Proven Not Started` для всех handoff issuance/write operations этой exact
+publication/Target: нет Release, Route, Accept, terminal/return/revoke/invalidation,
+unknown emission или другого
+возможного owner. Тогда reconstruct-ится существующее
+`Active / Owned(recorded-initial-source) / Unissued`; bootstrap не выдаёт
+authorization и не назначает нового owner.
+
+Недоступный configured backend, в который доказанно не начиналась запись,
+фиксируется как `configured / unused / inaccessible` с native основаниями
+`Proven Not Started`; читать этот backend или утверждать его чтение не требуется.
+Configuration/access denial сами не создают record или transfer. Напротив,
+inaccessible actual prior record pointer, started/Outcome Unknown write или
+emission, incomplete source history либо ambiguous owner оставляют `Unknown`:
+нужно восстановить/reconcile original record, replacement bootstrap запрещён.
+User/source declaration об отсутствии записи не заменяет native proof.
+
+Операционные сообщения явно обозначают `publisher-handoff-v1`, event kind
+(`StoreBootstrap`, `Release`, `Route`, `Accept`, `VerificationReceipt` либо
+existing closed/P10 event) и exact Target. Цитата/proposal не является issuance;
+legacy actual events проверяются по их native intent/полным existing полям,
+а не игнорируются из-за отсутствия нового marker. Natural-language native user
+Route допустим с полными required references. Receipt описывает наблюдение,
+а не новый ownership transition.
+
+Source генерирует fresh UUIDv4 и native-emits Release с existing immutable
+Transfer Identity. Platform event locator и exact persisted payload/readback
+сохраняются отдельным receipt после emission, без self-assigned native ID или
+self-hash. Source немедленно прекращает publication mutation. Пока durability
+и complete chain не доказаны, pending durability является evidence
+classification: ownership `Unknown`, ни один context не выполняет mutation,
+completion transition не заявляется. Новая authorization/attempt state не
+вводится. Recovery сначала native-read reconciles possible emission; blind
+повтор Release/нового ID запрещён. Proven Release даёт
+`Active / InTransitNone / Released`.
+
+После durable Release actual native user Route должен назвать exact UUIDv4,
+unchanged Target, native Release locator, named destination и prior publish
+gate. Предварительный запрос recover/handoff без ещё не выпущенного exact ID
+не является Route и не дополняется от имени пользователя. Destination
+independently перечитывает complete chain/newest tail, проверяет Target,
+source/route linkage и оба capability probe своего exact context; затем сам
+native-emits Accept с тем же Transfer Identity, native Release/Route locators,
+actual destination identity и native probe references. Durable readback Accept
+доказывает ownership linearization; uncertain emitted Accept требует
+reconciliation и запрещает обеим сторонам mutation/re-emission вслепую.
+Destination обязан иметь native read/emit path в той же canonical conversation;
+copy Accept из другого thread не создаёт перехода. Навигация и чтение не
+доказывают смену principal или GitHub capability.
+
+Unknown ownership восстанавливается только из complete authoritative current
+chain: `Unissued` — recorded initial source; `Released` — `InTransitNone`;
+exact `Accepted` — recorded destination; valid closed/P10 — existing
+return/terminal disposition. Newest-tail revalidation обязательна перед Accept
+и каждой mutation; stale prefix не выбирает owner. Если native history/emit
+недоступны, пользователь может restore access/reopen original provider task
+в recorded source context по descriptor; после этого source заново проходит
+read-only qualification/reconstruction и выпускает собственное событие.
+Reopen не является Release/Route/Accept, не повышает privileges и не переносит
+credentials. Невосстановимый source/access/native provenance сохраняет
+`StoreUnavailable / Unknown / STOP`; destination/user не заменяют source и
+неназванный fallback backend не предполагается.
+
+Generic amendment Acceptance и actual store qualification являются разными
+вердиктами. По explicit current user recovery request accepted exact repair
+bytes могут применяться к prospective read-only recovery существующего Target
+до commit repair, со ссылкой на accepted manifest. Это не меняет Target,
+не переносит его permission на process task и не отменяет отдельные
+commit/publication gates, exact user Route или текущий запрет side effects.
+Authorization сохраняется для unchanged Target по существующим правилам;
+ownership до доказанного перехода не повышается.
 
 Terminal/return semantics являются исчерпывающими:
 
@@ -1472,7 +1612,9 @@ Coordinator направляет проблему владельцу соотв�
 - открытые findings и риски;
 - требуемое действие следующей роли.
 
-Устный или чатовый контекст не заменяет handoff в репозитории.
+Устный или обычный чатовый контекст не заменяет handoff в репозитории.
+Qualified native Publisher transcript является только operational publication
+evidence по правилу выше и не заменяет repository task/role handoffs.
 
 ## Stop Conditions
 

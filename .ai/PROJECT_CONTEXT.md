@@ -8,18 +8,22 @@
 
 ## Текущее состояние
 
-- Current task: **TASK-070 — Runtime Containment Exact Generation Evidence
-  Reader**, `In Progress`, on branch
-  `feature/task-070-runtime-containment-evidence-reader` from trusted baseline
-  `8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. Documentation Baseline passed,
-  and the historical Architecture Confirmation found `ARCH-B-001` in DP-022.
-  The 2026-09-28 user-authorized mirrored DP-022 refinement was independently
-  confirmed `APPROVED`, blocking findings 0, against actual EN/RU bytes; it
-  fixes result projection, later DP-014 binding ownership, one-use freshness
-  and mandatory fatal fencing. No other known architecture prerequisite for
-  the isolated generation reader remains. Implementation and verification are
-  in progress; TASK-070 has no Acceptance, commit or publication readiness
-- Latest completed task (2026-09-25): **TASK-069 — Runtime Process-Containment
+- Current task: **TASK-072 — Publisher Handoff Store Bootstrap and Recovery**,
+  `In Progress`, Design-update, branch `docs/task-072-handoff-store-recovery`,
+  trusted baseline `c058da69f2296e52a8e32cc25e195190389dbca7`. Это только
+  bounded PROCESS-001 repair. Latest checkpoint/closure определяется newest
+  valid Recovery Evidence Envelope TASK-072 matching independently recomputed
+  subject manifest; projection не заменяет Verification/Review/Acceptance.
+- Latest completed product task: **TASK-070 — Runtime Containment Exact
+  Generation Evidence Reader**, `Completed — Coordinator Accepted` по matching
+  terminal envelope. Локальный Git подтверждает опубликованный reader:
+  task commit `82b7cce`, merged synchronized
+  `main@c058da69f2296e52a8e32cc25e195190389dbca7`. Full shutdown composer,
+  DP-017 recovery, production wiring и Activation не добавлены. TASK-072 не
+  меняет product design/capability. TASK-071 находится в separate frozen
+  publication context; repair не меняет её immutable Target/bytes и не
+  разрешает probes/publication effects.
+- Previous completed product task (2026-09-25): **TASK-069 — Runtime Process-Containment
   Bootstrap Implementation**, `Completed — Coordinator Accepted` by the newest
   valid matching Recovery Evidence Envelope. The accepted Windows-only
   `internal/runtimecontainment` bootstrap was published as task commit

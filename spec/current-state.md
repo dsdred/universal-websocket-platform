@@ -1,19 +1,22 @@
 # Текущее состояние
 
-**Текущая implementation task:** TASK-070 — Runtime Containment Exact
-Generation Evidence Reader, `In Progress`, на ветке
-`feature/task-070-runtime-containment-evidence-reader` от synchronized baseline
-`8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. Documentation Baseline прошёл,
-но historical Architecture Confirmation выявил `ARCH-B-001`. Разрешённое
-пользователем зеркальное уточнение DP-022 прошло независимый Architecture
-Confirmation фактических EN/RU bytes 2026-09-28: `APPROVED`, 0 blocking.
-Уточнены выбор одного outcome, later DP-014 binding seam, single-use freshness
-и обязательное fatal fencing; иных известных architecture prerequisites для
-изолированного reader slice нет. TASK-070 теперь `In Progress`: implementation
-и verification ещё выполняются, Coordinator Acceptance, commit и publication
-readiness отсутствуют.
+**Текущая process task:** TASK-072 — Publisher Handoff Store Bootstrap and
+Recovery, `In Progress`, Design-update, branch
+`docs/task-072-handoff-store-recovery`, trusted baseline
+`c058da69f2296e52a8e32cc25e195190389dbca7`. Latest checkpoint/closure —
+newest valid matching Recovery Evidence Envelope TASK-072; projection не
+выдаёт gate. Изменение только PROCESS-001/обязательных contracts/mirrors/scenarios,
+не product capability/readiness/DP.
 
-**Последняя завершённая implementation task (2026-09-25):** TASK-069 — Runtime
+**Последняя завершённая implementation task:** TASK-070 — Runtime Containment
+Exact Generation Evidence Reader, `Completed — Coordinator Accepted` по
+matching envelope. Local Git: published task commit `82b7cce`, merged main
+`c058da69f2296e52a8e32cc25e195190389dbca7`. Full shutdown-completion composer,
+DP-017 recovery, production wiring и Activation остаются отсутствующими.
+TASK-071 separate frozen publication context не входит в product baseline этой
+process task; bytes/immutable Target не меняются, probes/effects не выполняются.
+
+**Предыдущая завершённая implementation task (2026-09-25):** TASK-069 — Runtime
 Process-Containment Bootstrap Implementation, `Completed — Coordinator
 Accepted` по newest valid matching Recovery Evidence Envelope. Windows-only
 `internal/runtimecontainment` bootstrap опубликован task commit
