@@ -731,17 +731,18 @@ func TestConditionalBindExecutionGeneration_NoActiveAttemptRejected(t *testing.T
 
 func TestSentinelErrorStrings(t *testing.T) {
 	cases := map[error]string{
-		ErrInstanceNotFound:          "runtime instance not found",
-		ErrInstanceAlreadyExists:     "runtime instance already exists",
-		ErrStaleRevision:             "stale aggregate revision",
-		ErrActiveAttemptExists:       "active launch attempt already exists",
-		ErrNoActiveAttempt:           "no active launch attempt",
-		ErrAttemptIDReused:           "launch attempt ID reused within instance history",
-		ErrInvalidAttemptPhase:       "invalid launch attempt phase for operation",
-		ErrBindingAlreadyExists:      "execution generation binding already exists",
-		ErrInvalidIdentity:           "invalid identity",
-		ErrAttemptNotFound:           "launch attempt not found",
-		ErrIncoherentAttemptSnapshot: "incoherent launch attempt snapshot",
+		ErrInstanceNotFound:            "runtime instance not found",
+		ErrInstanceAlreadyExists:       "runtime instance already exists",
+		ErrStaleRevision:               "stale aggregate revision",
+		ErrActiveAttemptExists:         "active launch attempt already exists",
+		ErrNoActiveAttempt:             "no active launch attempt",
+		ErrAttemptIDReused:             "launch attempt ID reused within instance history",
+		ErrInvalidAttemptPhase:         "invalid launch attempt phase for operation",
+		ErrBindingAlreadyExists:        "execution generation binding already exists",
+		ErrInvalidIdentity:             "invalid identity",
+		ErrAttemptNotFound:             "launch attempt not found",
+		ErrExecutionGenerationNotBound: "execution generation not bound",
+		ErrIncoherentAttemptSnapshot:   "incoherent launch attempt snapshot",
 	}
 	for sentinel, want := range cases {
 		if sentinel.Error() != want {

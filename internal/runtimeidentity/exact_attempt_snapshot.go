@@ -83,7 +83,16 @@ func ReadExactAttemptSnapshot(
 	var nonterminalID runtimeconfigload.LaunchAttemptID
 	for _, attempt := range history {
 		if attempt.runtimeInstanceID != instanceID || attempt.launchAttemptID == "" ||
-			attempt.configurationVersionID == 0 || !coherentAttemptTerminalFacts(attempt) {
+			attempt.configurationVersionID == 0 {
+			return ExactAttemptSnapshot{}, ErrIncoherentAttemptSnapshot
+		}
+		factsAttempt := attempt
+		if attempt.launchAttemptID == attemptID && attempt.executionGeneration == "" {
+			// The full-tuple reader must distinguish an otherwise coherent exact
+			// observation that is merely unbound from contradictory stored facts.
+			factsAttempt.executionGeneration = ExecutionGeneration("classification-only")
+		}
+		if !coherentAttemptTerminalFacts(factsAttempt) {
 			return ExactAttemptSnapshot{}, ErrIncoherentAttemptSnapshot
 		}
 		if _, duplicate := seen[attempt.launchAttemptID]; duplicate {
@@ -102,8 +111,11 @@ func ReadExactAttemptSnapshot(
 	if matches == 0 {
 		return ExactAttemptSnapshot{}, ErrAttemptNotFound
 	}
-	if matches != 1 || exact.executionGeneration == "" {
+	if matches != 1 {
 		return ExactAttemptSnapshot{}, ErrIncoherentAttemptSnapshot
+	}
+	if exact.executionGeneration == "" {
+		return ExactAttemptSnapshot{}, ErrExecutionGenerationNotBound
 	}
 
 	activeID, active := before.ActiveAttempt()

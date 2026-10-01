@@ -112,7 +112,7 @@ func TestReadExactAttemptSnapshot_RejectsMalformedExactFacts(t *testing.T) {
 		{name: "duplicate", history: []LaunchAttemptRecord{valid, duplicate}, want: ErrIncoherentAttemptSnapshot},
 		{name: "foreign-parent", history: []LaunchAttemptRecord{foreign}, want: ErrIncoherentAttemptSnapshot},
 		{name: "foreign-unrelated-history", history: []LaunchAttemptRecord{valid, foreignUnrelated}, want: ErrIncoherentAttemptSnapshot},
-		{name: "partial-binding", history: []LaunchAttemptRecord{partial}, want: ErrIncoherentAttemptSnapshot},
+		{name: "partial-binding", history: []LaunchAttemptRecord{partial}, want: ErrExecutionGenerationNotBound},
 		{name: "terminal-without-basis", history: []LaunchAttemptRecord{missingBasis}, want: ErrIncoherentAttemptSnapshot},
 		{name: "nonterminal-with-basis", history: []LaunchAttemptRecord{nonterminalBasis}, want: ErrIncoherentAttemptSnapshot},
 		{name: "unknown-phase", history: []LaunchAttemptRecord{unknownPhase}, want: ErrIncoherentAttemptSnapshot},

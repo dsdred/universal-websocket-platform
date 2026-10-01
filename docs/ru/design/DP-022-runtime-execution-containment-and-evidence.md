@@ -5,7 +5,7 @@
 ## 1. Статус
 
 - **Design Status:** Approved
-- **Implementation Status:** Partial (только изолированный exact-generation reader)
+- **Implementation Status:** Partial (изолированные reader и private full-tuple composer candidate)
 
 Это предложение определяет execution-containment и evidence boundary, которую
 Approved DP-017 section 11 требует до реализации recovery reconciliation. Оно
@@ -23,11 +23,17 @@ verification, review и Acceptance checkpoint и subject identity resolve-ятс
 только из newest valid matching envelope TASK-069 и здесь не дублируются. Slice
 не реализует evidence outcomes этого предложения.
 
-TASK-070 теперь содержит изолированный candidate generation-fact reader под
-verification после независимо одобренного focused уточнения sections 12 и
-14–19. Принятый full-tuple evidence adapter, scanner, supervisor, production
-wiring и composed runtime behavior отсутствуют. Control Service ещё не может
-наблюдать termination процесса через эту границу.
+Завершённая и опубликованная TASK-070 реализует isolated generation-fact reader
+после независимо одобренного focused уточнения sections 12 и 14–19.
+Завершённая и опубликованная TASK-071 добавляет только isolated prerequisite
+DP-014 Owner provenance/exact-attempt snapshot. TASK-073 реализует следующий
+private full-tuple composer/use-once-handle slice как isolated candidate. Его
+exact current checkpoint и role verdict остаются owned newest valid Recovery
+Evidence Envelope entry TASK-073, совпадающей с independently recomputed
+current subject manifest, и здесь не дублируются. Он не Coordinator Accepted,
+не committed, не published и не wired в Control Service. Scanner, supervisor,
+production wiring и composed runtime behavior отсутствуют; Control Service ещё
+не может наблюдать termination процесса через эту границу.
 
 ## 2. Назначение
 
@@ -752,9 +758,10 @@ verification, review и Acceptance checkpoint определяется толь�
 matching envelope TASK-069. Завершённая TASK-070 добавляет isolated
 generation-fact reader в `internal/runtimecontainment`. TASK-071 добавляет
 isolated Owner terminal provenance DP-014 и private exact-attempt
-snapshot/revalidation prerequisite. Full-tuple evidence composition,
-production wiring и code path, который мог бы expose termination evidence
-Control Service, отсутствуют.
+snapshot/revalidation prerequisite. TASK-073 добавляет isolated repository-
+private full-tuple composer и invocation-scoped use-once handle в
+`internal/runtimeexecutionevidence`, без production composition. Code path,
+который мог бы expose termination evidence Control Service, отсутствует.
 
 DP-023 — Approved/Implemented in isolation по explicit Coordinator status
 decision через TASK-069. Mutable role verdicts и identities resolve-ятся из
@@ -762,21 +769,21 @@ newest valid matching envelope этой task. Все evidence и downstream gate
 остаются без изменений. Coordinator явно устанавливает Implementation Status
 DP-022 как Partial для принятого isolated generation-fact reader. Prerequisite
 DP-014 TASK-071 не повышает этот статус и не заявляет full-tuple evidence или
-production activation.
+production activation. Isolated unaccepted composer candidate TASK-073 также
+сохраняет статус Partial и не заявляет production activation.
 
 Этот документ есть Approved design граница, поэтому DP-017 section 11 теперь
 имеет authoritative containment boundary для потребления; сам DP-017 остаётся
 Approved/Planned и неактивированным. Статус получен явным решением через project
 design status процесс; acceptance задачи со стороны Documentation, Tester,
 Reviewer или Coordinator не повышает Design Status этого документа и никогда не
-повышает Implementation Status. Isolated bootstrap candidate не активирует
-full evidence: full-tuple adapter и composition отсутствуют, поэтому exact
-prior-generation termination proof, требуемый DP-017 section 11, по-прежнему не
-может потребляться ни одним компонентом, а DP-017 recovery, DP-018 reporting,
-production integration и Production Activation остаются `Not Activated` и
-отсутствуют; downstream consumption containment evidence относится к более
-поздней, отдельно approved границе. Ни один gate ARCH-004 section 19 здесь не
-заявляется и не переоткрывается.
+повышает Implementation Status. Isolated composer candidate TASK-073 не
+активирует recovery или production consumption evidence: admission/provider
+wiring и composition Control Service отсутствуют. DP-017 recovery, DP-018
+reporting, production integration и Production Activation остаются `Not
+Activated` и отсутствуют; downstream consumption containment evidence
+относится к более поздней, отдельно approved границе. Ни один gate ARCH-004
+section 19 здесь не заявляется и не переоткрывается.
 
 ## 26. Решение
 

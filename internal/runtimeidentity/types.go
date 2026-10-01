@@ -56,6 +56,10 @@ var (
 	// contain the requested LaunchAttemptID.
 	ErrAttemptNotFound = errors.New("launch attempt not found")
 
+	// ErrExecutionGenerationNotBound is returned when an exact-attempt
+	// observation exists but has no immutable execution-generation binding.
+	ErrExecutionGenerationNotBound = errors.New("execution generation not bound")
+
 	// ErrIncoherentAttemptSnapshot is returned when detached aggregate/history
 	// facts cannot form one exact, internally consistent attempt snapshot.
 	ErrIncoherentAttemptSnapshot = errors.New("incoherent launch attempt snapshot")
