@@ -5,7 +5,7 @@
 ## 1. Status
 
 - **Design Status:** Approved
-- **Implementation Status:** Partial (isolated exact-generation reader only)
+- **Implementation Status:** Partial (isolated reader and private full-tuple composer candidate)
 
 This proposal defines the execution-containment and evidence boundary that
 Approved DP-017 section 11 requires before recovery reconciliation can be
@@ -22,10 +22,16 @@ The latest verification, review and Acceptance checkpoint and subject identity
 resolve only from TASK-069's newest valid matching envelope and are not
 duplicated here. The slice does not implement this proposal's evidence outcomes.
 
-TASK-070 now contains an isolated generation-fact reader candidate under
-verification, following the independently approved focused refinement of
-sections 12 and 14–19. No accepted full-tuple evidence adapter, scanner,
-supervisor, production wiring or composed runtime behavior exists. Control
+Completed and published TASK-070 implements the isolated generation-fact
+reader after the independently approved focused refinement of sections 12 and
+14–19. Completed and published TASK-071 adds only the isolated DP-014 Owner
+provenance/exact-attempt snapshot prerequisite. TASK-073 implements the next
+private full-tuple composer/use-once-handle slice as an isolated candidate.
+Its exact current checkpoint and role verdict remain owned by the newest valid
+TASK-073 Recovery Evidence Envelope entry matching an independently recomputed
+current subject manifest; they are not duplicated here. It is not Coordinator
+Accepted, committed, published, or wired into Control Service. No scanner,
+supervisor, production wiring or composed runtime behavior exists, and Control
 Service cannot yet observe process termination through this boundary.
 
 ## 2. Purpose
@@ -728,8 +734,10 @@ checkpoint resolves only from TASK-069's newest valid matching envelope.
 Completed TASK-070 adds the isolated generation-fact reader inside
 `internal/runtimecontainment`. TASK-071 adds the isolated DP-014 Owner terminal
 provenance and private exact-attempt snapshot/revalidation prerequisite.
-Full-tuple evidence composition, production wiring and any code path exposing
-termination evidence to Control Service remain absent.
+TASK-073 adds an isolated repository-private full-tuple composer and
+invocation-scoped use-once handle in `internal/runtimeexecutionevidence`, with
+no production composition. Any code path exposing termination evidence to
+Control Service remains absent.
 
 DP-023 is Approved/Implemented in isolation by explicit Coordinator status
 decision through TASK-069. Mutable role verdicts and identities resolve from
@@ -737,20 +745,22 @@ that task's newest valid matching envelope. Every evidence and downstream gate
 remains unchanged. The Coordinator explicitly sets DP-022 Implementation
 Status to Partial for the accepted isolated generation-fact reader. TASK-071's
 DP-014 prerequisite does not raise that status and does not claim full-tuple
-evidence or production activation.
+evidence or production activation. TASK-073's isolated unaccepted composer
+candidate also leaves the status Partial and does not claim production
+activation.
 
 This document is an Approved design boundary, so DP-017 section 11 now has an
 authoritative containment boundary to consume; DP-017 itself stays
 Approved/Planned and unactivated. The status came from an explicit decision
 through the project's design status process; Documentation, Tester, Reviewer, or
 Coordinator acceptance of a task does not raise this document's Design Status
-and never raises Implementation Status. An isolated bootstrap candidate does
-not activate full evidence: no full-tuple adapter or composition exists, so the exact
-prior-generation termination proof that DP-017 section 11 requires still cannot
-be consumed by any component, and DP-017 recovery, DP-018 reporting, production
-integration, and Production Activation remain `Not Activated` and absent, and
-downstream consumption of containment evidence is a later, separately approved
-boundary. No ARCH-004 section 19 gate is claimed or re-opened here.
+and never raises Implementation Status. The isolated TASK-073 composer
+candidate does not activate recovery or production evidence consumption: no
+admission/provider wiring or Control Service composition exists. DP-017
+recovery, DP-018 reporting, production integration, and Production Activation
+remain `Not Activated` and absent; downstream consumption of containment
+evidence is a later, separately approved boundary. No ARCH-004 section 19 gate
+is claimed or re-opened here.
 
 ## 26. Decision
 

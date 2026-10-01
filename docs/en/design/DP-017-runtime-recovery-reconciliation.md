@@ -227,17 +227,21 @@ The approved containment boundary named here is
 per containment domain, the durable containment ledger whose supersession fact
 is the only proof that an exact prior generation terminated, and the separate
 Host-owned shutdown-completion evidence. The containment capability and ledger
-are implemented only in the isolated DP-023 bootstrap package; no full-tuple
-evidence adapter or production composition exists. DP-017 implementation
-remains unactivated.
+are implemented only in the isolated DP-023 bootstrap package. TASK-070's
+exact-generation reader and TASK-071's DP-014 provenance/read prerequisite are
+completed and published. TASK-073 implements an isolated repository-private
+full-tuple evidence composer candidate; no production composition exists.
+DP-017 implementation remains unactivated.
 
 [DP-023](DP-023-runtime-process-containment-bootstrap.md) separately approves
 the initial process-lifetime capability, durable ledger transition, and
 generation-authority bootstrap. Its first slice is Implemented in isolation by
-TASK-069. An isolated exact-generation reader is a TASK-070 candidate under
-verification; the bootstrap still excludes full-tuple evidence composition,
-production wiring, and recovery, so this section's executable prerequisite is
-not yet satisfied.
+TASK-069. TASK-070 completed and published the isolated exact-generation reader,
+and TASK-071 completed and published the DP-014 provenance/read prerequisite.
+TASK-073 implements the next private full-tuple composer/use-once-handle slice
+as an isolated candidate. Admission/provider and Control Service wiring remain
+absent, so this section has no production-composed executable prerequisite and
+recovery remains unactivated.
 
 The replacement Control Service must not fabricate a Host reference, hydrate
 an Owner, probe a port and call it Running, or adopt any execution. It may use
@@ -585,8 +589,10 @@ TASK-069 implemented the DP-023 containment bootstrap in isolation, and
 completed TASK-070 implemented the isolated exact-generation reader. TASK-071
 adds only the DP-014 recovery-provenance validation surface; it implements no
 DP-017 assessment, claim, barrier, executor, or terminalization workflow. No
-full-tuple evidence composition or production wiring exists. These remain later
-dependency-ordered slices.
+production wiring exists. TASK-073 implements only the isolated private
+full-tuple composer/use-once-handle candidate; it adds no DP-017 assessment,
+claim, barrier, executor, or terminalization workflow. The remaining work stays
+dependency ordered.
 
 The current in-process Runtime components do not survive Control Service
 process termination and expose no restart-time recovery capability. Creating

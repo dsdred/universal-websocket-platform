@@ -487,9 +487,15 @@ Architectural debt относится к границам, которые ост
   projection, later DP-014 binding ownership, single-use freshness и
   обязательное fatal fencing. Иных известных architecture prerequisites для
   изолированного reader нет. Implementation Status DP-022 — Partial по явному
-  Coordinator decision только для проверенного изолированного candidate.
-  TASK-070 — In Progress, без Coordinator Acceptance. Bootstrap не wired в
-  Control Service; full-tuple evidence, recovery, reporting и
+  Coordinator decision для isolated reader. TASK-070 завершена, Coordinator
+  Accepted и опубликована через PR #75. TASK-071 завершена и опубликована через
+  PR #77 с isolated prerequisite Owner provenance/exact-attempt snapshot.
+  TASK-073 теперь реализует следующий private full-tuple composer/use-once-
+  handle slice как isolated candidate. Его exact current checkpoint и role
+  verdict определяются только newest valid Recovery Evidence Envelope entry
+  TASK-073, совпадающей с independently recomputed current subject manifest.
+  Он не Coordinator Accepted, не committed, не published и не wired в Control
+  Service; admission/provider composition, recovery, reporting и
   Production Activation отсутствуют.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.

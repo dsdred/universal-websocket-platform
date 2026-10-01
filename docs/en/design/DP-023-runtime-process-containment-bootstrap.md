@@ -425,8 +425,12 @@ capability, pre-provisioned anchor/bbolt ledger, authoritative generation
 bootstrap, unsupported-platform fail-closed stub, and focused proofs. It is not
 composed into Control Service. Completed TASK-070 adds only the isolated exact
 generation reader, and TASK-071 adds only the isolated DP-014 provenance/read
-prerequisite; no positive full-tuple evidence composer exists. Therefore
-current production composition behavior and DP-017 are unchanged; composition,
+prerequisite. TASK-073 implements the next private full-tuple composer/use-once-
+handle slice as an isolated candidate. Its exact current checkpoint and role
+verdict resolve only from the newest valid TASK-073 Recovery Evidence Envelope
+entry matching an independently recomputed current subject manifest. It is not
+Coordinator Accepted or production-composed. Therefore current production
+composition behavior and DP-017 are unchanged; admission/provider composition,
 recovery, reporting, provisioning, integration, and Production Activation
 remain later work.
 

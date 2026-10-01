@@ -8,14 +8,17 @@
 
 ## Текущее состояние
 
-- Current bounded rework: **TASK-071 — Runtime Owner Shutdown Provenance and
-  Exact Attempt Snapshot**, `In Progress`, on branch
-  `feature/task-071-owner-shutdown-provenance`. Reconciliation sources are
-  historical accepted HEAD `b653337dc93eb9419648246e447813dc168a16ea` and
-  current integration `main@fb6341e48f6abdea0f2c2b23ea4c949a16ed3a70`.
-  Latest rework checkpoint is the newest valid Recovery Evidence Envelope
-  entry in TASK-071 matching the independently recomputed three-path subject
-  manifest. This projection does not grant Verification/Review/Acceptance.
+- Current task: **TASK-073 — Runtime Shutdown-Completion Evidence Composer**,
+  `In Progress`, on
+  `feature/task-073-shutdown-evidence-composer` from synchronized
+  `main@0cec13d8e2b310545d5e2af40286158fda9820e9`. It is limited to the fourth
+  DP-023 section 19 slice: private full-tuple DP-022 evidence composition and
+  an invocation-scoped use-once handle. The isolated implementation candidate
+  and focused tests exist in `internal/runtimeexecutionevidence` with the
+  minimal DP-014 read-classification seam. The exact current checkpoint and
+  role verdict resolve only from the newest valid TASK-073 Recovery Evidence
+  Envelope entry matching an independently recomputed current subject manifest.
+  Coordinator Acceptance, commit and publication do not exist.
 - Published process repair (2026-09-30): **TASK-072 — Publisher Handoff Store
   Bootstrap and Recovery**, accepted docs-only PROCESS-001 repair, task commit
   `60ee9bec4dde3df08620f1a9d54b28da3f5b4c62`, published through PR #76 into
@@ -24,10 +27,11 @@
   handoff ownership. Actual store qualification remains a per-attempt gate;
   repair does not change product capability, readiness or DP status and does
   not authorize publication of another Target.
-- Historical accepted implementation (2026-09-30): **TASK-071 — Runtime Owner Shutdown
-  Provenance and Exact Attempt Snapshot**, `Completed — Coordinator Accepted`, on branch
-  `feature/task-071-owner-shutdown-provenance` from trusted synchronized
-  baseline `c058da69f2296e52a8e32cc25e195190389dbca7`. The bounded mirrored
+- Latest published implementation (2026-09-30): **TASK-071 — Runtime Owner
+  Shutdown Provenance and Exact Attempt Snapshot**, `Completed — Coordinator
+  Accepted`. Integration commit
+  `e1234a8447d75d1ffddf07dd953d444956b15ff1` was published through PR #77 and
+  merged as `0cec13d8e2b310545d5e2af40286158fda9820e9`. The bounded mirrored
   DP-014/016/017/022/023 repair passed independent Architecture Confirmation
   `APPROVED — NO NEW PREREQUISITE`, blocking findings 0. Accepted source commit
   `b653337dc93eb9419648246e447813dc168a16ea` adds isolated immutable
@@ -37,11 +41,10 @@
   affected-package `-count=25`, full vet, formatting and diff check pass;
   independent final Reviewer returned `APPROVED`, blocking findings 0, Scope
   Audit `21/0/0`. Race is unavailable without a C compiler. These are historical
-  accepted-source facts, not a claim that TASK-071 is merged into current main.
-  The current rework changes only project-state reconciliation and append-only
-  task evidence. The full composer, durable production adapter,
-  provider/admission wiring, DP-017 recovery and Production Activation remain
-  `Not Activated`.
+  accepted and published facts. At that publication checkpoint the full
+  composer remained `Not Activated`; TASK-073 now implements it only as an
+  isolated unaccepted candidate. Durable production adapter, provider/admission
+  wiring, DP-017 recovery and Production Activation remain `Not Activated`.
 - Previous published product task (2026-09-29): **TASK-070 — Runtime Containment Exact
   Generation Evidence Reader**, `Completed — Coordinator Accepted`. Task commit
   `82b7cce29ea9bca350b7945ac51a2531135d1a21` was published through PR #75
@@ -691,9 +694,10 @@
 - Design Status DP-014 — **Approved**, Implementation Status — **Implemented in
   isolation**; in-memory Runtime Instance aggregate store `internal/runtimeidentity`
   реализован изолированно вместе с immutable Owner/recovery terminal
-  provenance и private coherent exact-attempt snapshot/revalidation; external
-  storage, full evidence composer, recovery workflow, HTTP API и production
-  wiring отсутствуют
+  provenance и private coherent exact-attempt snapshot/revalidation. TASK-073
+  использует этот read boundary в isolated private full-tuple composer
+  candidate; external storage, recovery workflow, HTTP API и production wiring
+  отсутствуют
 - Design Status DP-015 — **Approved**, primitive Start/Stop boundary, partial
   parent/phase sequential core DP-019, command-boundary Continue/pending-Stop
   rendezvous, TASK-047 tracked-Start managed-parent admission и TASK-057

@@ -489,9 +489,15 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   later DP-014 binding ownership, single-use freshness and mandatory fatal
   fencing. No further known architecture prerequisite exists for the isolated
   reader. DP-022 Implementation Status is Partial by explicit Coordinator
-  decision for this verified isolated candidate only. TASK-070 is In Progress,
-  without Coordinator Acceptance. The bootstrap is not wired into Control
-  Service; full-tuple evidence, recovery, reporting,
+  decision for the isolated reader. TASK-070 is completed, Coordinator
+  Accepted, and published through PR #75. TASK-071 is completed and published
+  through PR #77 with the isolated Owner-provenance/exact-attempt prerequisite.
+  TASK-073 now implements the next private full-tuple composer/use-once-handle
+  slice as an isolated candidate. Its exact current checkpoint and role verdict
+  resolve only from the newest valid TASK-073 Recovery Evidence Envelope entry
+  matching an independently recomputed current subject manifest. It is not
+  Coordinator Accepted, committed, published, or wired into Control Service;
+  admission/provider composition, recovery, reporting,
   and Production Activation remain absent.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
