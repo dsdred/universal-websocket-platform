@@ -74,11 +74,18 @@
   decision DP-023 имеет Implementation Status
   `Implemented in isolation`; DP-022 имеет `Partial` для завершённого и
   опубликованного isolated reader TASK-070. Опубликованная TASK-071 добавляет
-  prerequisite Owner provenance/exact-attempt snapshot. TASK-073 реализует
-  isolated private full-tuple evidence composer/use-once handle candidate; это
-  не меняет статус DP-022 и не создаёт production composition или activation.
-  Exact current checkpoint/verdict TASK-073 берётся только из newest valid
-  matching Recovery Evidence Envelope.
+  prerequisite Owner provenance/exact-attempt snapshot. TASK-073 завершена,
+  Coordinator Accepted и опубликована через PR #78: isolated private full-tuple
+  evidence composer/use-once handle существует в
+  `internal/runtimeexecutionevidence`. Это сохраняет статус DP-022 Partial и не
+  создаёт production composition или activation. TASK-074 активирует только
+  следующий private containment composition/admission/provider gate; её
+  independent Architecture Confirmation — `APPROVED`, blocking findings 0.
+  Isolated implementation и focused proofs существуют в private package
+  `internal/runtimecontainmentcomposition`; independent Tester verification
+  пройдена с recorded race-environment limitation, pre-documentation Review
+  Approved без findings. Exact current checkpoint/verdict TASK-074
+  берётся только из newest valid matching Recovery Evidence Envelope.
   Статус не повышается самим authoring или commit.
 - ARCH-004 определяет Runtime Instance, Launch Attempt и deployment identity
   model; минимальный in-process Runtime Lifecycle Owner и process-local
@@ -112,9 +119,11 @@ newest valid matching envelope и опубликована task commit
 `046ddcfaa0a5f73e8821de71b578a0db4d2a3ecd` в
 `main@8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. DP-023 — `Approved /
 Implemented in isolation`; DP-022 теперь `Approved / Partial` только для
-завершённого isolated reader TASK-070 и prerequisite provenance/read TASK-071.
-TASK-073 реализует isolated unaccepted full-tuple composer candidate. Slice не
-wired в Control Service; recovery/reporting/Production Activation отсутствуют.
+завершённого isolated reader TASK-070, prerequisite provenance/read TASK-071 и
+published full-tuple composer TASK-073. TASK-074 реализует следующий private
+composition/admission/provider gate только изолированно в новом package. Slice
+не wired в Control Service; recovery/reporting/Production Activation
+отсутствуют.
 
 Historical TASK-070 Architecture Confirmation обнаружил отдельный blocker
 `TASK-070/ARCH-B-001` для exact evidence-reader slice. Разрешённое
@@ -128,12 +137,17 @@ fatal fault вызывает обязательное DP-023 fencing без dura
 Все четыре пункта blocker закрыты; иных architecture prerequisites для package
 reader не было. TASK-070 завершена, Coordinator Accepted и опубликована через
 PR #75. TASK-071 также завершена и опубликована через PR #77, добавив isolated
-DP-014 provenance/read prerequisite. TASK-073 активировала следующий ordered
-full-tuple composer slice и содержит isolated implementation candidate. Exact
-current checkpoint и role verdict не дублируются здесь и resolve-ятся только
-из newest valid TASK-073 Recovery Evidence Envelope entry, совпадающей с
-independently recomputed current subject manifest. Coordinator Acceptance,
-commit и publication отсутствуют.
+DP-014 provenance/read prerequisite. TASK-073 завершила следующий ordered
+full-tuple composer slice, получила Coordinator Acceptance и опубликована через
+PR #78. TASK-074 активирует только subsequent private containment composition,
+admission и generation-provider gate; independent Architecture Confirmation
+утвердила existing design без нового DP или scope change. Isolated candidate
+реализован и независимо проверен в
+`internal/runtimecontainmentcomposition`, без изменений existing runtime
+packages или production entry points. Exact current checkpoint и role verdict не дублируются здесь и
+resolve-ятся только из newest valid TASK-074 Recovery Evidence Envelope entry,
+совпадающей с independently recomputed current subject manifest. Commit и
+publication TASK-074 не авторизованы.
 
 Delivery, Message Persistence, Plugin ABI, production deployment adapters, operational
 diagnostics и supervision требуют сфокусированных решений в соответствующих

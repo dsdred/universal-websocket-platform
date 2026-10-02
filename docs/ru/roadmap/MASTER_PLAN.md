@@ -490,13 +490,16 @@ Architectural debt относится к границам, которые ост
   Coordinator decision для isolated reader. TASK-070 завершена, Coordinator
   Accepted и опубликована через PR #75. TASK-071 завершена и опубликована через
   PR #77 с isolated prerequisite Owner provenance/exact-attempt snapshot.
-  TASK-073 теперь реализует следующий private full-tuple composer/use-once-
-  handle slice как isolated candidate. Его exact current checkpoint и role
-  verdict определяются только newest valid Recovery Evidence Envelope entry
-  TASK-073, совпадающей с independently recomputed current subject manifest.
-  Он не Coordinator Accepted, не committed, не published и не wired в Control
-  Service; admission/provider composition, recovery, reporting и
-  Production Activation отсутствуют.
+  TASK-073 завершила и опубликовала private full-tuple
+  composer/use-once-handle slice через PR #78. TASK-074 активирует только
+  следующий private containment composition/admission/provider gate. Его exact
+  current checkpoint и role verdict определяются только newest valid Recovery
+  Evidence Envelope entry TASK-074, совпадающей с independently recomputed
+  current subject manifest. Isolated candidate теперь существует в private
+  package `internal/runtimecontainmentcomposition` и прошёл independent
+  verification и pre-documentation review; результат не wired в Control
+  Service. Production composition, recovery, reporting и Production Activation
+  отсутствуют.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Message Persistence, Delivery и Plugin всё ещё требуют focused design.

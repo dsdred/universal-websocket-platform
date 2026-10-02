@@ -424,15 +424,17 @@ contains the Windows-only `internal/runtimecontainment` slice with a conforming
 capability, pre-provisioned anchor/bbolt ledger, authoritative generation
 bootstrap, unsupported-platform fail-closed stub, and focused proofs. It is not
 composed into Control Service. Completed TASK-070 adds only the isolated exact
-generation reader, and TASK-071 adds only the isolated DP-014 provenance/read
-prerequisite. TASK-073 implements the next private full-tuple composer/use-once-
-handle slice as an isolated candidate. Its exact current checkpoint and role
-verdict resolve only from the newest valid TASK-073 Recovery Evidence Envelope
-entry matching an independently recomputed current subject manifest. It is not
-Coordinator Accepted or production-composed. Therefore current production
-composition behavior and DP-017 are unchanged; admission/provider composition,
-recovery, reporting, provisioning, integration, and Production Activation
-remain later work.
+generation reader, TASK-071 adds only the isolated DP-014 provenance/read
+prerequisite, and completed/published TASK-073 adds the isolated private
+full-tuple composer/use-once-handle slice. TASK-074 activates only the next
+private containment composition/admission/provider gate. Its exact current
+checkpoint and role verdict resolve only from the newest valid TASK-074
+Recovery Evidence Envelope entry matching an independently recomputed current
+subject manifest. An isolated candidate now exists in the private
+`internal/runtimecontainmentcomposition` package, but no result is
+production-composed. Therefore current production composition behavior and
+DP-017 are unchanged; production composition, recovery, reporting,
+provisioning, integration, and Production Activation remain later work.
 
 ## 22. Decision
 

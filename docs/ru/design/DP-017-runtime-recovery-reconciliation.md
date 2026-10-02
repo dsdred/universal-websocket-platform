@@ -225,20 +225,23 @@ Approved containment boundary, называемая здесь, —
 единственное доказательство termination exact prior generation, и отдельный
 Host-owned shutdown-completion evidence. Containment capability и ledger
 реализованы только в изолированном bootstrap package DP-023. Exact-generation
-reader TASK-070 и prerequisite provenance/read DP-014 TASK-071 завершены и
-опубликованы. TASK-073 реализует isolated repository-private full-tuple
-evidence composer candidate; production composition отсутствует. Реализация
-DP-017 остаётся неактивированной.
+reader TASK-070, prerequisite provenance/read DP-014 TASK-071 и repository-
+private full-tuple evidence composer TASK-073 завершены и опубликованы.
+TASK-074 реализует только следующий private containment composition,
+admission и generation-provider gate изолированно в
+`internal/runtimecontainmentcomposition`; production composition отсутствует.
+Реализация DP-017 остаётся неактивированной.
 
 [DP-023](DP-023-runtime-process-containment-bootstrap.md) отдельно утверждает
 initial process-lifetime capability, durable ledger transition и bootstrap
 generation authority. Его первый slice Implemented in isolation через TASK-069.
-TASK-070 завершила и опубликовала isolated exact-generation reader, а TASK-071
-завершила и опубликовала prerequisite provenance/read DP-014. TASK-073
-реализует следующий private full-tuple composer/use-once-handle slice как
-isolated candidate. Admission/provider и Control Service wiring отсутствуют,
-поэтому section не имеет production-composed executable prerequisite, а
-recovery остаётся неактивированной.
+TASK-070 завершила и опубликовала isolated exact-generation reader, TASK-071
+завершила и опубликовала prerequisite provenance/read DP-014, а TASK-073
+завершила и опубликовала private full-tuple composer/use-once-handle slice.
+TASK-074 — активный private containment composition/admission/provider gate с
+isolated candidate, но Control Service wiring отсутствует, поэтому section не
+имеет production-composed executable prerequisite, а recovery остаётся
+неактивированной.
 
 Replacement Control Service не фабрикует Host reference, не hydrate Owner, не
 probe port с выводом Running и не adopt execution. Proven generation termination
@@ -577,10 +580,12 @@ TASK-069 реализовала containment bootstrap DP-023 изолирова�
 TASK-070 реализовала isolated exact-generation reader. TASK-071 добавляет
 только validation surface recovery provenance DP-014; она не реализует
 assessment, claim, barrier, executor или terminalization workflow DP-017.
-Production wiring отсутствует. TASK-073 реализует только isolated private
-full-tuple composer/use-once-handle candidate; она не добавляет assessment,
-claim, barrier, executor или terminalization workflow DP-017. Остальная работа
-сохраняет dependency ordering.
+Production wiring отсутствует. TASK-073 реализует и публикует только isolated
+private full-tuple composer/use-once-handle; она не добавляет assessment,
+claim, barrier, executor или terminalization workflow DP-017. TASK-074
+реализует только следующий private containment
+composition/admission/provider gate изолированно и не добавляет DP-017 workflow.
+Остальная работа сохраняет dependency ordering.
 
 Текущие in-process Runtime components не переживают Control Service process
 termination и не предоставляют restart-time recovery capability. Создание
