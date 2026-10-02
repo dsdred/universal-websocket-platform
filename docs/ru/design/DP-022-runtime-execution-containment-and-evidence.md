@@ -5,7 +5,7 @@
 ## 1. Статус
 
 - **Design Status:** Approved
-- **Implementation Status:** Partial (изолированные reader и private full-tuple composer candidate)
+- **Implementation Status:** Partial (изолированные reader и private full-tuple composer)
 
 Это предложение определяет execution-containment и evidence boundary, которую
 Approved DP-017 section 11 требует до реализации recovery reconciliation. Оно
@@ -26,12 +26,15 @@ verification, review и Acceptance checkpoint и subject identity resolve-ятс
 Завершённая и опубликованная TASK-070 реализует isolated generation-fact reader
 после независимо одобренного focused уточнения sections 12 и 14–19.
 Завершённая и опубликованная TASK-071 добавляет только isolated prerequisite
-DP-014 Owner provenance/exact-attempt snapshot. TASK-073 реализует следующий
-private full-tuple composer/use-once-handle slice как isolated candidate. Его
-exact current checkpoint и role verdict остаются owned newest valid Recovery
-Evidence Envelope entry TASK-073, совпадающей с independently recomputed
-current subject manifest, и здесь не дублируются. Он не Coordinator Accepted,
-не committed, не published и не wired в Control Service. Scanner, supervisor,
+DP-014 Owner provenance/exact-attempt snapshot. Завершённая и опубликованная
+TASK-073 добавляет private full-tuple composer/use-once-handle slice
+изолированно. TASK-074 активирует только следующий private containment
+composition, admission и generation-provider gate. Его exact current checkpoint
+и role verdict остаются owned newest valid Recovery Evidence Envelope entry
+TASK-074, совпадающей с independently recomputed current subject manifest, и
+здесь не дублируются. Isolated candidate теперь существует в
+`internal/runtimecontainmentcomposition`, но результат не wired в Control
+Service. Scanner, supervisor,
 production wiring и composed runtime behavior отсутствуют; Control Service ещё
 не может наблюдать termination процесса через эту границу.
 
@@ -758,7 +761,7 @@ verification, review и Acceptance checkpoint определяется толь�
 matching envelope TASK-069. Завершённая TASK-070 добавляет isolated
 generation-fact reader в `internal/runtimecontainment`. TASK-071 добавляет
 isolated Owner terminal provenance DP-014 и private exact-attempt
-snapshot/revalidation prerequisite. TASK-073 добавляет isolated repository-
+snapshot/revalidation prerequisite. TASK-073 добавляет опубликованный isolated repository-
 private full-tuple composer и invocation-scoped use-once handle в
 `internal/runtimeexecutionevidence`, без production composition. Code path,
 который мог бы expose termination evidence Control Service, отсутствует.
@@ -769,7 +772,7 @@ newest valid matching envelope этой task. Все evidence и downstream gate
 остаются без изменений. Coordinator явно устанавливает Implementation Status
 DP-022 как Partial для принятого isolated generation-fact reader. Prerequisite
 DP-014 TASK-071 не повышает этот статус и не заявляет full-tuple evidence или
-production activation. Isolated unaccepted composer candidate TASK-073 также
+production activation. Accepted и published isolated composer TASK-073 также
 сохраняет статус Partial и не заявляет production activation.
 
 Этот документ есть Approved design граница, поэтому DP-017 section 11 теперь
@@ -777,9 +780,11 @@ production activation. Isolated unaccepted composer candidate TASK-073 такж�
 Approved/Planned и неактивированным. Статус получен явным решением через project
 design status процесс; acceptance задачи со стороны Documentation, Tester,
 Reviewer или Coordinator не повышает Design Status этого документа и никогда не
-повышает Implementation Status. Isolated composer candidate TASK-073 не
-активирует recovery или production consumption evidence: admission/provider
-wiring и composition Control Service отсутствуют. DP-017 recovery, DP-018
+повышает Implementation Status. Published isolated composer TASK-073 не
+активирует recovery или production consumption evidence. TASK-074 активирует
+только следующий private containment composition/admission/provider gate
+изолированно; composition Control Service отсутствует.
+DP-017 recovery, DP-018
 reporting, production integration и Production Activation остаются `Not
 Activated` и отсутствуют; downstream consumption containment evidence
 относится к более поздней, отдельно approved границе. Ни один gate ARCH-004

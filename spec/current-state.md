@@ -1,17 +1,33 @@
 # Текущее состояние
 
-**Текущая задача:** TASK-073 — Runtime Shutdown-Completion Evidence Composer,
-`In Progress`, на ветке
-`feature/task-073-shutdown-evidence-composer` от synchronized
-`main@0cec13d8e2b310545d5e2af40286158fda9820e9`. Scope ограничен четвёртым
-ordered slice DP-023 §19: private full-tuple evidence composition и
-invocation-scoped use-once handle. Изолированный implementation candidate и
-focused tests существуют в `internal/runtimeexecutionevidence` с минимальным
-DP-014 read-classification seam. Exact current checkpoint и role verdict
-определяются только newest valid Recovery Evidence Envelope entry TASK-073,
-совпадающей с independently recomputed current subject manifest. Coordinator
-Acceptance, commit и publication отсутствуют. Admission, provider wiring,
-DP-017 recovery и Production Activation не активированы.
+**Текущая задача:** TASK-074 — Runtime Containment Composition, Admission, and
+Generation Provider Gate, `In Progress`, на ветке
+`feature/task-074-containment-composition-gate` от synchronized
+`main@a84098284b0202f2fea9a61e089a74f564a05405`. Scope ограничен item 5
+ordered decomposition DP-023 §19: один repository-private composition boundary,
+который связывает existing containment authority с command admission, late
+generation provider и опубликованным full-tuple evidence composer. Independent
+Architecture Confirmation — `APPROVED`, blocking findings 0. Isolated
+implementation и focused proofs существуют в новом private package
+`internal/runtimecontainmentcomposition`; independent Tester verification
+пройдена с зафиксированным ограничением среды для race, а pre-documentation
+Reviewer одобрил exact subject без findings. Existing runtime packages и
+production entry points не изменены. Exact current checkpoint и role verdict
+определяются только newest valid Recovery Evidence Envelope entry TASK-074,
+совпадающей с independently recomputed current subject manifest. Commit и
+publication не авторизованы. Private composition gate не wired в Control
+Service; DP-017 recovery и Production Activation не активированы.
+
+**Последняя опубликованная implementation task (2026-10-01):** TASK-073 —
+Runtime Shutdown-Completion Evidence Composer, `Completed — Coordinator
+Accepted`. Task commit `37ca6d6b5065aeb1a4831bc30aa54503ae06ff64`
+опубликован через PR #78 и merged как
+`a84098284b0202f2fea9a61e089a74f564a05405`.
+`internal/runtimeexecutionevidence` содержит isolated private full-tuple
+composer и invocation-scoped use-once handle с minimal DP-014
+read-classification seam. DP-022 остаётся Approved / Partial; TASK-073 не
+добавила admission/provider composition, Control Service wiring, DP-017
+recovery или Production Activation.
 
 **Опубликованный process repair (2026-09-30):** TASK-072 — Publisher Handoff
 Store Bootstrap and Recovery, accepted docs-only PROCESS-001 repair. Task
@@ -22,7 +38,7 @@ handoff ownership. Actual store qualification остаётся отдельны�
 gate; product capability/readiness/DP status не меняются, publication другого
 Target не разрешается.
 
-**Последняя опубликованная implementation task (2026-09-30):** TASK-071 —
+**Предыдущая опубликованная implementation prerequisite (2026-09-30):** TASK-071 —
 Runtime Owner Shutdown Provenance and Exact Attempt Snapshot, `Completed —
 Coordinator Accepted`. Integration commit
 `e1234a8447d75d1ffddf07dd953d444956b15ff1` опубликован через PR #77 и merged
@@ -38,9 +54,9 @@ snapshot/revalidation и minimal runtimeactivation mapping. Full tests,
 final independent Reviewer `APPROVED`, blocking findings 0, Scope Audit
 `21/0/0`. Race detector недоступен в этой среде без C compiler. На этом
 publication checkpoint full `HostShutdownCompleted` composer оставался `Not
-Activated`; TASK-073 теперь реализует только isolated unaccepted candidate.
-Production durable adapter, provider/admission wiring, DP-017 recovery и
-Production Activation остаются `Not Activated`.
+Activated`; TASK-073 впоследствии реализовала и опубликовала его изолированно
+через PR #78. Production durable adapter, provider/admission wiring, DP-017
+recovery и Production Activation остаются `Not Activated`.
 
 **Предыдущая завершённая implementation task (2026-09-29):** TASK-070 — Runtime
 Containment Exact Generation Evidence Reader, `Completed — Coordinator
@@ -941,9 +957,11 @@ Runtime Operational Identity Persistence DP-014 имеет Design Status Approve
 Implementation Status Implemented in isolation. Package `internal/runtimeidentity`
 реализует все девять conceptual operations §21, immutable terminal completion
 basis, authority-specific publication surfaces и private coherent exact-attempt
-snapshot/revalidation как in-memory store изолированно. TASK-073 использует
-этот read boundary в isolated private full-tuple composer candidate; external
-storage, HTTP API, recovery workflow, production wiring и Production Activation
+snapshot/revalidation как in-memory store изолированно. Published TASK-073
+использует этот read boundary в isolated private full-tuple composer; TASK-074
+реализует следующий private composition-gate slice только изолированно в
+`internal/runtimecontainmentcomposition`. External storage,
+HTTP API, recovery workflow, production wiring и Production Activation
 отсутствуют.
 
 Runtime Management Command Idempotency DP-015 имеет Design Status Approved;

@@ -4,27 +4,40 @@
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
 Текущая implementation task —
-[TASK-073](TASK-073-RUNTIME-SHUTDOWN-EVIDENCE-COMPOSER.md), `In Progress`, на ветке
-`feature/task-073-shutdown-evidence-composer` от synchronized
-`main@0cec13d8e2b310545d5e2af40286158fda9820e9`. Scope ограничен четвёртым
-ordered slice DP-023 §19: private full-tuple shutdown-completion evidence
-composer и invocation-scoped use-once handle. Admission/provider wiring,
-DP-017 recovery и Production Activation не активированы. Isolated implementation
-candidate и focused tests существуют в `internal/runtimeexecutionevidence`.
-Exact current checkpoint и role verdict определяются только newest valid
-Recovery Evidence Envelope entry TASK-073, совпадающей с independently
-recomputed current subject manifest. Coordinator Acceptance, commit и
-publication отсутствуют.
+[TASK-074](TASK-074-RUNTIME-CONTAINMENT-COMPOSITION-GATE.md), `In Progress`, на
+ветке `feature/task-074-containment-composition-gate` от synchronized
+`main@a84098284b0202f2fea9a61e089a74f564a05405`. Scope ограничен item 5
+ordered decomposition DP-023 §19: private composition boundary связывает one
+exact active containment authority с command admission, late generation
+provider и published full-tuple evidence composer. Independent Architecture
+Confirmation — `APPROVED`, blocking findings 0. Isolated implementation и
+focused proofs существуют в новом private package
+`internal/runtimecontainmentcomposition`; independent Tester verification
+пройдена с recorded race-environment limitation, pre-documentation Review
+Approved без findings. Existing runtime packages и production entry points не
+изменены. Exact current checkpoint и role verdict определяются только
+newest valid Recovery Evidence Envelope entry TASK-074, совпадающей с
+independently recomputed current subject manifest. Commit и publication не
+авторизованы; private composition gate не wired в Control Service, DP-017
+recovery и Production Activation не активированы.
 
 Последняя опубликованная product task —
+[TASK-073](TASK-073-RUNTIME-SHUTDOWN-EVIDENCE-COMPOSER.md), `Completed —
+Coordinator Accepted`. Task commit
+`37ca6d6b5065aeb1a4831bc30aa54503ae06ff64` опубликован через PR #78 и merged
+как `a84098284b0202f2fea9a61e089a74f564a05405`. Isolated private full-tuple
+composer и invocation-scoped use-once handle теперь существуют в
+`internal/runtimeexecutionevidence`; TASK-073 не добавила admission/provider
+composition, Control Service wiring, DP-017 recovery или Production Activation.
+
+Предыдущая опубликованная product task —
 [TASK-071](TASK-071-RUNTIME-OWNER-SHUTDOWN-PROVENANCE.md), `Completed —
 Coordinator Accepted`. Integration commit
 `e1234a8447d75d1ffddf07dd953d444956b15ff1` опубликован через PR #77 и merged
 как `0cec13d8e2b310545d5e2af40286158fda9820e9`; local/remote task refs
 отсутствуют, `main == origin/main`. TASK-071 добавляет только isolated Owner
 terminal provenance и exact-attempt snapshot/revalidation prerequisite; full
-composer реализуется отдельной текущей TASK-073 только как isolated unaccepted
-candidate.
+composer впоследствии реализован и опубликован TASK-073.
 
 Опубликованный process repair —
 [TASK-072](TASK-072-PUBLISHER-HANDOFF-STORE-RECOVERY.md), bounded docs-only
@@ -50,9 +63,10 @@ Envelope. Windows-only DP-023 bootstrap реализован изолирова�
 `046ddcfaa0a5f73e8821de71b578a0db4d2a3ecd` опубликован и merged в
 `main@8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. DP-023 — `Approved /
 Implemented in isolation`, DP-022 — `Approved / Partial` только для
-завершённого isolated reader TASK-070 и prerequisite provenance/read TASK-071;
-TASK-073 добавляет isolated unaccepted full-tuple composer candidate. Control
-Service wiring, recovery, reporting и Production Activation отсутствуют.
+завершённого isolated reader TASK-070, prerequisite provenance/read TASK-071 и
+published full-tuple composer TASK-073. Текущая TASK-074 активирует только
+следующий private composition-gate slice. Control Service wiring, recovery,
+reporting и Production Activation отсутствуют.
 
 Последняя завершённая documentation-only work —
 [TASK-068](TASK-068-RUNTIME-CONTAINMENT-IMPLEMENTATION-READINESS.md),
@@ -199,7 +213,8 @@ PROCESS-002, Scope Audit 31/0/0 и final Reviewer проходят. Task commit
 - [TASK-070 — Runtime Containment Exact Generation Evidence Reader](TASK-070-RUNTIME-CONTAINMENT-EVIDENCE-READER.md) — Completed, Coordinator Accepted; task commit `82b7cce29ea9bca350b7945ac51a2531135d1a21` published through PR #75 and merged as `c058da69f2296e52a8e32cc25e195190389dbca7`; isolated reader only
 - [TASK-071 — Runtime Owner Shutdown Provenance and Exact Attempt Snapshot](TASK-071-RUNTIME-OWNER-SHUTDOWN-PROVENANCE.md) — Completed, Coordinator Accepted; integration commit `e1234a8447d75d1ffddf07dd953d444956b15ff1` published through PR #77 and merged as `0cec13d8e2b310545d5e2af40286158fda9820e9`; isolated DP-014 prerequisite only
 - [TASK-072 — Publisher Handoff Store Bootstrap and Recovery](TASK-072-PUBLISHER-HANDOFF-STORE-RECOVERY.md) — Completed, Coordinator Accepted; docs-only process repair commit `60ee9bec4dde3df08620f1a9d54b28da3f5b4c62` published through PR #76 and included in TASK-071 integration
-- [TASK-073 — Runtime Shutdown-Completion Evidence Composer](TASK-073-RUNTIME-SHUTDOWN-EVIDENCE-COMPOSER.md) — In Progress; isolated implementation candidate exists; exact checkpoint/verdict resolves from the newest valid matching Recovery Evidence Envelope; no Coordinator Acceptance, commit or publication
+- [TASK-073 — Runtime Shutdown-Completion Evidence Composer](TASK-073-RUNTIME-SHUTDOWN-EVIDENCE-COMPOSER.md) — Completed, Coordinator Accepted; task commit `37ca6d6b5065aeb1a4831bc30aa54503ae06ff64` published through PR #78 and merged as `a84098284b0202f2fea9a61e089a74f564a05405`; isolated full-tuple composer only
+- [TASK-074 — Runtime Containment Composition, Admission, and Generation Provider Gate](TASK-074-RUNTIME-CONTAINMENT-COMPOSITION-GATE.md) — In Progress; independent Architecture Confirmation APPROVED with 0 blockers; isolated private implementation and focused proofs exist and passed independent verification; exact checkpoint/verdict resolves from the newest valid matching Recovery Evidence Envelope; no Control Service wiring, commit, or publication authorization
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.
