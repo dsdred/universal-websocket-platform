@@ -5,13 +5,14 @@
 ## 1. Status
 
 - **Design Status:** Approved
-- **Implementation Status:** Planned
+- **Implementation Status:** Planned overall; read-only assessment implemented
+  in isolation by TASK-075
 
-This approved design defines a planned
-recovery and reconciliation boundary after loss of Control Service
-process-local Runtime ownership. No recovery package, store, schema, execution
-adapter, API, scanner, or production wiring exists as a result of this
-document.
+This approved design defines recovery and reconciliation after loss of Control
+Service process-local Runtime ownership. TASK-075 implements only the
+repository-private mutation-free read-only assessment slice in isolation. No
+durable recovery claim/permit/barrier/release, reconciliation mutation,
+external store/schema, API, scanner, reporting, or production wiring exists.
 
 ## 2. Purpose
 
@@ -42,7 +43,9 @@ primitive DP-015 boundary, partial DP-019 parent/phase sequential core, and
 command-boundary Continue/pending-Stop rendezvous, managed command gates,
 continuation, DP-014 attempt/generation binding sequence, and DP-016
 orchestration are implemented and independently verified in isolation. DP-017
-remains Planned; recovery and production composition remain absent.
+remains Planned overall even though its read-only assessment slice is
+implemented; durable recovery, reconciliation mutation, and production
+composition remain absent.
 
 ## 4. Scope
 
@@ -229,11 +232,14 @@ is the only proof that an exact prior generation terminated, and the separate
 Host-owned shutdown-completion evidence. The containment capability and ledger
 are implemented only in the isolated DP-023 bootstrap package. TASK-070's
 exact-generation reader, TASK-071's DP-014 provenance/read prerequisite, and
-TASK-073's repository-private full-tuple evidence composer are completed and
-published. TASK-074 implements only the next private containment composition,
-admission, and generation-provider gate in isolation in
-`internal/runtimecontainmentcomposition`; no production composition exists.
-DP-017 implementation remains unactivated.
+TASK-073's repository-private full-tuple evidence composer and TASK-074's
+private containment composition/admission/provider gate are completed and
+published. No production composition exists. TASK-075 implements only the
+read-only assessment slice from DP-023 section 19 item 6 and its required
+minimal DP-015 per-Instance snapshot seam. It performs stable DP-014 identity/
+history and DP-015 command rereads around exact containment evidence and returns
+only `Unknown`, `Clean`, `CommandOnly`, `UnboundAttempt`,
+`ExecutionTerminated`, `ResourceAbsence`, or `ShutdownCompleted`.
 
 [DP-023](DP-023-runtime-process-containment-bootstrap.md) separately approves
 the initial process-lifetime capability, durable ledger transition, and
@@ -241,10 +247,12 @@ generation-authority bootstrap. Its first slice is Implemented in isolation by
 TASK-069. TASK-070 completed and published the isolated exact-generation reader,
 TASK-071 completed and published the DP-014 provenance/read prerequisite, and
 TASK-073 completed and published the private full-tuple composer/use-once-handle
-slice. TASK-074 is the active private containment composition/admission/provider
-gate and now has an isolated candidate, but Control Service wiring remains
-absent, so this section has no production-composed executable prerequisite and
-recovery remains unactivated.
+slice, and TASK-074 completed and published the private containment
+composition/admission/provider gate through PR #79. TASK-075 is the active
+read-only recovery-assessment slice and is implemented in isolation, but
+Control Service wiring remains absent. Recovery claim/permit/barrier/release,
+reconciliation mutation, reporting, and Production Activation remain
+unactivated.
 
 The replacement Control Service must not fabricate a Host reference, hydrate
 an Owner, probe a port and call it Running, or adopt any execution. It may use
@@ -583,10 +591,12 @@ Deferred to focused designs or implementation tasks:
 
 ## 28. Implementation Boundary
 
-Implementation Status is Planned. The repository contains isolated
-process-local Runtime aggregate and command stores, but no external durable or
-process-restart store, recovery claim, execution-evidence adapter, recovery
-executor, public management API, or production wiring.
+Implementation Status remains Planned overall. The repository contains the isolated private
+`internal/runtimerecoveryassessment` read-only assessment and the complete
+detached DP-015 snapshot seam it consumes. The assessment validates one exact
+Runtime Instance through stable aggregate/history and command rereads plus
+exact attempt/generation evidence; stale, contradictory, foreign, cancelled,
+unsupported, or unavailable facts fail closed to `Unknown`.
 
 TASK-069 implemented the DP-023 containment bootstrap in isolation, and
 completed TASK-070 implemented the isolated exact-generation reader. TASK-071
@@ -594,9 +604,17 @@ adds only the DP-014 recovery-provenance validation surface; it implements no
 DP-017 assessment, claim, barrier, executor, or terminalization workflow. No
 production wiring exists. TASK-073 implements and publishes only the isolated
 private full-tuple composer/use-once-handle; it adds no DP-017 assessment,
-claim, barrier, executor, or terminalization workflow. TASK-074 implements only
-the next private containment composition/admission/provider gate in isolation
-and adds no DP-017 workflow. The remaining work stays dependency ordered.
+claim, barrier, executor, or terminalization workflow. TASK-074 implements and
+publishes only the private containment composition/admission/provider gate in
+isolation. TASK-075 implements the next read-only assessment slice and one
+minimal mutation-free DP-015 per-Instance command snapshot seam. Focused and
+full tests, vet, snapshot/assessment stress proofs, and independent Tester and
+pre-documentation Review pass with zero blockers. The race detector was not
+runnable on the available Windows toolchain because `CGO_ENABLED=0` and no C
+compiler was installed; no race-detector PASS is claimed. The remaining work
+stays dependency ordered: no durable recovery claim/permit/barrier/release,
+reconciliation publication, recovery executor, public management API,
+reporting, or production wiring exists.
 
 The current in-process Runtime components do not survive Control Service
 process termination and expose no restart-time recovery capability. Creating

@@ -1,22 +1,32 @@
 # Текущее состояние
 
-**Текущая задача:** TASK-074 — Runtime Containment Composition, Admission, and
-Generation Provider Gate, `In Progress`, на ветке
-`feature/task-074-containment-composition-gate` от synchronized
-`main@a84098284b0202f2fea9a61e089a74f564a05405`. Scope ограничен item 5
-ordered decomposition DP-023 §19: один repository-private composition boundary,
-который связывает existing containment authority с command admission, late
-generation provider и опубликованным full-tuple evidence composer. Independent
-Architecture Confirmation — `APPROVED`, blocking findings 0. Isolated
-implementation и focused proofs существуют в новом private package
-`internal/runtimecontainmentcomposition`; independent Tester verification
-пройдена с зафиксированным ограничением среды для race, а pre-documentation
-Reviewer одобрил exact subject без findings. Existing runtime packages и
-production entry points не изменены. Exact current checkpoint и role verdict
-определяются только newest valid Recovery Evidence Envelope entry TASK-074,
-совпадающей с independently recomputed current subject manifest. Commit и
-publication не авторизованы. Private composition gate не wired в Control
-Service; DP-017 recovery и Production Activation не активированы.
+**Текущая задача:** TASK-075 — Runtime Read-Only Recovery Assessment,
+`In Progress`, на ветке `feature/task-075-runtime-recovery-assessment` от clean
+synchronized `main@bfab084c1a9664181027650b092bf240e04af435`. Scope ограничен
+item 6 ordered decomposition DP-023 §19: один repository-private mutation-free
+assessment DP-017 для exact Runtime Instance. Independent Architecture
+Confirmation — `APPROVED — READY WITH ONE REQUIRED MINIMAL DP-015 READ-ONLY
+SNAPSHOT SEAM; NO NEW DP, NO SCOPE EXPANSION`, blocking findings 0. Требуемый
+seam реализован как complete detached per-Instance snapshot
+primitive/parent/phase records в ownership `runtimecommandidempotency`; он не
+создаёт ledger, не выдаёт permit и не мутирует command truth. Private package
+`internal/runtimerecoveryassessment` реализует stable read-only assessment
+DP-014/DP-015/evidence и closed classifications `Unknown`, `Clean`,
+`CommandOnly`, `UnboundAttempt`, `ExecutionTerminated`, `ResourceAbsence` и
+`ShutdownCompleted`. Recovery claim/permit/barrier/release, reconciliation,
+Control Service wiring/reporting и Production Activation остаются `Not
+Activated`. Exact current checkpoint и role verdict определяются только newest
+valid Recovery Evidence Envelope entry TASK-075, совпадающей с independently
+recomputed current subject manifest.
+
+**Последняя опубликованная implementation task (2026-10-03):** TASK-074 —
+Runtime Containment Composition, Admission, and Generation Provider Gate,
+`Completed — Coordinator Accepted`. Task commit
+`2d78d417784012e4e945e60f8d721246ea5bdcbf` опубликован через PR #79 и merged
+как `bfab084c1a9664181027650b092bf240e04af435`. Isolated private package
+`internal/runtimecontainmentcomposition` связывает exact active containment
+authority с admission/provider/evidence paths, но не wired в Control Service и
+не реализует workflow DP-017.
 
 **Последняя опубликованная implementation task (2026-10-01):** TASK-073 —
 Runtime Shutdown-Completion Evidence Composer, `Completed — Coordinator
@@ -183,7 +193,9 @@ Start/Stop boundary DP-015 реализованы изолированно packa
 `internal/runtimecommandidempotency`; partial parent/phase sequential core и
 command-boundary Continue/pending-Stop rendezvous DP-019 также реализованы там
 изолированно, а полный extension остаётся Planned. DP-016 имеет Implementation
-Status Implemented in isolation; DP-017–DP-019 остаются Planned overall.
+Status Implemented in isolation; DP-017 остаётся Planned overall, хотя isolated
+read-only assessment TASK-075 реализован, а durable recovery/reconciliation и
+DP-018–DP-019 остаются Planned.
 Зеркальный DP-022 с Design Status Approved (повышен TASK-067) определяет
 containment/evidence boundary, требуемый DP-017 §11; он ничего не реализует,
 поэтому containment ledger, capability и evidence adapter отсутствуют, а

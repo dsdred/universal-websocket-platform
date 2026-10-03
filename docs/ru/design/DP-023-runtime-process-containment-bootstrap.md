@@ -422,15 +422,15 @@ bootstrap, fail-closed stub для unsupported platforms и focused proofs. Он
 composed в Control Service. Завершённая TASK-070 добавляет только isolated exact
 generation reader, TASK-071 — только isolated prerequisite provenance/read
 DP-014, а завершённая и опубликованная TASK-073 — isolated private full-tuple
-composer/use-once-handle slice. TASK-074 активирует только следующий private
-containment composition/admission/provider gate. Его exact current checkpoint
-и role verdict определяются только newest valid Recovery Evidence Envelope
-entry TASK-074, совпадающей с independently recomputed current subject
-manifest. Isolated candidate теперь существует в private package
-`internal/runtimecontainmentcomposition`, но результат не production-composed.
-Поэтому current production composition behavior и DP-017 не меняются;
-production composition, recovery, reporting, provisioning, integration
-и Production Activation остаются последующими работами.
+composer/use-once-handle slice. TASK-074 завершила и опубликовала private
+containment composition/admission/provider gate через PR #79. TASK-075
+реализует только item 6 — read-only recovery assessment DP-017 — и требуемый
+minimal mutation-free DP-015 per-Instance command snapshot seam. Private
+assessment потребляет exact identity, command и containment-evidence reads,
+возвращает только closed fail-closed classifications и не создаёт authority.
+Результат не production-composed; recovery claim/permit/barrier/release,
+reconciliation, reporting, provisioning, integration и Production Activation
+остаются последующими работами.
 
 ## 22. Решение
 

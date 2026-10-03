@@ -78,15 +78,16 @@
   Coordinator Accepted и опубликована через PR #78: isolated private full-tuple
   evidence composer/use-once handle существует в
   `internal/runtimeexecutionevidence`. Это сохраняет статус DP-022 Partial и не
-  создаёт production composition или activation. TASK-074 активирует только
-  следующий private containment composition/admission/provider gate; её
-  independent Architecture Confirmation — `APPROVED`, blocking findings 0.
-  Isolated implementation и focused proofs существуют в private package
-  `internal/runtimecontainmentcomposition`; independent Tester verification
-  пройдена с recorded race-environment limitation, pre-documentation Review
-  Approved без findings. Exact current checkpoint/verdict TASK-074
-  берётся только из newest valid matching Recovery Evidence Envelope.
-  Статус не повышается самим authoring или commit.
+  создаёт production composition или activation. TASK-074 завершила private
+  containment composition/admission/provider gate, получила Coordinator
+  Acceptance и опубликована через PR #79 как merge
+  `bfab084c1a9664181027650b092bf240e04af435`. TASK-075 активирует только
+  следующий read-only assessment slice DP-017. Independent Architecture
+  Confirmation TASK-075 — `APPROVED` с одним required minimal mutation-free
+  DP-015 per-Instance command snapshot seam, blocking findings 0. Seam и private
+  assessment package реализованы изолированно и независимо проверены; durable
+  recovery authority и production wiring не созданы. Статусы design не
+  повышаются task implementation или commit.
 - ARCH-004 определяет Runtime Instance, Launch Attempt и deployment identity
   model; минимальный in-process Runtime Lifecycle Owner и process-local
   isolated operational identity/command stores реализованы, а external durable
@@ -101,8 +102,9 @@
   TASK-064 durable primitive Satisfied outcome реализованы изолированно.
   TASK-026 реализует и независимо верифицирует isolated orchestrator DP-016.
   DP-015 Implementation Status остаётся Partial; DP-016 — Implemented in
-  isolation; полный DP-015/DP-019 extension и DP-017–DP-019 сохраняют Planned
-  overall.
+  isolation; DP-017 сохраняет Planned overall, хотя read-only assessment
+  TASK-075 реализован изолированно. Полный DP-015/DP-019 extension, durable
+  recovery/reconciliation DP-017 и DP-018–DP-019 сохраняют Planned overall.
 
 ## Ожидающие отдельного решения
 
@@ -120,10 +122,11 @@ newest valid matching envelope и опубликована task commit
 `main@8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. DP-023 — `Approved /
 Implemented in isolation`; DP-022 теперь `Approved / Partial` только для
 завершённого isolated reader TASK-070, prerequisite provenance/read TASK-071 и
-published full-tuple composer TASK-073. TASK-074 реализует следующий private
-composition/admission/provider gate только изолированно в новом package. Slice
-не wired в Control Service; recovery/reporting/Production Activation
-отсутствуют.
+published full-tuple composer TASK-073 и published private composition gate
+TASK-074. TASK-075 реализует следующий read-only assessment изолированно,
+потребляя эти существующие read/evidence boundaries. Ни один slice не wired в
+Control Service; recovery claim/permit/barrier/release, reconciliation,
+reporting и Production Activation отсутствуют.
 
 Historical TASK-070 Architecture Confirmation обнаружил отдельный blocker
 `TASK-070/ARCH-B-001` для exact evidence-reader slice. Разрешённое
@@ -139,15 +142,13 @@ reader не было. TASK-070 завершена, Coordinator Accepted и оп�
 PR #75. TASK-071 также завершена и опубликована через PR #77, добавив isolated
 DP-014 provenance/read prerequisite. TASK-073 завершила следующий ordered
 full-tuple composer slice, получила Coordinator Acceptance и опубликована через
-PR #78. TASK-074 активирует только subsequent private containment composition,
-admission и generation-provider gate; independent Architecture Confirmation
-утвердила existing design без нового DP или scope change. Isolated candidate
-реализован и независимо проверен в
-`internal/runtimecontainmentcomposition`, без изменений existing runtime
-packages или production entry points. Exact current checkpoint и role verdict не дублируются здесь и
-resolve-ятся только из newest valid TASK-074 Recovery Evidence Envelope entry,
-совпадающей с independently recomputed current subject manifest. Commit и
-publication TASK-074 не авторизованы.
+PR #78. TASK-074 завершила и опубликовала subsequent private containment
+composition/admission/provider gate через PR #79 без Control Service wiring.
+TASK-075 реализует только read-only assessment DP-017 и required minimal
+mutation-free DP-015 snapshot seam; focused proofs, independent Tester и fresh
+pre-documentation Review проходят с 0 blockers. Durable recovery
+claim/permit/barrier/release, reconciliation mutation и production wiring не
+реализованы.
 
 Delivery, Message Persistence, Plugin ABI, production deployment adapters, operational
 diagnostics и supervision требуют сфокусированных решений в соответствующих

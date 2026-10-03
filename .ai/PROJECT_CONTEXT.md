@@ -8,23 +8,31 @@
 
 ## Текущее состояние
 
-- Current task: **TASK-074 — Runtime Containment Composition, Admission, and
-  Generation Provider Gate**, `In Progress`, on
-  `feature/task-074-containment-composition-gate` from synchronized
-  `main@a84098284b0202f2fea9a61e089a74f564a05405`. It is limited to DP-023
-  section 19 item 5: one repository-private composition boundary that binds
-  the existing containment authority to command admission, the late generation
-  provider, and the published full-tuple evidence composer. Independent
-  Architecture Confirmation is `APPROVED`, blocking findings 0. The isolated
-  implementation and focused proofs now exist in the new private
-  `internal/runtimecontainmentcomposition` package; independent Tester
-  verification passed with the recorded race-environment limitation, and the
-  pre-documentation Reviewer approved the exact subject with zero findings.
-  No existing runtime package or production entry point was changed. The exact
-  current checkpoint and role
-  verdict resolve only from the newest valid TASK-074 Recovery Evidence
-  Envelope entry matching an independently recomputed current subject manifest.
-  Commit and publication are not authorized.
+- Current task: **TASK-075 — Runtime Read-Only Recovery Assessment**,
+  `In Progress`, on `feature/task-075-runtime-recovery-assessment` from clean
+  synchronized `main@bfab084c1a9664181027650b092bf240e04af435`. It is limited
+  to DP-023 section 19 item 6: one repository-private, mutation-free DP-017
+  assessment of an exact Runtime Instance. Independent Architecture
+  Confirmation is `APPROVED — READY WITH ONE REQUIRED MINIMAL DP-015 READ-ONLY
+  SNAPSHOT SEAM; NO NEW DP, NO SCOPE EXPANSION`, blocking findings 0. The
+  required seam is now implemented as a complete detached per-Instance
+  primitive/parent/phase snapshot owned by `runtimecommandidempotency`; it does
+  not create a ledger, expose a permit, or mutate command truth. The private
+  `internal/runtimerecoveryassessment` package implements the read-only stable
+  DP-014/DP-015/evidence assessment and the closed classes `Unknown`, `Clean`,
+  `CommandOnly`, `UnboundAttempt`, `ExecutionTerminated`, `ResourceAbsence`,
+  and `ShutdownCompleted`. Recovery claim/permit/barrier/release,
+  reconciliation, Control Service wiring/reporting, and Production Activation
+  remain `Not Activated`. The exact current checkpoint and role verdict resolve
+  only from the newest valid TASK-075 Recovery Evidence Envelope entry matching
+  an independently recomputed current subject manifest.
+- Latest published implementation (2026-10-03): **TASK-074 — Runtime
+  Containment Composition, Admission, and Generation Provider Gate**,
+  `Completed — Coordinator Accepted`. Task commit
+  `2d78d417784012e4e945e60f8d721246ea5bdcbf` was published through PR #79 and
+  merged as `bfab084c1a9664181027650b092bf240e04af435`. The isolated private
+  `internal/runtimecontainmentcomposition` gate exists, but is not wired into
+  Control Service and implements no DP-017 workflow.
 - Latest published implementation (2026-10-01): **TASK-073 — Runtime
   Shutdown-Completion Evidence Composer**, `Completed — Coordinator Accepted`.
   Task commit `37ca6d6b5065aeb1a4831bc30aa54503ae06ff64` was published through
@@ -186,9 +194,11 @@
   management routing изолированно; Approved DP-014 и `internal/runtimeidentity`
   реализуют in-memory Runtime Instance aggregate store изолированно; Approved
   DP-015 и `internal/runtimecommandidempotency` реализуют primitive command
-  claim/replay boundary изолированно. Approved/Planned DP-016–DP-018 закрывают
-  focused design gates ARCH-004 §19(4)–(6) для activation/replacement/rollback, recovery/
-  reconciliation и operational error reporting/redaction. Approved/
+  claim/replay boundary изолированно. Approved DP-016–DP-018 закрывают focused
+  design gates ARCH-004 §19(4)–(6) для activation/replacement/rollback,
+  recovery/reconciliation и operational error reporting/redaction; DP-017
+  остаётся Planned overall, хотя isolated read-only assessment TASK-075 уже
+  реализован. Approved/
   Planned overall DP-019 определяет parent/phase, authorization и private
   Start-claim continuation prerequisites DP-016. TASK-028 реализует partial
   parent/phase sequential core, а TASK-029 — command-boundary Continue и
@@ -721,9 +731,10 @@
   replay-first/late-generation admission — **Implemented in isolation**;
   Implementation Status remains **Partial** and the full extension remains
   **Planned**; process-local
-  `internal/runtimecommandidempotency` реализует claim/replay storage и
-  callback-scoped one-shot permits; external schema, API, recovery, integration
-  и production wiring отсутствуют
+  `internal/runtimecommandidempotency` реализует claim/replay storage,
+  callback-scoped one-shot permits и complete detached mutation-free
+  per-Instance assessment snapshot primitive/parent/phase records; external
+  schema, API, recovery mutation, integration и production wiring отсутствуют
 - Design Status DP-016 — **Approved**, Implementation Status — **Implemented
   in isolation**; TASK-026 implements and independently verifies the isolated
   activation/replacement/rollback orchestrator and all 19 proof rows;
@@ -739,9 +750,11 @@
   accepted, and published that prerequisite through PR #68. TASK-026 now
   implements the isolated orchestrator; API, recovery and production wiring
   remain absent
-- Design Status DP-017 — **Approved**, Implementation Status — **Planned**;
-  recovery/reconciliation определены только на design level; recovery store,
-  execution-evidence adapter, executor, API и production wiring отсутствуют
+- Design Status DP-017 — **Approved**, Implementation Status — **Planned
+  overall**; repository-private mutation-free read-only assessment и семь
+  closed classifications реализованы изолированно TASK-075. Durable recovery
+  claim/permit/barrier/release, reconciliation mutation, production
+  wiring/reporting/API и Production Activation отсутствуют
 - Design Status DP-018 — **Approved**, Implementation Status — **Planned**;
   operational reporting/redaction определены только на design level; report
   model, projector, delivery adapter, API и production wiring отсутствуют

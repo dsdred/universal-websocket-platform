@@ -5,11 +5,14 @@
 ## 1. Статус
 
 - **Design Status:** Approved
-- **Implementation Status:** Planned
+- **Implementation Status:** Planned overall; read-only assessment реализован
+  изолированно TASK-075
 
-Этот approved design определяет planned boundary восстановления и сверки после потери process-local Runtime
-ownership Control Service. Этот документ не создаёт recovery package, store,
-schema, execution adapter, API, scanner или production wiring.
+Этот approved design определяет recovery и reconciliation после потери
+process-local Runtime ownership Control Service. TASK-075 реализует только
+repository-private mutation-free read-only assessment slice изолированно.
+Durable recovery claim/permit/barrier/release, reconciliation mutation,
+external store/schema, API, scanner, reporting и production wiring отсутствуют.
 
 ## 2. Назначение
 
@@ -40,8 +43,9 @@ Accepted ADR и Active/Frozen architecture остаются authoritative. DP-01
 DP-015, partial parent/phase sequential core DP-019, command-boundary
 Continue/pending-Stop rendezvous, managed command gates, continuation, binding
 sequence attempt/generation DP-014 и orchestration DP-016 реализованы и
-независимо верифицированы изолированно. DP-017 остаётся Planned; recovery и
-production composition отсутствуют.
+независимо верифицированы изолированно. DP-017 остаётся Planned overall, хотя
+его read-only assessment slice реализован; durable recovery, reconciliation
+mutation и production composition отсутствуют.
 
 ## 4. Область действия
 
@@ -226,22 +230,26 @@ Approved containment boundary, называемая здесь, —
 Host-owned shutdown-completion evidence. Containment capability и ledger
 реализованы только в изолированном bootstrap package DP-023. Exact-generation
 reader TASK-070, prerequisite provenance/read DP-014 TASK-071 и repository-
-private full-tuple evidence composer TASK-073 завершены и опубликованы.
-TASK-074 реализует только следующий private containment composition,
-admission и generation-provider gate изолированно в
-`internal/runtimecontainmentcomposition`; production composition отсутствует.
-Реализация DP-017 остаётся неактивированной.
+private full-tuple evidence composer TASK-073 и private containment
+composition/admission/provider gate TASK-074 завершены и опубликованы.
+Production composition отсутствует. TASK-075 реализует только read-only
+assessment slice item 6 DP-023 §19 и обязательный minimal DP-015 per-Instance
+snapshot seam. Assessment выполняет stable rereads DP-014 identity/history и
+DP-015 command truth вокруг exact containment evidence и возвращает только
+`Unknown`, `Clean`, `CommandOnly`, `UnboundAttempt`, `ExecutionTerminated`,
+`ResourceAbsence` или `ShutdownCompleted`.
 
 [DP-023](DP-023-runtime-process-containment-bootstrap.md) отдельно утверждает
 initial process-lifetime capability, durable ledger transition и bootstrap
 generation authority. Его первый slice Implemented in isolation через TASK-069.
 TASK-070 завершила и опубликовала isolated exact-generation reader, TASK-071
 завершила и опубликовала prerequisite provenance/read DP-014, а TASK-073
-завершила и опубликовала private full-tuple composer/use-once-handle slice.
-TASK-074 — активный private containment composition/admission/provider gate с
-isolated candidate, но Control Service wiring отсутствует, поэтому section не
-имеет production-composed executable prerequisite, а recovery остаётся
-неактивированной.
+завершила и опубликовала private full-tuple composer/use-once-handle slice, а
+TASK-074 завершила и опубликовала private containment
+composition/admission/provider gate через PR #79. TASK-075 — активный read-only
+recovery-assessment slice, реализованный изолированно, но Control Service wiring
+отсутствует. Recovery claim/permit/barrier/release, reconciliation mutation,
+reporting и Production Activation остаются неактивированными.
 
 Replacement Control Service не фабрикует Host reference, не hydrate Owner, не
 probe port с выводом Running и не adopt execution. Proven generation termination
@@ -571,10 +579,12 @@ executor, reporting, integration и Production Activation отсутствуют
 
 ## 28. Граница реализации
 
-Implementation Status — Planned. Repository содержит isolated process-local
-Runtime aggregate и command stores, но не содержит external durable или
-process-restart store, recovery claim, execution-evidence adapter, recovery
-executor, public management API или production wiring.
+Implementation Status остаётся Planned overall. Repository содержит isolated private
+read-only assessment `internal/runtimerecoveryassessment` и потребляемый им
+complete detached snapshot seam DP-015. Assessment валидирует один exact
+Runtime Instance через stable rereads aggregate/history и command truth плюс
+exact evidence attempt/generation; stale, contradictory, foreign, cancelled,
+unsupported или unavailable facts fail closed в `Unknown`.
 
 TASK-069 реализовала containment bootstrap DP-023 изолированно, а завершённая
 TASK-070 реализовала isolated exact-generation reader. TASK-071 добавляет
@@ -583,9 +593,16 @@ assessment, claim, barrier, executor или terminalization workflow DP-017.
 Production wiring отсутствует. TASK-073 реализует и публикует только isolated
 private full-tuple composer/use-once-handle; она не добавляет assessment,
 claim, barrier, executor или terminalization workflow DP-017. TASK-074
-реализует только следующий private containment
-composition/admission/provider gate изолированно и не добавляет DP-017 workflow.
-Остальная работа сохраняет dependency ordering.
+реализует и публикует только private containment
+composition/admission/provider gate изолированно. TASK-075 реализует следующий
+read-only assessment slice и один minimal mutation-free DP-015 per-Instance
+command snapshot seam. Focused/full tests, vet, stress proofs snapshot/
+assessment, independent Tester и pre-documentation Review проходят с 0
+blockers. Race detector не запускался в доступном Windows toolchain из-за
+`CGO_ENABLED=0` и отсутствия C compiler; race-detector PASS не заявляется.
+Остальная работа сохраняет dependency ordering: durable recovery
+claim/permit/barrier/release, reconciliation publication, recovery executor,
+public management API, reporting и production wiring отсутствуют.
 
 Текущие in-process Runtime components не переживают Control Service process
 termination и не предоставляют restart-time recovery capability. Создание
