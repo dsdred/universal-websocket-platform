@@ -426,15 +426,15 @@ bootstrap, unsupported-platform fail-closed stub, and focused proofs. It is not
 composed into Control Service. Completed TASK-070 adds only the isolated exact
 generation reader, TASK-071 adds only the isolated DP-014 provenance/read
 prerequisite, and completed/published TASK-073 adds the isolated private
-full-tuple composer/use-once-handle slice. TASK-074 activates only the next
-private containment composition/admission/provider gate. Its exact current
-checkpoint and role verdict resolve only from the newest valid TASK-074
-Recovery Evidence Envelope entry matching an independently recomputed current
-subject manifest. An isolated candidate now exists in the private
-`internal/runtimecontainmentcomposition` package, but no result is
-production-composed. Therefore current production composition behavior and
-DP-017 are unchanged; production composition, recovery, reporting,
-provisioning, integration, and Production Activation remain later work.
+full-tuple composer/use-once-handle slice. TASK-074 completed and published the
+private containment composition/admission/provider gate through PR #79. TASK-075
+implements only item 6, the DP-017 read-only recovery assessment, plus its
+required minimal mutation-free DP-015 per-Instance command snapshot seam. The
+private assessment consumes exact identity, command, and containment-evidence
+reads and returns only closed fail-closed classifications; it creates no
+authority. No result is production-composed; recovery claim/permit/barrier/
+release, reconciliation, reporting, provisioning, integration, and Production
+Activation remain later work.
 
 ## 22. Decision
 

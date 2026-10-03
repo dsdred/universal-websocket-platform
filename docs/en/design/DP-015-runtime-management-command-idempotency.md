@@ -9,8 +9,10 @@
   parent/phase sequential core, and command-boundary Continue/pending-Stop
   rendezvous implemented in isolation; Slice 3 managed gates and continuation
   implemented and independently accepted in isolation; TASK-057 replay-first/
-  late-generation admission implemented and prospectively accepted in isolation; the
-  complete DP-019 extension remains Planned
+  late-generation admission implemented and prospectively accepted in
+  isolation; TASK-075 complete detached read-only per-Instance assessment
+  snapshot implemented and independently verified in isolation; the complete
+  DP-019 extension remains Planned
 
 TASK-049 completed the design-only refinement of the replay-first
 orchestration-admission and late-generation contract in section 13.2 and was
@@ -395,7 +397,8 @@ A Claimed primitive, parent, or phase record without its exact live permit is
 barrier against every new state-changing command and every further phase until
 an approved recovery contract makes the linked command set Terminal. Approved
 [DP-017](DP-017-runtime-recovery-reconciliation.md) defines fail-closed exact-
-fact resolution; its Planned implementation remains absent. Observe remains
+fact resolution. TASK-075 implements only read-only fact assessment; durable
+resolution remains Planned and absent. Observe remains
 read-only. No
 tracked exception applies after process restart, after loss of the claiming
 call stack, or when a claim or terminal publication is indeterminate.
@@ -447,7 +450,8 @@ Claimed. Once its execution permit is gone, it is unresolved and closes the
 per-Instance barrier. No retry or different key may delegate lifecycle work.
 Approved DP-017 defines the section 19(5) contract for exact command,
 lifecycle, and execution-evidence inspection and truthful barrier resolution;
-its Planned implementation remains absent.
+TASK-075 implements only the read-only inspection/assessment subset, while
+truthful barrier resolution remains Planned and absent.
 
 ## 16. Command States
 
@@ -716,6 +720,15 @@ Coordinator Accepted in isolation for the bounded existing-seam repair,
 including same-boundary and reconstructed-storage replay proofs, and is
 published through PR #68. TASK-026 subsequently implements and independently
 verifies the isolated orchestrator.
+
+TASK-075 implements the separate DP-017 read-only assessment prerequisite as
+`AssessmentSnapshot` and `MemoryStorage.ReadAssessmentSnapshot`. The seam reads
+an existing per-Instance ledger without creating one, copies primitive, parent,
+and phase records under the ledger lock, returns detached deterministic record
+sets, and exposes no permit, admission, mutation, map, lock, or live callback
+authority. Its focused coherence/detachment proofs and the consuming assessment
+proofs passed independent verification; the race detector remained unavailable
+because the Windows toolchain had `CGO_ENABLED=0` and no C compiler.
 
 ## 28. Decision
 

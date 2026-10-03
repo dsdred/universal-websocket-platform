@@ -493,15 +493,15 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   Accepted, and published through PR #75. TASK-071 is completed and published
   through PR #77 with the isolated Owner-provenance/exact-attempt prerequisite.
   TASK-073 completed and published the private full-tuple
-  composer/use-once-handle slice through PR #78. TASK-074 activates only the
-  next private containment composition/admission/provider gate. Its exact
-  current checkpoint and role verdict resolve only from the newest valid
-  TASK-074 Recovery Evidence Envelope entry matching an independently
-  recomputed current subject manifest. An isolated candidate now exists in the
-  private `internal/runtimecontainmentcomposition` package and passed
-  independent verification and pre-documentation review; no result is wired
-  into Control Service. Production composition, recovery, reporting, and
-  Production Activation remain absent.
+  composer/use-once-handle slice through PR #78. TASK-074 completed and
+  published the private containment composition/admission/provider gate through
+  PR #79. TASK-075 implements only the next DP-017 read-only assessment slice
+  and its required minimal mutation-free DP-015 per-Instance command snapshot
+  seam in isolation. Independent Tester and pre-documentation Reviewer report
+  zero blockers; the race detector is unavailable in the current Windows
+  toolchain. No result is wired into Control Service. Recovery claim/permit/
+  barrier/release, reconciliation, reporting, and Production Activation remain
+  absent.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Message Persistence, Delivery, and Plugin contracts still require focused design.

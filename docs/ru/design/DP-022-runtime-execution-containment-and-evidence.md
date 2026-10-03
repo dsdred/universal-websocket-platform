@@ -28,12 +28,10 @@ verification, review и Acceptance checkpoint и subject identity resolve-ятс
 Завершённая и опубликованная TASK-071 добавляет только isolated prerequisite
 DP-014 Owner provenance/exact-attempt snapshot. Завершённая и опубликованная
 TASK-073 добавляет private full-tuple composer/use-once-handle slice
-изолированно. TASK-074 активирует только следующий private containment
-composition, admission и generation-provider gate. Его exact current checkpoint
-и role verdict остаются owned newest valid Recovery Evidence Envelope entry
-TASK-074, совпадающей с independently recomputed current subject manifest, и
-здесь не дублируются. Isolated candidate теперь существует в
-`internal/runtimecontainmentcomposition`, но результат не wired в Control
+изолированно. TASK-074 завершила и опубликовала private containment
+composition/admission/provider gate через PR #79. TASK-075 реализует только
+downstream read-only assessment slice DP-017, независимо верифицированный
+изолированно. Результат не wired в Control
 Service. Scanner, supervisor,
 production wiring и composed runtime behavior отсутствуют; Control Service ещё
 не может наблюдать termination процесса через эту границу.
@@ -776,19 +774,22 @@ production activation. Accepted и published isolated composer TASK-073 такж
 сохраняет статус Partial и не заявляет production activation.
 
 Этот документ есть Approved design граница, поэтому DP-017 section 11 теперь
-имеет authoritative containment boundary для потребления; сам DP-017 остаётся
-Approved/Planned и неактивированным. Статус получен явным решением через project
+имеет authoritative containment boundary для потребления; DP-017 остаётся
+Approved/Planned overall, хотя isolated read-only assessment реализован, а
+durable recovery остаётся неактивированным. Статус получен явным решением через project
 design status процесс; acceptance задачи со стороны Documentation, Tester,
 Reviewer или Coordinator не повышает Design Status этого документа и никогда не
 повышает Implementation Status. Published isolated composer TASK-073 не
-активирует recovery или production consumption evidence. TASK-074 активирует
-только следующий private containment composition/admission/provider gate
-изолированно; composition Control Service отсутствует.
-DP-017 recovery, DP-018
-reporting, production integration и Production Activation остаются `Not
-Activated` и отсутствуют; downstream consumption containment evidence
-относится к более поздней, отдельно approved границе. Ни один gate ARCH-004
-section 19 здесь не заявляется и не переоткрывается.
+активирует recovery или production consumption evidence. TASK-074 реализует и
+публикует только private containment composition/admission/provider gate
+изолированно; composition Control Service отсутствует. TASK-075 реализует
+только repository-private read-only assessment slice DP-017, который потребляет
+exact full-tuple evidence через существующую composition boundary и fail closed
+в `Unknown`; evidence authority он не создаёт. Durable recovery
+claim/permit/barrier/release и reconciliation DP-017, reporting DP-018,
+production integration и Production Activation остаются `Not Activated` и
+отсутствуют. Ни один gate ARCH-004 section 19 здесь не заявляется и не
+переоткрывается.
 
 ## 26. Решение
 

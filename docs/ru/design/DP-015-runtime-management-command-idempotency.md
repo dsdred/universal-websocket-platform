@@ -9,8 +9,10 @@
   sequential core Approved DP-019 и command-boundary Continue/pending-Stop
   rendezvous реализованы изолированно; managed gates и continuation Среза 3
   реализованы и независимо приняты изолированно; replay-first/late-generation
-  admission TASK-057 реализован и prospectively accepted изолированно; полное
-  extension DP-019 остаётся Planned
+  admission TASK-057 реализован и prospectively accepted изолированно;
+  complete detached read-only per-Instance assessment snapshot TASK-075
+  реализован и независимо проверен изолированно; полное extension DP-019
+  остаётся Planned
 
 TASK-049 завершила design-only refinement contract replay-first orchestration
 admission и позднего выделения generation в разделе 13.2; Coordinator
@@ -394,7 +396,8 @@ Claimed primitive, parent или phase record без exact live permit явля�
 для каждого нового state-changing command и дальнейшей phase до тех пор, пока
 утверждённый recovery contract не сделает linked command set Terminal. Approved
 [DP-017](DP-017-runtime-recovery-reconciliation.md) определяет fail-closed
-resolution exact facts; его Planned implementation остаётся отсутствующей.
+resolution exact facts. TASK-075 реализует только read-only assessment facts;
+durable resolution остаётся Planned и отсутствует.
 Observe остаётся read-only. Ни
 один tracked exception не действует после restart process, потери claiming
 call stack или indeterminate claim/terminal publication.
@@ -446,7 +449,8 @@ publication отсутствует или indeterminate, record остаётся
 barrier. Ни retry, ни другой key не могут делегировать lifecycle work. Approved
 DP-017 определяет contract section 19(5) для inspection exact command,
 lifecycle и execution-evidence facts и truthful barrier resolution; его
-Planned implementation остаётся отсутствующей.
+read-only inspection/assessment subset реализован TASK-075, а truthful barrier
+resolution остаётся Planned и отсутствует.
 
 ## 16. Состояния command
 
@@ -715,6 +719,15 @@ evidence. Последующий review TASK-026 доказал, что primitiv
 принимает bounded repair existing seam, включая proofs replay в той же boundary
 и после reconstruction storage, и публикует его через PR #68. TASK-026 после
 этого реализует и независимо верифицирует isolated orchestrator.
+
+TASK-075 реализует prerequisite отдельного read-only assessment slice DP-017
+как `AssessmentSnapshot` и `MemoryStorage.ReadAssessmentSnapshot`. Seam читает
+существующий per-Instance ledger без его создания, копирует primitive, parent и
+phase records под ledger lock, возвращает detached deterministic record sets и
+не exposing permit, admission, mutation, map, lock или live callback authority.
+Focused proofs coherence/detachment и proofs consuming assessment прошли
+independent verification; race detector остался недоступен, потому что Windows
+toolchain имел `CGO_ENABLED=0` и не содержал C compiler.
 
 ## 28. Решение
 

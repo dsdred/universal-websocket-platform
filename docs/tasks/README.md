@@ -4,22 +4,30 @@
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
 Текущая implementation task —
-[TASK-074](TASK-074-RUNTIME-CONTAINMENT-COMPOSITION-GATE.md), `In Progress`, на
-ветке `feature/task-074-containment-composition-gate` от synchronized
-`main@a84098284b0202f2fea9a61e089a74f564a05405`. Scope ограничен item 5
-ordered decomposition DP-023 §19: private composition boundary связывает one
-exact active containment authority с command admission, late generation
-provider и published full-tuple evidence composer. Independent Architecture
-Confirmation — `APPROVED`, blocking findings 0. Isolated implementation и
-focused proofs существуют в новом private package
-`internal/runtimecontainmentcomposition`; independent Tester verification
-пройдена с recorded race-environment limitation, pre-documentation Review
-Approved без findings. Existing runtime packages и production entry points не
-изменены. Exact current checkpoint и role verdict определяются только
-newest valid Recovery Evidence Envelope entry TASK-074, совпадающей с
-independently recomputed current subject manifest. Commit и publication не
-авторизованы; private composition gate не wired в Control Service, DP-017
-recovery и Production Activation не активированы.
+[TASK-075](TASK-075-RUNTIME-READ-ONLY-RECOVERY-ASSESSMENT.md), `In Progress`,
+на ветке `feature/task-075-runtime-recovery-assessment` от clean synchronized
+`main@bfab084c1a9664181027650b092bf240e04af435`. Scope ограничен item 6
+ordered decomposition DP-023 §19: repository-private mutation-free assessment
+DP-017 для exact Runtime Instance. Independent Architecture Confirmation —
+`APPROVED — READY WITH ONE REQUIRED MINIMAL DP-015 READ-ONLY SNAPSHOT SEAM; NO
+NEW DP, NO SCOPE EXPANSION`, blocking findings 0. Required seam — complete
+detached per-Instance primitive/parent/phase snapshot в
+`runtimecommandidempotency` без ledger creation, permit exposure или mutation.
+Seam и private `internal/runtimerecoveryassessment` реализованы изолированно;
+assessment возвращает семь closed classifications и fail closed при stale,
+contradictory или unsupported evidence. Recovery claim/permit/barrier/release,
+reconciliation, Control Service wiring/reporting и Production Activation не
+активированы. Exact current checkpoint и role verdict определяются только
+newest valid Recovery Evidence Envelope entry TASK-075, совпадающей с
+independently recomputed current subject manifest.
+
+Предыдущая опубликованная product task —
+[TASK-074](TASK-074-RUNTIME-CONTAINMENT-COMPOSITION-GATE.md), `Completed —
+Coordinator Accepted`. Task commit
+`2d78d417784012e4e945e60f8d721246ea5bdcbf` опубликован через PR #79 и merged
+как `bfab084c1a9664181027650b092bf240e04af435`. Isolated private composition
+gate существует в `internal/runtimecontainmentcomposition`, но не wired в
+Control Service и не реализует DP-017 workflow.
 
 Последняя опубликованная product task —
 [TASK-073](TASK-073-RUNTIME-SHUTDOWN-EVIDENCE-COMPOSER.md), `Completed —
@@ -62,11 +70,11 @@ Coordinator Accepted (2026-09-25)` по newest valid matching Recovery Evidence
 Envelope. Windows-only DP-023 bootstrap реализован изолированно; task commit
 `046ddcfaa0a5f73e8821de71b578a0db4d2a3ecd` опубликован и merged в
 `main@8eebcbc065f0aeb1c88a3be1c76ba586dfd34d19`. DP-023 — `Approved /
-Implemented in isolation`, DP-022 — `Approved / Partial` только для
-завершённого isolated reader TASK-070, prerequisite provenance/read TASK-071 и
-published full-tuple composer TASK-073. Текущая TASK-074 активирует только
-следующий private composition-gate slice. Control Service wiring, recovery,
-reporting и Production Activation отсутствуют.
+Implemented in isolation`, DP-022 — `Approved / Partial` для опубликованных
+reader TASK-070, prerequisite provenance/read TASK-071, full-tuple composer
+TASK-073 и private composition gate TASK-074. TASK-075 активирует только
+read-only assessment item 6. Control Service wiring, recovery claim/barrier,
+reconciliation, reporting и Production Activation отсутствуют.
 
 Последняя завершённая documentation-only work —
 [TASK-068](TASK-068-RUNTIME-CONTAINMENT-IMPLEMENTATION-READINESS.md),
@@ -214,7 +222,8 @@ PROCESS-002, Scope Audit 31/0/0 и final Reviewer проходят. Task commit
 - [TASK-071 — Runtime Owner Shutdown Provenance and Exact Attempt Snapshot](TASK-071-RUNTIME-OWNER-SHUTDOWN-PROVENANCE.md) — Completed, Coordinator Accepted; integration commit `e1234a8447d75d1ffddf07dd953d444956b15ff1` published through PR #77 and merged as `0cec13d8e2b310545d5e2af40286158fda9820e9`; isolated DP-014 prerequisite only
 - [TASK-072 — Publisher Handoff Store Bootstrap and Recovery](TASK-072-PUBLISHER-HANDOFF-STORE-RECOVERY.md) — Completed, Coordinator Accepted; docs-only process repair commit `60ee9bec4dde3df08620f1a9d54b28da3f5b4c62` published through PR #76 and included in TASK-071 integration
 - [TASK-073 — Runtime Shutdown-Completion Evidence Composer](TASK-073-RUNTIME-SHUTDOWN-EVIDENCE-COMPOSER.md) — Completed, Coordinator Accepted; task commit `37ca6d6b5065aeb1a4831bc30aa54503ae06ff64` published through PR #78 and merged as `a84098284b0202f2fea9a61e089a74f564a05405`; isolated full-tuple composer only
-- [TASK-074 — Runtime Containment Composition, Admission, and Generation Provider Gate](TASK-074-RUNTIME-CONTAINMENT-COMPOSITION-GATE.md) — In Progress; independent Architecture Confirmation APPROVED with 0 blockers; isolated private implementation and focused proofs exist and passed independent verification; exact checkpoint/verdict resolves from the newest valid matching Recovery Evidence Envelope; no Control Service wiring, commit, or publication authorization
+- [TASK-074 — Runtime Containment Composition, Admission, and Generation Provider Gate](TASK-074-RUNTIME-CONTAINMENT-COMPOSITION-GATE.md) — Completed, Coordinator Accepted; task commit `2d78d417784012e4e945e60f8d721246ea5bdcbf` published through PR #79 and merged as `bfab084c1a9664181027650b092bf240e04af435`; isolated private composition gate only
+- [TASK-075 — Runtime Read-Only Recovery Assessment](TASK-075-RUNTIME-READ-ONLY-RECOVERY-ASSESSMENT.md) — In Progress; independent Architecture Confirmation Approved with one required minimal DP-015 read-only snapshot seam and no scope expansion; isolated seam and private assessment implemented; exact checkpoint/verdict resolves only from the newest valid matching Recovery Evidence Envelope; durable recovery authority and production wiring remain Not Activated
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

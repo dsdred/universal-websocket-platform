@@ -27,12 +27,10 @@ reader after the independently approved focused refinement of sections 12 and
 14–19. Completed and published TASK-071 adds only the isolated DP-014 Owner
 provenance/exact-attempt snapshot prerequisite. Completed and published
 TASK-073 adds the private full-tuple composer/use-once-handle slice in
-isolation. TASK-074 activates only the next private containment composition,
-admission, and generation-provider gate. Its exact current checkpoint and role
-verdict remain owned by the newest valid TASK-074 Recovery Evidence Envelope
-entry matching an independently recomputed current subject manifest; they are
-not duplicated here. An isolated candidate now exists in
-`internal/runtimecontainmentcomposition`, but no result is wired into Control
+isolation. TASK-074 completed and published the private containment
+composition/admission/provider gate through PR #79. TASK-075 implements only
+the downstream DP-017 read-only assessment slice, independently verified in
+isolation. No result is wired into Control
 Service. No scanner,
 supervisor, production wiring or composed runtime behavior exists, and Control
 Service cannot yet observe process termination through this boundary.
@@ -753,19 +751,22 @@ composer also leaves the status Partial and does not claim production
 activation.
 
 This document is an Approved design boundary, so DP-017 section 11 now has an
-authoritative containment boundary to consume; DP-017 itself stays
-Approved/Planned and unactivated. The status came from an explicit decision
+authoritative containment boundary to consume; DP-017 remains Approved/Planned
+overall while its isolated read-only assessment is implemented and durable
+recovery remains unactivated. The status came from an explicit decision
 through the project's design status process; Documentation, Tester, Reviewer, or
 Coordinator acceptance of a task does not raise this document's Design Status
 and never raises Implementation Status. The published isolated TASK-073
 composer does not activate recovery or production evidence consumption.
-TASK-074 implements only the next private containment
+TASK-074 implements and publishes only the private containment
 composition/admission/provider gate in isolation; no Control Service
-composition exists. DP-017
-recovery, DP-018 reporting, production integration, and Production Activation
-remain `Not Activated` and absent; downstream consumption of containment
-evidence is a later, separately approved boundary. No ARCH-004 section 19 gate
-is claimed or re-opened here.
+composition exists. TASK-075 implements only the repository-private DP-017
+read-only assessment slice, consuming exact full-tuple evidence through the
+existing composition boundary and failing closed to `Unknown`; it creates no
+evidence authority. DP-017 durable recovery claim/permit/barrier/release and
+reconciliation, DP-018 reporting, production integration, and Production
+Activation remain `Not Activated` and absent. No ARCH-004 section 19 gate is
+claimed or re-opened here.
 
 ## 26. Decision
 
