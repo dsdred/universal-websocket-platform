@@ -8,25 +8,32 @@
 
 ## Текущее состояние
 
-- Current task: **TASK-075 — Runtime Read-Only Recovery Assessment**,
-  `In Progress`, on `feature/task-075-runtime-recovery-assessment` from clean
-  synchronized `main@bfab084c1a9664181027650b092bf240e04af435`. It is limited
-  to DP-023 section 19 item 6: one repository-private, mutation-free DP-017
-  assessment of an exact Runtime Instance. Independent Architecture
-  Confirmation is `APPROVED — READY WITH ONE REQUIRED MINIMAL DP-015 READ-ONLY
-  SNAPSHOT SEAM; NO NEW DP, NO SCOPE EXPANSION`, blocking findings 0. The
-  required seam is now implemented as a complete detached per-Instance
-  primitive/parent/phase snapshot owned by `runtimecommandidempotency`; it does
-  not create a ledger, expose a permit, or mutate command truth. The private
-  `internal/runtimerecoveryassessment` package implements the read-only stable
-  DP-014/DP-015/evidence assessment and the closed classes `Unknown`, `Clean`,
-  `CommandOnly`, `UnboundAttempt`, `ExecutionTerminated`, `ResourceAbsence`,
-  and `ShutdownCompleted`. Recovery claim/permit/barrier/release,
-  reconciliation, Control Service wiring/reporting, and Production Activation
-  remain `Not Activated`. The exact current checkpoint and role verdict resolve
-  only from the newest valid TASK-075 Recovery Evidence Envelope entry matching
-  an independently recomputed current subject manifest.
-- Latest published implementation (2026-10-03): **TASK-074 — Runtime
+- Current task: **TASK-076 — Local Configuration Studio**, `In Progress`, on
+  `feature/task-076-local-configuration-studio` from clean synchronized
+  `main@5eb54efea3f3df5c7967b2c1e2d0894c6289e50a`. The working tree contains a
+  private Go-embedded local/dev Studio and minimal Control Service wiring for
+  one existing-API-only flow: create Workspace, Configuration and Draft, update
+  Listener host/port, publish, then show authoritative `Published`, version
+  number and preliminary URL. Architecture verdict is `APPROVED —
+  IMPLEMENTATION READY WITHIN THE EXACT TASK-076 BOUNDARY; NO NEW ADR, DP,
+  DOMAIN API, OR RUNTIME WORK REQUIRED`, blocking 0/non-blocking 3. Independent
+  Tester verdict is `PASS WITH LIMITATION`, findings 0/0/0: focused/regression/
+  full tests, vet, JavaScript syntax, format/diff and URL proofs pass; Tester
+  independently observed the initial real-browser UI/notices and reviewed the
+  Coordinator-produced full browser success/failure evidence. PROCESS-002 is
+  the current stage and Scope Audit is next. Coordinator Acceptance, commit,
+  publication and release have not occurred. The Studio is not a production
+  Admin UI, Runtime manager, persistence layer, reachability proof, or claim
+  that `Published` means `Running`.
+- Latest published implementation (2026-10-03): **TASK-075 — Runtime Read-Only
+  Recovery Assessment**, `Completed — Coordinator Accepted`. Task commit
+  `f7b80ac976a144aa4918bd4ed74140e48fd31310` was published through PR #80 and
+  merged as `5eb54efea3f3df5c7967b2c1e2d0894c6289e50a`. The complete detached
+  DP-015 assessment snapshot seam and private mutation-free DP-017 assessment
+  are implemented in isolation. Durable recovery claim/permit/barrier/release,
+  reconciliation, Control Service Runtime wiring/reporting, and Production
+  Activation remain `Not Activated`.
+- Previous published implementation (2026-10-03): **TASK-074 — Runtime
   Containment Composition, Admission, and Generation Provider Gate**,
   `Completed — Coordinator Accepted`. Task commit
   `2d78d417784012e4e945e60f8d721246ea5bdcbf` was published through PR #79 and

@@ -24,6 +24,11 @@ The repository currently contains an Alpha foundation rather than a production-r
 - ConfigurationVersion supports create, publish, and archive lifecycle operations.
 - Listener, TLS, timeout, and Authentication metadata are represented in the Configuration DSL.
 - Authentication metadata includes API Key, JWT, and Basic settings, with validation separated into a dedicated component.
+- A built-in local-development Configuration Studio uses only those existing
+  APIs for one create/configure/publish flow. It is not the production Admin UI:
+  it remains in-memory and unauthenticated, does not manage Runtime, and labels
+  `Published` and its WebSocket URL preview without claiming Running state or
+  reachability.
 
 ### Snapshot
 
@@ -495,13 +500,15 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   TASK-073 completed and published the private full-tuple
   composer/use-once-handle slice through PR #78. TASK-074 completed and
   published the private containment composition/admission/provider gate through
-  PR #79. TASK-075 implements only the next DP-017 read-only assessment slice
-  and its required minimal mutation-free DP-015 per-Instance command snapshot
-  seam in isolation. Independent Tester and pre-documentation Reviewer report
-  zero blockers; the race detector is unavailable in the current Windows
-  toolchain. No result is wired into Control Service. Recovery claim/permit/
-  barrier/release, reconciliation, reporting, and Production Activation remain
-  absent.
+  PR #79. TASK-075 implemented the next DP-017 read-only assessment slice and
+  its required minimal mutation-free DP-015 per-Instance command snapshot seam
+  in isolation, and was published through PR #80. No result is wired into
+  Control Service. Recovery claim/permit/barrier/release, reconciliation,
+  reporting, and Production Activation remain absent. TASK-076 implements a
+  separately prioritized bounded local/dev Configuration Studio over existing
+  configuration APIs only. It does not change the DP-017 queue or promote the
+  later production Admin UI roadmap item; Coordinator Acceptance and
+  publication are still pending.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Message Persistence, Delivery, and Plugin contracts still require focused design.

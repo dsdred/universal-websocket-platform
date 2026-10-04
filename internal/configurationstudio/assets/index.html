@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Local Configuration Studio</title>
+  <link rel="stylesheet" href="/configuration-studio/studio.css">
+  <script src="/configuration-studio/studio.js" defer></script>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <p class="eyebrow">Universal WebSocket Platform · local/dev</p>
+      <h1>Local Configuration Studio</h1>
+      <p class="intro">Create and publish one listener configuration using the Control Service API. Use this studio only in a trusted local development environment.</p>
+    </header>
+
+    <aside class="notices" aria-label="Important limitations">
+      <h2>Before you continue</h2>
+      <ul>
+        <li><strong>Published does not mean Running.</strong> This studio does not start or manage a Runtime.</li>
+        <li><strong>Control Service data is stored only in memory</strong> and is lost after the Control Service restarts.</li>
+        <li><strong>Any WebSocket URL shown here is preliminary.</strong> It is not a reachability or Runtime-status check.</li>
+      </ul>
+    </aside>
+
+    <section class="panel" aria-labelledby="configuration-heading">
+      <h2 id="configuration-heading">Create a configuration</h2>
+      <form id="configuration-form" novalidate>
+        <label for="workspace-name">Workspace name</label>
+        <input id="workspace-name" name="workspaceName" type="text" maxlength="120" required>
+
+        <label for="configuration-name">Configuration name</label>
+        <input id="configuration-name" name="configurationName" type="text" maxlength="120" required>
+
+        <div class="listener-fields">
+          <div>
+            <label for="listener-host">Listener host</label>
+            <input id="listener-host" name="listenerHost" type="text" value="127.0.0.1" maxlength="255" required>
+          </div>
+          <div>
+            <label for="listener-port">Listener port</label>
+            <input id="listener-port" name="listenerPort" type="number" value="8080" min="1" max="65535" step="1" required>
+          </div>
+        </div>
+
+        <button id="submit-button" type="submit">Create and publish</button>
+      </form>
+
+      <p id="flow-status" class="status" role="status" aria-live="polite">Ready.</p>
+    </section>
+
+    <section id="result" class="panel result" aria-labelledby="result-heading" hidden>
+      <h2 id="result-heading">Published configuration</h2>
+      <dl>
+        <div>
+          <dt>State</dt>
+          <dd id="result-state"></dd>
+        </div>
+        <div>
+          <dt>Version</dt>
+          <dd id="result-version"></dd>
+        </div>
+        <div>
+          <dt>Preliminary WebSocket URL</dt>
+          <dd id="result-url" class="url"></dd>
+        </div>
+      </dl>
+      <p class="result-warning">This preliminary URL is not a live endpoint check. Published does not mean Running.</p>
+    </section>
+  </main>
+</body>
+</html>

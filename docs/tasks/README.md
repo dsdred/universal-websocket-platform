@@ -4,22 +4,35 @@
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
 Текущая implementation task —
-[TASK-075](TASK-075-RUNTIME-READ-ONLY-RECOVERY-ASSESSMENT.md), `In Progress`,
-на ветке `feature/task-075-runtime-recovery-assessment` от clean synchronized
-`main@bfab084c1a9664181027650b092bf240e04af435`. Scope ограничен item 6
-ordered decomposition DP-023 §19: repository-private mutation-free assessment
-DP-017 для exact Runtime Instance. Independent Architecture Confirmation —
-`APPROVED — READY WITH ONE REQUIRED MINIMAL DP-015 READ-ONLY SNAPSHOT SEAM; NO
-NEW DP, NO SCOPE EXPANSION`, blocking findings 0. Required seam — complete
-detached per-Instance primitive/parent/phase snapshot в
-`runtimecommandidempotency` без ledger creation, permit exposure или mutation.
-Seam и private `internal/runtimerecoveryassessment` реализованы изолированно;
-assessment возвращает семь closed classifications и fail closed при stale,
-contradictory или unsupported evidence. Recovery claim/permit/barrier/release,
-reconciliation, Control Service wiring/reporting и Production Activation не
-активированы. Exact current checkpoint и role verdict определяются только
-newest valid Recovery Evidence Envelope entry TASK-075, совпадающей с
-independently recomputed current subject manifest.
+[TASK-076](TASK-076-LOCAL-CONFIGURATION-STUDIO.md), `In Progress`, на ветке
+`feature/task-076-local-configuration-studio` от clean synchronized
+`main@5eb54efea3f3df5c7967b2c1e2d0894c6289e50a`. Working tree реализует
+минимальный встроенный local/dev Configuration Studio: один guided flow через
+существующие HTTP API создаёт Workspace, Configuration и Draft, меняет Listener
+host/port, публикует Draft и показывает authoritative `Published`, номер версии
+и предварительный WebSocket URL. UI использует только Go `embed` и plain
+HTML/CSS/JavaScript; явно сообщает `Published != Running`, потерю in-memory
+данных после restart и предварительный характер URL. Independent Architecture
+Confirmation — `APPROVED — IMPLEMENTATION READY WITHIN THE EXACT TASK-076
+BOUNDARY; NO NEW ADR, DP, DOMAIN API, OR RUNTIME WORK REQUIRED`, blocking 0,
+non-blocking 3. Independent Tester — `PASS WITH LIMITATION`, findings 0/0/0;
+полный browser submit evidence создан Coordinator и независимо reviewed, а
+Tester отдельно подтвердил real-browser initial UI/notices и executable/static
+proofs. Documentation Synchronization выполняется; Scope Audit является
+следующим stage. Coordinator Acceptance, commit и publication не выполнены.
+Studio не является production Admin UI, не запускает Runtime, не доказывает
+WebSocket reachability и не добавляет persistence, authentication, recovery или
+Runtime management.
+
+Последняя опубликованная product task —
+[TASK-075](TASK-075-RUNTIME-READ-ONLY-RECOVERY-ASSESSMENT.md), `Completed —
+Coordinator Accepted`. Task commit
+`f7b80ac976a144aa4918bd4ed74140e48fd31310` опубликован через PR #80 и merged
+как `5eb54efea3f3df5c7967b2c1e2d0894c6289e50a`. Private mutation-free
+assessment DP-017 и required DP-015 detached snapshot seam реализованы
+изолированно. Durable recovery claim/permit/barrier/release, reconciliation,
+Control Service Runtime wiring/reporting и Production Activation остаются `Not
+Activated`.
 
 Предыдущая опубликованная product task —
 [TASK-074](TASK-074-RUNTIME-CONTAINMENT-COMPOSITION-GATE.md), `Completed —
@@ -223,7 +236,8 @@ PROCESS-002, Scope Audit 31/0/0 и final Reviewer проходят. Task commit
 - [TASK-072 — Publisher Handoff Store Bootstrap and Recovery](TASK-072-PUBLISHER-HANDOFF-STORE-RECOVERY.md) — Completed, Coordinator Accepted; docs-only process repair commit `60ee9bec4dde3df08620f1a9d54b28da3f5b4c62` published through PR #76 and included in TASK-071 integration
 - [TASK-073 — Runtime Shutdown-Completion Evidence Composer](TASK-073-RUNTIME-SHUTDOWN-EVIDENCE-COMPOSER.md) — Completed, Coordinator Accepted; task commit `37ca6d6b5065aeb1a4831bc30aa54503ae06ff64` published through PR #78 and merged as `a84098284b0202f2fea9a61e089a74f564a05405`; isolated full-tuple composer only
 - [TASK-074 — Runtime Containment Composition, Admission, and Generation Provider Gate](TASK-074-RUNTIME-CONTAINMENT-COMPOSITION-GATE.md) — Completed, Coordinator Accepted; task commit `2d78d417784012e4e945e60f8d721246ea5bdcbf` published through PR #79 and merged as `bfab084c1a9664181027650b092bf240e04af435`; isolated private composition gate only
-- [TASK-075 — Runtime Read-Only Recovery Assessment](TASK-075-RUNTIME-READ-ONLY-RECOVERY-ASSESSMENT.md) — In Progress; independent Architecture Confirmation Approved with one required minimal DP-015 read-only snapshot seam and no scope expansion; isolated seam and private assessment implemented; exact checkpoint/verdict resolves only from the newest valid matching Recovery Evidence Envelope; durable recovery authority and production wiring remain Not Activated
+- [TASK-075 — Runtime Read-Only Recovery Assessment](TASK-075-RUNTIME-READ-ONLY-RECOVERY-ASSESSMENT.md) — Completed, Coordinator Accepted; task commit `f7b80ac976a144aa4918bd4ed74140e48fd31310` published through PR #80 and merged as `5eb54efea3f3df5c7967b2c1e2d0894c6289e50a`; isolated read-only assessment only; durable recovery authority and production wiring remain Not Activated
+- [TASK-076 — Local Configuration Studio](TASK-076-LOCAL-CONFIGURATION-STUDIO.md) — In Progress; implementation and independent Verification complete; PROCESS-002 Documentation Synchronization in progress; embedded local/dev UI over existing APIs only; Coordinator Acceptance, commit and publication not reached
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

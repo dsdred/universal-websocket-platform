@@ -12,6 +12,15 @@ Service, in-memory доменные API и собранную в production sing
 vertical с Authentication до Upgrade, детерминированной маршрутизацией,
 транзакционной передачей Session и Manager-aware shutdown.
 
+Текущий репозиторий также содержит встроенный **Local Configuration Studio**
+в корне Control Service. Это UI только для trusted local development и одного
+сценария поверх существующих API: создать Workspace, Configuration и Draft,
+задать Listener host/port, опубликовать и увидеть возвращённые state/version и
+предварительный WebSocket URL. `Published` не означает `Running`; данные
+остаются in-memory и теряются после restart; URL не является проверкой
+reachability. Studio не является production Admin UI и не запускает Runtime и
+не управляет им.
+
 Configuration Loader, Snapshot Builder, Runtime Bootstrap и Launcher,
 Lifecycle Owner, management routing, operational identity, command
 idempotency и orchestration prerequisites также существуют изолированно. Они
