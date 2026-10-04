@@ -3,13 +3,20 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая bounded process/tooling task —
-[TASK-077](TASK-077-TRUSTED-PUBLISHER-ROUTE.md), verification-stable `In Progress`,
-на `docs/task-077-trusted-publisher-route` от
-`main@e9a87b5a35c880ac71444be9960876d3fbd02fbc`. Qualified trusted initial
-route, durable native owner linkage и read-only capability preflight сохраняют
-отдельные gates/P0–P10/recovery. Actual gates/closure resolve-ятся только newest
-valid matching TASK-077 envelope; no product/runtime task activated.
+Текущая bounded Design-only / Readiness task —
+[TASK-078](TASK-078-RECOVERY-CLAIM-READINESS.md), verification-stable `In Progress`,
+branch `docs/task-078-recovery-claim-readiness`, baseline
+`5e40742c74860c7446941cffbd8747309b3b1053`. Actual gates/closure resolve-ятся
+только из newest valid matching TASK-078 envelope. Item 7 implementation не
+готова: joint atomic ordering, previous-authority-loss provenance, durable
+claim/readback/resume и claim-aware assessment требуют отдельного bounded
+implementation-boundary decision; candidate `Not Activated`.
+
+Последний опубликованный process repair —
+[TASK-077](TASK-077-TRUSTED-PUBLISHER-ROUTE.md), Coordinator Accepted subject
+`bb2bd18df470021a8dc5bd6751a292c0d00c2e1c`, commit
+`c70c398b2a7b5c85765f53d663088d117ca1e21e`, PR #82 merged как
+`5e40742c74860c7446941cffbd8747309b3b1053`; product capability unchanged.
 
 Последняя опубликованная product task —
 [TASK-076](TASK-076-LOCAL-CONFIGURATION-STUDIO.md), Coordinator Accepted source
@@ -232,7 +239,8 @@ PROCESS-002, Scope Audit 31/0/0 и final Reviewer проходят. Task commit
 - [TASK-073 — Runtime Shutdown-Completion Evidence Composer](TASK-073-RUNTIME-SHUTDOWN-EVIDENCE-COMPOSER.md) — Completed, Coordinator Accepted; task commit `37ca6d6b5065aeb1a4831bc30aa54503ae06ff64` published through PR #78 and merged as `a84098284b0202f2fea9a61e089a74f564a05405`; isolated full-tuple composer only
 - [TASK-074 — Runtime Containment Composition, Admission, and Generation Provider Gate](TASK-074-RUNTIME-CONTAINMENT-COMPOSITION-GATE.md) — Completed, Coordinator Accepted; task commit `2d78d417784012e4e945e60f8d721246ea5bdcbf` published through PR #79 and merged as `bfab084c1a9664181027650b092bf240e04af435`; isolated private composition gate only
 - [TASK-075 — Runtime Read-Only Recovery Assessment](TASK-075-RUNTIME-READ-ONLY-RECOVERY-ASSESSMENT.md) — Completed, Coordinator Accepted; task commit `f7b80ac976a144aa4918bd4ed74140e48fd31310` published through PR #80 and merged as `5eb54efea3f3df5c7967b2c1e2d0894c6289e50a`; isolated read-only assessment only; durable recovery authority and production wiring remain Not Activated
-- [TASK-077 — Trusted Publisher Initial Route and Capability Preflight](TASK-077-TRUSTED-PUBLISHER-ROUTE.md) — verification-stable In Progress; latest valid matching envelope resolves gates/closure; one publication governance/tooling repair, no product/runtime work
+- [TASK-077 — Trusted Publisher Initial Route and Capability Preflight](TASK-077-TRUSTED-PUBLISHER-ROUTE.md) — Coordinator Accepted; commit c70c398 published through PR #82 as merge 5e40742; product capability unchanged
+- [TASK-078 — Runtime Recovery Claim and Admission Barrier Readiness](TASK-078-RECOVERY-CLAIM-READINESS.md) — verification-stable In Progress; latest matching envelope resolves gates/closure; design-only assessment, no implementation activation
 - [TASK-076 — Local Configuration Studio](TASK-076-LOCAL-CONFIGURATION-STUDIO.md) — Coordinator Accepted source; committed as b8c2b86 and merged through PR #81 as e9a87b5; existing-API local/dev UI, no Runtime/DP-017 change
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с

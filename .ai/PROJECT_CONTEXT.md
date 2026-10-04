@@ -8,15 +8,18 @@
 
 ## Текущее состояние
 
-- Current task: **TASK-077 — Trusted Publisher Initial Route and Capability
-  Preflight**, verification-stable `In Progress`, branch
-  `docs/task-077-trusted-publisher-route`, baseline
-  `e9a87b5a35c880ac71444be9960876d3fbd02fbc`. This is one bounded publication
-  governance/tooling repair: qualified trusted route before P0/ownership,
-  durable native InitialDispatch linkage, read-only capability collector and
-  preserved P0–P10/recovery. Actual gates and closure resolve only from the
-  newest valid matching TASK-077 Recovery Evidence Envelope. Runtime/product
-  capability and DP-017 are unchanged; no next product task is activated.
+- Current task: **TASK-078 — Runtime Recovery Claim and Admission Barrier
+  Readiness**, verification-stable `In Progress`, branch
+  `docs/task-078-recovery-claim-readiness`, baseline
+  `5e40742c74860c7446941cffbd8747309b3b1053`. Actual gates and closure resolve
+  only from the newest valid matching TASK-078 Recovery Evidence Envelope.
+  This bounded design-only assessment records item 7 implementation prerequisites;
+  no recovery claim/barrier implementation or new normative protocol is activated.
+- Latest published process repair: **TASK-077**, Coordinator Accepted subject
+  `bb2bd18df470021a8dc5bd6751a292c0d00c2e1c`, commit
+  `c70c398b2a7b5c85765f53d663088d117ca1e21e`, PR #82 merged as
+  `5e40742c74860c7446941cffbd8747309b3b1053`. Trusted initial Publisher routing
+  and read-only preflight tooling are published; product capability unchanged.
 - Standing Publisher route discovery only: provider `Codex`, original native
   thread/history `01a1084d-8edb-7852-a00d-4fd6da53af7a`, declaration item
   `msg_06abeaa72a076103016ac2a92f3e8487d29ea550f6825e0e61`, turn
@@ -456,9 +459,11 @@
   external / 0 Deferred; no separate prerequisite; DP-016 remains Approved /
   Planned; Tester PASS 0/0/0; repeat Reviewer APPROVED 0/0; Scope Audit
   16/0/0; PROCESS-002 Synchronized; later superseded by the TASK-026 recheck**
-- Текущая рекомендация: **не выбрана и не активирована. DP-017 recovery,
-  DP-018 reporting и production integration требуют отдельного будущего clean
-  repository-first intake; publication TASK-026 не активирует их автоматически**
+- Текущая рекомендация: **после TASK-078 — bounded recovery claim/admission
+  implementation-boundary decision для joint atomic ordering, authentic
+  authority-loss provenance, durability/readback/resume и claim observation.
+  Not Activated; отдельный clean intake. DP-017 reconciliation/release,
+  DP-018 reporting и production integration остаются более поздними slices.**
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы
   изолированно; Repeat Independent Review Approved, blocking/non-blocking 0;

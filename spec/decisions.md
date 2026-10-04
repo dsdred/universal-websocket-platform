@@ -108,6 +108,19 @@
 
 ## Ожидающие отдельного решения
 
+TASK-078 — bounded Design-only / Readiness для DP-023 §19 item 7. Independent
+Architect: readiness assessment Ready, implementation Not Ready. Отсутствуют
+joint atomic aggregate/command/claim ordering, authentic proof потери прежней
+lifecycle/command/recovery authority, durable claim/readback/resume contract и
+claim-aware assessment seam. NewBoundary expiry не прекращает уже выполняемый
+Owner/callback; containment ledger не является lifecycle/command/recovery store.
+Следующий candidate — bounded implementation-boundary decision этих prerequisites,
+`Not Activated`, с отдельным clean intake. Approved DP-014/015/017/022/023 и
+реализованные capabilities не изменены; конкретные private mechanics допустимы
+только после Architect confirmation, изменение Approved contract не выводится
+автоматически из отсутствия кода. TASK-078 actual gates/closure resolve-ятся из
+newest valid matching Recovery Evidence Envelope task record.
+
 Historical TASK-069 blocker `ARCH-B-001` доказал необходимость independently
 delivered immutable trusted provisioning descriptor, который связывает
 expected canonical root, physical root identity и storage-authority identity и
