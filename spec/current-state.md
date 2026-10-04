@@ -1,26 +1,25 @@
 # Текущее состояние
 
-**Текущая задача:** TASK-076 — Local Configuration Studio, `In Progress`, на
-ветке `feature/task-076-local-configuration-studio` от clean synchronized
-`main@5eb54efea3f3df5c7967b2c1e2d0894c6289e50a`. В working tree реализован
-встроенный local/dev UI Control Service для одного guided flow через
-существующие HTTP API: создать Workspace, Configuration и Draft, изменить
-Listener host/port, опубликовать Draft и показать authoritative `Published`,
-номер версии и предварительный WebSocket URL. Private package
-`internal/configurationstudio` владеет только Go-embedded HTML/CSS/JavaScript и
-точными presentation routes; composition root регистрирует их без изменения
-domain API. Architecture Confirmation — `APPROVED — IMPLEMENTATION READY WITHIN
-THE EXACT TASK-076 BOUNDARY; NO NEW ADR, DP, DOMAIN API, OR RUNTIME WORK
-REQUIRED`, blocking 0/non-blocking 3. Independent Tester — `PASS WITH
-LIMITATION`, findings 0/0/0; full browser submit evidence создан Coordinator и
-независимо reviewed, а Tester отдельно подтвердил initial real-browser UI и
-notices. PROCESS-002 выполняется, Scope Audit является следующим stage;
-Coordinator Acceptance, commit и publication отсутствуют. Studio предназначен
-только для trusted local/dev, хранит данные по-прежнему только in-memory, не
-запускает Runtime, не доказывает reachability и явно сообщает, что `Published`
-не означает `Running`, а URL предварительный.
+**Текущая задача:** TASK-077 — Trusted Publisher Initial Route and Capability
+Preflight, verification-stable `In Progress`, на
+`docs/task-077-trusted-publisher-route` от
+`main@e9a87b5a35c880ac71444be9960876d3fbd02fbc`. Один bounded publication
+process/tooling repair задаёт qualified trusted route до P0/ownership, durable
+native InitialDispatch linkage и read-only capability collector. Actual gates
+и closure определяет только newest valid matching Recovery Evidence Envelope
+TASK-077. P0–P10, отдельные Commit/Publication gates и recovery handoff
+сохраняются; runtime/product capability, DP-017 и product readiness не меняются.
+Новая runtime/product task не активирована.
 
-**Последняя опубликованная implementation task (2026-10-03):** TASK-075 —
+**Последняя опубликованная implementation task:** TASK-076 — Local
+Configuration Studio. Accepted source manifest
+`c1dd8f72c67588ca151b5dc32374ccd7ec0bfadf`, task commit
+`b8c2b8672343aefccfe03000144ebdd4df93f8ea`, PR #81 merged как
+`e9a87b5a35c880ac71444be9960876d3fbd02fbc`. Встроенный local/dev Studio
+использует существующие Configuration HTTP API. Published не означает Running;
+данные in-memory, URL предварительный. Runtime/DP-017 не изменены.
+
+**Предыдущая опубликованная implementation task (2026-10-03):** TASK-075 —
 Runtime Read-Only Recovery Assessment, `Completed — Coordinator Accepted`.
 Task commit `f7b80ac976a144aa4918bd4ed74140e48fd31310` опубликован через PR #80 и
 merged как `5eb54efea3f3df5c7967b2c1e2d0894c6289e50a`. Complete detached
@@ -39,7 +38,7 @@ Runtime Containment Composition, Admission, and Generation Provider Gate,
 authority с admission/provider/evidence paths, но не wired в Control Service и
 не реализует workflow DP-017.
 
-**Последняя опубликованная implementation task (2026-10-01):** TASK-073 —
+**Предыдущая опубликованная implementation task (2026-10-01):** TASK-073 —
 Runtime Shutdown-Completion Evidence Composer, `Completed — Coordinator
 Accepted`. Task commit `37ca6d6b5065aeb1a4831bc30aa54503ae06ff64`
 опубликован через PR #78 и merged как

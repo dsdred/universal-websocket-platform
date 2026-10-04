@@ -123,6 +123,26 @@ Auth/transport/repository failure внутри initial P0 оставляет P0 
 
 ### Publisher Execution Context
 
+До initial P0 и ownership Publisher resolve-ит qualified standing trusted route
+по PROCESS-001. Default sandbox остаётся orchestrator/observer. Actual trusted
+principal/SID и native actor/thread/history/publication-run linkage проверяются;
+durable independently read-back `InitialDispatch` назначает initial owner.
+Standing `RouteDeclaration`/qualification хранится в original qualified native
+transcript, не содержит credentials или publication permission; discovery
+locator не является workstation configuration/authority. Missing/refused/
+wrong-identity route — STOP, без sandbox fallback. В Codex Windows используется
+supported `exec_command / require_escalated`, subject to tool approval, не
+arbitrary impersonation или permanent escalation permission.
+
+Каждая invocation P0–P10 сохраняет same native owner/run/route и проверяет actual
+identity внутри неё до действия. SID alone, другая thread/fork/subagent/session
+не наследуют ownership. Interruption требует reconstruct original native chain;
+context change уже owned transaction использует existing recovery handoff.
+Read-only collector Discovery/P0Capability не проверяет полный native Target/
+authority scope, не назначает owner и не является full P0. P0 проверяет также
+repository permissions/archive/disabled и applicable merge/protection/rules;
+не заявляет гарантированность future writes или tool approval.
+
 Publisher выполняет side effects только из exact execution context, который
 до них успешно прошёл оба обязательных read-only capability probe: decisive
 GitHub API user/repository access и Git remote authentication/read для exact

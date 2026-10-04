@@ -35,6 +35,11 @@ Coordinator обязан:
 - закрыть задачу после успешного завершения всех этапов;
 - после отдельно разрешённого commit сформировать immutable Publisher handoff
   и отличать publication readiness от terminal publication completion;
+- до первого P0/owner resolve-ить qualified standing native trusted route,
+  проверить actual execution principal/SID и обеспечить durable InitialDispatch
+  с native gate/Target/actor/thread/history/publication-run/tool linkage;
+  development sandbox только orchestrates/observes, без initial ownership или
+  publication fallback; route/collector не grants permission;
 - сертифицировать `Blocked Closure Certified` только по полному evidence gate
   PROCESS-001 и не выдавать его за Acceptance или Completion;
 - синхронизировать project state и рекомендовать следующую Ready work, не
@@ -297,7 +302,14 @@ Project-state synchronization следует stable-vs-ephemeral правилу
 PROCESS-002: transient Publisher blockers не записываются в immutable task
 commit.
 
-Если execution identity не обладает GitHub capability, Coordinator не требует
+Initial dispatch использует Trusted Initial Publisher Route and Dispatch
+PROCESS-001: standing declaration хранится в qualified original native
+transcript, registry содержит только discovery locator, qualification свежая
+при каждом gate. Independent readback InitialDispatch — initial owner point;
+pending/ambiguous event не запускает mutations. Same owner/run/route и actual
+identity проверяются каждой trusted invocation. Tool refusal не обходится.
+
+Если уже owning execution identity не обладает GitHub capability, Coordinator не требует
 login/token transfer внутри sandbox и не считает наличие user profile
 либо `gh auth status` доказательством decisive API capability. Он допускает
 только trusted-context handoff PROCESS-001,

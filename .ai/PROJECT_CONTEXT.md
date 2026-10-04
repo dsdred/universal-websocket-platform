@@ -8,24 +8,29 @@
 
 ## Текущее состояние
 
-- Current task: **TASK-076 — Local Configuration Studio**, `In Progress`, on
-  `feature/task-076-local-configuration-studio` from clean synchronized
-  `main@5eb54efea3f3df5c7967b2c1e2d0894c6289e50a`. The working tree contains a
-  private Go-embedded local/dev Studio and minimal Control Service wiring for
-  one existing-API-only flow: create Workspace, Configuration and Draft, update
-  Listener host/port, publish, then show authoritative `Published`, version
-  number and preliminary URL. Architecture verdict is `APPROVED —
-  IMPLEMENTATION READY WITHIN THE EXACT TASK-076 BOUNDARY; NO NEW ADR, DP,
-  DOMAIN API, OR RUNTIME WORK REQUIRED`, blocking 0/non-blocking 3. Independent
-  Tester verdict is `PASS WITH LIMITATION`, findings 0/0/0: focused/regression/
-  full tests, vet, JavaScript syntax, format/diff and URL proofs pass; Tester
-  independently observed the initial real-browser UI/notices and reviewed the
-  Coordinator-produced full browser success/failure evidence. PROCESS-002 is
-  the current stage and Scope Audit is next. Coordinator Acceptance, commit,
-  publication and release have not occurred. The Studio is not a production
-  Admin UI, Runtime manager, persistence layer, reachability proof, or claim
-  that `Published` means `Running`.
-- Latest published implementation (2026-10-03): **TASK-075 — Runtime Read-Only
+- Current task: **TASK-077 — Trusted Publisher Initial Route and Capability
+  Preflight**, verification-stable `In Progress`, branch
+  `docs/task-077-trusted-publisher-route`, baseline
+  `e9a87b5a35c880ac71444be9960876d3fbd02fbc`. This is one bounded publication
+  governance/tooling repair: qualified trusted route before P0/ownership,
+  durable native InitialDispatch linkage, read-only capability collector and
+  preserved P0–P10/recovery. Actual gates and closure resolve only from the
+  newest valid matching TASK-077 Recovery Evidence Envelope. Runtime/product
+  capability and DP-017 are unchanged; no next product task is activated.
+- Standing Publisher route discovery only: provider `Codex`, original native
+  thread/history `01a1084d-8edb-7852-a00d-4fd6da53af7a`, declaration item
+  `msg_06abeaa72a076103016ac2a92f3e8487d29ea550f6825e0e61`, turn
+  `01a1085b-30a4-7fd0-a811-c3808a93cc84`. Read actual declaration and complete
+  qualified history under PROCESS-001; this locator contains no workstation
+  configuration, permission, owner or reusable capability verdict.
+- Latest published implementation: **TASK-076 — Local Configuration Studio**,
+  Coordinator Accepted source manifest
+  `c1dd8f72c67588ca151b5dc32374ccd7ec0bfadf`, task commit
+  `b8c2b8672343aefccfe03000144ebdd4df93f8ea`, merged through PR #81 as
+  `e9a87b5a35c880ac71444be9960876d3fbd02fbc`. Local/dev embedded Studio uses
+  existing Configuration APIs and keeps Published != Running, in-memory data
+  and preliminary URL limitations. No Runtime/DP-017 work was added.
+- Previous published implementation (2026-10-03): **TASK-075 — Runtime Read-Only
   Recovery Assessment**, `Completed — Coordinator Accepted`. Task commit
   `f7b80ac976a144aa4918bd4ed74140e48fd31310` was published through PR #80 and
   merged as `5eb54efea3f3df5c7967b2c1e2d0894c6289e50a`. The complete detached
@@ -40,7 +45,7 @@
   merged as `bfab084c1a9664181027650b092bf240e04af435`. The isolated private
   `internal/runtimecontainmentcomposition` gate exists, but is not wired into
   Control Service and implements no DP-017 workflow.
-- Latest published implementation (2026-10-01): **TASK-073 — Runtime
+- Previous published implementation (2026-10-01): **TASK-073 — Runtime
   Shutdown-Completion Evidence Composer**, `Completed — Coordinator Accepted`.
   Task commit `37ca6d6b5065aeb1a4831bc30aa54503ae06ff64` was published through
   PR #78 and merged as `a84098284b0202f2fea9a61e089a74f564a05405`.

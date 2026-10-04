@@ -380,3 +380,31 @@ Fixtures — native record/context facts, а не fabricated operational events.
 | S-062 | Reused/stale UUID, conflicting native tail/actors или newer event после старого read | Complete current history/ID inventory проверяется; reused/closed/accepted ID не route/accept повторно. Stale prefix не доказывает current state; conflicting owner/tail → Unknown/STOP; невозможно выбрать удобный owner или заменить record |
 | S-063 | User authorization unchanged, но Target branch/head/base/range/class/repository/task/scope изменён | Existing Target mismatch → InvalidatedByTargetChange/NoneTerminal и Closed(TargetChanged); bootstrap/readback не восстанавливают прежнюю authorization, old permission не переносится |
 | S-064 | Ownership Unknown после потерянного/неоднозначного record | Complete original gate/P0/current native chain и весь known inventory reconstruct-ят только proven state: Unissued recorded source, Released InTransitNone, Accepted recorded destination, valid closed/P10 exact return/terminal disposition. Missing pointer/unknown write/partial history остаются Unknown/STOP; generic repair Approval не является live qualification |
+
+## Trusted Initial Dispatch — S-065–S-082
+
+Trace: PROCESS-001 Trusted Initial Publisher Route and Dispatch; Publisher
+Initial Trusted Route/P0. Эти decision proofs не issues ownership или permission.
+Executable collector regression — `scripts/tests/publisher-capability-preflight.tests.ps1`;
+native linkage проверяется independently из qualified actual records.
+
+| ID | Given / When | Required disposition |
+|---|---|---|
+| S-065 | Qualified confirmed standing route, new exact gate/committed Target, trusted identity | Dispatch admission before P0/owner; durable independently read-back InitialDispatch establishes only trusted initial owner; fresh P0 then full P1–P10 |
+| S-066 | Missing/unqualified/inaccessible/conflicting route | No initial owner/P0/mutation; STOP; no convenient old descriptor or sandbox fallback |
+| S-067 | Runner rejected/unavailable or actual principal/SID mismatches | Identity rejection before external collector probes/owner; no credential/config/approval bypass |
+| S-068 | Same SID but different native actor/thread/fork/subagent/session/run | Linkage fails; cannot inherit or create second owner |
+| S-069 | API succeeds/Git fails or vice versa | Full P0 incomplete, P1 not attempted; one probe cannot compensate |
+| S-070 | Dirty Discovery vs dirty P0Capability/full P0 | Discovery reports capability facts and dirty admission blocker, no owner/full P0; publication admission rejects dirty state |
+| S-071 | Wrong origin/repository/default branch/GitHub identity | Fail closed with sanitized result; no redirects or reconfiguration |
+| S-072 | Read-only actor role, archived/disabled repo, missing required policy visibility | P0 blocked; no permission/settings mutation; 404 alone not proof absence |
+| S-073 | Actor push/admin true but specific credential action scope unknown | Read-only capability limited, future writes not guaranteed; known action denial blocks, P1–P9 actual refusal handled normally |
+| S-074 | Target changed or no exact publication gate | No initial dispatch; old permission invalidated/not granted by route or collector |
+| S-075 | Interruption before dispatch issuance proven | No new owner; requalify route/admission under same exact gate before first dispatch |
+| S-076 | InitialDispatch emitted, durability/outcome unknown | Unknown/STOP; read original native chain before re-emission; durable exact event restores only recorded owner |
+| S-077 | Conflicting dispatches/current tail or duplicate actor | Unknown/STOP, no choice of convenient chain or implicit machine lock |
+| S-078 | Subsequent trusted process PID changes with same native owner/run/route/SID | Allowed only after newest-tail/authority/Target/phase checks and same-invocation identity guard |
+| S-079 | Continuation cannot prove original native owner binding | STOP, no SID-only new session owner or blind mutation retry |
+| S-080 | Already-owned legacy/sandbox transaction or later context drift | Existing Release -> actual user Route -> Accept; initial route cannot silently rebind authority |
+| S-081 | Successful no-handoff P10 | Proven trusted owner consumes exact authority; NoneTerminal, attempt Unissued, no fabricated transfer ID; STOP |
+| S-082 | Replacement standing route or next task reads discovery locator | Actual user-confirmed supersession/full original history and fresh qualification required; locator not permission/usable PASS or workstation config |

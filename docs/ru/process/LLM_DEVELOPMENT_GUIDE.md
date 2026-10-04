@@ -226,6 +226,35 @@ P0 read-only preflight
     -> P10 full terminal report and STOP
 ```
 
+До initial P0 и ownership существующая команда публикации resolve-ит qualified
+trusted route по PROCESS-001. Default development sandbox orchestrates/observes;
+он не становится initial mutation owner. Standing non-secret RouteDeclaration
+хранится в qualified original native transcript, ссылается на actual user
+confirmation и задаёт expected identity/supported runner. Navigation хранит
+только native discovery locator. Каждый gate requalify-ит complete history и
+свежую actual principal/SID; route не выдаёт credentials или permanent
+publication/tool permission.
+
+После trusted read-only admission durable independently read-back
+InitialDispatch связывает exact gate/Target/route с native actor, original
+thread/history, owning publication run и trusted identity call/result evidence.
+Это initial ownership point; затем fresh P0. Matching SID alone не допускает
+другую thread/session/subagent. Каждая invocation P0–P10 сохраняет тот же native
+owner/route и проверяет actual identity внутри invocation до действия.
+Pending/ambiguous dispatch, отказ runner или unknown linkage останавливают
+mutations, без sandbox fallback. Context change уже owned transaction сохраняет
+existing Release / actual user Route / Accept recovery protocol.
+
+Discovery read-only collector может сообщить dirty state как publication
+admission blocker; P0Capability требует clean state. Ни один mode не создаёт
+authority/ownership/full P0. Full P0 также проверяет native linkage/authorization/
+immutable scope, repository permissions, archive/disabled и applicable
+merge/protection/effective rules. Missing required policy visibility блокирует;
+404 alone не absence proof. Actor repository role не доказывает write scopes
+specific API/Git credential. Read-only success не гарантирует будущие mutations,
+tool approval или checks; все P1–P10 и refusal/recovery gates обязательны.
+Новый backend/workstation configuration в repository не добавляется.
+
 Initial P0 проверяет чистое staged/unstaged/untracked состояние, current exact
 task branch и commit, immutable Target, origin и noninteractive SSH access,
 `gh auth status`, а также доступ к текущему GitHub repository/default branch.
