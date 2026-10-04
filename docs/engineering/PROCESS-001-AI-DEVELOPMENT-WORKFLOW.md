@@ -1140,6 +1140,107 @@ certified, не accepted.
 negative disposition scope/tuple, полный P0-P10 и только negative terminal
 outcome. BCC/Accepted semantics и B multi-commit range не наследуются.
 
+### Trusted Initial Publisher Route and Dispatch
+
+Штатный Publication Gate сначала выбирает qualified trusted route, до первого
+P0 и до возникновения ownership. Development/default sandbox не становится
+initial Publisher. Coordinator может orchestrate/observe из sandbox, но все
+Publisher execution calls P0–P10 направляет только через supported trusted
+runner. В Codex Windows поддерживаемый mechanism — `exec_command` с
+`sandbox_permissions: require_escalated`, subject to actual tool approval;
+это не arbitrary Windows-user selector и не permanent approval exception.
+Точное имя роли, выбранный runner или прежний probe не доказывают identity.
+Неизвестный, отказанный или wrong-identity route означает STOP без sandbox
+fallback, token transfer, auth/config changes или ручного push bypass.
+
+#### Standing Route Persistence and Qualification
+
+Standing route — non-secret `publisher-initial-route-v1 / RouteDeclaration`
+в original qualified native execution transcript, вне immutable Target и
+workstation configuration репозитория. Declaration содержит repository/origin,
+provider, original thread/history locator, supported runner/approval boundary,
+expected Windows principal/SID и authenticated GitHub identity, owner rules и
+native locator actual explicit user confirmation этой route. Это не publication
+permission, не Target/transfer ID и не ownership event. Repository navigation
+может хранить только native declaration discovery locator, не machine-local
+configuration, credentials или mutable capability/ownership verdict.
+
+Qualification применяет native provenance/durability standards раздела
+Canonical Transcript Store Bootstrap and Recovery: complete original history,
+known continuations/inventory, native author/turn/item/call linkage, backing
+history corroborated native API, stable prefix/newest tail и independently
+read-back exact payload. Для Codex concrete reader — `read_thread` с actual
+items/outputs плюс обнаруженный provider-owned JSONL с matching session ID;
+summaries/copies/guessed files/manual inserts не qualification. Declaration
+emits actual native agent; independent Coordinator/reader записывает
+`RouteQualificationReceipt` с declaration/user/probe native locators, descriptor
+и verified tail. Receipt не создаёт author provenance. Это не handoff
+`StoreBootstrap`: standing route не reconstruct-ит уже owned Target.
+
+При каждом новом gate route перечитывается и requalified с fresh trusted
+identity и capability facts; cached success не действует как P0. Explicit user
+confirmation делает declaration reusable, не разрешает будущие mutations.
+Missing/inaccessible/conflicting declaration, incomplete history или visibility
+means STOP, без выбора удобного старого record. Replacement/supersession route
+требует actual user confirmation и ссылки на предыдущий declaration; актуальная
+route определяется complete chain, не именем account. Existing owned transaction
+не переносится на replacement route. Reopen/continuation восстанавливает только
+read access; identity и native execution continuity доказываются заново.
+
+#### Initial Ownership and Native Executor Linkage
+
+После exact ordinary publication gate и committed immutable Target Coordinator
+resolve-ит route, выполняет read-only dispatch admission через trusted runner и
+доказывает actual Windows principal/SID. Это ещё не P0/ownership; отказ до
+issuance не создаёт owner. Native Publisher emits `InitialDispatch` с exact
+gate locator/Target, qualified declaration/receipt/current tail, actual native
+actor, original thread/history branch, owning publication run locator и
+correlated trusted identity command/result locators. Independent readback
+complete payload/current history — initial ownership linearization point:
+`Active / Owned(exact execution context) / Unissued`. Только затем выполняется
+fresh read-only P0. No Release/Route/Accept или transfer ID фабриковать нельзя.
+Pending/ambiguous dispatch emission means ownership `Unknown`/STOP; сначала
+reconcile native record, не повторять emission или назначать другого owner.
+Known old owner/attempt исключает initial dispatch и требует existing recovery.
+
+Owning execution context — tuple `{native actor, original thread/history,
+owning publication run, qualified route, actual Windows principal/SID}`.
+PID отдельных trusted processes может меняться; каждый call/result обязан
+иметь native linkage к тому же owner/run. Matching SID alone не допускает
+другую session/thread/fork/subagent или concurrent actor. Agent orchestration
+identity не подменяет проверенную execution identity. Events от native
+Publisher связываются с actual trusted tool evidence, не только actor text.
+
+Перед каждым P-step/mutation Publisher independently reread-ит newest owner
+tail, unchanged Target, unconsumed authorization и phase-appropriate state.
+Каждый execution call направляется через declared trusted mechanism, а actual
+principal/SID проверяется внутри той же invocation до действия; предыдущий
+отдельный `whoami` не гарантирует следующую invocation. Native call/turn
+correlation сохраняется вместе с operation/result evidence. После interruption
+continuation reconstruct-ит original binding/current chain и доказывает
+continuity; нельзя объявить новый session owner по SID. Если continuity не
+доказана, STOP/recovery. Context drift после ownership использует unchanged
+Release -> actual user Route -> Accept, без silent rebind/sandbox retry.
+
+#### Read-Only Capability Collector Boundary
+
+[`publisher-capability-preflight.ps1`](../../scripts/publisher-capability-preflight.ps1)
+собирает filtered identity/API/origin/role/policy evidence. Explicit Discovery
+допускает dirty working tree, честно отмечая publication admission blocked.
+P0Capability требует clean state, но collector не проверяет native authority/
+owner/scope, не emits dispatch, не assigns owner и никогда не claims full P0.
+Полный gate включает независимые native linkage и immutable Target checks.
+Collector/route receipt не являются permissions. Wrong identity отвергается
+до external probes; prompts disabled process-local; failures не выводят secrets.
+
+P0 PASS подтверждает только capability, доступную read-only checks. Reported
+repository `push/admin` — actor role, не доказательство action scopes exact API
+credential или potentially different Git credential. Known insufficient action
+permission blocks P0; remaining write-scope uncertainty сообщается явно без
+trial push/PR/mutation probe. Future approval/protection/checks/network refusal
+может блокировать exact P1–P9, сохраняя inspect-first recovery. Admin/bypass
+capability не разрешает обход checks/protection; P3/P4 сохраняются без изменений.
+
 ### Publisher Execution Environment Capability
 
 Publisher side effects MUST выполняться из одного exact execution context,
@@ -1185,10 +1286,11 @@ publication может быть передана credential-capable destination 
 секретов и без нового Commit Gate, Coordinator Acceptance или publish gate.
 Это разрешено только следующим протоколом:
 
-Initial procedural owner — exact context, которому пользователь адресовал
-действующий publish gate и который начал read-only P0; ownership не разрешает
-side effect до полного P0 capability proof. Release Handoff может выпустить
-только текущий owner.
+Initial procedural owner определяется durable InitialDispatch выше до P0.
+Legacy already-owned publications сохраняют recorded initial owner по original
+gate/P0 evidence; новый route не переписывает их ownership. Ownership не
+разрешает side effect до полного P0 capability proof. Release Handoff может
+выпустить только текущий proven owner.
 
 `Transfer Identity` — immutable tuple одной попытки передачи:
 
@@ -1479,12 +1581,26 @@ P0 read-only preflight
     -> P10 terminal report and STOP
 ```
 
-Initial P0 до первой mutation проверяет clean staged/unstaged/untracked state,
+До P0 обязательны qualified trusted dispatch и durable initial owner либо
+existing exact recovery owner. Initial P0 до первой mutation проверяет native
+owner/run/route/gate linkage и actual execution identity, clean staged/unstaged/untracked state,
 current exact branch/HEAD, immutable Target `{publication class, TaskID,
 repository, branch, ordered commit target, base main, scope}`, origin
 URL/repository, noninteractive SSH и
 `git ls-remote --exit-code origin`, supporting `gh auth status`, decisive
-GitHub API user и repository/default-branch probes. Failure любого transport/auth/
+GitHub API user и repository/default-branch probes; available repository
+permissions, archive/disabled state, allowed merge method и applicable effective
+rules/branch protection для base и exact target branch. Required policy
+visibility unavailable/ambiguous blocks P0; 404 alone не доказывает absence
+protection. Rule/protection scope и evidence applicability явно классифицируются.
+Для GitHub ambiguous REST protection 404 может быть reconciled static read-only
+GraphQL query exact ref: successful/no errors, exact repository/ref name/OID,
+explicit present `branchProtectionRule: null` и successful effective rules GET.
+Это означает лишь no traditional rule observed, не unprotected branch или
+гарантию write scopes. Missing/null ref/field, mismatched OID/errors/conflicting
+policy blocks. Collector types summary не заменяет inspection полного rule
+parameters и traditional target-ref protection в полном P0.
+P0 не гарантирует future mutation success. Failure любого transport/auth/
 repository subcheck внутри P0 оставляет P0 первым незавершённым, zero completed
 pipeline steps и P1 not attempted.
 

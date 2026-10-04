@@ -205,6 +205,16 @@ authorization headers и credential payload запрещены. Project-state д
 фиксируют сам принятый governance contract и terminal publication facts, но не
 копируют transient handoff, auth или workstation state.
 
+Standing initial route/qualification и InitialDispatch определены PROCESS-001.
+Route declaration/receipt и owner linkage принадлежат qualified original native
+transcript. Project navigation сохраняет только durable discovery locator и
+governance contract, не machine-local route settings или mutable probe PASS.
+Sync различает unowned read-only Discovery, durable trusted initial owner и
+already-owned recovery; initial route не заменяет существующий transfer.
+Native actor/thread/history/run/trusted command/result linkage и independent
+readback являются обязательным evidence; роль/account/SID alone недостаточно.
+Dry collector result не объявляется full publication P0/ownership/permission.
+
 Operational handoff record хранится вне immutable Target/project-state и
 append-only связывает exact UUIDv4 transfer ID с immutable Target, source
 identity, Release checkpoint snapshot, explicit user route, destination

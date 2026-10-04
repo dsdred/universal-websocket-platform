@@ -3,28 +3,23 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая implementation task —
-[TASK-076](TASK-076-LOCAL-CONFIGURATION-STUDIO.md), `In Progress`, на ветке
-`feature/task-076-local-configuration-studio` от clean synchronized
-`main@5eb54efea3f3df5c7967b2c1e2d0894c6289e50a`. Working tree реализует
-минимальный встроенный local/dev Configuration Studio: один guided flow через
-существующие HTTP API создаёт Workspace, Configuration и Draft, меняет Listener
-host/port, публикует Draft и показывает authoritative `Published`, номер версии
-и предварительный WebSocket URL. UI использует только Go `embed` и plain
-HTML/CSS/JavaScript; явно сообщает `Published != Running`, потерю in-memory
-данных после restart и предварительный характер URL. Independent Architecture
-Confirmation — `APPROVED — IMPLEMENTATION READY WITHIN THE EXACT TASK-076
-BOUNDARY; NO NEW ADR, DP, DOMAIN API, OR RUNTIME WORK REQUIRED`, blocking 0,
-non-blocking 3. Independent Tester — `PASS WITH LIMITATION`, findings 0/0/0;
-полный browser submit evidence создан Coordinator и независимо reviewed, а
-Tester отдельно подтвердил real-browser initial UI/notices и executable/static
-proofs. Documentation Synchronization выполняется; Scope Audit является
-следующим stage. Coordinator Acceptance, commit и publication не выполнены.
-Studio не является production Admin UI, не запускает Runtime, не доказывает
-WebSocket reachability и не добавляет persistence, authentication, recovery или
-Runtime management.
+Текущая bounded process/tooling task —
+[TASK-077](TASK-077-TRUSTED-PUBLISHER-ROUTE.md), verification-stable `In Progress`,
+на `docs/task-077-trusted-publisher-route` от
+`main@e9a87b5a35c880ac71444be9960876d3fbd02fbc`. Qualified trusted initial
+route, durable native owner linkage и read-only capability preflight сохраняют
+отдельные gates/P0–P10/recovery. Actual gates/closure resolve-ятся только newest
+valid matching TASK-077 envelope; no product/runtime task activated.
 
 Последняя опубликованная product task —
+[TASK-076](TASK-076-LOCAL-CONFIGURATION-STUDIO.md), Coordinator Accepted source
+manifest `c1dd8f72c67588ca151b5dc32374ccd7ec0bfadf`, task commit
+`b8c2b8672343aefccfe03000144ebdd4df93f8ea`, PR #81 merged как
+`e9a87b5a35c880ac71444be9960876d3fbd02fbc`. Local/dev Configuration Studio
+использует existing APIs, сохраняет truthful Published != Running/in-memory/
+preliminary URL limitations и не меняет Runtime/DP-017.
+
+Предыдущая опубликованная product task —
 [TASK-075](TASK-075-RUNTIME-READ-ONLY-RECOVERY-ASSESSMENT.md), `Completed —
 Coordinator Accepted`. Task commit
 `f7b80ac976a144aa4918bd4ed74140e48fd31310` опубликован через PR #80 и merged
@@ -42,7 +37,7 @@ Coordinator Accepted`. Task commit
 gate существует в `internal/runtimecontainmentcomposition`, но не wired в
 Control Service и не реализует DP-017 workflow.
 
-Последняя опубликованная product task —
+Предыдущая опубликованная product task —
 [TASK-073](TASK-073-RUNTIME-SHUTDOWN-EVIDENCE-COMPOSER.md), `Completed —
 Coordinator Accepted`. Task commit
 `37ca6d6b5065aeb1a4831bc30aa54503ae06ff64` опубликован через PR #78 и merged
@@ -237,7 +232,8 @@ PROCESS-002, Scope Audit 31/0/0 и final Reviewer проходят. Task commit
 - [TASK-073 — Runtime Shutdown-Completion Evidence Composer](TASK-073-RUNTIME-SHUTDOWN-EVIDENCE-COMPOSER.md) — Completed, Coordinator Accepted; task commit `37ca6d6b5065aeb1a4831bc30aa54503ae06ff64` published through PR #78 and merged as `a84098284b0202f2fea9a61e089a74f564a05405`; isolated full-tuple composer only
 - [TASK-074 — Runtime Containment Composition, Admission, and Generation Provider Gate](TASK-074-RUNTIME-CONTAINMENT-COMPOSITION-GATE.md) — Completed, Coordinator Accepted; task commit `2d78d417784012e4e945e60f8d721246ea5bdcbf` published through PR #79 and merged as `bfab084c1a9664181027650b092bf240e04af435`; isolated private composition gate only
 - [TASK-075 — Runtime Read-Only Recovery Assessment](TASK-075-RUNTIME-READ-ONLY-RECOVERY-ASSESSMENT.md) — Completed, Coordinator Accepted; task commit `f7b80ac976a144aa4918bd4ed74140e48fd31310` published through PR #80 and merged as `5eb54efea3f3df5c7967b2c1e2d0894c6289e50a`; isolated read-only assessment only; durable recovery authority and production wiring remain Not Activated
-- [TASK-076 — Local Configuration Studio](TASK-076-LOCAL-CONFIGURATION-STUDIO.md) — In Progress; implementation and independent Verification complete; PROCESS-002 Documentation Synchronization in progress; embedded local/dev UI over existing APIs only; Coordinator Acceptance, commit and publication not reached
+- [TASK-077 — Trusted Publisher Initial Route and Capability Preflight](TASK-077-TRUSTED-PUBLISHER-ROUTE.md) — verification-stable In Progress; latest valid matching envelope resolves gates/closure; one publication governance/tooling repair, no product/runtime work
+- [TASK-076 — Local Configuration Studio](TASK-076-LOCAL-CONFIGURATION-STUDIO.md) — Coordinator Accepted source; committed as b8c2b86 and merged through PR #81 as e9a87b5; existing-API local/dev UI, no Runtime/DP-017 change
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

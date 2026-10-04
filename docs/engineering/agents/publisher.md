@@ -71,6 +71,30 @@ reconstruction и продолжение с первого незавершён�
 
 ## Execution Environment Capability
 
+### Initial Trusted Route
+
+До первого P0 и ownership выполнить PROCESS-001 Trusted Initial Publisher Route
+and Dispatch: independently qualify standing native RouteDeclaration/receipt,
+resolve exact committed Target/user gate, dispatch supported trusted runner и
+проверить actual principal/SID. Native InitialDispatch с gate/Target/route и
+trusted command/result linkage получает owner только после durable independent
+readback. Development sandbox остаётся observation/orchestration-only; отказ,
+unknown emission или wrong identity — STOP, без fallback или silent rebind.
+
+Owner включает native actor, original thread/history, owning publication run,
+route и actual principal/SID. Matching SID/role/helper либо другая thread/fork/
+subagent/session не являются continuity. Перед каждым P-step/mutation читать
+newest owner tail и проверять Target/authority/phase/native linkage; identity
+проверять внутри same trusted invocation до действия. Меняющиеся process PIDs
+допустимы только при proven same native owner/run. Interrupted owner reconstruct
+сохраняет binding либо STOP; context transfer — existing Release/Route/Accept.
+
+Standing route не credentials, не permission и не handoff StoreBootstrap;
+requalify при каждом gate. Discovery collector допускает dirty state как
+publication blocker; P0Capability требует clean state, но neither collector
+mode assigns owner/authority/full P0. Native linkage/immutable scope остаются
+самостоятельными обязательными checks. Read-only PASS не обещает future writes.
+
 Текущий Publisher context способен владеть publication side effects только
 после двух successful read-only probes из exact identity/session:
 
@@ -112,9 +136,11 @@ accepted/certified/negative-disposition scope identity. Snapshot фиксиру�
 known refs/PR/head/base/merge OID и first unfinished step. User route и Accept
 не меняют эти поля, а append-only связывают их с exact destination identity.
 
-Initial procedural owner — exact context, которому пользователь адресовал
-publish gate и который начал read-only P0. До успешного P0 он не имеет права
-side effect; только текущий owner может выпустить Release Handoff.
+Initial procedural owner возникает только после durable independently read-back
+InitialDispatch по Trusted Initial Route выше, до P0. Legacy already-owned
+publications сохраняют recorded original owner по original gate/P0 evidence;
+standing route не переопределяет его. До полного успешного P0 side effects
+запрещены; только текущий proven owner может выпустить Release Handoff.
 
 Destination получает authority только если пользователь явно маршрутизировал
 exact transfer ID плюс Target и сослался на ранее разрешённую publication, после чего
@@ -227,6 +253,16 @@ user routing или ambiguous ownership останавливают publication.
 7. текущий context является initial owner либо exact accepted handoff owner;
    source/released, in-transit, duplicate или ambiguous ownership запрещает
    mutation.
+8. qualified route/InitialDispatch либо legacy/recovery chain независимо
+   доказывает exact native actor/thread/history/run и correlated trusted
+   execution identity; account/SID alone недостаточно;
+9. authenticated GitHub identity совпадает с qualified route; repository
+   permissions, archived/disabled state, allowed merge method, effective base/
+   exact-target branch rules и traditional protection доступны read-only.
+   Missing policy visibility blocks P0. 404 alone не означает absence; нужны
+   independent authoritative absence/Not Applicable evidence. Reported actor
+   role не доказывает action scopes specific API/Git credential; known denial
+   blocks P0, unavoidable future-write uncertainty явно сохраняется.
 
 Dirty или ambiguous baseline не является consumptive external blocker:
 Publisher ничего не меняет и сообщает safety failure. Изменившийся exact

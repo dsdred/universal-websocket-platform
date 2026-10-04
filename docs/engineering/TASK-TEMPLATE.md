@@ -293,6 +293,15 @@ generated, formatting-only и незадокументированное planned
 - base `main`:
 - accepted/certified/negative-disposition verification и scope:
 - Publisher P0–P10 state или `not authorized`;
+- initial trusted route: qualified native declaration/user-confirmation/receipt
+  locators, discovery registry (без machine-local config/credentials), свежие
+  expected/actual identity/SID и native actor/thread/history/publication-run
+  linkage; dispatch before P0/owner, durable independent InitialDispatch
+  readback либо first incomplete dispatch step; sandbox observation-only,
+  no fallback; already-owned transaction только через existing recovery;
+- collector: Discovery/P0Capability, dirty admission blocker, sanitized
+  identity/API/origin/permissions/archive/disabled/merge/protection/rules facts;
+  no ownership/authority/full-P0 claims, write-scope uncertainty explicit;
 - при blocker: completed steps, exact first unfinished step, preserved state и
   phase (`task branch` до P6 либо `main` после P6), known PR/merge OID и
   confirmation, что permission остаётся действительным;

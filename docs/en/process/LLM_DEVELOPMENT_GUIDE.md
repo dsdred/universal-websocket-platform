@@ -226,6 +226,35 @@ P0 read-only preflight
     -> P10 full terminal report and STOP
 ```
 
+Before initial P0 or ownership, the existing publication command resolves a
+qualified trusted route under PROCESS-001. The default development sandbox
+orchestrates/observes; it never becomes the initial mutation owner. A standing
+non-secret RouteDeclaration lives in the qualified original native transcript,
+references actual user confirmation and defines the expected identity and
+supported runner. Navigation stores only its native discovery locator. Each
+gate requalifies the complete history and freshly verifies actual principal/SID;
+the route grants neither credentials nor permanent publication/tool permission.
+
+After trusted read-only admission, durable independently read-back
+InitialDispatch binds exact gate/Target/route to native actor, original
+thread/history, owning publication run and trusted identity call/result evidence.
+It is the initial ownership point, followed by fresh P0. Matching SID alone
+cannot admit another thread/session/subagent. Every P0–P10 invocation keeps the
+same native owner/route and checks actual identity inside that invocation before
+acting. Pending/ambiguous dispatch, rejected runner or unknown linkage stops
+mutations; no sandbox fallback. Already-owned context changes retain the existing
+Release / actual user Route / Accept recovery protocol.
+
+The read-only collector's Discovery mode may report dirty state as a publication
+admission blocker; P0Capability requires clean state. Neither mode establishes
+authority, ownership or full P0. Full P0 also checks native linkage/authorization/
+immutable scope, repository permissions, archive/disabled status and applicable
+merge/protection/effective rules. Missing required policy visibility blocks;
+404 alone is not absence proof. Actor repository role does not prove specific
+API/Git credential write scopes. Read-only success never guarantees future
+mutations, tool approvals or checks; P1–P10 and their refusal/recovery gates stay
+mandatory. No new backend or workstation configuration is added to the repository.
+
 Initial P0 verifies a clean staged/unstaged/untracked state, current exact task
 branch and commit, immutable Target, origin and noninteractive SSH access,
 `gh auth status`, and access to the current GitHub repository/default branch.

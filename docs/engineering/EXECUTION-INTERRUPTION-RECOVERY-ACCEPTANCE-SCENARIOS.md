@@ -445,3 +445,19 @@ Publisher S-056–S-064. Это generic decision proofs на native evidence fix
 | R-095 | Native summary/copy/local edited file substitutes original history or tail changed during read | Qualification fails; read actual native complete chain with context linkage and stable prefix/current tail; manual insert/rewrite/conflict → Unknown/STOP, user assertion/digest alone not proof |
 | R-096 | Known inaccessible actual record or started/outcome-unknown external write discovered during first bootstrap | Stop bootstrap, keep Unknown; restore/read/reconcile original record. Descriptor/history cannot discard concrete pointer; proven-unused configured backend is a distinct allowed R-092 case |
 | R-097 | Generic repair accepted locally but uncommitted; current user requests original publication recovery | Cite accepted exact repair manifest, independently qualify native store and replay authority; no automatic Release/Route/Accept, no new original publication permission for unchanged Target, no permission transfer to repair commit/publication, current effect freeze remains |
+
+### Trusted initial-route recovery — R-098–R-105
+
+Trace: PROCESS-001 Trusted Initial Publisher Route and Dispatch; S-065–S-082.
+Route discovery и owned transaction различаются; earlier handoff guards unchanged.
+
+| ID | Given / When | Required result |
+|---|---|---|
+| R-098 | Route/history unavailable before gate/initial dispatch | No owner/new publication; restore original native record, no config/copy replacement |
+| R-099 | Runner refusal or identity mismatch before dispatch issuance | No owner, no sandbox fallback, no attempted P1; report exact boundary |
+| R-100 | Dispatch admission started but InitialDispatch not emitted | Started != Owned; inspect issuance inventory, fresh read-only admission only |
+| R-101 | Interrupted possible InitialDispatch emission/readback | Unknown/STOP; reconcile exact gate/Target/native actor/runner event chain before retry |
+| R-102 | Restore original publication in later tool process/continuation | Reconstruct same native actor/thread/history/owning-run/route/SID; PID change alone allowed, SID alone not continuity |
+| R-103 | Existing legacy or accepted-handoff owner present | Retain exact owner and phase; no initial-dispatch retrofit, unchanged transfer for context change |
+| R-104 | P-step mutation outcome unknown after trusted invocation | Existing operation-specific inspect/reconstruct/reconcile, no blind retry or default sandbox execution |
+| R-105 | P10 consumes no-handoff publication; new gate follows later | Old owner/authority terminal, Unissued not fabricated Closed ID; fresh independent exact gate/qualified dispatch for new Target |
