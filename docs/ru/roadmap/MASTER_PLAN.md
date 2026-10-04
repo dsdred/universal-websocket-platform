@@ -24,6 +24,11 @@ Universal WebSocket Platform — open-source платформа для созд�
 - ConfigurationVersion поддерживает lifecycle create, publish и archive.
 - Metadata Listener, TLS, timeout и Authentication представлены в Configuration DSL.
 - Metadata Authentication включает настройки API Key, JWT и Basic; validation выделена в отдельный компонент.
+- Встроенный local-development Configuration Studio использует только эти
+  существующие API для одного flow create/configure/publish. Это не production
+  Admin UI: данные остаются in-memory, listener unauthenticated, Runtime не
+  управляется, а `Published` и preview WebSocket URL не выдаются за Running
+  state или доказательство reachability.
 
 ### Snapshot
 
@@ -493,12 +498,15 @@ Architectural debt относится к границам, которые ост
   TASK-073 завершила и опубликовала private full-tuple
   composer/use-once-handle slice через PR #78. TASK-074 завершила и
   опубликовала private containment composition/admission/provider gate через PR
-  #79. TASK-075 реализует только следующий read-only assessment slice DP-017 и
+  #79. TASK-075 реализовала следующий read-only assessment slice DP-017 и
   required minimal mutation-free DP-015 per-Instance command snapshot seam
-  изолированно. Independent Tester и pre-documentation Reviewer сообщают 0
-  blockers; race detector недоступен в текущем Windows toolchain. Результат не
-  wired в Control Service. Recovery claim/permit/barrier/release,
-  reconciliation, reporting и Production Activation отсутствуют.
+  изолированно и опубликована через PR #80. Результат не wired в Control
+  Service. Recovery claim/permit/barrier/release, reconciliation, reporting и
+  Production Activation отсутствуют. TASK-076 реализует отдельно
+  приоритизированный bounded local/dev Configuration Studio только поверх
+  существующих configuration API. Он не меняет очередь DP-017 и не повышает
+  более поздний roadmap item production Admin UI; Coordinator Acceptance и
+  publication ещё не выполнены.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Message Persistence, Delivery и Plugin всё ещё требуют focused design.

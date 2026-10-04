@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Built-in local-development Configuration Studio using embedded plain
+  HTML/CSS/JavaScript and the existing Control Service APIs to create a
+  Workspace, Configuration and Draft, update Listener host/port, publish, and
+  display the authoritative state/version plus a preliminary WebSocket URL.
+  The UI explicitly remains in-memory, unauthenticated/local-only, does not
+  start or manage Runtime, and does not treat `Published` as `Running` or the
+  displayed URL as a reachability result.
 - ListenerSettings metadata with validated Host and Port for Draft ConfigurationVersion entities.
 - TLSSettings metadata with certificate references and minimum TLS version for Draft ConfigurationVersion entities.
 - Listener TimeoutSettings metadata for handshake, read, write, and idle limits in seconds.

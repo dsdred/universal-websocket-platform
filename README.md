@@ -12,6 +12,14 @@ Service, in-memory domain APIs, and a production-composed single-node Runtime
 vertical with pre-Upgrade Authentication, deterministic routing,
 transactional Session handoff, and Manager-aware shutdown.
 
+The current repository also contains a built-in **Local Configuration
+Studio** at the Control Service root. It is a trusted local-development UI for
+one existing-API-only flow: create a Workspace, Configuration and Draft, set
+Listener host/port, publish, and inspect the returned state/version plus a
+preliminary WebSocket URL. `Published` does not mean `Running`; data remains
+in memory and is lost on restart; the URL is not a reachability check. The
+Studio is not a production Admin UI and does not start or manage Runtime.
+
 The Configuration Loader, Snapshot Builder, Runtime Bootstrap and Launcher,
 Lifecycle Owner, management routing, operational identity, command
 idempotency, and orchestration prerequisites also exist in isolation. They are

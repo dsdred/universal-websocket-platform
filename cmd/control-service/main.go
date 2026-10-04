@@ -15,6 +15,7 @@ import (
 
 	"github.com/dsdred/universal-websocket-platform/internal/config"
 	"github.com/dsdred/universal-websocket-platform/internal/configuration"
+	"github.com/dsdred/universal-websocket-platform/internal/configurationstudio"
 	"github.com/dsdred/universal-websocket-platform/internal/configurationversion"
 	httpserver "github.com/dsdred/universal-websocket-platform/internal/http"
 	applog "github.com/dsdred/universal-websocket-platform/internal/log"
@@ -47,6 +48,7 @@ func run() int {
 	configurationVersionHandler := configurationversion.NewHandler(configurationVersionService)
 	server := httpserver.New(
 		address,
+		configurationstudio.RegisterRoutes,
 		workspaceHandler.RegisterRoutes,
 		configurationHandler.RegisterRoutes,
 		configurationVersionHandler.RegisterRoutes,

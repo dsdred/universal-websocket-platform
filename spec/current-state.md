@@ -1,25 +1,36 @@
 # Текущее состояние
 
-**Текущая задача:** TASK-075 — Runtime Read-Only Recovery Assessment,
-`In Progress`, на ветке `feature/task-075-runtime-recovery-assessment` от clean
-synchronized `main@bfab084c1a9664181027650b092bf240e04af435`. Scope ограничен
-item 6 ordered decomposition DP-023 §19: один repository-private mutation-free
-assessment DP-017 для exact Runtime Instance. Independent Architecture
-Confirmation — `APPROVED — READY WITH ONE REQUIRED MINIMAL DP-015 READ-ONLY
-SNAPSHOT SEAM; NO NEW DP, NO SCOPE EXPANSION`, blocking findings 0. Требуемый
-seam реализован как complete detached per-Instance snapshot
-primitive/parent/phase records в ownership `runtimecommandidempotency`; он не
-создаёт ledger, не выдаёт permit и не мутирует command truth. Private package
-`internal/runtimerecoveryassessment` реализует stable read-only assessment
-DP-014/DP-015/evidence и closed classifications `Unknown`, `Clean`,
-`CommandOnly`, `UnboundAttempt`, `ExecutionTerminated`, `ResourceAbsence` и
-`ShutdownCompleted`. Recovery claim/permit/barrier/release, reconciliation,
-Control Service wiring/reporting и Production Activation остаются `Not
-Activated`. Exact current checkpoint и role verdict определяются только newest
-valid Recovery Evidence Envelope entry TASK-075, совпадающей с independently
-recomputed current subject manifest.
+**Текущая задача:** TASK-076 — Local Configuration Studio, `In Progress`, на
+ветке `feature/task-076-local-configuration-studio` от clean synchronized
+`main@5eb54efea3f3df5c7967b2c1e2d0894c6289e50a`. В working tree реализован
+встроенный local/dev UI Control Service для одного guided flow через
+существующие HTTP API: создать Workspace, Configuration и Draft, изменить
+Listener host/port, опубликовать Draft и показать authoritative `Published`,
+номер версии и предварительный WebSocket URL. Private package
+`internal/configurationstudio` владеет только Go-embedded HTML/CSS/JavaScript и
+точными presentation routes; composition root регистрирует их без изменения
+domain API. Architecture Confirmation — `APPROVED — IMPLEMENTATION READY WITHIN
+THE EXACT TASK-076 BOUNDARY; NO NEW ADR, DP, DOMAIN API, OR RUNTIME WORK
+REQUIRED`, blocking 0/non-blocking 3. Independent Tester — `PASS WITH
+LIMITATION`, findings 0/0/0; full browser submit evidence создан Coordinator и
+независимо reviewed, а Tester отдельно подтвердил initial real-browser UI и
+notices. PROCESS-002 выполняется, Scope Audit является следующим stage;
+Coordinator Acceptance, commit и publication отсутствуют. Studio предназначен
+только для trusted local/dev, хранит данные по-прежнему только in-memory, не
+запускает Runtime, не доказывает reachability и явно сообщает, что `Published`
+не означает `Running`, а URL предварительный.
 
-**Последняя опубликованная implementation task (2026-10-03):** TASK-074 —
+**Последняя опубликованная implementation task (2026-10-03):** TASK-075 —
+Runtime Read-Only Recovery Assessment, `Completed — Coordinator Accepted`.
+Task commit `f7b80ac976a144aa4918bd4ed74140e48fd31310` опубликован через PR #80 и
+merged как `5eb54efea3f3df5c7967b2c1e2d0894c6289e50a`. Complete detached
+per-Instance snapshot primitive/parent/phase records в
+`runtimecommandidempotency` и private mutation-free assessment
+`internal/runtimerecoveryassessment` реализованы изолированно. Durable recovery
+claim/permit/barrier/release, reconciliation, Control Service Runtime wiring/
+reporting и Production Activation остаются `Not Activated`.
+
+**Предыдущая опубликованная implementation task (2026-10-03):** TASK-074 —
 Runtime Containment Composition, Admission, and Generation Provider Gate,
 `Completed — Coordinator Accepted`. Task commit
 `2d78d417784012e4e945e60f8d721246ea5bdcbf` опубликован через PR #79 и merged
@@ -1012,6 +1023,17 @@ Activation отсутствуют.
 - Go module для Go 1.25
 - Исполняемый Control Service
 - HTTP Server на Chi Router с endpoint `GET /health`
+- Встроенный local/dev Configuration Studio на `GET /` с Go-embedded plain
+  HTML/CSS/JavaScript и точными asset routes; он выполняет только существующий
+  create Workspace -> create Configuration -> create Draft -> update Listener
+  -> publish flow
+- Studio показывает только authoritative publish result: `Published`, номер
+  версии и предварительный `ws://<host>:<port>/ws`; IPv6 literal заключён в
+  brackets, WebSocket connection/probe не выполняется
+- Studio постоянно сообщает, что `Published` не означает `Running`, данные
+  in-memory теряются после restart, а URL предварительный; UI предназначен
+  только для trusted local/dev и наследует unauthenticated listener Control
+  Service
 - Configuration адреса и уровня журнала через `UWP_HTTP_HOST`, `UWP_HTTP_PORT` и `UWP_LOG_LEVEL`
 - Безопасные значения по умолчанию: `127.0.0.1:8080` и уровень журнала `info`
 - Валидация Configuration до запуска сервиса
@@ -1221,7 +1243,8 @@ Activation отсутствуют.
 - Реальные Secret Storage backend и подключение Resolver к Runtime Container еще не реализованы
 - Инфраструктуры развертывания
 - Инфраструктуры хранения данных
-- Admin UI
+- Production/operational Admin UI; реализован только bounded local/dev
+  Configuration Studio без Runtime management
 
 Этот файл описывает реализованное состояние репозитория, а не запланированные возможности продукта. Обновляйте его только при существенном изменении этого состояния.
 
