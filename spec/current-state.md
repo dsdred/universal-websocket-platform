@@ -1,15 +1,21 @@
 # Текущее состояние
 
-**Текущая задача:** TASK-077 — Trusted Publisher Initial Route and Capability
-Preflight, verification-stable `In Progress`, на
-`docs/task-077-trusted-publisher-route` от
-`main@e9a87b5a35c880ac71444be9960876d3fbd02fbc`. Один bounded publication
-process/tooling repair задаёт qualified trusted route до P0/ownership, durable
-native InitialDispatch linkage и read-only capability collector. Actual gates
-и closure определяет только newest valid matching Recovery Evidence Envelope
-TASK-077. P0–P10, отдельные Commit/Publication gates и recovery handoff
-сохраняются; runtime/product capability, DP-017 и product readiness не меняются.
-Новая runtime/product task не активирована.
+**Текущая задача:** TASK-078 — Runtime Recovery Claim and Admission Barrier
+Readiness, verification-stable `In Progress`, branch
+`docs/task-078-recovery-claim-readiness`, baseline
+`5e40742c74860c7446941cffbd8747309b3b1053`. Actual gates и closure определяет
+newest valid matching Recovery Evidence Envelope TASK-078. Design-only оценка
+готовности item 7 фиксирует отсутствующие prerequisites joint atomic ordering,
+previous-authority-loss proof, durable claim/readback/resume и claim-aware
+assessment. Реализация claim/permit/barrier не активирована; Approved DP-017
+остаётся Planned overall с isolated read-only assessment TASK-075.
+
+**Последний опубликованный process repair:** TASK-077 — Coordinator Accepted
+subject `bb2bd18df470021a8dc5bd6751a292c0d00c2e1c`, commit
+`c70c398b2a7b5c85765f53d663088d117ca1e21e`, PR #82 merged как
+`5e40742c74860c7446941cffbd8747309b3b1053`. Trusted initial Publisher route и
+read-only capability preflight опубликованы; отдельные gates/P0–P10/recovery
+сохранены, runtime/product capability не меняется.
 
 **Последняя опубликованная implementation task:** TASK-076 — Local
 Configuration Studio. Accepted source manifest
