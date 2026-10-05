@@ -1,14 +1,23 @@
 # Текущее состояние
 
-**Текущая задача:** TASK-078 — Runtime Recovery Claim and Admission Barrier
-Readiness, verification-stable `In Progress`, branch
-`docs/task-078-recovery-claim-readiness`, baseline
-`5e40742c74860c7446941cffbd8747309b3b1053`. Actual gates и closure определяет
-newest valid matching Recovery Evidence Envelope TASK-078. Design-only оценка
-готовности item 7 фиксирует отсутствующие prerequisites joint atomic ordering,
-previous-authority-loss proof, durable claim/readback/resume и claim-aware
-assessment. Реализация claim/permit/barrier не активирована; Approved DP-017
-остаётся Planned overall с isolated read-only assessment TASK-075.
+**Текущая задача:** TASK-079 — Runtime Recovery Claim and Admission Implementation
+Boundary, verification-stable `In Progress`, branch
+`docs/task-079-recovery-claim-admission-boundary`, baseline
+`4dad1af14102f516784cb1ae0ef39a59fec6b0ec`. Actual gates/closure определяет
+newest valid matching TASK-079 Recovery Evidence Envelope. Зеркальный
+[DP-024](../docs/ru/design/DP-024-runtime-recovery-claim-admission-boundary.md)
+Draft/Planned описывает private restart-based ordering/provenance/claim protocol.
+Новый код, durable storage и production recovery не реализованы. Следующий
+candidate — отдельное design-only DP-024 Design Status/conformance decision,
+Not Activated; persistent aggregate/command/recovery qualification остаётся
+отдельным prerequisite. DP-017 Approved/Planned overall, только read-only
+assessment TASK-075 реализован изолированно; reconciliation/release не активированы.
+
+**Последняя опубликованная readiness task:** TASK-078 — Completed — Coordinator
+Accepted, subject `4c73bc9fd72ca61d28c2e67f454e936178d46b2a`, source `8687758`,
+PR #83 merged как `4dad1af14102f516784cb1ae0ef39a59fec6b0ec` по local immutable
+Git metadata. Item7 implementation Not Ready; четыре missing mechanics
+уточняются только в Draft DP-024.
 
 **Последний опубликованный process repair:** TASK-077 — Coordinator Accepted
 subject `bb2bd18df470021a8dc5bd6751a292c0d00c2e1c`, commit
