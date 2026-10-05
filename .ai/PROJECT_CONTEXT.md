@@ -8,13 +8,19 @@
 
 ## Текущее состояние
 
-- Current task: **TASK-078 — Runtime Recovery Claim and Admission Barrier
-  Readiness**, verification-stable `In Progress`, branch
-  `docs/task-078-recovery-claim-readiness`, baseline
-  `5e40742c74860c7446941cffbd8747309b3b1053`. Actual gates and closure resolve
-  only from the newest valid matching TASK-078 Recovery Evidence Envelope.
-  This bounded design-only assessment records item 7 implementation prerequisites;
-  no recovery claim/barrier implementation or new normative protocol is activated.
+- Current task: **TASK-079 — Runtime Recovery Claim and Admission Implementation
+  Boundary**, verification-stable `In Progress`, branch
+  `docs/task-079-recovery-claim-admission-boundary`, baseline
+  `4dad1af14102f516784cb1ae0ef39a59fec6b0ec`. Actual gates/closure resolve only
+  from the newest valid matching TASK-079 Recovery Evidence Envelope. Mirrored
+  DP-024 is Draft/Planned: restart-based private ordering/provenance/claim design,
+  no code, durable store or production recovery capability.
+- Latest published readiness: **TASK-078**, Completed — Coordinator Accepted,
+  exact subject `4c73bc9fd72ca61d28c2e67f454e936178d46b2a`; source commit
+  `8687758`, PR #83 merged as `4dad1af14102f516784cb1ae0ef39a59fec6b0ec`
+  by local immutable Git metadata. Item7 implementation remains Not Ready;
+  four missing mechanics are addressed as proposed design only by TASK-079.
+
 - Latest published process repair: **TASK-077**, Coordinator Accepted subject
   `bb2bd18df470021a8dc5bd6751a292c0d00c2e1c`, commit
   `c70c398b2a7b5c85765f53d663088d117ca1e21e`, PR #82 merged as
@@ -459,11 +465,13 @@
   external / 0 Deferred; no separate prerequisite; DP-016 remains Approved /
   Planned; Tester PASS 0/0/0; repeat Reviewer APPROVED 0/0; Scope Audit
   16/0/0; PROCESS-002 Synchronized; later superseded by the TASK-026 recheck**
-- Текущая рекомендация: **после TASK-078 — bounded recovery claim/admission
-  implementation-boundary decision для joint atomic ordering, authentic
-  authority-loss provenance, durability/readback/resume и claim observation.
-  Not Activated; отдельный clean intake. DP-017 reconciliation/release,
-  DP-018 reporting и production integration остаются более поздними slices.**
+- Текущая рекомендация: **после TASK-079 — отдельное design-only DP-024
+  Design Status/conformance decision с exact owner seams и isolated first-slice
+  proof coverage. Not Activated; Draft acceptance не разрешает код.
+  Persistent DP-014/DP-015/recovery store и provisioning qualification — отдельный
+  prerequisite. DP-017 reconciliation/release, DP-018 reporting, production
+  integration и activation остаются later slices.**
+
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы
   изолированно; Repeat Independent Review Approved, blocking/non-blocking 0;

@@ -108,18 +108,25 @@
 
 ## Ожидающие отдельного решения
 
-TASK-078 — bounded Design-only / Readiness для DP-023 §19 item 7. Independent
-Architect: readiness assessment Ready, implementation Not Ready. Отсутствуют
-joint atomic aggregate/command/claim ordering, authentic proof потери прежней
-lifecycle/command/recovery authority, durable claim/readback/resume contract и
-claim-aware assessment seam. NewBoundary expiry не прекращает уже выполняемый
-Owner/callback; containment ledger не является lifecycle/command/recovery store.
-Следующий candidate — bounded implementation-boundary decision этих prerequisites,
-`Not Activated`, с отдельным clean intake. Approved DP-014/015/017/022/023 и
-реализованные capabilities не изменены; конкретные private mechanics допустимы
-только после Architect confirmation, изменение Approved contract не выводится
-автоматически из отсутствия кода. TASK-078 actual gates/closure resolve-ятся из
-newest valid matching Recovery Evidence Envelope task record.
+TASK-078 Completed — Coordinator Accepted; accepted readiness subject
+`4c73bc9fd72ca61d28c2e67f454e936178d46b2a` опубликован source `8687758` через
+PR #83 как merge `4dad1af14102f516784cb1ae0ef39a59fec6b0ec` (local Git facts).
+Его четыре item7 gaps остаются implementation prerequisites.
+
+TASK-079 документирует [Draft/Planned DP-024](../docs/ru/design/DP-024-runtime-recovery-claim-admission-boundary.md):
+one exact-scope participant для всех owner writers/admission/phase gates;
+producer-generation provenance до normal/recovery capability issuance;
+restart-only authentic loss всех relevant authorities; durable complete claim CAS,
+exact readback, single local issuance и conditional successor resume;
+detached claim-aware assessment Clean/ReleaseOnly. NewBoundary expiry не
+прекращает уже выполняемый callback/Owner. Same-generation takeover и legacy
+missing provenance unresolved; containment ledger не хранит recovery truth.
+Persistent DP-014/DP-015/recovery facts и independently provisioned storage authority
+остаются prerequisite; memory-backed proof не означает durable item7 completion.
+Approved DP/ARCH/ADR, product capability и implementation statuses не изменены.
+Actual TASK079 gates/closure resolve-ятся только newest valid matching envelope.
+Следующий candidate: separate design-only DP024 Design Status/conformance decision,
+Not Activated, без DB выбора, code activation или reconciliation/release.
 
 Historical TASK-069 blocker `ARCH-B-001` доказал необходимость independently
 delivered immutable trusted provisioning descriptor, который связывает

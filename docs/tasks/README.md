@@ -3,14 +3,17 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая bounded Design-only / Readiness task —
-[TASK-078](TASK-078-RECOVERY-CLAIM-READINESS.md), verification-stable `In Progress`,
-branch `docs/task-078-recovery-claim-readiness`, baseline
-`5e40742c74860c7446941cffbd8747309b3b1053`. Actual gates/closure resolve-ятся
-только из newest valid matching TASK-078 envelope. Item 7 implementation не
-готова: joint atomic ordering, previous-authority-loss provenance, durable
-claim/readback/resume и claim-aware assessment требуют отдельного bounded
-implementation-boundary decision; candidate `Not Activated`.
+Текущая bounded Design-only task —
+[TASK-079](TASK-079-RECOVERY-CLAIM-ADMISSION-BOUNDARY.md), verification-stable
+`In Progress`, branch `docs/task-079-recovery-claim-admission-boundary`, baseline
+`4dad1af14102f516784cb1ae0ef39a59fec6b0ec`. Actual gates/closure resolve-ятся
+только newest valid matching TASK-079 envelope. DP-024 Draft/Planned, без
+implementation/durable storage claim. Следующий candidate — separate design-only
+DP024 Design Status/conformance decision, Not Activated; code item7 Not Ready.
+
+Последняя опубликованная readiness — TASK-078, Completed — Coordinator Accepted,
+subject `4c73bc9fd72ca61d28c2e67f454e936178d46b2a`, source `8687758`, PR #83,
+merge `4dad1af14102f516784cb1ae0ef39a59fec6b0ec` по local Git metadata.
 
 Последний опубликованный process repair —
 [TASK-077](TASK-077-TRUSTED-PUBLISHER-ROUTE.md), Coordinator Accepted subject
@@ -240,7 +243,8 @@ PROCESS-002, Scope Audit 31/0/0 и final Reviewer проходят. Task commit
 - [TASK-074 — Runtime Containment Composition, Admission, and Generation Provider Gate](TASK-074-RUNTIME-CONTAINMENT-COMPOSITION-GATE.md) — Completed, Coordinator Accepted; task commit `2d78d417784012e4e945e60f8d721246ea5bdcbf` published through PR #79 and merged as `bfab084c1a9664181027650b092bf240e04af435`; isolated private composition gate only
 - [TASK-075 — Runtime Read-Only Recovery Assessment](TASK-075-RUNTIME-READ-ONLY-RECOVERY-ASSESSMENT.md) — Completed, Coordinator Accepted; task commit `f7b80ac976a144aa4918bd4ed74140e48fd31310` published through PR #80 and merged as `5eb54efea3f3df5c7967b2c1e2d0894c6289e50a`; isolated read-only assessment only; durable recovery authority and production wiring remain Not Activated
 - [TASK-077 — Trusted Publisher Initial Route and Capability Preflight](TASK-077-TRUSTED-PUBLISHER-ROUTE.md) — Coordinator Accepted; commit c70c398 published through PR #82 as merge 5e40742; product capability unchanged
-- [TASK-078 — Runtime Recovery Claim and Admission Barrier Readiness](TASK-078-RECOVERY-CLAIM-READINESS.md) — verification-stable In Progress; latest matching envelope resolves gates/closure; design-only assessment, no implementation activation
+- [TASK-078 — Runtime Recovery Claim and Admission Barrier Readiness](TASK-078-RECOVERY-CLAIM-READINESS.md) — Completed, Coordinator Accepted; source 8687758 merged through PR #83 as 4dad1af; item7 code remains Not Ready
+- [TASK-079 — Runtime Recovery Claim and Admission Implementation Boundary](TASK-079-RECOVERY-CLAIM-ADMISSION-BOUNDARY.md) — verification-stable In Progress; latest matching envelope resolves gates/closure; DP024 Draft/Planned, no code activation
 - [TASK-076 — Local Configuration Studio](TASK-076-LOCAL-CONFIGURATION-STUDIO.md) — Coordinator Accepted source; committed as b8c2b86 and merged through PR #81 as e9a87b5; existing-API local/dev UI, no Runtime/DP-017 change
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
