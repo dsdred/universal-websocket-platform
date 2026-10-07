@@ -114,7 +114,7 @@ PR #83 как merge `4dad1af14102f516784cb1ae0ef39a59fec6b0ec` (local Git facts)
 Его четыре item7 gaps остаются implementation prerequisites.
 
 TASK-080 explicit independent Architect decision утверждает
-[DP-024 Approved / Planned](../docs/ru/design/DP-024-runtime-recovery-claim-admission-boundary.md).
+[DP-024 Approved / Partial](../docs/ru/design/DP-024-runtime-recovery-claim-admission-boundary.md).
 Exact-scope outer serialization token отделён от owner-local locks; external
 CAS/readback/evidence/authorization/waits не проходят под ними. DP-015 §13.1
 parent/preclaimed StopOld/occupant/rendezvous/private phase permit остаются одним
@@ -126,13 +126,23 @@ single local issuance. Unknown outcomes inspect-first, same-candidate retry
 только после proven absence; generation invalidation запрещает выдачу даже при
 committed CAS. Восемь crash cuts не возрождают old permit. Все relevant origins
 должны authentically proven terminated; client expiry этого не доказывает.
-Approved DP/ARCH/ADR не изменены. Implementation remains Planned; четырнадцать
-proof obligations Planned, no executable PASS. First recommendation — isolated
-ordering/fence foundation с test owner ports и partial model coverage, Not Activated;
-real-owner integration, durable provenance/DP014/DP015/recovery storage и original
+Approved DP/ARCH/ADR semantics не изменены. TASK-081 реализует только private
+`internal/runtimerecoverycoordination`: explicit exact-scope participant, closed
+aggregate/command test-owner models, detached complete membership/revisions,
+startup/sticky admission fence и local reservation/epoch/fatal invalidation.
+Owner locks не сохраняются при simulated external I/O; local revalidation не
+claim/permit/authority. Implementation Partial только для этой isolated foundation
+по explicit TASK-081 role decision. Четырнадцать integrated proof obligations
+Planned; P5 authentic origin и P8/P9 durability Deferred, full executable PASS нет.
+Next recommendation — real-owner/generation participation readiness and integration,
+Not Activated; durable provenance/DP014/DP015/recovery storage и original
 authority/provisioning qualification — отдельные prerequisites. Item7 completion,
 reconciliation/release/production wiring не активированы. Actual TASK080 gates/
-closure resolve-ятся только newest valid matching envelope.
+closure resolve-ятся только newest valid matching envelope; TASK081 использует
+свой такой же stable resolver, без переноса historical verdicts.
+TASK-080 accepted subject `70302b93b3908b0216ce79298ade7ae0e10d123b` опубликован
+source `eac6f6eac0a19fbea4d4c47e978124e7fc6cd6eb` через PR #85 как merge
+`ac82aa29b9aaf7d25a0822b7ef3b3785b9149b18` по local immutable Git metadata.
 TASK-079 accepted subject `15047580e43ee0a177bc35619f9f0dfaee2b2ae5` опубликован
 source `4ead8a82ac04a227121cd53b35b190a9a4a0182c` через PR #84 как merge
 `0d018c42ff2244e80b05f7ea9e0e58b0966f6413`; его Draft уточняется этой задачей.

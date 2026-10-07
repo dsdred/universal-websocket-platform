@@ -8,20 +8,24 @@
 
 ## Текущее состояние
 
-- Current task: **TASK-080 — Runtime Recovery Claim Design Status and Conformance**,
-  verification-stable `In Progress`, branch `docs/task-080-recovery-claim-design-status`,
-  baseline `0d018c42ff2244e80b05f7ea9e0e58b0966f6413`. Actual gates/closure resolve
-  only from the newest valid matching TASK-080 Recovery Evidence Envelope.
-  Mirrored DP-024 is Approved / Planned by explicit independent Architect decision:
-  outer ordering token differs from owner-local locks; all external persistence/
-  readback occurs outside those locks. Local reservation grants no authority;
-  successful durable claim CAS is the commit point, exact readback/revalidation
-  precede one local issuance. DP-015 internal atomic parent transition is preserved.
-  No code, persistent adapter, recovery permit or production recovery exists.
-  Next recommendation: isolated private ordering/fence foundation using test
-  owner ports only, Not Activated; real-owner integration and durable qualification
-  remain separate prerequisites, item7 completion is not established.
-- Latest published design boundary: **TASK-079**, accepted subject
+- Current task: **TASK-081 — Runtime Recovery Ordering and Fence Foundation**,
+  verification-stable `In Progress`, branch
+  `feature/task-081-recovery-ordering-foundation`, baseline
+  `ac82aa29b9aaf7d25a0822b7ef3b3785b9149b18`. Actual gates/closure resolve
+  only from the newest valid matching TASK-081 Recovery Evidence Envelope.
+  Scope is isolated private local ordering/fence with closed test-owner models;
+  the foundation exists in `internal/runtimerecoverycoordination`. DP-024 is
+  Approved / Partial for this local model only;
+  no real-owner participation, durable provenance/storage/claim, recovery permit
+  or production recovery is established. Item7 completion remains unproven.
+  Next recommendation: separate real-owner/generation participation readiness
+  and integration, Not Activated; durable qualification remains separate.
+- Latest published design boundary: **TASK-080**, accepted subject `70302b93b3908b0216ce79298ade7ae0e10d123b`, source
+  `eac6f6eac0a19fbea4d4c47e978124e7fc6cd6eb` through PR #85 merge
+  `ac82aa29b9aaf7d25a0822b7ef3b3785b9149b18` by local immutable Git metadata.
+  Approved DP-024 design delivers no runtime or storage capability.
+
+- Previous published design boundary: **TASK-079**, accepted subject
   `15047580e43ee0a177bc35619f9f0dfaee2b2ae5`, source commit
   `4ead8a82ac04a227121cd53b35b190a9a4a0182c`, PR #84 merge
   `0d018c42ff2244e80b05f7ea9e0e58b0966f6413`. Its Draft design is refined by
@@ -476,12 +480,12 @@
   external / 0 Deferred; no separate prerequisite; DP-016 remains Approved /
   Planned; Tester PASS 0/0/0; repeat Reviewer APPROVED 0/0; Scope Audit
   16/0/0; PROCESS-002 Synchronized; later superseded by the TASK-026 recheck**
-- Текущая рекомендация: **после TASK-080 — isolated private ordering/fence foundation,
-  Not Activated**. Test owner ports доказывают только local model semantics;
-  real-owner integration и generation-transition integration — отдельный slice.
-  Persistent DP-014/DP-015/recovery store и provisioning qualification остаются
-  отдельным prerequisite. DP-017 reconciliation/release, DP-018 reporting,
-  production integration и activation остаются later slices.
+- Текущая рекомендация: **после TASK-081 — separate real-owner/generation
+  participation readiness and integration, Not Activated**. Test-owner models
+  доказывают только local foundation semantics. Persistent DP-014/DP-015/recovery
+  store, authentic provenance и provisioning qualification остаются отдельными
+  prerequisites. DP-017 reconciliation/release, DP-018 reporting, production
+  integration и activation остаются later slices.
 
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы
