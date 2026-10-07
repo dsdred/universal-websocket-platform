@@ -113,20 +113,29 @@ TASK-078 Completed — Coordinator Accepted; accepted readiness subject
 PR #83 как merge `4dad1af14102f516784cb1ae0ef39a59fec6b0ec` (local Git facts).
 Его четыре item7 gaps остаются implementation prerequisites.
 
-TASK-079 документирует [Draft/Planned DP-024](../docs/ru/design/DP-024-runtime-recovery-claim-admission-boundary.md):
-one exact-scope participant для всех owner writers/admission/phase gates;
-producer-generation provenance до normal/recovery capability issuance;
-restart-only authentic loss всех relevant authorities; durable complete claim CAS,
-exact readback, single local issuance и conditional successor resume;
-detached claim-aware assessment Clean/ReleaseOnly. NewBoundary expiry не
-прекращает уже выполняемый callback/Owner. Same-generation takeover и legacy
-missing provenance unresolved; containment ledger не хранит recovery truth.
-Persistent DP-014/DP-015/recovery facts и independently provisioned storage authority
-остаются prerequisite; memory-backed proof не означает durable item7 completion.
-Approved DP/ARCH/ADR, product capability и implementation statuses не изменены.
-Actual TASK079 gates/closure resolve-ятся только newest valid matching envelope.
-Следующий candidate: separate design-only DP024 Design Status/conformance decision,
-Not Activated, без DB выбора, code activation или reconciliation/release.
+TASK-080 explicit independent Architect decision утверждает
+[DP-024 Approved / Planned](../docs/ru/design/DP-024-runtime-recovery-claim-admission-boundary.md).
+Exact-scope outer serialization token отделён от owner-local locks; external
+CAS/readback/evidence/authorization/waits не проходят под ними. DP-015 §13.1
+parent/preclaimed StopOld/occupant/rendezvous/private phase permit остаются одним
+internal atomic transition; persistent DP-015 adapter compatibility отдельно.
+Local sticky fence/reservation не committed claim, success или permit.
+Successful durable complete claim CAS — commit/publication point; exact readback
+и повторная validation epoch/revisions/current unfenced authority предшествуют
+single local issuance. Unknown outcomes inspect-first, same-candidate retry
+только после proven absence; generation invalidation запрещает выдачу даже при
+committed CAS. Восемь crash cuts не возрождают old permit. Все relevant origins
+должны authentically proven terminated; client expiry этого не доказывает.
+Approved DP/ARCH/ADR не изменены. Implementation remains Planned; четырнадцать
+proof obligations Planned, no executable PASS. First recommendation — isolated
+ordering/fence foundation с test owner ports и partial model coverage, Not Activated;
+real-owner integration, durable provenance/DP014/DP015/recovery storage и original
+authority/provisioning qualification — отдельные prerequisites. Item7 completion,
+reconciliation/release/production wiring не активированы. Actual TASK080 gates/
+closure resolve-ятся только newest valid matching envelope.
+TASK-079 accepted subject `15047580e43ee0a177bc35619f9f0dfaee2b2ae5` опубликован
+source `4ead8a82ac04a227121cd53b35b190a9a4a0182c` через PR #84 как merge
+`0d018c42ff2244e80b05f7ea9e0e58b0966f6413`; его Draft уточняется этой задачей.
 
 Historical TASK-069 blocker `ARCH-B-001` доказал необходимость independently
 delivered immutable trusted provisioning descriptor, который связывает

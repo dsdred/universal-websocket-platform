@@ -505,8 +505,9 @@ Architectural debt относится к границам, которые ост
   Production Activation отсутствуют. TASK-076 реализует отдельно
   приоритизированный bounded local/dev Configuration Studio только поверх
   существующих configuration API. Он не меняет очередь DP-017 и не повышает
-  более поздний roadmap item production Admin UI; Coordinator Acceptance и
-  publication ещё не выполнены.
+  более поздний roadmap item production Admin UI; Coordinator-Accepted source
+  `b8c2b8672343aefccfe03000144ebdd4df93f8ea` опубликован через PR #81
+  и merged как `e9a87b5a35c880ac71444be9960876d3fbd02fbc`.
 - **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Message Persistence, Delivery и Plugin всё ещё требуют focused design.

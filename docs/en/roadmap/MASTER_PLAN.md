@@ -507,8 +507,9 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   reporting, and Production Activation remain absent. TASK-076 implements a
   separately prioritized bounded local/dev Configuration Studio over existing
   configuration APIs only. It does not change the DP-017 queue or promote the
-  later production Admin UI roadmap item; Coordinator Acceptance and
-  publication are still pending.
+  later production Admin UI roadmap item; its Coordinator-Accepted source
+  `b8c2b8672343aefccfe03000144ebdd4df93f8ea` was published through PR #81
+  and merged as `e9a87b5a35c880ac71444be9960876d3fbd02fbc`.
 - **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Message Persistence, Delivery, and Plugin contracts still require focused design.
