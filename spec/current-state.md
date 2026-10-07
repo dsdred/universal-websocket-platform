@@ -1,23 +1,32 @@
 # Текущее состояние
 
-**Текущая задача:** TASK-079 — Runtime Recovery Claim and Admission Implementation
-Boundary, verification-stable `In Progress`, branch
-`docs/task-079-recovery-claim-admission-boundary`, baseline
-`4dad1af14102f516784cb1ae0ef39a59fec6b0ec`. Actual gates/closure определяет
-newest valid matching TASK-079 Recovery Evidence Envelope. Зеркальный
+**Текущая задача:** TASK-080 — Runtime Recovery Claim Design Status and Conformance,
+verification-stable `In Progress`, branch `docs/task-080-recovery-claim-design-status`,
+baseline `0d018c42ff2244e80b05f7ea9e0e58b0966f6413`. Actual gates/closure определяет
+только newest valid matching TASK-080 Recovery Evidence Envelope. Зеркальный
 [DP-024](../docs/ru/design/DP-024-runtime-recovery-claim-admission-boundary.md)
-Draft/Planned описывает private restart-based ordering/provenance/claim protocol.
-Новый код, durable storage и production recovery не реализованы. Следующий
-candidate — отдельное design-only DP-024 Design Status/conformance decision,
-Not Activated; persistent aggregate/command/recovery qualification остаётся
-отдельным prerequisite. DP-017 Approved/Planned overall, только read-only
-assessment TASK-075 реализован изолированно; reconciliation/release не активированы.
+Approved / Planned по explicit independent Architect decision: outer ordering
+token отделён от owner-local locks, external CAS/readback проходит вне них;
+local reservation не truth/permit, durable claim CAS — commit point, exact
+readback/revalidation предшествуют single local issuance. DP-015 internal atomic
+parent transition сохранён. Новый код, persistent adapter, recovery permit и
+production recovery отсутствуют. Next recommendation — isolated private
+ordering/fence foundation с test owner ports, Not Activated. Real-owner
+integration и durable qualification — отдельные prerequisites; item7 не завершён.
+DP-017 остаётся Approved/Planned overall, только TASK-075 assessment изолированно
+реализован; reconciliation/release не активированы.
+
+**Последняя опубликованная design boundary:** TASK-079, accepted subject
+`15047580e43ee0a177bc35619f9f0dfaee2b2ae5`, source
+`4ead8a82ac04a227121cd53b35b190a9a4a0182c`, PR #84 merge
+`0d018c42ff2244e80b05f7ea9e0e58b0966f6413`. Draft уточнён TASK-080;
+publication не добавила runtime implementation capability.
 
 **Последняя опубликованная readiness task:** TASK-078 — Completed — Coordinator
 Accepted, subject `4c73bc9fd72ca61d28c2e67f454e936178d46b2a`, source `8687758`,
 PR #83 merged как `4dad1af14102f516784cb1ae0ef39a59fec6b0ec` по local immutable
 Git metadata. Item7 implementation Not Ready; четыре missing mechanics
-уточняются только в Draft DP-024.
+уточняются только на design level DP-024.
 
 **Последний опубликованный process repair:** TASK-077 — Coordinator Accepted
 subject `bb2bd18df470021a8dc5bd6751a292c0d00c2e1c`, commit

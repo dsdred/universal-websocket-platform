@@ -4,12 +4,20 @@
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
 Текущая bounded Design-only task —
-[TASK-079](TASK-079-RECOVERY-CLAIM-ADMISSION-BOUNDARY.md), verification-stable
-`In Progress`, branch `docs/task-079-recovery-claim-admission-boundary`, baseline
-`4dad1af14102f516784cb1ae0ef39a59fec6b0ec`. Actual gates/closure resolve-ятся
-только newest valid matching TASK-079 envelope. DP-024 Draft/Planned, без
-implementation/durable storage claim. Следующий candidate — separate design-only
-DP024 Design Status/conformance decision, Not Activated; code item7 Not Ready.
+[TASK-080](TASK-080-RECOVERY-CLAIM-DESIGN-STATUS.md), verification-stable
+`In Progress`, branch `docs/task-080-recovery-claim-design-status`, baseline
+`0d018c42ff2244e80b05f7ea9e0e58b0966f6413`. Actual gates/closure resolve-ятся
+только newest valid matching TASK-080 envelope. DP-024 Approved / Planned:
+owner locks отделены от outer ordering, claim CAS/readback/issuance уточнены;
+код или durable qualification отсутствуют. Next recommendation — isolated
+ordering/fence foundation с test owner ports, Not Activated. Real-owner
+integration/durable qualification и item7 completion остаются отдельно.
+
+Последняя опубликованная design boundary —
+[TASK-079](TASK-079-RECOVERY-CLAIM-ADMISSION-BOUNDARY.md), accepted subject
+`15047580e43ee0a177bc35619f9f0dfaee2b2ae5`, source
+`4ead8a82ac04a227121cd53b35b190a9a4a0182c`, PR #84 merged как
+`0d018c42ff2244e80b05f7ea9e0e58b0966f6413`; Draft refined by TASK-080.
 
 Последняя опубликованная readiness — TASK-078, Completed — Coordinator Accepted,
 subject `4c73bc9fd72ca61d28c2e67f454e936178d46b2a`, source `8687758`, PR #83,
@@ -244,7 +252,8 @@ PROCESS-002, Scope Audit 31/0/0 и final Reviewer проходят. Task commit
 - [TASK-075 — Runtime Read-Only Recovery Assessment](TASK-075-RUNTIME-READ-ONLY-RECOVERY-ASSESSMENT.md) — Completed, Coordinator Accepted; task commit `f7b80ac976a144aa4918bd4ed74140e48fd31310` published through PR #80 and merged as `5eb54efea3f3df5c7967b2c1e2d0894c6289e50a`; isolated read-only assessment only; durable recovery authority and production wiring remain Not Activated
 - [TASK-077 — Trusted Publisher Initial Route and Capability Preflight](TASK-077-TRUSTED-PUBLISHER-ROUTE.md) — Coordinator Accepted; commit c70c398 published through PR #82 as merge 5e40742; product capability unchanged
 - [TASK-078 — Runtime Recovery Claim and Admission Barrier Readiness](TASK-078-RECOVERY-CLAIM-READINESS.md) — Completed, Coordinator Accepted; source 8687758 merged through PR #83 as 4dad1af; item7 code remains Not Ready
-- [TASK-079 — Runtime Recovery Claim and Admission Implementation Boundary](TASK-079-RECOVERY-CLAIM-ADMISSION-BOUNDARY.md) — verification-stable In Progress; latest matching envelope resolves gates/closure; DP024 Draft/Planned, no code activation
+- [TASK-080 — Runtime Recovery Claim Design Status and Conformance](TASK-080-RECOVERY-CLAIM-DESIGN-STATUS.md) — verification-stable In Progress; matching envelope resolves gates/closure; DP024 Approved/Planned, no code activation
+- [TASK-079 — Runtime Recovery Claim and Admission Implementation Boundary](TASK-079-RECOVERY-CLAIM-ADMISSION-BOUNDARY.md) — accepted subject15047580 published source4ead8a82 through PR84 merge0d018c42; Draft refined by TASK080
 - [TASK-076 — Local Configuration Studio](TASK-076-LOCAL-CONFIGURATION-STUDIO.md) — Coordinator Accepted source; committed as b8c2b86 and merged through PR #81 as e9a87b5; existing-API local/dev UI, no Runtime/DP-017 change
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с

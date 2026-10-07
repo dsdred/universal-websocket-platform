@@ -4,11 +4,12 @@
 
 ## 1. Статус
 
-- **Design Status:** Draft
+- **Design Status:** Approved
 - **Implementation Status:** Planned
 
-TASK-079 фиксирует предлагаемый private implementation boundary. Architecture
-Confirmation разрешает документировать предложение, но не Approval или код.
+TASK-079 ввела предлагаемую private boundary. Независимое Architect Confirmation
+TASK-080 утверждает уточнённый design этого документа; Implementation остаётся
+Planned. Approval не поставляет код или storage qualification.
 DP-017 остаётся Approved / Planned overall: изолированно реализован только
 read-only assessment TASK-075. Durable claim, recovery permit и barrier отсутствуют.
 
@@ -23,7 +24,7 @@ assessment. Предложение уточняет [DP-017](DP-017-runtime-reco
 attempt truth; [DP-015](DP-015-runtime-management-command-idempotency.md) —
 command/parent/phase truth. [DP-022](DP-022-runtime-execution-containment-and-evidence.md)
 и [DP-023](DP-023-runtime-process-containment-bootstrap.md) владеют containment
-и generation evidence. Этот Draft не переопределяет перечисленные источники.
+и generation evidence. Это Approved уточнение не переопределяет перечисленные источники.
 
 Approved-source amendment или ADR не предлагаются: это заменяемая private
 реализация существующих требований ordering/ownership без постоянного выбора
@@ -46,47 +47,69 @@ cancellation, timeout и пустая live map недостаточны.
 ## 4. Ownership и exact scope
 
 Exact scope: operational/containment domain, Workspace, Configuration и Runtime
-Instance. Один composition-private per-Instance ordering participant явно
-передаётся DP-014, DP-015 и recovery owners. Composition должна передать один
-и тот же participant всем writers этого scope, а не независимые gates одного
-Instance. Разные Instances имеют независимые participants.
+Instance. Composition явно передаёт один и тот же private per-Instance ordering
+participant owners DP-014, DP-015 и recovery. Разные Instances независимы.
+Participant владеет ordering и local fence; records, validation и conditional
+publications остаются у owners. Recovery владеет claim/barrier coordination и
+non-transferable permit; composition предоставляет current containment authority
+и prior-process-loss proof. Raw maps/locks, generic transaction registry, service
+locator, произвольный callback и ordinary lifecycle capability границу не пересекают.
 
-Participant владеет только ordering и local admission fence. DP-014 и DP-015
-сохраняют records, validation и conditional publications. Recovery владеет
-claim/barrier coordination и private non-transferable permit. Composition
-предоставляет current containment authority и prior-process-loss proof.
-Raw maps/locks, generic transaction registry, service locator, произвольный
-callback и ordinary lifecycle capability не пересекают эту границу.
+Это present owners и prospective participation seams, а не поставленные APIs:
+
+| Owner/source | Required participation |
+| --- | --- |
+| `runtimeidentity/store.go` | Instance creation/candidate identity allocation при влиянии на absence/identity; attempt claim/history append, execution binding, Running publication, Stop claim, все authority-specific terminal publishers включая recovery |
+| `runtimecommandidempotency/store.go` | Primitive inspect/claim, tracked-Start Stop admission, permit consumption/delegation gates, terminal publication |
+| `managed_start.go`, `managed_parent.go`, `orchestration_admission.go` | Managed candidate revalidation, tracked parent/preclaimed StopOld atomic admission, binding/rendezvous continuation, Satisfied terminal publication |
+| `parent_store.go` | Parent admission, StopOld/StartTarget creation/delegation, phase/parent terminal publication, omission/order decisions |
+| `assessment_snapshot.go` и DP-014 detached readers | Complete coherent fact collection; pending/unknown coordination не является qualified no-claim/Clean; reader snapshots не раскрывают participant, lock, map или authority |
+| `MemoryStorage.nextGeneration` / `NewBoundary` | Client-epoch invalidation, никогда process-termination proof |
+| `runtimerecoveryassessment` | Planned detached claim/provenance reader и ReleaseOnly, без mutation/issuance |
+| `runtimecontainmentcomposition` | Явная передача одного participant, current containment authority и immutable supersession observation; без synthetic producer provenance или containment-ledger extension |
+| Future recovery owner/store | Claim CAS, exact readback, conditional resume, local single issuance; future release участвует, но не активирован |
+
+Все writers и delegation gates должны участвовать до заявления integrated
+ordering. Ordinary terminal completion не обходит participant. Live callback
+может работать вне locks; takeover всё равно требует proven termination каждого
+authentic relevant process origin.
 
 ## 5. Joint ordering protocol
 
-Каждый DP-014 conditional writer и каждый DP-015 primitive/managed claim,
-candidate-to-claim path, tracked-Start Stop exception, parent с preclaimed
-StopOld, later-phase creation/delegation gate и ordinary terminal publication
-входят в одну короткую область. Recovery claim/resume и будущий release также
-участвуют. Один обход делает joint-ordering proof недействительным.
+Outer exact-scope serialization token и owner-local locks — разные boundaries.
+Каждый seam §4 участвует; recovery claim/resume и future release разделяют
+ordering. Захват: outer participant, затем fixed owner-local lock order;
+обратный вход запрещён. DP-014 aggregate locks, DP-015 active-client-generation/
+ledger locks и Runtime Owner locks защищают только короткие internal transitions.
+Все owner-local locks освобождаются до external persistence/readback,
+authorization, evidence queries, waits или lifecycle work.
 
-Порядок захвата: outer exact-scope participant, затем owner-local locks;
-обратный вход запрещён. Внутри выполняются только закрытые owner-defined bounded
-validation/publication operations. Authorization, evidence queries и
-Owner/Flow/Load/Host work выполняются снаружи. Долгая lifecycle/evidence operation
-не удерживает область. Persistent publication использует только qualified bounded
-owner operation; unknown storage completion закрывает/fences, а не позволяет
-другому writer переинтерпретировать частичный результат.
+Recovery может удерживать outer token во время qualified bounded CAS/readback;
+это никогда не разрешает external I/O под owner-local lock. Разные Instances
+независимы. Unknown completion сохраняет closed admission и unresolved
+disposition даже после освобождения physical token. Lifecycle/evidence callback
+не выполняется под token.
 
-Перед commit проверяются exact aggregate/history identity и revision,
-полные primitive/parent/phase membership и revisions (включая absence и links),
-claim revision/absence, coordination revision и current authority. Detached
-reads/evidence собираются снаружи и revalidate-ятся внутри. Stale/conflicting/
-unknown validation не меняет durable facts и не выдаёт permit; требуется
-reassessment. Local fence при этом может оставаться закрытым.
+DP-015 §13.1 остаётся authoritative: parent, preclaimed StopOld, sole Stop
+exception occupant, rendezvous и private live phase permit образуют один atomic
+internal transition под active-generation/ledger locks. Этот design не разделяет
+transition и не переносит ordinary parent admission в recovery storage.
+Future persistent DP-015 adapter отдельно доказывает compatibility.
+Новый ordinary-command publication protocol или adapter здесь не утверждён.
 
-Нынешние DP-014 aggregate mutex и DP-015 client/ledger locks раздельны;
-stable rereads сами по себе не реализуют протокол. Cross-process writer
-exclusion требует validated current DP-023 authority и conforming storage
-boundary. Cross-store distributed transaction не предполагается: owner
-publications остаются отдельными, все valid writers разделяют ordering,
-restart admission начинается закрытым. Physical layout не выбран.
+Detached facts/evidence собираются вне owner-local locks. Под participant locks
+кратко проверяют exact aggregate/history, complete command membership,
+absence/links/revisions, claim/coordination revisions, authentic provenance,
+current unfenced containment authority и local client/admission epoch. Записывают
+только closed candidate reservation §9, затем освобождают locks.
+Stale/conflicting validation имеет zero durable mutation и не выдаёт permit.
+
+Token исключает всех conforming writers пока recovery publication pending;
+validated DP-023 authority исключает другого authorized process writer.
+Captured owner revisions поэтому не меняются через conforming writer между
+validation и recovery CAS. Adapter без этой гарантии unqualified. Нынешние
+раздельные owner mutexes/stable rereads не реализуют протокол. Cross-store
+distributed transaction и physical layout не выбираются.
 
 ## 6. Admission fence до claim
 
@@ -120,7 +143,9 @@ DP-014 lifecycle producers также связывают operation kind, candida
 incarnation сохраняются до recovery permit issuance.
 
 Provenance — coordination metadata, а не второй lifecycle/command truth store,
-attempt execution binding или extension containment ledger. Оно должно commit
+attempt execution binding или extension containment ledger. Lock separation и
+reservation/CAS/readback discipline §§5,9 обязательны; external provenance
+publication/inspection не выполняются под owner-local locks. Оно должно commit
 вместе с owner publication либо как write-ahead certificate перед ней;
 оба варианта требуют exact inspection до capability release. Orphan certificate
 сам по себе не является admission или claim truth. Proven publication absence
@@ -171,28 +196,67 @@ wall-clock takeover metadata не входят в coordination records.
 
 ## 9. Claim, confirmation и single issuance
 
-Под joint region fresh exact non-clean facts и complete prior-authority-loss
-proof разрешают один conditional persistent claim и closed recovery barrier
-в одной logical publication point. Claim фиксирует exact captured revisions,
-scope, provenance и candidate issuer. Stale/conflicting input имеет zero durable
-mutation. Fence и claim исключают всех valid normal writers.
+После detached collection и validation §5 закрыть/сохранить sticky local
+admission fence и записать private candidate reservation с exact validated facts.
+Освободить все owner-local locks. Этот local transition — только fence/reservation:
+без committed claim, success, reopened admission, usable permit или delegation.
+Reservation не является recovery truth.
 
-Durable commit сам по себе не возвращает permit. Exact candidate readback
-должен подтвердить весь record. Затем под тем же participant с revalidated
-current authority/revisions фиксируется одна local issuance disposition для exact
-claim revision/issuer incarnation. Только synchronous path, владеющий candidate,
-получает один private non-transferable permit; observers его не получают.
-Issuance не восстанавливается из stored identity. Recovery authority не может
-вызвать Start, Stop, Flow, Load, Build, Launcher или adopt Host.
+Удерживая outer token, выполнить qualified recovery-store conditional atomic
+publication. Successful durable CAS — claim commit/publication point: один complete
+record содержит immutable claim identity, captured facts/provenance, issuer
+generation/incarnation, monotonic revision и unresolved closed barrier.
+Exact candidate readback проходит вне owner-local locks. Затем кратко reacquire
+local locks под participant и revalidate reservation, epoch, exact owner revisions,
+claim revision и current unfenced authority. Записать одну local issuance disposition.
+Освободить locks и participant до synchronous delivery original candidate-owning
+path. Observers не получают permit. Stored identity не восстанавливает issuance;
+private permit non-transferable и не может invoke Start, Stop, Flow, Load, Build,
+Launcher или adopt Host.
 
-Unknown commit/readback оставляет admission закрытым без issuance. Сначала
-inspect того же candidate; confirmed absence при unchanged expected state
-разрешает только exact-candidate retry. Другой tail/claim или unknown authority
-не перезаписывается. Если local issuance могла произойти без proven disposition,
-duplicate запрещён; same-generation reissue/adoption первоначально не поддержан.
-Cancellation/loss оставляет claim unresolved. Claim, committed до последующего
-fatal fencing, остаётся для successor inspection; fenced authority не может
-использовать permit или delegate work.
+Каждый issued/delivered permit навсегда связан с exact claim revision, issuer
+incarnation, local client/admission epoch и current containment authority.
+После освобождения issuance locks/token synchronous delivery проходит новый короткий
+closed internal acceptance gate, atomically ordered с epoch replacement/fatal
+invalidation. Gate выполняет только bounded local validation/acceptance: без external
+I/O, lifecycle или arbitrary callback под owner-local locks. Invalidation до acceptance
+подавляет successful delivery и оставляет issuance exhausted/unresolved. Если acceptance
+первой прошла gate, последующая invalidation немедленно disables handle; удержание
+или возврат handle не continuing authority. Delivery linearizes на gate, а не physical
+return. Каждый последующий permitted conditional recovery use проходит fresh
+exact-epoch/current-unfenced-authority gate под тем же participant, atomically ordered
+с invalidation. Stale handles reject без новой authorized mutation/delegation.
+External persistence остаётся вне всех owner-local locks по reservation/publication/
+confirmation §§5,9. Уже in-flight uncertain publication inspect как possibly committed,
+никогда не reported successful от invalidated authority. Gate не retries/recreates
+issued permit; epoch invalidation не proof termination old process/callback.
+
+Durable commit и live issuance различны. Atomic semantic boundary DP-017 сохранена:
+normal admission/другой issuer не interleave, reservation не даёт authority,
+interrupted completion остаётся unresolved/closed. Client-generation replacement
+или fatal fencing invalidate pending reservation и disable issuance даже во время
+persistence. Invalidation никогда не ждёт external storage под owner-local locks
+и не захватывает locks обратно. Она не переписывает captured owner revisions,
+не удаляет possibly committed claim и не доказывает prior-process termination.
+Inspection может завершиться, но invalidated candidate не возвращает permit успешно.
+
+Unknown publication/readback остаётся closed. Сначала inspect same candidate.
+Retry требует proven exact absence, unchanged expected durable/owner facts,
+valid original storage authority и fresh current authorization; используется тот
+же candidate. Другой tail/claim не перезаписывается. Если issuance могла состояться,
+same-generation reissue/adoption запрещены. Cancellation/loss сохраняет unresolved
+claim; fenced issuer не может continue/delegate.
+
+| Cut | Required recovery behavior |
+| --- | --- |
+| До reservation/fence | Нет claim/permit; successor admission starts closed |
+| Local fence/reservation, до durable CAS | Нет committed claim/success; successor inspect qualified storage, reservation не reconstruct permit |
+| Durable publication uncertain | Closed admission; exact-candidate inspection до retry |
+| Claim committed, до local confirmation | Authoritative unresolved claim сохраняется; successor доказывает termination prior origins до conditional resume |
+| Confirmed claim, до issuance | Stored identity не доказывает issuance; same-generation uncertainty fails closed |
+| Local issuance recorded, до/uncertain delivery | Invalidation до acceptance подавляет success; после acceptance disables handle; нет duplicate в этой generation/incarnation |
+| Permit delivered, cancellation/client-epoch replacement/fatal fence | Claim unresolved; invalidated handle не continue/delegate |
+| Restart | Old permit не revived; fresh conditional resume требует termination всех relevant origins и сохраняет original observations |
 
 ## 10. Conditional resume
 
@@ -201,7 +265,8 @@ capability origins, читает full current aggregate/command/claim/provenance
 revalidate exact revisions под joint ordering. Сохраняет claim identity/original
 observations, conditional advances claim revision с fresh issuer generation/
 incarnation и current observations, подтверждает exact readback, затем использует
-single-issuance protocol. Старый permit не восстанавливается.
+reservation, unlocked CAS/readback и single-issuance protocol §§5,9. External I/O
+не проходит под owner-local lock. Старый permit не восстанавливается.
 
 Current-generation issuer, incomplete origin set, stale facts, missing original
 authority или uncertainty возможности сохранения prior issuer/capability
@@ -217,7 +282,8 @@ command/parent, manufacture Owner completion basis или открыть claimed
 Private assessment расширяется detached exact claim/provenance observation и
 revision, явно переданными recovery reader. Stable rereads включают claim/
 coordination revision вокруг evidence. Missing/foreign/stale/unknown reads дают
-Unknown, а не absent claim. Assessment не выдаёт mutation capability.
+Unknown, а не absent claim. Pending reservations/unknown disposition никогда
+не qualified no-claim или Clean. Assessment не выдаёт mutation capability.
 
 Clean требует no active attempt, no non-terminal primitive/parent/existing phase,
 coherent terminal aggregate/command facts и qualified absence
@@ -237,12 +303,12 @@ Planned, а не existing capability.
 | P4 | Concurrent claim paths создают один committed claim и не более одного live permit | DP-017 §9 |
 | P5 | CommandOnly/unbound origins доказывают old process loss без synthetic binding | DP-017 §§10–11 |
 | P6 | Unlocked live callback, client expiry, same-generation issuer или missing provenance запрещают takeover | DP-015 permits; DP-017 §9 |
-| P7 | Crash на provenance/publication/readback/issuance cuts; exact inspection, без duplicate capability | DP-014 §17; DP-017 §§9,20 |
+| P7 | Crash на provenance/publication/readback/issuance и issuance→unlock→delivery invalidation cuts; exact inspection, без duplicate capability | DP-014 §17; DP-017 §§9,20 |
 | P8 | Persistent aggregate, complete commands и claim переживают real process restart | DP-017 §§9,17,23 |
 | P9 | Missing/replaced/rollback/clone/corrupt authority никогда не становится empty | DP-023 §8.1; DP-017 §23 |
 | P10 | Fresh conditional successor resume сохраняет original observations; stale/foreign input не меняет facts | DP-017 §§9,16 |
 | P11 | Clean vs ReleaseOnly; stable detached claim-aware reads не дают permit | DP-017 §§7,12 |
-| P12 | Cancellation/unknown result/fatal fence сохраняют closed admission и запрещают issuance | DP-017 §§20–21; DP-023 §12 |
+| P12 | Cancellation/unknown result/fatal fence сохраняют closed admission; epoch replacement отзывает issued и delivered permits | DP-017 §§20–21; DP-023 §12 |
 | P13 | Independent Instances, fixed lock order, evidence/lifecycle вне области, race/stress | DP-017 §19 |
 | P14 | Claim не даёт lifecycle/reconciliation/release/Owner-basis promotion или new attempt | DP-017 §§13–17 |
 
@@ -251,25 +317,53 @@ Planned, а не existing capability.
 durable conformance, process-origin production coverage или production recovery
 readiness.
 
+
+### Coverage первого foundation slice
+
+| Proof | Planned first foundation coverage | Remaining prerequisite |
+| --- | --- | --- |
+| P1 | Shared identity/no bypass только test participants | Каждый real writer/delegation gate |
+| P2 | Local race/reservation/revision rejection | Real complete owners и durable conditional publication |
+| P3 | Local startup/sticky fence | Real restart с qualified owner/claim stores |
+| P4 | Reservations не дают authority | Durable one-claim/single live issuance |
+| P5 | Reject missing/current synthetic origins | Authentic durable producer provenance |
+| P6 | Client expiry не takeover proof | Complete origins/surviving real callbacks |
+| P7 | Только local cut/invalidation model | Real provenance/CAS/readback/issuance crash cuts |
+| P8 | Deferred | Persistent aggregate/complete commands/claim restart |
+| P9 | Deferred | Existing-only authority, anti-clone/rollback provisioning |
+| P10 | Resume authority не раскрывается | Conditional durable successor resume |
+| P11 | Pending/unknown не qualified Clean в model | Actual claim-aware assessment/ReleaseOnly |
+| P12 | Local cancellation/epoch/fence negative gates | Actual fatal authority/uncertain storage cuts |
+| P13 | Independent scopes/fixed order/no owner locks during simulated I/O | Real integration, race/stress/persistent I/O |
+| P14 | Нет lifecycle/reconciliation/release capability | Continued integrated negative proofs |
+
+Это planned partial model coverage, никогда PASS или real-owner/durability
+qualification. Восемь cuts §9 требуют future executable evidence.
+
 ## 13. Prerequisites и следующее решение
 
-Первый candidate: отдельное design-only DP-024 Design Status и conformance
-decision против Approved sources и всех proof obligations. Он Not Activated;
-Acceptance этого Draft не разрешает implementation. Решение должно ограничить
-first isolated mechanics slice, exact owner seams/proof coverage, затем отделить
-его от persistent DP-014/DP-015/recovery storage qualification. Concrete durable
-adapter/schema/provisioning остаётся отдельным prerequisite.
+Следующая рекомендация — отдельная isolated private ordering/fence foundation,
+Not Activated. Fresh independent intake ограничит scope и Size Guard. Допустимы
+явно переданная exact-scope participant identity, startup-closed/sticky fence,
+closed typed reservation/epoch invalidation, fixed lock order и test owner
+participants. Negative dispositions проверяются без claim-store mutation,
+provenance publication, live recovery permit, lifecycle delegation или production
+composition. Package/API/file-count до intake не обещаются.
 
-Только later fresh intake с approved mechanics, exact owner integration,
-authentic provenance и qualified durable stores может заявить item 7 completion.
-Items 8–10 reconciliation/release и item 11 reporting/integration остаются позже.
-Один ordering/claim behavior сохраняется целостным; evidence scanning, второй
-adapter, production wiring и unrelated functionality разделяются. Production-line
-и file-count Size Guard требует fresh оценки при implementation intake.
+Test owner ports доказывают только local semantics, а не participation каждого
+real DP-014/DP-015 writer. Real-owner/generation-transition integration — отдельный
+bounded slice. Persistent aggregate/complete command/recovery adapter и original
+storage-authority/provisioning qualification остаются отдельными prerequisites;
+DB, schema, adapter и provisioner здесь не выбираются.
+Только later fresh intake с integrated owners, authentic durable provenance и
+qualified stores может заявить item 7 completion. Items 8–10 reconciliation/release
+и item 11 reporting/integration остаются позже. Следующая task здесь не начинается.
 
 ## 14. Граница решения
 
-Зафиксировать предлагаемый private restart-based protocol как Draft / Planned.
-Existing Approved statuses и delivered capabilities не изменены. TASK-079 не
-поставила код, durable store или production recovery. Unknown provenance,
-storage, authority или commit outcome всегда оставляет admission закрытым.
+Независимый Architect TASK-080 явно утверждает уточнённый private restart-based
+design: Approved / Planned. Internal atomic transitions и external-I/O prohibition
+DP-015 не изменены. TASK-079/TASK-080 не поставили код, durable store, recovery permit
+или production recovery. Все proof rows остаются Planned. Unknown provenance,
+storage, authority или publication outcome оставляет admission closed;
+design Approval не активирует implementation.

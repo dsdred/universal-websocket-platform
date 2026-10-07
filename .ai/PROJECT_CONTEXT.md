@@ -8,18 +8,29 @@
 
 ## Текущее состояние
 
-- Current task: **TASK-079 — Runtime Recovery Claim and Admission Implementation
-  Boundary**, verification-stable `In Progress`, branch
-  `docs/task-079-recovery-claim-admission-boundary`, baseline
-  `4dad1af14102f516784cb1ae0ef39a59fec6b0ec`. Actual gates/closure resolve only
-  from the newest valid matching TASK-079 Recovery Evidence Envelope. Mirrored
-  DP-024 is Draft/Planned: restart-based private ordering/provenance/claim design,
-  no code, durable store or production recovery capability.
+- Current task: **TASK-080 — Runtime Recovery Claim Design Status and Conformance**,
+  verification-stable `In Progress`, branch `docs/task-080-recovery-claim-design-status`,
+  baseline `0d018c42ff2244e80b05f7ea9e0e58b0966f6413`. Actual gates/closure resolve
+  only from the newest valid matching TASK-080 Recovery Evidence Envelope.
+  Mirrored DP-024 is Approved / Planned by explicit independent Architect decision:
+  outer ordering token differs from owner-local locks; all external persistence/
+  readback occurs outside those locks. Local reservation grants no authority;
+  successful durable claim CAS is the commit point, exact readback/revalidation
+  precede one local issuance. DP-015 internal atomic parent transition is preserved.
+  No code, persistent adapter, recovery permit or production recovery exists.
+  Next recommendation: isolated private ordering/fence foundation using test
+  owner ports only, Not Activated; real-owner integration and durable qualification
+  remain separate prerequisites, item7 completion is not established.
+- Latest published design boundary: **TASK-079**, accepted subject
+  `15047580e43ee0a177bc35619f9f0dfaee2b2ae5`, source commit
+  `4ead8a82ac04a227121cd53b35b190a9a4a0182c`, PR #84 merge
+  `0d018c42ff2244e80b05f7ea9e0e58b0966f6413`. Its Draft design is refined by
+  TASK-080; publication creates no runtime implementation capability.
 - Latest published readiness: **TASK-078**, Completed — Coordinator Accepted,
   exact subject `4c73bc9fd72ca61d28c2e67f454e936178d46b2a`; source commit
   `8687758`, PR #83 merged as `4dad1af14102f516784cb1ae0ef39a59fec6b0ec`
   by local immutable Git metadata. Item7 implementation remains Not Ready;
-  four missing mechanics are addressed as proposed design only by TASK-079.
+  four missing mechanics are addressed at design level by DP-024 only.
 
 - Latest published process repair: **TASK-077**, Coordinator Accepted subject
   `bb2bd18df470021a8dc5bd6751a292c0d00c2e1c`, commit
@@ -465,12 +476,12 @@
   external / 0 Deferred; no separate prerequisite; DP-016 remains Approved /
   Planned; Tester PASS 0/0/0; repeat Reviewer APPROVED 0/0; Scope Audit
   16/0/0; PROCESS-002 Synchronized; later superseded by the TASK-026 recheck**
-- Текущая рекомендация: **после TASK-079 — отдельное design-only DP-024
-  Design Status/conformance decision с exact owner seams и isolated first-slice
-  proof coverage. Not Activated; Draft acceptance не разрешает код.
-  Persistent DP-014/DP-015/recovery store и provisioning qualification — отдельный
-  prerequisite. DP-017 reconciliation/release, DP-018 reporting, production
-  integration и activation остаются later slices.**
+- Текущая рекомендация: **после TASK-080 — isolated private ordering/fence foundation,
+  Not Activated**. Test owner ports доказывают только local model semantics;
+  real-owner integration и generation-transition integration — отдельный slice.
+  Persistent DP-014/DP-015/recovery store и provisioning qualification остаются
+  отдельным prerequisite. DP-017 reconciliation/release, DP-018 reporting,
+  production integration и activation остаются later slices.
 
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы

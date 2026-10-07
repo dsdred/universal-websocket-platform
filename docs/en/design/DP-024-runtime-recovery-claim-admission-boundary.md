@@ -4,11 +4,12 @@
 
 ## 1. Status
 
-- **Design Status:** Draft
+- **Design Status:** Approved
 - **Implementation Status:** Planned
 
-TASK-079 records a proposed private implementation boundary. Architecture
-Confirmation authorizes documenting this proposal, not Approval or code.
+TASK-079 introduced the proposed private boundary. TASK-080 independent Architect
+Confirmation approves the refined design recorded here; Implementation remains
+Planned. Approval delivers no code or storage qualification.
 DP-017 remains Approved / Planned overall with only TASK-075 read-only assessment
 implemented in isolation. No durable claim, recovery permit or barrier exists.
 
@@ -23,7 +24,7 @@ sections 7–9, 16–19 and 23 under
 attempt truth; [DP-015](DP-015-runtime-management-command-idempotency.md) owns
 command/parent/phase truth. [DP-022](DP-022-runtime-execution-containment-and-evidence.md)
 and [DP-023](DP-023-runtime-process-containment-bootstrap.md) own containment
-and generation evidence. This Draft overrides none of those sources.
+and generation evidence. This Approved refinement overrides none of those sources.
 
 No Approved-source amendment or ADR is proposed: this is a replaceable private
 realization of existing ordering and ownership requirements, without a permanent
@@ -45,48 +46,71 @@ cancellation, timeouts or an empty live map are insufficient.
 
 ## 4. Ownership and exact scope
 
-The exact scope is operational/containment domain, Workspace, Configuration and
-Runtime Instance. One composition-private per-Instance ordering participant is
-explicitly supplied to DP-014, DP-015 and recovery owners. Composition must supply
-the same participant for all writers of that scope, never create independent
-gates for the same Instance. Different Instances have independent participants.
-
-The participant owns only ordering and a local admission fence. DP-014 and
-DP-015 keep their records, validation and conditional publications. Recovery
-owns claim/barrier coordination and its private non-transferable permit.
-Composition supplies current containment authority and prior-process-loss proof.
+Exact scope is operational/containment domain, Workspace, Configuration and Runtime
+Instance. Composition explicitly supplies one identical private per-Instance
+ordering participant to DP-014, DP-015 and recovery owners. Different Instances
+have independent participants. The participant owns ordering and a local fence;
+owner records, validation and conditional publications remain with their owners.
+Recovery owns claim/barrier coordination and its non-transferable permit;
+composition supplies current containment authority and prior-process-loss proof.
 No raw map/lock, generic transaction registry, service locator, arbitrary callback
 or ordinary lifecycle capability crosses this boundary.
 
+These are present owners and prospective participation seams, not delivered APIs:
+
+| Owner/source | Required participation |
+| --- | --- |
+| `runtimeidentity/store.go` | Instance creation/candidate identity allocation where absence/identity is affected; attempt claim/history append, execution binding, Running publication, Stop claim, all authority-specific terminal publishers including recovery |
+| `runtimecommandidempotency/store.go` | Primitive inspect/claim, tracked-Start Stop admission, permit consumption/delegation gates, terminal publication |
+| `managed_start.go`, `managed_parent.go`, `orchestration_admission.go` | Managed candidate revalidation, tracked parent/preclaimed StopOld atomic admission, binding/rendezvous continuation, Satisfied terminal publication |
+| `parent_store.go` | Parent admission, StopOld/StartTarget creation/delegation, phase/parent terminal publication, omission/order decisions |
+| `assessment_snapshot.go` and DP-014 detached readers | Complete coherent fact collection; pending/unknown coordination cannot be qualified no-claim/Clean; reader snapshots expose no participant, lock, map or authority |
+| `MemoryStorage.nextGeneration` / `NewBoundary` | Client-epoch invalidation, never process-termination proof |
+| `runtimerecoveryassessment` | Planned detached claim/provenance reader and ReleaseOnly, no mutation/issuance |
+| `runtimecontainmentcomposition` | Explicit same participant supply, current containment authority and immutable supersession observation; no synthetic producer provenance or containment-ledger extension |
+| Future recovery owner/store | Claim CAS, exact readback, conditional resume, local single issuance; future release participates but is not activated |
+
+All writers and delegation gates must participate before integrated ordering can
+be claimed. Ordinary terminal completion cannot bypass the participant. A live
+callback may run outside locks; takeover still requires proven termination of
+every authentic relevant process origin.
+
 ## 5. Joint ordering protocol
 
-Every DP-014 conditional writer and every DP-015 primitive/managed claim,
-candidate-to-claim path, tracked-Start Stop exception, parent with preclaimed
-StopOld, later-phase creation/delegation gate and ordinary terminal publication
-enters the same short region. Recovery claim/resume and future release also
-participate. One bypass invalidates the joint-ordering proof.
+The outer exact-scope serialization token and owner-local locks are different
+boundaries. Every seam in section 4 participates; recovery claim/resume and
+future release share ordering. Acquisition is outer participant, then the fixed
+owner-local lock order; reverse entry is forbidden. DP-014 aggregate locks,
+DP-015 active-client-generation/ledger locks and Runtime Owner locks protect
+only short internal transitions. Release every owner-local lock before external
+persistence/readback, authorization, evidence queries, waits or lifecycle work.
 
-Acquisition order is outer exact-scope participant, then owner-local locks;
-reverse entry is forbidden. Only closed owner-defined bounded validation and
-publication operations execute inside. Authorization, evidence queries and
-Owner/Flow/Load/Host work run outside. No long lifecycle or evidence operation
-holds the region. A persistent publication may use only the qualified bounded
-owner operation; unknown storage completion closes/fences rather than allowing
-another writer to reinterpret a partial result.
+Recovery may retain the outer token during qualified bounded CAS/readback;
+this is never permission to hold any owner-local lock across external I/O.
+Different Instances remain independent. Unknown completion retains closed
+admission and unresolved disposition, even after the physical token is released.
+No lifecycle/evidence callback runs under the token.
 
-Before committing, validate exact aggregate/history identity and revision,
-complete primitive/parent/phase membership and revisions (including absence and
-links), claim revision/absence, coordination revision and current authority.
-Detached reads and evidence are collected outside and revalidated inside.
-Stale/conflicting/unknown validation changes no durable fact and issues no
-permit; it requires reassessment. It may retain a closed local fence.
+DP-015 section 13.1 remains authoritative: parent, preclaimed StopOld, sole Stop
+exception occupant, rendezvous and private live phase permit form one atomic
+internal transition under active-generation/ledger locks. This design neither
+splits that transition nor moves ordinary parent admission into recovery storage.
+A future persistent DP-015 adapter must separately demonstrate compatibility.
+No new ordinary-command publication protocol or adapter is approved here.
 
-The current DP-014 aggregate mutex and DP-015 client/ledger locks are separate;
-stable rereads alone do not implement this protocol. Cross-process writer
-exclusion requires validated current DP-023 authority and a conforming storage
-boundary. No cross-store distributed transaction is assumed: owner publications
-remain separate, all valid writers share ordering, and restart admission starts
-closed. Physical layout remains undecided.
+Collect detached facts/evidence outside owner-local locks. Under the participant
+briefly lock and validate exact aggregate/history, complete command membership,
+absence/links/revisions, claim and coordination revisions, authentic provenance,
+current unfenced containment authority and local client/admission epoch. Record
+only the closed candidate reservation described in section 9, then unlock.
+Stale/conflicting validation performs zero durable mutation and issues no permit.
+
+All conforming writers remain excluded by the token while recovery publication
+is pending; validated DP-023 authority excludes another authorized process writer.
+Captured owner revisions therefore cannot change through a conforming writer
+between validation and recovery CAS. A storage adapter lacking this guarantee
+is unqualified. Separate current owner mutexes/stable rereads do not implement
+this protocol. No cross-store distributed transaction or physical layout is chosen.
 
 ## 6. Admission fence before claim
 
@@ -120,7 +144,9 @@ their authentic producer generation. Recovery issuer generation and an opaque
 incarnation are persisted before recovery permit issuance.
 
 Provenance is coordination metadata, not another lifecycle/command truth store,
-attempt execution binding or containment-ledger extension. It must commit with
+attempt execution binding or containment-ledger extension. The lock separation
+and reservation/CAS/readback discipline of sections 5 and 9 applies; no external
+provenance publication or inspection runs under owner-local locks. It must commit with
 the owner publication or as a write-ahead certificate before that publication;
 either path requires exact inspection before capability release. An orphan
 certificate alone is neither admission nor claim truth. Proven publication
@@ -171,28 +197,69 @@ PID or wall-clock takeover metadata belong in coordination records.
 
 ## 9. Claim, confirmation and single issuance
 
-Under the joint region, fresh exact non-clean facts plus complete prior-authority
-loss proof allow one conditional persistent claim and closed recovery barrier at
-one logical publication point. The claim commits its exact captured revisions,
-scope, provenance and candidate issuer. Stale/conflicting input has zero durable
-mutation. All valid normal writers are excluded by the fence and claim.
+After detached collection and section 5 validation, close/retain the sticky
+local admission fence and record a private candidate reservation containing the
+exact validated facts. Release every owner-local lock. This local transition is
+only fence/reservation: no committed claim, success, reopened admission, usable
+permit or delegation. The reservation is not recovery truth.
 
-Durable commit alone returns no permit. Exact candidate readback must confirm the
-whole record. Then, under the same participant with current authority and revisions
-revalidated, record one local issuance disposition for exact claim revision and
-issuer incarnation. Only the synchronous path owning the candidate receives one
-private non-transferable permit; observers never do. Issuance is not reconstructed
-from stored identity. Recovery authority cannot invoke Start, Stop, Flow, Load,
-Build, Launcher or adopt a Host.
+Retain the outer token and perform qualified recovery-store conditional atomic
+publication. Its successful durable CAS is the claim commit/publication point:
+one complete record contains immutable claim identity, captured facts/provenance,
+issuer generation/incarnation, monotonic revision and unresolved closed barrier.
+Exact candidate readback occurs outside owner-local locks. Then briefly reacquire
+local locks under the participant and revalidate reservation, epoch, exact owner
+revisions, claim revision and current unfenced authority. Record one local issuance
+disposition. Release locks and participant before synchronous delivery to the
+original candidate-owning path. Observers never receive a permit. No issuance is
+reconstructed from stored identity; the private permit is non-transferable and
+cannot invoke Start, Stop, Flow, Load, Build, Launcher or adopt a Host.
 
-Unknown commit/readback leaves admission closed and issues none. Inspect that
-same candidate first; confirmed absence with unchanged expected state permits
-only exact-candidate retry. A different tail/claim or unknown authority cannot be
-overwritten. If local issuance may have occurred without proven disposition,
-never issue a duplicate; same-generation reissue/adoption is unsupported.
-Cancellation/loss keeps claim unresolved. A claim committed before subsequent
-fatal fencing remains for successor inspection; fenced authority cannot use a
-permit or delegate work.
+Every issued and delivered permit is permanently bound to exact claim revision,
+issuer incarnation, local client/admission epoch and current containment authority.
+After releasing the issuance locks/token, synchronous delivery enters a new short
+closed internal acceptance gate atomically ordered with epoch replacement/fatal
+invalidation. It performs only bounded local validation/acceptance, no external I/O,
+lifecycle or arbitrary callback under owner-local locks. Invalidation winning before
+acceptance suppresses successful delivery and leaves issuance exhausted/unresolved.
+If acceptance wins first, subsequent invalidation immediately disables the handle;
+retaining or returning it is no continuing authority. Delivery linearizes at this
+gate, not at physical return. Every later permitted conditional recovery use enters
+a fresh exact-epoch/current-unfenced-authority gate under the same participant,
+atomically ordered with invalidation. Stale handles reject without a new authorized
+mutation or delegation. External persistence remains outside all owner-local locks
+using sections 5 and 9 reservation/publication/confirmation. An already in-flight
+uncertain publication is inspected as possibly committed, never reported successful
+from invalidated authority. No gate retries or recreates an issued permit; epoch
+invalidation is not proof that an old process/callback terminated.
+
+Durable commit and live issuance are distinct. DP-017's atomic semantic boundary
+is preserved: normal admission/another issuer cannot interleave, reservation
+grants no authority, interrupted completion remains unresolved and closed.
+Client-generation replacement or fatal fencing invalidates pending reservation
+and disables issuance even during persistence. Invalidation never waits for
+external storage under owner-local locks or acquires locks in reverse order.
+It neither rewrites captured owner revisions nor erases a possibly committed
+claim, nor proves prior-process termination. Inspection may finish, but the
+invalidated candidate cannot successfully return a permit.
+
+Unknown publication/readback stays closed. Inspect the same candidate first.
+Retry requires proven exact absence, unchanged expected durable/owner facts,
+valid original storage authority and fresh current authorization; retry uses the
+same candidate. Another tail/claim is not overwritten. If issuance may already
+have occurred, same-generation reissue/adoption is forbidden. Cancellation/loss
+retains unresolved claim; a fenced issuer cannot continue or delegate.
+
+| Cut | Required recovery behavior |
+| --- | --- |
+| Before reservation/fence | No claim/permit; successor admission starts closed |
+| Local fence/reservation, before durable CAS | No committed claim/success; successor inspects qualified storage, reservation never reconstructs a permit |
+| Durable publication uncertain | Closed admission; exact-candidate inspection before retry |
+| Claim committed, before local confirmation | Authoritative unresolved claim retained; successor proves prior origins terminated before conditional resume |
+| Confirmed claim, before issuance | Stored identity does not prove issuance; same-generation uncertainty fails closed |
+| Local issuance recorded, before/uncertain delivery | Invalidation before acceptance suppresses success; after acceptance disables handle; no duplicate in that generation/incarnation |
+| Permit delivered, cancellation/client-epoch replacement/fatal fence | Claim unresolved; invalidated handle cannot continue/delegate |
+| Restart | No old permit revived; fresh conditional resume requires all relevant origins terminated and preserves original observations |
 
 ## 10. Conditional resume
 
@@ -201,7 +268,8 @@ terminated, reads the full current aggregate/command/claim/provenance set, and
 revalidates exact revisions under joint ordering. It retains claim identity and
 original observations, conditionally advances claim revision with fresh issuer
 generation/incarnation and current observations, confirms exact readback, then
-uses the single-issuance protocol. It never reconstructs the old permit.
+uses sections 5 and 9 reservation, unlocked CAS/readback and single-issuance
+protocol. No owner-local lock crosses external I/O. It never reconstructs the old permit.
 
 Current-generation issuer, incomplete origin set, stale facts, missing original
 authority or uncertainty whether a prior issuer/capability can still survive
@@ -216,7 +284,8 @@ command/parent, manufacture an Owner completion basis or reopen a claimed barrie
 Extend the private assessment with a detached exact claim/provenance observation
 and revision, supplied explicitly by recovery's reader. Stable rereads include
 the claim/coordination revision around evidence. Missing/foreign/stale/unknown
-reads return Unknown, not absent claim. Assessment exposes no mutation capability.
+reads return Unknown, not absent claim. Pending reservations/unknown disposition
+never qualify as no-claim or Clean. Assessment exposes no mutation capability.
 
 Clean requires no active attempt, no non-terminal primitive/parent/existing phase,
 coherent terminal aggregate/command facts and qualified absence
@@ -236,12 +305,12 @@ those additions are planned, not existing capability.
 | P4 | Concurrent claim paths produce one committed claim and at most one live permit | DP-017 §9 |
 | P5 | CommandOnly/unbound origins prove old process loss without synthetic binding | DP-017 §§10–11 |
 | P6 | Unlocked live callback, client expiry, same-generation issuer or missing provenance prevent takeover | DP-015 permits; DP-017 §9 |
-| P7 | Crash at provenance/publication/readback/issuance cuts; exact inspection, no duplicate capability | DP-014 §17; DP-017 §§9,20 |
+| P7 | Crash at provenance/publication/readback/issuance and issuance→unlock→delivery invalidation cuts; exact inspection, no duplicate capability | DP-014 §17; DP-017 §§9,20 |
 | P8 | Persistent aggregate, complete commands and claim survive real process restart | DP-017 §§9,17,23 |
 | P9 | Missing/replaced/rollback/clone/corrupt authority never becomes empty | DP-023 §8.1; DP-017 §23 |
 | P10 | Fresh conditional successor resume preserves original observations; stale/foreign input mutates nothing | DP-017 §§9,16 |
 | P11 | Clean vs ReleaseOnly; stable detached claim-aware reads give no permit | DP-017 §§7,12 |
-| P12 | Cancellation/unknown result/fatal fence keep admission closed and disable issuance | DP-017 §§20–21; DP-023 §12 |
+| P12 | Cancellation/unknown result/fatal fence keep admission closed; epoch replacement revokes issued and delivered permits | DP-017 §§20–21; DP-023 §12 |
 | P13 | Independent Instances, fixed lock order, evidence/lifecycle outside region, race/stress | DP-017 §19 |
 | P14 | No lifecycle/reconciliation/release/Owner-basis promotion or new attempt from claim | DP-017 §§13–17 |
 
@@ -249,25 +318,53 @@ All fourteen rows are planned obligations, not PASS. In-memory simulations can
 prove local ordering/issuance mechanics only. They cannot prove P8/P9 durable
 conformance, process-origin production coverage or production recovery readiness.
 
+
+### First foundation slice coverage
+
+| Proof | Planned first foundation coverage | Remaining prerequisite |
+| --- | --- | --- |
+| P1 | Shared identity/no bypass among test participants only | Every real writer/delegation gate |
+| P2 | Local race/reservation/revision rejection | Real complete owners and durable conditional publication |
+| P3 | Local startup/sticky fence | Real restart with qualified owner/claim stores |
+| P4 | Reservations grant no authority | Durable one-claim/single live issuance |
+| P5 | Reject missing/current synthetic origins | Authentic durable producer provenance |
+| P6 | Client expiry is not takeover proof | Complete origins/surviving real callbacks |
+| P7 | Local cut/invalidation model only | Real provenance/CAS/readback/issuance crash cuts |
+| P8 | Deferred | Persistent aggregate/complete commands/claim restart |
+| P9 | Deferred | Existing-only authority, anti-clone/rollback provisioning |
+| P10 | No resume authority exposed | Conditional durable successor resume |
+| P11 | Pending/unknown never qualified Clean in model | Actual claim-aware assessment/ReleaseOnly |
+| P12 | Local cancellation/epoch/fence negative gates | Actual fatal authority/uncertain storage cuts |
+| P13 | Independent scopes/fixed order/no owner locks during simulated I/O | Real integration, race/stress/persistent I/O |
+| P14 | No lifecycle/reconciliation/release capability | Continued integrated negative proofs |
+
+This table is planned partial model coverage, never PASS or real-owner/durability
+qualification. The eight cuts in section 9 require future executable evidence.
+
 ## 13. Prerequisites and next decision
 
-First candidate: separate design-only DP-024 Design Status and conformance
-decision against Approved sources and all proof obligations. It is Not Activated;
-this Draft's acceptance cannot authorize implementation. That decision must
-bound the first isolated mechanics slice and its exact owner seams/proof coverage,
-then distinguish it from persistent DP-014/DP-015/recovery storage qualification.
-Concrete durable adapter/schema/provisioning remains a separate prerequisite.
+The next recommendation is a separate isolated private ordering/fence foundation,
+Not Activated. Fresh independent intake must bound scope and Size Guard. It may
+contain exact-scope participant identity supplied explicitly, startup-closed/sticky
+fence, closed typed reservation/epoch invalidation, fixed lock order and test
+owner participants. It validates negative dispositions without claim-store mutation,
+provenance publication, live recovery permit, lifecycle delegation or production
+composition. No package/API/file-count promise is made before intake.
 
-Only a later fresh intake with approved mechanics, exact owner integration,
-authentic provenance and qualified durable stores can claim item 7 completion.
-Items 8–10 reconciliation/release and item 11 reporting/integration remain later.
-One ordering/claim behavior is kept intact; evidence scanning, a second adapter,
-production wiring and unrelated functionality must be split. Production-line
-and file-count Size Guard requires fresh evaluation at implementation intake.
+Test owner ports prove local semantics only, not participation of every real
+DP-014/DP-015 writer. Real-owner and generation-transition integration is a separate
+bounded slice. Persistent aggregate/complete command/recovery adapter and original
+storage-authority/provisioning qualification remain distinct prerequisites; DB,
+schema, adapter and provisioner choices are not made here.
+Only later fresh intake with integrated owners, authentic durable provenance and
+qualified stores can claim item 7 completion. Items 8–10 reconciliation/release
+and item 11 reporting/integration remain later. No next task is started here.
 
 ## 14. Decision boundary
 
-Record this proposed private restart-based protocol as Draft / Planned. Existing
-Approved statuses and delivered capabilities remain unchanged. No code, durable
-store or production recovery has been delivered by TASK-079. Unknown provenance,
-storage, authority or commit outcome always leaves admission closed.
+TASK-080 independent Architect explicitly approves this refined private
+restart-based design: Approved / Planned. DP-015 internal atomic transitions and
+external-I/O prohibition remain unchanged. No code, durable store, recovery permit
+or production recovery has been delivered by TASK-079/TASK-080. All proof rows
+remain planned. Unknown provenance, storage, authority or publication outcome
+leaves admission closed; design Approval is no implementation activation.
