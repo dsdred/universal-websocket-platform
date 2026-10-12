@@ -139,17 +139,27 @@ TASK-081 accepted source manifest `acefebe25d8a1053d6af0af00bbc1625014876c4`
 как merge `4a2a575577f180527fa7a9b5499da037b294bb06` по local immutable Git
 metadata; cached refs/local metadata не являются fresh network evidence.
 [TASK-082 readiness](../docs/tasks/TASK-082-REAL-OWNER-PARTICIPATION-READINESS.md)
-возвращает assessment READY, full real-owner/generation integration SPLIT REQUIRED /
-NOT READY AS ONE BOUNDED TASK. Immediate Implementation intake NOT READY; concrete seam contract/Size Guard unresolved. Next candidate — Design-update для typed real-owner
-attachment/complete writer, reader и delegation coverage, membership/absence
-revisions и storage-wide client-generation/containment-fatal invalidation fan-out
-ordering под Approved DP-024, Not Activated. Existing semantics не изменены;
-concrete participation seam ещё требует bounded design. Durable provenance/stores
-не prerequisites лишь local seam, но остаются prerequisites полного item7.
-DP-024 Approved / Partial не изменён, integrated P1–P14 Planned. Reconciliation,
-release и production wiring не активированы. Actual TASK080/TASK081 gates/closure
-resolve-ятся только их newest valid matching envelopes; TASK082 использует свой
-stable resolver без переноса historical verdicts.
+Completed — Coordinator Accepted; immutable source `6cfb17bff4246d17e41107755ace0fa3b6d96850`
+reconstructs accepted manifest `aa97244d3f46cb7f535af69d6a86babe12780f26`, PR #87
+merge `cf17b1728349bca9ac3916c88a00445f021cc4a9` by local Git metadata only.
+Assessment READY; full real-owner/generation integration SPLIT REQUIRED / NOT READY
+AS ONE BOUNDED TASK. Its immediate implementation intake was NOT READY pending
+concrete seam contract and Size Guard decomposition.
+[TASK-083 design](../docs/tasks/TASK-083-REAL-OWNER-PARTICIPATION-DESIGN.md) is current,
+verification-stable In Progress; actual gates/closure resolve only from its newest
+valid matching envelope. DP-024 §15 records typed exact-scope non-rebinding
+attachment and explicit complete coverage, monotonic membership/absence revisions,
+root client/fatal gates ordered before short local acceptance, and independent
+Instance fan-out without outer-token acquisition or I/O under owner locks.
+Approved ownership/semantics/status are unchanged; no executable capability added.
+Next candidate: fresh local leaf plus complete DP-014 coverage intake Not Activated;
+DP-015 and fatal/composition integration follow separately. Missing command,
+authority or qualified no-claim stays closed, including partial integration.
+Durable provenance/stores are not prerequisites merely for a local seam; authentic
+origins, persistent stores/claim and original authority remain full item7 prerequisites.
+DP-024 Approved / Partial, integrated P1–P14 Planned, reconciliation/release and
+production wiring Not Activated. Existing TASK080/TASK081 envelopes retain their
+own historical evidence; no historical verdict transfers to TASK083.
 TASK-080 accepted subject `70302b93b3908b0216ce79298ade7ae0e10d123b` опубликован
 source `eac6f6eac0a19fbea4d4c47e978124e7fc6cd6eb` через PR #85 как merge
 `ac82aa29b9aaf7d25a0822b7ef3b3785b9149b18` по local immutable Git metadata.

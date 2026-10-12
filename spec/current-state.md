@@ -1,19 +1,26 @@
 # Текущее состояние
 
-**Текущая задача:** TASK-082 — Runtime Real-Owner and Generation Participation
-Readiness, verification-stable `In Progress`, branch
-`docs/task-082-real-owner-participation-readiness`, baseline
-`4a2a575577f180527fa7a9b5499da037b294bb06`. Actual gates/closure определяет
-только newest valid matching TASK-082 Recovery Evidence Envelope.
-Assessment READY; full real-owner/generation integration — SPLIT REQUIRED /
-NOT READY AS ONE BOUNDED TASK. Immediate Implementation intake NOT READY; concrete seam contract/Size Guard unresolved. Next candidate — Design-update для typed
-real-owner attachment/complete coverage, membership/absence revisions и
-client-generation/containment-fatal invalidation fan-out ordering под Approved
-DP-024, Not Activated. Durable provenance/stores не prerequisites лишь local seam;
-они остаются prerequisites полного item7. Новая runtime capability не добавлена.
-DP-024 Approved / Partial для local model, integrated P1–P14 Planned, item7 unproven.
-DP-017 остаётся Approved/Planned overall; только TASK-075 read-only assessment
-реализован изолированно, reconciliation/release не активированы.
+**Текущая задача:** TASK-083 — Runtime Real-Owner Participation Design, verification-stable
+`In Progress`, branch `docs/task-083-real-owner-participation-design`, baseline
+`cf17b1728349bca9ac3916c88a00445f021cc4a9`. Actual gates/closure resolve only
+from the newest valid matching TASK-083 Recovery Evidence Envelope.
+Concrete private realization in DP-024 §15 records typed non-rebinding owner
+attachment, complete coverage and membership/absence revisions, storage-wide
+client replacement and containment-fatal ordering. Design work adds no runtime
+capability; DP-024 remains Approved / Partial for TASK-081 local test-owner models,
+integrated P1–P14 Planned, item7 unproven. Next candidate: fresh bounded local
+leaf plus complete DP-014 coverage intake, Not Activated; DP-015 and fatal/composition
+integration follow separately. Missing command/authority/qualified no-claim keeps
+startup closed; durable provenance/stores/claim remain full item7 prerequisites.
+
+**Последняя опубликованная readiness task:** TASK-082, Completed — Coordinator
+Accepted, source manifest `aa97244d3f46cb7f535af69d6a86babe12780f26`, commit
+`6cfb17bff4246d17e41107755ace0fa3b6d96850`, PR #87 merge
+`cf17b1728349bca9ac3916c88a00445f021cc4a9` по local immutable Git metadata.
+Assessment READY; full real-owner/generation integration SPLIT REQUIRED / NOT READY
+AS ONE BOUNDED TASK. Its immediate implementation intake was NOT READY pending
+the concrete seam and decomposition now recorded by TASK-083. Cached refs/local
+merge metadata are not fresh network or Publisher P0–P10 evidence.
 
 **Последняя опубликованная local foundation:** TASK-081, accepted source manifest
 `acefebe25d8a1053d6af0af00bbc1625014876c4`, commit
@@ -35,7 +42,7 @@ Approved DP-024 design delivers no runtime or storage capability.
 `0d018c42ff2244e80b05f7ea9e0e58b0966f6413`. Draft уточнён TASK-080;
 publication не добавила runtime implementation capability.
 
-**Последняя опубликованная readiness task:** TASK-078 — Completed — Coordinator
+**Предыдущая опубликованная readiness task:** TASK-078 — Completed — Coordinator
 Accepted, subject `4c73bc9fd72ca61d28c2e67f454e936178d46b2a`, source `8687758`,
 PR #83 merged как `4dad1af14102f516784cb1ae0ef39a59fec6b0ec` по local immutable
 Git metadata. Item7 implementation Not Ready; четыре missing mechanics

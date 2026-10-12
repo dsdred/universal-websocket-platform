@@ -354,20 +354,20 @@ executable evidence. Reservations и successful local revalidation не дают
 
 ## 13. Prerequisites и следующее решение
 
-TASK-081 поставляет isolated private local ordering/fence foundation только с closed
-test-owner models. Следующая рекомендация — separate real-owner/generation
-participation readiness and integration, Not Activated, после fresh independent
-intake и Size Guard. Foundation не меняет claim store/provenance, не выдаёт live
-recovery permit и не раскрывает lifecycle delegation или production composition.
+TASK-081 поставляет только isolated closed test-owner models. TASK-082 завершает
+real-owner/generation readiness: full integration SPLIT REQUIRED / NOT READY
+AS ONE BOUNDED TASK. TASK-083 фиксирует concrete private realization в §15.
+Следующая рекомендация — fresh bounded intake dependency leaf и complete DP-014
+local owner coverage, Not Activated, со fresh readiness и Size Guard. DP-015
+coverage/client replacement и actual fatal/composition coupling следуют отдельными
+slices. Missing command/authority/qualified no-claim оставляет startup closed.
 
-Test owner ports доказывают только local semantics, а не participation каждого
-real DP-014/DP-015 writer. Real-owner/generation-transition integration — отдельный
-bounded slice. Persistent aggregate/complete command/recovery adapter и original
-storage-authority/provisioning qualification остаются отдельными prerequisites;
-DB, schema, adapter и provisioner здесь не выбираются.
-Только later fresh intake с integrated owners, authentic durable provenance и
-qualified stores может заявить item 7 completion. Items 8–10 reconciliation/release
-и item 11 reporting/integration остаются позже. Следующая task здесь не начинается.
+Durable provenance, persistent aggregate/complete command/recovery storage и
+original storage-authority/provisioning qualification — отдельные prerequisites;
+DB, schema, adapter и provisioner не выбраны. Только later fresh intake с integrated
+owners, authentic durable origins и qualified stores может заявить item7 completion.
+Items 8–10 reconciliation/release и item11 reporting/integration остаются позже.
+Design task не активирует implementation или successor.
 
 ## 14. Граница решения
 
@@ -377,3 +377,135 @@ DP-015 не изменены. TASK-079/TASK-080 не поставили код, 
 или production recovery. Все integrated proof rows остаются Planned. Unknown provenance,
 storage, authority или publication outcome оставляет admission closed;
 design Approval не активирует implementation.
+
+## 15. Конкретный план local owner participation
+
+TASK-083 фиксирует эту private realization существующей Approved семантики.
+Всё ниже Planned: design task не реализует owner seam, root gate или integrated
+proof. Design Status остаётся Approved; Implementation Status Partial только для
+closed test-owner models TASK-081. План не даёт claim, permit, takeover authority
+или qualification production startup.
+
+### 15.1 Typed binding и явное coverage
+
+Dependency leaf `internal/runtimecoordination` не импортирует aggregate, command,
+containment, lifecycle или recovery owner. Закрытые типы: immutable validated
+`Scope`, `Participant`, `AggregateAttachment`, `CommandAttachment`, `ClientEpoch`,
+`AuthorityFence`, observation/transition regions и reservation-session handles.
+Composition явно поставляет identical participant. Attachment однократно связывает
+exact owner identity и scope; duplicate, foreign и rebinding reject. Complete-owner
+markers принадлежат conforming owner construction, а не caller claims. Через seam
+не проходят raw locks, generic callbacks, service discovery или ordinary lifecycle
+capability. Leaf latch не query-ит и не заменяет containment authority.
+
+Prospective `runtimeidentity.NewCoordinatedStore(scope, participant)` связывает одну
+Instance до allocation: historical `AllocateCandidateIdentity(id)` не передаёт
+domain/Workspace/Configuration. Каждый direct method, включая narrow terminal
+publishers, rejects foreign identity и сам входит в conforming region. Historical
+`NewStore`, `NewMemoryStorage` и uncoordinated composition остаются supported, но
+не считаются DP-024 conformance. Multi-Instance command storage использует typed
+`AttachInstance(scope, participant)` до capture ledger absence. Attachment не
+зависит от существования aggregate или ledger.
+
+Complete DP-014 coverage включает allocation/create, attempt claim/history append,
+execution binding, Running, Stop и все authority-specific terminal publishers,
+aggregate/history readers и exact-attempt capture/revalidation. Complete DP-015
+coverage включает primitive inspect/claim и tracked Stop; managed admission,
+binding и live gates; parent/phase admission, creation, delegation, terminal и
+expiry; atomic tracked parent/preclaimed StopOld/slot/rendezvous/private permit
+admission и consumption; replay-first orchestration; pending Stop и managed
+rendezvous transitions; complete assessment snapshots. Replacement и containment
+source fatal paths тоже участвуют. Wrapper не доказывает coverage direct calls.
+
+### 15.2 Полные detached observations и revisions
+
+Detached stamps содержат exact scope, opaque attachment identity, aggregate presence/
+allocation revision, aggregate/history revision, command-ledger presence, command
+membership revision, client epoch и participant epoch. Capture/revalidation не
+меняют domain facts и не возвращают handle/authority. Allocation/create повышают
+presence revision; successful aggregate publications повышают существующую
+aggregate revision. Ledger creation, primitive/parent/phase membership/publication,
+live-permit consumption/expiry, Stop-slot и rendezvous changes повышают отдельную
+coordination membership revision. Existing domain record revisions сохраняют semantics.
+
+Capture включает все terminal/non-terminal members и links; empty set содержит
+явный absence stamp. Missing, stale, foreign или partial coverage не открывает
+admission. Create-after-absence обязан invalidate stamp. Counters никогда не wrap:
+exhaustion закрывает admission и rejects future authorized mutation.
+
+### 15.3 Фиксированный порядок коротких regions
+
+Normal short regions acquire `Instance outer -> AuthorityFence read gate ->
+ClientEpoch read gate -> participant state -> owner-local locks`. Owner catalog
+lookup/registration предшествует aggregate lock. DP-015 сохраняет existing
+`clientMu.RLock -> ledger.mu` atomic transition, включая parent, preclaimed
+StopOld, sole occupant, rendezvous и private live phase permit.
+
+Aggregate/command facts можно копировать последовательно, пока identical outer
+token исключает writers; raw owner locks не пересекают package boundaries. Все
+authority/client/participant-state/owner gates освобождаются до authorization,
+evidence/storage/provider calls, lifecycle work или waits. Reservation может
+сохранять только outer при qualified external work. Direct owner calls и narrow
+publishers сами получают conforming region; composition wrapper недостаточен.
+Reverse entry из owner/client lock к outer token запрещён.
+
+### 15.4 Storage-wide client replacement
+
+`ClientEpoch` — отдельный bounded local gate, не замена DP-015 `clientMu`.
+Replacement получает exclusive gate, closes/invalidates все typed attached
+participants под каждым participant state lock, затем публикует новую generation
+под `clientMu.Lock`. Он не получает outer или owner ledger/aggregate lock и не
+ждёт external I/O. Retained outer/I/O другой Instance не блокирует этот bounded fan-out.
+
+Registration следует `AuthorityFence.R -> ClientEpoch.W -> participant.state`,
+после чего выполняется short owner registration. Она не может escape concurrent
+replacement или inherit prior opening. Overflow permanently fences client root и
+attached participants и запрещает visibility новой generation. Fan-out ждёт только
+bounded local gates; это не process-loss proof и не разрешение recovery.
+
+### 15.5 Fatal coupling во всех actual source paths
+
+Containment keeper владеет явно associated `AuthorityFence`. Каждый source
+fatal-publication path связывает existing `keeper.fenced` publication и complete
+attached-participant invalidation под authority root exclusive gate до возврата
+fatal result. Registration/internal acceptance используют тот же root read gate:
+fatal-first подавляет acceptance; acceptance-first немедленно invalidated после
+этого. Terminal completion, expiry и later phases obey resulting fence; authorized
+replay остаётся read-only.
+
+External `IsAuthoritative`, provisioning validation и `ReadGeneration` storage
+work остаются вне всех short gates. Roots предоставляют только bounded local
+invalidation, без evidence callback или termination claim. Leaf не заменяет
+containment truth и не меняет DP-023 fatal shutdown obligations.
+
+### 15.6 Наименьшая независимая последовательность и executable obligations
+
+Next candidate — fresh intake leaf binding/local regions и complete DP-014 direct
+writer/narrow publisher/reader/absence coverage, Not Activated. Second candidate
+покрывает complete DP-015 primitive/parent/phase/live/rendezvous participation,
+membership stamps и storage-wide replacement. Third candidate — actual containment
+source fatal coupling и explicit composition supply. Каждый slice проходит fresh
+readiness, Size Guard и independent review; никто не активирует successor.
+Production lines/package/path counts измеряются при соответствующем intake.
+
+Missing command attachment, current authority или qualified no-claim verification
+оставляют coordinated construction closed. First slice может доказать coordinated
+mutation rejection и coherent observation/absence; unchanged historical regressions
+доказывают existing successful publication behavior. Production test-opening API
+запрещён. Synthetic opening в existing closed model tests остаётся model-only;
+successful real-owner startup требует later complete qualification.
+
+Future executable proofs: direct/narrow-call bypass rejection; attachment до
+allocation/absence; foreign/rebind/stale/create-after-absence rejection; independent
+Instance observation при retained-token I/O; invalidate stamps после каждого
+command/live/rendezvous change; сохранение tracked-parent atomicity; two Instances
+и racing attachment при replacement; overflow без new-generation visibility;
+fatal до/после acceptance; closed-fence authorized replay с callback count zero;
+external work вне всех short gates. Это только local participation mechanics,
+не integrated P1–P14 или item7 completion.
+
+Durable producer provenance, persistent aggregate/complete commands/claim,
+independently trusted original storage authority, anti-clone/rollback qualification,
+claim-aware assessment, conditional claim/resume и live recovery issuance остаются
+отдельными full item7 prerequisites. Reconciliation, release, reporting, production
+wiring и activation находятся вне этой local sequence.
