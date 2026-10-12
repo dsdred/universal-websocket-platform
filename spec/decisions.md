@@ -134,12 +134,22 @@ Owner locks не сохраняются при simulated external I/O; local rev
 claim/permit/authority. Implementation Partial только для этой isolated foundation
 по explicit TASK-081 role decision. Четырнадцать integrated proof obligations
 Planned; P5 authentic origin и P8/P9 durability Deferred, full executable PASS нет.
-Next recommendation — real-owner/generation participation readiness and integration,
-Not Activated; durable provenance/DP014/DP015/recovery storage и original
-authority/provisioning qualification — отдельные prerequisites. Item7 completion,
-reconciliation/release/production wiring не активированы. Actual TASK080 gates/
-closure resolve-ятся только newest valid matching envelope; TASK081 использует
-свой такой же stable resolver, без переноса historical verdicts.
+TASK-081 accepted source manifest `acefebe25d8a1053d6af0af00bbc1625014876c4`
+опубликован commit `f5818c6e0500ede49fc1f3c4b314db63e16affc1` через PR #86
+как merge `4a2a575577f180527fa7a9b5499da037b294bb06` по local immutable Git
+metadata; cached refs/local metadata не являются fresh network evidence.
+[TASK-082 readiness](../docs/tasks/TASK-082-REAL-OWNER-PARTICIPATION-READINESS.md)
+возвращает assessment READY, full real-owner/generation integration SPLIT REQUIRED /
+NOT READY AS ONE BOUNDED TASK. Immediate Implementation intake NOT READY; concrete seam contract/Size Guard unresolved. Next candidate — Design-update для typed real-owner
+attachment/complete writer, reader и delegation coverage, membership/absence
+revisions и storage-wide client-generation/containment-fatal invalidation fan-out
+ordering под Approved DP-024, Not Activated. Existing semantics не изменены;
+concrete participation seam ещё требует bounded design. Durable provenance/stores
+не prerequisites лишь local seam, но остаются prerequisites полного item7.
+DP-024 Approved / Partial не изменён, integrated P1–P14 Planned. Reconciliation,
+release и production wiring не активированы. Actual TASK080/TASK081 gates/closure
+resolve-ятся только их newest valid matching envelopes; TASK082 использует свой
+stable resolver без переноса historical verdicts.
 TASK-080 accepted subject `70302b93b3908b0216ce79298ade7ae0e10d123b` опубликован
 source `eac6f6eac0a19fbea4d4c47e978124e7fc6cd6eb` через PR #85 как merge
 `ac82aa29b9aaf7d25a0822b7ef3b3785b9149b18` по local immutable Git metadata.

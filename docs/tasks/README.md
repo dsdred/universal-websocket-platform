@@ -3,16 +3,25 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая bounded implementation task —
-[TASK-081](TASK-081-RECOVERY-ORDERING-FOUNDATION.md), verification-stable
-`In Progress`, branch `feature/task-081-recovery-ordering-foundation`, baseline
-`ac82aa29b9aaf7d25a0822b7ef3b3785b9149b18`. Actual gates/closure resolve-ятся
-только newest valid matching TASK-081 envelope. Scope — isolated private local
-ordering/fence с closed test-owner models в
-`internal/runtimerecoverycoordination`. DP-024 Approved / Partial только local model.
-Real-owner integration, durable qualification и item7 completion не установлены.
-Next recommendation — real-owner/generation participation readiness and
-integration, Not Activated; provenance/stores remain separate prerequisites.
+Текущая bounded readiness task —
+[TASK-082](TASK-082-REAL-OWNER-PARTICIPATION-READINESS.md), verification-stable
+`In Progress`, branch `docs/task-082-real-owner-participation-readiness`, baseline
+`4a2a575577f180527fa7a9b5499da037b294bb06`. Actual gates/closure resolve-ятся
+только newest valid matching TASK-082 envelope. Assessment READY; full
+real-owner/generation integration — SPLIT REQUIRED / NOT READY AS ONE BOUNDED TASK.
+Next candidate — Design-update для typed real-owner attachment/complete coverage,
+membership/absence revisions и client-generation/containment-fatal invalidation
+fan-out ordering под Approved DP-024, Not Activated. Durable provenance/stores
+не блокируют лишь local seam, но остаются prerequisites полного item7.
+DP-024 сохраняет Approved / Partial; integrated P1–P14 Planned, item7 unproven.
+
+Последняя опубликованная local foundation — TASK-081, accepted source manifest
+`acefebe25d8a1053d6af0af00bbc1625014876c4`, commit
+`f5818c6e0500ede49fc1f3c4b314db63e16affc1`, PR #86 merge
+`4a2a575577f180527fa7a9b5499da037b294bb06` по local immutable Git metadata.
+`internal/runtimerecoverycoordination` содержит только closed test-owner models;
+real-owner integration, durable recovery claim и production recovery отсутствуют.
+Cached refs/local merge metadata не являются fresh network evidence.
 
 Последняя опубликованная design boundary — TASK-080 accepted subject `70302b93b3908b0216ce79298ade7ae0e10d123b`, source
 `eac6f6eac0a19fbea4d4c47e978124e7fc6cd6eb` through PR #85 merge
@@ -263,6 +272,8 @@ PROCESS-002, Scope Audit 31/0/0 и final Reviewer проходят. Task commit
 - [TASK-076 — Local Configuration Studio](TASK-076-LOCAL-CONFIGURATION-STUDIO.md) — Coordinator Accepted source; committed as b8c2b86 and merged through PR #81 as e9a87b5; existing-API local/dev UI, no Runtime/DP-017 change
 
 - [TASK-081 — Runtime Recovery Ordering and Fence Foundation](TASK-081-RECOVERY-ORDERING-FOUNDATION.md) — verification-stable In Progress; matching envelope resolves gates/closure; DP024 Approved/Partial for isolated local test-owner foundation; no real-owner/durable recovery claim
+
+- [TASK-082 — Runtime Real-Owner and Generation Participation Readiness](TASK-082-REAL-OWNER-PARTICIPATION-READINESS.md) — verification-stable In Progress; matching envelope resolves gates/closure; assessment READY, full integration SPLIT REQUIRED; next Design-update Not Activated; DP024 Approved/Partial and item7 unproven
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

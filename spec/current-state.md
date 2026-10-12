@@ -1,18 +1,28 @@
 # Текущее состояние
 
-**Текущая задача:** TASK-081 — Runtime Recovery Ordering and Fence Foundation,
-verification-stable `In Progress`, branch
-`feature/task-081-recovery-ordering-foundation`, baseline
-`ac82aa29b9aaf7d25a0822b7ef3b3785b9149b18`. Actual gates/closure определяет
-только newest valid matching TASK-081 Recovery Evidence Envelope.
-Scope — isolated private local ordering/fence с closed test-owner models;
-foundation реализован в `internal/runtimerecoverycoordination`.
-DP-024 Approved / Partial только для local model. Real-owner
-integration, durable provenance/storage/claim, recovery permit и production
-recovery отсутствуют; item7 не завершён. Next recommendation — separate
-real-owner/generation participation readiness and integration, Not Activated.
+**Текущая задача:** TASK-082 — Runtime Real-Owner and Generation Participation
+Readiness, verification-stable `In Progress`, branch
+`docs/task-082-real-owner-participation-readiness`, baseline
+`4a2a575577f180527fa7a9b5499da037b294bb06`. Actual gates/closure определяет
+только newest valid matching TASK-082 Recovery Evidence Envelope.
+Assessment READY; full real-owner/generation integration — SPLIT REQUIRED /
+NOT READY AS ONE BOUNDED TASK. Immediate Implementation intake NOT READY; concrete seam contract/Size Guard unresolved. Next candidate — Design-update для typed
+real-owner attachment/complete coverage, membership/absence revisions и
+client-generation/containment-fatal invalidation fan-out ordering под Approved
+DP-024, Not Activated. Durable provenance/stores не prerequisites лишь local seam;
+они остаются prerequisites полного item7. Новая runtime capability не добавлена.
+DP-024 Approved / Partial для local model, integrated P1–P14 Planned, item7 unproven.
 DP-017 остаётся Approved/Planned overall; только TASK-075 read-only assessment
 реализован изолированно, reconciliation/release не активированы.
+
+**Последняя опубликованная local foundation:** TASK-081, accepted source manifest
+`acefebe25d8a1053d6af0af00bbc1625014876c4`, commit
+`f5818c6e0500ede49fc1f3c4b314db63e16affc1`, PR #86 merge
+`4a2a575577f180527fa7a9b5499da037b294bb06` по local immutable Git metadata.
+Foundation в `internal/runtimerecoverycoordination` использует closed test-owner
+models; real-owner integration, durable provenance/storage/claim, recovery permit
+и production recovery отсутствуют. Cached refs/local merge metadata не являются
+fresh network evidence.
 
 **Последняя опубликованная design boundary:** TASK-080 accepted subject `70302b93b3908b0216ce79298ade7ae0e10d123b`, source
 `eac6f6eac0a19fbea4d4c47e978124e7fc6cd6eb` through PR #85 merge
