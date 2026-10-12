@@ -8,18 +8,26 @@
 
 ## Текущее состояние
 
-- Current task: **TASK-081 — Runtime Recovery Ordering and Fence Foundation**,
-  verification-stable `In Progress`, branch
-  `feature/task-081-recovery-ordering-foundation`, baseline
-  `ac82aa29b9aaf7d25a0822b7ef3b3785b9149b18`. Actual gates/closure resolve
-  only from the newest valid matching TASK-081 Recovery Evidence Envelope.
-  Scope is isolated private local ordering/fence with closed test-owner models;
-  the foundation exists in `internal/runtimerecoverycoordination`. DP-024 is
-  Approved / Partial for this local model only;
-  no real-owner participation, durable provenance/storage/claim, recovery permit
-  or production recovery is established. Item7 completion remains unproven.
-  Next recommendation: separate real-owner/generation participation readiness
-  and integration, Not Activated; durable qualification remains separate.
+- Current task: **TASK-082 — Runtime Real-Owner and Generation Participation
+  Readiness**, verification-stable `In Progress`, branch
+  `docs/task-082-real-owner-participation-readiness`, baseline
+  `4a2a575577f180527fa7a9b5499da037b294bb06`. Actual gates/closure resolve
+  only from the newest valid matching TASK-082 Recovery Evidence Envelope.
+  Assessment READY; full real-owner/generation integration is SPLIT REQUIRED /
+  NOT READY AS ONE BOUNDED TASK. Immediate Implementation intake NOT READY; concrete seam contract/Size Guard unresolved. Next candidate: Design-update for typed real-owner
+  attachment/complete coverage, membership/absence revisions and storage-wide
+  client-generation/containment-fatal invalidation fan-out ordering under Approved
+  DP-024, Not Activated. Durable stores/provenance do not block merely a local
+  seam; they remain full item7 prerequisites. No runtime capability added.
+- Latest published local foundation: **TASK-081**, accepted source manifest
+  `acefebe25d8a1053d6af0af00bbc1625014876c4`, commit
+  `f5818c6e0500ede49fc1f3c4b314db63e16affc1`, PR #86 merge
+  `4a2a575577f180527fa7a9b5499da037b294bb06` by local immutable Git metadata.
+  Closed test-owner models exist in `internal/runtimerecoverycoordination`.
+  DP-024 remains Approved / Partial only for this local model; integrated
+  P1–P14 remain Planned, item7 unproven. No real-owner participation, durable
+  provenance/storage/claim, recovery permit or production recovery established.
+  Cached refs/local merge metadata are not fresh network evidence.
 - Latest published design boundary: **TASK-080**, accepted subject `70302b93b3908b0216ce79298ade7ae0e10d123b`, source
   `eac6f6eac0a19fbea4d4c47e978124e7fc6cd6eb` through PR #85 merge
   `ac82aa29b9aaf7d25a0822b7ef3b3785b9149b18` by local immutable Git metadata.
@@ -480,12 +488,16 @@
   external / 0 Deferred; no separate prerequisite; DP-016 remains Approved /
   Planned; Tester PASS 0/0/0; repeat Reviewer APPROVED 0/0; Scope Audit
   16/0/0; PROCESS-002 Synchronized; later superseded by the TASK-026 recheck**
-- Текущая рекомендация: **после TASK-081 — separate real-owner/generation
-  participation readiness and integration, Not Activated**. Test-owner models
-  доказывают только local foundation semantics. Persistent DP-014/DP-015/recovery
-  store, authentic provenance и provisioning qualification остаются отдельными
-  prerequisites. DP-017 reconciliation/release, DP-018 reporting, production
-  integration и activation остаются later slices.
+- Текущая рекомендация: **после TASK-082 — Design-update для typed real-owner
+  attachment/complete participation coverage, membership/absence revisions и
+  storage-wide client-generation/containment-fatal invalidation fan-out ordering,
+  Not Activated**. Full integration SPLIT REQUIRED; local seam не требует заранее
+  реализованных durable stores/provenance, но требует concrete participation
+  contract и fresh Size Guard. Test-owner models доказывают только local semantics.
+  Persistent DP-014/DP-015/recovery stores, authentic provenance и original
+  provisioning qualification остаются отдельными prerequisites полного item7.
+  DP-017 reconciliation/release, DP-018 reporting, production integration и
+  activation остаются later slices.
 
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы
