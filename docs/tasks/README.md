@@ -3,17 +3,23 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая bounded Design-only task —
-[TASK-080](TASK-080-RECOVERY-CLAIM-DESIGN-STATUS.md), verification-stable
-`In Progress`, branch `docs/task-080-recovery-claim-design-status`, baseline
-`0d018c42ff2244e80b05f7ea9e0e58b0966f6413`. Actual gates/closure resolve-ятся
-только newest valid matching TASK-080 envelope. DP-024 Approved / Planned:
-owner locks отделены от outer ordering, claim CAS/readback/issuance уточнены;
-код или durable qualification отсутствуют. Next recommendation — isolated
-ordering/fence foundation с test owner ports, Not Activated. Real-owner
-integration/durable qualification и item7 completion остаются отдельно.
+Текущая bounded implementation task —
+[TASK-081](TASK-081-RECOVERY-ORDERING-FOUNDATION.md), verification-stable
+`In Progress`, branch `feature/task-081-recovery-ordering-foundation`, baseline
+`ac82aa29b9aaf7d25a0822b7ef3b3785b9149b18`. Actual gates/closure resolve-ятся
+только newest valid matching TASK-081 envelope. Scope — isolated private local
+ordering/fence с closed test-owner models в
+`internal/runtimerecoverycoordination`. DP-024 Approved / Partial только local model.
+Real-owner integration, durable qualification и item7 completion не установлены.
+Next recommendation — real-owner/generation participation readiness and
+integration, Not Activated; provenance/stores remain separate prerequisites.
 
-Последняя опубликованная design boundary —
+Последняя опубликованная design boundary — TASK-080 accepted subject `70302b93b3908b0216ce79298ade7ae0e10d123b`, source
+`eac6f6eac0a19fbea4d4c47e978124e7fc6cd6eb` through PR #85 merge
+`ac82aa29b9aaf7d25a0822b7ef3b3785b9149b18` by local immutable Git metadata.
+Approved DP-024 design delivers no runtime or storage capability.
+
+Предыдущая опубликованная design boundary —
 [TASK-079](TASK-079-RECOVERY-CLAIM-ADMISSION-BOUNDARY.md), accepted subject
 `15047580e43ee0a177bc35619f9f0dfaee2b2ae5`, source
 `4ead8a82ac04a227121cd53b35b190a9a4a0182c`, PR #84 merged как
@@ -252,9 +258,11 @@ PROCESS-002, Scope Audit 31/0/0 и final Reviewer проходят. Task commit
 - [TASK-075 — Runtime Read-Only Recovery Assessment](TASK-075-RUNTIME-READ-ONLY-RECOVERY-ASSESSMENT.md) — Completed, Coordinator Accepted; task commit `f7b80ac976a144aa4918bd4ed74140e48fd31310` published through PR #80 and merged as `5eb54efea3f3df5c7967b2c1e2d0894c6289e50a`; isolated read-only assessment only; durable recovery authority and production wiring remain Not Activated
 - [TASK-077 — Trusted Publisher Initial Route and Capability Preflight](TASK-077-TRUSTED-PUBLISHER-ROUTE.md) — Coordinator Accepted; commit c70c398 published through PR #82 as merge 5e40742; product capability unchanged
 - [TASK-078 — Runtime Recovery Claim and Admission Barrier Readiness](TASK-078-RECOVERY-CLAIM-READINESS.md) — Completed, Coordinator Accepted; source 8687758 merged through PR #83 as 4dad1af; item7 code remains Not Ready
-- [TASK-080 — Runtime Recovery Claim Design Status and Conformance](TASK-080-RECOVERY-CLAIM-DESIGN-STATUS.md) — verification-stable In Progress; matching envelope resolves gates/closure; DP024 Approved/Planned, no code activation
+- [TASK-080 — Runtime Recovery Claim Design Status and Conformance](TASK-080-RECOVERY-CLAIM-DESIGN-STATUS.md) — verification-stable In Progress; matching envelope resolves gates/closure; published source eac6f6e through PR #85 merge ac82aa2; DP024 design Approved, no code activation by TASK080
 - [TASK-079 — Runtime Recovery Claim and Admission Implementation Boundary](TASK-079-RECOVERY-CLAIM-ADMISSION-BOUNDARY.md) — accepted subject15047580 published source4ead8a82 through PR84 merge0d018c42; Draft refined by TASK080
 - [TASK-076 — Local Configuration Studio](TASK-076-LOCAL-CONFIGURATION-STUDIO.md) — Coordinator Accepted source; committed as b8c2b86 and merged through PR #81 as e9a87b5; existing-API local/dev UI, no Runtime/DP-017 change
+
+- [TASK-081 — Runtime Recovery Ordering and Fence Foundation](TASK-081-RECOVERY-ORDERING-FOUNDATION.md) — verification-stable In Progress; matching envelope resolves gates/closure; DP024 Approved/Partial for isolated local test-owner foundation; no real-owner/durable recovery claim
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

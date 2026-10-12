@@ -5,13 +5,24 @@
 ## 1. Status
 
 - **Design Status:** Approved
-- **Implementation Status:** Planned
+- **Implementation Status:** Partial (isolated local ordering/fence test-owner foundation)
 
-TASK-079 introduced the proposed private boundary. TASK-080 independent Architect
-Confirmation approves the refined design recorded here; Implementation remains
-Planned. Approval delivers no code or storage qualification.
+TASK-079 introduced the private boundary. TASK-080 independent Architect
+Confirmation approves the refined design recorded here. TASK-081 implements only
+`internal/runtimerecoverycoordination`: exact-scope explicit participant identity,
+closed aggregate/command test-owner models, detached complete membership/revisions,
+startup-closed/sticky fence, local reservation and client/fatal epoch invalidation.
+Outer serialization and short state/aggregate/command locks remain separate;
+reservation sessions retain only the outer token during simulated external I/O.
+One local revalidation disposition and idempotent disposal create no claim or permit.
+
+Implementation Status is Partial for that isolated local foundation by explicit
+TASK-081 role decision; current verification/review/closure resolves only from its
+newest valid matching Recovery Evidence Envelope. All integrated proofs remain
+planned. Real DP-014/DP-015 writers, authentic producer provenance, persistent
+stores, durable claim/readback/resume and live recovery permits remain absent.
 DP-017 remains Approved / Planned overall with only TASK-075 read-only assessment
-implemented in isolation. No durable claim, recovery permit or barrier exists.
+implemented in isolation. No durable recovery barrier or production recovery exists.
 
 ## 2. Purpose and authority
 
@@ -321,35 +332,34 @@ conformance, process-origin production coverage or production recovery readiness
 
 ### First foundation slice coverage
 
-| Proof | Planned first foundation coverage | Remaining prerequisite |
+| Proof | TASK-081 isolated local model coverage | Remaining prerequisite |
 | --- | --- | --- |
-| P1 | Shared identity/no bypass among test participants only | Every real writer/delegation gate |
-| P2 | Local race/reservation/revision rejection | Real complete owners and durable conditional publication |
-| P3 | Local startup/sticky fence | Real restart with qualified owner/claim stores |
-| P4 | Reservations grant no authority | Durable one-claim/single live issuance |
-| P5 | Reject missing/current synthetic origins | Authentic durable producer provenance |
-| P6 | Client expiry is not takeover proof | Complete origins/surviving real callbacks |
-| P7 | Local cut/invalidation model only | Real provenance/CAS/readback/issuance crash cuts |
+| P1 | Explicit same participant and exact owner identity among test models | Every real writer/delegation gate |
+| P2 | Detached complete membership/revisions and stale/foreign rejection | Real complete owners and durable conditional publication |
+| P3 | Startup closed; fresh clean-only opening and sticky unknown/recovery fence | Real restart with qualified owner/claim stores |
+| P4 | Reservation/revalidation is only local data/disposition, no authority | Durable one-claim/single live issuance |
+| P5 | Deferred; no origin input or loss proof | Authentic durable producer provenance |
+| P6 | Client epoch invalidation supplies no takeover authority | Complete origins/surviving real callbacks |
+| P7 | Pending local candidate invalidation during simulated external I/O | Real provenance/CAS/readback/issuance crash cuts |
 | P8 | Deferred | Persistent aggregate/complete commands/claim restart |
 | P9 | Deferred | Existing-only authority, anti-clone/rollback provisioning |
-| P10 | No resume authority exposed | Conditional durable successor resume |
-| P11 | Pending/unknown never qualified Clean in model | Actual claim-aware assessment/ReleaseOnly |
-| P12 | Local cancellation/epoch/fence negative gates | Actual fatal authority/uncertain storage cuts |
-| P13 | Independent scopes/fixed order/no owner locks during simulated I/O | Real integration, race/stress/persistent I/O |
+| P10 | No resume operation or authority | Conditional durable successor resume |
+| P11 | Unknown/incomplete/claim-present model facts cannot open admission | Actual claim-aware assessment/ReleaseOnly |
+| P12 | Local epoch/fatal invalidation closes admission and rejects old candidate | Actual fatal authority/uncertain storage and delivered-permit revocation |
+| P13 | Independent Instances, fixed owner lock order, owner locks released during simulated I/O | Real integration, race/stress/persistent I/O |
 | P14 | No lifecycle/reconciliation/release capability | Continued integrated negative proofs |
 
-This table is planned partial model coverage, never PASS or real-owner/durability
-qualification. The eight cuts in section 9 require future executable evidence.
+This is partial local model coverage, never full P1–P14 PASS, real-owner participation
+or durability qualification. The eight cuts in section 9 still require integrated
+executable evidence. Reservations and successful local revalidation grant no authority.
 
 ## 13. Prerequisites and next decision
 
-The next recommendation is a separate isolated private ordering/fence foundation,
-Not Activated. Fresh independent intake must bound scope and Size Guard. It may
-contain exact-scope participant identity supplied explicitly, startup-closed/sticky
-fence, closed typed reservation/epoch invalidation, fixed lock order and test
-owner participants. It validates negative dispositions without claim-store mutation,
-provenance publication, live recovery permit, lifecycle delegation or production
-composition. No package/API/file-count promise is made before intake.
+TASK-081 supplies the isolated private local ordering/fence foundation with closed
+test-owner models only. The next recommendation is separate real-owner/generation
+participation readiness and integration, Not Activated, subject to fresh independent
+intake and Size Guard. The foundation mutates no claim store or provenance, issues
+no live recovery permit and exposes no lifecycle delegation or production composition.
 
 Test owner ports prove local semantics only, not participation of every real
 DP-014/DP-015 writer. Real-owner and generation-transition integration is a separate
@@ -363,8 +373,7 @@ and item 11 reporting/integration remain later. No next task is started here.
 ## 14. Decision boundary
 
 TASK-080 independent Architect explicitly approves this refined private
-restart-based design: Approved / Planned. DP-015 internal atomic transitions and
+restart-based design: Approved; Implementation is now Partial only for TASK-081 local models. DP-015 internal atomic transitions and
 external-I/O prohibition remain unchanged. No code, durable store, recovery permit
-or production recovery has been delivered by TASK-079/TASK-080. All proof rows
-remain planned. Unknown provenance, storage, authority or publication outcome
+or production recovery has been delivered by TASK-079/TASK-080. All integrated proof rows remain planned. Unknown provenance, storage, authority or publication outcome
 leaves admission closed; design Approval is no implementation activation.

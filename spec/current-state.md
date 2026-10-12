@@ -1,22 +1,25 @@
 # Текущее состояние
 
-**Текущая задача:** TASK-080 — Runtime Recovery Claim Design Status and Conformance,
-verification-stable `In Progress`, branch `docs/task-080-recovery-claim-design-status`,
-baseline `0d018c42ff2244e80b05f7ea9e0e58b0966f6413`. Actual gates/closure определяет
-только newest valid matching TASK-080 Recovery Evidence Envelope. Зеркальный
-[DP-024](../docs/ru/design/DP-024-runtime-recovery-claim-admission-boundary.md)
-Approved / Planned по explicit independent Architect decision: outer ordering
-token отделён от owner-local locks, external CAS/readback проходит вне них;
-local reservation не truth/permit, durable claim CAS — commit point, exact
-readback/revalidation предшествуют single local issuance. DP-015 internal atomic
-parent transition сохранён. Новый код, persistent adapter, recovery permit и
-production recovery отсутствуют. Next recommendation — isolated private
-ordering/fence foundation с test owner ports, Not Activated. Real-owner
-integration и durable qualification — отдельные prerequisites; item7 не завершён.
-DP-017 остаётся Approved/Planned overall, только TASK-075 assessment изолированно
-реализован; reconciliation/release не активированы.
+**Текущая задача:** TASK-081 — Runtime Recovery Ordering and Fence Foundation,
+verification-stable `In Progress`, branch
+`feature/task-081-recovery-ordering-foundation`, baseline
+`ac82aa29b9aaf7d25a0822b7ef3b3785b9149b18`. Actual gates/closure определяет
+только newest valid matching TASK-081 Recovery Evidence Envelope.
+Scope — isolated private local ordering/fence с closed test-owner models;
+foundation реализован в `internal/runtimerecoverycoordination`.
+DP-024 Approved / Partial только для local model. Real-owner
+integration, durable provenance/storage/claim, recovery permit и production
+recovery отсутствуют; item7 не завершён. Next recommendation — separate
+real-owner/generation participation readiness and integration, Not Activated.
+DP-017 остаётся Approved/Planned overall; только TASK-075 read-only assessment
+реализован изолированно, reconciliation/release не активированы.
 
-**Последняя опубликованная design boundary:** TASK-079, accepted subject
+**Последняя опубликованная design boundary:** TASK-080 accepted subject `70302b93b3908b0216ce79298ade7ae0e10d123b`, source
+`eac6f6eac0a19fbea4d4c47e978124e7fc6cd6eb` through PR #85 merge
+`ac82aa29b9aaf7d25a0822b7ef3b3785b9149b18` by local immutable Git metadata.
+Approved DP-024 design delivers no runtime or storage capability.
+
+**Предыдущая опубликованная design boundary:** TASK-079, accepted subject
 `15047580e43ee0a177bc35619f9f0dfaee2b2ae5`, source
 `4ead8a82ac04a227121cd53b35b190a9a4a0182c`, PR #84 merge
 `0d018c42ff2244e80b05f7ea9e0e58b0966f6413`. Draft уточнён TASK-080;
