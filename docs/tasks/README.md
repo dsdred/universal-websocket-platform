@@ -3,17 +3,26 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая bounded readiness task —
-[TASK-082](TASK-082-REAL-OWNER-PARTICIPATION-READINESS.md), verification-stable
-`In Progress`, branch `docs/task-082-real-owner-participation-readiness`, baseline
-`4a2a575577f180527fa7a9b5499da037b294bb06`. Actual gates/closure resolve-ятся
-только newest valid matching TASK-082 envelope. Assessment READY; full
-real-owner/generation integration — SPLIT REQUIRED / NOT READY AS ONE BOUNDED TASK.
-Next candidate — Design-update для typed real-owner attachment/complete coverage,
-membership/absence revisions и client-generation/containment-fatal invalidation
-fan-out ordering под Approved DP-024, Not Activated. Durable provenance/stores
-не блокируют лишь local seam, но остаются prerequisites полного item7.
-DP-024 сохраняет Approved / Partial; integrated P1–P14 Planned, item7 unproven.
+Текущая bounded design-update task —
+[TASK-083](TASK-083-REAL-OWNER-PARTICIPATION-DESIGN.md), verification-stable
+`In Progress`, branch `docs/task-083-real-owner-participation-design`, baseline
+`cf17b1728349bca9ac3916c88a00445f021cc4a9`. Actual gates/closure resolve only
+from newest valid matching TASK-083 envelope. DP-024 §15 records typed attachment,
+complete coverage/membership, storage-wide client replacement and fatal ordering.
+Next candidate: fresh bounded local leaf plus complete DP-014 coverage intake,
+Not Activated; DP-015 then fatal/composition remain separate. Missing command,
+authority or qualified no-claim keeps startup closed. No runtime capability added;
+DP-024 Approved / Partial and integrated P1–P14 Planned, item7 unproven.
+
+Последняя опубликованная readiness —
+[TASK-082](TASK-082-REAL-OWNER-PARTICIPATION-READINESS.md), Completed — Coordinator
+Accepted, accepted source manifest `aa97244d3f46cb7f535af69d6a86babe12780f26`,
+commit `6cfb17bff4246d17e41107755ace0fa3b6d96850`, PR #87 merge
+`cf17b1728349bca9ac3916c88a00445f021cc4a9` по local immutable Git metadata.
+Assessment READY; full integration SPLIT REQUIRED / NOT READY AS ONE BOUNDED TASK;
+its implementation intake was NOT READY pending the TASK-083 seam/decomposition.
+Cached local metadata is not fresh network/P0–P10 proof. Durable provenance/stores
+remain full item7 prerequisites; publication created no runtime capability.
 
 Последняя опубликованная local foundation — TASK-081, accepted source manifest
 `acefebe25d8a1053d6af0af00bbc1625014876c4`, commit
@@ -34,7 +43,7 @@ Approved DP-024 design delivers no runtime or storage capability.
 `4ead8a82ac04a227121cd53b35b190a9a4a0182c`, PR #84 merged как
 `0d018c42ff2244e80b05f7ea9e0e58b0966f6413`; Draft refined by TASK-080.
 
-Последняя опубликованная readiness — TASK-078, Completed — Coordinator Accepted,
+Предыдущая опубликованная readiness — TASK-078, Completed — Coordinator Accepted,
 subject `4c73bc9fd72ca61d28c2e67f454e936178d46b2a`, source `8687758`, PR #83,
 merge `4dad1af14102f516784cb1ae0ef39a59fec6b0ec` по local Git metadata.
 
@@ -273,7 +282,8 @@ PROCESS-002, Scope Audit 31/0/0 и final Reviewer проходят. Task commit
 
 - [TASK-081 — Runtime Recovery Ordering and Fence Foundation](TASK-081-RECOVERY-ORDERING-FOUNDATION.md) — verification-stable In Progress; matching envelope resolves gates/closure; DP024 Approved/Partial for isolated local test-owner foundation; no real-owner/durable recovery claim
 
-- [TASK-082 — Runtime Real-Owner and Generation Participation Readiness](TASK-082-REAL-OWNER-PARTICIPATION-READINESS.md) — verification-stable In Progress; matching envelope resolves gates/closure; assessment READY, full integration SPLIT REQUIRED; next Design-update Not Activated; DP024 Approved/Partial and item7 unproven
+- [TASK-082 — Runtime Real-Owner and Generation Participation Readiness](TASK-082-REAL-OWNER-PARTICIPATION-READINESS.md) — Completed — Coordinator Accepted, exact accepted source aa97244d3f46cb7f535af69d6a86babe12780f26; commit 6cfb17bff4246d17e41107755ace0fa3b6d96850 / PR #87 / merge cf17b1728349bca9ac3916c88a00445f021cc4a9 by local immutable Git metadata; readiness only, full integration SPLIT REQUIRED.
+- [TASK-083 — Runtime Real-Owner Participation Design](TASK-083-REAL-OWNER-PARTICIPATION-DESIGN.md) — verification-stable In Progress; newest valid matching envelope resolves gates/closure; bounded DP024 realization, next local leaf plus complete DP014 intake Not Activated; no runtime capability.
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.
