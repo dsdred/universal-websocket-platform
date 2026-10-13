@@ -1,17 +1,31 @@
 # Текущее состояние
 
-**Текущая задача:** TASK-083 — Runtime Real-Owner Participation Design, verification-stable
-`In Progress`, branch `docs/task-083-real-owner-participation-design`, baseline
-`cf17b1728349bca9ac3916c88a00445f021cc4a9`. Actual gates/closure resolve only
-from the newest valid matching TASK-083 Recovery Evidence Envelope.
-Concrete private realization in DP-024 §15 records typed non-rebinding owner
-attachment, complete coverage and membership/absence revisions, storage-wide
-client replacement and containment-fatal ordering. Design work adds no runtime
-capability; DP-024 remains Approved / Partial for TASK-081 local test-owner models,
-integrated P1–P14 Planned, item7 unproven. Next candidate: fresh bounded local
-leaf plus complete DP-014 coverage intake, Not Activated; DP-015 and fatal/composition
-integration follow separately. Missing command/authority/qualified no-claim keeps
-startup closed; durable provenance/stores/claim remain full item7 prerequisites.
+**Текущая задача:** TASK-084 — Runtime DP-014 Coordination Participation,
+verification-stable `In Progress`, branch
+`feature/task-084-dp014-coordination-participation`, baseline
+`fb906b335523b933d7cdf3c634ca9946bcb410f0`. Actual gates/closure resolve only
+from its newest valid matching Recovery Evidence Envelope. Minimal typed leaf
+`internal/runtimecoordination` and complete real DP-014 participation are
+implemented as a closed local slice. Every coordinated direct/narrow writer
+rejects; ordered readers provide coherent detached complete history and
+allocation/absence stamps, without owner/lock links or authority. Copy/zero handles,
+scope/owner/absence/revision validation and checked counters have local proof
+coverage. Successful public coordinated publication/startup is not proved:
+package-local fixtures and legacy regressions remain distinct. DP-015 participation,
+client/fatal roots, qualified current authority/no-claim and durable recovery
+are absent. DP-024 remains Approved / Partial; integrated P1–P14 Planned,
+item7 unproven. Next candidate: fresh bounded complete DP-015
+participation/membership and storage-wide client replacement intake, Not Activated;
+actual containment fatal/composition coupling follows separately.
+
+**Последняя опубликованная design task:**
+TASK-083 — Completed — Coordinator Accepted; accepted source manifest
+`7a982b3b997cbe4d5c499829a355ce8824d8ce34`, source commit
+`bafe45972bf0da17b10aaa8096cac9d8d59cdbe3`, PR #88 merge
+`fb906b335523b933d7cdf3c634ca9946bcb410f0` по local immutable Git metadata.
+Design-only publication добавила concrete DP-024 §15 plan, без runtime capability.
+Это historical published source; исходная работа не возобновляется. Cached local
+metadata не является fresh remote или Publisher P0–P10 evidence.
 
 **Последняя опубликованная readiness task:** TASK-082, Completed — Coordinator
 Accepted, source manifest `aa97244d3f46cb7f535af69d6a86babe12780f26`, commit
@@ -27,11 +41,12 @@ merge metadata are not fresh network or Publisher P0–P10 evidence.
 `f5818c6e0500ede49fc1f3c4b314db63e16affc1`, PR #86 merge
 `4a2a575577f180527fa7a9b5499da037b294bb06` по local immutable Git metadata.
 Foundation в `internal/runtimerecoverycoordination` использует closed test-owner
-models; real-owner integration, durable provenance/storage/claim, recovery permit
-и production recovery отсутствуют. Cached refs/local merge metadata не являются
+models; на том publication checkpoint real-owner integration, durable
+provenance/storage/claim, recovery permit и production recovery отсутствовали.
+Текущий closed DP-014 slice отдельно описан выше. Cached refs/local merge metadata не являются
 fresh network evidence.
 
-**Последняя опубликованная design boundary:** TASK-080 accepted subject `70302b93b3908b0216ce79298ade7ae0e10d123b`, source
+**Предыдущая опубликованная design boundary:** TASK-080 accepted subject `70302b93b3908b0216ce79298ade7ae0e10d123b`, source
 `eac6f6eac0a19fbea4d4c47e978124e7fc6cd6eb` through PR #85 merge
 `ac82aa29b9aaf7d25a0822b7ef3b3785b9149b18` by local immutable Git metadata.
 Approved DP-024 design delivers no runtime or storage capability.

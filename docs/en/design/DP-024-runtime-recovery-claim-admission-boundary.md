@@ -5,7 +5,7 @@
 ## 1. Status
 
 - **Design Status:** Approved
-- **Implementation Status:** Partial (isolated local ordering/fence test-owner foundation)
+- **Implementation Status:** Partial (isolated local test-owner foundation and closed DP-014 participation)
 
 TASK-079 introduced the private boundary. TASK-080 independent Architect
 Confirmation approves the refined design recorded here. TASK-081 implements only
@@ -16,12 +16,19 @@ Outer serialization and short state/aggregate/command locks remain separate;
 reservation sessions retain only the outer token during simulated external I/O.
 One local revalidation disposition and idempotent disposal create no claim or permit.
 
-Implementation Status is Partial for that isolated local foundation by explicit
-TASK-081 role decision; current verification/review/closure resolves only from its
-newest valid matching Recovery Evidence Envelope. All integrated proofs remain
-planned. Real DP-014/DP-015 writers, authentic producer provenance, persistent
-stores, durable claim/readback/resume and live recovery permits remain absent.
-DP-017 remains Approved / Planned overall with only TASK-075 read-only assessment
+TASK-084 adds the minimal dependency leaf `internal/runtimecoordination` and
+complete closed participation of the real DP-014 owner: construction before
+allocation, every direct/narrow writer, ordered detached readers, coherent complete
+history and allocation/absence stamps. All coordinated writes reject; missing
+commands, current authority and qualified no-claim cannot open admission. Legacy
+constructor regressions retain successful isolated publication behavior.
+
+Implementation Status remains Partial for TASK-081 models and this TASK-084 local
+slice. Each task's gates/closure resolve only from its newest valid matching
+Recovery Evidence Envelope. All integrated P1–P14 proofs remain Planned. DP-015
+participation, client/fatal roots, authentic producer provenance, persistent stores,
+durable claim/readback/resume and live recovery permits remain absent. DP-017
+remains Approved / Planned overall with only TASK-075 read-only assessment
 implemented in isolation. No durable recovery barrier or production recovery exists.
 
 ## 2. Purpose and authority
@@ -67,7 +74,8 @@ composition supplies current containment authority and prior-process-loss proof.
 No raw map/lock, generic transaction registry, service locator, arbitrary callback
 or ordinary lifecycle capability crosses this boundary.
 
-These are present owners and prospective participation seams, not delivered APIs:
+This is the complete participation inventory. TASK-084 delivers only closed DP-014
+participation; command, recovery and containment seams remain planned:
 
 | Owner/source | Required participation |
 | --- | --- |
@@ -358,10 +366,12 @@ executable evidence. Reservations and successful local revalidation grant no aut
 TASK-081 supplies only isolated closed test-owner models. TASK-082 completes
 real-owner/generation readiness: full integration is SPLIT REQUIRED / NOT READY
 AS ONE BOUNDED TASK. TASK-083 records the concrete private realization in section 15.
-The next recommendation is fresh bounded intake for the dependency leaf and complete
-DP-014 local owner coverage, Not Activated, with fresh readiness and Size Guard.
-DP-015 coverage/client replacement and actual fatal/composition coupling follow as
-separate slices. Missing command/authority/qualified no-claim keeps startup closed.
+TASK-084 now implements the minimal leaf and complete closed DP-014 local owner
+coverage described in section 15. The next recommendation is fresh bounded intake
+for complete DP-015 participation, membership stamps and storage-wide client
+replacement, Not Activated, with fresh readiness and Size Guard. Actual
+fatal/composition coupling follows separately. Missing command/authority/qualified
+no-claim keeps coordinated writes closed.
 
 Durable provenance, persistent aggregate/complete command/recovery storage and
 original storage-authority/provisioning qualification remain separate prerequisites;
@@ -373,7 +383,7 @@ No implementation or successor is activated by this design task.
 ## 14. Decision boundary
 
 TASK-080 independent Architect explicitly approves this refined private
-restart-based design: Approved; Implementation is now Partial only for TASK-081 local models. DP-015 internal atomic transitions and
+restart-based design: Approved; Implementation remains Partial for TASK-081 local models and TASK-084 closed DP-014 participation. DP-015 internal atomic transitions and
 external-I/O prohibition remain unchanged. No code, durable store, recovery permit
 or production recovery has been delivered by TASK-079/TASK-080. All integrated proof rows remain planned. Unknown provenance, storage, authority or publication outcome
 leaves admission closed; design Approval is no implementation activation.
@@ -381,35 +391,37 @@ leaves admission closed; design Approval is no implementation activation.
 ## 15. Concrete local owner participation plan
 
 TASK-083 records this private realization of the existing Approved semantics.
-Everything below is planned: no owner seam, root gate or integrated proof is
-implemented by this design task. Design Status remains Approved; Implementation
-Status remains Partial only for TASK-081 closed test-owner models. This plan grants
-no claim, permit, takeover authority or production startup qualification.
+TASK-084 implements only the minimal typed leaf, closed real DP-014 participation
+and coherent detached owner observations. The complete command, root,
+reservation-session and integrated protocol below remain planned. Design Status
+stays Approved; Implementation Status stays Partial. This local slice grants no
+claim, permit, takeover authority or production startup qualification.
 
 ### 15.1 Typed binding and explicit coverage
 
 The dependency leaf `internal/runtimecoordination` imports no aggregate, command,
-containment, lifecycle or recovery owner. Its closed types are immutable validated
-`Scope`, `Participant`, `AggregateAttachment`, `CommandAttachment`, `ClientEpoch`,
-`AuthorityFence`, observation/transition regions and reservation-session handles.
+containment, lifecycle or recovery owner. TASK-084 implements immutable validated
+`Scope`, copy-safe `Participant`, non-rebinding `AggregateAttachment` and short
+`ObservationRegion`; its transition region always rejects. `CommandAttachment`,
+`ClientEpoch`, `AuthorityFence` and reservation-session handles remain planned.
 Composition supplies the identical participant explicitly. Attachments bind exact
 owner identity and scope once; duplicate, foreign and rebinding attempts reject.
 Complete-owner markers belong to conforming owner construction, never caller claims.
 No raw locks, generic callbacks, service discovery or ordinary lifecycle capability
 cross the seam. The leaf latch does not query or replace containment authority.
 
-Prospective `runtimeidentity.NewCoordinatedStore(scope, participant)` binds one
+Implemented `runtimeidentity.NewCoordinatedStore(scope, participant)` binds one
 Instance before allocation: historical `AllocateCandidateIdentity(id)` cannot
 convey domain/Workspace/Configuration. Every direct method, including narrow
 terminal publishers, rejects foreign identity and enters its own conforming region.
 Historical `NewStore`, `NewMemoryStorage` and uncoordinated composition stay
-supported but do not count toward DP-024 conformance. Multi-Instance command
+supported but do not count toward DP-024 conformance. Planned multi-Instance command
 storage uses typed `AttachInstance(scope, participant)` before capturing ledger
 absence. Attachment is independent of aggregate or ledger existence.
 
 Complete DP-014 coverage includes allocation/create, attempt claim/history append,
 execution binding, Running, Stop and all authority-specific terminal publishers,
-aggregate/history readers and exact-attempt capture/revalidation. Complete DP-015
+aggregate/history readers and exact-attempt capture/revalidation. Planned complete DP-015
 coverage includes primitive inspect/claim and tracked Stop; managed admission,
 binding and live gates; parent/phase admission, creation, delegation, terminal and
 expiry; tracked parent/preclaimed StopOld/slot/rendezvous/private permit atomic
@@ -433,13 +445,32 @@ explicit absence stamp. Missing, stale, foreign or partial coverage cannot open
 admission. Create-after-absence must invalidate the stamp. Counters never wrap:
 exhaustion closes admission and rejects future authorized mutation.
 
+TASK-084 `CaptureCoordinationSnapshot` and `RevalidateCoordinationSnapshot`
+implement only the DP-014 part: exact scope, an isolated opaque identity with no
+owner/lock links, presence revision, allocation/aggregate presence, aggregate view
+and every terminal/nonterminal history member. Capture verifies complete index,
+immutable binding, active/terminal and desired/actual coherence; nil, incomplete
+or contradictory owner facts reject without a partial result. Coherent unbound
+early facts and retained StopFailure remain valid local observations; the separate
+exact execution reader still rejects an unbound selected attempt. No command,
+participant/client epoch or qualified no-claim stamp is fabricated. Presence and
+domain counters reject exhaustion before mutation. Create-after-absence and
+successful-publication observations use explicitly labelled package-local fixtures;
+they do not prove successful coordinated mutation.
+
 ### 15.3 Fixed short-region order
 
-Normal short regions acquire `Instance outer -> AuthorityFence read gate ->
+The complete planned protocol acquires `Instance outer -> AuthorityFence read gate ->
 ClientEpoch read gate -> participant state -> owner-local locks`. Owner catalog
 lookup/registration precedes aggregate locking. DP-015 retains its existing
 `clientMu.RLock -> ledger.mu` atomic transition, including parent, preclaimed
 StopOld, sole occupant, rendezvous and private live phase permit.
+
+TASK-084 observation acquires Instance outer, then owner catalog and aggregate
+locks; it releases them all before returning. Missing root/command qualification
+keeps transitions closed. Shared participant state preserves one attachment across
+copies; copied region handles share exactly one release disposition and zero/nil
+Close is safe. No raw mutex or arbitrary callback is exposed.
 
 Aggregate and command facts may be copied sequentially while the same outer token
 excludes writers; raw owner locks never cross packages. Release every authority,
@@ -481,24 +512,28 @@ truth nor changes DP-023 fatal shutdown obligations.
 
 ### 15.6 Smallest independent sequence and executable obligations
 
-The next candidate is fresh intake for leaf binding/local regions and complete
-DP-014 direct-writer, narrow-publisher, reader and absence coverage, Not Activated.
-The second candidate covers complete DP-015 primitive/parent/phase/live/rendezvous
-participation, membership stamps and storage-wide replacement. The third covers
-actual containment-source fatal coupling and explicit composition supply. Each
-slice receives fresh readiness, Size Guard and independent review; none activates
-its successor. Production lines/package/path counts must be measured at that intake.
+TASK-084 implements the first slice: leaf binding/local observation regions and
+complete closed DP-014 direct-writer, narrow-publisher, reader and absence coverage.
+Its 13 proof tests and two regression tests cover copy/zero handles, attachment
+before allocation/absence, direct/narrow rejection, detached/stale/foreign/partial
+facts, counter exhaustion, independent Instances and released owner locks.
+Success fixtures are package-local; historical constructor regressions retain
+existing successful publication behavior. Focused stress, full regression and vet
+pass; race verification is unavailable in the current CGO-disabled/no-C-compiler
+environment. This evidence proves only the local slice, not integrated P1–P14.
+
+The next candidate is complete DP-015 primitive/parent/phase/live/rendezvous
+participation, membership stamps and storage-wide client replacement, Not Activated.
+Actual containment-source fatal coupling and explicit composition supply follow
+separately. Each receives fresh readiness, Size Guard and independent review;
+no successor is activated here.
 
 Missing command attachment, current authority or qualified no-claim verification
-keeps coordinated construction closed. The first slice may prove coordinated
-mutation rejection and coherent observation/absence; unchanged historical
-regressions prove existing successful publication behavior. No production
-test-opening API is permitted. Synthetic opening in existing closed model tests
-remains model-only; successful real-owner startup needs later complete qualification.
+keeps every coordinated write closed. No production test-opening API exists.
+Synthetic opening in existing closed model tests remains model-only; successful
+real-owner startup needs later complete qualification.
 
-Future executable proofs must cover direct/narrow-call bypass rejection; attachment
-before allocation/absence; foreign/rebind/stale/create-after-absence rejection;
-independent Instance observation during retained-token I/O; every command/live/
+Remaining integrated executable proofs must cover every command/live/
 rendezvous change invalidating stamps; preserved tracked-parent atomicity; two
 Instances and racing attachment during replacement; overflow without new-generation
 visibility; fatal before/after acceptance; closed-fence authorized replay with

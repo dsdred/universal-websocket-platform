@@ -131,8 +131,8 @@ Approved DP/ARCH/ADR semantics не изменены. TASK-081 реализуе�
 aggregate/command test-owner models, detached complete membership/revisions,
 startup/sticky admission fence и local reservation/epoch/fatal invalidation.
 Owner locks не сохраняются при simulated external I/O; local revalidation не
-claim/permit/authority. Implementation Partial только для этой isolated foundation
-по explicit TASK-081 role decision. Четырнадцать integrated proof obligations
+claim/permit/authority. На TASK-081 publication checkpoint Implementation Partial
+относился только к этой isolated foundation по explicit TASK-081 role decision. Четырнадцать integrated proof obligations
 Planned; P5 authentic origin и P8/P9 durability Deferred, full executable PASS нет.
 TASK-081 accepted source manifest `acefebe25d8a1053d6af0af00bbc1625014876c4`
 опубликован commit `f5818c6e0500ede49fc1f3c4b314db63e16affc1` через PR #86
@@ -145,21 +145,35 @@ merge `cf17b1728349bca9ac3916c88a00445f021cc4a9` by local Git metadata only.
 Assessment READY; full real-owner/generation integration SPLIT REQUIRED / NOT READY
 AS ONE BOUNDED TASK. Its immediate implementation intake was NOT READY pending
 concrete seam contract and Size Guard decomposition.
-[TASK-083 design](../docs/tasks/TASK-083-REAL-OWNER-PARTICIPATION-DESIGN.md) is current,
-verification-stable In Progress; actual gates/closure resolve only from its newest
-valid matching envelope. DP-024 §15 records typed exact-scope non-rebinding
-attachment and explicit complete coverage, monotonic membership/absence revisions,
-root client/fatal gates ordered before short local acceptance, and independent
-Instance fan-out without outer-token acquisition or I/O under owner locks.
-Approved ownership/semantics/status are unchanged; no executable capability added.
-Next candidate: fresh local leaf plus complete DP-014 coverage intake Not Activated;
-DP-015 and fatal/composition integration follow separately. Missing command,
-authority or qualified no-claim stays closed, including partial integration.
-Durable provenance/stores are not prerequisites merely for a local seam; authentic
-origins, persistent stores/claim and original authority remain full item7 prerequisites.
-DP-024 Approved / Partial, integrated P1–P14 Planned, reconciliation/release and
-production wiring Not Activated. Existing TASK080/TASK081 envelopes retain their
-own historical evidence; no historical verdict transfers to TASK083.
+[TASK-083 design](../docs/tasks/TASK-083-REAL-OWNER-PARTICIPATION-DESIGN.md) —
+historical Completed — Coordinator Accepted, source manifest
+`7a982b3b997cbe4d5c499829a355ce8824d8ce34`, commit
+`bafe45972bf0da17b10aaa8096cac9d8d59cdbe3`, PR #88 merge
+`fb906b335523b933d7cdf3c634ca9946bcb410f0` by local immutable Git metadata.
+This published design records DP-024 §15 typed non-rebinding attachment, complete
+coverage, membership/absence revisions and planned root client/fatal ordering;
+publication added no executable capability and does not resume original work.
+Cached metadata is not fresh remote/P0–P10 proof.
+
+[TASK-084 implementation](../docs/tasks/TASK-084-DP014-COORDINATION-PARTICIPATION.md)
+is current verification-stable In Progress; its newest valid matching envelope
+alone resolves actual gates/closure. Minimal typed leaf and complete real DP-014
+participation implement closed direct/narrow writer regions and coherent detached
+aggregate/history/allocation/absence observations. Opaque detached identity has no
+owner/lock links; copy/zero handles, malformed/partial/foreign/stale facts and
+checked counters are covered locally. Fixture success is not coordinated startup;
+legacy constructor successful regressions retain their separate isolation boundary.
+Approved ownership/semantics/status are unchanged. Missing commands, authority
+and qualified no-claim keeps every coordinated mutation closed.
+
+Next candidate: fresh bounded complete DP-015 participation/membership and
+storage-wide client replacement intake, Not Activated; actual fatal/composition
+coupling follows separately. DP-015 participation/root gates, authentic origins, persistent stores/
+claim and original authority remain separate full item7 prerequisites. DP-024
+Approved / Partial includes TASK-081 local models and TASK-084 closed local slice;
+integrated P1–P14 Planned, reconciliation/release and production wiring Not Activated.
+Historical TASK080/081/083 evidence does not transfer into current TASK084 gates.
+
 TASK-080 accepted subject `70302b93b3908b0216ce79298ade7ae0e10d123b` опубликован
 source `eac6f6eac0a19fbea4d4c47e978124e7fc6cd6eb` через PR #85 как merge
 `ac82aa29b9aaf7d25a0822b7ef3b3785b9149b18` по local immutable Git metadata.
