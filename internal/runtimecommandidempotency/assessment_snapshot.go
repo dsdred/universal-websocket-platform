@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfigload"
+	"github.com/dsdred/universal-websocket-platform/internal/runtimecoordination"
 )
 
 // AssessmentSnapshot is one complete detached read of the primitive, parent,
@@ -74,6 +75,12 @@ func (s *MemoryStorage) ReadAssessmentSnapshot(
 		parents:           []ParentRecordView{},
 		phases:            []PhaseRecordView{},
 	}
+	region1 := s.lockRegion(instanceScope{domain: domain, workspaceID: workspaceID, configurationID: configurationID, runtimeInstanceID: runtimeInstanceID})
+	if region1.invalid {
+		region1.Close()
+		return AssessmentSnapshot{}, runtimecoordination.ErrClosed
+	}
+	defer region1.Close()
 	ledger := s.existingLedger(instanceScope{
 		domain:            domain,
 		workspaceID:       workspaceID,
@@ -84,7 +91,7 @@ func (s *MemoryStorage) ReadAssessmentSnapshot(
 		return snapshot, nil
 	}
 
-	ledger.mu.Lock()
+	ledger.lock()
 	snapshot.primitive = make([]RecordView, 0, len(ledger.records))
 	for _, record := range ledger.records {
 		snapshot.primitive = append(snapshot.primitive, record.view())
@@ -97,7 +104,7 @@ func (s *MemoryStorage) ReadAssessmentSnapshot(
 	for _, record := range ledger.phases {
 		snapshot.phases = append(snapshot.phases, record.view())
 	}
-	ledger.mu.Unlock()
+	ledger.unlock()
 
 	sort.Slice(snapshot.primitive, func(i, j int) bool {
 		return recordViewLess(snapshot.primitive[i], snapshot.primitive[j])

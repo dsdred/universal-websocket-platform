@@ -56,10 +56,14 @@ func (s Scope) InstanceID() string { return s.instance }
 type Participant struct{ data *participantState }
 
 type participantState struct {
-	outer    sync.Mutex
-	state    sync.Mutex
-	scope    Scope
-	attached bool
+	outer         sync.Mutex
+	state         sync.Mutex
+	scope         Scope
+	attached      bool
+	command       bool
+	commandMarker *commandMarker
+	roots         *rootBinding
+	epoch         uint64
 }
 
 // NewParticipant constructs a closed participant for a validated scope.
@@ -96,8 +100,11 @@ func (p *Participant) AttachAggregate(scope Scope) (AggregateAttachment, error) 
 // external work or wait. It exposes no raw lock or callback execution surface.
 type ObservationRegion struct{ release *regionRelease }
 type regionRelease struct {
-	participant *participantState
-	once        sync.Once
+	participant                   *participantState
+	once                          sync.Once
+	roots                         *rootBinding
+	clientEpoch, participantEpoch uint64
+	stateHeld                     bool
 }
 
 // Observe enters Instance outer before owner-local locks. Foreign or zero scope
@@ -111,13 +118,46 @@ func (a AggregateAttachment) Observe(scope Scope) (*ObservationRegion, error) {
 		return nil, ErrForeignScope
 	}
 	p.outer.Lock()
-	return &ObservationRegion{release: &regionRelease{participant: p}}, nil
+	p.state.Lock()
+	roots := p.roots
+	p.state.Unlock()
+	if roots != nil {
+		roots.authority.gate.RLock()
+		roots.client.gate.RLock()
+	}
+	p.state.Lock()
+	// Registration can publish the immutable binding between the initial read
+	// and this acquisition. Retry before exposing an incompletely ordered region.
+	if roots != p.roots {
+		p.state.Unlock()
+		if roots != nil {
+			roots.client.gate.RUnlock()
+			roots.authority.gate.RUnlock()
+		}
+		p.outer.Unlock()
+		return a.Observe(scope)
+	}
+	release := &regionRelease{participant: p, roots: roots, stateHeld: true}
+	if roots != nil {
+		release.clientEpoch = roots.client.epoch
+		release.participantEpoch = p.epoch
+	}
+	return &ObservationRegion{release: release}, nil
 }
 
 // Close releases the short observation region exactly once.
 func (r *ObservationRegion) Close() {
 	if r != nil && r.release != nil {
-		r.release.once.Do(func() { r.release.participant.outer.Unlock() })
+		r.release.once.Do(func() {
+			if r.release.stateHeld {
+				r.release.participant.state.Unlock()
+			}
+			if r.release.roots != nil {
+				r.release.roots.client.gate.RUnlock()
+				r.release.roots.authority.gate.RUnlock()
+			}
+			r.release.participant.outer.Unlock()
+		})
 	}
 }
 

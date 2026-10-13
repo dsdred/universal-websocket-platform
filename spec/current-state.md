@@ -1,22 +1,29 @@
 # Текущее состояние
 
-**Текущая задача:** TASK-084 — Runtime DP-014 Coordination Participation,
-verification-stable `In Progress`, branch
-`feature/task-084-dp014-coordination-participation`, baseline
-`fb906b335523b933d7cdf3c634ca9946bcb410f0`. Actual gates/closure resolve only
-from its newest valid matching Recovery Evidence Envelope. Minimal typed leaf
-`internal/runtimecoordination` and complete real DP-014 participation are
-implemented as a closed local slice. Every coordinated direct/narrow writer
-rejects; ordered readers provide coherent detached complete history and
-allocation/absence stamps, without owner/lock links or authority. Copy/zero handles,
-scope/owner/absence/revision validation and checked counters have local proof
-coverage. Successful public coordinated publication/startup is not proved:
-package-local fixtures and legacy regressions remain distinct. DP-015 participation,
-client/fatal roots, qualified current authority/no-claim and durable recovery
-are absent. DP-024 remains Approved / Partial; integrated P1–P14 Planned,
-item7 unproven. Next candidate: fresh bounded complete DP-015
-participation/membership and storage-wide client replacement intake, Not Activated;
-actual containment fatal/composition coupling follows separately.
+**Текущая задача:** TASK-085 — Runtime DP-015 Coordination Participation, verification-stable
+`In Progress`, branch `feature/task-085-dp015-coordination-participation`, baseline
+`20f5ba532ba9a1dbaa16c00796662fc6191d0ff5`. Actual gates/closure resolve only
+from its newest valid matching Recovery Evidence Envelope. Closed real DP-014
+and DP-015 participation now supplies ordered detached aggregate/history and
+complete command membership/link/presence observations, plus storage-wide client
+replacement. Typed copy-safe roots and staged attachment remain local ordering
+mechanics: the explicitly supplied inert authority root grants no containment
+authority or fatal-source coupling. All coordinated writes reject; authorized
+replay remains read-only with zero lifecycle/provider callbacks. Successful
+state-change fixtures and legacy regressions do not prove coordinated startup.
+DP-024 remains Approved / Partial; integrated P1–P14 Planned, item7 unproven.
+Qualified current authority/no-claim, durable recovery and production integration
+remain absent. Next candidate: fresh bounded actual containment fatal-source
+coupling and explicit composition supply readiness, Not Activated.
+
+**Последняя опубликованная implementation prerequisite:**
+TASK-084 — Completed — Coordinator Accepted, accepted source manifest
+`6d7375e6267d7d48abb9bebdf4737d5521607c4d`, source commit
+`4ddaf8272b537b27b825d854d8cd0b325f49bd2e`, PR #89 merge
+`20f5ba532ba9a1dbaa16c00796662fc6191d0ff5` by local immutable Git metadata.
+Its closed leaf/DP-014 slice is the prerequisite for TASK-085; historical
+acceptance does not transfer to current gates. Cached local facts are not fresh
+remote or Publisher P0–P10 evidence.
 
 **Последняя опубликованная design task:**
 TASK-083 — Completed — Coordinator Accepted; accepted source manifest

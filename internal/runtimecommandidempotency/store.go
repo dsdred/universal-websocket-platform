@@ -5,6 +5,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/dsdred/universal-websocket-platform/internal/runtimecoordination"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeorchestrationbinding"
 )
 
@@ -46,6 +47,10 @@ type stopExceptionOccupant struct {
 
 type commandLedger struct {
 	mu           sync.Mutex
+	membership   uint64
+	fenced       bool
+	before       ledgerState
+	region       *shortRegion
 	records      map[commandIdentity]*commandRecord
 	live         map[commandIdentity]*permitState
 	stopForStart map[commandIdentity]stopExceptionOccupant
@@ -61,8 +66,10 @@ type commandLedger struct {
 // Boundary client. Constructing a new Boundary preserves records but expires
 // all permits issued by the previous client generation.
 type MemoryStorage struct {
+	coord          *commandCoordination
 	clientMu       sync.RWMutex
 	generation     uint64
+	clientFenced   bool
 	generationDone chan struct{}
 	mu             sync.Mutex
 	ledgers        map[instanceScope]*commandLedger
@@ -76,13 +83,33 @@ func NewMemoryStorage() *MemoryStorage {
 	}
 }
 
-func (s *MemoryStorage) nextGeneration() (uint64, <-chan struct{}) {
+func (s *MemoryStorage) nextGeneration() (uint64, <-chan struct{}, error) {
+	if s.coord != nil {
+		r, err := s.coord.client.BeginReplacement()
+		if err != nil {
+			s.fenceClient()
+			return 0, nil, err
+		}
+		defer r.Close()
+		s.clientMu.RLock()
+		exhausted := s.generation == ^uint64(0)
+		s.clientMu.RUnlock()
+		if exhausted {
+			r.Fence()
+			s.fenceClient()
+			return 0, nil, ErrBoundaryExpired
+		}
+	}
 	s.clientMu.Lock()
 	defer s.clientMu.Unlock()
+	if s.clientFenced || s.generation == ^uint64(0) {
+		s.fenceClientLocked()
+		return 0, nil, ErrBoundaryExpired
+	}
 	close(s.generationDone)
 	s.generationDone = make(chan struct{})
 	s.generation++
-	return s.generation, s.generationDone
+	return s.generation, s.generationDone, nil
 }
 
 func (s *MemoryStorage) ledger(scope instanceScope) *commandLedger {
@@ -90,6 +117,9 @@ func (s *MemoryStorage) ledger(scope instanceScope) *commandLedger {
 	defer s.mu.Unlock()
 	ledger, ok := s.ledgers[scope]
 	if !ok {
+		if s.coord != nil && s.coord.presence[scope] == ^uint64(0) {
+			return nil
+		}
 		ledger = &commandLedger{
 			records:      make(map[commandIdentity]*commandRecord),
 			live:         make(map[commandIdentity]*permitState),
@@ -102,6 +132,9 @@ func (s *MemoryStorage) ledger(scope instanceScope) *commandLedger {
 			managedStart: make(map[runtimeorchestrationbinding.StartRendezvous]*managedStartRendezvous),
 		}
 		s.ledgers[scope] = ledger
+		if s.coord != nil {
+			s.coord.presence[scope]++
+		}
 	}
 	return ledger
 }
@@ -124,10 +157,13 @@ type Boundary struct {
 
 // NewBoundary constructs the only active client generation for storage.
 func NewBoundary(storage *MemoryStorage) (*Boundary, error) {
-	if storage == nil {
+	if storage == nil || (storage.coord != nil && storage.coord.self != storage) {
 		return nil, ErrInvalidSubmission
 	}
-	generation, generationDone := storage.nextGeneration()
+	generation, generationDone, err := storage.nextGeneration()
+	if err != nil {
+		return nil, err
+	}
 	return &Boundary{storage: storage, generation: generation, generationDone: generationDone}, nil
 }
 
@@ -161,36 +197,52 @@ func (b *Boundary) Execute(
 	// The read lock makes the active-generation check and command admission one
 	// linearization region against NewBoundary's generation transition. A stale
 	// client therefore cannot insert a Claim after reconstruction.
-	b.storage.clientMu.RLock()
-	if b.storage.generation != b.generation {
-		b.storage.clientMu.RUnlock()
+	region1 := b.storage.lockRegion(scope.instanceScope())
+	if region1.invalid {
+		region1.Close()
+		return Admission{}, runtimecoordination.ErrClosed
+	}
+	if b.storage.clientFenced || b.storage.generation != b.generation {
+		region1.Close()
 		return Admission{}, ErrBoundaryExpired
 	}
-	ledger := b.storage.ledger(scope.instanceScope())
+	ledger := b.storage.existingLedger(scope.instanceScope())
+	if ledger == nil {
+		if region1.closed {
+			region1.Close()
+			return Admission{}, runtimecoordination.ErrClosed
+		}
+		ledger = b.storage.ledger(scope.instanceScope())
+	}
 	identity := commandIdentity{scope: scope, key: key}
-	ledger.mu.Lock()
+	ledger.lock()
 
 	if existing, ok := ledger.records[identity]; ok {
 		if existing.intent != intent {
-			ledger.mu.Unlock()
-			b.storage.clientMu.RUnlock()
+			ledger.unlock()
+			region1.Close()
 			return Admission{}, ErrCommandKeyConflict
 		}
 		view := existing.view()
 		if existing.state == CommandStateTerminal {
-			ledger.mu.Unlock()
-			b.storage.clientMu.RUnlock()
+			ledger.unlock()
+			region1.Close()
 			return Admission{kind: AdmissionReplay, record: view}, nil
 		}
-		ledger.mu.Unlock()
-		b.storage.clientMu.RUnlock()
+		ledger.unlock()
+		region1.Close()
 		return Admission{kind: AdmissionInProgress, record: view}, nil
 	}
 
+	if region1.closed || !ledger.writableLocked() {
+		ledger.unlock()
+		region1.Close()
+		return Admission{}, runtimecoordination.ErrClosed
+	}
 	allowed, trackedStart, pending := b.mayClaimLocked(ledger, scope.operation)
 	if !allowed {
-		ledger.mu.Unlock()
-		b.storage.clientMu.RUnlock()
+		ledger.unlock()
+		region1.Close()
 		return Admission{}, ErrInstanceBlocked
 	}
 
@@ -221,8 +273,8 @@ func (b *Boundary) Execute(
 		pending.notifyLocked()
 	}
 	claimed := Admission{kind: AdmissionClaimed, record: record.view()}
-	ledger.mu.Unlock()
-	b.storage.clientMu.RUnlock()
+	ledger.unlock()
+	region1.Close()
 
 	terminal, err := permit.execute(ctx, invoke)
 	if err != nil {
@@ -306,22 +358,32 @@ func (p *executionPermit) execute(
 		return p.executePendingStop(ctx, invoke)
 	}
 
-	p.boundary.storage.clientMu.RLock()
-	p.ledger.mu.Lock()
-	if p.boundary.storage.generation != p.boundary.generation ||
+	region1 := p.boundary.storage.lockRegion(p.identity.scope.instanceScope())
+
+	if region1.closed {
+		region1.Close()
+		return RecordView{}, runtimecoordination.ErrClosed
+	}
+	p.ledger.lock()
+	if !p.ledger.writableLocked() {
+		p.ledger.unlock()
+		region1.Close()
+		return RecordView{}, runtimecoordination.ErrClosed
+	}
+	if p.ledger.fenced || p.boundary.storage.clientFenced || p.boundary.storage.generation != p.boundary.generation ||
 		p.state.generation != p.boundary.generation {
-		p.ledger.mu.Unlock()
-		p.boundary.storage.clientMu.RUnlock()
+		p.ledger.unlock()
+		region1.Close()
 		return RecordView{}, ErrBoundaryExpired
 	}
 	live := p.ledger.live[p.identity]
-	if live != p.state {
-		p.ledger.mu.Unlock()
-		p.boundary.storage.clientMu.RUnlock()
+	if live != p.state || !p.ledger.primitiveDelegable(p.identity, p.state) {
+		p.ledger.unlock()
+		region1.Close()
 		return RecordView{}, ErrBoundaryExpired
 	}
-	p.ledger.mu.Unlock()
-	p.boundary.storage.clientMu.RUnlock()
+	p.ledger.unlock()
+	region1.Close()
 
 	outcome, definitive := invokeSafely(invoke)
 	if !definitive {
@@ -331,16 +393,26 @@ func (p *executionPermit) execute(
 		return RecordView{}, ErrIndeterminateExecution
 	}
 
-	p.boundary.storage.clientMu.RLock()
-	p.ledger.mu.Lock()
-	defer p.ledger.mu.Unlock()
-	defer p.boundary.storage.clientMu.RUnlock()
-	if p.boundary.storage.generation != p.boundary.generation {
+	region2 := p.boundary.storage.lockRegion(p.identity.scope.instanceScope())
+
+	if region2.closed {
+		region2.Close()
+		return RecordView{}, runtimecoordination.ErrClosed
+	}
+	p.ledger.lock()
+	if !p.ledger.writableLocked() {
+		p.ledger.unlock()
+		region2.Close()
+		return RecordView{}, runtimecoordination.ErrClosed
+	}
+	defer region2.Close()
+	defer p.ledger.unlock()
+	if p.ledger.fenced || p.boundary.storage.clientFenced || p.boundary.storage.generation != p.boundary.generation {
 		delete(p.ledger.live, p.identity)
 		return RecordView{}, ErrBoundaryExpired
 	}
 	record := p.ledger.records[p.identity]
-	if record == nil || record.state != CommandStateClaimed ||
+	if record == nil || record.revision == ^Revision(0) || record.state != CommandStateClaimed ||
 		p.ledger.live[p.identity] != p.state {
 		return RecordView{}, ErrBoundaryExpired
 	}
@@ -376,8 +448,24 @@ func invokeSafely(invoke func() (TerminalOutcome, error)) (
 }
 
 func (p *executionPermit) expire() {
-	p.ledger.mu.Lock()
-	defer p.ledger.mu.Unlock()
+	region1 := p.boundary.storage.lockRegion(p.identity.scope.instanceScope())
+	if region1.closed {
+		region1.Close()
+		return
+	}
+
+	p.ledger.lock()
+
+	if !p.ledger.writableLocked() {
+		p.ledger.unlock()
+		region1.Close()
+		return
+	}
+	defer region1.Close()
+	defer p.ledger.unlock()
+	if p.ledger.fenced {
+		return
+	}
 	if p.ledger.live[p.identity] == p.state {
 		delete(p.ledger.live, p.identity)
 	}

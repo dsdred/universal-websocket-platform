@@ -2,6 +2,7 @@ package runtimecommandidempotency
 
 import (
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfigload"
+	"github.com/dsdred/universal-websocket-platform/internal/runtimecoordination"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeorchestrationbinding"
 )
 
@@ -97,18 +98,18 @@ func (b *Boundary) pendingManagedStopRendezvousLocked(
 }
 
 func (r *managedStartRendezvous) liveLocked(b *Boundary, ledger *commandLedger) bool {
-	if r == nil || b == nil || ledger == nil || r.state == nil ||
-		b.storage.generation != b.generation || r.generation != b.generation {
+	if r == nil || b == nil || ledger == nil || r.state == nil || ledger.fenced ||
+		b.storage.clientFenced || b.storage.generation != b.generation || r.generation != b.generation {
 		return false
 	}
 	if r.phase != (phaseIdentity{}) {
 		record := ledger.phases[r.phase]
 		return ledger.livePhases[r.phase] == r.state && record != nil &&
-			record.state == CommandStateClaimed && record.revision == r.state.revision
+			record.state == CommandStateClaimed && record.revision != ^Revision(0) && record.revision == r.state.revision
 	}
 	record := ledger.records[r.identity]
 	return ledger.live[r.identity] == r.state && record != nil &&
-		record.state == CommandStateClaimed && record.revision == r.state.revision
+		record.state == CommandStateClaimed && record.revision != ^Revision(0) && record.revision == r.state.revision
 }
 
 func (r *managedStartRendezvous) terminalCompatible(outcome TerminalOutcome) bool {
@@ -143,33 +144,45 @@ func (b *Boundary) lockManagedRendezvous(
 	if b == nil || b.storage == nil || !binding.Valid() {
 		return nil, nil, ErrInvalidSubmission
 	}
-	b.storage.clientMu.RLock()
-	if b.storage.generation != b.generation {
-		b.storage.clientMu.RUnlock()
+	authorization := binding.Authorization()
+	region1 := b.storage.lockRegion(instanceScope{domain: authorization.OperationalDomain(), workspaceID: authorization.WorkspaceID(), configurationID: authorization.ConfigurationID(), runtimeInstanceID: authorization.RuntimeInstanceID()})
+	if region1.closed {
+		region1.Close()
+		return nil, nil, runtimecoordination.ErrClosed
+	}
+	if b.storage.clientFenced || b.storage.generation != b.generation {
+		region1.Close()
 		return nil, nil, ErrBoundaryExpired
 	}
-	authorization := binding.Authorization()
 	ledger := b.storage.existingLedger(instanceScope{
 		domain: authorization.OperationalDomain(), workspaceID: authorization.WorkspaceID(),
 		configurationID: authorization.ConfigurationID(), runtimeInstanceID: authorization.RuntimeInstanceID(),
 	})
 	if ledger == nil {
-		b.storage.clientMu.RUnlock()
+		region1.Close()
 		return nil, nil, ErrIndeterminateExecution
 	}
-	ledger.mu.Lock()
+	ledger.lock()
+	if !ledger.writableLocked() {
+		ledger.unlock()
+		region1.Close()
+		return nil, nil, runtimecoordination.ErrClosed
+	}
 	rendezvous := ledger.managedStart[binding.Rendezvous()]
 	if rendezvous == nil || rendezvous.binding != binding || !rendezvous.liveLocked(b, ledger) {
-		ledger.mu.Unlock()
-		b.storage.clientMu.RUnlock()
+		ledger.unlock()
+		region1.Close()
 		return nil, nil, ErrIndeterminateExecution
 	}
+	ledger.region = region1
 	return ledger, rendezvous, nil
 }
 
 func (b *Boundary) unlockManagedRendezvous(ledger *commandLedger) {
-	ledger.mu.Unlock()
-	b.storage.clientMu.RUnlock()
+	r := ledger.region
+	ledger.region = nil
+	ledger.unlock()
+	r.Close()
 }
 
 // ResolveManagedStartEarly linearizes the exact Owner claim against a pending
@@ -291,19 +304,26 @@ func (b *Boundary) waitManagedStop(rendezvous *managedStartRendezvous) (ManagedS
 		// The rendezvous belongs to exactly one ledger; locate it through the
 		// immutable authorization without retaining a store lock while waiting.
 		authorization := rendezvous.binding.Authorization()
+		region1 := b.storage.lockRegion(instanceScope{domain: authorization.OperationalDomain(), workspaceID: authorization.WorkspaceID(), configurationID: authorization.ConfigurationID(), runtimeInstanceID: authorization.RuntimeInstanceID()})
+		if region1.closed {
+			region1.Close()
+			return GateBlocked, runtimecoordination.ErrClosed
+		}
 		ledger := b.storage.existingLedger(instanceScope{
 			domain: authorization.OperationalDomain(), workspaceID: authorization.WorkspaceID(),
 			configurationID: authorization.ConfigurationID(), runtimeInstanceID: authorization.RuntimeInstanceID(),
 		})
 		if ledger == nil {
+			region1.Close()
 			return GateBlocked, ErrIndeterminateExecution
 		}
-		ledger.mu.Lock()
+		ledger.lock()
 		resolution := rendezvous.bridge.resolution
 		hasStop := rendezvous.bridge.stopState != nil
 		notify := rendezvous.bridge.notify
 		stage := rendezvous.stage
-		ledger.mu.Unlock()
+		ledger.unlock()
+		region1.Close()
 		switch resolution {
 		case stopResolutionConverged:
 			return GateStopConverged, nil
