@@ -8,20 +8,30 @@
 
 ## Текущее состояние
 
-- Current task: **TASK-084 — Runtime DP-014 Coordination Participation**,
-  verification-stable `In Progress`, branch
-  `feature/task-084-dp014-coordination-participation`, baseline
-  `fb906b335523b933d7cdf3c634ca9946bcb410f0`. Actual gates/closure resolve only
-  from its newest valid matching Recovery Evidence Envelope. Minimal typed leaf
-  `internal/runtimecoordination` and complete real DP-014 participation provide
-  closed writer regions and ordered coherent detached aggregate/history/allocation/
-  absence observations. No coordinated write or successful startup is enabled;
-  fixtures and legacy successful regressions remain distinct. DP-015 participation, client/fatal
-  roots, qualified authority/no-claim, durable recovery and production wiring remain
-  absent. DP-024 stays Approved / Partial, integrated P1–P14 Planned, item7 unproven.
-  Next candidate: fresh bounded complete DP-015 participation/membership and
-  storage-wide client replacement intake, Not Activated; actual fatal/composition
-  coupling follows separately.
+- Current task: **TASK-085 — Runtime DP-015 Coordination Participation**, verification-stable
+`In Progress`, branch `feature/task-085-dp015-coordination-participation`, baseline
+`20f5ba532ba9a1dbaa16c00796662fc6191d0ff5`. Actual gates/closure resolve only
+from its newest valid matching Recovery Evidence Envelope. Closed real DP-014
+and DP-015 participation now supplies ordered detached aggregate/history and
+complete command membership/link/presence observations, plus storage-wide client
+replacement. Typed copy-safe roots and staged attachment remain local ordering
+mechanics: the explicitly supplied inert authority root grants no containment
+authority or fatal-source coupling. All coordinated writes reject; authorized
+replay remains read-only with zero lifecycle/provider callbacks. Successful
+state-change fixtures and legacy regressions do not prove coordinated startup.
+DP-024 remains Approved / Partial; integrated P1–P14 Planned, item7 unproven.
+Qualified current authority/no-claim, durable recovery and production integration
+remain absent. Next candidate: fresh bounded actual containment fatal-source
+coupling and explicit composition supply readiness, Not Activated.
+
+- Latest published implementation prerequisite: TASK-084 — Completed — Coordinator Accepted, accepted source manifest
+`6d7375e6267d7d48abb9bebdf4737d5521607c4d`, source commit
+`4ddaf8272b537b27b825d854d8cd0b325f49bd2e`, PR #89 merge
+`20f5ba532ba9a1dbaa16c00796662fc6191d0ff5` by local immutable Git metadata.
+Its closed leaf/DP-014 slice is the prerequisite for TASK-085; historical
+acceptance does not transfer to current gates. Cached local facts are not fresh
+remote or Publisher P0–P10 evidence.
+
 - Latest published design: **TASK-083**, Completed — Coordinator Accepted,
   accepted source manifest `7a982b3b997cbe4d5c499829a355ce8824d8ce34`, source
   `bafe45972bf0da17b10aaa8096cac9d8d59cdbe3`, PR #88 merge
@@ -507,14 +517,14 @@
   external / 0 Deferred; no separate prerequisite; DP-016 remains Approved /
   Planned; Tester PASS 0/0/0; repeat Reviewer APPROVED 0/0; Scope Audit
   16/0/0; PROCESS-002 Synchronized; later superseded by the TASK-026 recheck**
-- Текущая рекомендация: **после TASK-084 — fresh bounded intake complete DP-015
-  participation/membership и storage-wide client replacement, Not Activated**.
-  TASK-083 published concrete plan и TASK-084 closed leaf/complete DP-014 slice
-  не активируют successor. Actual fatal/composition coupling следует отдельно.
-  Persistent DP-014/DP-015/recovery stores, authentic provenance и original
-  provisioning qualification остаются отдельными prerequisites полного item7.
-  DP-017 reconciliation/release, DP-018 reporting, production integration и
-  activation остаются later slices.
+- Текущая рекомендация: **после TASK-085 — fresh bounded actual containment
+  fatal-source coupling и explicit composition supply readiness, Not Activated**.
+  TASK-083 published plan и closed DP-014/DP-015 slices TASK-084/TASK-085 не
+  активируют successor. Inert authority-root scaffolding не доказывает actual
+  containment authority или fatal coupling. Persistent DP-014/DP-015/recovery
+  stores, authentic provenance и original provisioning qualification остаются
+  отдельными prerequisites полного item7. DP-017 reconciliation/release,
+  DP-018 reporting, production integration и activation остаются later slices.
 
 - TASK-028 acceptance evidence: **partial DP-019 durable parent/derived-phase
   storage, callback capability и sequential phase core реализованы

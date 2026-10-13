@@ -5,7 +5,7 @@
 ## 1. Status
 
 - **Design Status:** Approved
-- **Implementation Status:** Partial (isolated local test-owner foundation and closed DP-014 participation)
+- **Implementation Status:** Partial (isolated local test-owner foundation, closed DP-014/DP-015 participation and client replacement)
 
 TASK-079 introduced the private boundary. TASK-080 independent Architect
 Confirmation approves the refined design recorded here. TASK-081 implements only
@@ -23,13 +23,20 @@ history and allocation/absence stamps. All coordinated writes reject; missing
 commands, current authority and qualified no-claim cannot open admission. Legacy
 constructor regressions retain successful isolated publication behavior.
 
-Implementation Status remains Partial for TASK-081 models and this TASK-084 local
-slice. Each task's gates/closure resolve only from its newest valid matching
-Recovery Evidence Envelope. All integrated P1–P14 proofs remain Planned. DP-015
-participation, client/fatal roots, authentic producer provenance, persistent stores,
-durable claim/readback/resume and live recovery permits remain absent. DP-017
-remains Approved / Planned overall with only TASK-075 read-only assessment
-implemented in isolation. No durable recovery barrier or production recovery exists.
+TASK-085 adds complete closed real DP-015 participation, detached command
+membership/link/presence stamps and storage-wide client replacement. The explicitly
+supplied inert `AuthorityFence` and storage-owned `ClientEpoch` provide only local
+ordering/invalidation; actual containment authority and fatal coupling are absent.
+Authorized replay/read remains available, every coordinated mutation rejects,
+and successful fixtures do not prove coordinated startup.
+
+Implementation Status remains Partial for TASK-081 models and TASK-084/TASK-085
+closed local slices. Each task's gates/closure resolve only from its newest valid
+matching Recovery Evidence Envelope. Integrated P1–P14 remain Planned and item7
+unproven. Authentic producer provenance, persistent stores, durable claim/readback/
+resume and live recovery permits remain absent. DP-017 stays Approved / Planned
+overall with only TASK-075 isolated read-only assessment. No durable recovery
+barrier or production recovery exists.
 
 ## 2. Purpose and authority
 
@@ -74,8 +81,9 @@ composition supplies current containment authority and prior-process-loss proof.
 No raw map/lock, generic transaction registry, service locator, arbitrary callback
 or ordinary lifecycle capability crosses this boundary.
 
-This is the complete participation inventory. TASK-084 delivers only closed DP-014
-participation; command, recovery and containment seams remain planned:
+This is the complete participation inventory. TASK-084/TASK-085 deliver closed
+DP-014/DP-015 participation and client replacement; recovery and actual containment
+seams remain planned:
 
 | Owner/source | Required participation |
 | --- | --- |
@@ -366,12 +374,13 @@ executable evidence. Reservations and successful local revalidation grant no aut
 TASK-081 supplies only isolated closed test-owner models. TASK-082 completes
 real-owner/generation readiness: full integration is SPLIT REQUIRED / NOT READY
 AS ONE BOUNDED TASK. TASK-083 records the concrete private realization in section 15.
-TASK-084 now implements the minimal leaf and complete closed DP-014 local owner
-coverage described in section 15. The next recommendation is fresh bounded intake
-for complete DP-015 participation, membership stamps and storage-wide client
-replacement, Not Activated, with fresh readiness and Size Guard. Actual
-fatal/composition coupling follows separately. Missing command/authority/qualified
-no-claim keeps coordinated writes closed.
+TASK-084 implements the minimal leaf and complete closed DP-014 local owner
+coverage; TASK-085 adds complete closed DP-015 participation, membership stamps
+and storage-wide client replacement described in section 15. The next recommendation
+is fresh bounded actual containment-source fatal coupling and explicit composition
+supply readiness, Not Activated, with fresh Size Guard and independent review.
+Missing current authority/qualified no-claim keeps coordinated writes closed;
+inert root construction is not qualification of containment authority.
 
 Durable provenance, persistent aggregate/complete command/recovery storage and
 original storage-authority/provisioning qualification remain separate prerequisites;
@@ -383,7 +392,7 @@ No implementation or successor is activated by this design task.
 ## 14. Decision boundary
 
 TASK-080 independent Architect explicitly approves this refined private
-restart-based design: Approved; Implementation remains Partial for TASK-081 local models and TASK-084 closed DP-014 participation. DP-015 internal atomic transitions and
+restart-based design: Approved; Implementation remains Partial for TASK-081 local models and closed DP-014/DP-015 participation plus client replacement in TASK-084/TASK-085. DP-015 internal atomic transitions and
 external-I/O prohibition remain unchanged. No code, durable store, recovery permit
 or production recovery has been delivered by TASK-079/TASK-080. All integrated proof rows remain planned. Unknown provenance, storage, authority or publication outcome
 leaves admission closed; design Approval is no implementation activation.
@@ -391,19 +400,22 @@ leaves admission closed; design Approval is no implementation activation.
 ## 15. Concrete local owner participation plan
 
 TASK-083 records this private realization of the existing Approved semantics.
-TASK-084 implements only the minimal typed leaf, closed real DP-014 participation
-and coherent detached owner observations. The complete command, root,
-reservation-session and integrated protocol below remain planned. Design Status
-stays Approved; Implementation Status stays Partial. This local slice grants no
-claim, permit, takeover authority or production startup qualification.
+TASK-084 implements the minimal typed leaf, closed real DP-014 participation
+and coherent detached aggregate observations. TASK-085 adds complete closed real
+DP-015 participation, membership observations and local client replacement.
+Actual fatal-source coupling, reservation-session and integrated recovery protocol
+remain planned. Design Status stays Approved; Implementation Status stays Partial.
+These slices grant no claim, permit, takeover authority or production startup
+qualification.
 
 ### 15.1 Typed binding and explicit coverage
 
 The dependency leaf `internal/runtimecoordination` imports no aggregate, command,
 containment, lifecycle or recovery owner. TASK-084 implements immutable validated
 `Scope`, copy-safe `Participant`, non-rebinding `AggregateAttachment` and short
-`ObservationRegion`; its transition region always rejects. `CommandAttachment`,
-`ClientEpoch`, `AuthorityFence` and reservation-session handles remain planned.
+`ObservationRegion`; its transition region always rejects. TASK-085 implements
+copy-safe `CommandAttachment`, `ClientEpoch`, inert `AuthorityFence` and bounded
+registration/replacement regions. Reservation-session handles remain planned.
 Composition supplies the identical participant explicitly. Attachments bind exact
 owner identity and scope once; duplicate, foreign and rebinding attempts reject.
 Complete-owner markers belong to conforming owner construction, never caller claims.
@@ -415,19 +427,20 @@ Instance before allocation: historical `AllocateCandidateIdentity(id)` cannot
 convey domain/Workspace/Configuration. Every direct method, including narrow
 terminal publishers, rejects foreign identity and enters its own conforming region.
 Historical `NewStore`, `NewMemoryStorage` and uncoordinated composition stay
-supported but do not count toward DP-024 conformance. Planned multi-Instance command
-storage uses typed `AttachInstance(scope, participant)` before capturing ledger
-absence. Attachment is independent of aggregate or ledger existence.
+supported but do not count toward DP-024 conformance. TASK-085
+`NewCoordinatedMemoryStorage(authority)` uses typed `AttachInstance(scope, participant)`
+before capturing ledger absence. Staged registration commits only after short owner
+catalog checks; rejected unattached calls disclose no absence and do not poison attachment. Attachment is independent of aggregate or ledger existence.
 
 Complete DP-014 coverage includes allocation/create, attempt claim/history append,
 execution binding, Running, Stop and all authority-specific terminal publishers,
-aggregate/history readers and exact-attempt capture/revalidation. Planned complete DP-015
+aggregate/history readers and exact-attempt capture/revalidation. TASK-085 complete closed DP-015
 coverage includes primitive inspect/claim and tracked Stop; managed admission,
 binding and live gates; parent/phase admission, creation, delegation, terminal and
 expiry; tracked parent/preclaimed StopOld/slot/rendezvous/private permit atomic
 admission and consumption; replay-first orchestration; pending Stop and managed
-rendezvous transitions; complete assessment snapshots. Replacement and containment
-source fatal paths also participate. A wrapper cannot prove direct-call coverage.
+rendezvous transitions; complete assessment snapshots and client replacement. Actual
+containment source fatal paths must participate in the later separate slice. A wrapper cannot prove direct-call coverage.
 
 ### 15.2 Complete detached observations and revisions
 
@@ -458,6 +471,18 @@ domain counters reject exhaustion before mutation. Create-after-absence and
 successful-publication observations use explicitly labelled package-local fixtures;
 they do not prove successful coordinated mutation.
 
+TASK-085 command capture/revalidation copies every terminal/nonterminal member,
+live/slot/rendezvous link and explicit ledger absence under one ordered region.
+Opaque snapshot identity has no owner/lock links; mutable permit/channel/bridge
+references are removed. Exact scope, intent/authorization, derived phase order and
+retained resolved/blocked diagnostic bridges are checked without treating retained
+tokens as live authority. Private value/identity accounting advances membership
+only for actual changes; reads do not fence or change facts. New coordination
+counters reject exhaustion before mutation; existing domain revision semantics
+remain unchanged, with covered pre-mutation exhaustion guards. This is no global
+legacy counter or authority guarantee. Successful changes use labelled local
+fixtures or separate legacy regressions, not coordinated mutation evidence.
+
 ### 15.3 Fixed short-region order
 
 The complete planned protocol acquires `Instance outer -> AuthorityFence read gate ->
@@ -466,11 +491,15 @@ lookup/registration precedes aggregate locking. DP-015 retains its existing
 `clientMu.RLock -> ledger.mu` atomic transition, including parent, preclaimed
 StopOld, sole occupant, rendezvous and private live phase permit.
 
-TASK-084 observation acquires Instance outer, then owner catalog and aggregate
-locks; it releases them all before returning. Missing root/command qualification
-keeps transitions closed. Shared participant state preserves one attachment across
-copies; copied region handles share exactly one release disposition and zero/nil
-Close is safe. No raw mutex or arbitrary callback is exposed.
+TASK-085 transparently upgrades previously attached aggregate observations to
+the root order when command registration commits. A rootless short observation
+retains participant state until Close so registration cannot overlap its owner
+read; it is not an external-I/O reservation. Rooted command regions retain the
+fixed root/state gates before `clientMu.RLock` and ledger locks. Public wrappers
+delegate to private short-region helpers, releasing each region before nested
+entry or callbacks/waits. Missing current authority/qualified no-claim keeps
+transitions closed. Shared root/attachment/region copies retain one disposition;
+zero/nil Close is safe. No raw mutex or arbitrary callback is exposed.
 
 Aggregate and command facts may be copied sequentially while the same outer token
 excludes writers; raw owner locks never cross packages. Release every authority,
@@ -494,6 +523,12 @@ with short owner registration afterward. It cannot escape concurrent replacement
 or inherit prior opening. Overflow permanently fences the client root and attached
 participants and prevents visibility of a new generation. Fan-out waits only for
 bounded local gates; it is not process-loss proof or permission to recover.
+
+TASK-085 implements this local registration/replacement order, copy-safe disposal
+and permanent exhaustion fencing before new client generation visibility. Its
+inert root does not prove prior-process loss, current authority or fatal coupling.
+Fixture-only outer retention demonstrates that fan-out takes no outer token;
+short observation regions are released before external work.
 
 ### 15.5 Fatal coupling at every actual source
 
@@ -522,11 +557,21 @@ existing successful publication behavior. Focused stress, full regression and ve
 pass; race verification is unavailable in the current CGO-disabled/no-C-compiler
 environment. This evidence proves only the local slice, not integrated P1–P14.
 
-The next candidate is complete DP-015 primitive/parent/phase/live/rendezvous
-participation, membership stamps and storage-wide client replacement, Not Activated.
-Actual containment-source fatal coupling and explicit composition supply follow
-separately. Each receives fresh readiness, Size Guard and independent review;
-no successor is activated here.
+TASK-085 implements the next closed slice with 28 added tests: 25 proof and
+three regression tests. They cover complete direct/callback rejection, authorized
+primitive/managed/replay-first terminal replay with zero work callbacks, detached
+membership/absence invalidation, exact contradictory-link rejection, retained
+diagnostic bridges, copy/zero/abort handles, attachment/replacement races and
+overflow without new generation visibility. Successful mutation fixtures remain
+package-local; actual legacy Stop-first/atomicity/counter regressions stay distinct.
+Full supported regression/vet and serial focused stress pass. Race verification
+is unavailable with CGO disabled; an earlier concurrent legacy bounded-yield
+failure followed by serial passes is retained as a limitation, not diagnosed fact.
+These proofs establish closed local mechanics only, not integrated P1–P14/item7.
+
+Next candidate: fresh bounded actual containment-source fatal coupling and explicit
+composition supply readiness, Not Activated. Each successor needs fresh readiness,
+Size Guard and independent review; no successor is activated here.
 
 Missing command attachment, current authority or qualified no-claim verification
 keeps every coordinated write closed. No production test-opening API exists.

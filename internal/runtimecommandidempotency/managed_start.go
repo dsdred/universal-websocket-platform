@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/dsdred/universal-websocket-platform/internal/runtimecoordination"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeorchestrationbinding"
 )
 
@@ -65,18 +66,30 @@ func (b *Boundary) executeManagedStart(
 		return Admission{}, err
 	}
 
-	b.storage.clientMu.RLock()
-	if b.storage.generation != b.generation {
-		b.storage.clientMu.RUnlock()
+	region1 := b.storage.lockRegion(scope.instanceScope())
+
+	if region1.invalid {
+		region1.Close()
+		return Admission{}, runtimecoordination.ErrClosed
+	}
+	if b.storage.clientFenced || b.storage.generation != b.generation {
+		region1.Close()
 		return Admission{}, ErrBoundaryExpired
 	}
-	ledger := b.storage.ledger(scope.instanceScope())
+	ledger := b.storage.existingLedger(scope.instanceScope())
+	if ledger == nil {
+		if region1.closed {
+			region1.Close()
+			return Admission{}, runtimecoordination.ErrClosed
+		}
+		ledger = b.storage.ledger(scope.instanceScope())
+	}
 	identity := commandIdentity{scope: scope, key: key}
-	ledger.mu.Lock()
+	ledger.lock()
 	if existing := ledger.records[identity]; existing != nil {
 		if existing.intent != intent {
-			ledger.mu.Unlock()
-			b.storage.clientMu.RUnlock()
+			ledger.unlock()
+			region1.Close()
 			return Admission{}, ErrCommandKeyConflict
 		}
 		kind := AdmissionInProgress
@@ -84,21 +97,26 @@ func (b *Boundary) executeManagedStart(
 			kind = AdmissionReplay
 		}
 		view := existing.view()
-		ledger.mu.Unlock()
-		b.storage.clientMu.RUnlock()
+		ledger.unlock()
+		region1.Close()
 		return Admission{kind: kind, record: view}, nil
+	}
+	if region1.closed || !ledger.writableLocked() {
+		ledger.unlock()
+		region1.Close()
+		return Admission{}, runtimecoordination.ErrClosed
 	}
 	allowed, _, pending := b.mayClaimLocked(ledger, scope.operation)
 	if !allowed || pending != nil {
-		ledger.mu.Unlock()
-		b.storage.clientMu.RUnlock()
+		ledger.unlock()
+		region1.Close()
 		return Admission{}, ErrInstanceBlocked
 	}
 	var binding runtimeorchestrationbinding.StartExecutionBinding
 	rendezvous, rendezvousErr := b.newStartRendezvous()
 	if rendezvousErr != nil {
-		ledger.mu.Unlock()
-		b.storage.clientMu.RUnlock()
+		ledger.unlock()
+		region1.Close()
 		return Admission{}, ErrInvalidSubmission
 	}
 	if !late {
@@ -106,8 +124,8 @@ func (b *Boundary) executeManagedStart(
 		binding, err = runtimeorchestrationbinding.NewPrimitiveStartExecutionBinding(
 			authorization, expectedRevision, generation, rendezvous)
 		if err != nil {
-			ledger.mu.Unlock()
-			b.storage.clientMu.RUnlock()
+			ledger.unlock()
+			region1.Close()
 			return Admission{}, ErrInvalidSubmission
 		}
 	}
@@ -121,8 +139,8 @@ func (b *Boundary) executeManagedStart(
 		bridge: newStartRendezvous(b.generation), stage: managedStagePreOwner,
 	}
 	claimed := Admission{kind: AdmissionClaimed, record: record.view()}
-	ledger.mu.Unlock()
-	b.storage.clientMu.RUnlock()
+	ledger.unlock()
+	region1.Close()
 
 	var terminal RecordView
 	var err error
@@ -142,8 +160,15 @@ func (b *Boundary) executeManagedStart(
 }
 
 func (b *Boundary) newStartRendezvous() (runtimeorchestrationbinding.StartRendezvous, error) {
-	return runtimeorchestrationbinding.NewStartRendezvous(
-		strconv.FormatUint(b.generation, 36) + ":" + strconv.FormatUint(b.rendezvousSeq.Add(1), 36))
+	for {
+		current := b.rendezvousSeq.Load()
+		if current == ^uint64(0) {
+			return runtimeorchestrationbinding.StartRendezvous{}, ErrBoundaryExpired
+		}
+		if b.rendezvousSeq.CompareAndSwap(current, current+1) {
+			return runtimeorchestrationbinding.NewStartRendezvous(strconv.FormatUint(b.generation, 36) + ":" + strconv.FormatUint(current+1, 36))
+		}
+	}
 }
 
 func (p *executionPermit) executeAfterGeneration(
@@ -154,37 +179,49 @@ func (p *executionPermit) executeAfterGeneration(
 	invoke func(runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error),
 ) (RecordView, error) {
 	defer p.expire()
+	if err := p.boundary.storage.checkDelegation(p.identity.scope.instanceScope()); err != nil {
+		return RecordView{}, err
+	}
 	generation, definitive := provideGenerationSafely(provideGeneration, ctx)
 	if !definitive || generation == "" || ctx.Err() != nil {
 		return RecordView{}, ErrIndeterminateExecution
 	}
-	p.boundary.storage.clientMu.RLock()
-	p.ledger.mu.Lock()
-	if p.boundary.storage.generation != p.boundary.generation ||
+	region1 := p.boundary.storage.lockRegion(p.identity.scope.instanceScope())
+	if region1.closed {
+		region1.Close()
+		return RecordView{}, runtimecoordination.ErrClosed
+	}
+	p.ledger.lock()
+	if !p.ledger.writableLocked() {
+		p.ledger.unlock()
+		region1.Close()
+		return RecordView{}, runtimecoordination.ErrClosed
+	}
+	if p.ledger.fenced || p.boundary.storage.clientFenced || p.boundary.storage.generation != p.boundary.generation ||
 		p.ledger.live[p.identity] != p.state {
-		p.ledger.mu.Unlock()
-		p.boundary.storage.clientMu.RUnlock()
+		p.ledger.unlock()
+		region1.Close()
 		return RecordView{}, ErrBoundaryExpired
 	}
 	managed := p.ledger.managedStart[p.managed]
 	if managed == nil || !managed.liveLocked(p.boundary, p.ledger) ||
 		managed.binding != (runtimeorchestrationbinding.StartExecutionBinding{}) ||
 		managed.stage != managedStagePreOwner || managed.bridge == nil {
-		p.ledger.mu.Unlock()
-		p.boundary.storage.clientMu.RUnlock()
+		p.ledger.unlock()
+		region1.Close()
 		return RecordView{}, ErrIndeterminateExecution
 	}
 	binding, err := runtimeorchestrationbinding.NewPrimitiveStartExecutionBinding(
 		authorization, expectedAggregateRevision, generation, p.managed,
 	)
 	if err != nil {
-		p.ledger.mu.Unlock()
-		p.boundary.storage.clientMu.RUnlock()
+		p.ledger.unlock()
+		region1.Close()
 		return RecordView{}, ErrIndeterminateExecution
 	}
 	managed.binding = binding
-	p.ledger.mu.Unlock()
-	p.boundary.storage.clientMu.RUnlock()
+	p.ledger.unlock()
+	region1.Close()
 	return p.execute(ctx, func() (TerminalOutcome, error) { return invoke(binding) })
 }
 
@@ -214,17 +251,21 @@ func (b *Boundary) managedStartRendezvousLive(
 		rendezvous == (runtimeorchestrationbinding.StartRendezvous{}) {
 		return false
 	}
-	b.storage.clientMu.RLock()
-	defer b.storage.clientMu.RUnlock()
-	if b.storage.generation != b.generation {
+	region1 := b.storage.lockRegion(scope.instanceScope())
+	if region1.invalid {
+		region1.Close()
+		return false
+	}
+	defer region1.Close()
+	if b.storage.clientFenced || b.storage.generation != b.generation {
 		return false
 	}
 	ledger := b.storage.existingLedger(scope.instanceScope())
 	if ledger == nil {
 		return false
 	}
-	ledger.mu.Lock()
-	defer ledger.mu.Unlock()
+	ledger.lock()
+	defer ledger.unlock()
 	entry, exists := ledger.managedStart[rendezvous]
 	if !exists || entry == nil {
 		return false

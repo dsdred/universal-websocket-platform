@@ -102,9 +102,10 @@ func TestIndependentInstanceDuringRetainedOuter(t *testing.T) {
 	scope := testScope(t, "a")
 	p, _ := NewParticipant(scope)
 	a, _ := p.AttachAggregate(scope)
-	r, _ := a.Observe(scope)
-	defer r.Close()
-	// Simulated external work retains only outer, never participant state.
+	_ = a
+	// Fixture-only outer retention models external work, never a short owner region.
+	p.data.outer.Lock()
+	defer p.data.outer.Unlock()
 	if !p.data.state.TryLock() {
 		t.Fatal("state lock retained during external work")
 	}

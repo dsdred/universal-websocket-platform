@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfigload"
+	"github.com/dsdred/universal-websocket-platform/internal/runtimecoordination"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeorchestrationbinding"
 )
 
@@ -125,17 +126,26 @@ func (p *executionPermit) executePendingStop(
 	}()
 
 	for {
-		p.boundary.storage.clientMu.RLock()
-		p.ledger.mu.Lock()
+		region1 := p.boundary.storage.lockRegion(p.identity.scope.instanceScope())
+		if region1.closed {
+			region1.Close()
+			return RecordView{}, runtimecoordination.ErrClosed
+		}
+		p.ledger.lock()
+		if !p.ledger.writableLocked() {
+			p.ledger.unlock()
+			region1.Close()
+			return RecordView{}, runtimecoordination.ErrClosed
+		}
 		if !p.pendingStopLiveLocked() {
-			p.ledger.mu.Unlock()
-			p.boundary.storage.clientMu.RUnlock()
+			p.ledger.unlock()
+			region1.Close()
 			return RecordView{}, ErrBoundaryExpired
 		}
 		signal := p.pending.signal
 		notify := p.pending.notify
-		p.ledger.mu.Unlock()
-		p.boundary.storage.clientMu.RUnlock()
+		p.ledger.unlock()
+		region1.Close()
 
 		switch signal {
 		case startSignalNoClaim:
@@ -179,10 +189,19 @@ func (p *executionPermit) executePendingStop(
 }
 
 func (p *executionPermit) cancelPendingStop(cause error) (RecordView, bool, error) {
-	p.boundary.storage.clientMu.RLock()
-	defer p.boundary.storage.clientMu.RUnlock()
-	p.ledger.mu.Lock()
-	defer p.ledger.mu.Unlock()
+	region1 := p.boundary.storage.lockRegion(p.identity.scope.instanceScope())
+	if region1.closed {
+		region1.Close()
+		return RecordView{}, false, runtimecoordination.ErrClosed
+	}
+	defer region1.Close()
+	p.ledger.lock()
+	if !p.ledger.writableLocked() {
+		p.ledger.unlock()
+		region1.Close()
+		return RecordView{}, false, runtimecoordination.ErrClosed
+	}
+	defer p.ledger.unlock()
 	if !p.pendingStopLiveLocked() {
 		return RecordView{}, false, ErrBoundaryExpired
 	}
@@ -190,7 +209,7 @@ func (p *executionPermit) cancelPendingStop(cause error) (RecordView, bool, erro
 		return RecordView{}, false, nil
 	}
 	record := p.ledger.records[p.identity]
-	if record == nil || record.state != CommandStateClaimed || cause == nil {
+	if record == nil || record.revision == ^Revision(0) || record.state != CommandStateClaimed || cause == nil {
 		return RecordView{}, false, ErrIndeterminateExecution
 	}
 	record.state = CommandStateTerminal
@@ -208,7 +227,7 @@ func (p *executionPermit) cancelPendingStop(cause error) (RecordView, bool, erro
 }
 
 func (p *executionPermit) pendingStopLiveLocked() bool {
-	return p.pending != nil && p.boundary.storage.generation == p.boundary.generation &&
+	return p.ledger.primitiveDelegable(p.identity, p.state) && !p.ledger.fenced && !p.boundary.storage.clientFenced && p.pending != nil && p.boundary.storage.generation == p.boundary.generation &&
 		p.pending.generation == p.boundary.generation &&
 		p.pending.stop == p.identity && p.pending.stopState == p.state &&
 		p.pending.resolution == stopResolutionNone &&
@@ -219,15 +238,24 @@ func (p *executionPermit) publishPendingStop(
 	outcome TerminalOutcome,
 	resolution stopResolution,
 ) (RecordView, error) {
-	p.boundary.storage.clientMu.RLock()
-	defer p.boundary.storage.clientMu.RUnlock()
-	p.ledger.mu.Lock()
-	defer p.ledger.mu.Unlock()
+	region1 := p.boundary.storage.lockRegion(p.identity.scope.instanceScope())
+	if region1.closed {
+		region1.Close()
+		return RecordView{}, runtimecoordination.ErrClosed
+	}
+	defer region1.Close()
+	p.ledger.lock()
+	if !p.ledger.writableLocked() {
+		p.ledger.unlock()
+		region1.Close()
+		return RecordView{}, runtimecoordination.ErrClosed
+	}
+	defer p.ledger.unlock()
 	if !p.pendingStopLiveLocked() {
 		return RecordView{}, ErrBoundaryExpired
 	}
 	record := p.ledger.records[p.identity]
-	if record == nil || record.state != CommandStateClaimed || !outcome.valid() {
+	if record == nil || record.revision == ^Revision(0) || record.state != CommandStateClaimed || !outcome.valid() {
 		return RecordView{}, ErrIndeterminateExecution
 	}
 	record.state = CommandStateTerminal
@@ -250,8 +278,21 @@ func (p *executionPermit) blockPendingStop() {
 	if p == nil || p.pending == nil || p.ledger == nil {
 		return
 	}
-	p.ledger.mu.Lock()
-	defer p.ledger.mu.Unlock()
+	region1 := p.boundary.storage.lockRegion(p.identity.scope.instanceScope())
+	if region1.closed {
+		region1.Close()
+		return
+	}
+
+	p.ledger.lock()
+
+	if !p.ledger.writableLocked() {
+		p.ledger.unlock()
+		region1.Close()
+		return
+	}
+	defer region1.Close()
+	defer p.ledger.unlock()
 	if p.pending.stop == p.identity && p.pending.stopState == p.state &&
 		p.pending.resolution == stopResolutionNone {
 		p.pending.resolution = stopResolutionBlocked
@@ -280,13 +321,11 @@ func (e *StartTargetExecution) OwnerClaimed(
 	if e == nil || attempt == "" {
 		return false, ErrInvalidSubmission
 	}
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	if e.permit == nil || !e.active || e.signaled {
-		return false, ErrInvalidSubmission
+	permit, err := e.consumeSignal()
+	if err != nil {
+		return false, err
 	}
-	e.signaled = true
-	return e.permit.signalOwnerClaimed(attempt)
+	return permit.signalOwnerClaimed(attempt)
 }
 
 // StartNoClaim explicitly and immutably records why the callback is ending
@@ -299,18 +338,25 @@ func (e *StartTargetExecution) StartNoClaim(cause StartNoClaimCause) error {
 	if e == nil || !cause.Valid() {
 		return ErrInvalidSubmission
 	}
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	if e.permit == nil || !e.active || e.signaled {
-		return ErrInvalidSubmission
+	permit, err := e.consumeSignal()
+	if err != nil {
+		return err
 	}
-	e.signaled = true
-	return e.permit.signalStartNoClaim(cause)
+	return permit.signalStartNoClaim(cause)
 }
 
 func (e *StartTargetExecution) close() bool {
+	if e.permit == nil || e.permit.parent == nil {
+		return false
+	}
+	p := e.permit.parent
+	r := p.boundary.storage.lockRegion(p.identity.scope.instanceScope())
+	defer r.Close()
 	e.mu.Lock()
 	defer e.mu.Unlock()
+	if r.closed {
+		return e.signaled
+	}
 	e.active = false
 	return e.signaled
 }
@@ -318,57 +364,83 @@ func (e *StartTargetExecution) close() bool {
 func (p *phasePermit) signalOwnerClaimed(
 	attempt runtimeconfigload.LaunchAttemptID,
 ) (bool, error) {
-	p.parent.boundary.storage.clientMu.RLock()
-	p.parent.ledger.mu.Lock()
-	if !p.parent.liveLocked() || p.parent.ledger.livePhases[p.identity] != p.state {
-		p.parent.ledger.mu.Unlock()
-		p.parent.boundary.storage.clientMu.RUnlock()
+	region1 := p.parent.boundary.storage.lockRegion(p.parent.identity.scope.instanceScope())
+	if region1.closed {
+		region1.Close()
+		return false, runtimecoordination.ErrClosed
+	}
+	p.parent.ledger.lock()
+	if !p.parent.ledger.writableLocked() {
+		p.parent.ledger.unlock()
+		region1.Close()
+		return false, runtimecoordination.ErrClosed
+	}
+	if !p.parent.liveLocked() || !p.parent.ledger.phaseDelegable(p.identity, p.state) {
+		p.parent.ledger.unlock()
+		region1.Close()
 		return false, ErrBoundaryExpired
 	}
 	rendezvous := p.parent.ledger.rendezvous[p.identity.parent]
 	if rendezvous == nil || rendezvous.signal != startSignalNone {
-		p.parent.ledger.mu.Unlock()
-		p.parent.boundary.storage.clientMu.RUnlock()
+		p.parent.ledger.unlock()
+		region1.Close()
 		return false, ErrInvalidSubmission
 	}
 	rendezvous.signal = startSignalOwnerClaimed
 	rendezvous.attempt = attempt
 	rendezvous.notifyLocked()
-	p.parent.ledger.mu.Unlock()
-	p.parent.boundary.storage.clientMu.RUnlock()
+	p.parent.ledger.unlock()
+	region1.Close()
 	return p.waitForPendingStop(rendezvous)
 }
 
 func (p *phasePermit) signalStartNoClaim(cause StartNoClaimCause) error {
-	p.parent.boundary.storage.clientMu.RLock()
-	p.parent.ledger.mu.Lock()
-	if !p.parent.liveLocked() || p.parent.ledger.livePhases[p.identity] != p.state {
-		p.parent.ledger.mu.Unlock()
-		p.parent.boundary.storage.clientMu.RUnlock()
+	region1 := p.parent.boundary.storage.lockRegion(p.parent.identity.scope.instanceScope())
+	if region1.closed {
+		region1.Close()
+		return runtimecoordination.ErrClosed
+	}
+	p.parent.ledger.lock()
+	if !p.parent.ledger.writableLocked() {
+		p.parent.ledger.unlock()
+		region1.Close()
+		return runtimecoordination.ErrClosed
+	}
+	if !p.parent.liveLocked() || !p.parent.ledger.phaseDelegable(p.identity, p.state) {
+		p.parent.ledger.unlock()
+		region1.Close()
 		return ErrBoundaryExpired
 	}
 	rendezvous := p.parent.ledger.rendezvous[p.identity.parent]
 	if rendezvous == nil || rendezvous.signal != startSignalNone {
-		p.parent.ledger.mu.Unlock()
-		p.parent.boundary.storage.clientMu.RUnlock()
+		p.parent.ledger.unlock()
+		region1.Close()
 		return ErrInvalidSubmission
 	}
 	rendezvous.signal = startSignalNoClaim
 	rendezvous.startNoClaimCause = cause
 	rendezvous.notifyLocked()
-	p.parent.ledger.mu.Unlock()
-	p.parent.boundary.storage.clientMu.RUnlock()
+	p.parent.ledger.unlock()
+	region1.Close()
 	_, err := p.waitForPendingStop(rendezvous)
 	return err
 }
 
 func (p *phasePermit) waitForPendingStop(rendezvous *startRendezvous) (bool, error) {
 	for {
-		p.parent.ledger.mu.Lock()
+		region1 := p.parent.boundary.storage.lockRegion(p.parent.identity.scope.instanceScope())
+		if region1.closed {
+			region1.Close()
+			return false, runtimecoordination.ErrClosed
+		}
+
+		p.parent.ledger.lock()
 		resolution := rendezvous.resolution
 		hasStop := rendezvous.stopState != nil
 		notify := rendezvous.notify
-		p.parent.ledger.mu.Unlock()
+		p.parent.ledger.unlock()
+
+		region1.Close()
 		switch resolution {
 		case stopResolutionConverged:
 			return true, nil
@@ -392,8 +464,21 @@ func (p *phasePermit) blockStartRendezvous() {
 	if p == nil || p.parent == nil || p.parent.ledger == nil {
 		return
 	}
-	p.parent.ledger.mu.Lock()
-	defer p.parent.ledger.mu.Unlock()
+	region1 := p.parent.boundary.storage.lockRegion(p.parent.identity.scope.instanceScope())
+	if region1.closed {
+		region1.Close()
+		return
+	}
+
+	p.parent.ledger.lock()
+
+	if !p.parent.ledger.writableLocked() {
+		p.parent.ledger.unlock()
+		region1.Close()
+		return
+	}
+	defer region1.Close()
+	defer p.parent.ledger.unlock()
 	rendezvous := p.parent.ledger.rendezvous[p.identity.parent]
 	if rendezvous != nil && rendezvous.signal == startSignalNone {
 		rendezvous.signal = startSignalBlocked
@@ -415,15 +500,25 @@ func (p *phasePermit) executeStartTarget(
 		p.expire()
 	}()
 
-	p.parent.boundary.storage.clientMu.RLock()
-	p.parent.ledger.mu.Lock()
-	if !p.parent.liveLocked() || p.parent.ledger.livePhases[p.identity] != p.state {
-		p.parent.ledger.mu.Unlock()
-		p.parent.boundary.storage.clientMu.RUnlock()
+	region1 := p.parent.boundary.storage.lockRegion(p.parent.identity.scope.instanceScope())
+
+	if region1.closed {
+		region1.Close()
+		return PhaseRecordView{}, runtimecoordination.ErrClosed
+	}
+	p.parent.ledger.lock()
+	if !p.parent.ledger.writableLocked() {
+		p.parent.ledger.unlock()
+		region1.Close()
+		return PhaseRecordView{}, runtimecoordination.ErrClosed
+	}
+	if !p.parent.liveLocked() || !p.parent.ledger.phaseDelegable(p.identity, p.state) {
+		p.parent.ledger.unlock()
+		region1.Close()
 		return PhaseRecordView{}, ErrBoundaryExpired
 	}
-	p.parent.ledger.mu.Unlock()
-	p.parent.boundary.storage.clientMu.RUnlock()
+	p.parent.ledger.unlock()
+	region1.Close()
 
 	execution := &StartTargetExecution{permit: p, active: true}
 	outcome, definitive := invokeStartTargetSafely(invoke, execution)
@@ -435,15 +530,25 @@ func (p *phasePermit) executeStartTarget(
 		return PhaseRecordView{}, ErrIndeterminateExecution
 	}
 
-	p.parent.boundary.storage.clientMu.RLock()
-	p.parent.ledger.mu.Lock()
-	defer p.parent.ledger.mu.Unlock()
-	defer p.parent.boundary.storage.clientMu.RUnlock()
-	if !p.parent.liveLocked() || p.parent.ledger.livePhases[p.identity] != p.state {
+	region2 := p.parent.boundary.storage.lockRegion(p.parent.identity.scope.instanceScope())
+
+	if region2.closed {
+		region2.Close()
+		return PhaseRecordView{}, runtimecoordination.ErrClosed
+	}
+	p.parent.ledger.lock()
+	if !p.parent.ledger.writableLocked() {
+		p.parent.ledger.unlock()
+		region2.Close()
+		return PhaseRecordView{}, runtimecoordination.ErrClosed
+	}
+	defer region2.Close()
+	defer p.parent.ledger.unlock()
+	if !p.parent.liveLocked() || !p.parent.ledger.phaseDelegable(p.identity, p.state) {
 		return PhaseRecordView{}, ErrBoundaryExpired
 	}
 	record := p.parent.ledger.phases[p.identity]
-	if record == nil || record.state != CommandStateClaimed || record.revision != p.state.revision {
+	if record == nil || record.revision == ^Revision(0) || record.state != CommandStateClaimed || record.revision != p.state.revision {
 		return PhaseRecordView{}, ErrBoundaryExpired
 	}
 	rendezvous := p.parent.ledger.rendezvous[p.identity.parent]
@@ -490,10 +595,18 @@ func invokeStartTargetSafely(
 
 func (p *ParentExecution) waitForStopFirst(rendezvous *startRendezvous) (bool, error) {
 	for {
-		p.ledger.mu.Lock()
+		region1 := p.boundary.storage.lockRegion(p.identity.scope.instanceScope())
+		if region1.closed {
+			region1.Close()
+			return false, runtimecoordination.ErrClosed
+		}
+
+		p.ledger.lock()
 		resolution := rendezvous.resolution
 		notify := rendezvous.notify
-		p.ledger.mu.Unlock()
+		p.ledger.unlock()
+
+		region1.Close()
 		switch resolution {
 		case stopResolutionConverged:
 			return true, nil
@@ -508,4 +621,32 @@ func (p *ParentExecution) waitForStopFirst(rendezvous *startRendezvous) (bool, e
 		case <-notify:
 		}
 	}
+}
+
+func (e *StartTargetExecution) consumeSignal() (*phasePermit, error) {
+	if e.permit == nil || e.permit.parent == nil {
+		return nil, ErrInvalidSubmission
+	}
+	p := e.permit.parent
+	r := p.boundary.storage.lockRegion(p.identity.scope.instanceScope())
+	defer r.Close()
+	if r.closed {
+		return nil, runtimecoordination.ErrClosed
+	}
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	p.ledger.lock()
+	defer p.ledger.unlock()
+	if !p.ledger.writableLocked() {
+		return nil, runtimecoordination.ErrClosed
+	}
+	if !e.active || e.signaled {
+		return nil, ErrInvalidSubmission
+	}
+	e.signaled = true
+	p.ledger.membership++
+	if p.ledger.membership == ^uint64(0) {
+		p.ledger.fenced = true
+	}
+	return e.permit, nil
 }

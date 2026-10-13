@@ -3,6 +3,8 @@ package runtimecommandidempotency
 import (
 	"context"
 	"sync"
+
+	"github.com/dsdred/universal-websocket-platform/internal/runtimecoordination"
 )
 
 type parentRecord struct {
@@ -78,18 +80,30 @@ func (b *Boundary) ExecuteParent(
 		return ParentAdmission{}, err
 	}
 
-	b.storage.clientMu.RLock()
-	if b.storage.generation != b.generation {
-		b.storage.clientMu.RUnlock()
+	region1 := b.storage.lockRegion(scope.instanceScope())
+
+	if region1.invalid {
+		region1.Close()
+		return ParentAdmission{}, runtimecoordination.ErrClosed
+	}
+	if b.storage.clientFenced || b.storage.generation != b.generation {
+		region1.Close()
 		return ParentAdmission{}, ErrBoundaryExpired
 	}
-	ledger := b.storage.ledger(scope.instanceScope())
+	ledger := b.storage.existingLedger(scope.instanceScope())
+	if ledger == nil {
+		if region1.closed {
+			region1.Close()
+			return ParentAdmission{}, runtimecoordination.ErrClosed
+		}
+		ledger = b.storage.ledger(scope.instanceScope())
+	}
 	identity := commandIdentity{scope: scope, key: key}
-	ledger.mu.Lock()
+	ledger.lock()
 	if existing, ok := ledger.parents[identity]; ok {
 		if existing.intent != intent {
-			ledger.mu.Unlock()
-			b.storage.clientMu.RUnlock()
+			ledger.unlock()
+			region1.Close()
 			return ParentAdmission{}, ErrCommandKeyConflict
 		}
 		view := existing.view()
@@ -97,13 +111,18 @@ func (b *Boundary) ExecuteParent(
 		if existing.state == CommandStateTerminal {
 			kind = AdmissionReplay
 		}
-		ledger.mu.Unlock()
-		b.storage.clientMu.RUnlock()
+		ledger.unlock()
+		region1.Close()
 		return ParentAdmission{kind: kind, record: view}, nil
 	}
+	if region1.closed || !ledger.writableLocked() {
+		ledger.unlock()
+		region1.Close()
+		return ParentAdmission{}, runtimecoordination.ErrClosed
+	}
 	if ledger.hasAnyNonterminalLocked() {
-		ledger.mu.Unlock()
-		b.storage.clientMu.RUnlock()
+		ledger.unlock()
+		region1.Close()
 		return ParentAdmission{}, ErrInstanceBlocked
 	}
 	record := &parentRecord{
@@ -119,24 +138,29 @@ func (b *Boundary) ExecuteParent(
 	}
 	execution.usage.cond = sync.NewCond(&execution.usage.mu)
 	claimed := ParentAdmission{kind: AdmissionClaimed, record: record.view()}
-	ledger.mu.Unlock()
-	b.storage.clientMu.RUnlock()
+	ledger.unlock()
+	region1.Close()
 
 	defer execution.closeAndExpire()
 	callbackReturned := invokeParentSafely(invoke, execution)
 	execution.closeAndWait()
 
-	b.storage.clientMu.RLock()
-	ledger.mu.Lock()
+	region2 := b.storage.lockRegion(scope.instanceScope())
+
+	if region2.invalid {
+		region2.Close()
+		return ParentAdmission{}, runtimecoordination.ErrClosed
+	}
+	ledger.lock()
 	current := ledger.parents[identity]
 	if current != nil && current.state == CommandStateTerminal {
 		claimed.record = current.view()
-		ledger.mu.Unlock()
-		b.storage.clientMu.RUnlock()
+		ledger.unlock()
+		region2.Close()
 		return claimed, nil
 	}
-	ledger.mu.Unlock()
-	b.storage.clientMu.RUnlock()
+	ledger.unlock()
+	region2.Close()
 	if !callbackReturned {
 		return claimed, ErrIndeterminateExecution
 	}
@@ -233,16 +257,25 @@ func (p *ParentExecution) ContinueOrExecuteStartTarget(
 		ctx == nil || invoke == nil {
 		return PhaseAdmission{}, false, ErrInvalidSubmission
 	}
-	if !p.beginUse() {
-		return PhaseAdmission{}, false, ErrBoundaryExpired
+	if err := p.beginUseError(); err != nil {
+		return PhaseAdmission{}, false, err
 	}
 	defer p.endUse()
 	identity, _ := newPhaseIdentity(p.identity, PhaseStartTarget)
-	p.boundary.storage.clientMu.RLock()
-	p.ledger.mu.Lock()
+	region1 := p.boundary.storage.lockRegion(p.identity.scope.instanceScope())
+	if region1.closed {
+		region1.Close()
+		return PhaseAdmission{}, false, runtimecoordination.ErrClosed
+	}
+	p.ledger.lock()
+	if !p.ledger.writableLocked() {
+		p.ledger.unlock()
+		region1.Close()
+		return PhaseAdmission{}, false, runtimecoordination.ErrClosed
+	}
 	if !p.liveLocked() {
-		p.ledger.mu.Unlock()
-		p.boundary.storage.clientMu.RUnlock()
+		p.ledger.unlock()
+		region1.Close()
 		return PhaseAdmission{}, false, ErrBoundaryExpired
 	}
 	if existing := p.ledger.phases[identity]; existing != nil {
@@ -251,30 +284,30 @@ func (p *ParentExecution) ContinueOrExecuteStartTarget(
 		if existing.state == CommandStateTerminal {
 			kind = AdmissionReplay
 		}
-		p.ledger.mu.Unlock()
-		p.boundary.storage.clientMu.RUnlock()
+		p.ledger.unlock()
+		region1.Close()
 		return PhaseAdmission{kind: kind, record: view}, false, nil
 	}
 	if !p.phaseOrderAllowsLocked(PhaseStartTarget) {
-		p.ledger.mu.Unlock()
-		p.boundary.storage.clientMu.RUnlock()
+		p.ledger.unlock()
+		region1.Close()
 		return PhaseAdmission{}, false, ErrIllegalPhaseOrder
 	}
 	rendezvous := p.ledger.rendezvous[p.identity]
 	if rendezvous == nil || rendezvous.generation != p.boundary.generation ||
 		rendezvous.signal == startSignalBlocked {
-		p.ledger.mu.Unlock()
-		p.boundary.storage.clientMu.RUnlock()
+		p.ledger.unlock()
+		region1.Close()
 		return PhaseAdmission{}, false, ErrBoundaryExpired
 	}
 	if rendezvous.continueCancelled {
-		p.ledger.mu.Unlock()
-		p.boundary.storage.clientMu.RUnlock()
+		p.ledger.unlock()
+		region1.Close()
 		return PhaseAdmission{}, true, context.Canceled
 	}
 	if rendezvous.stopCancelledBeforePhase {
-		p.ledger.mu.Unlock()
-		p.boundary.storage.clientMu.RUnlock()
+		p.ledger.unlock()
+		region1.Close()
 		return PhaseAdmission{}, true, context.Canceled
 	}
 	if err := ctx.Err(); err != nil {
@@ -284,8 +317,8 @@ func (p *ParentExecution) ContinueOrExecuteStartTarget(
 			rendezvous.signal = startSignalNoClaim
 			rendezvous.notifyLocked()
 		}
-		p.ledger.mu.Unlock()
-		p.boundary.storage.clientMu.RUnlock()
+		p.ledger.unlock()
+		region1.Close()
 		if waitForStop {
 			_, _ = p.waitForStopFirst(rendezvous)
 		}
@@ -293,14 +326,14 @@ func (p *ParentExecution) ContinueOrExecuteStartTarget(
 	}
 	if rendezvous.stopState != nil {
 		if rendezvous.signal != startSignalNone {
-			p.ledger.mu.Unlock()
-			p.boundary.storage.clientMu.RUnlock()
+			p.ledger.unlock()
+			region1.Close()
 			return PhaseAdmission{}, false, ErrIndeterminateExecution
 		}
 		rendezvous.signal = startSignalNoClaim
 		rendezvous.notifyLocked()
-		p.ledger.mu.Unlock()
-		p.boundary.storage.clientMu.RUnlock()
+		p.ledger.unlock()
+		region1.Close()
 		prevented, err := p.waitForStopFirst(rendezvous)
 		return PhaseAdmission{}, prevented, err
 	}
@@ -311,8 +344,8 @@ func (p *ParentExecution) ContinueOrExecuteStartTarget(
 	rendezvous.startPhaseClaimed = true
 	permit := &phasePermit{parent: p, identity: identity, state: state}
 	claimed := PhaseAdmission{kind: AdmissionClaimed, record: record.view()}
-	p.ledger.mu.Unlock()
-	p.boundary.storage.clientMu.RUnlock()
+	p.ledger.unlock()
+	region1.Close()
 
 	terminal, err := permit.executeStartTarget(invoke)
 	if err != nil {
@@ -329,19 +362,28 @@ func (p *ParentExecution) inspectOrExecutePhase(
 	if p == nil || p.boundary == nil || p.ledger == nil || p.state == nil || invoke == nil {
 		return PhaseAdmission{}, ErrInvalidSubmission
 	}
-	if !p.beginUse() {
-		return PhaseAdmission{}, ErrBoundaryExpired
+	if err := p.beginUseError(); err != nil {
+		return PhaseAdmission{}, err
 	}
 	defer p.endUse()
 	identity, ok := newPhaseIdentity(p.identity, kind)
 	if !ok {
 		return PhaseAdmission{}, ErrInvalidSubmission
 	}
-	p.boundary.storage.clientMu.RLock()
-	p.ledger.mu.Lock()
+	region1 := p.boundary.storage.lockRegion(p.identity.scope.instanceScope())
+	if region1.closed {
+		region1.Close()
+		return PhaseAdmission{}, runtimecoordination.ErrClosed
+	}
+	p.ledger.lock()
+	if !p.ledger.writableLocked() {
+		p.ledger.unlock()
+		region1.Close()
+		return PhaseAdmission{}, runtimecoordination.ErrClosed
+	}
 	if !p.liveLocked() {
-		p.ledger.mu.Unlock()
-		p.boundary.storage.clientMu.RUnlock()
+		p.ledger.unlock()
+		region1.Close()
 		return PhaseAdmission{}, ErrBoundaryExpired
 	}
 	if existing, exists := p.ledger.phases[identity]; exists {
@@ -350,13 +392,13 @@ func (p *ParentExecution) inspectOrExecutePhase(
 		if existing.state == CommandStateTerminal {
 			admissionKind = AdmissionReplay
 		}
-		p.ledger.mu.Unlock()
-		p.boundary.storage.clientMu.RUnlock()
+		p.ledger.unlock()
+		region1.Close()
 		return PhaseAdmission{kind: admissionKind, record: view}, nil
 	}
 	if !p.phaseOrderAllowsLocked(kind) {
-		p.ledger.mu.Unlock()
-		p.boundary.storage.clientMu.RUnlock()
+		p.ledger.unlock()
+		region1.Close()
 		return PhaseAdmission{}, ErrIllegalPhaseOrder
 	}
 	record := &phaseRecord{identity: identity, state: CommandStateClaimed, revision: 1}
@@ -365,8 +407,8 @@ func (p *ParentExecution) inspectOrExecutePhase(
 	p.ledger.livePhases[identity] = state
 	permit := &phasePermit{parent: p, identity: identity, state: state}
 	claimed := PhaseAdmission{kind: AdmissionClaimed, record: record.view()}
-	p.ledger.mu.Unlock()
-	p.boundary.storage.clientMu.RUnlock()
+	p.ledger.unlock()
+	region1.Close()
 
 	terminal, err := permit.execute(invoke)
 	if err != nil {
@@ -377,13 +419,13 @@ func (p *ParentExecution) inspectOrExecutePhase(
 }
 
 func (p *ParentExecution) liveLocked() bool {
-	if p.boundary.storage.generation != p.boundary.generation ||
+	if p.ledger.fenced || p.boundary.storage.clientFenced || p.boundary.storage.generation != p.boundary.generation ||
 		p.state.generation != p.boundary.generation ||
 		p.ledger.liveParents[p.identity] != p.state {
 		return false
 	}
 	record := p.ledger.parents[p.identity]
-	return record != nil && record.state == CommandStateClaimed &&
+	return record != nil && record.state == CommandStateClaimed && record.revision != ^Revision(0) &&
 		record.revision == p.state.revision
 }
 
@@ -415,14 +457,23 @@ func (p *ParentExecution) PublishTerminal(
 	if p == nil || !outcome.valid() {
 		return ParentRecordView{}, ErrInvalidSubmission
 	}
-	if !p.beginUse() {
-		return ParentRecordView{}, ErrBoundaryExpired
+	if err := p.beginUseError(); err != nil {
+		return ParentRecordView{}, err
 	}
 	defer p.endUse()
-	p.boundary.storage.clientMu.RLock()
-	p.ledger.mu.Lock()
-	defer p.ledger.mu.Unlock()
-	defer p.boundary.storage.clientMu.RUnlock()
+	region1 := p.boundary.storage.lockRegion(p.identity.scope.instanceScope())
+	if region1.closed {
+		region1.Close()
+		return ParentRecordView{}, runtimecoordination.ErrClosed
+	}
+	p.ledger.lock()
+	if !p.ledger.writableLocked() {
+		p.ledger.unlock()
+		region1.Close()
+		return ParentRecordView{}, runtimecoordination.ErrClosed
+	}
+	defer region1.Close()
+	defer p.ledger.unlock()
 	if !p.liveLocked() {
 		return ParentRecordView{}, ErrBoundaryExpired
 	}
@@ -493,8 +544,21 @@ func (p *ParentExecution) expire() {
 	if p == nil || p.ledger == nil || p.state == nil {
 		return
 	}
-	p.ledger.mu.Lock()
-	defer p.ledger.mu.Unlock()
+	region1 := p.boundary.storage.lockRegion(p.identity.scope.instanceScope())
+	if region1.closed {
+		region1.Close()
+		return
+	}
+
+	p.ledger.lock()
+
+	if !p.ledger.writableLocked() {
+		p.ledger.unlock()
+		region1.Close()
+		return
+	}
+	defer region1.Close()
+	defer p.ledger.unlock()
 	if p.ledger.liveParents[p.identity] == p.state {
 		delete(p.ledger.liveParents, p.identity)
 	}
@@ -505,17 +569,25 @@ func (p *ParentExecution) expire() {
 	}
 }
 
-func (p *ParentExecution) beginUse() bool {
+func (p *ParentExecution) beginUseError() error {
 	if p == nil || p.usage == nil || p.usage.cond == nil {
-		return false
+		return ErrBoundaryExpired
+	}
+	if p.boundary == nil || p.boundary.storage == nil {
+		return ErrBoundaryExpired
+	}
+	r := p.boundary.storage.lockRegion(p.identity.scope.instanceScope())
+	defer r.Close()
+	if r.closed {
+		return runtimecoordination.ErrClosed
 	}
 	p.usage.mu.Lock()
 	defer p.usage.mu.Unlock()
-	if p.usage.closing {
-		return false
+	if p.usage.closing || p.usage.inFlight == ^uint64(0) {
+		return ErrBoundaryExpired
 	}
 	p.usage.inFlight++
-	return true
+	return nil
 }
 
 func (p *ParentExecution) endUse() {
@@ -554,31 +626,50 @@ func (p *phasePermit) execute(
 		return PhaseRecordView{}, ErrInvalidSubmission
 	}
 	defer p.expire()
-	p.parent.boundary.storage.clientMu.RLock()
-	p.parent.ledger.mu.Lock()
+	region1 := p.parent.boundary.storage.lockRegion(p.parent.identity.scope.instanceScope())
+	if region1.closed {
+		region1.Close()
+		return PhaseRecordView{}, runtimecoordination.ErrClosed
+	}
+	p.parent.ledger.lock()
+	if !p.parent.ledger.writableLocked() {
+		p.parent.ledger.unlock()
+		region1.Close()
+		return PhaseRecordView{}, runtimecoordination.ErrClosed
+	}
 	if !p.parent.liveLocked() ||
-		p.parent.ledger.livePhases[p.identity] != p.state {
-		p.parent.ledger.mu.Unlock()
-		p.parent.boundary.storage.clientMu.RUnlock()
+		!p.parent.ledger.phaseDelegable(p.identity, p.state) {
+		p.parent.ledger.unlock()
+		region1.Close()
 		return PhaseRecordView{}, ErrBoundaryExpired
 	}
-	p.parent.ledger.mu.Unlock()
-	p.parent.boundary.storage.clientMu.RUnlock()
+	p.parent.ledger.unlock()
+	region1.Close()
 
 	outcome, definitive := invokeSafely(invoke)
 	if !definitive || !outcome.valid() {
 		return PhaseRecordView{}, ErrIndeterminateExecution
 	}
 
-	p.parent.boundary.storage.clientMu.RLock()
-	p.parent.ledger.mu.Lock()
-	defer p.parent.ledger.mu.Unlock()
-	defer p.parent.boundary.storage.clientMu.RUnlock()
-	if !p.parent.liveLocked() || p.parent.ledger.livePhases[p.identity] != p.state {
+	region2 := p.parent.boundary.storage.lockRegion(p.parent.identity.scope.instanceScope())
+
+	if region2.closed {
+		region2.Close()
+		return PhaseRecordView{}, runtimecoordination.ErrClosed
+	}
+	p.parent.ledger.lock()
+	if !p.parent.ledger.writableLocked() {
+		p.parent.ledger.unlock()
+		region2.Close()
+		return PhaseRecordView{}, runtimecoordination.ErrClosed
+	}
+	defer region2.Close()
+	defer p.parent.ledger.unlock()
+	if !p.parent.liveLocked() || !p.parent.ledger.phaseDelegable(p.identity, p.state) {
 		return PhaseRecordView{}, ErrBoundaryExpired
 	}
 	record := p.parent.ledger.phases[p.identity]
-	if record == nil || record.state != CommandStateClaimed ||
+	if record == nil || record.revision == ^Revision(0) || record.state != CommandStateClaimed ||
 		record.revision != p.state.revision {
 		return PhaseRecordView{}, ErrBoundaryExpired
 	}
@@ -591,8 +682,21 @@ func (p *phasePermit) execute(
 }
 
 func (p *phasePermit) expire() {
-	p.parent.ledger.mu.Lock()
-	defer p.parent.ledger.mu.Unlock()
+	region1 := p.parent.boundary.storage.lockRegion(p.parent.identity.scope.instanceScope())
+	if region1.closed {
+		region1.Close()
+		return
+	}
+
+	p.parent.ledger.lock()
+
+	if !p.parent.ledger.writableLocked() {
+		p.parent.ledger.unlock()
+		region1.Close()
+		return
+	}
+	defer region1.Close()
+	defer p.parent.ledger.unlock()
 	if p.parent.ledger.livePhases[p.identity] == p.state {
 		delete(p.parent.ledger.livePhases, p.identity)
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfigload"
+	"github.com/dsdred/universal-websocket-platform/internal/runtimecoordination"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeorchestrationbinding"
 )
 
@@ -370,19 +371,29 @@ func (b *Boundary) ExecuteReplayFirstManagedParent(
 }
 
 func (b *Boundary) inspectPrimitive(scope Scope, key CommandKey, intent Intent) (Admission, bool, error) {
-	b.storage.clientMu.RLock()
-	defer b.storage.clientMu.RUnlock()
-	if b.storage.generation != b.generation {
+	region1 := b.storage.lockRegion(scope.instanceScope())
+	if region1.invalid {
+		region1.Close()
+		return Admission{}, false, runtimecoordination.ErrClosed
+	}
+	defer region1.Close()
+	if b.storage.clientFenced || b.storage.generation != b.generation {
 		return Admission{}, false, ErrBoundaryExpired
 	}
 	ledger := b.storage.existingLedger(scope.instanceScope())
 	if ledger == nil {
+		if region1.closed {
+			return Admission{}, false, runtimecoordination.ErrClosed
+		}
 		return Admission{}, false, nil
 	}
-	ledger.mu.Lock()
-	defer ledger.mu.Unlock()
+	ledger.lock()
+	defer ledger.unlock()
 	record := ledger.records[commandIdentity{scope: scope, key: key}]
 	if record == nil {
+		if region1.closed {
+			return Admission{}, false, runtimecoordination.ErrClosed
+		}
 		return Admission{}, false, nil
 	}
 	if record.intent != intent {
@@ -396,19 +407,29 @@ func (b *Boundary) inspectPrimitive(scope Scope, key CommandKey, intent Intent) 
 }
 
 func (b *Boundary) inspectParent(scope Scope, key CommandKey, intent Intent) (ParentAdmission, bool, error) {
-	b.storage.clientMu.RLock()
-	defer b.storage.clientMu.RUnlock()
-	if b.storage.generation != b.generation {
+	region1 := b.storage.lockRegion(scope.instanceScope())
+	if region1.invalid {
+		region1.Close()
+		return ParentAdmission{}, false, runtimecoordination.ErrClosed
+	}
+	defer region1.Close()
+	if b.storage.clientFenced || b.storage.generation != b.generation {
 		return ParentAdmission{}, false, ErrBoundaryExpired
 	}
 	ledger := b.storage.existingLedger(scope.instanceScope())
 	if ledger == nil {
+		if region1.closed {
+			return ParentAdmission{}, false, runtimecoordination.ErrClosed
+		}
 		return ParentAdmission{}, false, nil
 	}
-	ledger.mu.Lock()
-	defer ledger.mu.Unlock()
+	ledger.lock()
+	defer ledger.unlock()
 	record := ledger.parents[commandIdentity{scope: scope, key: key}]
 	if record == nil {
+		if region1.closed {
+			return ParentAdmission{}, false, runtimecoordination.ErrClosed
+		}
 		return ParentAdmission{}, false, nil
 	}
 	if record.intent != intent {

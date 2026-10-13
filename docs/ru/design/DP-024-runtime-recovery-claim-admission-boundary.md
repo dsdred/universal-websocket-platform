@@ -5,7 +5,7 @@
 ## 1. Статус
 
 - **Design Status:** Approved
-- **Implementation Status:** Partial (isolated local test-owner foundation and closed DP-014 participation)
+- **Implementation Status:** Partial (isolated local test-owner foundation, closed DP-014/DP-015 participation and client replacement)
 
 TASK-079 ввела private boundary. Независимое Architect Confirmation TASK-080
 утверждает уточнённый design. TASK-081 реализует только
@@ -23,13 +23,20 @@ allocation/absence stamps. Все coordinated writes reject; missing commands,
 current authority и qualified no-claim не могут открыть admission. Legacy
 constructor regressions сохраняют successful isolated publication behavior.
 
-Implementation Status остаётся Partial для TASK-081 models и local slice TASK-084.
-Gates/closure каждой задачи определяет только её newest valid matching Recovery
-Evidence Envelope. Все integrated P1–P14 proofs остаются Planned. DP-015
-participation, client/fatal roots, authentic producer provenance, persistent stores,
-durable claim/readback/resume и live recovery permits отсутствуют. DP-017 остаётся
-Approved / Planned overall: изолированно реализован только read-only assessment
-TASK-075. Durable recovery barrier и production recovery отсутствуют.
+TASK-085 добавляет complete closed real DP-015 participation, detached command
+membership/link/presence stamps и storage-wide client replacement. Явно supplied
+inert `AuthorityFence` и storage-owned `ClientEpoch` дают только local ordering/
+invalidation; actual containment authority и fatal coupling отсутствуют.
+Authorized replay/read доступен, каждый coordinated mutation reject;
+successful fixtures не доказывают coordinated startup.
+
+Implementation Status остаётся Partial для TASK-081 models и closed local slices
+TASK-084/TASK-085. Gates/closure каждой задачи определяет только newest valid
+matching Recovery Evidence Envelope. Integrated P1–P14 остаются Planned, item7
+unproven. Authentic producer provenance, persistent stores, durable claim/readback/
+resume и live recovery permits отсутствуют. DP-017 остаётся Approved / Planned
+overall: реализован только isolated read-only assessment TASK-075. Durable recovery
+barrier и production recovery отсутствуют.
 
 ## 2. Назначение и источники
 
@@ -73,8 +80,9 @@ non-transferable permit; composition предоставляет current containm
 и prior-process-loss proof. Raw maps/locks, generic transaction registry, service
 locator, произвольный callback и ordinary lifecycle capability границу не пересекают.
 
-Это complete participation inventory. TASK-084 поставляет только closed DP-014
-participation; command, recovery и containment seams остаются Planned:
+Это complete participation inventory. TASK-084/TASK-085 поставляют closed
+DP-014/DP-015 participation и client replacement; recovery и actual containment
+seams остаются Planned:
 
 | Owner/source | Required participation |
 | --- | --- |
@@ -365,11 +373,13 @@ executable evidence. Reservations и successful local revalidation не дают
 TASK-081 поставляет только isolated closed test-owner models. TASK-082 завершает
 real-owner/generation readiness: full integration SPLIT REQUIRED / NOT READY
 AS ONE BOUNDED TASK. TASK-083 фиксирует concrete private realization в §15.
-TASK-084 теперь реализует minimal leaf и complete closed DP-014 local owner
-coverage из §15. Следующая рекомендация — fresh bounded intake complete DP-015
-participation, membership stamps и storage-wide client replacement, Not Activated,
-со fresh readiness и Size Guard. Actual fatal/composition coupling следует отдельно.
-Missing command/authority/qualified no-claim оставляет coordinated writes closed.
+TASK-084 реализует minimal leaf и complete closed DP-014 local owner coverage;
+TASK-085 добавляет complete closed DP-015 participation, membership stamps и
+storage-wide client replacement из §15. Следующая рекомендация — fresh bounded
+actual containment-source fatal coupling и explicit composition supply readiness,
+Not Activated, со fresh Size Guard и independent review. Missing current authority/
+qualified no-claim оставляет coordinated writes closed; inert root construction
+не квалифицирует containment authority.
 
 Durable provenance, persistent aggregate/complete command/recovery storage и
 original storage-authority/provisioning qualification — отдельные prerequisites;
@@ -381,7 +391,7 @@ Design task не активирует implementation или successor.
 ## 14. Граница решения
 
 Независимый Architect TASK-080 явно утверждает уточнённый private restart-based
-design: Approved; Implementation остаётся Partial для local models TASK-081 и closed DP-014 participation TASK-084. Internal atomic transitions и external-I/O prohibition
+design: Approved; Implementation остаётся Partial для local models TASK-081 и closed DP-014/DP-015 participation plus client replacement TASK-084/TASK-085. Internal atomic transitions и external-I/O prohibition
 DP-015 не изменены. TASK-079/TASK-080 не поставили код, durable store, recovery permit
 или production recovery. Все integrated proof rows остаются Planned. Unknown provenance,
 storage, authority или publication outcome оставляет admission closed;
@@ -390,19 +400,22 @@ design Approval не активирует implementation.
 ## 15. Конкретный план local owner participation
 
 TASK-083 фиксирует эту private realization существующей Approved семантики.
-TASK-084 реализует только minimal typed leaf, closed real DP-014 participation и
-coherent detached owner observations. Complete command, root, reservation-session
-и integrated protocol ниже остаются Planned. Design Status остаётся Approved;
-Implementation Status остаётся Partial. Local slice не даёт claim, permit,
-takeover authority или qualification production startup.
+TASK-084 реализует minimal typed leaf, closed real DP-014 participation и
+coherent detached aggregate observations. TASK-085 добавляет complete closed real
+DP-015 participation, membership observations и local client replacement.
+Actual fatal-source coupling, reservation-session и integrated recovery protocol
+остаются Planned. Design Status остаётся Approved; Implementation Status Partial.
+Эти slices не дают claim, permit, takeover authority или production startup
+qualification.
 
 ### 15.1 Typed binding и явное coverage
 
 Dependency leaf `internal/runtimecoordination` не импортирует aggregate, command,
 containment, lifecycle или recovery owner. TASK-084 реализует immutable validated
 `Scope`, copy-safe `Participant`, non-rebinding `AggregateAttachment` и short
-`ObservationRegion`; transition region всегда reject. `CommandAttachment`,
-`ClientEpoch`, `AuthorityFence` и reservation-session handles остаются Planned.
+`ObservationRegion`; transition region всегда reject. TASK-085 реализует
+copy-safe `CommandAttachment`, `ClientEpoch`, inert `AuthorityFence` и bounded
+registration/replacement regions. Reservation-session handles остаются Planned.
 Composition явно поставляет identical participant. Attachment однократно связывает
 exact owner identity и scope; duplicate, foreign и rebinding reject. Complete-owner
 markers принадлежат conforming owner construction, а не caller claims. Через seam
@@ -414,19 +427,21 @@ Instance до allocation: historical `AllocateCandidateIdentity(id)` не пер
 domain/Workspace/Configuration. Каждый direct method, включая narrow terminal
 publishers, rejects foreign identity и сам входит в conforming region. Historical
 `NewStore`, `NewMemoryStorage` и uncoordinated composition остаются supported, но
-не считаются DP-024 conformance. Planned multi-Instance command storage использует typed
-`AttachInstance(scope, participant)` до capture ledger absence. Attachment не
+не считаются DP-024 conformance. TASK-085
+`NewCoordinatedMemoryStorage(authority)` использует typed `AttachInstance(scope, participant)`
+до capture ledger absence. Staged registration commit происходит только после short
+owner catalog checks; rejected unattached calls не раскрывают absence и не poison attachment. Attachment не
 зависит от существования aggregate или ledger.
 
 Complete DP-014 coverage включает allocation/create, attempt claim/history append,
 execution binding, Running, Stop и все authority-specific terminal publishers,
-aggregate/history readers и exact-attempt capture/revalidation. Planned complete DP-015
+aggregate/history readers и exact-attempt capture/revalidation. TASK-085 complete closed DP-015
 coverage включает primitive inspect/claim и tracked Stop; managed admission,
 binding и live gates; parent/phase admission, creation, delegation, terminal и
 expiry; atomic tracked parent/preclaimed StopOld/slot/rendezvous/private permit
 admission и consumption; replay-first orchestration; pending Stop и managed
-rendezvous transitions; complete assessment snapshots. Replacement и containment
-source fatal paths тоже участвуют. Wrapper не доказывает coverage direct calls.
+rendezvous transitions; complete assessment snapshots и client replacement. Actual
+containment source fatal paths должны участвовать в later separate slice. Wrapper не доказывает coverage direct calls.
 
 ### 15.2 Полные detached observations и revisions
 
@@ -457,6 +472,18 @@ exhaustion до mutation. Create-after-absence и successful-publication observa
 используют явно обозначенные package-local fixtures; они не доказывают successful
 coordinated mutation.
 
+TASK-085 command capture/revalidation копирует все terminal/nonterminal members,
+live/slot/rendezvous links и explicit ledger absence под одним ordered region.
+Opaque snapshot identity не содержит owner/lock links; mutable permit/channel/
+bridge references удалены. Exact scope, intent/authorization, derived phase order
+и retained resolved/blocked diagnostic bridges проверяются без трактовки retained
+tokens как live authority. Private value/identity accounting повышает membership
+только при actual changes; reads не fence и не меняют facts. New coordination
+counters reject exhaustion до mutation; existing domain revision semantics
+сохранены, с covered pre-mutation exhaustion guards. Это не global legacy counter
+или authority guarantee. Successful changes используют labelled local fixtures
+или отдельные legacy regressions, а не coordinated mutation evidence.
+
 ### 15.3 Фиксированный порядок коротких regions
 
 Complete planned protocol acquire `Instance outer -> AuthorityFence read gate ->
@@ -465,10 +492,14 @@ lookup/registration предшествует aggregate lock. DP-015 сохран
 `clientMu.RLock -> ledger.mu` atomic transition, включая parent, preclaimed
 StopOld, sole occupant, rendezvous и private live phase permit.
 
-TASK-084 observation получает Instance outer, затем owner catalog и aggregate
-locks; освобождает их все до возврата. Missing root/command qualification оставляет
-transitions closed. Shared participant state сохраняет один attachment при copies;
-copied region handles используют ровно один release disposition, zero/nil Close
+TASK-085 прозрачно переводит previously attached aggregate observations на root
+order после command registration commit. Rootless short observation сохраняет
+participant state до Close, поэтому registration не пересекает owner read; это
+не external-I/O reservation. Rooted command regions сохраняют fixed root/state
+gates до `clientMu.RLock` и ledger locks. Public wrappers делегируют private
+short-region helpers, освобождая каждый region до nested entry/callbacks/waits.
+Missing current authority/qualified no-claim оставляет transitions closed.
+Shared root/attachment/region copies используют один disposition; zero/nil Close
 безопасен. Raw mutex или arbitrary callback не предоставляется.
 
 Aggregate/command facts можно копировать последовательно, пока identical outer
@@ -492,6 +523,12 @@ Registration следует `AuthorityFence.R -> ClientEpoch.W -> participant.st
 replacement или inherit prior opening. Overflow permanently fences client root и
 attached participants и запрещает visibility новой generation. Fan-out ждёт только
 bounded local gates; это не process-loss proof и не разрешение recovery.
+
+TASK-085 реализует этот local registration/replacement order, copy-safe disposal
+и permanent exhaustion fencing до new client generation visibility. Inert root
+не доказывает prior-process loss, current authority или fatal coupling.
+Fixture-only outer retention показывает, что fan-out не получает outer token;
+short observation regions освобождаются до external work.
 
 ### 15.5 Fatal coupling во всех actual source paths
 
@@ -520,11 +557,21 @@ publication behavior. Focused stress, full regression и vet проходят; r
 verification недоступна в текущем CGO-disabled/no-C-compiler environment. Evidence
 доказывает только local slice, не integrated P1–P14.
 
-Next candidate — complete DP-015 primitive/parent/phase/live/rendezvous participation,
-membership stamps и storage-wide client replacement, Not Activated. Actual
-containment-source fatal coupling и explicit composition supply следуют отдельно.
-Каждый проходит fresh readiness, Size Guard и independent review; successor здесь
-не активируется.
+TASK-085 реализует следующий closed slice с 28 added tests: 25 proof и три
+regression tests. Они покрывают complete direct/callback rejection, authorized
+primitive/managed/replay-first terminal replay с zero work callbacks, detached
+membership/absence invalidation, exact contradictory-link rejection, retained
+diagnostic bridges, copy/zero/abort handles, attachment/replacement races и
+overflow без new generation visibility. Successful mutation fixtures остаются
+package-local; actual legacy Stop-first/atomicity/counter regressions отделены.
+Full supported regression/vet и serial focused stress проходят. Race verification
+недоступна при CGO disabled; earlier concurrent legacy bounded-yield failure и
+последующие serial passes сохранены как limitation, не diagnosed fact.
+Эти proofs подтверждают только closed local mechanics, не integrated P1–P14/item7.
+
+Next candidate: fresh bounded actual containment-source fatal coupling и explicit
+composition supply readiness, Not Activated. Каждый successor требует fresh
+readiness, Size Guard и independent review; successor здесь не активируется.
 
 Missing command attachment, current authority или qualified no-claim verification
 оставляет каждый coordinated write closed. Production test-opening API отсутствует.

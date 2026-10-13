@@ -155,24 +155,43 @@ coverage, membership/absence revisions and planned root client/fatal ordering;
 publication added no executable capability and does not resume original work.
 Cached metadata is not fresh remote/P0–P10 proof.
 
-[TASK-084 implementation](../docs/tasks/TASK-084-DP014-COORDINATION-PARTICIPATION.md)
-is current verification-stable In Progress; its newest valid matching envelope
-alone resolves actual gates/closure. Minimal typed leaf and complete real DP-014
-participation implement closed direct/narrow writer regions and coherent detached
-aggregate/history/allocation/absence observations. Opaque detached identity has no
-owner/lock links; copy/zero handles, malformed/partial/foreign/stale facts and
-checked counters are covered locally. Fixture success is not coordinated startup;
-legacy constructor successful regressions retain their separate isolation boundary.
-Approved ownership/semantics/status are unchanged. Missing commands, authority
-and qualified no-claim keeps every coordinated mutation closed.
+[TASK-085 implementation](../docs/tasks/TASK-085-DP015-COORDINATION-PARTICIPATION.md)
+TASK-085 — Runtime DP-015 Coordination Participation, verification-stable
+`In Progress`, branch `feature/task-085-dp015-coordination-participation`, baseline
+`20f5ba532ba9a1dbaa16c00796662fc6191d0ff5`. Actual gates/closure resolve only
+from its newest valid matching Recovery Evidence Envelope. Closed real DP-014
+and DP-015 participation now supplies ordered detached aggregate/history and
+complete command membership/link/presence observations, plus storage-wide client
+replacement. Typed copy-safe roots and staged attachment remain local ordering
+mechanics: the explicitly supplied inert authority root grants no containment
+authority or fatal-source coupling. All coordinated writes reject; authorized
+replay remains read-only with zero lifecycle/provider callbacks. Successful
+state-change fixtures and legacy regressions do not prove coordinated startup.
+DP-024 remains Approved / Partial; integrated P1–P14 Planned, item7 unproven.
+Qualified current authority/no-claim, durable recovery and production integration
+remain absent. Next candidate: fresh bounded actual containment fatal-source
+coupling and explicit composition supply readiness, Not Activated.
+TASK-085 adds complete closed command participation, membership/link snapshots,
+checked local epochs and storage-wide replacement under the existing Approved
+§15 contract. Twenty-eight added tests (25 proof, three regression) distinguish
+package-local successful fixtures, historical successful legacy execution and
+closed real-owner rejection; none proves startup, fatal authority or recovery.
+Serial focused stress/full regression/vet pass; race is unavailable with CGO
+disabled. An earlier concurrent legacy bounded-yield test failure and subsequent
+serial passes remain verification limitations, not a proven contention diagnosis.
 
-Next candidate: fresh bounded complete DP-015 participation/membership and
-storage-wide client replacement intake, Not Activated; actual fatal/composition
-coupling follows separately. DP-015 participation/root gates, authentic origins, persistent stores/
-claim and original authority remain separate full item7 prerequisites. DP-024
-Approved / Partial includes TASK-081 local models and TASK-084 closed local slice;
-integrated P1–P14 Planned, reconciliation/release and production wiring Not Activated.
-Historical TASK080/081/083 evidence does not transfer into current TASK084 gates.
+Published prerequisite TASK-084 — Completed — Coordinator Accepted, accepted source manifest
+`6d7375e6267d7d48abb9bebdf4737d5521607c4d`, source commit
+`4ddaf8272b537b27b825d854d8cd0b325f49bd2e`, PR #89 merge
+`20f5ba532ba9a1dbaa16c00796662fc6191d0ff5` by local immutable Git metadata.
+Its closed leaf/DP-014 slice is the prerequisite for TASK-085; historical
+acceptance does not transfer to current gates. Cached local facts are not fresh
+remote or Publisher P0–P10 evidence.
+DP-024 remains Approved / Partial for TASK-081 local models and TASK-084/TASK-085
+closed real-owner slices. Durable provenance, persistent aggregate/complete
+commands/claim, original storage authority, reconciliation/release/reporting and
+production wiring remain separate prerequisites. Historical source evidence does
+not substitute for current TASK-085 Verification/Review/Acceptance.
 
 TASK-080 accepted subject `70302b93b3908b0216ce79298ade7ae0e10d123b` опубликован
 source `eac6f6eac0a19fbea4d4c47e978124e7fc6cd6eb` через PR #85 как merge
