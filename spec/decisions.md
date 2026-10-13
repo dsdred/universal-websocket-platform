@@ -155,22 +155,33 @@ coverage, membership/absence revisions and planned root client/fatal ordering;
 publication added no executable capability and does not resume original work.
 Cached metadata is not fresh remote/P0–P10 proof.
 
-[TASK-085 implementation](../docs/tasks/TASK-085-DP015-COORDINATION-PARTICIPATION.md)
-TASK-085 — Runtime DP-015 Coordination Participation, verification-stable
-`In Progress`, branch `feature/task-085-dp015-coordination-participation`, baseline
-`20f5ba532ba9a1dbaa16c00796662fc6191d0ff5`. Actual gates/closure resolve only
-from its newest valid matching Recovery Evidence Envelope. Closed real DP-014
-and DP-015 participation now supplies ordered detached aggregate/history and
-complete command membership/link/presence observations, plus storage-wide client
-replacement. Typed copy-safe roots and staged attachment remain local ordering
-mechanics: the explicitly supplied inert authority root grants no containment
-authority or fatal-source coupling. All coordinated writes reject; authorized
-replay remains read-only with zero lifecycle/provider callbacks. Successful
-state-change fixtures and legacy regressions do not prove coordinated startup.
-DP-024 remains Approved / Partial; integrated P1–P14 Planned, item7 unproven.
-Qualified current authority/no-claim, durable recovery and production integration
-remain absent. Next candidate: fresh bounded actual containment fatal-source
-coupling and explicit composition supply readiness, Not Activated.
+[TASK-086 readiness](../docs/tasks/TASK-086-FATAL-SOURCE-COMPOSITION-READINESS.md) —
+TASK-086 — Runtime Fatal-Source Coupling and Composition Supply Readiness,
+verification-stable `In Progress`, branch
+`docs/task-086-fatal-source-composition-readiness`, baseline
+`7daefc0b96c8127a7f884b521686998a2181d43a`. Actual gates/closure resolve only
+from its newest valid matching Recovery Evidence Envelope. This Design-update /
+Readiness records the planned private source-bound registry, seven actual fatal
+paths and explicit opaque closed read-only assembly in DP-024 §16. It adds no
+runtime capability. DP-024 remains Approved / Partial; integrated P1–P14 Planned,
+item7 unproven. Closed DP-014/DP-015 participation, detached observations and
+client replacement remain local mechanics; inert roots do not prove containment
+association or fatal coupling. Every coordinated writer rejects; authorized
+replay is read-only with zero lifecycle/provider callbacks. Qualified current
+authority/no-claim, authentic durable provenance/stores and recovery remain absent.
+Next candidate after independent acceptance of this plan: source-bound leaf
+registry/fatal handle, complete actual containment-source coupling and explicit
+closed composition supply, Ready to fresh intake / Not Activated. Fresh Size Guard
+and independent review are required; production integration remains absent.
+
+[TASK-085 implementation](../docs/tasks/TASK-085-DP015-COORDINATION-PARTICIPATION.md) —
+TASK-085 — Completed — Coordinator Accepted, accepted source manifest
+`2b399f887e312eef51e38845f53799115ee40e44`, source commit
+`0d9c433086a96641eaff63dfa6d506f311bd69bb`, PR #90 merge
+`7daefc0b96c8127a7f884b521686998a2181d43a` by local immutable Git metadata.
+Its closed complete DP-015 slice is the prerequisite for TASK-086; historical
+acceptance does not transfer to current gates. Cached local facts are not fresh
+remote or Publisher P0–P10 evidence.
 TASK-085 adds complete closed command participation, membership/link snapshots,
 checked local epochs and storage-wide replacement under the existing Approved
 §15 contract. Twenty-eight added tests (25 proof, three regression) distinguish
@@ -191,7 +202,7 @@ DP-024 remains Approved / Partial for TASK-081 local models and TASK-084/TASK-08
 closed real-owner slices. Durable provenance, persistent aggregate/complete
 commands/claim, original storage authority, reconciliation/release/reporting and
 production wiring remain separate prerequisites. Historical source evidence does
-not substitute for current TASK-085 Verification/Review/Acceptance.
+not substitute for current TASK-086 Verification/Review/Acceptance.
 
 TASK-080 accepted subject `70302b93b3908b0216ce79298ade7ae0e10d123b` опубликован
 source `eac6f6eac0a19fbea4d4c47e978124e7fc6cd6eb` через PR #85 как merge

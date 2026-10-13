@@ -590,3 +590,137 @@ independently trusted original storage authority, anti-clone/rollback qualificat
 claim-aware assessment, conditional claim/resume и live recovery issuance остаются
 отдельными full item7 prerequisites. Reconciliation, release, reporting, production
 wiring и activation находятся вне этой local sequence.
+
+## 16. Готовность source-bound fatal coupling и closed composition
+
+TASK-086 фиксирует planned private realization разделов 4–9 и 15.5. Он заменяет
+historical TASK-085 next-readiness recommendation в разделах 13/15 без изменения
+этих разделов, Design Status или Implementation Status. Design не предоставляет
+runtime capability, current-authority qualification, qualified no-claim, recovery
+permit или item7 proof.
+
+### 16.1 Actual source inventory и gap
+
+На baseline TASK-086 существуют семь production fatal publications:
+
+| Actual source | Fatal condition |
+| --- | --- |
+| `containment.go`, `IsAuthoritative` | Invalid held capability, nil DB или failed provisioning revalidation |
+| `containment.go`, `AcquireProcessContainment`, first acquired guard | Acquired capability invalid |
+| `containment.go`, `AcquireProcessContainment`, existing-store guard | Existing provisioned store open fails или held capability invalid |
+| `containment.go`, `AcquireProcessContainment`, successor guard | Generation creation, successor bootstrap, post-append provisioning revalidation или held-capability validation fails |
+| `evidence.go`, `ReadGeneration` | Ledger tail противоречит current generation |
+| `evidence.go`, `validateForEvidence` | Held capability invalid или DB unavailable |
+| `evidence.go`, `fenceEvidenceError` | Provisioning/ledger/storage inspection fails |
+
+Direct test stores — fixtures, не source coverage. Current authority root содержит
+только RWMutex; participant registry принадлежит client. Participant roots появляются
+только после command registration commit, поэтому aggregate-only participants
+остаются rootless. Existing `runtimecontainmentcomposition.New` принимает prebuilt
+dependencies и не supplies shared participant или coordinated stores. Existing
+authority/evidence checks не реализуют source-local invalidation.
+
+### 16.2 Source association до owner attachment
+
+Keeper privately создаёт и сохраняет один immutable domain-bound authority root
+до first acquired-capability fatal branch. Caller inert root не принимается как
+source-associated. Copies сохраняют identity; source/domain rebinding запрещён.
+Private composition получает exact keeper-associated root через exact active
+authority и existing external validation. Сам root никогда не attests containment
+authority.
+
+Additive source-bound participant construction регистрирует exact-domain
+participant под `Authority.R -> participant.state` до любого owner attachment или
+absence capture. Authority registry включает каждый participant, в том числе
+aggregate-only и failed partial construction, и каждый associated ClientEpoch.
+Detach/rebind или removal-as-absence запрещены. Root/client construction,
+participant registration и staged command registration rejects sticky fatal под
+тем же authority read gate. Abort command registration не добавляет command fact
+и не удаляет already source-registered participant. Historical rootless/inert
+construction остаётся supported, но unqualified.
+
+### 16.3 Typed source-local publication и complete invalidation
+
+Один private keeper helper покрывает каждый actual fatal branch. Он получает opaque
+copy-safe fatal-publication region, сохраняющий `Authority.W`, публикует existing
+`keeper.fenced=true`, вызывает bounded typed `Invalidate()` и только затем closes
+region и returns. Raw lock или arbitrary callback не предоставляется. Handle не
+предоставляет source association, evidence, opening, generation, release или
+recovery authority. Nil/zero handles safe; copies используют один idempotent
+invalidation/close disposition.
+
+Каждый source-associated fast return, увидевший `keeper.fenced=true`, до return
+join-ит completed publication через bounded typed same-root completion read.
+Read получает Authority.R вне owner/outer gates и после external inspection;
+in-flight Authority.W сначала завершает flag publication, complete invalidation
+и release. Repeated fatal observations safe; atomic flag сам по себе не доказывает
+completed coupling. Это включает IsAuthoritative final false из-за concurrent
+fencing. Nil/no-source caller errors не фабрикуют root или authority.
+
+Fan-out следует `Authority.W -> ClientEpoch.W` (один client за раз), затем
+`participant.state`, и также покрывает separately registered partial participants.
+Root/clients/participants permanently terminal, epochs MaxUint64. Deduplication
+или idempotent terminal assignments исключают пропуск participant или counter wrap
+при repeated registry associations. Fan-out не получает Instance outer,
+aggregate/ledger/clientMu lock и не вызывает callback, storage/evidence/lifecycle
+work или external wait. Ожидаются только bounded local gates. Existing replacement
+publication и fatal fan-out serializes через каждый client gate; replacement не
+может clear terminal state или resurrect participant.
+
+Authority write упорядочен с registration/observation/internal-acceptance read
+gates: fatal-first suppresses acceptance; acceptance-first invalidated до fatal
+return. Actual live recovery issuance отсутствует; region ordering или labelled
+fixtures не доказывают delivered-permit revocation. Authorized replay остаётся
+read-only с zero work callbacks; все coordinated writes closed.
+
+`IsAuthoritative`, provisioning validation и `ReadGeneration` fault detection
+остаются вне каждого short gate. Source results/reasons, caller-error nonfencing,
+fatal-over-cancellation precedence, retained capability, no reacquisition и
+DP-023 process-termination obligations не меняются. Local invalidation никогда не
+является process-loss evidence или termination proof.
+
+### 16.4 Explicit opaque closed assembly
+
+Additive private assembly получает exact keeper-associated root вне short gates
+и проверяет canonical operational/containment domain и exact target scope. Он
+регистрирует один source-bound participant до создания своего coordinated DP-014
+Store и coordinated DP-015 MemoryStorage/attachment, передавая identical participant
+и source root обоим owners. Возвращается только complete closed assembly.
+Partial owners/absence не exposed; participant/root, caller completeness assertion,
+storage adoption или unqualified owner injection не пересекают его surface.
+
+Этот separate opaque local assembly владеет coordinated dependencies и предоставляет
+только detached read observations. Activation methods или Flow/Owner/private-invoker
+adoption не добавляются. Legacy activation/evidence `Composition` и `New` остаются
+supported, но unqualified. Assembly не предоставляет ordinary runtime owner creation,
+successful startup, production wiring или activation.
+
+### 16.5 Next implementation admission и proof obligations
+
+Assessment Ready. После independent acceptance этого plan smallest implementation
+candidate Ready to fresh intake / Not Activated: source-bound leaf registry/fatal
+handle, complete actual containment fatal coverage и explicit closed composition
+supply. Three existing packages, zero new packages, estimate 300–500 production
+lines и 13–17 total paths с documentation требуют fresh Size Guard; более 500
+production lines или 15 paths triggers reassessment до дальнейшей работы. Source
+publication нельзя отделить от complete source association/fan-out/supply без bypass.
+
+| Future obligation | Required executable proof и limitation |
+| --- | --- |
+| Все actual sources | Static inventory плюс fault injection во всех семи sites, включая bootstrap до active authority exposure |
+| Registration ordering | Fatal-first rejection, registration-first invalidation, aggregate-only и aborted command attachment coverage |
+| Completed fatal return | Pause после keeper flag publication до fan-out: repeated-fatal/fast-return readers ждут complete invalidation до false/Unknown return |
+| Complete fan-out | Two clients/two Instances, partial participants, exact domain/root mismatch, copy/zero handles |
+| Sticky terminal state | Fatal versus replacement не resurrect state и не wrap epochs; exhaustion не exposes new client generation |
+| Bounded gates | Retained outer не блокирует fatal; fan-out не получает owner locks; external authority/evidence work вне short gates |
+| Explicit supply | Identical source/participant/root для обоих real owners, foreign scope rejection, без partial exposure или absence leak |
+| Closed compatibility | Direct writers reject, authorized replay zero callbacks; separate legacy constructor regressions |
+
+Это planned proofs, не PASS. Integrated P1–P14 остаются Planned, item7 unproven;
+full integration Split Required / Not Ready. Authentic durable producer provenance,
+persistent aggregate/complete commands/claim, independently trusted original storage
+authority, anti-clone/rollback qualification, qualified current authority/no-claim,
+claim-aware assessment, conditional claim/readback/resume и live issuance остаются
+отдельными prerequisites. Reservation, reconciliation, release, reporting,
+production wiring и activation остаются later work. Design или его acceptance
+не активируют successor.

@@ -3,29 +3,31 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая implementation task —
-[TASK-085](TASK-085-DP015-COORDINATION-PARTICIPATION.md). TASK-085 — Runtime DP-015 Coordination Participation, verification-stable
-`In Progress`, branch `feature/task-085-dp015-coordination-participation`, baseline
-`20f5ba532ba9a1dbaa16c00796662fc6191d0ff5`. Actual gates/closure resolve only
-from its newest valid matching Recovery Evidence Envelope. Closed real DP-014
-and DP-015 participation now supplies ordered detached aggregate/history and
-complete command membership/link/presence observations, plus storage-wide client
-replacement. Typed copy-safe roots and staged attachment remain local ordering
-mechanics: the explicitly supplied inert authority root grants no containment
-authority or fatal-source coupling. All coordinated writes reject; authorized
-replay remains read-only with zero lifecycle/provider callbacks. Successful
-state-change fixtures and legacy regressions do not prove coordinated startup.
-DP-024 remains Approved / Partial; integrated P1–P14 Planned, item7 unproven.
-Qualified current authority/no-claim, durable recovery and production integration
-remain absent. Next candidate: fresh bounded actual containment fatal-source
-coupling and explicit composition supply readiness, Not Activated.
+Текущая Design-update / Readiness task —
+[TASK-086](TASK-086-FATAL-SOURCE-COMPOSITION-READINESS.md). TASK-086 — Runtime Fatal-Source Coupling and Composition Supply Readiness,
+verification-stable `In Progress`, branch
+`docs/task-086-fatal-source-composition-readiness`, baseline
+`7daefc0b96c8127a7f884b521686998a2181d43a`. Actual gates/closure resolve only
+from its newest valid matching Recovery Evidence Envelope. This Design-update /
+Readiness records the planned private source-bound registry, seven actual fatal
+paths and explicit opaque closed read-only assembly in DP-024 §16. It adds no
+runtime capability. DP-024 remains Approved / Partial; integrated P1–P14 Planned,
+item7 unproven. Closed DP-014/DP-015 participation, detached observations and
+client replacement remain local mechanics; inert roots do not prove containment
+association or fatal coupling. Every coordinated writer rejects; authorized
+replay is read-only with zero lifecycle/provider callbacks. Qualified current
+authority/no-claim, authentic durable provenance/stores and recovery remain absent.
+Next candidate after independent acceptance of this plan: source-bound leaf
+registry/fatal handle, complete actual containment-source coupling and explicit
+closed composition supply, Ready to fresh intake / Not Activated. Fresh Size Guard
+and independent review are required; production integration remains absent.
 
 Последний опубликованный implementation prerequisite —
-TASK-084 — Completed — Coordinator Accepted, accepted source manifest
-`6d7375e6267d7d48abb9bebdf4737d5521607c4d`, source commit
-`4ddaf8272b537b27b825d854d8cd0b325f49bd2e`, PR #89 merge
-`20f5ba532ba9a1dbaa16c00796662fc6191d0ff5` by local immutable Git metadata.
-Its closed leaf/DP-014 slice is the prerequisite for TASK-085; historical
+TASK-085 — Completed — Coordinator Accepted, accepted source manifest
+`2b399f887e312eef51e38845f53799115ee40e44`, source commit
+`0d9c433086a96641eaff63dfa6d506f311bd69bb`, PR #90 merge
+`7daefc0b96c8127a7f884b521686998a2181d43a` by local immutable Git metadata.
+Its closed complete DP-015 slice is the prerequisite for TASK-086; historical
 acceptance does not transfer to current gates. Cached local facts are not fresh
 remote or Publisher P0–P10 evidence.
 
@@ -310,7 +312,8 @@ PROCESS-002, Scope Audit 31/0/0 и final Reviewer проходят. Task commit
 - [TASK-082 — Runtime Real-Owner and Generation Participation Readiness](TASK-082-REAL-OWNER-PARTICIPATION-READINESS.md) — Completed — Coordinator Accepted, exact accepted source aa97244d3f46cb7f535af69d6a86babe12780f26; commit 6cfb17bff4246d17e41107755ace0fa3b6d96850 / PR #87 / merge cf17b1728349bca9ac3916c88a00445f021cc4a9 by local immutable Git metadata; readiness only, full integration SPLIT REQUIRED.
 - [TASK-083 — Runtime Real-Owner Participation Design](TASK-083-REAL-OWNER-PARTICIPATION-DESIGN.md) — historical Completed — Coordinator Accepted source 7a982b3b997cbe4d5c499829a355ce8824d8ce34; commit bafe45972bf0da17b10aaa8096cac9d8d59cdbe3 / PR #88 / merge fb906b335523b933d7cdf3c634ca9946bcb410f0 by local immutable Git metadata; design-only, no work resume.
 - [TASK-084 — Runtime DP-014 Coordination Participation](TASK-084-DP014-COORDINATION-PARTICIPATION.md) — Completed — Coordinator Accepted; source `4ddaf8272b537b27b825d854d8cd0b325f49bd2e` / PR #89 merge `20f5ba532ba9a1dbaa16c00796662fc6191d0ff5` by local immutable Git facts; closed leaf/DP014 prerequisite, no integrated recovery.
-- [TASK-085 — Runtime DP-015 Coordination Participation](TASK-085-DP015-COORDINATION-PARTICIPATION.md) — current verification-stable In Progress; newest valid matching envelope resolves gates/closure; complete closed DP015 membership/client replacement, inert roots, next fatal/composition readiness Not Activated.
+- [TASK-085 — Runtime DP-015 Coordination Participation](TASK-085-DP015-COORDINATION-PARTICIPATION.md) — historical Completed — Coordinator Accepted; source `0d9c433086a96641eaff63dfa6d506f311bd69bb`, PR #90 merge `7daefc0b96c8127a7f884b521686998a2181d43a` by local immutable metadata; closed DP015 membership/client replacement, inert roots.
+- [TASK-086 — Runtime Fatal-Source Coupling and Composition Supply Readiness](TASK-086-FATAL-SOURCE-COMPOSITION-READINESS.md) — current verification-stable In Progress; newest valid matching envelope resolves gates/closure; planned DP024 §16, next implementation Ready to fresh intake after independent acceptance / Not Activated.
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.
