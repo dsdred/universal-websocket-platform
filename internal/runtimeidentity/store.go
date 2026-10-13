@@ -3,6 +3,8 @@ package runtimeidentity
 import (
 	"sync"
 
+	"github.com/dsdred/universal-websocket-platform/internal/runtimecoordination"
+
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfigload"
 )
 
@@ -67,6 +69,7 @@ func (a *runtimeInstanceAggregate) activeAttemptPtr() *LaunchAttemptRecord {
 // nine conceptual operations from DP-014 §21 and enforces all acceptance proofs
 // from DP-014 §22.
 //
+// A coordinated Store is bound to its original pointer and rejects value copies.
 // Different Runtime Instances may progress independently (per-aggregate mutex).
 // Same-Instance operations are serialized through that Instance's mutex.
 // Store-level operations (AllocateCandidateIdentity, CreateRuntimeInstance)
@@ -74,7 +77,9 @@ func (a *runtimeInstanceAggregate) activeAttemptPtr() *LaunchAttemptRecord {
 // registration step; they do not hold the store mutex while performing
 // per-aggregate work.
 type Store struct {
-	mu sync.Mutex
+	coordination     *storeCoordination
+	presenceRevision uint64
+	mu               sync.Mutex
 
 	// allocated tracks every RuntimeInstanceID that has been allocated through
 	// AllocateCandidateIdentity or used in CreateRuntimeInstance. An ID in this
@@ -140,6 +145,10 @@ func NewStore() *Store {
 func (s *Store) AllocateCandidateIdentity(
 	id runtimeconfigload.RuntimeInstanceID,
 ) error {
+	if err := s.enterTransition(id); err != nil {
+		return err
+	}
+
 	if id == "" {
 		return ErrInvalidIdentity
 	}
@@ -148,6 +157,10 @@ func (s *Store) AllocateCandidateIdentity(
 	if _, exists := s.allocated[id]; exists {
 		return ErrInstanceAlreadyExists
 	}
+	if s.presenceRevision == ^uint64(0) {
+		return ErrRevisionExhausted
+	}
+	s.presenceRevision++
 	s.allocated[id] = struct{}{}
 	return nil
 }
@@ -170,6 +183,14 @@ func (s *Store) CreateRuntimeInstance(
 	configurationID uint64,
 	id runtimeconfigload.RuntimeInstanceID,
 ) error {
+	if s != nil && s.coordination != nil && (workspaceID != s.coordination.scope.WorkspaceID() || configurationID != s.coordination.scope.ConfigurationID()) {
+		return runtimecoordination.ErrForeignScope
+	}
+
+	if err := s.enterTransition(id); err != nil {
+		return err
+	}
+
 	if workspaceID == 0 || configurationID == 0 || id == "" {
 		return ErrInvalidIdentity
 	}
@@ -179,6 +200,10 @@ func (s *Store) CreateRuntimeInstance(
 	if _, exists := s.instances[id]; exists {
 		return ErrInstanceAlreadyExists
 	}
+	if s.presenceRevision == ^uint64(0) {
+		return ErrRevisionExhausted
+	}
+	s.presenceRevision++
 	// Reserve identity (idempotent if AllocateCandidateIdentity was called
 	// first).
 	s.allocated[id] = struct{}{}
@@ -208,6 +233,12 @@ func (s *Store) CreateRuntimeInstance(
 func (s *Store) ReadRuntimeInstance(
 	id runtimeconfigload.RuntimeInstanceID,
 ) (RuntimeInstanceView, error) {
+	region, err := s.enterObservation(id)
+	if err != nil {
+		return RuntimeInstanceView{}, err
+	}
+	defer region.Close()
+
 	if id == "" {
 		return RuntimeInstanceView{}, ErrInvalidIdentity
 	}
@@ -218,6 +249,7 @@ func (s *Store) ReadRuntimeInstance(
 	agg.mu.Lock()
 	defer agg.mu.Unlock()
 	view := RuntimeInstanceView{
+		owner:             s.observationOwner(),
 		workspaceID:       agg.workspaceID,
 		configurationID:   agg.configurationID,
 		runtimeInstanceID: agg.runtimeInstanceID,
@@ -244,6 +276,12 @@ func (s *Store) ReadRuntimeInstance(
 func (s *Store) ReadLaunchAttemptHistory(
 	id runtimeconfigload.RuntimeInstanceID,
 ) ([]LaunchAttemptRecord, error) {
+	region, err := s.enterObservation(id)
+	if err != nil {
+		return nil, err
+	}
+	defer region.Close()
+
 	if id == "" {
 		return nil, ErrInvalidIdentity
 	}
@@ -286,6 +324,10 @@ func (s *Store) ConditionalClaimLaunchAttempt(
 	attemptID runtimeconfigload.LaunchAttemptID,
 	configurationVersionID uint64,
 ) (ClaimResult, error) {
+	if err := s.enterTransition(id); err != nil {
+		return ClaimResult{}, err
+	}
+
 	if id == "" || attemptID == "" || configurationVersionID == 0 {
 		return ClaimResult{}, ErrInvalidIdentity
 	}
@@ -320,6 +362,9 @@ func (s *Store) ConditionalClaimLaunchAttempt(
 		return ClaimResult{}, ErrAttemptIDReused
 	}
 
+	if agg.revision == ^Revision(0) {
+		return ClaimResult{}, ErrRevisionExhausted
+	}
 	// 4. Atomic append + activate + publish.
 	record := LaunchAttemptRecord{
 		runtimeInstanceID:      id,
@@ -362,6 +407,10 @@ func (s *Store) ConditionalBindExecutionGeneration(
 	attemptID runtimeconfigload.LaunchAttemptID,
 	generation ExecutionGeneration,
 ) (PublishResult, error) {
+	if err := s.enterTransition(id); err != nil {
+		return PublishResult{}, err
+	}
+
 	if id == "" || attemptID == "" || generation == "" {
 		return PublishResult{}, ErrInvalidIdentity
 	}
@@ -396,6 +445,9 @@ func (s *Store) ConditionalBindExecutionGeneration(
 	if active.executionGeneration != "" {
 		return PublishResult{}, ErrBindingAlreadyExists
 	}
+	if agg.revision == ^Revision(0) {
+		return PublishResult{}, ErrRevisionExhausted
+	}
 	// Store immutable binding and advance revision.
 	active.executionGeneration = generation
 	newRevision := agg.advanceRevision()
@@ -420,6 +472,10 @@ func (s *Store) ConditionalPublishRunning(
 	expectedRevision Revision,
 	attemptID runtimeconfigload.LaunchAttemptID,
 ) (PublishResult, error) {
+	if err := s.enterTransition(id); err != nil {
+		return PublishResult{}, err
+	}
+
 	if id == "" || attemptID == "" {
 		return PublishResult{}, ErrInvalidIdentity
 	}
@@ -446,6 +502,9 @@ func (s *Store) ConditionalPublishRunning(
 	if active.phase != AttemptPhaseClaimed && active.phase != AttemptPhaseLaunching {
 		return PublishResult{}, ErrInvalidAttemptPhase
 	}
+	if agg.revision == ^Revision(0) {
+		return PublishResult{}, ErrRevisionExhausted
+	}
 	// Publish Running.
 	active.phase = AttemptPhaseRunning
 	agg.actual = ActualStateRunning
@@ -470,6 +529,10 @@ func (s *Store) ConditionalClaimStop(
 	expectedRevision Revision,
 	attemptID runtimeconfigload.LaunchAttemptID,
 ) (PublishResult, error) {
+	if err := s.enterTransition(id); err != nil {
+		return PublishResult{}, err
+	}
+
 	if id == "" || attemptID == "" {
 		return PublishResult{}, ErrInvalidIdentity
 	}
@@ -491,6 +554,9 @@ func (s *Store) ConditionalClaimStop(
 	}
 	if active.launchAttemptID != attemptID {
 		return PublishResult{}, ErrNoActiveAttempt
+	}
+	if agg.revision == ^Revision(0) {
+		return PublishResult{}, ErrRevisionExhausted
 	}
 	// Phase-sensitive stop claim.
 	switch active.phase {
@@ -580,6 +646,10 @@ func (p ownerTerminalPublisher) ConditionalPublishStopFailure(
 	if p.store == nil {
 		return PublishResult{}, ErrInvalidIdentity
 	}
+	if err := p.store.enterTransition(id); err != nil {
+		return PublishResult{}, err
+	}
+
 	if id == "" || attemptID == "" {
 		return PublishResult{}, ErrInvalidIdentity
 	}
@@ -600,6 +670,9 @@ func (p ownerTerminalPublisher) ConditionalPublishStopFailure(
 	if active.phase != AttemptPhaseStopping || active.terminalCompletionBasis != "" {
 		return PublishResult{}, ErrInvalidAttemptPhase
 	}
+	if agg.revision == ^Revision(0) {
+		return PublishResult{}, ErrRevisionExhausted
+	}
 	agg.actual = ActualStateFailed
 	agg.desired = DesiredStateStopped
 	newRevision := agg.advanceRevision()
@@ -614,6 +687,10 @@ func (s *Store) conditionalPublishTerminal(
 	basis TerminalCompletionBasis,
 	permitted func(*LaunchAttemptRecord) bool,
 ) (PublishResult, error) {
+	if err := s.enterTransition(id); err != nil {
+		return PublishResult{}, err
+	}
+
 	if id == "" || attemptID == "" || !terminalPhase.isTerminal() || !basis.valid() || permitted == nil {
 		return PublishResult{}, ErrInvalidIdentity
 	}
@@ -635,6 +712,9 @@ func (s *Store) conditionalPublishTerminal(
 		return PublishResult{}, ErrInvalidAttemptPhase
 	}
 
+	if agg.revision == ^Revision(0) {
+		return PublishResult{}, ErrRevisionExhausted
+	}
 	active.phase = terminalPhase
 	active.terminalCompletionBasis = basis
 	agg.desired = DesiredStateStopped

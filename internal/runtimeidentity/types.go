@@ -52,6 +52,9 @@ var (
 	// otherwise invalid.
 	ErrInvalidIdentity = errors.New("invalid identity")
 
+	// ErrRevisionExhausted prevents any counter wrapping or partial publication.
+	ErrRevisionExhausted = errors.New("runtime identity revision exhausted")
+
 	// ErrAttemptNotFound is returned when an exact-attempt observation does not
 	// contain the requested LaunchAttemptID.
 	ErrAttemptNotFound = errors.New("launch attempt not found")
@@ -245,6 +248,7 @@ func (r LaunchAttemptRecord) TerminalCompletionBasis() TerminalCompletionBasis {
 // fields correspond to a single committed revision. Reads are observation only
 // and do not advance revision.
 type RuntimeInstanceView struct {
+	owner *coordinationOwner
 	// workspaceID is the immutable Workspace binding.
 	workspaceID uint64
 

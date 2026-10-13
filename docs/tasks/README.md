@@ -3,16 +3,28 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая bounded design-update task —
-[TASK-083](TASK-083-REAL-OWNER-PARTICIPATION-DESIGN.md), verification-stable
-`In Progress`, branch `docs/task-083-real-owner-participation-design`, baseline
-`cf17b1728349bca9ac3916c88a00445f021cc4a9`. Actual gates/closure resolve only
-from newest valid matching TASK-083 envelope. DP-024 §15 records typed attachment,
-complete coverage/membership, storage-wide client replacement and fatal ordering.
-Next candidate: fresh bounded local leaf plus complete DP-014 coverage intake,
-Not Activated; DP-015 then fatal/composition remain separate. Missing command,
-authority or qualified no-claim keeps startup closed. No runtime capability added;
-DP-024 Approved / Partial and integrated P1–P14 Planned, item7 unproven.
+Текущая implementation task —
+[TASK-084](TASK-084-DP014-COORDINATION-PARTICIPATION.md), verification-stable
+`In Progress`, branch `feature/task-084-dp014-coordination-participation`, baseline
+`fb906b335523b933d7cdf3c634ca9946bcb410f0`. Actual gates/closure resolve only
+from its newest valid matching Recovery Evidence Envelope. Minimal dependency
+leaf `internal/runtimecoordination` and complete closed DP-014 participation
+provide ordered coherent detached aggregate/history/allocation/absence reads;
+every coordinated writer rejects. Successful fixtures/regressions do not prove
+coordinated startup. DP-024 stays Approved / Partial; integrated P1–P14 Planned,
+item7 unproven. DP-015 participation, client/fatal roots, authority/durable recovery and
+production integration remain absent. Next candidate: fresh bounded complete
+DP-015 participation/membership and storage-wide client replacement intake,
+Not Activated; actual fatal/composition coupling follows separately.
+
+Последний опубликованный design —
+TASK-083 — Completed — Coordinator Accepted; accepted source manifest
+`7a982b3b997cbe4d5c499829a355ce8824d8ce34`, source commit
+`bafe45972bf0da17b10aaa8096cac9d8d59cdbe3`, PR #88 merge
+`fb906b335523b933d7cdf3c634ca9946bcb410f0` по local immutable Git metadata.
+Design-only publication добавила concrete DP-024 §15 plan, без runtime capability.
+Это historical published source; исходная работа не возобновляется. Cached local
+metadata не является fresh remote или Publisher P0–P10 evidence.
 
 Последняя опубликованная readiness —
 [TASK-082](TASK-082-REAL-OWNER-PARTICIPATION-READINESS.md), Completed — Coordinator
@@ -29,10 +41,11 @@ remain full item7 prerequisites; publication created no runtime capability.
 `f5818c6e0500ede49fc1f3c4b314db63e16affc1`, PR #86 merge
 `4a2a575577f180527fa7a9b5499da037b294bb06` по local immutable Git metadata.
 `internal/runtimerecoverycoordination` содержит только closed test-owner models;
-real-owner integration, durable recovery claim и production recovery отсутствуют.
+На этом publication checkpoint real-owner integration, durable recovery claim и
+production recovery отсутствовали; текущий closed DP-014 slice отдельно описан выше.
 Cached refs/local merge metadata не являются fresh network evidence.
 
-Последняя опубликованная design boundary — TASK-080 accepted subject `70302b93b3908b0216ce79298ade7ae0e10d123b`, source
+Предыдущая опубликованная design boundary — TASK-080 accepted subject `70302b93b3908b0216ce79298ade7ae0e10d123b`, source
 `eac6f6eac0a19fbea4d4c47e978124e7fc6cd6eb` through PR #85 merge
 `ac82aa29b9aaf7d25a0822b7ef3b3785b9149b18` by local immutable Git metadata.
 Approved DP-024 design delivers no runtime or storage capability.
@@ -280,10 +293,11 @@ PROCESS-002, Scope Audit 31/0/0 и final Reviewer проходят. Task commit
 - [TASK-079 — Runtime Recovery Claim and Admission Implementation Boundary](TASK-079-RECOVERY-CLAIM-ADMISSION-BOUNDARY.md) — accepted subject15047580 published source4ead8a82 through PR84 merge0d018c42; Draft refined by TASK080
 - [TASK-076 — Local Configuration Studio](TASK-076-LOCAL-CONFIGURATION-STUDIO.md) — Coordinator Accepted source; committed as b8c2b86 and merged through PR #81 as e9a87b5; existing-API local/dev UI, no Runtime/DP-017 change
 
-- [TASK-081 — Runtime Recovery Ordering and Fence Foundation](TASK-081-RECOVERY-ORDERING-FOUNDATION.md) — verification-stable In Progress; matching envelope resolves gates/closure; DP024 Approved/Partial for isolated local test-owner foundation; no real-owner/durable recovery claim
+- [TASK-081 — Runtime Recovery Ordering and Fence Foundation](TASK-081-RECOVERY-ORDERING-FOUNDATION.md) — historical Coordinator Accepted source acefebe25d8a1053d6af0af00bbc1625014876c4; commit f5818c6e0500ede49fc1f3c4b314db63e16affc1 / PR #86 / merge 4a2a575577f180527fa7a9b5499da037b294bb06 by local immutable Git metadata; local test-owner foundation without real-owner/durable recovery claim at publication.
 
 - [TASK-082 — Runtime Real-Owner and Generation Participation Readiness](TASK-082-REAL-OWNER-PARTICIPATION-READINESS.md) — Completed — Coordinator Accepted, exact accepted source aa97244d3f46cb7f535af69d6a86babe12780f26; commit 6cfb17bff4246d17e41107755ace0fa3b6d96850 / PR #87 / merge cf17b1728349bca9ac3916c88a00445f021cc4a9 by local immutable Git metadata; readiness only, full integration SPLIT REQUIRED.
-- [TASK-083 — Runtime Real-Owner Participation Design](TASK-083-REAL-OWNER-PARTICIPATION-DESIGN.md) — verification-stable In Progress; newest valid matching envelope resolves gates/closure; bounded DP024 realization, next local leaf plus complete DP014 intake Not Activated; no runtime capability.
+- [TASK-083 — Runtime Real-Owner Participation Design](TASK-083-REAL-OWNER-PARTICIPATION-DESIGN.md) — historical Completed — Coordinator Accepted source 7a982b3b997cbe4d5c499829a355ce8824d8ce34; commit bafe45972bf0da17b10aaa8096cac9d8d59cdbe3 / PR #88 / merge fb906b335523b933d7cdf3c634ca9946bcb410f0 by local immutable Git metadata; design-only, no work resume.
+- [TASK-084 — Runtime DP-014 Coordination Participation](TASK-084-DP014-COORDINATION-PARTICIPATION.md) — current verification-stable In Progress; newest valid matching envelope resolves gates/closure; closed leaf and complete DP014 participation, next DP015/client replacement intake Not Activated; no integrated recovery.
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

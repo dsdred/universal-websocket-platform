@@ -13,6 +13,7 @@ type exactAttemptSnapshotReader interface {
 // exact Launch Attempt and its immutable containment correlation. It is not an
 // evidence record and grants no lifecycle, command, or recovery authority.
 type ExactAttemptSnapshot struct {
+	owner                   *coordinationOwner
 	workspaceID             uint64
 	configurationID         uint64
 	runtimeInstanceID       runtimeconfigload.RuntimeInstanceID
@@ -130,7 +131,7 @@ func ReadExactAttemptSnapshot(
 	}
 
 	return ExactAttemptSnapshot{
-		workspaceID:             before.workspaceID,
+		owner: before.owner, workspaceID: before.workspaceID,
 		configurationID:         before.configurationID,
 		runtimeInstanceID:       instanceID,
 		launchAttemptID:         attemptID,
@@ -160,7 +161,7 @@ func RevalidateExactAttemptSnapshot(
 	if current.revision != snapshot.revision {
 		return ErrStaleRevision
 	}
-	if current.workspaceID != snapshot.workspaceID ||
+	if current.owner != snapshot.owner || current.workspaceID != snapshot.workspaceID ||
 		current.configurationID != snapshot.configurationID ||
 		current.runtimeInstanceID != snapshot.runtimeInstanceID {
 		return ErrIncoherentAttemptSnapshot

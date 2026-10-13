@@ -8,18 +8,27 @@
 
 ## Текущее состояние
 
-- Current task: **TASK-083 — Runtime Real-Owner Participation Design**,
+- Current task: **TASK-084 — Runtime DP-014 Coordination Participation**,
   verification-stable `In Progress`, branch
-  `docs/task-083-real-owner-participation-design`, baseline
-  `cf17b1728349bca9ac3916c88a00445f021cc4a9`. Actual gates/closure resolve only
-  from newest valid matching TASK-083 Recovery Evidence Envelope. DP-024 §15
-  records concrete typed non-rebinding attachment, complete coverage and
-  membership/absence revisions, storage-wide client replacement and fatal ordering.
-  Next candidate: fresh bounded local leaf plus complete DP-014 coverage intake,
-  Not Activated; DP-015 and fatal/composition integration follow separately.
-  Missing commands/authority/qualified no-claim keeps startup closed. No runtime
-  capability added; DP-024 Approved / Partial only for TASK-081 test-owner models,
-  integrated P1–P14 Planned, item7 unproven. Durable prerequisites remain separate.
+  `feature/task-084-dp014-coordination-participation`, baseline
+  `fb906b335523b933d7cdf3c634ca9946bcb410f0`. Actual gates/closure resolve only
+  from its newest valid matching Recovery Evidence Envelope. Minimal typed leaf
+  `internal/runtimecoordination` and complete real DP-014 participation provide
+  closed writer regions and ordered coherent detached aggregate/history/allocation/
+  absence observations. No coordinated write or successful startup is enabled;
+  fixtures and legacy successful regressions remain distinct. DP-015 participation, client/fatal
+  roots, qualified authority/no-claim, durable recovery and production wiring remain
+  absent. DP-024 stays Approved / Partial, integrated P1–P14 Planned, item7 unproven.
+  Next candidate: fresh bounded complete DP-015 participation/membership and
+  storage-wide client replacement intake, Not Activated; actual fatal/composition
+  coupling follows separately.
+- Latest published design: **TASK-083**, Completed — Coordinator Accepted,
+  accepted source manifest `7a982b3b997cbe4d5c499829a355ce8824d8ce34`, source
+  `bafe45972bf0da17b10aaa8096cac9d8d59cdbe3`, PR #88 merge
+  `fb906b335523b933d7cdf3c634ca9946bcb410f0` by local immutable Git metadata.
+  This historical published design records DP-024 §15 without runtime capability;
+  no original work resume. Cached local facts are not fresh remote/P0–P10 evidence.
+
 - Latest published readiness: **TASK-082**, Completed — Coordinator Accepted,
   accepted source manifest `aa97244d3f46cb7f535af69d6a86babe12780f26`, commit
   `6cfb17bff4246d17e41107755ace0fa3b6d96850`, PR #87 merge
@@ -33,11 +42,12 @@
   `f5818c6e0500ede49fc1f3c4b314db63e16affc1`, PR #86 merge
   `4a2a575577f180527fa7a9b5499da037b294bb06` by local immutable Git metadata.
   Closed test-owner models exist in `internal/runtimerecoverycoordination`.
-  DP-024 remains Approved / Partial only for this local model; integrated
-  P1–P14 remain Planned, item7 unproven. No real-owner participation, durable
-  provenance/storage/claim, recovery permit or production recovery established.
+  At that publication checkpoint DP-024 was Approved / Partial only for the local
+  model, with integrated P1–P14 Planned and item7 unproven; no real-owner
+  participation, durable provenance/storage/claim, recovery permit or production
+  recovery was established. The current closed DP-014 slice is described above.
   Cached refs/local merge metadata are not fresh network evidence.
-- Latest published design boundary: **TASK-080**, accepted subject `70302b93b3908b0216ce79298ade7ae0e10d123b`, source
+- Previous published design boundary: **TASK-080**, accepted subject `70302b93b3908b0216ce79298ade7ae0e10d123b`, source
   `eac6f6eac0a19fbea4d4c47e978124e7fc6cd6eb` through PR #85 merge
   `ac82aa29b9aaf7d25a0822b7ef3b3785b9149b18` by local immutable Git metadata.
   Approved DP-024 design delivers no runtime or storage capability.
@@ -497,12 +507,10 @@
   external / 0 Deferred; no separate prerequisite; DP-016 remains Approved /
   Planned; Tester PASS 0/0/0; repeat Reviewer APPROVED 0/0; Scope Audit
   16/0/0; PROCESS-002 Synchronized; later superseded by the TASK-026 recheck**
-- Текущая рекомендация: **после TASK-082 — Design-update для typed real-owner
-  attachment/complete participation coverage, membership/absence revisions и
-  storage-wide client-generation/containment-fatal invalidation fan-out ordering,
-  Not Activated**. Full integration SPLIT REQUIRED; local seam не требует заранее
-  реализованных durable stores/provenance, но требует concrete participation
-  contract и fresh Size Guard. Test-owner models доказывают только local semantics.
+- Текущая рекомендация: **после TASK-084 — fresh bounded intake complete DP-015
+  participation/membership и storage-wide client replacement, Not Activated**.
+  TASK-083 published concrete plan и TASK-084 closed leaf/complete DP-014 slice
+  не активируют successor. Actual fatal/composition coupling следует отдельно.
   Persistent DP-014/DP-015/recovery stores, authentic provenance и original
   provisioning qualification остаются отдельными prerequisites полного item7.
   DP-017 reconciliation/release, DP-018 reporting, production integration и
