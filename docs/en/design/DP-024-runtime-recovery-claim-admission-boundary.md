@@ -1059,3 +1059,177 @@ B remains the later dependent persistent-owner/claim/provenance conformance desi
 assessment from §18.4; no adapter/publication choice is pre-decided. Successful
 durable qualification and full item7 implementation remain **Not Ready**. No
 successor Task ID, branch or automatic activation follows this design.
+
+## 20. Closed-local implementation readiness and exact handoff plan
+
+[TASK-090](../../tasks/TASK-090-CLOSED-LOCAL-SESSION-READINESS.md) records an
+Architect-confirmed implementation plan for §19, with no executable change.
+Existing Approved semantics/statuses remain unchanged. DP-024 stays Approved /
+Partial; DP-017 Approved / Planned overall; integrated P1–P14 Planned and item7
+unproven. These future contracts describe local binding/consistency only.
+
+### 20.1 Readiness, ordering and Size Guard
+
+Assessment is Ready. The whole A handoff/session/reservation implementation is
+**Split Required**: estimated 650–900 net production lines and 19–23 code/test/doc
+paths, with an independently testable source-handoff prerequisite. The sole next
+candidate is **A1 — source-minted detached current-authority handoff: Ready for
+fresh bounded Implementation intake / Not Activated**. No successor ID/branch is
+assigned and no implementation starts in TASK-090.
+
+A1 is estimated at 180–280 net production lines, five production and three test
+paths, zero new packages/module edits. Seven expected documentation paths bring
+its estimated total to 15. Fresh intake must count actual necessary paths and
+reapply Size Guard; estimates are not a waiver. A2 — joint real-owner session and
+closed reservation — is dependent, Not Activated, and **not Ready by this task**.
+It needs fresh intake after A1 independent acceptance, exact API/scope and Size
+Guard confirmation. Estimated A2 450–650 production lines and 10–14 code/test
+paths plus required docs trigger reassessment. Its whole-pair safety boundary must
+remain indivisible; the estimate does not preapprove exceeding any trigger.
+B persistent-owner/claim/provenance conformance design remains later and unresolved.
+Successful durable qualification and full item7 remain Not Ready.
+
+### 20.2 Exact A1 typed contract and source affinity
+
+All additions are repository-private. The dependency leaf `runtimecoordination`
+imports no containment, aggregate or command owner. Planned signatures:
+
+```go
+func NewAuthoritySource(domain string) (*AuthorityFence, *SourceIssuer, error)
+func (s *SourceIssuer) CommitGeneration(generation string) error
+func (s *SourceIssuer) Observe() (CurrentObservation, error)
+func (r *AuthorityFence) RevalidateCurrentObservation(o CurrentObservation) error
+```
+
+`NewAuthoritySource` creates one fresh non-rebinding source and its opaque issuer;
+it accepts neither existing root nor generation/observation. Only the actual
+containment keeper uses this constructor and privately retains the issuer.
+Existing `NewAuthorityFence`, `NewSourceAuthorityFence` and root readers remain
+root-only and unqualified: none recovers the issuer. Creating another source,
+even with equal domain/generation strings, cannot forge the actual keeper root.
+No observation constructor, boolean setter, root-to-issuer conversion or generic
+callback is exported. `CurrentObservation` has private exact source/root/domain/
+generation affinity; copies retain it and grant no continuing authority.
+
+`CommitGeneration` binds one nonzero immutable committed generation under root.W.
+The keeper calls it only after its actual successful durable bootstrap, exact
+returned-generation, provisioning and capability validations. Zero input returns
+`ErrInvalidScope` without consuming first binding. Every second binding attempt,
+including equal generation through copies, returns new `ErrAlreadyCommitted` and
+cannot rebind. Zero root/facet, invalid domain or absent committed generation
+returns `ErrInvalidScope`; foreign exact affinity returns `ErrForeignScope`;
+terminal/fatal source returns `ErrClosed`. A failed keeper binding permanently
+fences via the existing fatal path, retains the keeper and exposes no ActiveAuthority.
+These are local dispositions, not storage commit or recovery claim outcomes.
+
+`Observe` takes only root.R, checks the one committed source/generation and
+unfenced state, then returns its detached binding. It performs no inspection,
+storage, authorization, evidence or arbitrary callback. Revalidation takes the
+same root.R and compares the exact source/root/domain/committed generation and
+unfenced state. An observation accepted before fatal is invalid afterward;
+fatal-first suppresses minting/revalidation. Mandatory revalidation precedes every
+later local use; external refresh requires fresh inspection outside outer.
+
+### 20.3 Actual keeper inspection and failure boundary
+
+The containment entry is exactly:
+
+```go
+func (a *ActiveAuthority) InspectCoordination(ctx context.Context, domain Domain) (runtimecoordination.CurrentObservation, error)
+```
+
+It rejects nil/invalid caller input and mismatched domain without manufacturing
+source corruption; caller cancellation returns the context error when no detected
+fatal fault takes precedence. Outside every outer/short gate it reads the exact
+`a.CurrentGeneration()` through actual `ReadGeneration`, requires
+`EvidenceGenerationLive`, unchanged exact `a.generation` and successful
+`IsAuthoritative` capability/provisioning inspection. The keeper's immutable
+committed generation must match this actual authority generation before
+`issuer.Observe`. No caller boolean or supplied generation substitutes for those
+checks. Unknown/stale/foreign inspection returns no observation. Detected source,
+capability, provisioning or ledger failures retain existing DP-023 fatal behavior;
+all seven existing fatal sources still perform complete local invalidation.
+
+The final root.R acceptance orders only local binding/unfenced state against
+fatal publication. It does not promise continuing external authority. Later
+session, claim, delivery and use retain §§7–9/19 fresh obligations. A1 never
+qualifies operational storage, no-claim or authentic prior-process origins.
+
+### 20.4 A1 exact future files and executable proof plan
+
+| Planned path under `internal/` | Required change |
+| --- | --- |
+| `runtimecoordination/handoff.go` (new) | Opaque issuer/observation, one-time bind, mint/revalidation and error |
+| `runtimecoordination/roots.go` | Private immutable source generation/issuer state |
+| `runtimecoordination/source.go` | Separate fresh source constructor; root-only compatibility |
+| `runtimecontainment/containment.go` | Private keeper issuer; bind after real successful bootstrap, fatal on failure |
+| `runtimecontainment/coordination.go` | Exact unlocked `InspectCoordination` and keeper-generation affinity |
+| `runtimecoordination/handoff_test.go` (new) | Leaf affinity, copy/binding, ordering and surface proofs |
+| `runtimecontainment/coordination_test.go` | Existing fatal inventory/ordering regressions and inspection isolation |
+| `runtimecontainment/handoff_windows_test.go` (new) | Real provisioned descriptor/ledger/bootstrap handoff proof |
+
+Future deterministic proofs, separate from existing isolated/model coverage:
+
+1. Zero, legacy, root-only and incomplete input cannot mint/revalidate. Another
+   source with equal domain/generation is foreign to the actual keeper. Wrong
+   domain/generation rejects; no public construction or issuer recovery surface.
+2. Actual provisioned successful bootstrap mints only its exact committed
+   generation after live ledger, capability and provisioning inspection. Provisional,
+   retained failed and fatal acquisitions expose no observation. Zero binding does
+   not consume; copies and repeated equal/different binding never rebind.
+3. Barrier/channel-controlled fatal-first versus mint/revalidation-first schedules:
+   fatal-first rejects, accepted-first later invalidates. Existing seven-site fatal
+   coverage, complete fan-out and final completion joins remain intact.
+4. Missing/replaced/corrupt provisioning/ledger or capability loss preserves source
+   fatal behavior. Scope/cancellation caller errors do not become fabricated source
+   corruption; detected fatal retains precedence.
+5. Pause actual external inspection while independent short-root publication
+   progresses to prove no inspection under gates. The exported seam contains no
+   generic callback, lifecycle, release, mutation or opening surface.
+
+Run focused leaf/containment proofs, full `go test ./...`, `go vet ./...`, gofmt,
+focused repeated stress and race tests where supported; record environment
+limitations explicitly. Preserve legacy constructors/root behavior and actual
+fatal regressions. Windows real-store evidence is distinguished from leaf fixtures.
+Documentation links/parity, exact scope and diff checks remain required; no module
+change is planned, so tidy/smoke applicability is decided explicitly at fresh intake.
+These are future requirements, not runtime PASS evidence from TASK-090.
+
+### 20.5 Dependent A2 boundary and subsequent work
+
+A2 is an assessed dependency, not a finalized Ready API contract. Its implementation
+inventory stays in existing leaf, DP-014/015 owner coordination and containment
+composition packages; no test-owner model becomes a production owner. Fresh intake
+must finalize typed `JointSession`/`ReadPhase`, session-bound owner
+capture/revalidation facets and composition `ClosedSession`/local reservation.
+The leaf owns opaque shared session/disposition state and imports no owners.
+Composition alone retains both real owners and exact source/scope/attachments.
+
+One cancel-aware outer acquisition spans complete DP-014 and DP-015 copies and
+whole-pair revalidation. Short gates follow §19.3, each owner validates its exact
+attachment/live phase before reading, and public recursive-outer readers are not
+called. Detached pair retains complete presence/history/membership/link/revision
+facts and source/client/participant stamps, without live owner pointers or authority.
+After detach only outer is retained; all short gates are released. No external-work
+callback or storage operation is introduced. Refresh closes the session and repeats
+outside-outer inspection then fresh full capture. Whole-pair revalidation/reservation
+has one shared terminal local disposition, candidate affinity and idempotent Close;
+copies cannot duplicate it. Success remains closed local consistency, no permit.
+
+Future A2 proofs must cover every §19.6 obligation: full real-owner absence/history/
+links, allocation and racing attachments, fatal/client replacement before capture,
+between detach/revalidation and during a blocked simulated interval, completed
+invalidation without outer/short-gate blockage, suppressed later confirmation,
+same-Instance contention and independent Instances, cancellation/partial/abandoned
+sessions and concurrent wrapper confirmation/Close with exactly-once outer release.
+Direct/narrow writes/delegation stay closed and authorized replay invokes zero work
+callbacks. Preserve DP-015 §13.1 indivisible parent/preclaimed StopOld transition.
+No lifecycle/evidence callbacks run under outer; qualified storage retention is a
+later explicit case, not general external-work permission.
+
+A1 does not supply A2 or joint pair/reservation evidence. A2 does not resolve B's
+persistent owners/provenance/claim/original storage authority or publication choice.
+Claim-aware assessment, qualified no-claim, conditional claim/readback/resume,
+issuance/delivery/use and all §9 crash cuts remain subsequent integrated obligations.
+Neither slice opens startup, reconciles/releases, promotes completion basis, wires
+production recovery or proves item7/P1–P14.
