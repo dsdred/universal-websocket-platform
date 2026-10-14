@@ -15,6 +15,18 @@ func NewSourceAuthorityFence(domain string) (*AuthorityFence, error) {
 	return &AuthorityFence{data: &authorityState{domain: domain, participants: make(map[*participantState]struct{}), clients: make(map[*clientState]struct{})}}, nil
 }
 
+// NewAuthoritySource creates a fresh source and its private generation issuer.
+// Root-only constructors cannot recover this facet or qualify observations.
+func NewAuthoritySource(domain string) (*AuthorityFence, *SourceIssuer, error) {
+	root, err := NewSourceAuthorityFence(domain)
+	if err != nil {
+		return nil, nil, err
+	}
+	marker := &issuerMarker{}
+	root.data.issuer = marker
+	return root, &SourceIssuer{root.data, marker}, nil
+}
+
 // NewSourceParticipant registers before any owner attachment. Registration is
 // permanent, including aborted or partial construction, and cannot rebind.
 func NewSourceParticipant(root *AuthorityFence, scope Scope) (*Participant, error) {

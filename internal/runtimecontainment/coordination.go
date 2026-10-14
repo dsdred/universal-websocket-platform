@@ -1,6 +1,10 @@
 package runtimecontainment
 
-import "github.com/dsdred/universal-websocket-platform/internal/runtimecoordination"
+import (
+	"context"
+
+	"github.com/dsdred/universal-websocket-platform/internal/runtimecoordination"
+)
 
 func (k *keeper) publishFatal() {
 	region := k.root.BeginFatalPublication()
@@ -22,4 +26,46 @@ func (a *ActiveAuthority) CoordinationRoot(domain Domain) (*runtimecoordination.
 		return nil, runtimecoordination.ErrClosed
 	}
 	return a.keeper.root, nil
+}
+
+// InspectCoordination inspects actual current generation and containment authority
+// outside all coordination gates, then returns a detached local source binding.
+// The result grants no continuing authority or recovery qualification.
+func (a *ActiveAuthority) InspectCoordination(ctx context.Context, domain Domain) (runtimecoordination.CurrentObservation, error) {
+	var zero runtimecoordination.CurrentObservation
+	if a == nil || a.keeper == nil || ctx == nil || zeroIdentity(domain.value) {
+		return zero, runtimecoordination.ErrInvalidScope
+	}
+	k := a.keeper
+	if domain != k.domain {
+		return zero, runtimecoordination.ErrForeignScope
+	}
+	if k.root == nil || k.issuer == nil {
+		return zero, runtimecoordination.ErrClosed
+	}
+	if zeroIdentity(a.generation.value) || k.committedGeneration != a.generation {
+		k.publishFatal()
+		return zero, runtimecoordination.ErrClosed
+	}
+	named := a.CurrentGeneration()
+	fact := a.ReadGeneration(ctx, domain, named)
+	// Always finish actual authority inspection: detected faults outrank cancellation.
+	if !a.IsAuthoritative() {
+		return zero, runtimecoordination.ErrClosed
+	}
+	if err := ctx.Err(); err != nil {
+		return zero, err
+	}
+	if fact.Kind() != EvidenceGenerationLive || named != a.CurrentGeneration() {
+		return zero, runtimecoordination.ErrClosed
+	}
+	observation, err := k.issuer.Observe()
+	if err == nil {
+		err = k.root.RevalidateCurrentObservation(observation)
+	}
+	if err != nil {
+		k.publishFatal()
+		return zero, runtimecoordination.ErrClosed
+	}
+	return observation, nil
 }

@@ -1233,3 +1233,62 @@ Claim-aware assessment, qualified no-claim, conditional claim/readback/resume,
 issuance/delivery/use and all §9 crash cuts remain subsequent integrated obligations.
 Neither slice opens startup, reconciles/releases, promotes completion basis, wires
 production recovery or proves item7/P1–P14.
+
+## 21. Isolated A1 source-minted handoff implementation boundary
+
+[TASK-091](../../tasks/TASK-091-CURRENT-AUTHORITY-HANDOFF.md) implements the bounded
+A1 contract from §20 in the worktree. Its current Verification, Review and
+Acceptance resolve only from the newest valid matching Recovery Evidence Envelope;
+this section does not assert those gates. Existing full design prefixes/statuses
+remain unchanged: DP-024 Approved / Partial, DP-017 Approved / Planned overall,
+integrated P1–P14 Planned and item7 unproven.
+
+### 21.1 Exact source and committed generation
+
+`runtimecoordination.NewAuthoritySource` creates a fresh exact root and opaque
+`SourceIssuer`. Private source markers distinguish equal-domain/equal-generation
+sources; legacy `NewAuthorityFence` and `NewSourceAuthorityFence` remain root-only
+and cannot recover an issuer. `CommitGeneration` serializes one immutable nonzero
+binding under root.W; zero before first binding does not consume it, and later
+binding attempts cannot rebind. Copies share that binding. `Observe` and
+`RevalidateCurrentObservation` use root.R for exact source/root/domain/generation
+and unfenced-state checks. `CurrentObservation` contains only private detached
+affinity, with no constructor, setter, owner pointer or continuing authority.
+The leaf imports no containment or aggregate/command owner and exposes no callback.
+
+The actual containment keeper privately retains its issuer. Successful durable
+bootstrap, provisioning and capability validation precede the one-time binding;
+binding failure retains/fences the keeper and exposes no `ActiveAuthority`.
+The keeper also retains its immutable committed generation for exact inspection
+comparison. These local source facts are not durable operational-store qualification.
+
+### 21.2 Actual inspection and fatal ordering
+
+`ActiveAuthority.InspectCoordination(ctx, domain)` rejects nil/invalid or foreign
+caller scope without manufacturing source corruption. It verifies actual generation
+against the keeper's immutable committed generation, calls actual `ReadGeneration`
+and `IsAuthoritative` outside outer/short gates, requires `EvidenceGenerationLive`
+and unchanged generation, then mints/revalidates exact local affinity. Caller
+cancellation returns the context error when no detected fatal fault takes precedence.
+Actual capability/provisioning/ledger failures preserve complete source fatal
+invalidation and final completion joins; new immutable-binding guards follow the
+same fatal path. No caller-supplied generation/boolean replaces actual inspection.
+
+Fatal-first ordering rejects minting/revalidation; acceptance-first observations
+lose validity after fatal publication. Successful local comparison promises no
+continuing external authority. Every later local use requires revalidation; fresh
+external inspection remains outside outer. Existing fatal and legacy behavior,
+closed coordinated writers and authorized read-only replay remain required regressions.
+Windows provisioned-store tests are distinct from leaf fixtures; executable proof
+results and environment limitations belong to the task envelope, not this section.
+
+### 21.3 Unchanged dependent boundaries
+
+A1 supplies no joint real-owner observation pair or reservation. The sole next
+recommendation is A2 fresh dependent readiness and Size Guard after independent
+A1 Acceptance, Not Activated; no successor ID/branch is assigned. A2 implementation
+is not Ready yet. B persistent-owner/claim/provenance conformance remains unresolved.
+Successful durable qualification/full item7 remain Not Ready. Startup opening,
+qualified no-claim, recovery claim/readback/resume, permit/issuance/delivery/use,
+lifecycle/reconciliation/release and production wiring/activation remain absent.
+No implementation or design status is promoted by this isolated addition.

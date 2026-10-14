@@ -80,12 +80,14 @@ func (r Result) IsFatalFenced() bool { return r.kind == resultFatalFenced }
 type generation struct{ value [identitySize]byte }
 
 type keeper struct {
-	capability heldCapability
-	db         *bolt.DB
-	domain     Domain
-	descriptor descriptor
-	fenced     atomic.Bool
-	root       *runtimecoordination.AuthorityFence
+	capability          heldCapability
+	db                  *bolt.DB
+	domain              Domain
+	descriptor          descriptor
+	fenced              atomic.Bool
+	root                *runtimecoordination.AuthorityFence
+	issuer              *runtimecoordination.SourceIssuer
+	committedGeneration generation
 }
 
 // ActiveAuthority exposes only the committed generation and guarantee facts.
@@ -161,8 +163,8 @@ func finishAcquisition(domain Domain, descriptor descriptor, capability heldCapa
 }
 
 func finishAcquisitionWithGeneration(domain Domain, descriptor descriptor, capability heldCapability, valid bool, generate func() (generation, error)) Result {
-	root, _ := runtimecoordination.NewSourceAuthorityFence(domain.text())
-	k := &keeper{capability: capability, domain: domain, descriptor: descriptor, root: root}
+	root, issuer, _ := runtimecoordination.NewAuthoritySource(domain.text())
+	k := &keeper{capability: capability, domain: domain, descriptor: descriptor, root: root, issuer: issuer}
 	retained.Lock()
 	retained.keepers = append(retained.keepers, k)
 	retained.Unlock()
@@ -183,6 +185,11 @@ func finishAcquisitionWithGeneration(domain Domain, descriptor descriptor, capab
 		k.publishFatal()
 		return Result{kind: resultFatalFenced}
 	}
+	if zeroIdentity(candidate.value) || issuer.CommitGeneration(hex.EncodeToString(candidate.value[:])) != nil {
+		k.publishFatal()
+		return Result{kind: resultFatalFenced}
+	}
+	k.committedGeneration = candidate
 	authority := &ActiveAuthority{generation: candidate, keeper: k}
 	return Result{kind: resultActive, authority: authority}
 }

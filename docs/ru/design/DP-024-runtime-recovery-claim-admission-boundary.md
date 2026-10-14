@@ -1230,3 +1230,62 @@ Claim-aware assessment, qualified no-claim, conditional claim/readback/resume,
 issuance/delivery/use и все §9 crash cuts остаются subsequent integrated obligations.
 Ни один slice не opens startup, reconciles/releases, promotes completion basis,
 wires production recovery или proves item7/P1–P14.
+
+## 21. Граница isolated A1 source-minted handoff implementation
+
+[TASK-091](../../tasks/TASK-091-CURRENT-AUTHORITY-HANDOFF.md) реализует bounded
+contract A1 из §20 в worktree. Текущие Verification, Review и Acceptance разрешаются
+только по newest valid matching Recovery Evidence Envelope; этот раздел не утверждает
+прохождение gates. Полные исходные design prefixes/statuses неизменны: DP-024
+Approved / Partial, DP-017 Approved / Planned overall, integrated P1–P14 Planned
+и item7 unproven.
+
+### 21.1 Exact source и committed generation
+
+`runtimecoordination.NewAuthoritySource` создаёт fresh exact root и opaque
+`SourceIssuer`. Private source markers различают equal-domain/equal-generation
+sources; legacy `NewAuthorityFence` и `NewSourceAuthorityFence` остаются root-only
+и не позволяют восстановить issuer. `CommitGeneration` сериализует одно immutable
+nonzero binding под root.W; zero до первого binding не расходует его, последующие
+binding attempts не могут rebind. Copies разделяют этот binding. `Observe` и
+`RevalidateCurrentObservation` используют root.R для проверки exact source/root/
+domain/generation и unfenced state. `CurrentObservation` содержит только private
+detached affinity, без constructor, setter, owner pointer или continuing authority.
+Leaf не импортирует containment или aggregate/command owner и не предоставляет callback.
+
+Actual containment keeper privately сохраняет issuer. Successful durable bootstrap,
+provisioning и capability validation предшествуют one-time binding; binding failure
+сохраняет/fences keeper и не предоставляет `ActiveAuthority`. Keeper также сохраняет
+immutable committed generation для exact inspection comparison. Эти local source
+facts не являются durable operational-store qualification.
+
+### 21.2 Actual inspection и fatal ordering
+
+`ActiveAuthority.InspectCoordination(ctx, domain)` отвергает nil/invalid или foreign
+caller scope, не создавая ложный source corruption. Он проверяет actual generation
+против immutable committed generation keeper, вызывает actual `ReadGeneration` и
+`IsAuthoritative` вне outer/short gates, требует `EvidenceGenerationLive` и unchanged
+generation, затем mint/revalidate exact local affinity. Caller cancellation возвращает
+context error, если detected fatal fault не имеет precedence. Actual capability/
+provisioning/ledger failures сохраняют complete source fatal invalidation и final
+completion joins; новые immutable-binding guards используют тот же fatal path.
+Caller-supplied generation/boolean не заменяет actual inspection.
+
+Fatal-first ordering отвергает mint/revalidation; acceptance-first observations
+теряют validity после fatal publication. Successful local comparison не обещает
+continuing external authority. Каждый later local use требует revalidation; fresh
+external inspection остаётся вне outer. Existing fatal и legacy behavior, closed
+coordinated writers и authorized read-only replay остаются required regressions.
+Windows provisioned-store tests отделены от leaf fixtures; executable proof results
+и environment limitations принадлежат task envelope, а не этому разделу.
+
+### 21.3 Неизменные dependent boundaries
+
+A1 не предоставляет joint real-owner observation pair или reservation. Единственная
+следующая рекомендация — A2 fresh dependent readiness и Size Guard после independent
+A1 Acceptance, Not Activated; successor ID/branch не назначены. A2 implementation
+ещё не Ready. B persistent-owner/claim/provenance conformance остаётся unresolved.
+Successful durable qualification/full item7 остаются Not Ready. Startup opening,
+qualified no-claim, recovery claim/readback/resume, permit/issuance/delivery/use,
+lifecycle/reconciliation/release и production wiring/activation отсутствуют.
+Это isolated addition не повышает implementation или design status.
