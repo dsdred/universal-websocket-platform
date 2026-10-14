@@ -57,9 +57,9 @@ func assertSourceFatal(t *testing.T, a *ActiveAuthority, s runtimecoordination.S
 func TestActualSourceFatalInventory(t *testing.T) {
 	// Keep branch inventory tied to executable production calls, excluding all
 	// direct fixture stores. Any new source publication requires a new proof row.
-	want := map[string]int{"isAuthoritative": 1, "finishAcquisitionWithGeneration": 3, "ReadGeneration": 1, "validateForEvidence": 1, "fenceEvidenceError": 1}
+	want := map[string]int{"isAuthoritative": 1, "finishAcquisitionWithGeneration": 4, "ReadGeneration": 1, "validateForEvidence": 1, "fenceEvidenceError": 1, "InspectCoordination": 2}
 	got := map[string]int{}
-	for _, name := range []string{"containment.go", "evidence.go"} {
+	for _, name := range []string{"containment.go", "evidence.go", "coordination.go"} {
 		f, err := parser.ParseFile(token.NewFileSet(), name, nil, 0)
 		if err != nil {
 			t.Fatal(err)
@@ -78,7 +78,7 @@ func TestActualSourceFatalInventory(t *testing.T) {
 				if ok && sel.Sel.Name == "publishFatal" {
 					got[fn.Name.Name]++
 				}
-				if ok && sel.Sel.Name == "Store" {
+				if ok && sel.Sel.Name == "Store" && fn.Name.Name != "publishFatal" {
 					t.Errorf("uncoupled flag store in %s", fn.Name.Name)
 				}
 				return true
@@ -264,5 +264,45 @@ func TestSourceRootExactDomainAndNoLegacyAdoption(t *testing.T) {
 	copy.keeper.publishFatal()
 	if a.IsAuthoritative() {
 		t.Fatal("copy lost source")
+	}
+}
+
+func TestCoordinationInspectionHasNoGateOrCallbackSurface(t *testing.T) {
+	f, err := parser.ParseFile(token.NewFileSet(), "coordination.go", nil, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var calls []string
+	for _, d := range f.Decls {
+		fn, ok := d.(*ast.FuncDecl)
+		if !ok || fn.Name.Name != "InspectCoordination" {
+			continue
+		}
+		ast.Inspect(fn.Body, func(n ast.Node) bool {
+			if _, ok := n.(*ast.FuncLit); ok {
+				t.Error("inspection callback surface")
+			}
+			if call, ok := n.(*ast.CallExpr); ok {
+				if sel, ok := call.Fun.(*ast.SelectorExpr); ok {
+					calls = append(calls, sel.Sel.Name)
+					if sel.Sel.Name == "Lock" || sel.Sel.Name == "RLock" {
+						t.Error("inspection holds gate")
+					}
+				}
+			}
+			return true
+		})
+	}
+	positions := map[string]int{}
+	for i, name := range calls {
+		positions[name] = i
+	}
+	for _, name := range []string{"ReadGeneration", "IsAuthoritative", "Observe", "RevalidateCurrentObservation"} {
+		if _, ok := positions[name]; !ok {
+			t.Fatal("missing actual boundary", name)
+		}
+	}
+	if positions["ReadGeneration"] >= positions["Observe"] || positions["IsAuthoritative"] >= positions["Observe"] || positions["Observe"] >= positions["RevalidateCurrentObservation"] {
+		t.Fatal("external inspection after local acceptance", calls)
 	}
 }

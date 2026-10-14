@@ -9,6 +9,8 @@ import (
 // authority and exposes neither opening nor external callback operations.
 type AuthorityFence struct{ data *authorityState }
 type authorityState struct {
+	issuer       *issuerMarker
+	generation   string
 	gate         sync.RWMutex
 	registry     sync.Mutex
 	domain       string

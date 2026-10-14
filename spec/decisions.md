@@ -155,24 +155,33 @@ coverage, membership/absence revisions and planned root client/fatal ordering;
 publication added no executable capability and does not resume original work.
 Cached metadata is not fresh remote/P0–P10 proof.
 
-[TASK-090 readiness](../docs/tasks/TASK-090-CLOSED-LOCAL-SESSION-READINESS.md) —
-TASK-090 — Closed-Local Joint Session Implementation Readiness,
-Design-only / Readiness, verification-stable `In Progress`, branch
-`docs/task-090-closed-local-session-readiness`, baseline
-`0a9b5d4e9d33cbf30216999c5e6e8abc6dff4ccb`. Actual gates/closure resolve only
-from its newest valid matching Recovery Evidence Envelope. Additive DP-024 §20
-records exact source-minted handoff contracts, implementation inventory, Size Guard
-and deterministic proof plan; runtime implementation remains absent.
-Architecture Confirmation PASS: split A into A1 source handoff and dependent A2
-joint real-owner session/reservation. Sole next recommendation: A1 Ready for fresh
-bounded Implementation intake / Not Activated; no successor ID or branch assigned.
-A2 needs fresh readiness after independent A1 acceptance and is not Ready by this
-assessment. B persistent-owner/claim/provenance conformance remains dependent with
-unresolved adapter/publication choices. Successful durable qualification/full item7
-remain Not Ready; integrated P1–P14 Planned. DP-024 stays Approved / Partial;
+[TASK-091 implementation](../docs/tasks/TASK-091-CURRENT-AUTHORITY-HANDOFF.md) —
+TASK-091 — Source-Minted Current-Authority Handoff, bounded A1 Implementation,
+verification-stable `In Progress`, branch
+`feature/task-091-current-authority-handoff`, baseline
+`587b55bdda0aa4ee92f2ce1827481e8dab51da86`. Actual gates/closure resolve only
+from its newest valid matching Recovery Evidence Envelope. Additive DP-024 §21
+records the isolated source/issuer, one-time generation binding, detached observation
+and actual keeper inspection boundary implemented in this worktree. Local binding
+is not continuing external authority; later use requires fresh local revalidation.
+Architecture Confirmation PASS; Verification, Review and Acceptance remain separate
+gates. Sole next recommendation: A2 joint real-owner session/reservation fresh
+readiness and Size Guard after independent A1 Acceptance, Not Activated; no successor
+ID or branch assigned. A2 implementation is not Ready yet. B persistent-owner/claim/
+provenance conformance remains unresolved; successful durable qualification/full
+item7 remain Not Ready and integrated P1–P14 Planned. DP-024 stays Approved / Partial;
 DP-017 stays Approved / Planned overall. No startup opening, claim, permit,
-capability or status promotion. Fresh Verification, Review and Acceptance remain
-separate gates.
+lifecycle/reconciliation/release, production wiring or status promotion.
+
+[TASK-090 published readiness](../docs/tasks/TASK-090-CLOSED-LOCAL-SESSION-READINESS.md) —
+TASK-090 — historical Completed — Coordinator Accepted, accepted source manifest
+`dacc667c07fa126151fe49ea5b356a4edc7d9d06`, source commit
+`9a2aa9f33e9e9c7b4244024ab12437a27891a74b`, PR #95 merge
+`587b55bdda0aa4ee92f2ce1827481e8dab51da86` by local immutable Git metadata.
+Its additive DP-024 §20 establishes exact A1 implementation readiness/decomposition
+and dependent A2 limitations; publication added no runtime capability. Historical
+acceptance is not a fresh gate; cached facts are not fresh remote or Publisher
+P0–P10 evidence. Original readiness work is not resumed.
 
 [TASK-089 published design](../docs/tasks/TASK-089-CURRENT-AUTHORITY-JOINT-SESSION-DESIGN.md) —
 TASK-089 — historical Completed — Coordinator Accepted, accepted source manifest
