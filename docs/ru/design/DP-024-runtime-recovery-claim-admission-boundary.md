@@ -1057,3 +1057,176 @@ obligations; local result не повышает lifecycle completion provenance.
 из §18.4; adapter/publication choice не предрешён. Successful durable qualification и
 full item7 implementation остаются **Not Ready**. Дизайн не назначает successor Task
 ID/branch и не запускает следующую task автоматически.
+
+## 20. Готовность closed-local реализации и exact handoff plan
+
+[TASK-090](../../tasks/TASK-090-CLOSED-LOCAL-SESSION-READINESS.md) фиксирует
+Architect-confirmed implementation plan §19 без executable change.
+Existing Approved semantics/statuses неизменны. DP-024 остаётся Approved /
+Partial; DP-017 Approved / Planned overall; integrated P1–P14 Planned, item7
+unproven. Future contracts определяют только local binding/consistency.
+
+### 20.1 Readiness, порядок и Size Guard
+
+Assessment Ready. Вся реализация A handoff/session/reservation — **Split Required**:
+оценка 650–900 net production lines и 19–23 code/test/doc paths; source handoff
+является independently testable prerequisite. Единственный следующий candidate:
+**A1 — source-minted detached current-authority handoff: Ready для fresh bounded
+Implementation intake / Not Activated**. Successor ID/branch не назначаются;
+TASK-090 не запускает реализацию.
+
+Оценка A1: 180–280 net production lines, пять production и три test paths, ноль
+новых packages/module edits. Семь ожидаемых documentation paths дают всего15.
+Fresh intake считает actual necessary paths и повторяет Size Guard; оценка не
+является waiver. A2 — joint real-owner session и closed reservation — dependent,
+Not Activated и **не Ready по этой task**. Нужен fresh intake после independent
+A1 acceptance, exact API/scope и Size Guard confirmation. Оценка A2: 450–650
+production lines, 10–14 code/test paths плюс required docs требует reassessment.
+Whole-pair safety boundary неделима; оценка не preapproves превышение trigger.
+B persistent-owner/claim/provenance conformance design остаётся later/unresolved.
+Successful durable qualification и full item7 остаются Not Ready.
+
+### 20.2 Exact A1 typed contract и source affinity
+
+Все additions repository-private. Dependency leaf `runtimecoordination` не
+импортирует containment, aggregate или command owner. Planned signatures:
+
+```go
+func NewAuthoritySource(domain string) (*AuthorityFence, *SourceIssuer, error)
+func (s *SourceIssuer) CommitGeneration(generation string) error
+func (s *SourceIssuer) Observe() (CurrentObservation, error)
+func (r *AuthorityFence) RevalidateCurrentObservation(o CurrentObservation) error
+```
+
+`NewAuthoritySource` создаёт один fresh non-rebinding source и opaque issuer;
+не принимает existing root или generation/observation. Только actual containment
+keeper использует constructor и privately retains issuer. Existing
+`NewAuthorityFence`, `NewSourceAuthorityFence` и root readers остаются root-only/
+unqualified: issuer через них не восстановить. Другой source, даже с равными
+строками domain/generation, не изготовляет actual keeper root. Observation
+constructor, boolean setter, root-to-issuer conversion и generic callback не
+экспортируются. `CurrentObservation` хранит private exact source/root/domain/
+generation affinity; copies сохраняют её, continuing authority не предоставляют.
+
+`CommitGeneration` связывает одну nonzero immutable committed generation под root.W.
+Keeper вызывает его только после actual successful durable bootstrap, exact
+returned-generation, provisioning и capability validations. Zero input возвращает
+`ErrInvalidScope`, не consuming first binding. Каждый second binding attempt,
+включая равную generation через copies, возвращает новый `ErrAlreadyCommitted`
+без rebind. Zero root/facet, invalid domain или absent committed generation дают
+`ErrInvalidScope`; foreign exact affinity — `ErrForeignScope`; terminal/fatal source —
+`ErrClosed`. Failed keeper binding permanently fences через existing fatal path,
+retains keeper и не exposes ActiveAuthority. Это local dispositions, не storage
+commit или recovery claim outcomes.
+
+`Observe` берёт только root.R, проверяет committed source/generation и unfenced
+state, возвращает detached binding. Inspection, storage, authorization, evidence
+и arbitrary callback отсутствуют. Revalidation берёт тот же root.R, сравнивает
+exact source/root/domain/committed generation и unfenced state. Принятая до fatal
+observation после него invalid; fatal-first suppresses mint/revalidation.
+Mandatory revalidation предшествует каждому later local use; external refresh
+требует fresh inspection вне outer.
+
+### 20.3 Actual keeper inspection и failure boundary
+
+Containment entry точно:
+
+```go
+func (a *ActiveAuthority) InspectCoordination(ctx context.Context, domain Domain) (runtimecoordination.CurrentObservation, error)
+```
+
+Nil/invalid caller input и mismatched domain отклоняются без manufactured source
+corruption; caller cancellation возвращает context error, когда detected fatal
+fault не имеет приоритета. Вне всех outer/short gates entry читает exact
+`a.CurrentGeneration()` через actual `ReadGeneration`, требует
+`EvidenceGenerationLive`, unchanged exact `a.generation` и successful
+`IsAuthoritative` capability/provisioning inspection. Immutable committed keeper
+generation обязана совпасть с actual authority generation до `issuer.Observe`.
+Caller boolean или supplied generation не заменяют checks. Unknown/stale/foreign
+inspection не возвращает observation. Detected source/capability/provisioning/
+ledger failures сохраняют existing DP-023 fatal behavior; все семь existing fatal
+sources выполняют complete local invalidation.
+
+Final root.R acceptance упорядочивает только local binding/unfenced state с fatal
+publication, не обещает continuing external authority. Later session/claim/delivery/
+use сохраняют §§7–9/19 fresh obligations. A1 не qualifies operational storage,
+no-claim или authentic prior-process origins.
+
+### 20.4 Exact future files A1 и executable proof plan
+
+| Planned path под `internal/` | Required change |
+| --- | --- |
+| `runtimecoordination/handoff.go` (new) | Opaque issuer/observation, one-time bind, mint/revalidation и error |
+| `runtimecoordination/roots.go` | Private immutable source generation/issuer state |
+| `runtimecoordination/source.go` | Separate fresh source constructor; root-only compatibility |
+| `runtimecontainment/containment.go` | Private keeper issuer; binding после real successful bootstrap, fatal при failure |
+| `runtimecontainment/coordination.go` | Exact unlocked `InspectCoordination` и keeper-generation affinity |
+| `runtimecoordination/handoff_test.go` (new) | Leaf affinity, copy/binding, ordering и surface proofs |
+| `runtimecontainment/coordination_test.go` | Existing fatal inventory/ordering regressions и inspection isolation |
+| `runtimecontainment/handoff_windows_test.go` (new) | Real provisioned descriptor/ledger/bootstrap handoff proof |
+
+Future deterministic proofs отделены от existing isolated/model coverage:
+
+1. Zero, legacy, root-only и incomplete input не mint/revalidate. Другой source с
+   равными domain/generation foreign для actual keeper. Wrong domain/generation
+   rejects; public construction или issuer recovery surface отсутствуют.
+2. Actual provisioned successful bootstrap mint-ит только exact committed
+   generation после live ledger/capability/provisioning inspection. Provisional,
+   retained failed и fatal acquisition не expose observation. Zero binding не
+   consume; copies/repeated equal/different binding не rebind.
+3. Barrier/channel-controlled fatal-first versus mint/revalidation-first schedules:
+   fatal-first rejects, accepted-first позже invalidates. Existing seven-site fatal
+   coverage, complete fan-out и final completion joins сохраняются.
+4. Missing/replaced/corrupt provisioning/ledger или capability loss сохраняют source
+   fatal behavior. Scope/cancellation caller errors не становятся fabricated source
+   corruption; detected fatal сохраняет precedence.
+5. Paused actual external inspection при independently progressing short-root
+   publication доказывает inspection вне gates. Exported seam не содержит generic
+   callback, lifecycle, release, mutation или opening surface.
+
+Нужны focused leaf/containment proofs, full `go test ./...`, `go vet ./...`, gofmt,
+focused repeated stress и race tests где supported; environment limitations
+фиксируются явно. Сохранить legacy constructor/root behavior и actual fatal
+regressions. Windows real-store evidence отличается от leaf fixtures.
+Documentation links/parity, exact scope и diff checks обязательны; module change
+не планируется, tidy/smoke applicability явно решается fresh intake. Это future
+requirements, не runtime PASS evidence TASK-090.
+
+### 20.5 Dependent A2 boundary и subsequent work
+
+A2 — assessed dependency, не finalized Ready API contract. Implementation inventory
+остаётся в existing leaf, DP-014/015 owner coordination и containment composition
+packages; test-owner model не становится production owner. Fresh intake финализирует
+typed `JointSession`/`ReadPhase`, session-bound owner capture/revalidation facets и
+composition `ClosedSession`/local reservation. Leaf владеет opaque shared session/
+disposition state, не импортирует owners. Только composition retains оба real
+owners и exact source/scope/attachments.
+
+Один cancel-aware outer acquisition охватывает complete DP-014/DP-015 copies и
+whole-pair revalidation. Short gates следуют §19.3; каждый owner validates exact
+attachment/live phase до чтения; public recursive-outer readers не вызываются.
+Detached pair сохраняет complete presence/history/membership/link/revision facts
+и source/client/participant stamps без live owner pointers или authority.
+После detach остаётся только outer; все short gates освобождены. External-work
+callback или storage operation не добавляются. Refresh закрывает session, повторяет
+outside-outer inspection и fresh full capture. Whole-pair revalidation/reservation
+имеет один shared terminal local disposition, candidate affinity и idempotent Close;
+copies не дублируют его. Success остаётся closed local consistency без permit.
+
+Future A2 proofs покрывают каждую §19.6 obligation: full real-owner absence/history/
+links, allocation/racing attachments, fatal/client replacement до capture, между
+detach/revalidation и during blocked simulated interval, completed invalidation
+без outer/short-gate blockage, suppressed later confirmation, same-Instance contention
+и independent Instances, cancellation/partial/abandoned sessions и concurrent wrapper
+confirmation/Close с exactly-once outer release. Direct/narrow writes/delegation
+остаются closed; authorized replay вызывает zero work callbacks. DP-015 §13.1
+indivisible parent/preclaimed StopOld transition сохраняется. Lifecycle/evidence
+callbacks не выполняются под outer; qualified storage retention — later explicit
+case, не general external-work permission.
+
+A1 не supplies A2 или joint pair/reservation evidence. A2 не resolves B persistent
+owners/provenance/claim/original storage authority или publication choice.
+Claim-aware assessment, qualified no-claim, conditional claim/readback/resume,
+issuance/delivery/use и все §9 crash cuts остаются subsequent integrated obligations.
+Ни один slice не opens startup, reconciles/releases, promotes completion basis,
+wires production recovery или proves item7/P1–P14.
