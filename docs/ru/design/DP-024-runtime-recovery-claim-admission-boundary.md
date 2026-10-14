@@ -917,3 +917,143 @@ assessment и planned obligations. Existing status/capability boundaries неи�
 TASK-088 gates/closure требуют newest valid matching Recovery Evidence Envelope,
 fresh independent Verification, PROCESS-002, Scope Audit, final Review и Coordinator
 Acceptance. Historical verdict эти gates не заменяет.
+
+## 19. Дизайн private current-authority handoff и joint observation session
+
+[TASK-089](../../tasks/TASK-089-CURRENT-AUTHORITY-JOINT-SESSION-DESIGN.md)
+фиксирует подтверждённую Architect реализацию §§5,7,9,15 и §18.4 A на уровне
+дизайна. Этот additive private design не меняет гарантий, владельцев истины,
+статусов или технологии. Реализации нет: DP-024 остаётся Approved / Partial;
+DP-017 — Approved / Planned overall; integrated P1–P14 Planned, item7 unproven.
+
+### 19.1 Фактическая граница и source-minted handoff
+
+`ClosedAssembly.Capture` сейчас читает DP-014, затем DP-015 в отдельных outer
+regions. Существующие public capture/revalidation methods повторно берут outer
+и не могут вызываться рекурсивно из retained session. Source roots доказывают
+только ordering association; `CoordinationRoot`, `authorityCurrent`, совпадение
+строк generation и стабильные owner snapshots не являются joint current-authority
+qualification.
+
+Только actual containment keeper/committed `ActiveAuthority` предоставляет opaque
+handoff, связывающий exact non-rebinding source identity, authority root, domain и
+committed nonzero execution generation. Composition связывает его с exact scope,
+participant и полными aggregate/command attachments. Keeper удерживает issuer facet;
+обычный читатель root не может получить этот facet или изготовить handoff.
+Inert/legacy root, caller boolean, совпадение строк domain/generation или другой
+keeper того же domain не синтезируют same-source binding. Это detached binding
+observation, не continuing authority, process-loss proof, qualified operational
+storage или no-claim. Общий registry не добавляется.
+
+### 19.2 External inspection и bounded local acceptance
+
+Current containment capability/provisioning/ledger и execution-evidence queries
+выполняются до получения outer, вне всех short authority/client/state/owner gates.
+Необходимый refresh закрывает session, выполняет query вне outer и начинает fresh
+session с полными recapture/revalidation. Lifecycle и evidence callbacks не
+выполняются под retained outer. Detached result связан с exact
+source/root/domain/generation. Перед его использованием typed source-local gate
+повторно проверяет binding и current unfenced state в том же root ordering, что
+fatal publication. Ошибка inspection следует существующему fatal behavior DP-023;
+unknown, stale или mismatched result отклоняется без новой authority.
+Leaf не опрашивает containment и не принимает переданный boolean как proof.
+
+Observation, принятая до fatal publication, теряет валидность, когда fatal побеждает
+следом. Успешное сравнение не обещает continuing external authority. Последующие
+local gates перепроверяют source identity и unfenced state; будущие claim/delivery/
+use сохраняют все fresh-authorization obligations §§7–9. Evidence, authorization,
+storage и arbitrary callbacks не выполняются под short gate.
+
+### 19.3 Одна joint real-owner observation session
+
+Одна opaque session получает ровно один Instance outer token, затем следует
+`outer -> AuthorityFence.R -> ClientEpoch.R -> participant.state -> owner-local gates`.
+Она проверяет exact scope, полные owner attachments и source/generation handoff.
+Typed session-bound owner read/revalidation facets обходят recursive outer entry;
+каждый owner проверяет свой exact attachment, live session identity и допустимую
+short read phase до чтения. Существующие public readers сохраняют собственный region
+entry. Через seam не проходят raw locks, generic callbacks, public owner pointers
+или mutation capability. Dependency leaf не импортирует aggregate/command/containment.
+
+Один outer token охватывает последовательные bounded copies DP-014 и DP-015.
+Сохраняются полные aggregate/history, allocation/presence и revision facts, все
+terminal/nonterminal command/parent/phase, links, explicit absence/membership stamps,
+opaque owner identities и client/generation/participant epochs. Partial, incoherent
+или foreign capture не возвращает пару. Последовательных short owner locks достаточно:
+conforming writers используют тот же outer; authority/client invalidation остаётся
+упорядоченной short gates. Detached output не содержит live authority или lock.
+DP-015 §13.1 сохраняет indivisible ordinary parent/preclaimed StopOld/occupant/
+rendezvous/private phase transition; seam не разделяет и не переносит её.
+
+### 19.4 Detach, revalidate и local reservation
+
+Только qualified bounded storage publication/readback может удерживать outer по
+§§5/9; все short authority/client/state/owner gates освобождаются заранее. Этот
+local design не предоставляет external-work callback или storage publication operation.
+Lifecycle/evidence callbacks и current containment/provisioning/ledger queries
+никогда не выполняются под outer; refresh этих inputs следует §19.2. External
+authorization и иная работа требуют освобождённых short gates и только явно
+разрешённого случая outer retention; общего разрешения external work под outer нет.
+Reentry повторно получает gates в fixed order и сравнивает всю detached
+пару, exact owner/attachment identities, source/generation, client/participant epochs
+и external observation binding. Attachment, replacement, fatal fencing, stale links/
+membership или create-after-absence отклоняют полный набор. Reverse acquisition и
+вызов public readers, повторно берущих outer, при retained outer запрещены.
+
+Local reservation сохраняет только jointly validated local observations и
+закрывает/сохраняет закрытым admission. Она связана с exact shared session state и
+candidate identity. Копии wrappers разделяют один terminal local validation
+disposition и idempotent `Close`; копирование detached data не создаёт новую reservation.
+Zero, foreign, stale, disposed или invalidated input отклоняется. Disposal освобождает
+outer ровно один раз, не открывая admission, не удаляя evidence, не доказывая absence
+и не отменяя possibly committed future publication. Fatal/replacement могут завершаться
+во время разрешённого retained-outer storage interval, не беря outer и не ожидая этой работы. Они
+инвалидируют confirmation с сохранением existing short-gate ordering.
+
+### 19.5 Closed completion и будущие qualified inputs
+
+Успешное exact local comparison даёт только closed local consistency result.
+Coordinated writes/delegation остаются закрытыми. Missing qualified owner, claim
+или provenance inputs означает unqualified, никогда не Clean/no-claim, startup
+opening, successful recovery qualification, durable claim или permit. Test-opening
+API, lifecycle invocation, reconciliation, release и production wiring не добавляются.
+Authorized replay остаётся read-only с нулём lifecycle/provider callbacks.
+
+Будущая qualification независимо требует restart-retained DP-014 aggregate/history
+и полной DP-015 truth, qualified claim/provenance storage, independently trusted
+expected original operational storage authority и declared anti-clone/rollback trust
+boundary, полных authentic normal/lifecycle/recovery issuer origins и exact claim/
+provenance observations. Missing/replaced/unavailable/corrupt storage не является
+authoritative absence. Containment storage не квалифицирует operational stores.
+Publication protocol/adapter/provisioner и выбор commit-with-owner против write-ahead
+остаются unresolved dependencies B. Дизайн не выбирает representation или substitute
+proof и не реализует claim-aware assessment либо ReleaseOnly. Все §9 crash cuts,
+conditional resume и single issuance/delivery/use остаются последующими integrated
+obligations; local result не повышает lifecycle completion provenance.
+
+### 19.6 Детерминированные будущие proofs и следующий candidate
+
+Будущий executable plan должен покрывать:
+
+- Отклонение zero/foreign/legacy/root-only, same-domain-other-source и wrong-generation;
+  копии handoff/session сохраняют single disposition.
+- Полную real-owner pair/presence/membership/link revalidation при изменениях между
+  detach и reentry, включая allocation и racing attachment; без partial pair.
+- Fatal/replacement до capture, между detach/revalidation и во время blocked
+  simulated qualified-storage interval; подавление successful confirmation после invalidation.
+- Завершение fatal/replacement при retained outer с доказанно освобождёнными short
+  gates и нулём lifecycle/evidence callbacks под outer; same-Instance contention и независимые Instances.
+- Cancellation, partial capture, repeated/concurrent confirmation и `Close`, abandoned
+  reservation: closed disposition и outer освобождён ровно один раз.
+- Отклонение direct/narrow coordinated writer/delegation и authorized replay с нулём
+  work callbacks; fixtures не заменяют qualified storage/provenance.
+
+Единственный следующий candidate: bounded closed-local implementation readiness/intake
+для реализации A через §19 source-minted handoff/joint real-owner session/reservation,
+**Not Activated**. Implementation Ready здесь не установлена. Fresh intake должен
+определить exact typed API/package/file inventory, Size Guard estimate, bounded scope
+и deterministic executable proof plan до implementation authorization. B остаётся
+последующим dependent persistent-owner/claim/provenance conformance design assessment
+из §18.4; adapter/publication choice не предрешён. Successful durable qualification и
+full item7 implementation остаются **Not Ready**. Дизайн не назначает successor Task
+ID/branch и не запускает следующую task автоматически.

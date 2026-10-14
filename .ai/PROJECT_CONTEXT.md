@@ -8,21 +8,30 @@
 
 ## Текущее состояние
 
-- Current task: TASK-088 — Runtime Recovery Qualification and Durable Prerequisite Readiness,
-Design-only / Readiness, verification-stable `In Progress`, branch
-`docs/task-088-recovery-qualification-readiness`, baseline
-`ca01f7cc5b94c59d6402aeac0eba33e2070f003a`. Actual gates/closure resolve only
-from its newest valid matching Recovery Evidence Envelope. Additive DP-024 §18
-records repository-backed qualification/durable-prerequisite assessment and
-bounded decomposition only. Assessment Ready; full item7/P1–P14 integration
-Split Required / Not Ready as one bounded task. DP-024 stays Approved / Partial;
-DP-017 stays Approved / Planned overall; integrated P1–P14 Planned, item7 unproven.
-Next recommendation: smallest private current-authority qualification/joint
-observation/reservation seam Design-only refinement, Ready to fresh design intake /
-Not Activated. Successful qualification implementation is Not Ready; later durable
-owner/claim/provenance conformance assessment retains unresolved adapter/publication
-choices. No capability/status promotion, successor task ID or activation. Fresh
-Verification, Review and Acceptance remain separate gates; this summary grants none.
+- Current task: TASK-089 — Current-Authority Handoff and Joint Observation Session Design,
+Design-only, verification-stable `In Progress`, branch
+`docs/task-089-current-authority-joint-session-design`, baseline
+`5aa367713c5e93abb752dcf25ff1d7b41ae7b5f0`. Actual gates/closure resolve only
+from its newest valid matching Recovery Evidence Envelope. Additive DP-024 §19
+records confirmed private source-minted handoff, joint real-owner observation,
+retained outer session and closed local reservation design; implementation absent.
+DP-024 stays Approved / Partial; DP-017 stays Approved / Planned overall;
+integrated P1–P14 Planned, item7 unproven. Next recommendation: bounded closed-local
+implementation readiness/intake for §19, Not Activated. Implementation Ready is
+not established: exact typed API/package inventory, Size Guard and executable
+proof plan require fresh intake. Successful durable qualification remains Not Ready.
+Later B persistent-owner/claim/provenance conformance design assessment retains
+unresolved adapter/publication choices. No startup opening, claim, permit, capability
+or status promotion. Fresh Verification, Review and Acceptance remain separate gates.
+
+- Latest published readiness: TASK-088 — historical Completed — Coordinator Accepted, accepted source manifest
+`5d66cadf5a65144df49356532f40806f787558b3`, source commit
+`2870188eb59c843886369cefa8ab589535bc77e4`, PR #93 merge
+`5aa367713c5e93abb752dcf25ff1d7b41ae7b5f0` by local immutable Git metadata.
+Its additive DP-024 §18 readiness/decomposition supplies this design prerequisite;
+publication added no runtime capability. Assessment Ready; full item7/P1–P14
+integration Split Required / Not Ready as one bounded task. Historical acceptance
+is not a fresh gate; cached facts are not fresh remote or Publisher P0–P10 evidence.
 
 - Latest published implementation: TASK-087 — historical Completed — Coordinator Accepted, accepted source manifest
 `11119b8e440809756783360455c8cc75472d6182`, source commit
@@ -37,7 +46,7 @@ origins/stores, claim/resume/issuance and production wiring remain absent.
 Historical acceptance does not transfer to current gates; cached local facts are
 not fresh remote or Publisher P0–P10 evidence.
 
-- Latest published readiness: TASK-086 — historical Completed — Coordinator Accepted, accepted source manifest
+- Previous published readiness: TASK-086 — historical Completed — Coordinator Accepted, accepted source manifest
 `539567e4dd250b32094a708f919cbcf0649b50c8`, source commit
 `f159fb9bbd6ba07a49465ac20c56b54aafd47954`, PR #91 merge
 `fac149e1fdcfcd402e5872ae60336b083f1e3b22` by local immutable Git metadata.

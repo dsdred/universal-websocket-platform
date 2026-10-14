@@ -920,3 +920,142 @@ assessment and planned obligations only. Existing status and capability boundari
 remain unchanged. TASK-088 gates/closure require its newest valid matching Recovery
 Evidence Envelope, fresh independent Verification, PROCESS-002, Scope Audit, final
 Review and Coordinator Acceptance. No historical verdict supplies those gates.
+
+## 19. Private current-authority handoff and joint observation session design
+
+[TASK-089](../../tasks/TASK-089-CURRENT-AUTHORITY-JOINT-SESSION-DESIGN.md)
+records Architect-confirmed realization of §§5,7,9,15 and §18.4 A. This additive
+private design changes no existing guarantee, truth owner, status or technology
+choice. It implements nothing: DP-024 stays Approved / Partial; DP-017 stays
+Approved / Planned overall; integrated P1–P14 Planned and item7 unproven.
+
+### 19.1 Actual boundary and source-minted handoff
+
+`ClosedAssembly.Capture` currently reads DP-014 then DP-015 in separate outer
+regions. Existing public capture/revalidation methods reacquire outer and cannot
+be called recursively from a retained session. Source roots establish ordering
+association only; `CoordinationRoot`, `authorityCurrent`, matching generation
+strings and stable owner snapshots are not joint current-authority qualification.
+
+The actual containment keeper/committed `ActiveAuthority` alone supplies an opaque
+handoff binding its exact non-rebinding source identity, authority root, domain and
+committed nonzero execution generation. Composition binds it to the exact scope,
+participant and complete aggregate/command attachments. The keeper retains its
+issuer facet; ordinary root readers cannot recover that facet or mint a handoff.
+An inert or legacy root, caller boolean, matching domain/generation string or
+second keeper for the same domain cannot synthesize a same-source binding.
+This is a detached binding observation, never continuing authority, process-loss
+proof, qualified operational storage or no-claim. No general registry is added.
+
+### 19.2 External inspection and bounded local acceptance
+
+Current containment capability/provisioning/ledger and execution-evidence queries
+run before outer acquisition, outside every short authority/client/state/owner gate.
+A needed refresh disposes the session, queries outside outer and starts a fresh
+session with complete recapture/revalidation. No lifecycle or evidence callback
+runs under retained outer. The detached result binds the exact
+source/root/domain/generation. Before consuming it, a typed source-local gate
+rechecks that binding and current unfenced state under the same root ordering as
+fatal publication. Inspection failure follows existing DP-023 fatal behavior;
+unknown, stale or mismatched results reject without new authority.
+The leaf does not query containment or treat a supplied boolean as proof.
+
+An observation accepted before fatal publication loses validity when fatal wins
+next. No successful comparison promises continuing external authority. Further
+local gates revalidate source identity and unfenced state; future claim/delivery/
+use retains all §§7–9 fresh-authorization obligations. No evidence, authorization,
+storage or arbitrary callback executes under a short gate.
+
+### 19.3 One joint real-owner observation session
+
+One opaque session acquires exactly one Instance outer token, then follows
+`outer -> AuthorityFence.R -> ClientEpoch.R -> participant.state -> owner-local gates`.
+It validates exact scope, complete owner attachments and handoff source/generation.
+Typed session-bound owner read/revalidation facets bypass recursive outer entry;
+each owner verifies its exact attachment, live session identity and allowed short
+read phase before reading. Existing public readers retain their own region entry.
+No raw locks, generic callbacks, public owner pointers or mutation capability
+cross the seam. The dependency leaf retains no aggregate/command/containment import.
+
+The same outer token spans sequential bounded DP-014 and DP-015 copies. Preserve
+complete aggregate/history, allocation/presence and revision facts, every terminal/
+nonterminal command/parent/phase, links, explicit absence/membership stamps, opaque
+owner identities and client/generation/participant epochs. Partial, incoherent or
+foreign capture returns no pair. Sequential short owner locks are sufficient
+because conforming writers share outer; authority/client invalidation remains
+ordered by the short gates. Detached output carries no live authority or lock.
+DP-015 §13.1 keeps its indivisible ordinary parent/preclaimed StopOld/occupant/
+rendezvous/private phase transition; this seam neither splits nor relocates it.
+
+### 19.4 Detach, revalidate and reserve locally
+
+Only qualified bounded storage publication/readback may retain outer as §§5/9
+allow; every short authority/client/state/owner gate is released first. This
+local design exposes no external-work callback or storage publication operation.
+Lifecycle/evidence callbacks and current containment/provisioning/ledger queries
+never run under outer; refreshing those inputs follows §19.2. External authorization
+and other work require released short gates and only an explicitly approved outer
+retention case; no general permission for external work under outer is created.
+Reentry reacquires the fixed order and compares the entire detached pair, exact
+owner/attachment identities, source/generation, client/participant epochs and the
+external observation binding. Attachment, replacement, fatal fencing, stale links/
+membership or create-after-absence rejects the full set. Reverse acquisition and
+calling outer-acquiring public readers while retaining outer are forbidden.
+
+A local reservation captures only the jointly validated local observations and
+closes/retains admission. It binds the exact shared session state and candidate
+identity. Copies of wrappers share one terminal local validation disposition and
+idempotent `Close`; copying detached data cannot manufacture another reservation.
+Zero, foreign, stale, disposed or invalidated input rejects. Disposal releases
+outer exactly once without reopening admission, deleting evidence, proving absence
+or cancelling any possibly committed future publication. Fatal/replacement may
+complete during the approved retained-outer storage interval without taking outer
+or waiting for that work. They invalidate confirmation, preserving existing short-gate ordering.
+
+### 19.5 Closed completion and future qualified inputs
+
+An exact successful local comparison yields only a closed local consistency
+result. Coordinated writes/delegation remain closed. Missing qualified owner,
+claim or provenance inputs means unqualified, never Clean/no-claim, startup opening,
+successful recovery qualification, durable claim or permit. No test-opening API,
+lifecycle invocation, reconciliation, release or production wiring is introduced.
+Authorized replay remains read-only with zero lifecycle/provider callbacks.
+
+Future qualification independently requires restart-retained DP-014 aggregate/
+history and complete DP-015 truth, qualified claim/provenance storage, independently
+trusted expected original operational storage authority and declared anti-clone/
+rollback trust boundary, complete authentic normal/lifecycle/recovery issuer origins,
+and exact claim/provenance observations. Missing/replaced/unavailable/corrupt storage
+is not authoritative absence. Containment storage cannot qualify operational stores.
+Publication protocol/adapter/provisioner and commit-with-owner versus write-ahead
+choices remain B dependencies, unresolved. This design chooses no representation
+or substitute proof and does not implement claim-aware assessment or ReleaseOnly.
+All §9 crash cuts, conditional resume and single issuance/delivery/use stay later
+integrated obligations; no local result promotes lifecycle completion provenance.
+
+### 19.6 Deterministic future proofs and next candidate
+
+The future executable plan must cover:
+
+- Zero/foreign/legacy/root-only and same-domain-other-source or wrong-generation
+  rejection; handoff/session copies preserve single disposition.
+- Complete real-owner pair/presence/membership/link revalidation against changes
+  between detach and reentry, including allocation and racing attachment; no partial pair.
+- Fatal/replacement before capture, between detach/revalidation and during a blocked
+  simulated qualified-storage interval; suppression of successful confirmation after invalidation.
+- Completion of fatal/replacement while outer is retained, with every short gate
+  demonstrably released and zero lifecycle/evidence callbacks under outer; same-Instance contention and independent Instances.
+- Cancellation, partial capture, repeated/concurrent confirmation and `Close`, and
+  abandoned reservation: closed disposition and outer released exactly once.
+- Direct/narrow coordinated writer/delegation rejection and authorized replay with
+  zero work callbacks; fixtures never substitute for qualified storage/provenance.
+
+One next candidate only: bounded closed-local implementation readiness/intake for
+this §19 source-minted handoff/joint real-owner session/reservation realization of
+A, **Not Activated**. Implementation Ready is not established here. Fresh intake
+must settle exact typed API/package/file inventory, Size Guard estimate, bounded
+scope and deterministic executable proof plan before implementation authorization.
+B remains the later dependent persistent-owner/claim/provenance conformance design
+assessment from §18.4; no adapter/publication choice is pre-decided. Successful
+durable qualification and full item7 implementation remain **Not Ready**. No
+successor Task ID, branch or automatic activation follows this design.
