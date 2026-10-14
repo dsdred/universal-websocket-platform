@@ -258,14 +258,21 @@ func exerciseConcreteCompositionGate(t *testing.T, root string) {
 	t.Run("concurrent submissions preserve one winner and fence blocks later work", func(t *testing.T) {
 		fixture := newConcreteFixture(t, filepath.Join(root, "concurrent"), nil)
 		const submissions = 16
+		fixture.invoker.entered = make(chan struct{})
+		fixture.invoker.release = make(chan struct{})
+		var wait sync.WaitGroup
+		var releaseOnce sync.Once
+		release := func() { releaseOnce.Do(func() { close(fixture.invoker.release) }) }
+		defer func() { release(); wait.Wait() }()
+		completed := make(chan struct{}, submissions)
 		errorsOut := make(chan error, submissions)
 		var winners atomic.Int32
 		var blocked atomic.Int32
-		var wait sync.WaitGroup
 		for index := 0; index < submissions; index++ {
 			wait.Add(1)
 			go func(index int) {
 				defer wait.Done()
+				defer func() { completed <- struct{}{} }()
 				result, err := fixture.composition.ActivateExact(context.Background(), mustCompositionRequest(t, fmt.Sprintf("concurrent-%d", index)))
 				switch {
 				case err == nil && result.Category() == runtimeactivation.ResultFailed:
@@ -277,6 +284,27 @@ func exerciseConcreteCompositionGate(t *testing.T, root string) {
 				}
 			}(index)
 		}
+		// Hold the first admitted command nonterminal until every competitor
+		// finishes. Distinct keys submitted after terminal failure are eligible
+		// for a new launch and do not belong to this overlap assertion.
+		deadline := time.NewTimer(30 * time.Second)
+		defer deadline.Stop()
+		select {
+		case <-fixture.invoker.entered:
+		case <-deadline.C:
+			t.Fatalf("first concurrent invocation did not enter: winners=%d blocked=%d invocations=%d completed=%d", winners.Load(), blocked.Load(), fixture.invoker.count(), len(completed))
+		}
+		for index := 0; index < submissions-1; index++ {
+			select {
+			case <-completed:
+			case <-deadline.C:
+				t.Fatalf("competing submissions did not finish while winner was nonterminal: observed=%d winners=%d blocked=%d invocations=%d", index, winners.Load(), blocked.Load(), fixture.invoker.count())
+			}
+		}
+		if winners.Load() != 0 || blocked.Load() != submissions-1 || fixture.invoker.count() != 1 {
+			t.Fatalf("nonterminal overlap winners=%d blocked=%d invocations=%d", winners.Load(), blocked.Load(), fixture.invoker.count())
+		}
+		release()
 		wait.Wait()
 		close(errorsOut)
 		for err := range errorsOut {
@@ -357,12 +385,19 @@ type recordingCompositionInvoker struct {
 	mu       sync.Mutex
 	bindings []runtimeorchestrationbinding.StartExecutionBinding
 	boundary *runtimecommandidempotency.Boundary
+	entered  chan struct{}
+	release  chan struct{}
+	once     sync.Once
 }
 
 func (i *recordingCompositionInvoker) InvokeManagedStart(_ context.Context, _ runtimelifecycle.StartRequest, binding runtimeorchestrationbinding.StartExecutionBinding) (runtimelifecycle.StartOutcome, error) {
 	i.mu.Lock()
 	i.bindings = append(i.bindings, binding)
 	i.mu.Unlock()
+	if i.entered != nil {
+		i.once.Do(func() { close(i.entered) })
+		<-i.release
+	}
 	if err := i.boundary.SignalManagedStartNoClaim(binding, runtimeorchestrationbinding.StartNoClaimFailed); err != nil {
 		return runtimelifecycle.StartOutcome{}, err
 	}

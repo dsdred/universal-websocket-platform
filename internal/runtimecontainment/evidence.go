@@ -100,7 +100,7 @@ func (a *ActiveAuthority) ReadGeneration(ctx context.Context, domain Domain, nam
 		return unknown(a.fenceEvidenceError(err))
 	}
 	if tail != a.generation {
-		a.keeper.fenced.Store(true)
+		a.keeper.publishFatal()
 		return unknown(UnknownContradictory)
 	}
 	if reason := a.validateForEvidence(); reason != "" {
@@ -121,23 +121,25 @@ func (a *ActiveAuthority) ReadGeneration(ctx context.Context, domain Domain, nam
 func (a *ActiveAuthority) validateForEvidence() UnknownReason {
 	keeper := a.keeper
 	if keeper.fenced.Load() {
+		keeper.joinFatal()
 		return UnknownUnavailable
 	}
 	if !validateHeld(keeper.capability) || keeper.db == nil {
-		keeper.fenced.Store(true)
+		keeper.publishFatal()
 		return UnknownUnavailable
 	}
 	if err := revalidateExistingProvisioned(keeper.db, keeper.domain, keeper.descriptor); err != nil {
 		return a.fenceEvidenceError(err)
 	}
 	if keeper.fenced.Load() {
+		keeper.joinFatal()
 		return UnknownUnavailable
 	}
 	return ""
 }
 
 func (a *ActiveAuthority) fenceEvidenceError(err error) UnknownReason {
-	a.keeper.fenced.Store(true)
+	a.keeper.publishFatal()
 	if errors.Is(err, errLedgerInvalid) {
 		return UnknownContradictory
 	}

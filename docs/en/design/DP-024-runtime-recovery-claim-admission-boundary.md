@@ -727,3 +727,68 @@ current authority/no-claim, claim-aware assessment, conditional claim/readback/
 resume and live issuance remain separate prerequisites. Reservation, reconciliation,
 release, reporting, production wiring and activation remain later work. No successor
 is activated by this design or its acceptance.
+
+## 17. TASK-087 isolated source-bound implementation
+
+TASK-087 adds the local implementation of §16. This appendix temporally supersedes
+historical assertions in §§1–16 that actual source fatal coupling and explicit
+closed supply are absent. Their original bytes and Design/Implementation Status
+remain unchanged: DP-024 stays Approved / Partial. The approved plan is unchanged;
+this appendix reports implemented local mechanics, not integrated recovery readiness.
+
+### 17.1 Source association and completed fatal publication
+
+The containment keeper creates and privately retains one immutable domain-bound
+`NewSourceAuthorityFence` before its first acquired-capability fatal branch.
+`CoordinationRoot` returns only that keeper's same-domain root after external
+validation; the root itself grants no current-authority proof. `NewSourceParticipant`
+registers before owner attachment/absence, with permanent partial/aborted membership.
+The authority registry also retains every associated client. Registration rejects
+foreign source/domain and sticky fatal; legacy inert/rootless construction stays
+supported and unqualified.
+
+`FatalPublication` provides bounded `BeginFatalPublication`, `Invalidate` and
+`Close`, with copy-safe shared disposition and safe zero/nil handling. The keeper's
+single helper publishes its existing atomic flag while holding Authority.W,
+invalidates clients/participants and completes publication before fatal return.
+All seven actual containment publications use it, including bootstrap before
+ActiveAuthority exposure. Flag-observing fast returns join completed same-root
+publication through `JoinFatalPublication`, including the final false
+`IsAuthoritative` path. The atomic flag alone is not completed invalidation.
+
+Fan-out uses Authority.W, then one ClientEpoch.W at a time, then participant state;
+it also covers aggregate-only and partially constructed participants. Terminal
+state is sticky and epochs become MaxUint64. Replacement cannot resurrect it.
+Fan-out takes no Instance outer, aggregate/ledger/clientMu lock and performs no
+callback, storage/evidence/lifecycle work or external wait. External source fault
+detection remains outside short gates. Existing reasons, caller-error nonfencing,
+fatal-over-cancellation, retained capability/no reacquisition and DP-023 process
+termination obligations remain unchanged. Local invalidation is not process-loss
+or termination evidence, and no delivered recovery permit exists to revoke.
+
+### 17.2 Explicit closed supply and remaining boundary
+
+Separate `NewClosedAssembly` validates canonical operational/containment domain
+and exact target, obtains the keeper root outside short gates and supplies one
+source-registered participant to its own coordinated DP-014 Store and coordinated
+DP-015 MemoryStorage/attachment. Only a complete opaque `ClosedAssembly` returns;
+failed partial registrations remain source-retained. Its only read operation is
+`Capture(scope)`, returning a `ClosedObservation` with detached `Identities()` and
+`Commands()` snapshots. Capture reads the owners sequentially; it is not an atomic
+joint snapshot, current-authority qualification or qualified no-claim.
+
+Owners, root/participant, boundary, adoption, activation and recovery capabilities
+are not exposed. All coordinated writers remain closed; authorized replay remains
+read-only with zero work callbacks. Existing owner implementations and legacy
+activation/evidence `Composition.New` remain supported and unqualified.
+
+Proofs and actual check outcomes are recorded in TASK-087's matching Recovery
+Evidence Envelope; this appendix does not independently assert PASS or Acceptance.
+Source-level tests distinguish actual fatal paths from local ordering fixtures;
+ordering fixtures cannot prove live-permit revocation. Integrated P1–P14 remain
+Planned, item7 unproven and full integration Split Required / Not Ready. Qualified
+current authority/no-claim, authentic durable provenance/stores, original storage
+qualification, claim/readback/resume/issuance, reservation, reconciliation/release,
+reporting and production wiring/activation remain separate work. Next recommendation
+is bounded readiness/decomposition of those prerequisites, Not Activated, without
+a readiness verdict or automatic successor activation.
