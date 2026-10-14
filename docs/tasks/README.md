@@ -3,22 +3,32 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая Design-only / Readiness task —
-[TASK-088](TASK-088-RECOVERY-QUALIFICATION-READINESS.md). TASK-088 — Runtime Recovery Qualification and Durable Prerequisite Readiness,
-Design-only / Readiness, verification-stable `In Progress`, branch
-`docs/task-088-recovery-qualification-readiness`, baseline
-`ca01f7cc5b94c59d6402aeac0eba33e2070f003a`. Actual gates/closure resolve only
-from its newest valid matching Recovery Evidence Envelope. Additive DP-024 §18
-records repository-backed qualification/durable-prerequisite assessment and
-bounded decomposition only. Assessment Ready; full item7/P1–P14 integration
-Split Required / Not Ready as one bounded task. DP-024 stays Approved / Partial;
-DP-017 stays Approved / Planned overall; integrated P1–P14 Planned, item7 unproven.
-Next recommendation: smallest private current-authority qualification/joint
-observation/reservation seam Design-only refinement, Ready to fresh design intake /
-Not Activated. Successful qualification implementation is Not Ready; later durable
-owner/claim/provenance conformance assessment retains unresolved adapter/publication
-choices. No capability/status promotion, successor task ID or activation. Fresh
-Verification, Review and Acceptance remain separate gates; this summary grants none.
+Текущая Design-only task —
+[TASK-089](TASK-089-CURRENT-AUTHORITY-JOINT-SESSION-DESIGN.md). TASK-089 — Current-Authority Handoff and Joint Observation Session Design,
+Design-only, verification-stable `In Progress`, branch
+`docs/task-089-current-authority-joint-session-design`, baseline
+`5aa367713c5e93abb752dcf25ff1d7b41ae7b5f0`. Actual gates/closure resolve only
+from its newest valid matching Recovery Evidence Envelope. Additive DP-024 §19
+records confirmed private source-minted handoff, joint real-owner observation,
+retained outer session and closed local reservation design; implementation absent.
+DP-024 stays Approved / Partial; DP-017 stays Approved / Planned overall;
+integrated P1–P14 Planned, item7 unproven. Next recommendation: bounded closed-local
+implementation readiness/intake for §19, Not Activated. Implementation Ready is
+not established: exact typed API/package inventory, Size Guard and executable
+proof plan require fresh intake. Successful durable qualification remains Not Ready.
+Later B persistent-owner/claim/provenance conformance design assessment retains
+unresolved adapter/publication choices. No startup opening, claim, permit, capability
+or status promotion. Fresh Verification, Review and Acceptance remain separate gates.
+
+Последняя опубликованная readiness —
+[TASK-088](TASK-088-RECOVERY-QUALIFICATION-READINESS.md). TASK-088 — historical Completed — Coordinator Accepted, accepted source manifest
+`5d66cadf5a65144df49356532f40806f787558b3`, source commit
+`2870188eb59c843886369cefa8ab589535bc77e4`, PR #93 merge
+`5aa367713c5e93abb752dcf25ff1d7b41ae7b5f0` by local immutable Git metadata.
+Its additive DP-024 §18 readiness/decomposition supplies this design prerequisite;
+publication added no runtime capability. Assessment Ready; full item7/P1–P14
+integration Split Required / Not Ready as one bounded task. Historical acceptance
+is not a fresh gate; cached facts are not fresh remote or Publisher P0–P10 evidence.
 
 Последняя опубликованная implementation —
 [TASK-087](TASK-087-FATAL-SOURCE-CLOSED-ASSEMBLY.md). TASK-087 — historical Completed — Coordinator Accepted, accepted source manifest
@@ -34,7 +44,7 @@ origins/stores, claim/resume/issuance and production wiring remain absent.
 Historical acceptance does not transfer to current gates; cached local facts are
 not fresh remote or Publisher P0–P10 evidence.
 
-Последняя опубликованная readiness —
+Предыдущая опубликованная readiness —
 [TASK-086](TASK-086-FATAL-SOURCE-COMPOSITION-READINESS.md). TASK-086 — historical Completed — Coordinator Accepted, accepted source manifest
 `539567e4dd250b32094a708f919cbcf0649b50c8`, source commit
 `f159fb9bbd6ba07a49465ac20c56b54aafd47954`, PR #91 merge
@@ -336,7 +346,8 @@ PROCESS-002, Scope Audit 31/0/0 и final Reviewer проходят. Task commit
 - [TASK-085 — Runtime DP-015 Coordination Participation](TASK-085-DP015-COORDINATION-PARTICIPATION.md) — historical Completed — Coordinator Accepted; source `0d9c433086a96641eaff63dfa6d506f311bd69bb`, PR #90 merge `7daefc0b96c8127a7f884b521686998a2181d43a` by local immutable metadata; closed DP015 membership/client replacement, inert roots.
 - [TASK-086 — Runtime Fatal-Source Coupling and Composition Supply Readiness](TASK-086-FATAL-SOURCE-COMPOSITION-READINESS.md) — historical Completed — Coordinator Accepted; accepted source `539567e4dd250b32094a708f919cbcf0649b50c8`, commit `f159fb9bbd6ba07a49465ac20c56b54aafd47954` / PR #91 merge `fac149e1fdcfcd402e5872ae60336b083f1e3b22` by local immutable metadata; design/readiness only.
 - [TASK-087 — Runtime Fatal-Source Coupling and Closed Assembly](TASK-087-FATAL-SOURCE-CLOSED-ASSEMBLY.md) — historical Completed — Coordinator Accepted; source `e1e03cb9fa898d4a784de06886070ba6c6a49cae`, accepted manifest `11119b8e440809756783360455c8cc75472d6182`, PR #92 merge `ca01f7cc5b94c59d6402aeac0eba33e2070f003a` by local immutable metadata; source-bound fatal coupling and opaque closed assembly only, no integrated recovery readiness.
-- [TASK-088 — Runtime Recovery Qualification and Durable Prerequisite Readiness](TASK-088-RECOVERY-QUALIFICATION-READINESS.md) — current Design-only / Readiness, verification-stable In Progress; newest valid matching envelope resolves gates/closure; additive DP-024 §18 assessment, first bounded qualification/joint-observation/reservation design candidate Not Activated; no capability/status promotion.
+- [TASK-088 — Runtime Recovery Qualification and Durable Prerequisite Readiness](TASK-088-RECOVERY-QUALIFICATION-READINESS.md) — historical Completed — Coordinator Accepted; accepted manifest `5d66cadf5a65144df49356532f40806f787558b3`, source `2870188eb59c843886369cefa8ab589535bc77e4`, PR #93 merge `5aa367713c5e93abb752dcf25ff1d7b41ae7b5f0` by local immutable metadata; additive DP-024 §18 readiness only, no capability promotion.
+- [TASK-089 — Current-Authority Handoff and Joint Observation Session Design](TASK-089-CURRENT-AUTHORITY-JOINT-SESSION-DESIGN.md) — current Design-only, verification-stable In Progress; newest valid matching envelope resolves gates/closure; additive DP-024 §19 local seam design, next bounded closed-local implementation readiness/intake Not Activated; no implementation Ready or durable qualification claimed.
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.
