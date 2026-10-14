@@ -63,7 +63,9 @@ type participantState struct {
 	command       bool
 	commandMarker *commandMarker
 	roots         *rootBinding
+	source        *authorityState
 	epoch         uint64
+	terminal      bool
 }
 
 // NewParticipant constructs a closed participant for a validated scope.
@@ -87,8 +89,15 @@ func (p *Participant) AttachAggregate(scope Scope) (AggregateAttachment, error) 
 	if scope != p.data.scope {
 		return AggregateAttachment{}, ErrForeignScope
 	}
+	if p.data.source != nil {
+		p.data.source.gate.RLock()
+		defer p.data.source.gate.RUnlock()
+	}
 	p.data.state.Lock()
 	defer p.data.state.Unlock()
+	if p.data.terminal {
+		return AggregateAttachment{}, ErrClosed
+	}
 	if p.data.attached {
 		return AggregateAttachment{}, ErrAlreadyAttached
 	}
@@ -105,6 +114,7 @@ type regionRelease struct {
 	roots                         *rootBinding
 	clientEpoch, participantEpoch uint64
 	stateHeld                     bool
+	authority                     *authorityState
 }
 
 // Observe enters Instance outer before owner-local locks. Foreign or zero scope
@@ -120,9 +130,15 @@ func (a AggregateAttachment) Observe(scope Scope) (*ObservationRegion, error) {
 	p.outer.Lock()
 	p.state.Lock()
 	roots := p.roots
+	authority := p.source
+	if authority == nil && roots != nil {
+		authority = roots.authority
+	}
 	p.state.Unlock()
+	if authority != nil {
+		authority.gate.RLock()
+	}
 	if roots != nil {
-		roots.authority.gate.RLock()
 		roots.client.gate.RLock()
 	}
 	p.state.Lock()
@@ -132,12 +148,25 @@ func (a AggregateAttachment) Observe(scope Scope) (*ObservationRegion, error) {
 		p.state.Unlock()
 		if roots != nil {
 			roots.client.gate.RUnlock()
-			roots.authority.gate.RUnlock()
+		}
+		if authority != nil {
+			authority.gate.RUnlock()
 		}
 		p.outer.Unlock()
 		return a.Observe(scope)
 	}
-	release := &regionRelease{participant: p, roots: roots, stateHeld: true}
+	if p.terminal {
+		p.state.Unlock()
+		if roots != nil {
+			roots.client.gate.RUnlock()
+		}
+		if authority != nil {
+			authority.gate.RUnlock()
+		}
+		p.outer.Unlock()
+		return nil, ErrClosed
+	}
+	release := &regionRelease{participant: p, roots: roots, authority: authority, stateHeld: true}
 	if roots != nil {
 		release.clientEpoch = roots.client.epoch
 		release.participantEpoch = p.epoch
@@ -154,7 +183,9 @@ func (r *ObservationRegion) Close() {
 			}
 			if r.release.roots != nil {
 				r.release.roots.client.gate.RUnlock()
-				r.release.roots.authority.gate.RUnlock()
+			}
+			if r.release.authority != nil {
+				r.release.authority.gate.RUnlock()
 			}
 			r.release.participant.outer.Unlock()
 		})

@@ -724,3 +724,68 @@ claim-aware assessment, conditional claim/readback/resume и live issuance ос�
 отдельными prerequisites. Reservation, reconciliation, release, reporting,
 production wiring и activation остаются later work. Design или его acceptance
 не активируют successor.
+
+## 17. Изолированная source-bound implementation TASK-087
+
+TASK-087 добавляет local implementation §16. Этот appendix по времени заменяет
+historical assertions §§1–16 об отсутствии actual source fatal coupling и explicit
+closed supply. Их original bytes и Design/Implementation Status сохраняются:
+DP-024 остаётся Approved / Partial. Approved plan не изменён; appendix описывает
+implemented local mechanics, а не integrated recovery readiness.
+
+### 17.1 Source association и completed fatal publication
+
+Containment keeper создаёт и privately retains один immutable domain-bound
+`NewSourceAuthorityFence` до first acquired-capability fatal branch.
+`CoordinationRoot` возвращает только same-domain root этого keeper после external
+validation; сам root не даёт current-authority proof. `NewSourceParticipant`
+регистрирует до owner attachment/absence, сохраняя permanent partial/aborted membership.
+Authority registry также retains каждый associated client. Registration rejects
+foreign source/domain и sticky fatal; legacy inert/rootless construction остаётся
+supported и unqualified.
+
+`FatalPublication` предоставляет bounded `BeginFatalPublication`, `Invalidate` и
+`Close` с copy-safe shared disposition и safe zero/nil handling. Единый keeper
+helper публикует existing atomic flag под Authority.W, invalidates clients/participants
+и завершает publication до fatal return. Все семь actual containment publications
+используют его, включая bootstrap до ActiveAuthority exposure. Fast returns,
+увидевшие flag, join-ят completed same-root publication через
+`JoinFatalPublication`, включая final false path `IsAuthoritative`.
+Atomic flag сам по себе не означает completed invalidation.
+
+Fan-out получает Authority.W, затем один ClientEpoch.W за раз, затем participant
+state; он также покрывает aggregate-only и partially constructed participants.
+Terminal state sticky, epochs становятся MaxUint64; replacement не resurrect state.
+Fan-out не получает Instance outer, aggregate/ledger/clientMu lock и не выполняет
+callback, storage/evidence/lifecycle work или external wait. External source fault
+detection остаётся вне short gates. Existing reasons, caller-error nonfencing,
+fatal-over-cancellation, retained capability/no reacquisition и DP-023 process
+termination obligations сохраняются. Local invalidation не является process-loss
+или termination evidence; delivered recovery permit для revocation отсутствует.
+
+### 17.2 Explicit closed supply и remaining boundary
+
+Separate `NewClosedAssembly` проверяет canonical operational/containment domain
+и exact target, получает keeper root вне short gates и supplies один
+source-registered participant собственным coordinated DP-014 Store и coordinated
+DP-015 MemoryStorage/attachment. Возвращается только complete opaque `ClosedAssembly`;
+failed partial registrations остаются source-retained. Единственная read operation —
+`Capture(scope)`, возвращающая `ClosedObservation` с detached `Identities()` и
+`Commands()` snapshots. Capture читает owners последовательно; это не atomic
+joint snapshot, current-authority qualification или qualified no-claim.
+
+Owners, root/participant, boundary, adoption, activation и recovery capabilities
+не exposed. Все coordinated writers остаются closed; authorized replay остаётся
+read-only с zero work callbacks. Existing owner implementations и legacy
+activation/evidence `Composition.New` остаются supported и unqualified.
+
+Proofs и actual check outcomes фиксируются в matching Recovery Evidence Envelope
+TASK-087; этот appendix самостоятельно не заявляет PASS или Acceptance.
+Source-level tests отделяют actual fatal paths от local ordering fixtures;
+ordering fixtures не доказывают live-permit revocation. Integrated P1–P14 остаются
+Planned, item7 unproven, full integration Split Required / Not Ready. Qualified
+current authority/no-claim, authentic durable provenance/stores, original storage
+qualification, claim/readback/resume/issuance, reservation, reconciliation/release,
+reporting и production wiring/activation остаются отдельной работой. Следующая
+рекомендация — bounded readiness/decomposition этих prerequisites, Not Activated,
+без readiness verdict или automatic successor activation.

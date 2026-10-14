@@ -8,7 +8,14 @@ import (
 // AuthorityFence is an inert local ordering root. It conveys no containment
 // authority and exposes neither opening nor external callback operations.
 type AuthorityFence struct{ data *authorityState }
-type authorityState struct{ gate sync.RWMutex }
+type authorityState struct {
+	gate         sync.RWMutex
+	registry     sync.Mutex
+	domain       string
+	terminal     bool
+	participants map[*participantState]struct{}
+	clients      map[*clientState]struct{}
+}
 
 // NewAuthorityFence constructs an inert root explicitly supplied by composition.
 func NewAuthorityFence() *AuthorityFence { return &AuthorityFence{data: &authorityState{}} }
@@ -29,7 +36,19 @@ func NewClientEpoch(authority *AuthorityFence) (*ClientEpoch, error) {
 	if authority == nil || authority.data == nil {
 		return nil, ErrInvalidScope
 	}
-	return &ClientEpoch{data: &clientState{authority: authority.data, participants: make(map[*participantState]struct{})}}, nil
+	a := authority.data
+	a.gate.RLock()
+	defer a.gate.RUnlock()
+	if a.terminal {
+		return nil, ErrClosed
+	}
+	c := &clientState{authority: a, participants: make(map[*participantState]struct{})}
+	if a.domain != "" {
+		a.registry.Lock()
+		a.clients[c] = struct{}{}
+		a.registry.Unlock()
+	}
+	return &ClientEpoch{data: c}, nil
 }
 
 type rootBinding struct {
@@ -70,6 +89,14 @@ func (handle *ClientEpoch) RegisterCommand(p *Participant, scope Scope) (Command
 		return CommandAttachment{}, nil, ErrForeignScope
 	}
 	c.authority.gate.RLock()
+	if c.authority.terminal || (c.authority.domain != "" && p.data.source != c.authority) || (p.data.source != nil && p.data.source != c.authority) {
+		terminal := c.authority.terminal
+		c.authority.gate.RUnlock()
+		if terminal {
+			return CommandAttachment{}, nil, ErrClosed
+		}
+		return CommandAttachment{}, nil, ErrForeignScope
+	}
 	c.gate.Lock()
 	p.data.state.Lock()
 	if p.data.command || p.data.roots != nil || c.fenced {

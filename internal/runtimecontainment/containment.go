@@ -9,6 +9,8 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/dsdred/universal-websocket-platform/internal/runtimecoordination"
+
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -83,6 +85,7 @@ type keeper struct {
 	domain     Domain
 	descriptor descriptor
 	fenced     atomic.Bool
+	root       *runtimecoordination.AuthorityFence
 }
 
 // ActiveAuthority exposes only the committed generation and guarantee facts.
@@ -105,15 +108,31 @@ func (a *ActiveAuthority) GuaranteeLevel() string { return "ProcessContainment" 
 
 // IsAuthoritative reports whether the private process capability remains valid.
 func (a *ActiveAuthority) IsAuthoritative() bool {
-	if a == nil || a.keeper == nil || a.keeper.fenced.Load() {
+	return a.isAuthoritative(func() bool {
+		return validateHeld(a.keeper.capability) && a.keeper.db != nil &&
+			revalidateExistingProvisioned(a.keeper.db, a.keeper.domain, a.keeper.descriptor) == nil
+	})
+}
+
+// isAuthoritative retains the real source publication and final completion join
+// around external inspection, which runs before any short coordination gate.
+func (a *ActiveAuthority) isAuthoritative(inspect func() bool) bool {
+	if a == nil || a.keeper == nil {
 		return false
 	}
-	if !validateHeld(a.keeper.capability) || a.keeper.db == nil ||
-		revalidateExistingProvisioned(a.keeper.db, a.keeper.domain, a.keeper.descriptor) != nil {
-		a.keeper.fenced.Store(true)
+	if a.keeper.fenced.Load() {
+		a.keeper.joinFatal()
 		return false
 	}
-	return !a.keeper.fenced.Load()
+	if !inspect() {
+		a.keeper.publishFatal()
+		return false
+	}
+	if a.keeper.fenced.Load() {
+		a.keeper.joinFatal()
+		return false
+	}
+	return true
 }
 
 var retained struct {
@@ -132,25 +151,36 @@ func AcquireProcessContainment(domain Domain, config LocalConfig) Result {
 	if !acquired {
 		return Result{kind: resultUnavailable}
 	}
-	k := &keeper{capability: capability, domain: domain, descriptor: descriptor}
+	return finishAcquisition(domain, descriptor, capability, valid)
+}
+
+// finishAcquisition keeps acquired-capability handling on the one actual
+// bootstrap path; every failure retains its keeper before returning.
+func finishAcquisition(domain Domain, descriptor descriptor, capability heldCapability, valid bool) Result {
+	return finishAcquisitionWithGeneration(domain, descriptor, capability, valid, newGeneration)
+}
+
+func finishAcquisitionWithGeneration(domain Domain, descriptor descriptor, capability heldCapability, valid bool, generate func() (generation, error)) Result {
+	root, _ := runtimecoordination.NewSourceAuthorityFence(domain.text())
+	k := &keeper{capability: capability, domain: domain, descriptor: descriptor, root: root}
 	retained.Lock()
 	retained.keepers = append(retained.keepers, k)
 	retained.Unlock()
 	if !valid {
-		k.fenced.Store(true)
+		k.publishFatal()
 		return Result{kind: resultFatalFenced}
 	}
 
 	db, err := openExistingProvisioned(domain, descriptor)
 	k.db = db
 	if err != nil || !validateHeld(capability) {
-		k.fenced.Store(true)
+		k.publishFatal()
 		return Result{kind: resultFatalFenced}
 	}
-	candidate, err := newGeneration()
+	candidate, err := generate()
 	if err != nil || bootstrapSuccessor(db, domain, candidate) != nil ||
 		revalidateExistingProvisioned(db, domain, descriptor) != nil || !validateHeld(capability) {
-		k.fenced.Store(true)
+		k.publishFatal()
 		return Result{kind: resultFatalFenced}
 	}
 	authority := &ActiveAuthority{generation: candidate, keeper: k}

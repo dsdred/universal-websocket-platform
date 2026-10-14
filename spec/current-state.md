@@ -1,22 +1,32 @@
 # Текущее состояние
 
-**Текущая задача:** TASK-086 — Runtime Fatal-Source Coupling and Composition Supply Readiness,
+**Текущая задача:** TASK-087 — Runtime Fatal-Source Coupling and Closed Assembly,
 verification-stable `In Progress`, branch
-`docs/task-086-fatal-source-composition-readiness`, baseline
-`7daefc0b96c8127a7f884b521686998a2181d43a`. Actual gates/closure resolve only
-from its newest valid matching Recovery Evidence Envelope. This Design-update /
-Readiness records the planned private source-bound registry, seven actual fatal
-paths and explicit opaque closed read-only assembly in DP-024 §16. It adds no
-runtime capability. DP-024 remains Approved / Partial; integrated P1–P14 Planned,
-item7 unproven. Closed DP-014/DP-015 participation, detached observations and
-client replacement remain local mechanics; inert roots do not prove containment
-association or fatal coupling. Every coordinated writer rejects; authorized
-replay is read-only with zero lifecycle/provider callbacks. Qualified current
-authority/no-claim, authentic durable provenance/stores and recovery remain absent.
-Next candidate after independent acceptance of this plan: source-bound leaf
-registry/fatal handle, complete actual containment-source coupling and explicit
-closed composition supply, Ready to fresh intake / Not Activated. Fresh Size Guard
-and independent review are required; production integration remains absent.
+`feature/task-087-fatal-source-closed-assembly`, baseline
+`fac149e1fdcfcd402e5872ae60336b083f1e3b22`. Actual gates/closure resolve only
+from its newest valid matching Recovery Evidence Envelope. The local implementation
+adds keeper-associated source roots, complete participant/client registration,
+typed fatal publication and completion joins across all seven actual containment
+sites, and a separate opaque closed read-only assembly supplying identical roots
+and participant to real DP-014/DP-015 owners. Detached owner observations are
+captured sequentially; they are not an atomic pair or current-authority proof.
+Every coordinated writer remains closed; authorized replay is read-only with
+zero lifecycle/provider callbacks. Legacy constructors remain supported and
+unqualified. DP-024 stays Approved / Partial; integrated P1–P14 Planned and item7
+unproven. Qualified current authority/no-claim, authentic durable provenance/stores,
+claim/resume/issuance and production wiring remain absent. Verification and
+Acceptance are separate gates; this state summary supplies neither.
+Next recommendation: bounded readiness/decomposition of remaining qualified
+current-authority/no-claim and authentic durable recovery prerequisites,
+Not Activated; no readiness verdict for full integration or a successor.
+
+**Последняя опубликованная readiness:** TASK-086 — historical Completed — Coordinator Accepted, accepted source manifest
+`539567e4dd250b32094a708f919cbcf0649b50c8`, source commit
+`f159fb9bbd6ba07a49465ac20c56b54aafd47954`, PR #91 merge
+`fac149e1fdcfcd402e5872ae60336b083f1e3b22` by local immutable Git metadata.
+Its Approved DP-024 §16 plan is the implementation prerequisite for TASK-087;
+publication added no runtime capability. Historical acceptance does not transfer
+to current gates. Cached local facts are not fresh remote or Publisher P0–P10 evidence.
 
 **Последняя опубликованная implementation prerequisite:**
 TASK-085 — Completed — Coordinator Accepted, accepted source manifest
@@ -36,7 +46,7 @@ Design-only publication добавила concrete DP-024 §15 plan, без runti
 Это historical published source; исходная работа не возобновляется. Cached local
 metadata не является fresh remote или Publisher P0–P10 evidence.
 
-**Последняя опубликованная readiness task:** TASK-082, Completed — Coordinator
+**Предыдущая опубликованная readiness task:** TASK-082, Completed — Coordinator
 Accepted, source manifest `aa97244d3f46cb7f535af69d6a86babe12780f26`, commit
 `6cfb17bff4246d17e41107755ace0fa3b6d96850`, PR #87 merge
 `cf17b1728349bca9ac3916c88a00445f021cc4a9` по local immutable Git metadata.

@@ -155,24 +155,35 @@ coverage, membership/absence revisions and planned root client/fatal ordering;
 publication added no executable capability and does not resume original work.
 Cached metadata is not fresh remote/P0–P10 proof.
 
-[TASK-086 readiness](../docs/tasks/TASK-086-FATAL-SOURCE-COMPOSITION-READINESS.md) —
-TASK-086 — Runtime Fatal-Source Coupling and Composition Supply Readiness,
+[TASK-087 implementation](../docs/tasks/TASK-087-FATAL-SOURCE-CLOSED-ASSEMBLY.md) —
+TASK-087 — Runtime Fatal-Source Coupling and Closed Assembly,
 verification-stable `In Progress`, branch
-`docs/task-086-fatal-source-composition-readiness`, baseline
-`7daefc0b96c8127a7f884b521686998a2181d43a`. Actual gates/closure resolve only
-from its newest valid matching Recovery Evidence Envelope. This Design-update /
-Readiness records the planned private source-bound registry, seven actual fatal
-paths and explicit opaque closed read-only assembly in DP-024 §16. It adds no
-runtime capability. DP-024 remains Approved / Partial; integrated P1–P14 Planned,
-item7 unproven. Closed DP-014/DP-015 participation, detached observations and
-client replacement remain local mechanics; inert roots do not prove containment
-association or fatal coupling. Every coordinated writer rejects; authorized
-replay is read-only with zero lifecycle/provider callbacks. Qualified current
-authority/no-claim, authentic durable provenance/stores and recovery remain absent.
-Next candidate after independent acceptance of this plan: source-bound leaf
-registry/fatal handle, complete actual containment-source coupling and explicit
-closed composition supply, Ready to fresh intake / Not Activated. Fresh Size Guard
-and independent review are required; production integration remains absent.
+`feature/task-087-fatal-source-closed-assembly`, baseline
+`fac149e1fdcfcd402e5872ae60336b083f1e3b22`. Actual gates/closure resolve only
+from its newest valid matching Recovery Evidence Envelope. The local implementation
+adds keeper-associated source roots, complete participant/client registration,
+typed fatal publication and completion joins across all seven actual containment
+sites, and a separate opaque closed read-only assembly supplying identical roots
+and participant to real DP-014/DP-015 owners. Detached owner observations are
+captured sequentially; they are not an atomic pair or current-authority proof.
+Every coordinated writer remains closed; authorized replay is read-only with
+zero lifecycle/provider callbacks. Legacy constructors remain supported and
+unqualified. DP-024 stays Approved / Partial; integrated P1–P14 Planned and item7
+unproven. Qualified current authority/no-claim, authentic durable provenance/stores,
+claim/resume/issuance and production wiring remain absent. Verification and
+Acceptance are separate gates; this state summary supplies neither.
+Next recommendation: bounded readiness/decomposition of remaining qualified
+current-authority/no-claim and authentic durable recovery prerequisites,
+Not Activated; no readiness verdict for full integration or a successor.
+
+[TASK-086 readiness](../docs/tasks/TASK-086-FATAL-SOURCE-COMPOSITION-READINESS.md) —
+TASK-086 — historical Completed — Coordinator Accepted, accepted source manifest
+`539567e4dd250b32094a708f919cbcf0649b50c8`, source commit
+`f159fb9bbd6ba07a49465ac20c56b54aafd47954`, PR #91 merge
+`fac149e1fdcfcd402e5872ae60336b083f1e3b22` by local immutable Git metadata.
+Its Approved DP-024 §16 plan is the implementation prerequisite for TASK-087;
+publication added no runtime capability. Historical acceptance does not transfer
+to current gates. Cached local facts are not fresh remote or Publisher P0–P10 evidence.
 
 [TASK-085 implementation](../docs/tasks/TASK-085-DP015-COORDINATION-PARTICIPATION.md) —
 TASK-085 — Completed — Coordinator Accepted, accepted source manifest
@@ -202,7 +213,7 @@ DP-024 remains Approved / Partial for TASK-081 local models and TASK-084/TASK-08
 closed real-owner slices. Durable provenance, persistent aggregate/complete
 commands/claim, original storage authority, reconciliation/release/reporting and
 production wiring remain separate prerequisites. Historical source evidence does
-not substitute for current TASK-086 Verification/Review/Acceptance.
+not substitute for current TASK-087 Verification/Review/Acceptance.
 
 TASK-080 accepted subject `70302b93b3908b0216ce79298ade7ae0e10d123b` опубликован
 source `eac6f6eac0a19fbea4d4c47e978124e7fc6cd6eb` через PR #85 как merge
