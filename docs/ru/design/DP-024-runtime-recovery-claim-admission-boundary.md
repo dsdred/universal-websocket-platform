@@ -789,3 +789,131 @@ qualification, claim/readback/resume/issuance, reservation, reconciliation/relea
 reporting и production wiring/activation остаются отдельной работой. Следующая
 рекомендация — bounded readiness/decomposition этих prerequisites, Not Activated,
 без readiness verdict или automatic successor activation.
+
+## 18. Готовность оставшихся qualification и durable prerequisites
+
+[TASK-088](../../tasks/TASK-088-RECOVERY-QUALIFICATION-READINESS.md) фиксирует repository-backed assessment §§4–12 и 15–17, без нового
+contract или implementation. Architect Confirmation подтверждает bounded assessment
+без поправки ADR/ARCH/Approved DP. DP-024 остаётся Approved / Partial;
+DP-017 остаётся Approved / Planned overall. Existing sections сохраняют historical
+meaning. Capability, successful qualification и successor activation не добавлены.
+
+### 18.1 Source baseline и scope
+
+TASK-087 source `e1e03cb9fa898d4a784de06886070ba6c6a49cae`, accepted manifest
+`11119b8e440809756783360455c8cc75472d6182`, merged через PR #92 как
+`ca01f7cc5b94c59d6402aeac0eba33e2070f003a` по immutable local Git evidence.
+Historical acceptance и cached publication facts не являются fresh verification или
+Publisher P0–P10. Complete seven-source fatal coupling и closed real-owner supply —
+supporting prerequisites, не proof current-authority/no-claim, durable origins или
+item 7. ADR-0003 explicit composition, ARCH-004 §§9,12,14, DP-014/015 owner truth,
+DP-017 §§7–12,19–23 и DP-022/023 containment truth остаются authoritative.
+Bounded sequence поддерживает existing single-node milestone, не меняет roadmap
+dependencies и не повышает production readiness.
+
+### 18.2 Actual seams и missing qualification
+
+| Actual source | Implemented boundary | Missing prerequisite |
+| --- | --- | --- |
+| `runtimecoordination/coordination.go`, `roots.go`, `source.go` | Exact attachment, short ordered observation, client invalidation и source-completed fatal fan-out; `Transition` всегда rejects | Qualified current-authority/no-claim validation, joint reservation session и live recovery acceptance/use gates |
+| `runtimecontainmentcomposition/closed.go` | Same keeper root/participant supplies complete opaque coordinated owners | `Capture` читает DP-014 затем DP-015 в separate regions; нет atomic joint snapshot, qualification или opening |
+| `runtimeidentity/store.go` и coordination readers | Complete detached aggregate/history/presence observations и closed direct/narrow writers | Store maps process-local; нужны restart-retained qualified aggregate/history и authentic lifecycle producer origins |
+| `runtimecommandidempotency/store.go` и coordination readers | Complete detached membership/links/absence, client replacement и closed mutation/delegation | MemoryStorage survives только client reconstruction; нужны restart-retained complete primitive/parent/phase truth и authentic capability origins |
+| `runtimerecoveryassessment/assessment.go` | Isolated stable seven-class read-only assessment | Нет claim/provenance reader или ReleaseOnly; его Clean не qualified no-claim |
+| `runtimecontainment` и legacy `composition.go` | Isolated provisioned containment ledger/current-generation checks; actual fatal coupling | External current checks не joint qualification token; containment descriptor/ledger не qualifies operational owner/claim/provenance stores |
+| Future recovery/provenance owner | Только Approved semantic obligations | Persistent original-authority qualification, authentic complete origins, claim CAS/readback/resume и single live issuance |
+
+Inert/source-associated root доказывает только ordering identity. Missing или empty
+process-local maps не authoritative storage absence. Independently trusted expected
+original authority и anti-clone/joint-rollback precondition §8 и DP-023 §8.1 применяются
+к future operational stores отдельно: containment-storage qualification их не заменяет.
+Candidate store не attests свою expected authority; undetectable consistent clone/
+rollback нельзя опровергнуть чтением только candidate. DB, schema, adapter и
+provisioner не выбраны.
+
+### 18.3 Integrated P1–P14 mapping
+
+Каждая integrated row остаётся Planned. Local support ниже — inventory, не fresh
+PASS, complete row coverage или item 7 proof; test-owner fixtures остаются model-only.
+
+| ID | Actual local support | Remaining integrated obligation |
+| --- | --- | --- |
+| P1 | Closed complete DP-014/015 participation и same-source assembly | Recovery/provenance writers и каждый real admission/delegation path share exact participant |
+| P2 | Complete detached owner membership/revision/absence stamps | One joint validation/reservation; command-vs-claim race и stale full-set rejection before durable mutation |
+| P3 | Permanently closed real owners; model startup/sticky fence | Qualified persistent startup/no-claim и restart сохраняют non-clean/unknown admission closed |
+| P4 | Только model local reservation/disposition | Concurrent durable CAS commits one claim и issues at most one live permit |
+| P5 | Нет durable producer-origin seam | Authentic CommandOnly/unbound origins доказывают termination всех relevant old processes без synthetic binding |
+| P6 | Client/source fatal invalidation | Unlocked callbacks, same-generation issuer, incomplete/missing origins запрещают takeover |
+| P7 | Model retained-outer I/O invalidation и actual fatal coupling | Real provenance/publication/readback/issuance crash cuts и delivery invalidation; exact inspection, без duplicate capability |
+| P8 | Только aggregate maps и complete command MemoryStorage | Qualified aggregate/history, complete commands, claim и provenance survive actual process restart |
+| P9 | Separate isolated containment descriptor/ledger substrate | Independently trusted original operational storage authority; missing/replaced/corrupt/clone/rollback не становится empty |
+| P10 | Нет durable resume operation | Conditional successor resume сохраняет original observations; stale/foreign input mutates nothing |
+| P11 | Stable detached isolated assessment | Qualified claim/provenance reads, Clean versus ReleaseOnly и zero observation authority |
+| P12 | Все seven fatal sources complete local invalidation; client replacement | Uncertain publication/cancellation остаются closed; issued/delivered permit suppression и revocation |
+| P13 | Local fixed short-gate order и independent Instances | Joint session, real persistent I/O outside short gates и integrated concurrency/race/stress |
+| P14 | Closed assembly/assessment/model expose no lifecycle/reconciliation/release | Integrated claim/resume не creates attempts, invokes lifecycle, releases barrier или promotes Owner completion basis |
+
+### 18.4 Smallest dependency sequence
+
+1. **A — design refinement private qualification/observation/reservation seam:**
+   Ready to fresh Design-only intake / Not Activated. Scope только exact current
+   source-root/scope/generation handoff, detached input revalidation и retained
+   outer-session/short-gate separation по §§5,7,9. Определить required future
+   qualified owner/claim/provenance inputs и fail-closed dispositions; не design
+   их persistence protocol, open admission, publish claim или issue permit.
+   Это first independently reviewable design slice, не API definition или
+   implementation authorization.
+2. **B — authentic provenance и persistent operational-store conformance:**
+   later dependent bounded design assessment, Not Activated. Resolve concrete
+   provenance commit-with-owner versus write-ahead inspection, complete owner
+   persistence compatibility и independently trusted original-authority inputs.
+   Adapter/publication-path choices остаются unresolved; A их не выбирает.
+3. Independently implement и qualify durable owners/provenance boundaries после
+   fresh readiness/Size Guard. Сохранить DP-015 §13.1 parent/preclaimed StopOld/
+   occupant/rendezvous/private permit atomicity и DP-014 publications.
+4. Добавить claim-aware detached assessment и qualified no-claim under joint
+   ordering только после qualified inputs; ReleaseOnly observes, но не releases.
+5. Добавить conditional claim/readback/resume и single non-transferable issuance,
+   delivery и every-use revalidation только после complete durable origins/stores.
+   Все eight §9 cuts и authentic prior-generation termination обязательны.
+6. DP-023 items 8–10 reconciliation/release, затем item 11 reporting/integration
+   и Production Activation — separate later work, Not Activated.
+
+Successful qualification implementation и full item 7 — Not Ready. B–6 требуют
+fresh dependency/readiness decisions; assessment не grants implementation readiness,
+successor Task ID или automatic execution. Refinement existing Approved semantics
+не требует status promotion или technology selection; changed ownership/guarantee
+потребует separate architecture work.
+
+### 18.5 Future executable acceptance obligations
+
+A должна вывести deterministic obligations для exact source/root/scope/generation
+binding и foreign/partial rejection; joint full owner/absence revalidation против
+competing writer/attachment; independent Instances; fatal/client replacement before
+capture, between detach/revalidation и during retained-outer I/O; zero new authority
+из stale/unknown input. Все owner-local/authority/client/state gates освобождаются
+до external authorization/storage/provenance/evidence work; только outer token может
+сохраняться по §§5/9. Obligations не подразумевают generic callback/raw-lock,
+opening, lifecycle, claim или permit surface.
+
+Позднейшие qualified storage tests должны различать authoritative absence и missing,
+replaced, unavailable или corrupt storage, independently verify original authority,
+доказать actual restart retention и declared anti-clone/rollback trust limits.
+Authentic producer coverage включает lifecycle candidates, normal primitive/parent/
+phase capability origins и recovery issuer incarnation до capability release.
+Orphan certificates не owner publication или claim truth. Unknown publication
+inspect-ится против same candidate до retry; все §9 crash cuts, conditional resume
+и issuance-to-delivery/use invalidation требуют integrated executable evidence.
+Legacy success/model opening/fatal ordering fixtures эти proofs не заменяют.
+Authorized replay сохраняет zero lifecycle/provider callbacks. Claim/resume не может
+reconcile/release или fabricate Stopped/OwnerShutdownCompleted/NoHostProduced.
+
+### 18.6 Readiness decision и documentation boundary
+
+Assessment: **Ready**. Full item 7/P1–P14 integration: **Split Required / Not Ready
+as one bounded task**. A Ready только для fresh bounded Design-only intake;
+successful qualification implementation — **Not Ready**. Appendix фиксирует только
+assessment и planned obligations. Existing status/capability boundaries неизменны.
+TASK-088 gates/closure требуют newest valid matching Recovery Evidence Envelope,
+fresh independent Verification, PROCESS-002, Scope Audit, final Review и Coordinator
+Acceptance. Historical verdict эти gates не заменяет.

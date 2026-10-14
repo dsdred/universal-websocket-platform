@@ -3,26 +3,36 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая implementation task —
-[TASK-087](TASK-087-FATAL-SOURCE-CLOSED-ASSEMBLY.md). TASK-087 — Runtime Fatal-Source Coupling and Closed Assembly,
-verification-stable `In Progress`, branch
-`feature/task-087-fatal-source-closed-assembly`, baseline
-`fac149e1fdcfcd402e5872ae60336b083f1e3b22`. Actual gates/closure resolve only
-from its newest valid matching Recovery Evidence Envelope. The local implementation
-adds keeper-associated source roots, complete participant/client registration,
-typed fatal publication and completion joins across all seven actual containment
-sites, and a separate opaque closed read-only assembly supplying identical roots
-and participant to real DP-014/DP-015 owners. Detached owner observations are
-captured sequentially; they are not an atomic pair or current-authority proof.
-Every coordinated writer remains closed; authorized replay is read-only with
-zero lifecycle/provider callbacks. Legacy constructors remain supported and
-unqualified. DP-024 stays Approved / Partial; integrated P1–P14 Planned and item7
-unproven. Qualified current authority/no-claim, authentic durable provenance/stores,
-claim/resume/issuance and production wiring remain absent. Verification and
-Acceptance are separate gates; this state summary supplies neither.
-Next recommendation: bounded readiness/decomposition of remaining qualified
-current-authority/no-claim and authentic durable recovery prerequisites,
-Not Activated; no readiness verdict for full integration or a successor.
+Текущая Design-only / Readiness task —
+[TASK-088](TASK-088-RECOVERY-QUALIFICATION-READINESS.md). TASK-088 — Runtime Recovery Qualification and Durable Prerequisite Readiness,
+Design-only / Readiness, verification-stable `In Progress`, branch
+`docs/task-088-recovery-qualification-readiness`, baseline
+`ca01f7cc5b94c59d6402aeac0eba33e2070f003a`. Actual gates/closure resolve only
+from its newest valid matching Recovery Evidence Envelope. Additive DP-024 §18
+records repository-backed qualification/durable-prerequisite assessment and
+bounded decomposition only. Assessment Ready; full item7/P1–P14 integration
+Split Required / Not Ready as one bounded task. DP-024 stays Approved / Partial;
+DP-017 stays Approved / Planned overall; integrated P1–P14 Planned, item7 unproven.
+Next recommendation: smallest private current-authority qualification/joint
+observation/reservation seam Design-only refinement, Ready to fresh design intake /
+Not Activated. Successful qualification implementation is Not Ready; later durable
+owner/claim/provenance conformance assessment retains unresolved adapter/publication
+choices. No capability/status promotion, successor task ID or activation. Fresh
+Verification, Review and Acceptance remain separate gates; this summary grants none.
+
+Последняя опубликованная implementation —
+[TASK-087](TASK-087-FATAL-SOURCE-CLOSED-ASSEMBLY.md). TASK-087 — historical Completed — Coordinator Accepted, accepted source manifest
+`11119b8e440809756783360455c8cc75472d6182`, source commit
+`e1e03cb9fa898d4a784de06886070ba6c6a49cae`, PR #92 merge
+`ca01f7cc5b94c59d6402aeac0eba33e2070f003a` by local immutable Git metadata.
+Keeper-associated source roots, complete registration and typed fatal publication/
+completion joins cover all seven actual sites; opaque closed assembly supplies the
+same roots/participant to real DP-014/015 owners. Capture remains sequential,
+not joint/current-authority or qualified no-claim proof. Coordinated writers stay
+closed; authorized replay has zero lifecycle/provider callbacks. Authentic durable
+origins/stores, claim/resume/issuance and production wiring remain absent.
+Historical acceptance does not transfer to current gates; cached local facts are
+not fresh remote or Publisher P0–P10 evidence.
 
 Последняя опубликованная readiness —
 [TASK-086](TASK-086-FATAL-SOURCE-COMPOSITION-READINESS.md). TASK-086 — historical Completed — Coordinator Accepted, accepted source manifest
@@ -325,7 +335,8 @@ PROCESS-002, Scope Audit 31/0/0 и final Reviewer проходят. Task commit
 - [TASK-084 — Runtime DP-014 Coordination Participation](TASK-084-DP014-COORDINATION-PARTICIPATION.md) — Completed — Coordinator Accepted; source `4ddaf8272b537b27b825d854d8cd0b325f49bd2e` / PR #89 merge `20f5ba532ba9a1dbaa16c00796662fc6191d0ff5` by local immutable Git facts; closed leaf/DP014 prerequisite, no integrated recovery.
 - [TASK-085 — Runtime DP-015 Coordination Participation](TASK-085-DP015-COORDINATION-PARTICIPATION.md) — historical Completed — Coordinator Accepted; source `0d9c433086a96641eaff63dfa6d506f311bd69bb`, PR #90 merge `7daefc0b96c8127a7f884b521686998a2181d43a` by local immutable metadata; closed DP015 membership/client replacement, inert roots.
 - [TASK-086 — Runtime Fatal-Source Coupling and Composition Supply Readiness](TASK-086-FATAL-SOURCE-COMPOSITION-READINESS.md) — historical Completed — Coordinator Accepted; accepted source `539567e4dd250b32094a708f919cbcf0649b50c8`, commit `f159fb9bbd6ba07a49465ac20c56b54aafd47954` / PR #91 merge `fac149e1fdcfcd402e5872ae60336b083f1e3b22` by local immutable metadata; design/readiness only.
-- [TASK-087 — Runtime Fatal-Source Coupling and Closed Assembly](TASK-087-FATAL-SOURCE-CLOSED-ASSEMBLY.md) — current verification-stable In Progress; newest valid matching envelope resolves gates/closure; local source-bound fatal coupling and opaque closed assembly, no integrated recovery readiness.
+- [TASK-087 — Runtime Fatal-Source Coupling and Closed Assembly](TASK-087-FATAL-SOURCE-CLOSED-ASSEMBLY.md) — historical Completed — Coordinator Accepted; source `e1e03cb9fa898d4a784de06886070ba6c6a49cae`, accepted manifest `11119b8e440809756783360455c8cc75472d6182`, PR #92 merge `ca01f7cc5b94c59d6402aeac0eba33e2070f003a` by local immutable metadata; source-bound fatal coupling and opaque closed assembly only, no integrated recovery readiness.
+- [TASK-088 — Runtime Recovery Qualification and Durable Prerequisite Readiness](TASK-088-RECOVERY-QUALIFICATION-READINESS.md) — current Design-only / Readiness, verification-stable In Progress; newest valid matching envelope resolves gates/closure; additive DP-024 §18 assessment, first bounded qualification/joint-observation/reservation design candidate Not Activated; no capability/status promotion.
 
 Новый агент начинает с корневого [`AGENTS.md`](../../AGENTS.md), а не с
 отдельного task record.

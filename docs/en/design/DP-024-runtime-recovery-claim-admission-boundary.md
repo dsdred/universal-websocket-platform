@@ -792,3 +792,131 @@ qualification, claim/readback/resume/issuance, reservation, reconciliation/relea
 reporting and production wiring/activation remain separate work. Next recommendation
 is bounded readiness/decomposition of those prerequisites, Not Activated, without
 a readiness verdict or automatic successor activation.
+
+## 18. Remaining qualification and durable prerequisite readiness
+
+[TASK-088](../../tasks/TASK-088-RECOVERY-QUALIFICATION-READINESS.md) records a repository-backed assessment of §§4–12 and 15–17, not a new
+contract or implementation. Architect Confirmation approves this bounded assessment
+without an ADR/ARCH/Approved-DP amendment. DP-024 stays Approved / Partial;
+DP-017 stays Approved / Planned overall. Existing sections retain their historical
+meaning. No capability, successful qualification or successor activation is added.
+
+### 18.1 Source baseline and scope
+
+TASK-087 source `e1e03cb9fa898d4a784de06886070ba6c6a49cae`, accepted manifest
+`11119b8e440809756783360455c8cc75472d6182`, is merged through PR #92 as
+`ca01f7cc5b94c59d6402aeac0eba33e2070f003a` by immutable local Git evidence.
+Historical acceptance and cached publication facts are not fresh verification or
+Publisher P0–P10. Its complete seven-source fatal coupling and closed real-owner
+supply are supporting prerequisites; they do not prove current-authority/no-claim,
+durable origins or item 7. ADR-0003 explicit composition, ARCH-004 §§9,12,14,
+DP-014/015 owner truth, DP-017 §§7–12,19–23 and DP-022/023 containment truth remain
+authoritative. This bounded sequence supports the existing single-node milestone;
+it does not change roadmap dependencies or promote production readiness.
+
+### 18.2 Actual seams and missing qualification
+
+| Actual source | Implemented boundary | Missing prerequisite |
+| --- | --- | --- |
+| `runtimecoordination/coordination.go`, `roots.go`, `source.go` | Exact attachment, short ordered observation, client invalidation and source-completed fatal fan-out; `Transition` always rejects | Qualified current-authority/no-claim validation, joint reservation session and live recovery acceptance/use gates |
+| `runtimecontainmentcomposition/closed.go` | Same keeper root/participant supplies complete opaque coordinated owners | `Capture` reads DP-014 then DP-015 in separate regions; no atomic joint snapshot, qualification or opening |
+| `runtimeidentity/store.go` and coordination readers | Complete detached aggregate/history/presence observations and closed direct/narrow writers | Store maps are process-local; restart-retained qualified aggregate/history and authentic lifecycle producer origins |
+| `runtimecommandidempotency/store.go` and coordination readers | Complete detached membership/links/absence, client replacement and closed mutation/delegation | MemoryStorage survives client reconstruction only; restart-retained complete primitive/parent/phase truth and authentic capability origins |
+| `runtimerecoveryassessment/assessment.go` | Isolated stable seven-class read-only assessment | No claim/provenance reader or ReleaseOnly; its Clean is not qualified no-claim |
+| `runtimecontainment` and legacy `composition.go` | Isolated provisioned containment ledger/current-generation checks; actual fatal coupling | External current checks are not a joint qualification token; containment descriptor/ledger does not qualify operational owner/claim/provenance stores |
+| Future recovery/provenance owner | Approved semantic obligations only | Persistent original-authority qualification, authentic complete origins, claim CAS/readback/resume and single live issuance |
+
+An inert/source-associated root proves ordering identity only. Missing or empty
+process-local maps are not authoritative storage absence. The independently trusted
+expected original authority and anti-clone/joint-rollback precondition from §8 and
+DP-023 §8.1 apply to the future operational stores separately: containment-storage
+qualification cannot substitute for them. No candidate store may attest its own
+expected authority; an undetectable consistent clone/rollback cannot be disproved
+by reading only that candidate. No DB, schema, adapter or provisioner is selected.
+
+### 18.3 Integrated P1–P14 mapping
+
+Every integrated row remains Planned. Local support below is inventory, not fresh
+PASS, complete row coverage or item 7 proof; test-owner fixtures stay model-only.
+
+| ID | Actual local support | Remaining integrated obligation |
+| --- | --- | --- |
+| P1 | Closed complete DP-014/015 participation and same-source assembly | Recovery/provenance writers and every real admission/delegation path share exact participant |
+| P2 | Complete detached owner membership/revision/absence stamps | One joint validation/reservation; command-vs-claim race and stale full-set rejection before durable mutation |
+| P3 | Permanently closed real owners; model startup/sticky fence | Qualified persistent startup/no-claim and restart keep non-clean/unknown admission closed |
+| P4 | Model local reservation/disposition only | Concurrent durable CAS commits one claim and issues at most one live permit |
+| P5 | No durable producer-origin seam | Authentic CommandOnly/unbound origins prove every relevant old process terminated without synthetic binding |
+| P6 | Client/source fatal invalidation | Unlocked callbacks, same-generation issuer, incomplete/missing origins prevent takeover |
+| P7 | Model retained-outer I/O invalidation and actual fatal coupling | Real provenance/publication/readback/issuance crash cuts and delivery invalidation; exact inspection, no duplicate capability |
+| P8 | Aggregate maps and complete command MemoryStorage only | Qualified aggregate/history, complete commands, claim and provenance survive actual process restart |
+| P9 | Separate isolated containment descriptor/ledger substrate | Independently trusted original operational storage authority; missing/replaced/corrupt/clone/rollback never becomes empty |
+| P10 | No durable resume operation | Conditional successor resume preserves original observations; stale/foreign input mutates nothing |
+| P11 | Stable detached isolated assessment | Qualified claim/provenance reads, Clean versus ReleaseOnly and zero observation authority |
+| P12 | All seven fatal sources complete local invalidation; client replacement | Uncertain publication/cancellation remain closed; issued/delivered permit suppression and revocation |
+| P13 | Local fixed short-gate order and independent Instances | Joint session, real persistent I/O outside short gates and integrated concurrency/race/stress |
+| P14 | Closed assembly/assessment/model expose no lifecycle/reconciliation/release | Integrated claim/resume never creates attempts, invokes lifecycle, releases barrier or promotes Owner completion basis |
+
+### 18.4 Smallest dependency sequence
+
+1. **A — private qualification/observation/reservation seam design refinement:**
+   Ready to fresh Design-only intake / Not Activated. Bound only exact current
+   source-root/scope/generation handoff, detached input revalidation and retained
+   outer-session/short-gate separation under §§5,7,9. Specify the required future
+   qualified owner/claim/provenance inputs and fail-closed dispositions; do not
+   design their persistence protocol, open admission, publish a claim or issue a
+   permit. This is the first independently reviewable design slice, not its API
+   definition or implementation authorization.
+2. **B — authentic provenance and persistent operational-store conformance:**
+   later dependent bounded design assessment, Not Activated. Resolve concrete
+   provenance commit-with-owner versus write-ahead inspection, complete owner
+   persistence compatibility and independently trusted original-authority inputs.
+   Adapter/publication-path choices remain unresolved; A does not choose them.
+3. Independently implement and qualify those durable owners/provenance boundaries
+   after fresh readiness/Size Guard. Preserve DP-015 §13.1 parent/preclaimed
+   StopOld/occupant/rendezvous/private permit atomicity and DP-014 publications.
+4. Add claim-aware detached assessment and qualified no-claim under joint ordering
+   only after qualified inputs; ReleaseOnly observes but never releases.
+5. Add conditional claim/readback/resume and single non-transferable issuance,
+   delivery and every-use revalidation only after complete durable origins/stores.
+   All eight §9 cuts and authentic prior-generation termination remain mandatory.
+6. DP-023 items 8–10 reconciliation/release, then item 11 reporting/integration
+   and Production Activation remain separate later work, Not Activated.
+
+Successful qualification implementation and full item 7 are Not Ready. B–6 need
+fresh dependency/readiness decisions; this assessment grants no implementation
+readiness, successor task ID or automatic execution. Refinement of existing
+Approved semantics needs no status promotion or technology selection; a changed
+ownership/guarantee would require separate architecture work.
+
+### 18.5 Future executable acceptance obligations
+
+A must derive deterministic obligations for exact source/root/scope/generation
+binding and foreign/partial rejection; joint full owner/absence revalidation against
+competing writer/attachment; independent Instances; fatal/client replacement before
+capture, between detach/revalidation and during retained-outer I/O; and zero new
+authority from stale/unknown input. Every owner-local/authority/client/state gate
+must be released before external authorization/storage/provenance/evidence work;
+only the outer token may remain as §§5/9 permit. No generic callback/raw-lock,
+opening, lifecycle, claim or permit surface is implied by these obligations.
+
+Later qualified storage tests must distinguish authoritative absence from missing,
+replaced, unavailable or corrupt storage, independently verify original authority,
+and prove actual restart retention and declared anti-clone/rollback trust limits.
+Authentic producer coverage includes lifecycle candidates, normal primitive/parent/
+phase capability origins and recovery issuer incarnation before capability release.
+Orphan certificates are not owner publication or claim truth. Unknown publication
+is inspected against the same candidate before retry; all §9 crash cuts, conditional
+resume and issuance-to-delivery/use invalidation need integrated executable evidence.
+Legacy success/model opening/fatal ordering fixtures cannot substitute for these
+proofs. Authorized replay retains zero lifecycle/provider callbacks. Claim/resume
+cannot reconcile/release or fabricate Stopped/OwnerShutdownCompleted/NoHostProduced.
+
+### 18.6 Readiness decision and documentation boundary
+
+Assessment: **Ready**. Full item 7/P1–P14 integration: **Split Required / Not Ready
+as one bounded task**. A is Ready only for fresh bounded Design-only intake;
+successful qualification implementation is **Not Ready**. The appendix records
+assessment and planned obligations only. Existing status and capability boundaries
+remain unchanged. TASK-088 gates/closure require its newest valid matching Recovery
+Evidence Envelope, fresh independent Verification, PROCESS-002, Scope Audit, final
+Review and Coordinator Acceptance. No historical verdict supplies those gates.
