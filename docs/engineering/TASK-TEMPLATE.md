@@ -299,6 +299,21 @@ generated, formatting-only и незадокументированное planned
   linkage; dispatch before P0/owner, durable independent InitialDispatch
   readback либо first incomplete dispatch step; sandbox observation-only,
   no fallback; already-owned transaction только через existing recovery;
+- known durable malformed initial-dispatch recovery, только если explicit scope
+  отдельно разрешает metadata application: exact typed AttemptKey/GateKey,
+  strict native-text UTF8 payload SHA256, full GateTarget/RecordedTarget и
+  mismatched fields, ReconciliationKey, current actual recovery-request
+  locator и reconciler self provenance; complete canonical native descriptor/
+  invocation inventory + bounded independent external no-effects evidence;
+  ObservedCut/ControlTail/predecessor, accepted amendment manifest, exact event
+  readback/assigned physical ID/independent receipt; pending/unknown/conflicting
+  state STOP. Old transaction only InvalidatedByInitialTargetMismatch /
+  NoneTerminal / initial Closed(TargetMismatch), transfer Unissued/ID none;
+  no P0/effects/P10/publication completion, no native rewrite/old-gate replay.
+  Repeated recovery reuses existing receipt, distinct physical items conflict;
+  fresh actual publication gate after closure proof, successor linkage/state
+  reconstructed and old closure never overwrites new ownership. General design
+  task fields do not issue event/permission or prove live eligibility;
 - collector: Discovery/P0Capability, dirty admission blocker, sanitized
   identity/API/origin/permissions/archive/disabled/merge/protection/rules facts;
   no ownership/authority/full-P0 claims, write-scope uncertainty explicit;
@@ -323,7 +338,8 @@ generated, formatting-only и незадокументированное planned
   IDs fail closed, reverse transfer uses a new ID;
 - durable handoff evidence: append-only operational record outside immutable
   Target/project-state with separate authorization
-  `Active/Consumed(P10)/RevokedByUser/InvalidatedByTargetChange`, ownership
+  `Active/Consumed(P10)/RevokedByUser/InvalidatedByTargetChange/
+  InvalidatedByInitialTargetMismatch`, ownership
   `Owned(context)/InTransitNone/NoneTerminal/Unknown` and attempt
   `Unissued/Released/Accepted/Closed(reason)` axes; predecessor/tail, actor,
   resulting states and terminal reason/disposition recorded; unavailable/

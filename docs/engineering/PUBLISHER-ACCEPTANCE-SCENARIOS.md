@@ -408,3 +408,39 @@ native linkage проверяется independently из qualified actual record
 | S-080 | Already-owned legacy/sandbox transaction or later context drift | Existing Release -> actual user Route -> Accept; initial route cannot silently rebind authority |
 | S-081 | Successful no-handoff P10 | Proven trusted owner consumes exact authority; NoneTerminal, attempt Unissued, no fabricated transfer ID; STOP |
 | S-082 | Replacement standing route or next task reads discovery locator | Actual user-confirmed supersession/full original history and fresh qualification required; locator not permission/usable PASS or workstation config |
+
+## Known durable initial Target mismatch — S-083–S-108
+
+Trace: PROCESS-001 §Known Durable InitialDispatch Target Mismatch Reconciliation;
+protocol publisher-initial-reconciliation-v1. Ни один row/fixture не является
+native emission, live qualification, permission или применением к TASK-092.
+Старые S-001–S-082 и handoff Transfer Identity сохраняют силу.
+
+| ID | Given / When | Required disposition |
+|---|---|---|
+| S-083 | Unique durable malformed InitialDispatch, unchanged exact valid gate/checkpoint, no owner, P0–P10 Proven Not Started; all qualification/no-effects/metadata-scope gates pass | Current self-proven reconciler may append one metadata event; only independent complete closing readback establishes old transaction InvalidatedByInitialTargetMismatch/NoneTerminal, initial Closed(TargetMismatch), transfer Unissued/ID none; no P10/completion |
+| S-084 | Exact correct dispatch / proven absent issuance / possible emission unknown | Ordinary S-065 / S-075,R-100 / S-076,R-101 respectively; narrow malformed closure is not a general replacement |
+| S-085 | P0 started, valid/legacy owner, Release/Route/Accept or competing actor/run/route exists | Narrow protocol ineligible; no fabricated unowned state, use existing owned/unknown recovery |
+| S-086 | Any P1–P10 action/effect or old P0 evidence, including late discovery after closure | Narrow no-start proposition fails; preserve history, STOP and reconcile actual effects, never rewrite old event/outcome |
+| S-087 | User assertion, STOP prose, collector PASS, clean tree and absent current ref/PR only | Insufficient; exhaustive native inventory and bounded independent external corroboration still required |
+| S-088 | Missing result/exit, pending async, hidden/eval script body, unknown session/route or identity | No-effects not proven; Unknown/STOP, no closing append or terminal owner |
+| S-089 | Current remote absence but earlier push→delete/create→close, insufficient activity visibility/time coverage or contradictory write | Reject closure; exact transaction attribution and bounded external coverage cannot be replaced by current snapshot |
+| S-090 | Complete relevant invocation inventory plus authoritative external corroboration; unrelated user activity known | Reconcile attributable effects only; unrelated activity neither proves effects of this attempt nor permits claiming no repository writes ever |
+| S-091 | Original API and backing recover exact UTF8 text including U+FEFF, CRLF/LF and Unicode; provider wrapper/compression differs | Exact payload digest/key unchanged across backing encodings/compression; no trim/newline/Unicode normalization or outer-JSON hash substitute |
+| S-092 | Unpaired surrogate/invalid encoding, ambiguous multipart boundaries, API/backing text mismatch, wrong digest/algorithm/namespace | Fail closed; no arbitrary text concatenation or convenient digest |
+| S-093 | Same item ID in another provider/original conversation/history branch, continuation alias/path/line/UUID changed | Full typed key required; distinct branches/items do not collide, aliases do not rename original attempt |
+| S-094 | GateTarget unchanged but recorded scope/OID typo; proposed TargetChanged, old payload correction or UUID retrofit | Reject substitutes; preserve both full Targets/mismatched fields; selected reason InitialTargetMismatch, no Transfer Identity |
+| S-095 | Missing/null/unknown key/Target field, case-fold/ref/URL alias or reordered commit target offered as equal | Exact component equality fails; no logical-key match or closure reuse |
+| S-096 | Design accepted, historical gate exists, but no current exact recovery scope permitting metadata reconciliation | Assessment/design does not authorize emission; no live event/permission |
+| S-097 | Current Coordinator/reconciler with own native author/turn/context, original qualified chain/linked continuation, complete pre-P0 anchors and explicit metadata scope | Own metadata event allowed only under all eligibility gates; never claims old Publisher/owner/SID or elevation |
+| S-098 | Reader/user/destination copy manufactures old Publisher event, self-assigns native ID or self-hashes unsaved event | Reject provenance; independent receipt cannot manufacture native author or assigned closure ID |
+| S-099 | Observational native read/results/receipt extend stable ObservedCut prefix before closing readback; every extension inventoried | Revalidate prefix/control tail; exactly one closure remains latest control event; literal EOF equality not required |
+| S-100 | New authority/control event, unknown extension, stale prefix/predecessor or conflicting key/reason before readback | Requalify complete chain; no stale append, choice of convenient first/latest or machine-CAS claim |
+| S-101 | Possible closing append outcome unknown; zero or partial matching events currently found | Unknown/STOP; zero found is not Proven Not Started, no blind re-emission |
+| S-102 | Exactly one durable matching closure and independent receipt/full reproducible validation exists; recovery repeats | Reuse exact physical closure/receipt; zero append; old gate/attempt remain permanent tombstones |
+| S-103 | Two distinct physical native closure locators/IDs share a key/payload, versus two API/backing/ZST views of one item | Distinct items conflict/Unknown, no idempotent dedupe; same consistent item views count once; inconsistent views under one ID are corruption/STOP |
+| S-104 | New item/UUID uses old gate; or new user gate follows raw event emission before independent closure proof | Reject old-gate retry and premature gate; proof does not retroactively validate it, require subsequent actual exact user publication gate |
+| S-105 | After proven closure actual new exact gate binds same immutable Target and closure proof, fresh qualification/admission and distinct dispatch/owning run | NEW GateKey/transaction may establish ordinary owner and P0–P10; old gate remains invalidated, no inherited permission/transfer |
+| S-106 | Late OLD recovery after complete valid successor chain, or successor chain is unknown/invalid | Proven successor: report-only reuse old receipt and preserve NEW owner/phase; unknown successor: current operation Unknown/STOP, never apply old NoneTerminal globally |
+| S-107 | originalHistoryBranchID Branch/id versus independently proven provider-no-branches NotApplicable; absent/null/guessed branch offered | Required tagged variants are exact and distinct; only proven provider-no-branches permits NotApplicable, no omitted branch equivalence |
+| S-108 | OLD transaction already revoked/Consumed(P10)/TargetChanged/otherwise terminal, or actual authorized Target changed before owner/P0 | No new initial-mismatch closure and no replacement of prior reason; actual TargetChanged uses existing S-074/S-039; exact valid prior initial closure is only report-only reuse |

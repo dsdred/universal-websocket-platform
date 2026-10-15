@@ -309,6 +309,22 @@ transcript, registry содержит только discovery locator, qualificat
 pending/ambiguous event не запускает mutations. Same owner/run/route и actual
 identity проверяются каждой trusted invocation. Tool refusal не обходится.
 
+Known durable InitialDispatch с ошибочным Target до P0 допускает только narrow
+metadata protocol PROCESS-001. Coordinator отдельно доказывает AttemptKey,
+GateKey/оба Targets, native qualification, ObservedCut/ControlTail, exhaustive
+invocation inventory и bounded independent external no-effects corroboration.
+Current explicit exact recovery scope обязан разрешать assessment + metadata
+reconciliation; general design Acceptance не является таким input. Reconciler
+emits собственное native событие в qualified original chain/linked continuation,
+с actual self provenance, без old-owner/SID impersonation или elevation.
+Independent closing readback/receipt — metadata point; до него Unknown/STOP.
+Old transaction получает InvalidatedByInitialTargetMismatch/NoneTerminal,
+initial attempt Closed(TargetMismatch), transfer Unissued/ID none; P10 и task
+closure не подразумеваются. Unknown append сначала reconciled, не повторяется;
+matching existing receipt reused, physical duplicates conflict. Old gate
+навсегда non-replayable; новый actual exact gate обязан следовать после proof
+closure. Late old recovery сохраняет proven valid successor owner/phase.
+
 Если уже owning execution identity не обладает GitHub capability, Coordinator не требует
 login/token transfer внутри sandbox и не считает наличие user profile
 либо `gh auth status` доказательством decisive API capability. Он допускает

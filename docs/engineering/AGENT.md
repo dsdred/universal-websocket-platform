@@ -121,6 +121,20 @@ report, CI/merge gate, safe cleanup и terminal evidence определены в
 Auth/transport/repository failure внутри initial P0 оставляет P0 первым
 незавершённым и P1 not attempted.
 
+### Known Malformed InitialDispatch
+
+Durable unique InitialDispatch с доказанным ошибочным Target до P0 имеет только
+bounded `Known Durable InitialDispatch Target Mismatch Reconciliation`
+PROCESS-001: exact native AttemptKey/GateKey, complete qualified history,
+independent no-effects proof и separately authorized metadata scope. Accepted
+governance design не разрешает application. Current reconciler emits own
+metadata, не old Publisher/owner; independent durable closure даёт только old
+transaction `InvalidatedByInitialTargetMismatch/NoneTerminal`, initial attempt
+`Closed(TargetMismatch)`, transfer `Unissued`/ID none. Pending/unknown ⇒ STOP.
+История не переписывается; old gate/attempt не replay-ятся. Новая transaction
+требует actual exact user publication gate после proof closure, fresh route и
+новый dispatch; repeated old recovery не terminalize-ит valid successor.
+
 ### Publisher Execution Context
 
 До initial P0 и ownership Publisher resolve-ит qualified standing trusted route
