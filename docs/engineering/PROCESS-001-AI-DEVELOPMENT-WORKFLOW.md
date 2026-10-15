@@ -1201,7 +1201,9 @@ complete payload/current history — initial ownership linearization point:
 fresh read-only P0. No Release/Route/Accept или transfer ID фабриковать нельзя.
 Pending/ambiguous dispatch emission means ownership `Unknown`/STOP; сначала
 reconcile native record, не повторять emission или назначать другого owner.
-Known old owner/attempt исключает initial dispatch и требует existing recovery.
+Known old owner/attempt исключает initial dispatch и требует existing recovery;
+единственное narrow exception — proven closed malformed initial transaction
+с новым actual gate по следующему разделу, без восстановления old permission.
 
 Owning execution context — tuple `{native actor, original thread/history,
 owning publication run, qualified route, actual Windows principal/SID}`.
@@ -1221,6 +1223,195 @@ continuation reconstruct-ит original binding/current chain и доказыва
 continuity; нельзя объявить новый session owner по SID. Если continuity не
 доказана, STOP/recovery. Context drift после ownership использует unchanged
 Release -> actual user Route -> Accept, без silent rebind/sandbox retry.
+
+#### Known Durable InitialDispatch Target Mismatch Reconciliation
+
+`publisher-initial-reconciliation-v1 / InitialDispatchReconciliation` — один
+узкий append-only metadata protocol для уникального durable InitialDispatch,
+ошибочный Target которого доказан до P0 и который никогда не установил exact
+owner. Он не исправляет исходный payload, не является StoreBootstrap, P-step,
+Transfer Identity, новым publication class, executor/backend или machine lock.
+Любое применение требует отдельного current explicit recovery scope; принятие
+этого общего контракта не разрешает live application.
+
+**Identity.** `AttemptKey` — полный typed tuple:
+`{namespace: publisher-initial-attempt-v1, provider, originalConversationID,
+originalHistoryBranchID, nativeTurnID, nativeItemID, payloadDigest}`.
+`GateKey` использует namespace `publisher-user-gate-v1` и те же original native
+locator/digest поля для actual user gate. `originalHistoryBranchID` в обоих
+keys обязателен как tagged union `{kind:Branch,id:exactNativeBranchID}` либо
+`{kind:NotApplicable}`. Второй вариант требует independent qualification proof,
+что provider не различает history branches. Missing/null/empty/unknown/guessed
+branch или continuation/fork alias отвергаются; equality сравнивает tag и id,
+варианты не взаимозаменяемы. Pathname, line number, compression либо новый UUID
+не переименовывают existing native item.
+
+`payloadDigest` имеет точные поля `{algorithm: sha256, encoding:
+exact-native-text-utf8-v1, hex: 64 lowercase hex}`. Хэшируются bytes полного
+exact persisted native textual payload в strict UTF-8 без добавления BOM,
+trim, Unicode/newline normalization; payload U+FEFF и line endings сохраняются.
+Invalid encoding/unpaired surrogates отвергаются. Native API и provider-owned
+backing независимо извлекают одинаковый payload. При неизвестных multipart
+boundaries/full text нельзя выбирать concatenation. Outer JSON escaping,
+wrapper/compression не являются payload. Digest raw decompressed backing-record
+может corroborate provenance, но не заменяет native key/API. Wrong namespace,
+algorithm, encoding или digest означает отказ.
+
+`GateTarget` и `RecordedTarget` сохраняются раздельно как полные existing
+immutable Target tuples: publication class, Task ID, repository/origin identity,
+exact branch, ordered commit target/range и head OID, base main OID, applicable
+accepted/certified/negative scope и decision identity. Git OID algorithm/length
+следуют repository object format; payload SHA256 не является Git OID.
+`PublicationTransactionIdentity = {GateKey, GateTarget}`.
+`ReconciliationKey = {namespace: publisher-initial-reconciliation-v1,
+AttemptKey, GateKey, GateTarget, RecordedTarget, reason: TargetMismatch}` —
+полный typed tuple, не unspecified serialized hash. Equality покомпонентная
+exact, без missing/null/unknown equivalence, case-fold, whitespace/Unicode/
+newline normalization, URL/path/ref alias или ordered-target reordering.
+Physical closure identity — полный provider-native locator: provider, original
+conversation/history branch и native turn/item ID; он не часть logical key.
+API/backing JSONL/decompressed ZST/repeated read/receipt одного item — views
+одной записи, не duplicate closure. Один ID с inconsistent views/bytes/digest —
+corruption/STOP; разные physical item locators с одним key — conflict.
+
+**Eligibility и qualification.** Все условия обязательны одновременно:
+
+1. Actual accepted/certified/negative checkpoint и valid actual user gate
+   задают unchanged GateTarget. Unique durable malformed native InitialDispatch
+   имеет complete exact payload, author/run/qualified-route и trusted read-only
+   admission/identity call/result linkage. RecordedTarget отличается в явно
+   перечисленных доказанных полях; эта запись никогда не создала exact owner.
+2. Нет другого valid dispatch, legacy owner, competing actor/run/route либо
+   Release/actual Route/Accept. P0 и P1–P10 данной transaction — `Proven Not
+   Started`; admission и inspection только read-only. Все attempted actions
+   завершены и классифицированы, нет pending async или outcome-unknown action.
+3. Нет valid prior revoke, Consumed(P10), InvalidatedByTargetChange или иного
+   terminal disposition OLD transaction. Existing terminal reason не заменяют
+   новым reason. Exact уже-valid initial reconciliation использует только
+   report-only reuse branch ниже; unknown/conflicting prior terminal facts — STOP.
+4. Полная original/known-continuation history, role/turn/item/call/result
+   provenance, API/backing corroboration, order, stable prefix/current cut и
+   independent readback проходят canonical native qualification. API/backing —
+   два представления одного store. Pre-P0 metadata variant связывает actual
+   original gate, original trusted admission/identity call/result и malformed
+   item вместо отсутствующих P0/owner anchors; owner/P0 не фабрикуются.
+5. Exhaustive no-effects bundle покрывает gate→ObservedCut во всех known
+   sessions/continuations/routes: tool/script/expanded-code identity,
+   command/result/exit/async-completion locators и classification каждого action.
+   Missing output, unseen background session, hidden/eval body, timeout/unknown
+   result, uncertain identity или incomplete route inventory дают `Unknown/STOP`.
+6. Independent read-only external corroboration exact repository/origin и
+   relevant Targets refs/PR/head/base/merge/activity называет bounded
+   time/subject/visibility coverage и согласуется с invocation inventory.
+   Current absence ref/PR не исключает push→delete или create→close. Historical
+   relevant write, contradiction или невозможность исключить attributable
+   side effect этой attempt блокируют closure. Это proof по данной transaction,
+   не утверждение об отсутствии unrelated repository activity.
+
+User assertion, STOP prose, collector PASS и clean local tree отдельно не
+доказывают no effects. Недоступный actual record/unknown emission нельзя
+заменить новым backend/history. Correct exact dispatch использует обычный
+S-065; proven absent issuance — S-075/R-100; unknown emission — S-076/R-101.
+Actual authorized Target change сохраняет существующий TargetChanged path в
+любой phase, включая before owner/P0 (S-074); новый path допустим только при
+unchanged GateTarget/source и ошибочном RecordedTarget. Начатый P0, любой effect
+или incomplete/unknown evidence исключают narrow protocol, даже если mutation
+ещё не наблюдалась. Offline decision traces не квалифицируют live store и не
+доказывают live eligibility.
+
+**Actor, cuts и event.** Current Coordinator/reconciler emits собственное native
+metadata событие в qualified original history либо qualified linked continuation
+только по current explicit user recovery scope, точно называющему original
+attempt и разрешающему assessment + metadata reconciliation. Это existing
+bounded task/recovery scope, не четвёртая publication gate-команда. Требуется
+actual self author/turn/context provenance; нельзя impersonate old Publisher,
+выдумать old owner/SID continuity или elevate principal ради metadata.
+Accepted amendment manifest — версия нормы, не permission/live qualification;
+reader receipt не создаёт author provenance. Только design scope не разрешает
+metadata application.
+
+`ObservedCut` — полный ordered native snapshot: provider/original conversation/
+branch, turn/item/call/result inventory, terminal observed item, exact prefix
+bytes/digest/encoding и API/backing corroboration. Independent reads доказывают
+stable prefix до cut; literal EOF не обязан оставаться прежним при новых read
+results. `ControlTail` — newest authority-relevant item в cut: gate/revoke/
+recovery scope, route qualification/supersession, dispatch/reconciliation/
+handoff/ownership, P-step/action start/result, unknown call либо competing
+actor/attempt. Event цитирует pre-append ObservedCut и ControlTail locators/
+digests. После cut допускаются только полностью inventoried, native-correlated,
+proven observational read/tool/result/receipt extensions; каждый item
+классифицируется. Любой новый control event/unknown extension до closing
+readback требует полной requalification, не stale append. Это procedural
+validation, не CAS или machine lock.
+
+Event содержит protocol/kind, exact keys, оба Targets и mismatched fields,
+original dispatch/admission locators, qualified descriptor/full inventory,
+evidence locators/digests/coverage, actual current recovery-request locator,
+current reconciler self-provenance, accepted amendment manifest, predecessor/
+cut/ControlTail и resulting authorization/ownership/initial-attempt/transfer
+dispositions с reason. Он явно утверждает old transaction P0–P10 NotStarted,
+publication NOT completed и permanently non-replayable old gate/attempt.
+Нельзя self-assign ещё не выданный native item ID или self-hash ещё не сохранённый
+event. Independent receipt после readback цитирует provider-assigned closure
+item ID, exact observed payload/full readback и новый cut; receipt labeled
+observation, не reconciliation kind.
+
+**Linearization и состояния.** Только один полный independently read-back
+physical event при unchanged prefix и closure как latest ControlTail завершает
+metadata linearization. Новые observational extensions допустимы по правилу
+выше. До доказанного closing readback ownership `Unknown/STOP`, old gate не
+usable; pending ambiguity не является terminal proof. Result по точной OLD
+PublicationTransactionIdentity + AttemptKey:
+
+- authorization: `InvalidatedByInitialTargetMismatch`;
+- mutation ownership: `NoneTerminal`;
+- initial-dispatch attempt: `Closed(TargetMismatch)`;
+- transfer attempt: `Unissued`, `transfer ID: none`.
+
+Initial attempt — отдельный namespace/state от handoff transfer attempt:
+proven absent issuance не имеет AttemptKey; durable exact valid InitialDispatch
+означает `Established` и ordinary `Active/Owned(context)/Unissued`; unknown
+issuance/readback означает `Unknown/STOP`; этот protocol закрывает только
+proven malformed attempt. Closed(TargetMismatch) и NoneTerminal выбраны как
+metadata disposition, а не выдуманные transfer close или previous owner.
+InvalidatedByInitialTargetMismatch отличает transcription mismatch от factual
+изменения authorized Target. Ни consumption/P10/revoke/publication completion,
+ни task status transition из этого event не следуют. Общие handoff terminal
+semantics ниже не расширяются на malformed initial attempt; BCC/Negative
+Disposition sealing/intake barriers сохраняются, positive prerequisite не
+создаётся.
+
+**Interruption, idempotency и successor.** Before append при `Proven Not Started`
+допустимы fresh qualification и первый append при unchanged current metadata
+scope. Possible append/readback interruption даёт `Unknown/STOP`: inspect
+original chain, без re-emission. Exactly one matching durable closure требует
+recover/reuse existing receipt с zero append. Zero found после unknown outcome
+не равно Proven Not Started. Два разных physical closure items даже с identical
+payload/key — conflict/Unknown, не idempotent dedupe. Corrupt digest/key/namespace/
+predecessor/reason, stale prefix, duplicate old-gate dispatch, competing owner
+или неизвестные effects запрещают выбор convenient first/latest record.
+Новое evidence старого P0/effect исключает narrow path; историю сохраняют,
+outcome не переписывают.
+
+Old GateKey/AttemptKey навсегда tombstones. После доказанной closure —
+independent durable receipt либо полной reproducible independent validation с
+native locator/cut/order — normal gate context связывает exact Target и closure
+proof. Только следующий actual native user `Разрешаю публиковать.` создаёт NEW
+GateKey/transaction. Даже тот же immutable Target требует fresh route/admission,
+distinct InitialDispatch/owning run и все обычные P0–P10. Gate после raw emission,
+но до closure proof не становится valid ретроактивно: нужен последующий actual
+gate. Новый item/UUID под OLD gate не является fresh attempt. Только эта
+доказанная закрытая transaction даёт narrow exception к запрету initial dispatch
+при known old attempt; никакого replay/reuse старого разрешения.
+
+Repeated OLD recovery после complete valid successor chain report-only reuses
+old receipt, сохраняет NEW Active/Owned/context/phase и никогда не применяет
+old NoneTerminal к successor. Legitimate subsequent control events не являются
+сами по себе conflict; требуется reconstruct complete extension linkage/state.
+Invalid/unknown successor даёт current operation Unknown/STOP без owner guessing.
+Протокол не исправляет typo, не повторяет dispatch под old gate, не invent-ит
+UUID/Release/Accept, не заменяет transcript и не выполняет reconciliation
+автоматически после принятия общей governance task.
 
 #### Read-Only Capability Collector Boundary
 
@@ -1337,7 +1528,8 @@ merge OID и first unfinished step на момент Release. После Release
 Handoff хранит три независимые exact оси:
 
 - authorization: `Active`, `Consumed(P10)`, `RevokedByUser` либо
-  `InvalidatedByTargetChange`;
+  `InvalidatedByTargetChange` либо `InvalidatedByInitialTargetMismatch`
+  (только narrow pre-P0 metadata path выше);
 - mutation ownership: `Owned(execution-context)`, `InTransitNone`,
   `NoneTerminal` либо `Unknown`;
 - transfer attempt: `Unissued`, `Released`, `Accepted` либо `Closed(reason)`.
@@ -1510,9 +1702,12 @@ Terminal/return semantics являются исчерпывающими:
    пользу `InTransitNone`. Новый destination требует explicit route и Accept.
    `CancelledBeforeAccept` этого нового attempt возвращает ownership именно
    recorded releasing destination, не первоначальному source.
-3. Factual Target mismatch немедленно устанавливает
+3. Factual изменение authorized Target (в любой phase, включая pre-P0)
+   немедленно устанавливает
    `InvalidatedByTargetChange / NoneTerminal`, закрывает все связанные attempts
    как `Closed(TargetChanged)` и запрещает reuse прежней authorization.
+   Erroneous RecordedTarget при unchanged GateTarget до P0 не является таким
+   изменением; его единственный narrow metadata path определён отдельно выше.
 4. Explicit user revoke немедленно устанавливает
    `RevokedByUser / NoneTerminal`, закрывает open attempt как
    `Closed(UserRevoked)`; более поздняя publication требует нового exact gate.

@@ -245,6 +245,68 @@ acting. Pending/ambiguous dispatch, rejected runner or unknown linkage stops
 mutations; no sandbox fallback. Already-owned context changes retain the existing
 Release / actual user Route / Accept recovery protocol.
 
+Known durable malformed InitialDispatch uses only the bounded
+[pre-P0 metadata reconciliation protocol](../../engineering/PROCESS-001-AI-DEVELOPMENT-WORKFLOW.md#known-durable-initialdispatch-target-mismatch-reconciliation).
+It requires a unique exact original native item that never established an
+owner, unchanged actual gate/checkpoint Target, P0–P10 Proven Not Started, full
+qualified native history/invocation inventory and independent external
+corroboration with explicit time/subject/visibility coverage. User assertions,
+STOP prose, collector success, a clean tree or current ref/PR absence do not
+prove no effects. P0-start, effects, missing output/async/script/route evidence,
+inaccessible actual history or unknown outcomes fail closed. Prior valid revoke,
+Consumed(P10), TargetChanged or another terminal reason excludes first closure;
+preserve that reason. Exact already-valid initial closure permits only reuse.
+Actual authorized Target change retains the existing path in any phase, including
+before owner/P0; a RecordedTarget error requires unchanged GateTarget.
+
+AttemptKey and GateKey use distinct typed namespaces and original provider,
+conversation/history-branch/turn/item locators plus SHA256 of the complete exact
+persisted native textual payload in strict UTF8. Both keys require the branch
+tag {kind:Branch,id:exactNativeBranchID} or {kind:NotApplicable}, the latter only
+with independent proof that the provider has no history branches; missing/null/
+unknown/guessed branches and aliases fail. Preserve U+FEFF, Unicode and line
+endings; do not add a BOM, normalize, trim, guess multipart concatenation, use
+outer JSON/compressed file bytes or retrofit a UUID. Native API/backing must
+recover the same text. Full GateTarget and RecordedTarget remain separate;
+ReconciliationKey binds both keys, both Targets and TargetMismatch with exact
+component equality, without aliases, missing/null equivalence or reordering.
+
+A current Coordinator/reconciler may emit its own metadata only in the qualified
+original chain/linked continuation under a separately explicit current recovery
+scope naming the attempt and permitting assessment plus metadata reconciliation.
+It never impersonates the old Publisher/owner or elevates a principal. Design
+Acceptance/amendment manifest is neither application permission nor live proof.
+ObservedCut records the full ordered native snapshot and stable prefix;
+ControlTail records its newest authority-relevant event. Fully inventoried,
+native-correlated observational extensions are allowed; any new control event
+or unknown extension requires complete requalification, not a stale append.
+
+Exactly one physical InitialDispatchReconciliation with independent complete
+readback is the metadata point; its observation receipt cites the assigned item
+ID and new cut, not a self-assigned ID or unsaved self-hash. Until then ownership
+is Unknown/STOP and the old gate is unusable. The old transaction alone becomes
+InvalidatedByInitialTargetMismatch / NoneTerminal, with initial attempt
+Closed(TargetMismatch); transfer stays Unissued with ID none. This is neither
+TargetChanged for an unchanged gate Target, P10/consumption, publication
+completion nor task closure. The initial attempt namespace is separate from
+handoff transfers; an exact valid dispatch is Established, unknown issuance is
+Unknown/STOP, and absent issuance has no AttemptKey.
+
+Possible interrupted append requires original-chain inspection, never blind
+re-emission; zero found does not prove Not Started. One proven matching closure
+reuses its receipt with zero append. Two distinct physical native closure
+locators/IDs conflict even with identical payload/key; API/backing/ZST views of
+one item count once, while inconsistent views under one ID are corruption/STOP.
+Late P0/effect evidence excludes this path without rewriting history. Old
+gate/attempt are permanent tombstones. Only a subsequent actual exact user
+publication gate after closure proof, binding that proof and Target, plus fresh
+route/admission and distinct dispatch/run can create a new transaction, even
+for the same Target. A gate between raw emission and proof is not retroactively
+valid. Late old recovery preserves a fully reconstructed valid successor
+owner/phase; unknown successor facts remain STOP. Existing handoff, BCC/Negative
+Disposition sealing and intake rules remain; design alone activates no recovery,
+permission or successor task.
+
 The read-only collector's Discovery mode may report dirty state as a publication
 admission blocker; P0Capability requires clean state. Neither mode establishes
 authority, ownership or full P0. Full P0 also checks native linkage/authorization/
@@ -297,8 +359,9 @@ identity. The snapshot contains P0-P10 classifications, known refs/PR/merge
 OIDs, and the first unfinished step. The explicit user route and Accept event
 bind the exact destination identity to those unchanged fields.
 
-The state model has three independent axes: authorization `Active |
-Consumed(P10) | RevokedByUser | InvalidatedByTargetChange`; mutation ownership
+The handoff state model has three independent axes: authorization `Active |
+Consumed(P10) | RevokedByUser | InvalidatedByTargetChange |
+InvalidatedByInitialTargetMismatch`; mutation ownership
 `Owned(context) | InTransitNone | NoneTerminal | Unknown`; and transfer attempt
 `Unissued | Released | Accepted | Closed(reason)`. Release sets
 `Active/InTransitNone/Released`; Accept sets

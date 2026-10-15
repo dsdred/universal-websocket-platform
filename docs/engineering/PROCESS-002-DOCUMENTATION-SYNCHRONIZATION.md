@@ -219,7 +219,8 @@ Operational handoff record хранится вне immutable Target/project-stat
 append-only связывает exact UUIDv4 transfer ID с immutable Target, source
 identity, Release checkpoint snapshot, explicit user route, destination
 identity, Accept и closed events. Он обязан переживать interruption и быть
-independently inspectable. Authorization `Active/Consumed/Revoked/Invalidated`,
+independently inspectable. Authorization `Active/Consumed/Revoked/Invalidated` (включая отдельный narrow
+`InvalidatedByInitialTargetMismatch`),
 ownership `Owned/InTransitNone/NoneTerminal/Unknown` и attempt
 `Unissued/Released/Accepted/Closed(reason)` не выводятся из project-state text.
 Недоступный или неоднозначный record означает ownership `Unknown` и STOP.
@@ -248,6 +249,18 @@ evidence означает STOP. P10 evidence сначала доказывает
 `CancelledBeforeAccept`. Затем evidence различает no-handoff
 `Unissued`/publication-level no-ID event, exact Accepted closure и сохранение
 already-closed reason с отдельным P10 event при доказанном current owner.
+
+Known durable malformed initial-dispatch metadata следует только PROCESS-001
+§Known Durable InitialDispatch Target Mismatch Reconciliation. Stable project
+facts сохраняют общий принятый design, но не live AttemptKey/GateKey,
+ObservedCut/ControlTail, no-effects verdict, pending append или closure receipt.
+Они остаются в qualified native operational chain вне immutable Target.
+Initial-attempt `Closed(TargetMismatch)` отдельно от transfer `Unissued`/ID none;
+authorization `InvalidatedByInitialTargetMismatch` и `NoneTerminal` scoped old
+transaction, не task lifecycle/publication completion и не successor. Exact
+payload SHA256 не смешивается с Git manifest OID. Documentation Approval не
+доказывает native eligibility и не разрешает metadata application. Repeated
+recovery reuses exact existing closure, не создаёт physical duplicate event.
 
 При applicability review изменения Publisher execution governance требуют
 проверки PROCESS-001, AGENT, Coordinator/Publisher roles, Publisher и general

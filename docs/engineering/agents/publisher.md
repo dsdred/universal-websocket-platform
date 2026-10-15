@@ -60,8 +60,9 @@ authority другого A/B/C target не переносятся.
 
 Оно не разрешает другой commit, branch, PR, force operation, bypass, rebase,
 reset, non-fast-forward pull или scope change. Разрешение прекращается только
-после P10, явного отзыва пользователем либо invalidation из-за изменения
-branch/commit/base/scope. Внешний blocker разрешение не расходует.
+после P10, явного отзыва пользователем, invalidation из-за изменения
+branch/commit/base/scope либо proven narrow initial-mismatch closure ниже.
+Внешний blocker разрешение не расходует.
 
 После устранения blocker точная команда
 `Авторизация готова. Продолжай ранее разрешённую публикацию.` либо столь же
@@ -70,6 +71,31 @@ reconstruction и продолжение с первого незавершён�
 `Разрешаю публиковать.` не требуется.
 
 ## Execution Environment Capability
+
+### Known Malformed Initial Dispatch
+
+Применим только narrow protocol PROCESS-001 §Known Durable InitialDispatch
+Target Mismatch Reconciliation: unique durable malformed payload, exact
+AttemptKey/GateKey/оба Targets, never-established owner, P0–P10 Proven Not Started,
+complete qualified native inventory и independent bounded external no-effects
+corroboration. P0-start/effect/unknown data исключают этот путь. Current
+Coordinator/reconciler по отдельному explicit exact metadata-recovery scope
+emits собственный native event; Publisher не фабрикует прежнего owner/transfer.
+Accepted amendment manifest не permission. ObservedCut/ControlTail и native
+readback проверяются по primary contract; unknown append ⇒ Unknown/STOP,
+exact single closure reused, distinct physical closure items conflict.
+
+Independent durable closure устанавливает только old transaction authorization
+`InvalidatedByInitialTargetMismatch`, ownership `NoneTerminal`, initial attempt
+`Closed(TargetMismatch)`; transfer remains `Unissued`, ID none. Это не P10,
+publication completion или task lifecycle. GateTarget не изменялся, поэтому
+TargetChanged не подменяет этот reason. Old gate/attempt permanently forbidden
+для повторного dispatch. Только actual exact user publication gate после proof
+closure, fresh route/admission и distinct dispatch/run разрешают NEW transaction
+даже с тем же Target. Repeated OLD recovery report-only reuses receipt и
+сохраняет valid successor owner/phase; unknown successor ⇒ STOP. Initial attempt
+namespace/state не является transfer attempt axis, valid initial dispatch имеет
+`Established`, unknown issuance/readback — `Unknown/STOP`.
 
 ### Initial Trusted Route
 
@@ -163,8 +189,9 @@ failed/interrupted assessment не даёт destination права mutation. Rev
 already-accepted ID, два releases/destinations и Target mismatch fail closed.
 Transfer ID не является secret, credential, permission или machine lock.
 
-State model содержит три независимые оси: authorization `Active |
-Consumed(P10) | RevokedByUser | InvalidatedByTargetChange`; mutation ownership
+Handoff state model содержит три независимые оси: authorization `Active |
+Consumed(P10) | RevokedByUser | InvalidatedByTargetChange |
+InvalidatedByInitialTargetMismatch`; mutation ownership
 `Owned(context) | InTransitNone | NoneTerminal | Unknown`; transfer attempt
 `Unissued | Released | Accepted | Closed(reason)`. Release устанавливает
 `Active/InTransitNone/Released`, Accept — `Active/Owned(destination)/Accepted`.
@@ -174,7 +201,8 @@ reconciliation без Accept/side effect; event закрывает ID, сохр�
 возвращает ownership recorded releasing source и требует повторного capability
 proof. После Accepted reverse начинает current destination через fresh ID и
 теряет ownership при Release; cancellation возвращает именно этого releasing
-destination. Target mismatch даёт `InvalidatedByTargetChange/NoneTerminal` и
+destination. Actual authorized Target change даёт
+`InvalidatedByTargetChange/NoneTerminal` и
 закрывает все attempts; user revoke — `RevokedByUser/NoneTerminal` и требует
 нового gate. P10 может terminalize publication только при доказанном
 `Active/Owned(execution-context)` у exact actor. `Released/InTransitNone`

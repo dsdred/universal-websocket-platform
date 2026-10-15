@@ -461,3 +461,29 @@ Route discovery и owned transaction различаются; earlier handoff gua
 | R-103 | Existing legacy or accepted-handoff owner present | Retain exact owner and phase; no initial-dispatch retrofit, unchanged transfer for context change |
 | R-104 | P-step mutation outcome unknown after trusted invocation | Existing operation-specific inspect/reconstruct/reconcile, no blind retry or default sandbox execution |
 | R-105 | P10 consumes no-handoff publication; new gate follows later | Old owner/authority terminal, Unissued not fabricated Closed ID; fresh independent exact gate/qualified dispatch for new Target |
+
+### Known durable malformed initial dispatch — R-106–R-122
+
+Trace: PROCESS-001 §Known Durable InitialDispatch Target Mismatch Reconciliation;
+Publisher S-083–S-108. Offline decision fixtures only: no actual native
+append/readback, current no-effects proof, TASK-092 disposition or permission.
+
+| ID | Given / When | Required result |
+|---|---|---|
+| R-106 | Recovery interrupted before append; full issuance inventory proves append Proven Not Started and metadata scope unchanged | Requalify current complete cut/control tail and eligibility, then first append only; no old dispatch retry |
+| R-107 | Append command/message started, outcome unknown; no closure currently found | Unknown/STOP; inspect original native chain, zero found is not Proven Not Started, no re-emission |
+| R-108 | Exact closure emitted, interrupted before independent readback/receipt | No terminal proof yet; native readback reconstructs exactly one event/order/prefix; only complete independent validation establishes metadata disposition |
+| R-109 | One durable closure/receipt proven, interruption before terminal report or repeated recovery | Zero append; reuse assigned closure ID/full receipt, reconstruct exact old scoped states, report-only |
+| R-110 | Receipt emission interrupted or unknown; closure independently proven | Inspect receipt/history before any new observation; receipt is labeled observation, not second closure; no extra reconciliation event |
+| R-111 | Two physical matching closure locators/IDs or conflicting duplicate/reason/predecessor | Unknown/STOP even identical bytes/key; no dedupe or choice of convenient event; consistent API/backing/ZST views of one item count once, inconsistent one-ID views STOP |
+| R-112 | Stable prefix remains but known observational native tools/results extend EOF through readback | Full item classification + same control chain permits readback; never require impossible unchanged EOF, unknown extension blocks |
+| R-113 | Revoke/new gate/route change/P-step/unknown call/competing actor appears between cut, append and readback | ControlTail changed; requalify complete chain, no stale append or closure proof from prior cut |
+| R-114 | Interrupted inventory has missing script expansion/result/async completion, inaccessible actual store or conflicting API/backing | No-effects/qualification unknown; restore actual record, not replacement backend or guessed provenance |
+| R-115 | External corroboration unavailable/stale or covers only current ref absence; later historical write/P0 discovered | No closure on insufficient negative proof; late evidence excludes narrow path, preserve native events and reconcile effects |
+| R-116 | Raw payload restored through compressed backing, pathname/continuation alias changed | Reconstruct original typed native keys and strict exact-text UTF8 digest; wrapper/file hash or alias never replaces key |
+| R-117 | Corrupt digest/namespace/encoding, ambiguous multipart, other history branch or normalized/reordered Target | Reject identity match; fail closed without retrofitted UUID/corrected initial dispatch |
+| R-118 | Old gate/new item retry or user gate arrived before independently proven closure | Permanently reject old transaction replay; premature gate cannot acquire validity retroactively, subsequent actual exact gate required |
+| R-119 | Closure proven then fresh actual gate for same Target with new route/admission/distinct dispatch/run | Separate NEW transaction; normal native owner/P0–P10 gates apply, old gate not reused or restored |
+| R-120 | Late recovery of OLD attempt after successor, with full valid linkage vs missing/conflicting successor facts | Valid: report-only reuse OLD receipt, preserve NEW Active/Owned/context/phase; incomplete: current operation Unknown/STOP, no repository-global NoneTerminal |
+| R-121 | originalHistoryBranchID missing/unknown, wrong Branch/id or unsupported NotApplicable after interrupted reconstruction | Fail closed; both native keys require exact tagged branch variant with independent provider-no-branches proof for NotApplicable |
+| R-122 | Prior revoke/Consumed(P10)/TargetChanged/other terminal facts found during restart | Preserve prior valid reason, no first closure; unknown/conflicting facts STOP, exact valid prior initial closure only report-only reuse; actual TargetChanged path remains any-phase |

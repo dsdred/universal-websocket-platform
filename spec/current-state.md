@@ -1,21 +1,36 @@
 # Текущее состояние
 
-**Текущая задача:** TASK-091 — Source-Minted Current-Authority Handoff, bounded A1 Implementation,
-verification-stable `In Progress`, branch
-`feature/task-091-current-authority-handoff`, baseline
-`587b55bdda0aa4ee92f2ce1827481e8dab51da86`. Actual gates/closure resolve only
-from its newest valid matching Recovery Evidence Envelope. Additive DP-024 §21
-records the isolated source/issuer, one-time generation binding, detached observation
-and actual keeper inspection boundary implemented in this worktree. Local binding
-is not continuing external authority; later use requires fresh local revalidation.
-Architecture Confirmation PASS; Verification, Review and Acceptance remain separate
-gates. Sole next recommendation: A2 joint real-owner session/reservation fresh
-readiness and Size Guard after independent A1 Acceptance, Not Activated; no successor
-ID or branch assigned. A2 implementation is not Ready yet. B persistent-owner/claim/
-provenance conformance remains unresolved; successful durable qualification/full
-item7 remain Not Ready and integrated P1–P14 Planned. DP-024 stays Approved / Partial;
-DP-017 stays Approved / Planned overall. No startup opening, claim, permit,
-lifecycle/reconciliation/release, production wiring or status promotion.
+**Текущая задача:** TASK-093 — Initial Dispatch Target Mismatch Reconciliation Governance,
+Design-update / Governance, verification-stable `In Progress`, branch
+`docs/task-093-initial-dispatch-reconciliation`, baseline
+`7f993c810ecd105f9f6d1b8c93fb2f173f832879`. Actual gates/closure resolve only
+from newest valid matching Recovery Evidence Envelope in its task record.
+Один общий append-only pre-P0 metadata design; native application, TASK-092
+reconciliation, InitialDispatch, P0–P10, commit и publication не выполняются.
+Approval этого design не доказывает live eligibility или permission. Следующий
+candidate — отдельный explicitly scoped read-only application-readiness
+assessment original incident, Not Activated; successor ID/branch не назначены.
+
+TASK-092 — immutable historical Completed — Coordinator Accepted по
+E-092-007/E-092-008, source commit
+`b25119ac94f21c115ca5dce7759447fbbd07fe3e`, accepted manifest
+`51e60028f19d7bd2e87f86908aab8c839b713abf`. Source читается через
+`git show b25119ac94f21c115ca5dce7759447fbbd07fe3e:docs/tasks/TASK-092-JOINT-SESSION-READINESS.md`;
+его файл/DP-024 §22 не включены в этот main-based governance checkout. Это
+unpublished accepted source; task Completion не доказывает publication и не
+переносит authority. Его publication/recovery не активируются этой задачей.
+
+TASK-091 — последняя опубликованная A1 implementation, historical Completed —
+Coordinator Accepted, accepted manifest `27ebcd9465b1e4f078e6b64cd80fcc492a81efd2`,
+source `108a461409421af36011ea5ca7a6b2e6a2ddca14`, PR #96 merge
+`7f993c810ecd105f9f6d1b8c93fb2f173f832879` по local immutable Git metadata.
+DP-024 §21 сохраняет isolated source/issuer, one-time generation binding,
+detached observation и actual keeper inspection. A2 implementation/readiness
+не активируется. B persistent-owner/claim/provenance остаётся unresolved;
+successful durable qualification/full item7 Not Ready, integrated P1–P14 Planned.
+DP-024 Approved / Partial, DP-017 Approved / Planned overall. No startup opening,
+claim, permit, lifecycle/reconciliation/release, production wiring или promotion.
+Historical Acceptance/cached facts не являются fresh gates/P0–P10 evidence.
 
 **Последняя опубликованная readiness task:** TASK-090 — historical Completed — Coordinator Accepted, accepted source manifest
 `dacc667c07fa126151fe49ea5b356a4edc7d9d06`, source commit
