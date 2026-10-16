@@ -3,17 +3,22 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая assessment task — [TASK-094](TASK-094-TASK-092-RECOVERY-ASSESSMENT.md).
-TASK-092 Publication Recovery Assessment, Documentation-only,
+Текущая assessment task — [TASK-095](TASK-095-POST-REVOKE-RECOVERY-ASSESSMENT.md).
+Post-Revoke Recovery Governance Assessment для TASK-092, Documentation-only,
 verification-stable `In Progress`, branch
-`docs/task-094-task-092-recovery-assessment`, baseline
-`bfb29d3bc6da58e05e921700e8e311b399f5fc97`. Actual gates/closure resolve only
+`docs/task-095-post-revoke-recovery-assessment`, baseline
+`8cc432c3b6c751daa3e2daf4d791e54d99a74c75`. Actual gates/closure resolve only
 from newest valid matching Recovery Evidence Envelope in its task record.
-Exact original dispatch содержит accepted manifest; historical checker expected
-ошибочное значение. TargetMismatch application ineligible; ordinary recovery
-требует дальнейшей квалификации и отдельных actual user gates. Старый gate
-не переиспользуется. Native application, InitialDispatch и publication excluded.
-Условный future recovery Not Activated; successor ID/branch не назначены.
+Scope — bounded assessment действующих правил; PROCESS-001/Publisher contracts,
+immutable sources и native operational history не изменяются. Assessment не
+применяет recovery, не выпускает terminal events и не активирует publication.
+Следующий candidate только conditional / Not Activated; successor ID не назначен.
+
+TASK-094 — historical Completed — Coordinator Accepted по E-094-006/E-094-007;
+accepted source `0354eaaa9375328f8bf8d89d115a9f6ebfc16abc`, PR #98 local merge
+`8cc432c3b6c751daa3e2daf4d791e54d99a74c75`. Assessment установил correct original
+dispatch и исключил TargetMismatch; conditional ordinary recovery не активирован.
+Immutable local metadata не fresh remote/P0–P10 evidence.
 
 [TASK-093](TASK-093-INITIAL-DISPATCH-TARGET-MISMATCH-RECONCILIATION.md) —
 published governance, historical Completed — Coordinator Accepted
