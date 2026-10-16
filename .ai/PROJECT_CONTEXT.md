@@ -8,16 +8,25 @@
 
 ## Текущее состояние
 
-- Current task: TASK-093 — Initial Dispatch Target Mismatch Reconciliation Governance,
-Design-update / Governance, verification-stable `In Progress`, branch
-`docs/task-093-initial-dispatch-reconciliation`, baseline
-`7f993c810ecd105f9f6d1b8c93fb2f173f832879`. Actual gates/closure resolve only
+- Current task: [TASK-094](../docs/tasks/TASK-094-TASK-092-RECOVERY-ASSESSMENT.md) —
+TASK-092 Publication Recovery Assessment, Documentation-only,
+verification-stable `In Progress`, branch
+`docs/task-094-task-092-recovery-assessment`, baseline
+`bfb29d3bc6da58e05e921700e8e311b399f5fc97`. Actual gates/closure resolve only
 from newest valid matching Recovery Evidence Envelope in its task record.
-Один общий append-only pre-P0 metadata design; native application, TASK-092
-reconciliation, InitialDispatch, P0–P10, commit и publication не выполняются.
-Approval этого design не доказывает live eligibility или permission. Следующий
-candidate — отдельный explicitly scoped read-only application-readiness
-assessment original incident, Not Activated; successor ID/branch не назначены.
+Exact original dispatch содержит accepted manifest; historical checker expected
+ошибочное значение. TargetMismatch application ineligible; ordinary recovery
+требует дальнейшей квалификации и отдельных actual user gates. Старый gate
+не переиспользуется. Native application, InitialDispatch и publication excluded.
+Условный future recovery Not Activated; successor ID/branch не назначены.
+
+TASK-093 — published governance, historical Completed — Coordinator Accepted
+по E-093-009/E-093-010, accepted manifest
+`76d2f016f30b0ebba5d149f02d4f5ccfff36c599`, source
+`8df57a598460ad677b0f128d5609d1913bc3e5ed`, PR #97 merge
+`bfb29d3bc6da58e05e921700e8e311b399f5fc97` по immutable Git/read-only GitHub
+evidence. Generic append-only mismatch design не доказывает incident eligibility,
+current ownership/gate или authority применить его к TASK-092.
 
 TASK-092 — immutable historical Completed — Coordinator Accepted по
 E-092-007/E-092-008, source commit
