@@ -3,16 +3,31 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая assessment task — [TASK-095](TASK-095-POST-REVOKE-RECOVERY-ASSESSMENT.md).
-Post-Revoke Recovery Governance Assessment для TASK-092, Documentation-only,
+Текущая design task — [TASK-097](TASK-097-CONTROLLED-PUBLISHER-RECOVERY-DESIGN.md) —
+Controlled Publisher Recovery, Documentation-only / Design,
 verification-stable `In Progress`, branch
-`docs/task-095-post-revoke-recovery-assessment`, baseline
-`8cc432c3b6c751daa3e2daf4d791e54d99a74c75`. Actual gates/closure resolve only
+`docs/task-097-controlled-publisher-recovery-isolated`, baseline
+`c8047fd08caa79480c2bc73b5c382f4aa5079db7`. Actual gates/closure resolve only
 from newest valid matching Recovery Evidence Envelope in its task record.
-Scope — bounded assessment действующих правил; PROCESS-001/Publisher contracts,
-immutable sources и native operational history не изменяются. Assessment не
-применяет recovery, не выпускает terminal events и не активирует publication.
-Следующий candidate только conditional / Not Activated; successor ID не назначен.
+Scope — новое требование владельца проекта; confirmed governance gap не установлен.
+DP-025 Draft / Planned сравнивает A Direct Publisher, B Fenced Mutation Gateway
+и C current fail-closed STOP; provider CAS/fencing capabilities остаются Unknown.
+Architecture Confirmation не утверждает operational recovery contract.
+Нормативные contracts, tooling и operational history не изменяются; live recovery,
+activation и historical migration не выполняются. Следующий candidate — только
+conditional / Not Activated; successor ID не назначен.
+
+TASK-096 — historical Completed — Coordinator Accepted по E-096-007/E-096-008;
+accepted source `82cf49627e54881599bb60a55f28c8e9c6b0c4db`, accepted manifest
+`1e065935ded73cd69c89b7f60a8359488509697d`. Authoring Completion не доказывает
+terminal publication. TASK-095/096 — bounded forensic fixtures design; их permission,
+ownership, immutable sources и operational transactions не меняются этой задачей.
+
+TASK-095 — historical Completed — Coordinator Accepted по E-095-006/E-095-007;
+accepted source `6a35b76f7678a06f65c24eb06de9bc8e0f6149bd`, accepted manifest
+`82fac22f0766fbad81cdd4568230cfd5240cb537`. Immutable accepted assessment source
+сохраняется. Authoring Completion не доказывает terminal publication; current
+assessment не переносит authority и не изменяет TASK-095 record/transaction.
 
 TASK-094 — historical Completed — Coordinator Accepted по E-094-006/E-094-007;
 accepted source `0354eaaa9375328f8bf8d89d115a9f6ebfc16abc`, PR #98 local merge

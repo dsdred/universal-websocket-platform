@@ -30,3 +30,11 @@ This directory contains focused Runtime design documents. A design document expl
 | [DP-022: Runtime Execution Containment and Evidence](DP-022-runtime-execution-containment-and-evidence.md) | Approved; partial: TASK-070/TASK-071/TASK-073 prerequisites and TASK-074 private composition gate are published; no production wiring |
 | [DP-023: Runtime Process-Containment Bootstrap](DP-023-runtime-process-containment-bootstrap.md) | Approved; implemented in isolation; ordered items 1–5 are published and TASK-075 implements item 6 read-only assessment in isolation; no production wiring |
 | [DP-024: Runtime Recovery Claim and Admission Boundary](DP-024-runtime-recovery-claim-admission-boundary.md) | Approved / Partial; TASK-081 isolated local ordering/fence test-owner models; real-owner/provenance/durable claim/permit absent; integrated proofs Planned |
+
+## Publisher governance proposals
+
+Separate governance research; these proposals do not extend Runtime implementation or authorize publication recovery.
+
+| Document | Status |
+| --- | --- |
+| [DP-025: Controlled Publisher Recovery](DP-025-controlled-publisher-recovery.md) | Draft / Planned; not implemented or activated |
