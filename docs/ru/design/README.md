@@ -38,3 +38,4 @@
 | Document | Status |
 | --- | --- |
 | [DP-025: Controlled Publisher Recovery](DP-025-controlled-publisher-recovery.md) | Draft / Planned; не реализовано и не активировано |
+| [DP-026: Fenced Mutation Gateway](DP-026-fenced-mutation-gateway.md) | Draft / Planned; не реализовано и не активировано |

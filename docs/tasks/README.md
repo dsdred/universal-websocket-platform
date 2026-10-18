@@ -3,19 +3,29 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая design task — [TASK-097](TASK-097-CONTROLLED-PUBLISHER-RECOVERY-DESIGN.md) —
-Controlled Publisher Recovery, Documentation-only / Design,
+Текущая design task — [TASK-098](TASK-098-FENCED-MUTATION-GATEWAY-DESIGN.md) —
+Fenced Mutation Gateway, Documentation-only / Design,
 verification-stable `In Progress`, branch
-`docs/task-097-controlled-publisher-recovery-isolated`, baseline
-`c8047fd08caa79480c2bc73b5c382f4aa5079db7`. Actual gates/closure resolve only
+`docs/task-098-fenced-mutation-gateway-design`, baseline
+`3e41932b4cd7d30acc1f61ec3d80d9700e3d8b84`. Actual gates/closure resolve only
 from newest valid matching Recovery Evidence Envelope in its task record.
-Scope — новое требование владельца проекта; confirmed governance gap не установлен.
-DP-025 Draft / Planned сравнивает A Direct Publisher, B Fenced Mutation Gateway
-и C current fail-closed STOP; provider CAS/fencing capabilities остаются Unknown.
-Architecture Confirmation не утверждает operational recovery contract.
-Нормативные contracts, tooling и operational history не изменяются; live recovery,
-activation и historical migration не выполняются. Следующий candidate — только
-conditional / Not Activated; successor ID не назначен.
+Scope — новое design requirement владельца; confirmed governance gap не установлен.
+DP-026 Draft / Planned проектирует prospective single-active gateway:
+exclusive credentials/workspace, durable journal, fencing и uncertain outcomes.
+Все неквалифицированные provider capabilities остаются UNKNOWN.
+Native CAS не доказывает fencing внешних mutations. DP-025 остаётся Draft / Planned;
+C остаётся действующим fail-closed baseline. Normative contracts, implementation,
+deployment, PoC, activation и live recovery не входят в scope.
+Следующие normative/evidence/implementation/activation gates — Not Activated,
+без автоматически назначенных Task IDs.
+
+TASK-097 — historical Coordinator Accepted, replacement R-097-007, manifest
+`5a583be8e6e935c1f556f4bc4bdb58b8c6c975b6`; isolated source
+`a3aa6a4a71422fdc38ee6a77feeb5af2719f1240`, PR #101 terminally published,
+merge `3e41932b4cd7d30acc1f61ec3d80d9700e3d8b84`.
+Это durable historical outcome, не fresh publication gate/owner или authority TASK-098.
+Published DP-025 Draft / Planned не активировал controlled recovery.
+Original commit/branch сохранены; TASK-096 source не включён в publication range.
 
 TASK-096 — historical Completed — Coordinator Accepted по E-096-007/E-096-008;
 accepted source `82cf49627e54881599bb60a55f28c8e9c6b0c4db`, accepted manifest

@@ -38,3 +38,4 @@ Separate governance research; these proposals do not extend Runtime implementati
 | Document | Status |
 | --- | --- |
 | [DP-025: Controlled Publisher Recovery](DP-025-controlled-publisher-recovery.md) | Draft / Planned; not implemented or activated |
+| [DP-026: Fenced Mutation Gateway](DP-026-fenced-mutation-gateway.md) | Draft / Planned; not implemented or activated |
