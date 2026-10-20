@@ -3,6 +3,7 @@ package runtime
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -34,7 +35,7 @@ func TestRuntimeSnapshotFieldSupportMatrixIsExhaustive(t *testing.T) {
 		"listener.TLS.MinVersion":                                "TLS: inactive while TLS is disabled",
 		"listener.Timeouts.HandshakeSeconds":                     "Handshake: executed as pre-Upgrade deadline",
 		"listener.Timeouts.ReadSeconds":                          "Listener settings: configured but inactive until Gate 9",
-		"listener.Timeouts.WriteSeconds":                         "Listener settings: configured but inactive until Gate 9",
+		"listener.Timeouts.WriteSeconds":                         "Session Send: one budget for serialization and network write",
 		"listener.Timeouts.IdleSeconds":                          "Listener settings: configured but inactive until Gate 9",
 		"authentication.Enabled":                                 "Authentication Bootstrap: service or anonymous identity",
 		"authentication.Providers[].Name":                        "Authentication Factory: provider identity",
@@ -79,6 +80,23 @@ func TestValidateExecutableSnapshotRejectsZeroSnapshot(t *testing.T) {
 func TestValidateExecutableSnapshotAcceptsBuilderSnapshot(t *testing.T) {
 	if err := validateExecutableSnapshot(validSnapshot()); err != nil {
 		t.Fatalf("validateExecutableSnapshot() error = %v", err)
+	}
+}
+
+func TestWriteSecondsSnapshotBounds(t *testing.T) {
+	for _, seconds := range []uint32{0, 1, 300, 301, ^uint32(0)} {
+		t.Run(fmt.Sprint(seconds), func(t *testing.T) {
+			snapshot, diagnostics := buildSnapshotForTest(func(version *configurationversion.ConfigurationVersion) {
+				version.Listener.Timeouts.WriteSeconds = seconds
+			})
+			if seconds >= 1 && seconds <= 300 {
+				if len(diagnostics) != 0 || validateExecutableSnapshot(snapshot) != nil {
+					t.Fatalf("valid bound rejected: %v", diagnostics)
+				}
+			} else if len(diagnostics) == 0 {
+				t.Fatal("invalid timeout produced executable Snapshot")
+			}
+		})
 	}
 }
 
