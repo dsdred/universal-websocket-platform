@@ -1,7 +1,9 @@
 # Runtime WriteSeconds enforcement — TASK-103
 
 Design status: Architecture Confirmation PASS (независимый Architect).
-Implementation status: implemented candidate; commit/publication не разрешены.
+Implementation status: Delivered via PR #103, source
+`a2742ab927f7a23fd10a92db986ce36ff6a987e8`, merge
+`aed7cc8f1693cf8bb48d71532fe543f09d2d1191`.
 Focused implementation note не изменяет Approved DP-003/004, Frozen
 ARCH-002 и Active ARCH-003. Effective Listener timeout behavior исключён из freeze ARCH-002.
 

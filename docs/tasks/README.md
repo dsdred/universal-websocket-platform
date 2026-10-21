@@ -3,11 +3,14 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая engineering task — [TASK-103](TASK-103-RUNTIME-WRITE-TIMEOUT.md) —
-Runtime WriteSeconds enforcement, `In Progress`, branch
-`feature/task-103-runtime-write-timeout`, baseline
-`4caf32fb3344c064c14f0c52ae3507f5c92e0718`. Gates resolve from newest matching
-task Recovery Evidence Envelope; no commit/publication authorized. TASK-102
+Текущая engineering task — [TASK-104](TASK-104-RUNTIME-READ-TIMEOUT.md) —
+Runtime ReadSeconds enforcement, `In Progress`, branch
+`feature/task-104-runtime-read-timeout`, baseline
+`aed7cc8f1693cf8bb48d71532fe543f09d2d1191`. Gates resolve from newest matching
+task Recovery Evidence Envelope; no stage/commit/publication authorized.
+TASK-103 WriteSeconds source `a2742ab927f7a23fd10a92db986ce36ff6a987e8` опубликован
+через PR #103, merge `aed7cc8f1693cf8bb48d71532fe543f09d2d1191`; historical race
+NOT RUN и R-103-N1 nonblocking сохраняются, без переноса authority. TASK-102
 source-only Accepted, committed/unpublished on separate branch at
 `8bfa2e22a4b6310a71f6d36c8724b1adedd727ad`; native verification NOT RUN,
 toolchain NOT QUALIFIED (Owner checkpoint).

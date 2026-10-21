@@ -47,6 +47,7 @@ type TransactionalDispatcher struct {
 	generate     idGenerator
 	prepare      provisionalPreparer
 	writeTimeout time.Duration
+	readTimeout  time.Duration
 }
 
 // NewTransactionalDispatcher creates the production transaction-capable
@@ -76,14 +77,31 @@ func NewTransactionalDispatcherWithWriteTimeout(
 	observer executionowner.TerminalObserver,
 	timeout time.Duration,
 ) (*TransactionalDispatcher, error) {
-	if timeout <= 0 || timeout > 300*time.Second {
+	return NewTransactionalDispatcherWithTimeouts(manager, root, handler, observer, 0, timeout)
+}
+
+// NewTransactionalDispatcherWithTimeouts configures immutable pre-Commit read
+// and write budgets: read 0..86400 seconds, write positive and at most 300
+// seconds. Zero disables the configured per-message read timeout.
+func NewTransactionalDispatcherWithTimeouts(
+	manager *sessionmanager.Manager,
+	root RuntimeContextProvider,
+	handler message.Handler,
+	observer executionowner.TerminalObserver,
+	readTimeout, writeTimeout time.Duration,
+) (*TransactionalDispatcher, error) {
+	if readTimeout < 0 || readTimeout > 86400*time.Second {
+		return nil, errors.New("read timeout must be between 0 and 86400 seconds")
+	}
+	if writeTimeout <= 0 || writeTimeout > 300*time.Second {
 		return nil, errors.New("write timeout must be positive and at most 300 seconds")
 	}
 	dispatcher, err := NewTransactionalDispatcher(manager, root, handler, observer)
 	if err != nil {
 		return nil, err
 	}
-	dispatcher.writeTimeout = timeout
+	dispatcher.readTimeout = readTimeout
+	dispatcher.writeTimeout = writeTimeout
 	return dispatcher, nil
 }
 
@@ -189,6 +207,7 @@ func (dispatcher *TransactionalDispatcher) DispatchAuthenticated(
 		return false, err
 	}
 	prepared.session.writeTimeout = dispatcher.writeTimeout
+	prepared.session.readTimeout = dispatcher.readTimeout
 	environment, err := executionowner.NewExecutionEnvironment(
 		rootContext,
 		executionContext,
