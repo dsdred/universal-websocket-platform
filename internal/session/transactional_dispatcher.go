@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/dsdred/universal-websocket-platform/internal/connection"
 	"github.com/dsdred/universal-websocket-platform/internal/executionowner"
@@ -39,12 +40,13 @@ type RuntimeContextProvider interface {
 // returns immediately after successful irreversible ownership transfer. It is
 // the sole production Session handoff selected by Runtime composition.
 type TransactionalDispatcher struct {
-	manager  reservationManager
-	root     RuntimeContextProvider
-	handler  message.Handler
-	observer executionowner.TerminalObserver
-	generate idGenerator
-	prepare  provisionalPreparer
+	manager      reservationManager
+	root         RuntimeContextProvider
+	handler      message.Handler
+	observer     executionowner.TerminalObserver
+	generate     idGenerator
+	prepare      provisionalPreparer
+	writeTimeout time.Duration
 }
 
 // NewTransactionalDispatcher creates the production transaction-capable
@@ -63,6 +65,26 @@ func NewTransactionalDispatcher(
 		generateID,
 		prepareProvisionalSession,
 	)
+}
+
+// NewTransactionalDispatcherWithWriteTimeout configures the immutable pre-Commit
+// per-Send budget. Legacy constructors leave this budget unconfigured.
+func NewTransactionalDispatcherWithWriteTimeout(
+	manager *sessionmanager.Manager,
+	root RuntimeContextProvider,
+	handler message.Handler,
+	observer executionowner.TerminalObserver,
+	timeout time.Duration,
+) (*TransactionalDispatcher, error) {
+	if timeout <= 0 || timeout > 300*time.Second {
+		return nil, errors.New("write timeout must be positive and at most 300 seconds")
+	}
+	dispatcher, err := NewTransactionalDispatcher(manager, root, handler, observer)
+	if err != nil {
+		return nil, err
+	}
+	dispatcher.writeTimeout = timeout
+	return dispatcher, nil
 }
 
 func newTransactionalDispatcher(
@@ -166,6 +188,7 @@ func (dispatcher *TransactionalDispatcher) DispatchAuthenticated(
 	if err != nil {
 		return false, err
 	}
+	prepared.session.writeTimeout = dispatcher.writeTimeout
 	environment, err := executionowner.NewExecutionEnvironment(
 		rootContext,
 		executionContext,

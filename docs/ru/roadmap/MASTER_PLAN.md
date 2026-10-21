@@ -247,6 +247,8 @@ Beta организована как набор архитектурных эп�
 ### Operational Completion
 
 9. **TLS and Listener settings:** безопасно разрешать certificate references и применять TLS, handshake, read, write и idle limits.
+   TASK-103 реализует bounded WriteSeconds slice (ожидание очереди и network
+   write); handshake уже применяется. TLS/read/idle остаются открытыми.
 10. **Metrics:** предоставлять ограниченные и не содержащие sensitive data measurements компонентов и lifecycle с контролируемой cardinality labels.
 11. **Operational diagnostics:** сообщать об ошибках server, Dispatcher, Provider, Handler и shutdown, сохраняя redaction Secrets и credentials.
 12. **Plugin contracts:** определить минимальные extension contracts, подтвержденные несколькими реальными use cases. Dynamic loading и ABI не подразумеваются.

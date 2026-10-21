@@ -1,6 +1,15 @@
 # Текущее состояние
 
-**Текущая задача:** [TASK-098](../docs/tasks/TASK-098-FENCED-MUTATION-GATEWAY-DESIGN.md) —
+**Текущая задача:** [TASK-103](../docs/tasks/TASK-103-RUNTIME-WRITE-TIMEOUT.md) —
+Runtime WriteSeconds enforcement, `In Progress`, branch
+`feature/task-103-runtime-write-timeout`, baseline
+`4caf32fb3344c064c14f0c52ae3507f5c92e0718`. Gates/closure resolve only from
+newest matching Recovery Evidence Envelope. No commit/publication authorized.
+TASK-102 remains source-only Accepted, committed/unpublished at
+`8bfa2e22a4b6310a71f6d36c8724b1adedd727ad` on its separate branch;
+native build/link NOT RUN, toolchain NOT QUALIFIED (Owner checkpoint).
+
+Historical [TASK-098](../docs/tasks/TASK-098-FENCED-MUTATION-GATEWAY-DESIGN.md) —
 Fenced Mutation Gateway, Documentation-only / Design,
 verification-stable `In Progress`, branch
 `docs/task-098-fenced-mutation-gateway-design`, baseline
@@ -1325,10 +1334,11 @@ Activation отсутствуют.
 - Первый Host Stop выполняет единый production shutdown pipeline: закрывает Admission, вызывает `SessionManager.BeginShutdown`, запрашивает Stop для immutable Snapshot, отменяет root Runtime context, останавливает Listener и затем ожидает `SessionManager.Wait`
 - Listener Stop и Manager Wait выполняются без удержания lifecycle mutex; их ошибки сохраняются вместе, а concurrent и repeated Stop получают один сохранённый terminal result
 - Успешный Host Stop подтверждает `SessionManager.StateClosed` и пустое Reservation, Registration и Owner Lifetime Lease accounting; context-bounded Wait failure оставляет Manager правдиво в `Closing`
-- Production composition до создания Listener проверяет startup-critical поля Snapshot: Runtime identity, Listener binding metadata, поддержку TLS и bounded Handshake timeout
+- Production composition до создания Listener проверяет startup-critical поля Snapshot: Runtime identity, Listener binding metadata, поддержку TLS, bounded Handshake и Write timeout (1..300 seconds)
 - Включённый TLS явно отклоняется как unsupported runtime capability до открытия TCP socket; CertificateRef и PrivateKeyRef при этом не разрешаются и не включаются в текст ошибки
 - `HandshakeSeconds` применяется как deadline всей pre-Upgrade evaluation; истёкшее решение не может перейти к `websocket.Accept`
-- `ReadSeconds`, `WriteSeconds` и `IdleSeconds` сохраняются в immutable Snapshot как configured-but-inactive Runtime capabilities до отдельного эпика TLS and Listener settings; default Published Configuration остаётся исполнимой
+- `WriteSeconds` задаёт единый per-Send budget для serialized write waiting и network Write; caller deadline/cancellation сохраняются, Stop независим от write gate. Duration фиксируется до Commit; ошибки следуют existing handler/Run/Owner path без retry или новой terminal category. См. [focused design](../docs/en/design/runtime-write-timeout.md).
+- `ReadSeconds` и `IdleSeconds` сохраняются в immutable Snapshot как configured-but-inactive Runtime capabilities; default Published Configuration остаётся исполнимой
 - Реализован Listener Bootstrap, создающий потокобезопасный Listener из ListenerSnapshot
 - Listener хранит локальную копию Host, Port и TLS configuration и поддерживает lifecycle `Created -> Running -> Stopping -> Stopped`
 - Listener открывает TCP socket и запускает HTTP Server; `GET /ws` передаётся

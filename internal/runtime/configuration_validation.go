@@ -21,7 +21,7 @@ const (
 )
 
 // validateExecutableSnapshot validates startup-critical capabilities only.
-// Read, write, and idle timeouts are retained as configured-but-inactive Runtime
+// Read and idle timeouts are retained as configured-but-inactive Runtime
 // capabilities until the Listener Settings roadmap gate defines their execution.
 func validateExecutableSnapshot(snapshot runtimeconfig.Snapshot) error {
 	provenance := snapshot.Provenance()
@@ -45,6 +45,9 @@ func validateExecutableSnapshot(snapshot runtimeconfig.Snapshot) error {
 	if listener.Timeouts.HandshakeSeconds < minimumHandshakeSeconds ||
 		listener.Timeouts.HandshakeSeconds > maximumHandshakeSeconds {
 		return invalidRuntimeField("handshake timeout")
+	}
+	if listener.Timeouts.WriteSeconds < 1 || listener.Timeouts.WriteSeconds > 300 {
+		return invalidRuntimeField("write timeout")
 	}
 	return nil
 }

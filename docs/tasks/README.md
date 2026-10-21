@@ -3,7 +3,16 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая design task — [TASK-098](TASK-098-FENCED-MUTATION-GATEWAY-DESIGN.md) —
+Текущая engineering task — [TASK-103](TASK-103-RUNTIME-WRITE-TIMEOUT.md) —
+Runtime WriteSeconds enforcement, `In Progress`, branch
+`feature/task-103-runtime-write-timeout`, baseline
+`4caf32fb3344c064c14f0c52ae3507f5c92e0718`. Gates resolve from newest matching
+task Recovery Evidence Envelope; no commit/publication authorized. TASK-102
+source-only Accepted, committed/unpublished on separate branch at
+`8bfa2e22a4b6310a71f6d36c8724b1adedd727ad`; native verification NOT RUN,
+toolchain NOT QUALIFIED (Owner checkpoint).
+
+Historical design task — [TASK-098](TASK-098-FENCED-MUTATION-GATEWAY-DESIGN.md) —
 Fenced Mutation Gateway, Documentation-only / Design,
 verification-stable `In Progress`, branch
 `docs/task-098-fenced-mutation-gateway-design`, baseline

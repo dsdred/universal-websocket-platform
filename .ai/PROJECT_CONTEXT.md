@@ -8,7 +8,16 @@
 
 ## Текущее состояние
 
-- Current task: [TASK-098](../docs/tasks/TASK-098-FENCED-MUTATION-GATEWAY-DESIGN.md) —
+- Current task: [TASK-103](../docs/tasks/TASK-103-RUNTIME-WRITE-TIMEOUT.md) —
+Runtime WriteSeconds enforcement, `In Progress`, branch
+`feature/task-103-runtime-write-timeout`, baseline
+`4caf32fb3344c064c14f0c52ae3507f5c92e0718`; gates resolve from matching task
+Recovery Evidence Envelope. No commit/publication authorized. TASK-102 remains
+source-only Accepted, committed/unpublished on its separate branch at
+`8bfa2e22a4b6310a71f6d36c8724b1adedd727ad`; native build/link NOT RUN and
+toolchain NOT QUALIFIED (Owner checkpoint). C active fail-closed; B/PoC inactive.
+
+Historical [TASK-098](../docs/tasks/TASK-098-FENCED-MUTATION-GATEWAY-DESIGN.md) —
 Fenced Mutation Gateway, Documentation-only / Design,
 verification-stable `In Progress`, branch
 `docs/task-098-fenced-mutation-gateway-design`, baseline

@@ -63,7 +63,8 @@ type websocketConnection interface {
 // DefaultSession is the default minimal Runtime Session.
 type DefaultSession struct {
 	mu           sync.RWMutex
-	writeMu      sync.Mutex
+	writeGate    chan struct{}
+	writeTimeout time.Duration // immutable after pre-Commit preparation
 	core         *sessionCore
 	connection   websocketConnection
 	state        lifecycleState
@@ -157,6 +158,7 @@ func newSessionFromCore(core *sessionCore, connection websocketConnection) (*Def
 		return nil, errNilSessionCore
 	}
 	return &DefaultSession{
+		writeGate:  make(chan struct{}, 1),
 		core:       core,
 		connection: connection,
 		state:      stateCreated,
@@ -277,6 +279,11 @@ func (session *DefaultSession) Run(ctx context.Context) error {
 
 // Send writes one transport-neutral Runtime Message while the Session is Running.
 func (session *DefaultSession) Send(ctx context.Context, runtimeMessage message.Message) error {
+	if session.writeTimeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, session.writeTimeout)
+		defer cancel()
+	}
 	var websocketType websocket.MessageType
 	switch runtimeMessage.Type() {
 	case message.TypeText:
@@ -288,8 +295,15 @@ func (session *DefaultSession) Send(ctx context.Context, runtimeMessage message.
 	}
 	payload := append([]byte(nil), runtimeMessage.Data()...)
 
-	session.writeMu.Lock()
-	defer session.writeMu.Unlock()
+	select {
+	case session.writeGate <- struct{}{}:
+		defer func() { <-session.writeGate }()
+	case <-ctx.Done():
+		return fmt.Errorf("wait for WebSocket write: %w", ctx.Err())
+	}
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("wait for WebSocket write: %w", err)
+	}
 
 	session.mu.RLock()
 	if session.state != stateRunning {

@@ -22,6 +22,8 @@ const legacyHandlerReference = "legacy"
 
 type messageRouterFactory func(*runtimeconfig.RoutingSnapshot, message.Handler) (message.Handler, error)
 
+type sessionDispatcherFactory func(*sessionmanager.Manager, session.RuntimeContextProvider, message.Handler, executionowner.TerminalObserver, time.Duration) (*session.TransactionalDispatcher, error)
+
 type runtimeComposition struct {
 	listener       listener.Listener
 	sessionManager *sessionmanager.Manager
@@ -72,6 +74,19 @@ func composeRuntimeWithRouterFactory(
 	reportError func(error),
 	newMessageRouter messageRouterFactory,
 ) (runtimeComposition, error) {
+	return composeRuntimeWithFactories(snapshot, resolver, handler, capabilities, reportError,
+		newMessageRouter, session.NewTransactionalDispatcherWithWriteTimeout)
+}
+
+func composeRuntimeWithFactories(
+	snapshot runtimeconfig.Snapshot,
+	resolver secretresolver.Resolver,
+	handler message.Handler,
+	capabilities *handshakeCapabilities,
+	reportError func(error),
+	newMessageRouter messageRouterFactory,
+	newSessionDispatcher sessionDispatcherFactory,
+) (runtimeComposition, error) {
 	if err := validateExecutableSnapshot(snapshot); err != nil {
 		return runtimeComposition{}, fmt.Errorf("validate Runtime Snapshot: %w", err)
 	}
@@ -104,11 +119,13 @@ func composeRuntimeWithRouterFactory(
 	}
 
 	sessionManager := sessionmanager.New()
-	sessionDispatcher, err := session.NewTransactionalDispatcher(
+	listenerSnapshot := snapshot.Listener()
+	sessionDispatcher, err := newSessionDispatcher(
 		sessionManager,
 		capabilities,
 		runtimeRouter,
 		terminalObserver{},
+		time.Duration(listenerSnapshot.Timeouts.WriteSeconds)*time.Second,
 	)
 	if err != nil {
 		return runtimeComposition{}, fmt.Errorf("create transactional Session Dispatcher: %w", err)
@@ -123,7 +140,6 @@ func composeRuntimeWithRouterFactory(
 	if err != nil {
 		return runtimeComposition{}, fmt.Errorf("create Handshake: %w", err)
 	}
-	listenerSnapshot := snapshot.Listener()
 	timedHandshakeHandler := handshakeTimeoutHandler{
 		next:    handshakeHandler,
 		timeout: time.Duration(listenerSnapshot.Timeouts.HandshakeSeconds) * time.Second,
