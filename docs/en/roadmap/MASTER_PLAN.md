@@ -250,7 +250,9 @@ These gates precede Router because Router must not inherit an unstable security,
 
 9. **TLS and Listener settings:** resolve certificate references safely and apply TLS, handshake, read, write, and idle limits.
    TASK-103 implements the bounded WriteSeconds slice (serialized waiting plus
-   network write); handshake is already effective. TLS/read/idle remain open.
+   network write); TASK-104 implements bounded per-full-message ReadSeconds,
+   excluding Handler time. Handshake is already effective. TLS/idle remain open;
+   Gate 9 is not complete.
 10. **Metrics:** expose bounded, non-sensitive component and lifecycle measurements with controlled label cardinality.
 11. **Operational diagnostics:** report server, Dispatcher, Provider, Handler, and shutdown failures while preserving Secret and credential redaction.
 12. **Plugin contracts:** identify the smallest extension contracts supported by multiple real use cases. Dynamic loading and ABI are not implied.

@@ -8,11 +8,15 @@
 
 ## Текущее состояние
 
-- Current task: [TASK-103](../docs/tasks/TASK-103-RUNTIME-WRITE-TIMEOUT.md) —
-Runtime WriteSeconds enforcement, `In Progress`, branch
-`feature/task-103-runtime-write-timeout`, baseline
-`4caf32fb3344c064c14f0c52ae3507f5c92e0718`; gates resolve from matching task
-Recovery Evidence Envelope. No commit/publication authorized. TASK-102 remains
+- Current task: [TASK-104](../docs/tasks/TASK-104-RUNTIME-READ-TIMEOUT.md) —
+Runtime ReadSeconds enforcement, `In Progress`, branch
+`feature/task-104-runtime-read-timeout`, baseline
+`aed7cc8f1693cf8bb48d71532fe543f09d2d1191`; gates resolve from matching task
+Recovery Evidence Envelope. No stage/commit/publication authorized. TASK-103
+WriteSeconds source `a2742ab927f7a23fd10a92db986ce36ff6a987e8` published via PR #103,
+merge `aed7cc8f1693cf8bb48d71532fe543f09d2d1191`. Historical race NOT RUN and
+R-103-N1 nonblocking remain limitations; this is no fresh publication authority.
+TASK-102 remains
 source-only Accepted, committed/unpublished on its separate branch at
 `8bfa2e22a4b6310a71f6d36c8724b1adedd727ad`; native build/link NOT RUN and
 toolchain NOT QUALIFIED (Owner checkpoint). C active fail-closed; B/PoC inactive.

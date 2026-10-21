@@ -65,6 +65,7 @@ type DefaultSession struct {
 	mu           sync.RWMutex
 	writeGate    chan struct{}
 	writeTimeout time.Duration // immutable after pre-Commit preparation
+	readTimeout  time.Duration // immutable after pre-Commit preparation
 	core         *sessionCore
 	connection   websocketConnection
 	state        lifecycleState
@@ -236,9 +237,9 @@ func (session *DefaultSession) Run(ctx context.Context) error {
 	}()
 
 	for {
-		websocketType, payload, err := connection.Read(ctx)
-		if err != nil {
-			return sessionReadError(ctx, err)
+		websocketType, payload, readFailed, err := session.readApplicationMessage(ctx, connection)
+		if readFailed {
+			return err
 		}
 
 		var messageType message.Type
@@ -275,6 +276,22 @@ func (session *DefaultSession) Run(ctx context.Context) error {
 			}
 		}
 	}
+}
+
+// readApplicationMessage keeps timer cleanup outside message processing. The
+// failure flag preserves terminal normal closure even when its classified error
+// is nil. Classify before cancellation so cleanup cannot invent a read failure.
+func (session *DefaultSession) readApplicationMessage(ctx context.Context, connection websocketConnection) (websocket.MessageType, []byte, bool, error) {
+	if session.readTimeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, session.readTimeout)
+		defer cancel()
+	}
+	messageType, payload, err := connection.Read(ctx)
+	if err != nil {
+		return messageType, payload, true, sessionReadError(ctx, err)
+	}
+	return messageType, payload, false, nil
 }
 
 // Send writes one transport-neutral Runtime Message while the Session is Running.

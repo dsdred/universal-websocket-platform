@@ -10,7 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Runtime enforcement of Published `WriteSeconds`: one bounded Session Send
   budget covers serialized waiting and network write, preserving caller
-  cancellation and independent Stop. Read/idle timeouts remain inactive.
+  cancellation and independent Stop. Idle timeout remains inactive.
+- Runtime enforcement of Published `ReadSeconds`: zero disables the configured
+  timeout; positive values bound each complete WebSocket application-message
+  read, preserving caller cancellation and excluding Handler execution time.
 
 - Built-in local-development Configuration Studio using embedded plain
   HTML/CSS/JavaScript and the existing Control Service APIs to create a

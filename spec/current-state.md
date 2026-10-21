@@ -1,10 +1,14 @@
 # Текущее состояние
 
-**Текущая задача:** [TASK-103](../docs/tasks/TASK-103-RUNTIME-WRITE-TIMEOUT.md) —
-Runtime WriteSeconds enforcement, `In Progress`, branch
-`feature/task-103-runtime-write-timeout`, baseline
-`4caf32fb3344c064c14f0c52ae3507f5c92e0718`. Gates/closure resolve only from
-newest matching Recovery Evidence Envelope. No commit/publication authorized.
+**Текущая задача:** [TASK-104](../docs/tasks/TASK-104-RUNTIME-READ-TIMEOUT.md) —
+Runtime ReadSeconds enforcement, `In Progress`, branch
+`feature/task-104-runtime-read-timeout`, baseline
+`aed7cc8f1693cf8bb48d71532fe543f09d2d1191`. Gates/closure resolve only from
+newest matching Recovery Evidence Envelope. No stage/commit/publication authorized.
+TASK-103 WriteSeconds source `a2742ab927f7a23fd10a92db986ce36ff6a987e8`
+опубликован через PR #103, merge `aed7cc8f1693cf8bb48d71532fe543f09d2d1191`.
+Historical race NOT RUN и R-103-N1 nonblocking сохраняются; это не fresh
+publication authority или перенос verification на TASK-104.
 TASK-102 remains source-only Accepted, committed/unpublished at
 `8bfa2e22a4b6310a71f6d36c8724b1adedd727ad` on its separate branch;
 native build/link NOT RUN, toolchain NOT QUALIFIED (Owner checkpoint).
@@ -1334,11 +1338,12 @@ Activation отсутствуют.
 - Первый Host Stop выполняет единый production shutdown pipeline: закрывает Admission, вызывает `SessionManager.BeginShutdown`, запрашивает Stop для immutable Snapshot, отменяет root Runtime context, останавливает Listener и затем ожидает `SessionManager.Wait`
 - Listener Stop и Manager Wait выполняются без удержания lifecycle mutex; их ошибки сохраняются вместе, а concurrent и repeated Stop получают один сохранённый terminal result
 - Успешный Host Stop подтверждает `SessionManager.StateClosed` и пустое Reservation, Registration и Owner Lifetime Lease accounting; context-bounded Wait failure оставляет Manager правдиво в `Closing`
-- Production composition до создания Listener проверяет startup-critical поля Snapshot: Runtime identity, Listener binding metadata, поддержку TLS, bounded Handshake и Write timeout (1..300 seconds)
+- Production composition до создания Listener проверяет startup-critical поля Snapshot: Runtime identity, Listener binding metadata, поддержку TLS, bounded Handshake и Write timeout (1..300 seconds), Read timeout (0..86400 seconds)
 - Включённый TLS явно отклоняется как unsupported runtime capability до открытия TCP socket; CertificateRef и PrivateKeyRef при этом не разрешаются и не включаются в текст ошибки
 - `HandshakeSeconds` применяется как deadline всей pre-Upgrade evaluation; истёкшее решение не может перейти к `websocket.Accept`
 - `WriteSeconds` задаёт единый per-Send budget для serialized write waiting и network Write; caller deadline/cancellation сохраняются, Stop независим от write gate. Duration фиксируется до Commit; ошибки следуют existing handler/Run/Owner path без retry или новой terminal category. См. [focused design](../docs/en/design/runtime-write-timeout.md).
-- `ReadSeconds` и `IdleSeconds` сохраняются в immutable Snapshot как configured-but-inactive Runtime capabilities; default Published Configuration остаётся исполнимой
+- `ReadSeconds` применяется к каждому полному application message: 0 отключает configured timeout, 1..86400 задаёт один бюджет ожидания и полного body/fragment reading без reset по control frames. Duration назначается до Commit; Handler получает исходный Run context и не расходует следующий read budget. Timeout является обычной Run failure с existing Owner cleanup/Manager accounting; normal close остаётся успешным завершением, новые termination categories не вводятся. См. [focused design](../docs/en/design/runtime-read-timeout.md).
+- Только `IdleSeconds` сохраняется как configured-but-inactive Runtime timeout capability; default Published Configuration остаётся исполнимой
 - Реализован Listener Bootstrap, создающий потокобезопасный Listener из ListenerSnapshot
 - Listener хранит локальную копию Host, Port и TLS configuration и поддерживает lifecycle `Created -> Running -> Stopping -> Stopped`
 - Listener открывает TCP socket и запускает HTTP Server; `GET /ws` передаётся

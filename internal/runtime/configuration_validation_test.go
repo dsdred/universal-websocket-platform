@@ -34,7 +34,7 @@ func TestRuntimeSnapshotFieldSupportMatrixIsExhaustive(t *testing.T) {
 		"listener.TLS.PrivateKeyRef":                             "TLS: inactive while TLS is disabled",
 		"listener.TLS.MinVersion":                                "TLS: inactive while TLS is disabled",
 		"listener.Timeouts.HandshakeSeconds":                     "Handshake: executed as pre-Upgrade deadline",
-		"listener.Timeouts.ReadSeconds":                          "Listener settings: configured but inactive until Gate 9",
+		"listener.Timeouts.ReadSeconds":                          "Session Run: fresh budget for each complete application message",
 		"listener.Timeouts.WriteSeconds":                         "Session Send: one budget for serialization and network write",
 		"listener.Timeouts.IdleSeconds":                          "Listener settings: configured but inactive until Gate 9",
 		"authentication.Enabled":                                 "Authentication Bootstrap: service or anonymous identity",
@@ -97,6 +97,38 @@ func TestWriteSecondsSnapshotBounds(t *testing.T) {
 				t.Fatal("invalid timeout produced executable Snapshot")
 			}
 		})
+	}
+}
+
+func TestReadSecondsSnapshotBounds(t *testing.T) {
+	for _, seconds := range []uint32{0, 1, 86400, 86401, ^uint32(0)} {
+		t.Run(fmt.Sprint(seconds), func(t *testing.T) {
+			snapshot, diagnostics := buildSnapshotForTest(func(version *configurationversion.ConfigurationVersion) {
+				version.Listener.Timeouts.ReadSeconds = seconds
+			})
+			if seconds <= 86400 {
+				if len(diagnostics) != 0 || validateExecutableSnapshot(snapshot) != nil {
+					t.Fatalf("valid bound rejected: %v", diagnostics)
+				}
+			} else if len(diagnostics) == 0 {
+				t.Fatal("Builder accepted invalid read timeout")
+			}
+		})
+	}
+}
+
+// Exercise the actual Runtime scalar guard separately from Builder rejection.
+// Immutable Snapshot has no public means of constructing an invalid bound.
+func TestValidateReadSecondsDefensiveGuard(t *testing.T) {
+	for _, seconds := range []uint32{0, 1, 86400, 86401, ^uint32(0)} {
+		err := validateReadSeconds(seconds)
+		if seconds <= 86400 {
+			if err != nil {
+				t.Fatalf("valid duration %d: %v", seconds, err)
+			}
+		} else if !errors.Is(err, ErrInvalidRuntimeConfiguration) || !strings.Contains(err.Error(), "read timeout") {
+			t.Fatalf("invalid duration %d: %v", seconds, err)
+		}
 	}
 }
 
