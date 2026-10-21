@@ -36,7 +36,7 @@ func TestRuntimeSnapshotFieldSupportMatrixIsExhaustive(t *testing.T) {
 		"listener.Timeouts.HandshakeSeconds":                     "Handshake: executed as pre-Upgrade deadline",
 		"listener.Timeouts.ReadSeconds":                          "Session Run: fresh budget for each complete application message",
 		"listener.Timeouts.WriteSeconds":                         "Session Send: one budget for serialization and network write",
-		"listener.Timeouts.IdleSeconds":                          "Listener settings: configured but inactive until Gate 9",
+		"listener.Timeouts.IdleSeconds":                          "Session Run: successful application I/O inactivity policy",
 		"authentication.Enabled":                                 "Authentication Bootstrap: service or anonymous identity",
 		"authentication.Providers[].Name":                        "Authentication Factory: provider identity",
 		"authentication.Providers[].Type":                        "Authentication Registry: executed or explicitly rejected",
@@ -129,6 +129,29 @@ func TestValidateReadSecondsDefensiveGuard(t *testing.T) {
 		} else if !errors.Is(err, ErrInvalidRuntimeConfiguration) || !strings.Contains(err.Error(), "read timeout") {
 			t.Fatalf("invalid duration %d: %v", seconds, err)
 		}
+	}
+}
+
+func TestIdleSecondsSnapshotBoundsAndDefensiveGuard(t *testing.T) {
+	for _, seconds := range []uint32{0, 1, 86400, 86401, ^uint32(0)} {
+		t.Run(fmt.Sprint(seconds), func(t *testing.T) {
+			snapshot, diagnostics := buildSnapshotForTest(func(version *configurationversion.ConfigurationVersion) {
+				version.Listener.Timeouts.IdleSeconds = seconds
+			})
+			err := validateIdleSeconds(seconds)
+			if seconds <= 86400 {
+				if err != nil || len(diagnostics) != 0 || validateExecutableSnapshot(snapshot) != nil {
+					t.Fatalf("valid idle bound: guard %v, diagnostics %v", err, diagnostics)
+				}
+			} else {
+				if len(diagnostics) == 0 {
+					t.Fatal("Builder accepted invalid idle timeout")
+				}
+				if !errors.Is(err, ErrInvalidRuntimeConfiguration) || !strings.Contains(err.Error(), "idle timeout") {
+					t.Fatalf("invalid idle guard: %v", err)
+				}
+			}
+		})
 	}
 }
 

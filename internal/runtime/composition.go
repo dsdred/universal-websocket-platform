@@ -22,7 +22,7 @@ const legacyHandlerReference = "legacy"
 
 type messageRouterFactory func(*runtimeconfig.RoutingSnapshot, message.Handler) (message.Handler, error)
 
-type sessionDispatcherFactory func(*sessionmanager.Manager, session.RuntimeContextProvider, message.Handler, executionowner.TerminalObserver, time.Duration, time.Duration) (*session.TransactionalDispatcher, error)
+type sessionDispatcherFactory func(*sessionmanager.Manager, session.RuntimeContextProvider, message.Handler, executionowner.TerminalObserver, time.Duration, time.Duration, time.Duration) (*session.TransactionalDispatcher, error)
 
 type runtimeComposition struct {
 	listener       listener.Listener
@@ -75,7 +75,7 @@ func composeRuntimeWithRouterFactory(
 	newMessageRouter messageRouterFactory,
 ) (runtimeComposition, error) {
 	return composeRuntimeWithFactories(snapshot, resolver, handler, capabilities, reportError,
-		newMessageRouter, session.NewTransactionalDispatcherWithTimeouts)
+		newMessageRouter, session.NewTransactionalDispatcherWithIdleTimeout)
 }
 
 func composeRuntimeWithFactories(
@@ -127,6 +127,7 @@ func composeRuntimeWithFactories(
 		terminalObserver{},
 		time.Duration(listenerSnapshot.Timeouts.ReadSeconds)*time.Second,
 		time.Duration(listenerSnapshot.Timeouts.WriteSeconds)*time.Second,
+		time.Duration(listenerSnapshot.Timeouts.IdleSeconds)*time.Second,
 	)
 	if err != nil {
 		return runtimeComposition{}, fmt.Errorf("create transactional Session Dispatcher: %w", err)

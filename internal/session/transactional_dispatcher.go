@@ -48,6 +48,7 @@ type TransactionalDispatcher struct {
 	prepare      provisionalPreparer
 	writeTimeout time.Duration
 	readTimeout  time.Duration
+	idleTimeout  time.Duration
 }
 
 // NewTransactionalDispatcher creates the production transaction-capable
@@ -102,6 +103,27 @@ func NewTransactionalDispatcherWithTimeouts(
 	}
 	dispatcher.readTimeout = readTimeout
 	dispatcher.writeTimeout = writeTimeout
+	return dispatcher, nil
+}
+
+// NewTransactionalDispatcherWithIdleTimeout adds a Run-scoped inactivity policy
+// to read/write budgets. Idle zero disables it; positive values are at most 86400
+// seconds. All durations are assigned to Session before Commit.
+func NewTransactionalDispatcherWithIdleTimeout(
+	manager *sessionmanager.Manager,
+	root RuntimeContextProvider,
+	handler message.Handler,
+	observer executionowner.TerminalObserver,
+	readTimeout, writeTimeout, idleTimeout time.Duration,
+) (*TransactionalDispatcher, error) {
+	if idleTimeout < 0 || idleTimeout > 86400*time.Second {
+		return nil, errors.New("idle timeout must be between 0 and 86400 seconds")
+	}
+	dispatcher, err := NewTransactionalDispatcherWithTimeouts(manager, root, handler, observer, readTimeout, writeTimeout)
+	if err != nil {
+		return nil, err
+	}
+	dispatcher.idleTimeout = idleTimeout
 	return dispatcher, nil
 }
 
@@ -208,6 +230,7 @@ func (dispatcher *TransactionalDispatcher) DispatchAuthenticated(
 	}
 	prepared.session.writeTimeout = dispatcher.writeTimeout
 	prepared.session.readTimeout = dispatcher.readTimeout
+	prepared.session.idleTimeout = dispatcher.idleTimeout
 	environment, err := executionowner.NewExecutionEnvironment(
 		rootContext,
 		executionContext,

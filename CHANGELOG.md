@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Runtime enforcement of Published `WriteSeconds`: one bounded Session Send
   budget covers serialized waiting and network write, preserving caller
-  cancellation and independent Stop. Idle timeout remains inactive.
+  cancellation and independent Stop.
 - Runtime enforcement of Published `ReadSeconds`: zero disables the configured
   timeout; positive values bound each complete WebSocket application-message
   read, preserving caller cancellation and excluding Handler execution time.
@@ -73,6 +73,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [0.1.0-alpha] - 2026-07-12
 
 ### Added
+
+- Runtime enforcement of Published `IdleSeconds`: zero disables inactivity
+  timeout; successful complete application Read/Write resets it, including
+  activity during Handler execution. Control frames and fragments do not reset
+  idle. Expiry cancels the Session Run scope while preserving Runtime root
+  lifetime, existing read/write budgets and Owner cleanup. The existing default
+  of 60 seconds is now effective; cancellation remains cooperative.
 
 - Initial project structure and architecture documentation.
 - Go-based Control Service.

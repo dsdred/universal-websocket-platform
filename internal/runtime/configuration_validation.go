@@ -20,9 +20,7 @@ const (
 	maximumHandshakeSeconds = 300
 )
 
-// validateExecutableSnapshot validates startup-critical capabilities only.
-// Idle timeouts remain a configured-but-inactive Runtime capability until the
-// Listener Settings roadmap gate defines their execution.
+// validateExecutableSnapshot rejects nonexecutable fields before resources.
 func validateExecutableSnapshot(snapshot runtimeconfig.Snapshot) error {
 	provenance := snapshot.Provenance()
 	if provenance.ConfigurationID == 0 || provenance.ConfigurationVersionID == 0 {
@@ -49,12 +47,22 @@ func validateExecutableSnapshot(snapshot runtimeconfig.Snapshot) error {
 	if listener.Timeouts.WriteSeconds < 1 || listener.Timeouts.WriteSeconds > 300 {
 		return invalidRuntimeField("write timeout")
 	}
-	return validateReadSeconds(listener.Timeouts.ReadSeconds)
+	if err := validateReadSeconds(listener.Timeouts.ReadSeconds); err != nil {
+		return err
+	}
+	return validateIdleSeconds(listener.Timeouts.IdleSeconds)
 }
 
 func validateReadSeconds(seconds uint32) error {
 	if seconds > 86400 {
 		return invalidRuntimeField("read timeout")
+	}
+	return nil
+}
+
+func validateIdleSeconds(seconds uint32) error {
+	if seconds > 86400 {
+		return invalidRuntimeField("idle timeout")
 	}
 	return nil
 }

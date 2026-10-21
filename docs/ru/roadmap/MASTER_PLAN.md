@@ -249,7 +249,9 @@ Beta организована как набор архитектурных эп�
 9. **TLS and Listener settings:** безопасно разрешать certificate references и применять TLS, handshake, read, write и idle limits.
    TASK-103 реализует bounded WriteSeconds slice (ожидание очереди и network
    write); TASK-104 реализует bounded per-full-message ReadSeconds, исключая
-   время Handler. Handshake уже применяется. TLS/idle остаются открытыми;
+   время Handler. TASK-106 добавляет Run-scoped IdleSeconds от последнего
+   успешного полного application Read/Write, включая время Handler; ноль
+   отключает idle. Handshake уже применяется. TLS остаётся открытым;
    Gate 9 не завершён.
 10. **Metrics:** предоставлять ограниченные и не содержащие sensitive data measurements компонентов и lifecycle с контролируемой cardinality labels.
 11. **Operational diagnostics:** сообщать об ошибках server, Dispatcher, Provider, Handler и shutdown, сохраняя redaction Secrets и credentials.
