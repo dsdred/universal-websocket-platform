@@ -3,17 +3,22 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая engineering task — [TASK-104](TASK-104-RUNTIME-READ-TIMEOUT.md) —
-Runtime ReadSeconds enforcement, `In Progress`, branch
-`feature/task-104-runtime-read-timeout`, baseline
-`aed7cc8f1693cf8bb48d71532fe543f09d2d1191`. Gates resolve from newest matching
-task Recovery Evidence Envelope; no stage/commit/publication authorized.
-TASK-103 WriteSeconds source `a2742ab927f7a23fd10a92db986ce36ff6a987e8` опубликован
-через PR #103, merge `aed7cc8f1693cf8bb48d71532fe543f09d2d1191`; historical race
-NOT RUN и R-103-N1 nonblocking сохраняются, без переноса authority. TASK-102
-source-only Accepted, committed/unpublished on separate branch at
-`8bfa2e22a4b6310a71f6d36c8724b1adedd727ad`; native verification NOT RUN,
-toolchain NOT QUALIFIED (Owner checkpoint).
+Текущая engineering task — [TASK-105](TASK-105-MINIMAL-GITHUB-CI.md) —
+Minimal GitHub CI, `In Progress`, branch `codex/task-105-minimal-github-ci`,
+baseline `fb916df77e697fb7a45dc7bb6e8d0150411f2d82`. Actual checkpoints and
+closure resolve only from newest matching task Recovery Evidence Envelope.
+CI workflow source exists for PR/main and push/main, ubuntu-24.04 x64,
+Go 1.26.5, formatting/build/test/vet/race/tidy/module guards. Hosted execution
+requires a separate Publication Gate; commit/publication not authorized.
+TASK-104 ReadSeconds source `63d99906924195115cb9dc260762ca050cb675b8`
+published through PR #104, merge `fb916df77e697fb7a45dc7bb6e8d0150411f2d82`.
+TASK-103 WriteSeconds source `a2742ab927f7a23fd10a92db986ce36ff6a987e8`
+published through PR #103, merge `aed7cc8f1693cf8bb48d71532fe543f09d2d1191`.
+Historical race NOT RUN and R-103-N1 nonblocking remain limitations; these
+facts provide no fresh publication authority or TASK-105 verification.
+TASK-102 remains source-only Accepted, committed/unpublished on its separate
+branch at `8bfa2e22a4b6310a71f6d36c8724b1adedd727ad`; native build/link NOT RUN,
+toolchain NOT QUALIFIED (Owner checkpoint). C active fail-closed; B/PoC inactive.
 
 Historical design task — [TASK-098](TASK-098-FENCED-MUTATION-GATEWAY-DESIGN.md) —
 Fenced Mutation Gateway, Documentation-only / Design,
