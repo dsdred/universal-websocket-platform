@@ -43,6 +43,8 @@ Separate governance research; these proposals do not extend Runtime implementati
 ## Focused execution notes
 
 [TLS execution v1](runtime-tls-enforcement.md) defines startup-loaded material,
-bounded TLS handshake and HTTP1 WSS. TASK-107 evidence resolves actual gates.
+bounded TLS handshake and HTTP1 WSS; TASK-107 is published through PR #107,
+merge `af61085843fd1666aec68d635daef944f2993972`. Gate 9 is technically closed
+by Owner decision; see [closure evidence and limitations](../reviews/gate-9-closure.md).
 Existing timeout notes: [read](runtime-read-timeout.md),
 [write](runtime-write-timeout.md), [idle](runtime-idle-timeout.md).

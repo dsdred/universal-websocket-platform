@@ -3,8 +3,12 @@
 [English version](../../en/design/runtime-tls-enforcement.md)
 
 Design status: Architecture Confirmation PASS, запись TASK-107 E-107-003.
-Implementation status: implemented candidate; verification и acceptance
-определяются Recovery Evidence Envelope TASK-107. Focused addition не изменяет Frozen ARCH-002,
+Implementation status: опубликовано TASK-107, source
+`8f97a9c8ca9ad6831911c6b7fe133c16aa588ee9`, PR #107, merge
+`af61085843fd1666aec68d635daef944f2993972`. Historical verification и acceptance
+сохранены в неизменном Recovery Evidence Envelope TASK-107. Gate 9 технически
+закрыт явным решением Owner; см. [closure record](../reviews/gate-9-closure.md).
+Focused addition не изменяет Frozen ARCH-002,
 Active ARCH-003/005 или Approved DP-003/004.
 
 ## Startup и владение материалом
@@ -104,5 +108,6 @@ h2-only/no-ALPN/plaintext rejection; silent/partial handshake expiry и Stop;
 trusted real WSS text/binary/echo, API Key/JWT pre-Upgrade, read/write/idle
 compatibility; concurrent Start/Stop/admission, rollback, single cleanup и Manager
 convergence. Нужны full regression, independent roles и exact manifest; historical
-CI не является candidate evidence. Закрытие Gate 9 требует отдельной полной
-evidence assessment и не следует автоматически из timeout work или этой note.
+CI не является candidate evidence. Отдельная полная
+[Gate 9 closure assessment](../reviews/gate-9-closure.md) фиксирует решение Owner;
+закрытие не выведено только из timeout work или этой note.

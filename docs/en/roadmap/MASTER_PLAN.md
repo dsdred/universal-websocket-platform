@@ -257,8 +257,12 @@ These gates precede Router because Router must not inherit an unstable security,
    successful complete application Read/Write, including Handler time; zero
    disables idle. TASK-107 adds one startup-loaded TLS certificate/key pair,
    HTTP1 WSS and bounded TLS handshake/header phases; its exact verification and
-   acceptance resolve from the task evidence. Gate 9 closure is not inferred
-   from the timeout workstream; full closure requires its complete evidence assessment.
+   acceptance resolve from the task evidence. **Technically closed by explicit
+   Owner decision on 2026-10-22**, following the complete
+   [Closure Evidence Matrix](../reviews/gate-9-closure.md) at baseline
+   `af61085843fd1666aec68d635daef944f2993972`. Closure covers only the existing
+   single-node scope and preserves all recorded limitations; it is not production
+   readiness, completion of other Beta gates or Windows/native qualification.
 10. **Metrics:** expose bounded, non-sensitive component and lifecycle measurements with controlled label cardinality.
 11. **Operational diagnostics:** report server, Dispatcher, Provider, Handler, and shutdown failures while preserving Secret and credential redaction.
 12. **Plugin contracts:** identify the smallest extension contracts supported by multiple real use cases. Dynamic loading and ABI are not implied.
@@ -319,8 +323,12 @@ Deferred features must not shape the current core through speculative abstractio
 The Runtime Alpha Review identifies implementation debt that must be tracked independently from new functionality:
 
 - Listener timeout enforcement and bounded TLS v1 execution are implemented;
-  TLS preparation fails closed before socket acquisition. Full Gate 9 closure
-  requires explicit complete verification, not inference from the timeout tasks.
+  TLS preparation fails closed before socket acquisition. Gate 9 is technically
+  closed by Owner decision after complete evidence assessment; see the
+  [closure record](../reviews/gate-9-closure.md). Cooperative cancellation,
+  documented shutdown limitations, TLS v1 exclusions, local race NOT RUN,
+  checkout tidy CRLF limitation and R-103-N1 nonblocking remain. Hosted Linux
+  race/tidy PASS does not qualify unpublished Windows/native TASK-102.
 - Manager-aware Session shutdown tracking is integrated with Runtime Host Stop.
 - The legacy synchronous Dispatcher remains only for isolated compatibility tests and must not return to production composition.
 - HTTP server and Dispatcher errors lack an operational reporting path.

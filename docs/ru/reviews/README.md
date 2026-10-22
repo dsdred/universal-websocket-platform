@@ -6,3 +6,4 @@
 
 - [Runtime Alpha Architecture Review](runtime-alpha-review.md)
 - [Review контракта Runtime Integration DP-005](dp-005-runtime-integration-contract-review.md)
+- [Техническое закрытие Gate 9 и evidence](gate-9-closure.md)

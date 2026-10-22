@@ -255,8 +255,12 @@ Beta организована как набор архитектурных эп�
    успешного полного application Read/Write, включая время Handler; ноль
    отключает idle. TASK-107 добавляет одну startup-loaded TLS certificate/key pair,
    HTTP1 WSS и bounded TLS handshake/header phases; exact verification и acceptance
-   определяются task evidence. Закрытие Gate 9 не следует из timeout workstream
-   и требует полной evidence assessment.
+   определяются task evidence. **Технически закрыт явным решением Owner
+   2026-10-22** после полной [Closure Evidence Matrix](../reviews/gate-9-closure.md)
+   на baseline `af61085843fd1666aec68d635daef944f2993972`. Закрытие охватывает
+   только существующий single-node scope с сохранением всех ограничений;
+   оно не означает production readiness, завершение других Beta gates или
+   Windows/native qualification.
 10. **Metrics:** предоставлять ограниченные и не содержащие sensitive data measurements компонентов и lifecycle с контролируемой cardinality labels.
 11. **Operational diagnostics:** сообщать об ошибках server, Dispatcher, Provider, Handler и shutdown, сохраняя redaction Secrets и credentials.
 12. **Plugin contracts:** определить минимальные extension contracts, подтвержденные несколькими реальными use cases. Dynamic loading и ABI не подразумеваются.
@@ -317,8 +321,12 @@ Deferred features не должны формировать текущий Core �
 Runtime Alpha Review фиксирует implementation debt, который необходимо учитывать отдельно от новой функциональности:
 
 - Listener timeout enforcement и bounded TLS v1 execution реализованы;
-  TLS preparation fail-closed предшествует socket acquisition. Закрытие Gate 9
-  требует explicit complete verification, а не вывода только из timeout tasks.
+  TLS preparation fail-closed предшествует socket acquisition. Gate 9 технически
+  закрыт решением Owner после полной evidence assessment; см.
+  [closure record](../reviews/gate-9-closure.md). Сохраняются cooperative
+  cancellation, documented shutdown limitations, TLS v1 exclusions, local race
+  NOT RUN, checkout tidy CRLF limitation и R-103-N1 nonblocking. Hosted Linux
+  race/tidy PASS не квалифицирует unpublished Windows/native TASK-102.
 - Manager-aware shutdown tracking Session интегрирован с Runtime Host Stop.
 - Legacy synchronous Dispatcher сохраняется только для изолированных compatibility-тестов и не должен возвращаться в production composition.
 - У ошибок HTTP server и Dispatcher нет operational reporting path.

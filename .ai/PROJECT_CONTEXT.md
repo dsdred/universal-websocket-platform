@@ -8,28 +8,40 @@
 
 ## Текущее состояние
 
-- Current task: [TASK-107](../docs/tasks/TASK-107-RUNTIME-TLS-ENFORCEMENT.md) —
-TLS Runtime enforcement v1, verification-stable `In Progress`, branch
-`codex/task-107-runtime-tls-enforcement`, baseline
-`9151db9e32e0b351d403087e4f1361b31b134fac`. Actual checkpoints and closure
-resolve only from newest matching task Recovery Evidence Envelope. No staging,
-commit or publication authorized. Product implementation requires Architecture PASS.
+- Current task: [TASK-108](../docs/tasks/TASK-108-GATE-9-TECHNICAL-CLOSURE.md) —
+Gate 9 technical closure documentation, verification-stable `In Progress`, branch
+`docs/task-108-gate-9-technical-closure`, baseline
+`af61085843fd1666aec68d635daef944f2993972`. Actual TASK-108 checkpoints and closure
+resolve only from its newest matching Recovery Evidence Envelope. No staging,
+commit or publication authorized for TASK-108.
+Owner approved Gate 9 technical closure on 2026-10-22 for existing single-node
+TLS v1 and handshake/read/write/idle limits with existing Authentication and
+lifecycle contracts. See the [Closure Evidence Matrix](../docs/en/reviews/gate-9-closure.md).
+TASK-107 source `8f97a9c8ca9ad6831911c6b7fe133c16aa588ee9` published through
+PR #107, merge `af61085843fd1666aec68d635daef944f2993972`; both trees equal
+`512840af96c547e312fd146aa0cf4069e5f322e0`. Required PR go-ci run39773286256
+and post-merge run39773713007 succeeded on their exact source/merge SHAs,
+including Linux race/tidy/module guards. Gate 9 closure is not production
+readiness, completion of all Beta gates or Windows/native TASK-102 qualification.
+Local race NOT RUN, checkout tidy CRLF limitation (source-fixture tidy PASS),
+cooperative cancellation, documented shutdown limits, TLS v1 exclusions and
+R-103-N1 nonblocking remain; no Frozen contract or guarantee is expanded.
 TASK-106 source `909abc7f67a36f6709ba343d0cf5b63bc3509c85` published through
 PR #106, merge `9151db9e32e0b351d403087e4f1361b31b134fac`; merge and source
 have identical tree `dd11a05d473683ea53faf67d197eb65362f8d8c4`.
 Required PR go-ci run39728769463 on source and push run39729079012 on merge
 succeeded, including Linux race/tidy/module guards. This does not qualify
-Windows/native TASK-102 or serve as TASK-107 verification/publication authority.
+Windows/native TASK-102 or authorize TASK-108 commit/publication.
 TASK-105 source `8de5b7da4ce5ba802ca9fc2d803c48bc1a5f6924` published through
 PR #105, merge `48a6c359ab5604add3c309248ba39dfaff7a0656`. Baseline hosted
 Go CI succeeded, including race/tidy/module guards; main ruleset requires go-ci.
-These are historical baseline facts, not TASK-107 verification or authority.
+These historical facts do not authorize TASK-108 commit/publication.
 TASK-104 ReadSeconds source `63d99906924195115cb9dc260762ca050cb675b8`
 published through PR #104, merge `fb916df77e697fb7a45dc7bb6e8d0150411f2d82`.
 TASK-103 WriteSeconds source `a2742ab927f7a23fd10a92db986ce36ff6a987e8`
 published through PR #103, merge `aed7cc8f1693cf8bb48d71532fe543f09d2d1191`.
 Historical race NOT RUN and R-103-N1 nonblocking remain limitations; these
-facts provide no fresh publication authority or TASK-107 verification.
+facts provide no fresh TASK-108 commit/publication authority.
 TASK-102 remains source-only Accepted, committed/unpublished on its separate
 branch at `8bfa2e22a4b6310a71f6d36c8724b1adedd727ad`; native build/link NOT RUN,
 toolchain NOT QUALIFIED (Owner checkpoint). C active fail-closed; B/PoC inactive.
