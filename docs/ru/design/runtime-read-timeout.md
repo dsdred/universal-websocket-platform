@@ -3,8 +3,12 @@
 [English version](../../en/design/runtime-read-timeout.md)
 
 Design status: Architecture Confirmation PASS (independent Architect).
-Implementation status: implemented candidate. Commit/publication не разрешены.
-Эта focused implementation note не меняет Approved DP-003/004/008, Frozen ARCH-002
+Implementation status: опубликовано TASK-104, source
+`63d99906924195115cb9dc260762ca050cb675b8`, PR #104, merge
+`fb916df77e697fb7a45dc7bb6e8d0150411f2d82`. Historical verification и acceptance
+сохранены в неизменном evidence TASK-104. Техническое закрытие Gate 9 и
+ограничения: [closure record](../reviews/gate-9-closure.md).
+Эта focused implementation note не меняет Approved DP-003/004, Draft DP-008, Frozen ARCH-002
 или Active ARCH-003. Effective Listener timeout behavior исключён из freeze
 [ARCH-002](../architecture/ARCH-002-runtime-foundation-freeze.md); существующий
 [DP-008](DP-008-snapshot-builder-contract.md) задаёт ReadSeconds 0..86400.

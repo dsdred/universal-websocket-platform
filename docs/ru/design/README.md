@@ -43,6 +43,8 @@
 ## Focused execution notes
 
 [TLS execution v1](runtime-tls-enforcement.md) определяет startup-loaded material,
-bounded TLS handshake и HTTP1 WSS. Actual gates определяет evidence TASK-107.
+bounded TLS handshake и HTTP1 WSS; TASK-107 опубликована через PR #107,
+merge `af61085843fd1666aec68d635daef944f2993972`. Gate 9 технически закрыт
+решением Owner; см. [closure evidence и ограничения](../reviews/gate-9-closure.md).
 Прежние timeout notes: [read](runtime-read-timeout.md),
 [write](runtime-write-timeout.md), [idle](runtime-idle-timeout.md).
