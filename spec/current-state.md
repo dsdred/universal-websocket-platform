@@ -1,21 +1,27 @@
 # Текущее состояние
 
-**Текущая задача:** [TASK-106](../docs/tasks/TASK-106-RUNTIME-IDLE-TIMEOUT.md) —
-Runtime IdleSeconds enforcement, `In Progress`, branch
-`codex/task-106-runtime-idle-timeout`, baseline
-`48a6c359ab5604add3c309248ba39dfaff7a0656`. Actual checkpoints and closure
-resolve only from newest matching task Recovery Evidence Envelope. No commit
-or publication authorized. Product implementation requires Architecture PASS.
+**Текущая задача:** [TASK-107](../docs/tasks/TASK-107-RUNTIME-TLS-ENFORCEMENT.md) —
+TLS Runtime enforcement v1, verification-stable `In Progress`, branch
+`codex/task-107-runtime-tls-enforcement`, baseline
+`9151db9e32e0b351d403087e4f1361b31b134fac`. Actual checkpoints and closure
+resolve only from newest matching task Recovery Evidence Envelope. No staging,
+commit or publication authorized. Product implementation requires Architecture PASS.
+TASK-106 source `909abc7f67a36f6709ba343d0cf5b63bc3509c85` published through
+PR #106, merge `9151db9e32e0b351d403087e4f1361b31b134fac`; merge and source
+have identical tree `dd11a05d473683ea53faf67d197eb65362f8d8c4`.
+Required PR go-ci run39728769463 on source and push run39729079012 on merge
+succeeded, including Linux race/tidy/module guards. This does not qualify
+Windows/native TASK-102 or serve as TASK-107 verification/publication authority.
 TASK-105 source `8de5b7da4ce5ba802ca9fc2d803c48bc1a5f6924` published through
 PR #105, merge `48a6c359ab5604add3c309248ba39dfaff7a0656`. Baseline hosted
 Go CI succeeded, including race/tidy/module guards; main ruleset requires go-ci.
-These are historical baseline facts, not TASK-106 verification or authority.
+These are historical baseline facts, not TASK-107 verification or authority.
 TASK-104 ReadSeconds source `63d99906924195115cb9dc260762ca050cb675b8`
 published through PR #104, merge `fb916df77e697fb7a45dc7bb6e8d0150411f2d82`.
 TASK-103 WriteSeconds source `a2742ab927f7a23fd10a92db986ce36ff6a987e8`
 published through PR #103, merge `aed7cc8f1693cf8bb48d71532fe543f09d2d1191`.
 Historical race NOT RUN and R-103-N1 nonblocking remain limitations; these
-facts provide no fresh publication authority or TASK-106 verification.
+facts provide no fresh publication authority or TASK-107 verification.
 TASK-102 remains source-only Accepted, committed/unpublished on its separate
 branch at `8bfa2e22a4b6310a71f6d36c8724b1adedd727ad`; native build/link NOT RUN,
 toolchain NOT QUALIFIED (Owner checkpoint). C active fail-closed; B/PoC inactive.
@@ -1346,7 +1352,8 @@ Activation отсутствуют.
 - Listener Stop и Manager Wait выполняются без удержания lifecycle mutex; их ошибки сохраняются вместе, а concurrent и repeated Stop получают один сохранённый terminal result
 - Успешный Host Stop подтверждает `SessionManager.StateClosed` и пустое Reservation, Registration и Owner Lifetime Lease accounting; context-bounded Wait failure оставляет Manager правдиво в `Closing`
 - Production composition до создания Listener проверяет startup-critical поля Snapshot: Runtime identity, Listener binding metadata, поддержку TLS, bounded Handshake и Write timeout (1..300 seconds), Read и Idle timeout (0..86400 seconds)
-- Включённый TLS явно отклоняется как unsupported runtime capability до открытия TCP socket; CertificateRef и PrivateKeyRef при этом не разрешаются и не включаются в текст ошибки
+- TLS v1 использует одну startup-loaded certificate/key pair через existing Resolver; resolution/parsing/leaf-validation failures предшествуют socket acquisition. Disabled TLS не разрешает TLS references. Raw PEM очищается после parsing; safe errors сохраняют errors.Is без раскрытия raw cause через Unwrap/As/formatting.
+- TLS Listener поддерживает minimum 1.2/1.3, maximum 1.3 и HTTP1-only negotiation; TLS handshake и HTTP headers имеют отдельные budgets HandshakeSeconds, затем сохраняется прежний request/pre-Upgrade budget. Это не один общий accept-to-Upgrade deadline. См. [focused TLS design](../docs/en/design/runtime-tls-enforcement.md); actual verification/acceptance определяются TASK-107 envelope.
 - `HandshakeSeconds` применяется как deadline всей pre-Upgrade evaluation; истёкшее решение не может перейти к `websocket.Accept`
 - `WriteSeconds` задаёт единый per-Send budget для serialized write waiting и network Write; caller deadline/cancellation сохраняются, Stop независим от write gate. Duration фиксируется до Commit; ошибки следуют existing handler/Run/Owner path без retry или новой terminal category. См. [focused design](../docs/en/design/runtime-write-timeout.md).
 - `ReadSeconds` применяется к каждому полному application message: 0 отключает configured timeout, 1..86400 задаёт один бюджет ожидания и полного body/fragment reading без reset по control frames. Duration назначается до Commit; Handler получает Run scope (private idle child при включённом idle) и не расходует следующий read budget. Timeout является обычной Run failure с existing Owner cleanup/Manager accounting; normal close остаётся успешным завершением, новые termination categories не вводятся. См. [focused design](../docs/en/design/runtime-read-timeout.md).
@@ -1423,14 +1430,13 @@ Activation отсутствуют.
 - Production integration Runtime Lifecycle Owner в Control Service
 - Интеграция Configuration Loader в production launch pipeline
 - Запуск Runtime и управление им из Control Service
-- Реальный TLS listener и другие сетевые параметры Listener
-- Полное применение TLS Listener settings в Runtime (idle/read/write уже применяются)
+- TLS rotation/reload, ACME, SNI certificate selection и mTLS (bounded TLS v1 не реализует эти возможности)
 - Operational diagnostics и supervision полного Handshake Pipeline за
   пределами реализованных Authentication, configured timeout enforcement и
   Session shutdown wait set
 - Проверка Basic credentials
 - Асимметричные JWT algorithms, JWKS, OIDC и token revocation
-- Реальные Secret Storage backend и подключение Resolver к Runtime Container еще не реализованы
+- Реальные Secret Storage backend отсутствуют; Resolver передаётся explicit dependency в Host composition, Container не является service locator
 - Инфраструктуры развертывания
 - Инфраструктуры хранения данных
 - Production/operational Admin UI; реализован только bounded local/dev

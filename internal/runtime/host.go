@@ -89,6 +89,7 @@ type runtimeComposer func(
 ) (listener.Listener, error)
 
 type productionRuntimeComposer func(
+	context.Context,
 	runtimeconfig.Snapshot,
 	secretresolver.Resolver,
 	message.Handler,
@@ -141,14 +142,16 @@ func newHostWithTerminalErrorReporter(
 	}
 	if compose == nil {
 		host.compose = func(
+			ctx context.Context,
 			snapshot runtimeconfig.Snapshot,
 			resolver secretresolver.Resolver,
 			handler message.Handler,
 		) (runtimeComposition, error) {
-			return composeRuntime(snapshot, resolver, handler, host.capabilities, host.reportError)
+			return composeRuntimeForStartup(ctx, snapshot, resolver, handler, host.capabilities, host.reportError)
 		}
 	} else {
 		host.compose = func(
+			_ context.Context,
 			snapshot runtimeconfig.Snapshot,
 			resolver secretresolver.Resolver,
 			handler message.Handler,
@@ -239,7 +242,7 @@ func (host *DefaultHost) startTransaction(ctx context.Context) (runtimeCompositi
 	var components runtimeComposition
 
 	startupErr := transaction.acquire(func() (startupRollback, error) {
-		createdComponents, err := host.compose(host.snapshot, host.resolver, host.handler)
+		createdComponents, err := host.compose(ctx, host.snapshot, host.resolver, host.handler)
 		if err != nil {
 			return nil, err
 		}

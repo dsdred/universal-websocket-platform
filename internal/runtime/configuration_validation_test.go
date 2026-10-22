@@ -13,8 +13,10 @@ import (
 	"time"
 
 	"github.com/dsdred/universal-websocket-platform/internal/configurationversion"
+	"github.com/dsdred/universal-websocket-platform/internal/listener"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfigload"
+	"github.com/dsdred/universal-websocket-platform/internal/secretresolver"
 )
 
 func TestRuntimeSnapshotFieldSupportMatrixIsExhaustive(t *testing.T) {
@@ -29,10 +31,10 @@ func TestRuntimeSnapshotFieldSupportMatrixIsExhaustive(t *testing.T) {
 		"provenance.LaunchAttemptID":                             "ARCH-004 execution identity",
 		"listener.Host":                                          "Listener: executed by net.Listen",
 		"listener.Port":                                          "Listener: executed by net.Listen",
-		"listener.TLS.Enabled":                                   "Runtime composition: enabled TLS rejected before Listener",
-		"listener.TLS.CertificateRef":                            "TLS: inactive while TLS is disabled",
-		"listener.TLS.PrivateKeyRef":                             "TLS: inactive while TLS is disabled",
-		"listener.TLS.MinVersion":                                "TLS: inactive while TLS is disabled",
+		"listener.TLS.Enabled":                                   "Runtime composition: startup TLS preparation and Listener transport",
+		"listener.TLS.CertificateRef":                            "TLS: resolved once per enabled startup",
+		"listener.TLS.PrivateKeyRef":                             "TLS: resolved once per enabled startup",
+		"listener.TLS.MinVersion":                                "TLS: enforced for enabled Listener",
 		"listener.Timeouts.HandshakeSeconds":                     "Handshake: executed as pre-Upgrade deadline",
 		"listener.Timeouts.ReadSeconds":                          "Session Run: fresh budget for each complete application message",
 		"listener.Timeouts.WriteSeconds":                         "Session Send: one budget for serialization and network write",
@@ -155,7 +157,7 @@ func TestIdleSecondsSnapshotBoundsAndDefensiveGuard(t *testing.T) {
 	}
 }
 
-func TestValidateExecutableSnapshotRejectsUnsupportedTLSWithoutLeakingReferences(t *testing.T) {
+func TestValidateExecutableSnapshotAcceptsTLSMetadataWithoutResolvingReferences(t *testing.T) {
 	snapshot, diagnostics := buildSnapshotForTest(func(version *configurationversion.ConfigurationVersion) {
 		version.Listener.TLS = configurationversion.TLSSettings{
 			Enabled:        true,
@@ -168,11 +170,8 @@ func TestValidateExecutableSnapshotRejectsUnsupportedTLSWithoutLeakingReferences
 		t.Fatalf("Builder diagnostics = %#v", diagnostics)
 	}
 	err := validateExecutableSnapshot(snapshot)
-	if !errors.Is(err, ErrInvalidRuntimeConfiguration) || !errors.Is(err, ErrUnsupportedRuntimeCapability) {
+	if err != nil {
 		t.Fatalf("validateExecutableSnapshot() error = %v", err)
-	}
-	if strings.Contains(err.Error(), "credential-that-must-not-leak") {
-		t.Fatalf("error leaked secret reference: %v", err)
 	}
 }
 
@@ -204,7 +203,7 @@ func TestHandshakeTimeoutHandlerUsesConfiguredDuration(t *testing.T) {
 	}
 }
 
-func TestTLSValidationFailsBeforeSocketAndPreservesSnapshot(t *testing.T) {
+func TestTLSMaterialFailureBeforeSocketAndPreservesSnapshot(t *testing.T) {
 	snapshot, diagnostics := buildSnapshotForTest(func(version *configurationversion.ConfigurationVersion) {
 		version.Listener.Port = availablePort(t)
 		version.Listener.TLS = configurationversion.TLSSettings{
@@ -224,9 +223,9 @@ func TestTLSValidationFailsBeforeSocketAndPreservesSnapshot(t *testing.T) {
 		Dependencies:   &DependencyBindings{SecretResolver: emptyResolver(t)},
 	})
 	failure, ok := outcome.StartupFailure()
-	if !ok || !errors.Is(failure, ErrUnsupportedRuntimeCapability) ||
-		!errors.Is(failure, ErrInvalidRuntimeConfiguration) {
-		t.Fatalf("Bootstrap() StartupFailure = (%v, %t), want unsupported invalid Runtime configuration", failure, ok)
+	if !ok || !errors.Is(failure, listener.ErrInvalidListenerConfiguration) ||
+		!errors.Is(failure, ErrInvalidRuntimeConfiguration) || !errors.Is(failure, secretresolver.ErrSecretNotFound) {
+		t.Fatalf("Bootstrap() StartupFailure = (%v, %t), want classified missing TLS material", failure, ok)
 	}
 	if strings.Contains(failure.Error(), "credential-that-must-not-leak") {
 		t.Fatal("StartupFailure error exposed a Secret Reference")

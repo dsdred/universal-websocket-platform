@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
+	"github.com/dsdred/universal-websocket-platform/internal/secretresolver"
 )
 
 var (
@@ -34,11 +35,10 @@ func validateExecutableSnapshot(snapshot runtimeconfig.Snapshot) error {
 		return invalidRuntimeField("TLS minimum version")
 	}
 	if listener.TLS.Enabled {
-		return fmt.Errorf(
-			"%w: %w: TLS",
-			ErrInvalidRuntimeConfiguration,
-			ErrUnsupportedRuntimeCapability,
-		)
+		if secretresolver.ValidateReference(listener.TLS.CertificateRef) != nil ||
+			secretresolver.ValidateReference(listener.TLS.PrivateKeyRef) != nil {
+			return invalidRuntimeField("TLS references")
+		}
 	}
 	if listener.Timeouts.HandshakeSeconds < minimumHandshakeSeconds ||
 		listener.Timeouts.HandshakeSeconds > maximumHandshakeSeconds {

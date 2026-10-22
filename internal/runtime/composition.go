@@ -56,14 +56,14 @@ func composeRuntime(
 	capabilities *handshakeCapabilities,
 	reportError func(error),
 ) (runtimeComposition, error) {
-	return composeRuntimeWithRouterFactory(
-		snapshot,
-		resolver,
-		handler,
-		capabilities,
-		reportError,
-		buildMessageRouter,
-	)
+	return composeRuntimeForStartup(context.Background(), snapshot, resolver, handler, capabilities, reportError)
+}
+
+func composeRuntimeForStartup(ctx context.Context, snapshot runtimeconfig.Snapshot, resolver secretresolver.Resolver,
+	handler message.Handler, capabilities *handshakeCapabilities, reportError func(error),
+) (runtimeComposition, error) {
+	return composeRuntimeWithFactoriesContext(ctx, snapshot, resolver, handler, capabilities, reportError,
+		buildMessageRouter, session.NewTransactionalDispatcherWithIdleTimeout)
 }
 
 func composeRuntimeWithRouterFactory(
@@ -87,8 +87,27 @@ func composeRuntimeWithFactories(
 	newMessageRouter messageRouterFactory,
 	newSessionDispatcher sessionDispatcherFactory,
 ) (runtimeComposition, error) {
+	return composeRuntimeWithFactoriesContext(context.Background(), snapshot, resolver, handler, capabilities,
+		reportError, newMessageRouter, newSessionDispatcher)
+}
+
+func composeRuntimeWithFactoriesContext(
+	ctx context.Context,
+	snapshot runtimeconfig.Snapshot,
+	resolver secretresolver.Resolver,
+	handler message.Handler,
+	capabilities *handshakeCapabilities,
+	reportError func(error),
+	newMessageRouter messageRouterFactory,
+	newSessionDispatcher sessionDispatcherFactory,
+) (runtimeComposition, error) {
 	if err := validateExecutableSnapshot(snapshot); err != nil {
 		return runtimeComposition{}, fmt.Errorf("validate Runtime Snapshot: %w", err)
+	}
+	listenerSnapshot := snapshot.Listener()
+	preparedTLS, err := listener.PrepareTLS(ctx, listenerSnapshot, resolver)
+	if err != nil {
+		return runtimeComposition{}, fmt.Errorf("%w: prepare TLS: %w", ErrInvalidRuntimeConfiguration, err)
 	}
 
 	routing, routingPresent := snapshot.Routing()
@@ -119,7 +138,6 @@ func composeRuntimeWithFactories(
 	}
 
 	sessionManager := sessionmanager.New()
-	listenerSnapshot := snapshot.Listener()
 	sessionDispatcher, err := newSessionDispatcher(
 		sessionManager,
 		capabilities,
@@ -147,9 +165,15 @@ func composeRuntimeWithFactories(
 		timeout: time.Duration(listenerSnapshot.Timeouts.HandshakeSeconds) * time.Second,
 	}
 
-	runtimeListener, err := listener.NewBootstrapWithHandshakeAndTerminalErrorReporter(
+	if listenerSnapshot.TLS.Enabled {
+		if err := ctx.Err(); err != nil {
+			return runtimeComposition{}, err
+		}
+	}
+	runtimeListener, err := listener.NewBootstrapWithTLSAndHandshake(
 		timedHandshakeHandler,
 		reportError,
+		preparedTLS,
 	).Build(listenerSnapshot)
 	if err != nil {
 		return runtimeComposition{}, fmt.Errorf("build Listener: %w", err)

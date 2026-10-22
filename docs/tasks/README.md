@@ -3,22 +3,28 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая engineering task — [TASK-106](TASK-106-RUNTIME-IDLE-TIMEOUT.md) —
-Runtime IdleSeconds enforcement, `In Progress`, branch
-`codex/task-106-runtime-idle-timeout`, baseline
-`48a6c359ab5604add3c309248ba39dfaff7a0656`. Actual checkpoints and closure
-resolve only from newest matching task Recovery Evidence Envelope. No commit
-or publication authorized. Product implementation requires Architecture PASS.
+Текущая engineering task — [TASK-107](TASK-107-RUNTIME-TLS-ENFORCEMENT.md) —
+TLS Runtime enforcement v1, verification-stable `In Progress`, branch
+`codex/task-107-runtime-tls-enforcement`, baseline
+`9151db9e32e0b351d403087e4f1361b31b134fac`. Actual checkpoints and closure
+resolve only from newest matching task Recovery Evidence Envelope. No staging,
+commit or publication authorized. Product implementation requires Architecture PASS.
+TASK-106 source `909abc7f67a36f6709ba343d0cf5b63bc3509c85` published through
+PR #106, merge `9151db9e32e0b351d403087e4f1361b31b134fac`; merge and source
+have identical tree `dd11a05d473683ea53faf67d197eb65362f8d8c4`.
+Required PR go-ci run39728769463 on source and push run39729079012 on merge
+succeeded, including Linux race/tidy/module guards. This does not qualify
+Windows/native TASK-102 or serve as TASK-107 verification/publication authority.
 TASK-105 source `8de5b7da4ce5ba802ca9fc2d803c48bc1a5f6924` published through
 PR #105, merge `48a6c359ab5604add3c309248ba39dfaff7a0656`. Baseline hosted
 Go CI succeeded, including race/tidy/module guards; main ruleset requires go-ci.
-These are historical baseline facts, not TASK-106 verification or authority.
+These are historical baseline facts, not TASK-107 verification or authority.
 TASK-104 ReadSeconds source `63d99906924195115cb9dc260762ca050cb675b8`
 published through PR #104, merge `fb916df77e697fb7a45dc7bb6e8d0150411f2d82`.
 TASK-103 WriteSeconds source `a2742ab927f7a23fd10a92db986ce36ff6a987e8`
 published through PR #103, merge `aed7cc8f1693cf8bb48d71532fe543f09d2d1191`.
 Historical race NOT RUN and R-103-N1 nonblocking remain limitations; these
-facts provide no fresh publication authority or TASK-106 verification.
+facts provide no fresh publication authority or TASK-107 verification.
 TASK-102 remains source-only Accepted, committed/unpublished on its separate
 branch at `8bfa2e22a4b6310a71f6d36c8724b1adedd727ad`; native build/link NOT RUN,
 toolchain NOT QUALIFIED (Owner checkpoint). C active fail-closed; B/PoC inactive.

@@ -39,3 +39,10 @@ Separate governance research; these proposals do not extend Runtime implementati
 | --- | --- |
 | [DP-025: Controlled Publisher Recovery](DP-025-controlled-publisher-recovery.md) | Draft / Planned; not implemented or activated |
 | [DP-026: Fenced Mutation Gateway](DP-026-fenced-mutation-gateway.md) | Draft / Planned; not implemented or activated |
+
+## Focused execution notes
+
+[TLS execution v1](runtime-tls-enforcement.md) defines startup-loaded material,
+bounded TLS handshake and HTTP1 WSS. TASK-107 evidence resolves actual gates.
+Existing timeout notes: [read](runtime-read-timeout.md),
+[write](runtime-write-timeout.md), [idle](runtime-idle-timeout.md).

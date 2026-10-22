@@ -25,8 +25,9 @@ Lifecycle Owner, management routing, operational identity, command
 idempotency, and orchestration prerequisites also exist in isolation. They are
 not wired into a Control Service Runtime-management path: Production
 Activation, external persistence, recovery and reporting implementations,
-complete TLS and Listener-settings execution, and the Control Service Runtime
-API remain absent.
+and the Control Service Runtime API remain absent. The Runtime vertical supports
+one startup-loaded TLS certificate/key pair and configured Session timeouts;
+certificate rotation/reload and mTLS are not implemented.
 
 ## Current release
 

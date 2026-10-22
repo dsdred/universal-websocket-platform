@@ -25,8 +25,10 @@ Configuration Loader, Snapshot Builder, Runtime Bootstrap и Launcher,
 Lifecycle Owner, management routing, operational identity, command
 idempotency и orchestration prerequisites также существуют изолированно. Они
 не подключены к пути управления Runtime из Control Service: Production
-Activation, реализации external persistence, recovery и reporting, полное
-исполнение TLS и Listener settings и Control Service Runtime API отсутствуют.
+Activation, реализации external persistence, recovery и reporting,
+Control Service Runtime API отсутствуют. Runtime vertical поддерживает одну
+startup-loaded TLS certificate/key pair и configured Session timeouts;
+certificate rotation/reload и mTLS не реализованы.
 
 ## Текущий релиз
 
