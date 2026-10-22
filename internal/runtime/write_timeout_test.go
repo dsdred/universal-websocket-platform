@@ -28,12 +28,12 @@ func TestRuntimeWriteTimeoutFromPublishedSnapshot(t *testing.T) {
 			_, err := composeRuntimeWithFactories(snapshot, emptyResolver(t), nil,
 				&handshakeCapabilities{canAccept: func() bool { return true }, runtimeContext: context.Background},
 				nil, buildMessageRouter,
-				func(manager *sessionmanager.Manager, root session.RuntimeContextProvider, handler message.Handler, observer executionowner.TerminalObserver, readTimeout, timeout time.Duration) (*session.TransactionalDispatcher, error) {
+				func(manager *sessionmanager.Manager, root session.RuntimeContextProvider, handler message.Handler, observer executionowner.TerminalObserver, readTimeout, timeout, idleTimeout time.Duration) (*session.TransactionalDispatcher, error) {
 					calls++
 					if timeout != time.Duration(seconds)*time.Second {
 						t.Fatalf("composed write timeout %v, want %ds", timeout, seconds)
 					}
-					return session.NewTransactionalDispatcherWithTimeouts(manager, root, handler, observer, readTimeout, timeout)
+					return session.NewTransactionalDispatcherWithIdleTimeout(manager, root, handler, observer, readTimeout, timeout, idleTimeout)
 				})
 			if err != nil || calls != 1 {
 				t.Fatalf("composition calls %d, error %v", calls, err)

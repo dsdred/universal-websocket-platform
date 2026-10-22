@@ -3,19 +3,22 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая engineering task — [TASK-105](TASK-105-MINIMAL-GITHUB-CI.md) —
-Minimal GitHub CI, `In Progress`, branch `codex/task-105-minimal-github-ci`,
-baseline `fb916df77e697fb7a45dc7bb6e8d0150411f2d82`. Actual checkpoints and
-closure resolve only from newest matching task Recovery Evidence Envelope.
-CI workflow source exists for PR/main and push/main, ubuntu-24.04 x64,
-Go 1.26.5, formatting/build/test/vet/race/tidy/module guards. Hosted execution
-requires a separate Publication Gate; commit/publication not authorized.
+Текущая engineering task — [TASK-106](TASK-106-RUNTIME-IDLE-TIMEOUT.md) —
+Runtime IdleSeconds enforcement, `In Progress`, branch
+`codex/task-106-runtime-idle-timeout`, baseline
+`48a6c359ab5604add3c309248ba39dfaff7a0656`. Actual checkpoints and closure
+resolve only from newest matching task Recovery Evidence Envelope. No commit
+or publication authorized. Product implementation requires Architecture PASS.
+TASK-105 source `8de5b7da4ce5ba802ca9fc2d803c48bc1a5f6924` published through
+PR #105, merge `48a6c359ab5604add3c309248ba39dfaff7a0656`. Baseline hosted
+Go CI succeeded, including race/tidy/module guards; main ruleset requires go-ci.
+These are historical baseline facts, not TASK-106 verification or authority.
 TASK-104 ReadSeconds source `63d99906924195115cb9dc260762ca050cb675b8`
 published through PR #104, merge `fb916df77e697fb7a45dc7bb6e8d0150411f2d82`.
 TASK-103 WriteSeconds source `a2742ab927f7a23fd10a92db986ce36ff6a987e8`
 published through PR #103, merge `aed7cc8f1693cf8bb48d71532fe543f09d2d1191`.
 Historical race NOT RUN and R-103-N1 nonblocking remain limitations; these
-facts provide no fresh publication authority or TASK-105 verification.
+facts provide no fresh publication authority or TASK-106 verification.
 TASK-102 remains source-only Accepted, committed/unpublished on its separate
 branch at `8bfa2e22a4b6310a71f6d36c8724b1adedd727ad`; native build/link NOT RUN,
 toolchain NOT QUALIFIED (Owner checkpoint). C active fail-closed; B/PoC inactive.

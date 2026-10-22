@@ -80,3 +80,10 @@ Existing WriteSeconds behavior, transport ownership и text/binary handling
 
 Non-goals: IdleSeconds, TLS, новая configuration или lifecycle categories, native
 toolchain, Architecture B, PoC и Approved/Frozen contract amendments.
+
+## Additive IdleSeconds clarification (TASK-106)
+
+При включённом IdleSeconds исходный Run context оборачивается в private
+Run-scoped idle child для Read и Handler. Handler не получает per-read child.
+Нулевой idle сохраняет identity исходного context. ReadSeconds по-прежнему
+исключает время Handler; idle включает его. См. [idle design](runtime-idle-timeout.md).

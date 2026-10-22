@@ -66,6 +66,8 @@ type DefaultSession struct {
 	writeGate    chan struct{}
 	writeTimeout time.Duration // immutable after pre-Commit preparation
 	readTimeout  time.Duration // immutable after pre-Commit preparation
+	idleTimeout  time.Duration // immutable after pre-Commit preparation
+	idle         *idleTracker  // guarded by mu; scope belongs to the admitted Run
 	core         *sessionCore
 	connection   websocketConnection
 	state        lifecycleState
@@ -209,7 +211,7 @@ func (session *DefaultSession) Start(ctx context.Context) error {
 }
 
 // Run blocks in the calling goroutine while reading application messages.
-func (session *DefaultSession) Run(ctx context.Context) error {
+func (session *DefaultSession) Run(ctx context.Context) (result error) {
 	session.mu.Lock()
 	if session.state != stateRunning {
 		session.mu.Unlock()
@@ -227,9 +229,18 @@ func (session *DefaultSession) Run(ctx context.Context) error {
 	handler := session.core.handler
 	principal := session.core.principal
 	sessionID := session.core.id
+	parent := ctx
+	var idle *idleTracker
+	if session.idleTimeout > 0 {
+		idle = newIdleTracker(ctx, session.idleTimeout)
+		session.idle = idle
+		ctx = idle.ctx
+	}
 	session.mu.Unlock()
 
 	defer func() {
+		idle.close()
+		result = idle.result(parent, result)
 		session.mu.Lock()
 		session.readLoop = false
 		close(done)
@@ -237,7 +248,7 @@ func (session *DefaultSession) Run(ctx context.Context) error {
 	}()
 
 	for {
-		websocketType, payload, readFailed, err := session.readApplicationMessage(ctx, connection)
+		websocketType, payload, readFailed, err := session.readApplicationMessage(ctx, connection, idle)
 		if readFailed {
 			return err
 		}
@@ -251,6 +262,7 @@ func (session *DefaultSession) Run(ctx context.Context) error {
 		default:
 			continue
 		}
+		idle.activity()
 		runtimeMessage, err := message.New(messageType, payload)
 		if err != nil {
 			return fmt.Errorf("create Runtime Message: %w", err)
@@ -281,7 +293,7 @@ func (session *DefaultSession) Run(ctx context.Context) error {
 // readApplicationMessage keeps timer cleanup outside message processing. The
 // failure flag preserves terminal normal closure even when its classified error
 // is nil. Classify before cancellation so cleanup cannot invent a read failure.
-func (session *DefaultSession) readApplicationMessage(ctx context.Context, connection websocketConnection) (websocket.MessageType, []byte, bool, error) {
+func (session *DefaultSession) readApplicationMessage(ctx context.Context, connection websocketConnection, idle *idleTracker) (websocket.MessageType, []byte, bool, error) {
 	if session.readTimeout > 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, session.readTimeout)
@@ -289,7 +301,17 @@ func (session *DefaultSession) readApplicationMessage(ctx context.Context, conne
 	}
 	messageType, payload, err := connection.Read(ctx)
 	if err != nil {
-		return messageType, payload, true, sessionReadError(ctx, err)
+		classified := sessionReadError(ctx, err)
+		if idle != nil {
+			idle.mu.Lock()
+			expired := idle.expired
+			idle.mu.Unlock()
+			if expired {
+				// The private idle cancellation must not erase the Read cause.
+				classified = errors.Join(classified, fmt.Errorf("read WebSocket message: %w", err))
+			}
+		}
+		return messageType, payload, true, classified
 	}
 	return messageType, payload, false, nil
 }
@@ -328,12 +350,14 @@ func (session *DefaultSession) Send(ctx context.Context, runtimeMessage message.
 		return ErrSessionNotRunning
 	}
 	connection := session.connection
+	idle := session.idle
 	session.mu.RUnlock()
 
 	writeErr := connection.Write(ctx, websocketType, payload)
 	if writeErr != nil {
 		return fmt.Errorf("write WebSocket message: %w", writeErr)
 	}
+	idle.activity()
 	return nil
 }
 
@@ -362,8 +386,10 @@ func (session *DefaultSession) Stop(ctx context.Context) error {
 		done := session.stopDone
 		readLoopDone := session.readLoopDone
 		connection := session.connection
+		idle := session.idle
 		session.mu.Unlock()
 
+		idle.close()
 		closeErr := connection.Close(websocket.StatusNormalClosure, "")
 		_ = connection.CloseNow()
 		if errors.Is(closeErr, net.ErrClosed) {

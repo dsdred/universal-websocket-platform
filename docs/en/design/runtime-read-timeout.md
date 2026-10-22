@@ -80,3 +80,10 @@ within their current contracts.
 
 Non-goals: IdleSeconds, TLS, new configuration or lifecycle categories, native
 toolchain, Architecture B, PoC and Approved/Frozen contract amendments.
+
+## Additive IdleSeconds policy qualification (TASK-106)
+
+When IdleSeconds is enabled, the original Run context is wrapped in a private
+Run-scoped idle child used by Read and Handler. Handler never receives the
+per-read child. Zero idle preserves original context identity. ReadSeconds still
+excludes Handler time; idle includes it. See [idle design](runtime-idle-timeout.md).
