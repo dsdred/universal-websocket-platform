@@ -44,7 +44,9 @@ Universal WebSocket Platform — open-source платформа для созд�
 
 - Listener открывает TCP socket и запускает HTTP server.
 - `GET /ws` выполняет RFC 6455 Upgrade и передает соединение через Dispatcher.
-- Metadata TLS и timeout Listener еще не полностью применяется Runtime.
+- Handshake, read, write и idle timeout применяются. TLS v1 поддерживает одну
+  startup-loaded certificate/key pair через Resolver, TLS1.2/1.3 и HTTP1 WSS;
+  TLS preparation failures предшествуют socket acquisition. Reload/mTLS отсутствуют.
 
 ### Authentication
 
@@ -251,8 +253,10 @@ Beta организована как набор архитектурных эп�
    write); TASK-104 реализует bounded per-full-message ReadSeconds, исключая
    время Handler. TASK-106 добавляет Run-scoped IdleSeconds от последнего
    успешного полного application Read/Write, включая время Handler; ноль
-   отключает idle. Handshake уже применяется. TLS остаётся открытым;
-   Gate 9 не завершён.
+   отключает idle. TASK-107 добавляет одну startup-loaded TLS certificate/key pair,
+   HTTP1 WSS и bounded TLS handshake/header phases; exact verification и acceptance
+   определяются task evidence. Закрытие Gate 9 не следует из timeout workstream
+   и требует полной evidence assessment.
 10. **Metrics:** предоставлять ограниченные и не содержащие sensitive data measurements компонентов и lifecycle с контролируемой cardinality labels.
 11. **Operational diagnostics:** сообщать об ошибках server, Dispatcher, Provider, Handler и shutdown, сохраняя redaction Secrets и credentials.
 12. **Plugin contracts:** определить минимальные extension contracts, подтвержденные несколькими реальными use cases. Dynamic loading и ABI не подразумеваются.
@@ -312,7 +316,9 @@ Deferred features не должны формировать текущий Core �
 
 Runtime Alpha Review фиксирует implementation debt, который необходимо учитывать отдельно от новой функциональности:
 
-- Listener хранит TLS и timeout metadata, не применяя их полностью.
+- Listener timeout enforcement и bounded TLS v1 execution реализованы;
+  TLS preparation fail-closed предшествует socket acquisition. Закрытие Gate 9
+  требует explicit complete verification, а не вывода только из timeout tasks.
 - Manager-aware shutdown tracking Session интегрирован с Runtime Host Stop.
 - Legacy synchronous Dispatcher сохраняется только для изолированных compatibility-тестов и не должен возвращаться в production composition.
 - У ошибок HTTP server и Dispatcher нет operational reporting path.
@@ -514,7 +520,10 @@ Architectural debt относится к границам, которые ост
   более поздний roadmap item production Admin UI; Coordinator-Accepted source
   `b8c2b8672343aefccfe03000144ebdd4df93f8ea` опубликован через PR #81
   и merged как `e9a87b5a35c880ac71444be9960876d3fbd02fbc`.
-- **Effective Listener Configuration:** metadata TLS и timeout может попасть в Snapshot без полного исполнения или явного отклонения.
+- **Effective Listener Configuration:** применяются timeouts и одна startup-loaded
+  TLS certificate/key pair. TASK-107 задаёт TLS handshake/header/request budgets
+  и limitations; actual gates определяются task evidence. Certificate reload,
+  external Secret backend и Control Service activation отсутствуют.
 - **Operational diagnostics:** ownership ошибок и redaction должны пересекать границы компонентов без привязки компонентов к одной реализации logging.
 - **Extension boundaries:** Router, transactional handoff Session и integration shutdown Runtime реализованы; contracts Message Persistence, Delivery и Plugin всё ещё требуют focused design.
 

@@ -3,8 +3,10 @@
 [English version](../../en/design/runtime-idle-timeout.md)
 
 Design status: Architecture Confirmation PASS (independent Architect).
-Implementation status: implemented candidate; verification и acceptance
-определяются Recovery Evidence Envelope TASK-106. Commit/publication не разрешены.
+Implementation status: опубликовано TASK-106, source
+`909abc7f67a36f6709ba343d0cf5b63bc3509c85`, PR #106, merge
+`9151db9e32e0b351d403087e4f1361b31b134fac`. Historical verification и
+acceptance сохраняются в неизменённом Recovery Evidence Envelope TASK-106.
 Focused note не изменяет Approved DP-003/004 или Frozen ARCH-002.
 Effective timeout behavior находится вне freeze ARCH-002.
 

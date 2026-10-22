@@ -253,6 +253,7 @@ func startHostWithManager(
 	t.Helper()
 	host := newTestHost(t, fixedComposer(runtimeListener))
 	host.compose = func(
+		context.Context,
 		runtimeconfig.Snapshot,
 		secretresolver.Resolver,
 		message.Handler,

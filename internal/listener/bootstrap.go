@@ -4,6 +4,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
 )
@@ -17,6 +18,13 @@ type Bootstrap interface {
 type DefaultBootstrap struct {
 	handshakeHandler http.Handler
 	reportError      func(error)
+	preparedTLS      *PreparedTLS
+}
+
+// NewBootstrapWithTLSAndHandshake binds already prepared, opaque TLS material.
+// Secret resolution belongs to Host startup composition, never Build.
+func NewBootstrapWithTLSAndHandshake(handler http.Handler, reporter func(error), prepared *PreparedTLS) DefaultBootstrap {
+	return DefaultBootstrap{handshakeHandler: handler, reportError: reporter, preparedTLS: prepared}
 }
 
 // NewBootstrapWithHandshake creates a Listener Bootstrap with a pre-Upgrade Handshake handler.
@@ -48,16 +56,20 @@ func (bootstrap DefaultBootstrap) Build(snapshot runtimeconfig.ListenerSnapshot)
 	if snapshot.TLS.Enabled && (certificateRef == "" || privateKeyRef == "") {
 		return nil, ErrInvalidListenerConfiguration
 	}
-	if snapshot.TLS.Enabled {
-		// TLS transport is not implemented. Reject before DefaultListener can call net.Listen
-		// so configured TLS can never silently become a plaintext Listener.
+	if snapshot.TLS.Enabled && (bootstrap.preparedTLS == nil || bootstrap.preparedTLS.config == nil) {
+		return nil, ErrInvalidListenerConfiguration
+	}
+	if snapshot.TLS.Enabled && bootstrap.preparedTLS.settings != snapshot.TLS {
+		return nil, ErrInvalidListenerConfiguration
+	}
+	if snapshot.TLS.Enabled && (snapshot.Timeouts.HandshakeSeconds < 1 || snapshot.Timeouts.HandshakeSeconds > 300) {
 		return nil, ErrInvalidListenerConfiguration
 	}
 	if bootstrap.handshakeHandler == nil {
 		return nil, ErrInvalidListenerConfiguration
 	}
 
-	return &DefaultListener{
+	created := &DefaultListener{
 		host: host,
 		port: snapshot.Port,
 		tls: tlsConfiguration{
@@ -72,5 +84,10 @@ func (bootstrap DefaultBootstrap) Build(snapshot runtimeconfig.ListenerSnapshot)
 		serveHTTP: func(server *http.Server, listener net.Listener) error {
 			return server.Serve(listener)
 		},
-	}, nil
+	}
+	if snapshot.TLS.Enabled {
+		created.tlsConfig = bootstrap.preparedTLS.config.Clone()
+		created.handshakeTimeout = time.Duration(snapshot.Timeouts.HandshakeSeconds) * time.Second
+	}
+	return created, nil
 }

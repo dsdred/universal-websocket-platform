@@ -2,11 +2,15 @@ package listener
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
+	"io"
+	"log"
 	"net"
 	"net/http"
 	"strconv"
 	"sync"
+	"time"
 )
 
 var (
@@ -44,6 +48,8 @@ type DefaultListener struct {
 	host             string
 	port             uint16
 	tls              tlsConfiguration
+	tlsConfig        *tls.Config
+	handshakeTimeout time.Duration
 	state            listenerState
 	listener         net.Listener
 	server           *http.Server
@@ -74,16 +80,28 @@ func (listener *DefaultListener) Running() bool {
 }
 
 // Start opens the configured TCP address and starts accepting connections.
-func (listener *DefaultListener) Start(context.Context) error {
+func (listener *DefaultListener) Start(ctx context.Context) error {
 	listener.mu.Lock()
 	defer listener.mu.Unlock()
 	if listener.state != listenerCreated {
 		return ErrListenerAlreadyRunning
 	}
+	if listener.tlsConfig != nil {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+	}
 
 	tcpListener, err := net.Listen("tcp", net.JoinHostPort(listener.host, strconv.Itoa(int(listener.port))))
 	if err != nil {
 		return err
+	}
+	if listener.tlsConfig != nil {
+		if err := ctx.Err(); err != nil {
+			_ = tcpListener.Close()
+			return err
+		}
+		tcpListener = tls.NewListener(tcpListener, listener.tlsConfig)
 	}
 	serverContext, serverStop := context.WithCancel(context.Background())
 	httpHandler := newHTTPHandlerWithHandshake(listener.handshakeHandler)
@@ -92,6 +110,15 @@ func (listener *DefaultListener) Start(context.Context) error {
 		BaseContext: func(net.Listener) context.Context {
 			return serverContext
 		},
+	}
+	if listener.tlsConfig != nil {
+		protocols := new(http.Protocols)
+		protocols.SetHTTP1(true)
+		httpServer.Protocols = protocols
+		httpServer.TLSNextProto = map[string]func(*http.Server, *tls.Conn, http.Handler){}
+		httpServer.ReadHeaderTimeout = listener.handshakeTimeout
+		// Peer handshake errors are connection rejections, not unstructured logs.
+		httpServer.ErrorLog = log.New(io.Discard, "", 0)
 	}
 
 	listener.listener = tcpListener
@@ -166,6 +193,7 @@ func (listener *DefaultListener) Stop(ctx context.Context) error {
 	listener.listener = nil
 	listener.server = nil
 	listener.serverStop = nil
+	listener.tlsConfig = nil
 	listener.state = listenerStopped
 	listener.stopErr = stopErr
 	close(stopDone)

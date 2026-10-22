@@ -44,7 +44,9 @@ The repository currently contains an Alpha foundation rather than a production-r
 
 - Listener opens a TCP socket and runs an HTTP server.
 - `GET /ws` performs an RFC 6455 Upgrade and transfers the connection through a Dispatcher.
-- TLS and Listener timeout metadata are not yet fully enforced by Runtime.
+- Handshake, read, write and idle timeouts are enforced. TLS v1 supports one
+  startup-loaded certificate/key pair through Resolver, TLS1.2/1.3 and HTTP1 WSS;
+  TLS preparation failures precede socket acquisition. No certificate reload/mTLS.
 
 ### Authentication
 
@@ -253,8 +255,10 @@ These gates precede Router because Router must not inherit an unstable security,
    network write); TASK-104 implements bounded per-full-message ReadSeconds,
    excluding Handler time. TASK-106 adds Run-scoped IdleSeconds since the last
    successful complete application Read/Write, including Handler time; zero
-   disables idle. Handshake is already effective. TLS remains open;
-   Gate 9 is not complete.
+   disables idle. TASK-107 adds one startup-loaded TLS certificate/key pair,
+   HTTP1 WSS and bounded TLS handshake/header phases; its exact verification and
+   acceptance resolve from the task evidence. Gate 9 closure is not inferred
+   from the timeout workstream; full closure requires its complete evidence assessment.
 10. **Metrics:** expose bounded, non-sensitive component and lifecycle measurements with controlled label cardinality.
 11. **Operational diagnostics:** report server, Dispatcher, Provider, Handler, and shutdown failures while preserving Secret and credential redaction.
 12. **Plugin contracts:** identify the smallest extension contracts supported by multiple real use cases. Dynamic loading and ABI are not implied.
@@ -314,7 +318,9 @@ Deferred features must not shape the current core through speculative abstractio
 
 The Runtime Alpha Review identifies implementation debt that must be tracked independently from new functionality:
 
-- Listener stores TLS and timeout metadata without fully enforcing it.
+- Listener timeout enforcement and bounded TLS v1 execution are implemented;
+  TLS preparation fails closed before socket acquisition. Full Gate 9 closure
+  requires explicit complete verification, not inference from the timeout tasks.
 - Manager-aware Session shutdown tracking is integrated with Runtime Host Stop.
 - The legacy synchronous Dispatcher remains only for isolated compatibility tests and must not return to production composition.
 - HTTP server and Dispatcher errors lack an operational reporting path.
@@ -516,7 +522,10 @@ Architectural debt concerns boundaries that remain unresolved or incomplete afte
   later production Admin UI roadmap item; its Coordinator-Accepted source
   `b8c2b8672343aefccfe03000144ebdd4df93f8ea` was published through PR #81
   and merged as `e9a87b5a35c880ac71444be9960876d3fbd02fbc`.
-- **Effective Listener Configuration:** TLS and timeout metadata can reach Snapshot without complete execution or explicit rejection.
+- **Effective Listener Configuration:** timeouts and one startup-loaded TLS
+  certificate/key pair are applied. TASK-107 defines TLS handshake/header/request
+  budgets and limitations; its actual gates resolve from the task evidence.
+  Certificate reload, external Secret backend and Control Service activation are absent.
 - **Operational diagnostics:** error ownership and redaction must cross component boundaries without coupling components to one logging implementation.
 - **Extension boundaries:** Router, transactional Session handoff, and Runtime shutdown integration are implemented; Message Persistence, Delivery, and Plugin contracts still require focused design.
 
