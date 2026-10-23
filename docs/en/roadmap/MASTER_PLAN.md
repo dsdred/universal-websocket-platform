@@ -331,7 +331,12 @@ The Runtime Alpha Review identifies implementation debt that must be tracked ind
   race/tidy PASS does not qualify unpublished Windows/native TASK-102.
 - Manager-aware Session shutdown tracking is integrated with Runtime Host Stop.
 - The legacy synchronous Dispatcher remains only for isolated compatibility tests and must not return to production composition.
-- HTTP server and Dispatcher errors lack an operational reporting path.
+- Listener/Handshake have synchronous trusted terminal-error callbacks, but no
+  complete safe operational reporting path. Handshake Provider errors lack that
+  reporting; production Session terminal observation remains a no-op. Gate 11 is
+  open. [DP-027](../design/DP-027-runtime-diagnostics-v1.md) is Draft / Planned
+  design/readiness for Listener Serve and Handshake Provider failures only;
+  it adds no implementation or closure.
 - Basic and asymmetric JWT Runtime coverage is incomplete.
 - Origin behavior relies on library defaults rather than explicit Configuration.
 

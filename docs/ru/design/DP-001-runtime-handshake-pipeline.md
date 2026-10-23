@@ -9,9 +9,11 @@
 **Статус реализации (TASK-ARCH-REVIEW-010):** Реализован частично. В production
 работают pre-Upgrade Authentication boundary, live-проверки admission,
 ограниченный Handshake, Runtime-owned connection context и transactional
-ownership handoff. Документ остаётся Draft, поскольку Host shutdown ещё не
-использует wait set Session Manager, а контракты operational diagnostics и
-supervision остаются незавершёнными.
+ownership handoff. Позднее Host shutdown интегрировал wait set Session Manager
+через ARCH-003 Task 10. Документ остаётся Draft; operational diagnostics и
+supervision не завершены. [DP-027](DP-027-runtime-diagnostics-v1.md) предлагает
+только Listener Serve/Handshake Provider diagnostics без реализации и без
+закрытия Gate 11.
 
 Этот документ предлагает архитектуру Runtime Handshake. Он определяет концептуальные границы и инварианты, а не Go-интерфейсы, пакеты или переиспользуемый policy framework.
 
