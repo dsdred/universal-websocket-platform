@@ -8,12 +8,22 @@
 
 ## Текущее состояние
 
-- Current task: [TASK-108](../docs/tasks/TASK-108-GATE-9-TECHNICAL-CLOSURE.md) —
-Gate 9 technical closure documentation, verification-stable `In Progress`, branch
-`docs/task-108-gate-9-technical-closure`, baseline
-`af61085843fd1666aec68d635daef944f2993972`. Actual TASK-108 checkpoints and closure
-resolve only from its newest matching Recovery Evidence Envelope. No staging,
-commit or publication authorized for TASK-108.
+- Current task: [TASK-109](../docs/tasks/TASK-109-RUNTIME-DIAGNOSTICS-V1-DESIGN.md) — Runtime Diagnostics v1,
+Design-only / Readiness, verification-stable `In Progress`, branch
+`docs/task-109-runtime-diagnostics-v1-design`, baseline
+`67ca1b200d42fda5be8b6dc8741d8f0bc24bd2a6`. Actual checkpoints/closure resolve
+only from its newest valid matching Recovery Evidence Envelope. Scope: Listener
+Serve failures and Handshake Provider operational failures. DP-027 Draft / Planned
+proposes bounded safe observation; no implementation, wiring or Gate 11 closure.
+Dispatcher, Handler, Session terminal anomalies, shutdown diagnostics and Metrics
+integration remain deferred. No staging, commit or publication authorized.
+TASK-102 unchanged, native qualification NOT RUN; C active, B/PoC inactive.
+
+Предыдущая [TASK-108](../docs/tasks/TASK-108-GATE-9-TECHNICAL-CLOSURE.md) принята как документационный Gate 9 closure cycle;
+source `edc2cbfce8f02ed2c4a1cfd281ccbea0b912ee0d` merged через PR #108 в
+`67ca1b200d42fda5be8b6dc8741d8f0bc24bd2a6` (fresh GitHub readback TASK-109).
+Исторический evidence record сохранён; его closure-time запреты не являются
+текущим состоянием publication и не дают новых permissions.
 Owner approved Gate 9 technical closure on 2026-10-22 for existing single-node
 TLS v1 and handshake/read/write/idle limits with existing Authentication and
 lifecycle contracts. See the [Closure Evidence Matrix](../docs/en/reviews/gate-9-closure.md).

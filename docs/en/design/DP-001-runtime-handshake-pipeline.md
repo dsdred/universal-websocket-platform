@@ -9,9 +9,11 @@
 **Implementation status (TASK-ARCH-REVIEW-010):** Partially implemented. The
 pre-Upgrade Authentication boundary, live admission checks, bounded Handshake,
 Runtime-owned connection context, and transactional ownership handoff are in
-production. The document remains Draft because Host shutdown does not yet use
-the Session Manager wait set and the operational diagnostics/supervision
-contracts remain incomplete.
+production. Host shutdown subsequently integrated the Session Manager wait set
+through ARCH-003 Task 10. The document remains Draft; operational diagnostics
+and supervision remain incomplete. [DP-027](DP-027-runtime-diagnostics-v1.md)
+proposes only Listener Serve/Handshake Provider diagnostics, with no implementation
+or Gate 11 closure.
 
 This document proposes the Runtime Handshake architecture. It defines conceptual boundaries and invariants, not Go interfaces, packages, or a reusable policy framework.
 
