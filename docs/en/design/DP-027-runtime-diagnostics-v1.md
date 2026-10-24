@@ -5,16 +5,23 @@
 ## 1. Status and scope
 
 - **Design Status:** Draft.
-- **Implementation Status:** Planned.
+- **Implementation Status:** Partial — isolated mailbox only (TASK-110); source integration and delivery Planned.
 - **Target Milestone:** Beta, Gate 11; this document does not close Gate 11.
 - **Task:** [TASK-109](../../tasks/TASK-109-RUNTIME-DIAGNOSTICS-V1-DESIGN.md).
 - **Source baseline:** `67ca1b200d42fda5be8b6dc8741d8f0bc24bd2a6`.
 
 The accepted deliverable may be design/readiness evidence without normative
-Approval or implementation authorization. No new behavior is implemented here.
+Approval or implementation authorization. Source integration is not implemented here.
 The only proposed source kinds are unexpected Listener Serve return and
 Handshake Authentication Provider operational failure. Existing behavior,
 proposed eligibility and future implementation proofs are distinguished below.
+
+Implementation boundary: [TASK-110](../../tasks/TASK-110-RUNTIME-DIAGNOSTICS-MAILBOX.md)
+implements only the isolated `internal/runtimediagnostics` substrate and package
+proof tests under separate Owner authorization. There are no Runtime call sites,
+source hooks or production sink. Design remains Draft; Gate 11 remains open.
+The future matrix below is proved only for package-local V06–V14 subsets stated
+in TASK-110; V01–V05 and integration portions remain Planned.
 
 ## 2. Authority and invariants
 

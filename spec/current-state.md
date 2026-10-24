@@ -1,15 +1,21 @@
 # Текущее состояние
 
-**Текущая задача:** [TASK-109](../docs/tasks/TASK-109-RUNTIME-DIAGNOSTICS-V1-DESIGN.md) — Runtime Diagnostics v1,
-Design-only / Readiness, verification-stable `In Progress`, branch
-`docs/task-109-runtime-diagnostics-v1-design`, baseline
-`67ca1b200d42fda5be8b6dc8741d8f0bc24bd2a6`. Actual checkpoints/closure resolve
-only from its newest valid matching Recovery Evidence Envelope. Scope: Listener
-Serve failures and Handshake Provider operational failures. DP-027 Draft / Planned
-proposes bounded safe observation; no implementation, wiring or Gate 11 closure.
-Dispatcher, Handler, Session terminal anomalies, shutdown diagnostics and Metrics
-integration remain deferred. No staging, commit or publication authorized.
-TASK-102 unchanged, native qualification NOT RUN; C active, B/PoC inactive.
+**Текущая задача:** [TASK-110](../docs/tasks/TASK-110-RUNTIME-DIAGNOSTICS-MAILBOX.md) — Runtime Diagnostics v1 isolated mailbox,
+Implementation, verification-stable `In Progress`, branch
+`codex/task-110-runtime-diagnostics-mailbox`, baseline
+`0955bf469848166491c36dd7d965dadf434f81e9`. Actual checkpoints/closure resolve
+only from its newest valid matching Recovery Evidence Envelope. Scope: isolated
+`internal/runtimediagnostics`, closed three-scalar schema, fixed64 lossy TryLock
+mailbox and package tests. DP-027 Draft / Partial (substrate only); source hooks,
+Runtime wiring, sink, Metrics and full Gate 11 reporting remain absent/deferred.
+Gate 11 OPEN; no staging, commit or publication authorized. TASK-102 unchanged,
+native qualification NOT RUN; C active, B/PoC inactive.
+
+[TASK-109](../docs/tasks/TASK-109-RUNTIME-DIAGNOSTICS-V1-DESIGN.md) — published design/readiness,
+source `c42eeb93f7dc32a3c4eba7f6af6d2852a4ca131f`, PR #109 merged at
+`0955bf469848166491c36dd7d965dadf434f81e9` (fresh read-only GitHub evidence).
+Historical task record and design Acceptance preserved; current Owner instruction
+separately authorizes only the isolated TASK-110 substrate.
 
 Предыдущая [TASK-108](../docs/tasks/TASK-108-GATE-9-TECHNICAL-CLOSURE.md) принята как документационный Gate 9 closure cycle;
 source `edc2cbfce8f02ed2c4a1cfd281ccbea0b912ee0d` merged через PR #108 в

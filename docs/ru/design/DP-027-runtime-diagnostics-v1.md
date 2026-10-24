@@ -5,16 +5,23 @@
 ## 1. Статус и scope
 
 - **Design Status:** Draft.
-- **Implementation Status:** Planned.
+- **Implementation Status:** Partial — isolated mailbox only (TASK-110); source integration and delivery Planned.
 - **Целевая веха:** Beta, Gate 11; этот документ не закрывает Gate 11.
 - **Задача:** [TASK-109](../../tasks/TASK-109-RUNTIME-DIAGNOSTICS-V1-DESIGN.md).
 - **Source baseline:** `67ca1b200d42fda5be8b6dc8741d8f0bc24bd2a6`.
 
 Принятый deliverable может быть design/readiness evidence без нормативного
-Approval и без разрешения реализации. Новое поведение здесь не реализовано.
+Approval и без разрешения реализации. Source integration здесь не реализована.
 Единственные предлагаемые source kinds — неожиданный возврат Listener Serve и
 operational failure Authentication Provider в Handshake. Ниже разделяются
 текущее поведение, предлагаемая eligibility и proofs будущей реализации.
+
+Граница реализации: [TASK-110](../../tasks/TASK-110-RUNTIME-DIAGNOSTICS-MAILBOX.md)
+реализует только изолированный `internal/runtimediagnostics` substrate и package
+proof tests по отдельной Owner authorization. Runtime call sites, source hooks
+и production sink отсутствуют. Design остаётся Draft; Gate 11 открыт.
+Будущая матрица ниже доказана только для package-local subsets V06–V14,
+указанных в TASK-110; V01–V05 и integration portions остаются Planned.
 
 ## 2. Authority и invariants
 
