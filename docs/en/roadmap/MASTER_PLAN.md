@@ -334,9 +334,10 @@ The Runtime Alpha Review identifies implementation debt that must be tracked ind
 - Listener/Handshake have synchronous trusted terminal-error callbacks, but no
   complete safe operational reporting path. Handshake Provider errors lack that
   reporting; production Session terminal observation remains a no-op. Gate 11 is
-  open. [DP-027](../design/DP-027-runtime-diagnostics-v1.md) is Draft / Planned
-  design/readiness for Listener Serve and Handshake Provider failures only;
-  it adds no implementation or closure.
+  open. [DP-027](../design/DP-027-runtime-diagnostics-v1.md) remains Draft;
+  implementation is Partial: TASK-110 adds only an isolated fixed64 safe mailbox
+  and package tests. Listener Serve/Handshake Provider hooks, Runtime wiring and
+  production sink remain absent; this does not close Gate 11.
 - Basic and asymmetric JWT Runtime coverage is incomplete.
 - Origin behavior relies on library defaults rather than explicit Configuration.
 
