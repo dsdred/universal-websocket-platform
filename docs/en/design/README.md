@@ -14,7 +14,7 @@ This directory contains focused Runtime design documents. A design document expl
 | [DP-006: Runtime Production Integration](DP-006-runtime-production-integration.md) | Draft; partially implemented |
 | [DP-007: Configuration Loader Contract](DP-007-configuration-loader-contract.md) | Draft; implemented in isolation |
 | [DP-008: Snapshot Builder Contract](DP-008-snapshot-builder-contract.md) | Draft; implemented in isolation |
-| [DP-009: Runtime Bootstrap Contract](DP-009-runtime-bootstrap-contract.md) | Draft; implemented in isolation |
+| [DP-009: Runtime Bootstrap Contract](DP-009-runtime-bootstrap-contract.md) | Draft; implemented in isolation; diagnostics value-binding extension Planned (TASK-111) |
 | [DP-010: Runtime Lifecycle Owner Contract](DP-010-runtime-lifecycle-owner-contract.md) | Draft; base and expected-attempt Stop extension implemented in isolation |
 | [DP-011: Runtime Launch Pipeline Integration](DP-011-runtime-launch-pipeline-integration.md) | Draft; base, managed continuation, and exact invoker implemented in isolation; callback/production composition planned |
 | [DP-012: Runtime Source Composition](DP-012-runtime-source-composition.md) | Draft; implemented in isolation |
@@ -30,7 +30,7 @@ This directory contains focused Runtime design documents. A design document expl
 | [DP-022: Runtime Execution Containment and Evidence](DP-022-runtime-execution-containment-and-evidence.md) | Approved; partial: TASK-070/TASK-071/TASK-073 prerequisites and TASK-074 private composition gate are published; no production wiring |
 | [DP-023: Runtime Process-Containment Bootstrap](DP-023-runtime-process-containment-bootstrap.md) | Approved; implemented in isolation; ordered items 1–5 are published and TASK-075 implements item 6 read-only assessment in isolation; no production wiring |
 | [DP-024: Runtime Recovery Claim and Admission Boundary](DP-024-runtime-recovery-claim-admission-boundary.md) | Approved / Partial; TASK-081 isolated local ordering/fence test-owner models; real-owner/provenance/durable claim/permit absent; integrated proofs Planned |
-| [DP-027: Runtime Diagnostics v1](DP-027-runtime-diagnostics-v1.md) | Draft / Partial; TASK-110 isolated fixed64 mailbox; source hooks, sink and Gate 11 closure absent |
+| [DP-027: Runtime Diagnostics v1](DP-027-runtime-diagnostics-v1.md) | Draft / Partial; TASK-110 mailbox implemented; TASK-111 source-hook/value-passage design only, implementation Not Activated; Gate11 open |
 
 ## Publisher governance proposals
 

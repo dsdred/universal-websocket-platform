@@ -265,7 +265,7 @@ service locator или registry:
 | Terminal Error Reporter | Опционален | Capability синхронного callback; Bootstrap никогда его не вызывает |
 
 Для обязательного Secret Resolver nil и typed-nil оба означают отсутствие. Для
-каждого optional binding nil и typed-nil оба означают отсутствие. Отсутствие
+каждого текущего optional reference binding nil и typed-nil оба означают отсутствие. Отсутствие
 никогда не выбирает fallback-реализацию.
 
 Bindings не несут identity Runtime или Launch Attempt и полномочий Loader,
@@ -279,6 +279,22 @@ Production-конструктор Host фиксирован и принадле�
 factory seam только для тестов. Binding не должна вводить dependency injection
 на основе reflection, global registry, скрытый fallback, mutable shared launch
 state или construction operational graph.
+
+### Planned diagnostics value binding (TASK-111)
+
+Таблица выше сохраняет три текущих implemented bindings. Отдельный design
+[TASK111](../../tasks/TASK-111-RUNTIME-DIAGNOSTICS-INTEGRATION-DESIGN.md) в
+[Draft DP027](DP-027-runtime-diagnostics-v1.md) §16 планирует один additional fixed
+optional field: `DiagnosticsProducer runtimediagnostics.Producer`.
+Zero value означает absence; existing nil/typed-nil rules относятся к current
+reference bindings, не к proposed value field. Bootstrap один раз копирует value
+в private Host construction; не создаёт/не владеет mailbox, не offers/reads/closes/
+flushes. Reader остаётся у external composition owner. Host interface/NewHost,
+Snapshot, launch identity, static failure precedence и one Host/Build/Start/cause/
+cleanup contracts неизменны. Extension **Planned, не реализован**, не входит в
+minimum component-local next slice. Current implementation/design statuses и
+production integration gates не меняются; это не Approved/Frozen amendment и
+не implementation authorization.
 
 ## 12. Граница запуска Host
 

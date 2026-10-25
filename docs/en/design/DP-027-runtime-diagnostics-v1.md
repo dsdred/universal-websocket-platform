@@ -23,6 +23,8 @@ source hooks or production sink. Design remains Draft; Gate 11 remains open.
 The future matrix below is proved only for package-local V06–V14 subsets stated
 in TASK-110; V01–V05 and integration portions remain Planned.
 
+Integration design: [TASK-111](../../tasks/TASK-111-RUNTIME-DIAGNOSTICS-INTEGRATION-DESIGN.md), baseline `060cf22cf040a2e84d49c52095af9ed4ab9390a7`; sections 15–19 are Planned design/readiness only.
+
 ## 2. Authority and invariants
 
 [ADR-0002](../adr/0002-configuration-dsl.md) and
@@ -238,7 +240,9 @@ stress and module/build/vet checks for the exact authorized slice. V01–V06 and
 Host integration portions of V11–V12 belong to later source integration, not
 proof supplied by an isolated mailbox test. No unavailable test may be called PASS.
 
-## 12. Minimal next implementation slice
+## 12. Isolated substrate prerequisite (TASK-110)
+
+Historical prerequisite, now published as TASK-110; the current next slice is section 19.
 
 Recommend **one isolated `internal/runtimediagnostics` mailbox package and its
 tests**, no production imports/call sites or source wiring. Readiness is conditional
@@ -293,8 +297,161 @@ Inspected test source (not rerun in this design task):
   `TestBootstrapHostAuthenticationErrorPreventsUpgrade`,
   `TestBootstrapTerminalObserverConsumesSessionError`.
 
-These prove the existence of tests for current boundaries, not execution success
-or new mailbox behavior. Independent actual-byte design gates and exact candidate
-identity resolve from the TASK-109 envelope. Proposed mailbox implementation is
-bounded and independently testable; full production diagnostics remains not ready
-for activation within this task. STOP before implementation authorization.
+TASK-109 verified the original design only. TASK-110 subsequently implemented and
+published the isolated mailbox through PR110 at this integration baseline; its
+PR/post-merge Linux CI passed race/tidy/module guards. These historical facts do
+not prove new integration. TASK-111 verifies only the design in sections 15–19;
+source integration, consumer/delivery and Gate11 closure remain absent.
+
+## 15. Source integration inventory at TASK-111 baseline
+
+This is Design-update / Readiness only at `060cf22cf040a2e84d49c52095af9ed4ab9390a7`.
+No source or test changes are made. The mailbox is published; the integrations below
+are Planned. Source anchors refer to this exact baseline.
+
+| Source boundary | Existing fact | Exact planned producer point |
+| --- | --- | --- |
+| [Listener](../../../internal/listener/listener.go), `serve`, lines 212–218 | One Serve call, closed-error filter at 215, legacy callback at 216, deferred wg.Done at 213 | Inside the unchanged eligible branch, one `Offer(ListenerServeFailed)` before the legacy callback |
+| Same file, wrapper/reporter 220–242 and Stop 185–186 | Unwrap retains raw cause; synchronous panic-isolated callback precedes Serve completion; Stop waits for Serve/handlers | Preserve filter, wrapper, callback and waits; do not pass a cause to Offer |
+| [Listener Bootstrap](../../../internal/listener/bootstrap.go), 16–97 | Constructors bind dependencies; Build copies them without opening a socket | Copy one concrete Producer value before Start; no event during Build |
+| [Handshake](../../../internal/handshake/handler.go), 107–115 | One Authenticate; error goes to existing generic rejection; later context check remains separate | Immediately after Authenticate, take one diagnostic-only `handshakeContext.Err()` sample; nonnil error plus active sample permits one Provider offer |
+| Same file, 116–163 | Decision, final admission/context, Accept, handoff/cleanup and configured-timeout callback already exist | Preserve all existing response, cancellation and ownership operations |
+| [Authentication Service](../../../internal/authentication/service.go), 32–46 | Ordered Providers; first error is returned unchanged; first success stops evaluation | No reporting in Service/Providers; Handshake owns the one opportunity per Authenticate return |
+| [API Key](../../../internal/authentication/apikey_provider.go) / [JWT](../../../internal/authentication/jwt_provider.go) | Credential rejection returns nil error; resolver/key dependency failure returns operational error | Nil-error rejection emits nothing; active-context nonnil error is eligible without cause inspection |
+| [Runtime composition](../../../internal/runtime/composition.go), 153–181 | Host builds both boundaries with one legacy callback; terminalObserver at 34 is a no-op | Later pass Producer separately from the two ADR-0004 capabilities; no Session Observer reuse |
+
+Listen/build/TLS preparation errors, expected closed Serve returns, TLS peer
+rejections, Stop errors, Accept/handoff failures and Session outcomes add neither
+code. DP-018 management categories and report keys are not reused.
+
+## 16. Exact value dependency and construction design
+
+The following signatures are proposed design, not implemented APIs:
+
+- `DefaultBootstrap.WithDiagnosticsProducer(producer runtimediagnostics.Producer) DefaultBootstrap` returns a copy of the Listener Bootstrap with a private Producer value. Existing constructors and the Build interface stay unchanged; Build copies the value to DefaultListener without offering or new validation.
+- `handshake.NewHandlerWithDiagnostics(admission AdmissionCapability, runtimeContext RuntimeContextProvider, authenticationService authentication.Service, handoff connection.AuthenticatedDispatcher, reportError func(error), producer runtimediagnostics.Producer) (*Handler, error)` stores a private Producer value. Existing constructors keep signatures and required-dependency validation order, delegating with zero Producer.
+
+Zero disables observation; no fallback mailbox is constructed. A caller dereferences
+the nonnil Producer pointer returned by mailbox New once at its construction
+boundary. Only the opaque capability is copied, never mailbox/mutex state. Later
+assignment of the caller's Producer object to zero or another capability cannot
+redirect an already-constructed component. Concurrent caller mutation during the
+construction copy remains unsupported caller misuse. No runtime setter, diagnostic
+interface/callback or raw-error constructor is added.
+
+Complete later passage is explicit and **Planned**, not part of the next slice:
+
+1. External composition owner creates one mailbox pair for one Host construction/lifetime and retains Reader externally. Separate Host lifetimes require separate mailboxes; there is no implicit global sharing or Host identity field.
+2. Future fixed `DependencyBindings.DiagnosticsProducer runtimediagnostics.Producer` is optional, zero absent. Bootstrap snapshots this value once; it never creates/owns the mailbox or calls Offer/TryRead. Caller must not mutate the borrowed request/dependencies while Bootstrap reads them.
+3. A private Host-construction core accepts/stores the value and threads it through private production composition into the two component constructors. Public Host interface, NewHost signature and existing zero-producer behavior remain unchanged.
+4. Host remains the only operational composition root during Start. No Reader/getter/consumer enters Host, Bootstrap outcomes, Snapshot, Configuration, launch identity or the ADR-0004 admission/context carrier. The new dependency imports only the leaf mailbox package.
+
+[Draft DP-009](DP-009-runtime-bootstrap-contract.md) section 11 explicitly separates
+this planned fourth binding from its three currently implemented bindings. Static
+validation/failure precedence, fixed factory ownership, one Host/Build/Start call,
+cause wrapping and cleanup ownership remain unchanged. No Approved/Frozen amendment
+is needed; an implementation requiring one must stop for Owner decision.
+
+## 17. Exact source algorithm and compatibility
+
+Listener adds exactly one concrete Offer call inside the existing nonnil/unexpected
+Serve-error branch, before `reportListenerTerminalError`. Ignore the bool. Keep the
+existing errors.Is filter and raw-cause wrapper intact. Concurrent Stop does not
+reclassify an unexpected return. A blocked legacy callback cannot prevent the prior
+offer attempt, but still delays wg.Done/Stop. The pre-existing filter can itself
+invoke hostile Is/Unwrap and block or panic; no stronger guarantee is introduced.
+
+Handshake adds exactly one diagnostic-only context sample immediately after the
+Authenticate return. If returned error is nonnil and that sample is nil, attempt
+one `Offer(AuthenticationProviderFailed)`, ignoring bool. Then execute the existing
+error branch, later context checks, decision, admission, Accept and handoff logic
+unchanged. The sample never replaces those checks.
+
+| Diagnostic sample / Authenticate return | New Provider opportunity | Existing flow retained |
+| --- | --- | --- |
+| Cancelled/timed out sample; any result/error | None, including independent late dependency failure | Existing cancellation/error rejection and legacy configured-timeout handling |
+| Active sample; nonnil error, including direct/wrapped context sentinels | One offer; do not call Error/Unwrap/Is | Existing generic 503; no Upgrade/handoff |
+| Active sample; nil error and rejected/invalid success | None | Existing 401 unless subsequent existing cancellation checks win |
+| Active sample; nil error and valid success | None | All existing admission/context/Upgrade/handoff checks |
+
+Cancellation after an active sample does not retract an eligible offer. If a
+configured timeout becomes visible to the existing rejection helper afterward,
+its legacy timeout callback may still run; that is not a duplicate Provider code.
+Cancellation before the sample deliberately loses late failures, not proves their
+absence or success. Provider error sentinels do not establish caller cancellation.
+
+Neither source passes raw errors, request/Provider metadata, credentials, Principal
+or labels to the mailbox. It receives only a fixed Code and assigns version and
+accepted-insertion sequence. Service, Providers, callback adapters and generic
+legacy report helpers emit no duplicate offers. One occurrence has at most one
+attempt, not a reliable-delivery/exactly-once acceptance guarantee. Loss never
+causes retry, replay, recursion, fallback reporting, response or lifecycle changes.
+
+## 18. Lifetime, startup and Stop
+
+The later mailbox lifetime is one Host lifetime, including failed Start/rollback
+and retry on that same Host. Do not reset, replace, drain or flush it on retry;
+accepted historical events retain their sequence. A failed lifetime may discard
+its entire mailbox. A retained Reader may consume after rollback or Stop; no event
+proves attempt identity, readiness, startup success, current liveness or cleanup.
+
+Static binding/Build, failed Listen or TLS preparation emit neither code. If an
+actual Serve invocation fails before startup commit or during rollback/Stop, its
+normal source filter still decides eligibility. Pre-commit unavailable Runtime
+context/admission still prevents Authentication and hence Provider reporting.
+
+No new resource, worker, sink, timer, Start/Stop/Close/reset/flush/drain/join or
+shutdown error is added. Source offers acquire no Host/Listener lifecycle,
+Manager, Session or execution-owner lock; mailbox TryLock ends before legacy
+callbacks or further handler work. A blocked external consumer affects only that
+consumer. Existing arbitrary legacy callbacks/Providers can still block cleanup;
+the design supplies no new hard termination or scheduling-latency guarantee.
+Approved Session Observer/lease/accounting and Host startup/rollback/Stop order,
+readiness, admission and errors.Is-compatible cause chains remain unchanged.
+
+## 19. Exact future verification and minimum next slice
+
+These are required future proofs, **not tests executed by TASK-111**. The component
+slice uses two focused diagnostic test files in Listener/Handshake; existing tests
+remain regression coverage. W rows belong only to a later separately selected
+wiring slice. I rows refine the source portions of V01–V14; existing mailbox proofs
+remain substrate evidence, not a replacement for source proofs.
+
+| ID / proposed proof | Exact required outcome | Slice |
+| --- | --- | --- |
+| I01 TestListenerDiagnosticsExpectedServeReturns | nil, direct and wrapped http.ErrServerClosed/net.ErrClosed: no new event; legacy behavior unchanged; wrapped cases extend the current direct-sentinel coverage | Component |
+| I02 TestListenerDiagnosticsUnexpectedServeOnce | One unexpected return, including concurrent Stop: one opportunity/code, safe schema/positive sequence; legacy callback once and errors.Is(callbackErr,rawCause) true | Component |
+| I03 TestListenerDiagnosticsBeforeLegacyReporter | Block controllable legacy reporter: prior event is removable; release reporter before asserting cleanup. Reporter panic remains isolated; no claim that blocked legacy permits Stop completion | Component |
+| I04 TestHandshakeDiagnosticsOperationalFailure | Active sample + arbitrary/direct/wrapped context-shaped error: one Provider code, generic 503, zero Upgrade/handoff; ordered multi-Provider service still has one boundary opportunity | Component |
+| I05 TestHandshakeDiagnosticsCredentialRejection | Nil-error credential reject/invalid success: no code, existing 401/cancellation precedence; valid success also no code | Component |
+| I06 TestHandshakeDiagnosticsCancellationPrecedence | Cancel/timeout before sample + late result/error: no Provider event, existing 503/timeout callback. Cancellation after active sample does not retract; legacy timeout callback may coexist. Deterministic phase-controlled fixtures, not timing sleeps | Component |
+| I07 TestHandshakeDiagnosticsDoNotInspectProviderError | Hostile Error/Unwrap/Is and request/Provider metadata never inspected by projection; exactly three safe scalars. Exclude Listener pre-existing filter from hostile-method non-invocation guarantee | Component |
+| I08 TestDiagnosticsSaturationPreservesSourceBehavior | Prefill real mailbox64; trigger each eligible source: preserve FIFO/HTTP/legacy behavior under full loss, no retry; zero Producer preserves legacy behavior | Component |
+| I09 TestDiagnosticsCaptureProducerValue | Bind P1 value, overwrite caller object with P2/zero, trigger: only original Reader1 receives; separate mailbox instances do not cross | Component |
+| I10 TestDiagnosticsConcurrentSourcesAndReaders | Valid copies, positive unique accepted sequence/per-reader FIFO, accepted count <= eligible occurrences, allowed loss/no source duplicates/cross-mailbox events; future race/stress and legacy regressions | Component |
+| I11 TestDiagnosticsDoNotAddOutcomeKinds | Accept/handoff/Session/startup/Stop failures add neither code; existing handoff/reporter cleanup and errors.Is behavior unchanged | Component |
+| I12 source/import/API audit + existing mailbox proofs | One concrete Offer per eligible branch, ignored bool; no raw input/adapter/counter/retry/sink/worker. Busy/exhaustion compatibility is compositional: mailbox white-box proofs plus source structure. Do not add mailbox test APIs or claim directly forced inaccessible state | Component |
+| W01 TestBootstrapDiagnosticsBindingSnapshot | Optional value copied once; unchanged request/validation precedence; no Offer/TryRead during binding; caller reassignment cannot redirect Host | Later wiring |
+| W02 TestHostDiagnosticsSharedProducerIsolation | One Host uses same mailbox for both sources; independent Hosts use separate pairs; Reader never stored/exposed by Host | Later wiring |
+| W03 TestHostDiagnosticsRollbackRetryLifetime | Composition/startup/rollback/retry preserve lifecycle/causes and one sequence; old events retained, no reset/flush/new resource | Later wiring |
+| W04 TestHostDiagnosticsStopIndependence | With nil/prompt legacy reporter, saturated mailbox or blocked external consumer does not change Host Stop order; retained reader/late eligible Listener event work; legacy blocking exclusions remain | Later wiring |
+| W05 Host/Session contract audit + existing regressions | Host interface/NewHost unchanged; ADR004 carrier2; Observer/accounting unchanged; no ControlPlane cycle, sink/Metrics/API/durable transport/Configuration field | Later wiring |
+
+Future regression includes the five Listener serve_error tests, Handshake rejection/
+error/deadline/admission/handoff/panic/concurrency tests, Host rollback/retry/shutdown
+and Bootstrap optional-binding/cause tests, and Approved Session/Manager tests.
+Implementation verification requires formatting, full test/build/vet/module checks,
+available race and stress; unavailable checks remain explicit limitations. Linux
+race does not qualify Windows/native TASK-102.
+
+**Ready, Not Activated:** the minimum next implementation is only component-local
+hooks/construction: listener.go, listener/bootstrap.go, handshake/handler.go, two
+focused package test files and necessary task/status docs. No runtime, Authentication,
+Session/Manager, mailbox or module edits. Existing production composition keeps its
+legacy constructors/zero Producer; this does not activate Host/Bootstrap wiring.
+
+The later value-binding/Host/private composition slice requires this prerequisite
+independently accepted, fresh readiness/Size Guard and separate Owner authorization.
+Neither slice introduces a sink or consumer lifecycle. This design acceptance is
+not normative DP Approval, implementation permission or Gate11 closure.
+**STOP BEFORE COMMIT GATE AND IMPLEMENTATION AUTHORIZATION.**

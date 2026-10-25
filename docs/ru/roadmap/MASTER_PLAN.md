@@ -335,7 +335,9 @@ Runtime Alpha Review фиксирует implementation debt, который не
   Gate 11 открыт. [DP-027](../design/DP-027-runtime-diagnostics-v1.md) остаётся Draft;
   implementation Partial: TASK-110 добавляет только isolated fixed64 safe mailbox
   и package tests. Listener Serve/Handshake Provider hooks, Runtime wiring и
-  production sink отсутствуют; Gate 11 этим не закрывается.
+  production sink отсутствуют; Gate 11 этим не закрывается. TASK111 определяет
+  только component-source hooks и later explicit value-binding design;
+  minimum implementation slice Not Activated.
 - Покрытие Runtime для Basic и asymmetric JWT неполное.
 - Поведение Origin полагается на defaults библиотеки, а не на явную Configuration.
 
