@@ -9,6 +9,7 @@ import (
 	"github.com/coder/websocket"
 	"github.com/dsdred/universal-websocket-platform/internal/authentication"
 	"github.com/dsdred/universal-websocket-platform/internal/connection"
+	"github.com/dsdred/universal-websocket-platform/internal/runtimediagnostics"
 )
 
 var (
@@ -37,6 +38,7 @@ type Handler struct {
 	authentication authentication.Service
 	handoff        connection.AuthenticatedDispatcher
 	reportError    func(error)
+	diagnostics    runtimediagnostics.Producer
 }
 
 // NewHandler creates the pre-Upgrade Handshake boundary from narrow dependencies.
@@ -64,6 +66,19 @@ func NewHandlerWithTerminalErrorReporter(
 	handoff connection.AuthenticatedDispatcher,
 	reportError func(error),
 ) (*Handler, error) {
+	return NewHandlerWithDiagnostics(admission, runtimeContext, authenticationService, handoff, reportError, runtimediagnostics.Producer{})
+}
+
+// NewHandlerWithDiagnostics captures an optional mailbox capability by value.
+// Legacy reporting stays synchronous; zero Producer disables diagnostics.
+func NewHandlerWithDiagnostics(
+	admission AdmissionCapability,
+	runtimeContext RuntimeContextProvider,
+	authenticationService authentication.Service,
+	handoff connection.AuthenticatedDispatcher,
+	reportError func(error),
+	producer runtimediagnostics.Producer,
+) (*Handler, error) {
 	if admission == nil {
 		return nil, ErrNilAdmissionCapability
 	}
@@ -82,6 +97,7 @@ func NewHandlerWithTerminalErrorReporter(
 		authentication: authenticationService,
 		handoff:        handoff,
 		reportError:    reportError,
+		diagnostics:    producer,
 	}, nil
 }
 
@@ -105,6 +121,10 @@ func (handler *Handler) ServeHTTP(response http.ResponseWriter, request *http.Re
 	}()
 
 	result, err := handler.authentication.Authenticate(handshakeContext, authenticationRequest(request))
+	diagnosticContextErr := handshakeContext.Err()
+	if err != nil && diagnosticContextErr == nil {
+		handler.diagnostics.Offer(runtimediagnostics.AuthenticationProviderFailed)
+	}
 	if err != nil {
 		handler.rejectCanceledHandshake(response, handshakeContext)
 		return

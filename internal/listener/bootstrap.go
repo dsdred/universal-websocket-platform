@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
+	"github.com/dsdred/universal-websocket-platform/internal/runtimediagnostics"
 )
 
 // Bootstrap builds an effective Runtime Listener from an immutable Snapshot.
@@ -19,6 +20,7 @@ type DefaultBootstrap struct {
 	handshakeHandler http.Handler
 	reportError      func(error)
 	preparedTLS      *PreparedTLS
+	diagnostics      runtimediagnostics.Producer
 }
 
 // NewBootstrapWithTLSAndHandshake binds already prepared, opaque TLS material.
@@ -39,6 +41,13 @@ func NewBootstrapWithHandshakeAndTerminalErrorReporter(
 	reportError func(error),
 ) DefaultBootstrap {
 	return DefaultBootstrap{handshakeHandler: handler, reportError: reportError}
+}
+
+// WithDiagnosticsProducer returns a Bootstrap copy with an optional mailbox capability.
+// The value is captured before Build; zero disables diagnostics.
+func (bootstrap DefaultBootstrap) WithDiagnosticsProducer(producer runtimediagnostics.Producer) DefaultBootstrap {
+	bootstrap.diagnostics = producer
+	return bootstrap
 }
 
 // Build validates and copies Listener Snapshot metadata without opening a socket.
@@ -81,6 +90,7 @@ func (bootstrap DefaultBootstrap) Build(snapshot runtimeconfig.ListenerSnapshot)
 		state:            listenerCreated,
 		handshakeHandler: bootstrap.handshakeHandler,
 		reportError:      bootstrap.reportError,
+		diagnostics:      bootstrap.diagnostics,
 		serveHTTP: func(server *http.Server, listener net.Listener) error {
 			return server.Serve(listener)
 		},

@@ -329,15 +329,13 @@ Runtime Alpha Review фиксирует implementation debt, который не
   race/tidy PASS не квалифицирует unpublished Windows/native TASK-102.
 - Manager-aware shutdown tracking Session интегрирован с Runtime Host Stop.
 - Legacy synchronous Dispatcher сохраняется только для изолированных compatibility-тестов и не должен возвращаться в production composition.
-- Listener/Handshake имеют synchronous trusted terminal-error callbacks, но нет
-  полного safe operational reporting path. Handshake Provider errors не имеют
-  такого reporting; production Session terminal observation остаётся no-op.
-  Gate 11 открыт. [DP-027](../design/DP-027-runtime-diagnostics-v1.md) остаётся Draft;
-  implementation Partial: TASK-110 добавляет только isolated fixed64 safe mailbox
-  и package tests. Listener Serve/Handshake Provider hooks, Runtime wiring и
-  production sink отсутствуют; Gate 11 этим не закрывается. TASK111 определяет
-  только component-source hooks и later explicit value-binding design;
-  minimum implementation slice Not Activated.
+- Listener/Handshake сохраняют synchronous trusted terminal-error callbacks. DP027
+  остаётся Draft/Partial: TASK110 даёт fixed64 mailbox; TASK112 добавляет только
+  component-local Listener Serve/Handshake Provider hooks и copied Producer
+  constructors. Runtime composition использует zero Producer; Host/Bootstrap
+  value binding, production sink/delivery и W01–W05 остаются Planned. Session
+  terminal observation остаётся no-op; Gate 11 OPEN. Blocking legacy callback
+  неизменен; Windows/native qualification этим не устанавливается.
 - Покрытие Runtime для Basic и asymmetric JWT неполное.
 - Поведение Origin полагается на defaults библиотеки, а не на явную Configuration.
 
