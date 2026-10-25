@@ -280,21 +280,22 @@ factory seam только для тестов. Binding не должна вво�
 на основе reflection, global registry, скрытый fallback, mutable shared launch
 state или construction operational graph.
 
-### Planned diagnostics value binding (TASK-111)
+### Diagnostics value binding (TASK-113)
 
-Таблица выше сохраняет три текущих implemented bindings. Отдельный design
-[TASK111](../../tasks/TASK-111-RUNTIME-DIAGNOSTICS-INTEGRATION-DESIGN.md) в
-[Draft DP027](DP-027-runtime-diagnostics-v1.md) §16 планирует один additional fixed
-optional field: `DiagnosticsProducer runtimediagnostics.Producer`.
-Zero value означает absence; existing nil/typed-nil rules относятся к current
-reference bindings, не к proposed value field. Bootstrap один раз копирует value
-в private Host construction; не создаёт/не владеет mailbox, не offers/reads/closes/
-flushes. Reader остаётся у external composition owner. Host interface/NewHost,
-Snapshot, launch identity, static failure precedence и one Host/Build/Start/cause/
-cleanup contracts неизменны. Extension **Planned, не реализован**, не входит в
-minimum component-local next slice. Current implementation/design statuses и
-production integration gates не меняются; это не Approved/Frozen amendment и
-не implementation authorization.
+Таблица выше описывает три исходных reference bindings. TASK-113 реализует
+отдельно спланированное четвёртое поле TASK-111/DP-027 §16:
+`DiagnosticsProducer runtimediagnostics.Producer`. Fixed optional value:
+zero означает отсутствие; nil/typed-nil rules относятся только к reference bindings.
+После прежней static validation Bootstrap один раз копирует value на fixed production
+factory boundary в private Host construction. Caller не меняет borrowed request/
+dependencies во время Bootstrap; последующее присваивание не перенаправляет Host.
+Bootstrap не создаёт/не владеет mailbox, не offers/reads/closes/flushes его.
+Reader остаётся внешним. Private Host composition передаёт тот же captured value
+двум существующим component producers на один Host lifetime, включая rollback/
+retry. Host/NewHost, Snapshot, launch identity, failure precedence, one Host/Build/
+Start и cause/cleanup contracts неизменны. Design остаётся Draft; bounded
+implementation не является Approved/Frozen amendment, полной launch-pipeline
+integration, production sink/delivery или Gate11 closure.
 
 ## 12. Граница запуска Host
 

@@ -8,6 +8,7 @@ import (
 	"github.com/dsdred/universal-websocket-platform/internal/listener"
 	"github.com/dsdred/universal-websocket-platform/internal/message"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
+	"github.com/dsdred/universal-websocket-platform/internal/runtimediagnostics"
 	"github.com/dsdred/universal-websocket-platform/internal/secretresolver"
 	"github.com/dsdred/universal-websocket-platform/internal/sessionmanager"
 )
@@ -60,6 +61,7 @@ type DefaultHost struct {
 	newRuntimeContext runtimeContextFactory
 	stateObserver     func(hostState)
 	reportError       func(error)
+	diagnostics       runtimediagnostics.Producer
 	admission         admissionGate
 	capabilities      *handshakeCapabilities
 	runtimeListener   listener.Listener
@@ -113,6 +115,17 @@ func newHostWithTerminalErrorReporter(
 	compose runtimeComposer,
 	reportError func(error),
 ) (*DefaultHost, error) {
+	return newHostWithDiagnostics(snapshot, resolver, handler, compose, reportError, runtimediagnostics.Producer{})
+}
+
+func newHostWithDiagnostics(
+	snapshot runtimeconfig.Snapshot,
+	resolver secretresolver.Resolver,
+	handler message.Handler,
+	compose runtimeComposer,
+	reportError func(error),
+	producer runtimediagnostics.Producer,
+) (*DefaultHost, error) {
 	if isZeroSnapshot(snapshot) {
 		return nil, ErrNilSnapshot
 	}
@@ -131,6 +144,7 @@ func newHostWithTerminalErrorReporter(
 		resolver:    resolver,
 		handler:     handler,
 		reportError: reportError,
+		diagnostics: producer,
 		newRuntimeContext: func() (context.Context, context.CancelFunc) {
 			return context.WithCancel(context.Background())
 		},
@@ -147,7 +161,8 @@ func newHostWithTerminalErrorReporter(
 			resolver secretresolver.Resolver,
 			handler message.Handler,
 		) (runtimeComposition, error) {
-			return composeRuntimeForStartup(ctx, snapshot, resolver, handler, host.capabilities, host.reportError)
+			return composeRuntimeForStartupWithDiagnostics(ctx, snapshot, resolver, handler, host.capabilities,
+				host.reportError, host.diagnostics)
 		}
 	} else {
 		host.compose = func(

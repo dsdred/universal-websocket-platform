@@ -276,21 +276,22 @@ factory seam only for tests. Binding must not introduce reflection-based
 dependency injection, a global registry, hidden fallback, mutable shared
 launch state, or operational graph construction.
 
-### Planned diagnostics value binding (TASK-111)
+### Diagnostics value binding (TASK-113)
 
-The table above remains the three currently implemented bindings. The separate
-[TASK-111](../../tasks/TASK-111-RUNTIME-DIAGNOSTICS-INTEGRATION-DESIGN.md) design in
-[Draft DP-027](DP-027-runtime-diagnostics-v1.md) section 16 plans one additional
-fixed optional field: `DiagnosticsProducer runtimediagnostics.Producer`.
-Its zero value means absent; the existing nil/typed-nil rules apply to the current
-reference bindings, not to this proposed value field. Bootstrap copies the value
-once into private Host construction; it never creates/owns a mailbox, offers,
-reads, closes or flushes it. Reader remains with the external composition owner.
-Host interface/NewHost, Snapshot, launch identity, static failure precedence and
-one Host/Build/Start/cause/cleanup contracts remain unchanged. The extension is
-**Planned, not implemented**, not part of the minimum component-local next slice.
-Current implementation/design statuses and production integration gates do not
-change; this is not an Approved/Frozen amendment or implementation authorization.
+The table above describes the three original reference bindings. TASK-113 implements
+the separately planned fourth field from TASK-111/DP-027 §16:
+`DiagnosticsProducer runtimediagnostics.Producer`. This fixed optional value is
+zero when absent; nil/typed-nil rules apply only to the reference bindings.
+After existing static validation, Bootstrap copies it once at the fixed production
+factory boundary into private Host construction. Caller must not mutate borrowed
+request/dependencies during Bootstrap. Later caller reassignment cannot redirect Host.
+Bootstrap never creates/owns a mailbox or offers, reads, closes or flushes it.
+Reader remains external. Private Host composition passes the same captured value
+to the two existing component producers for one Host lifetime, including rollback/
+retry. Host/NewHost, Snapshot, launch identity, failure precedence, one Host/Build/
+Start and cause/cleanup contracts stay unchanged. Design remains Draft; this
+bounded implementation is not an Approved/Frozen amendment, full launch-pipeline
+integration, production sink/delivery or Gate11 closure.
 
 ## 12. Host Startup Boundary
 

@@ -332,12 +332,12 @@ The Runtime Alpha Review identifies implementation debt that must be tracked ind
 - Manager-aware Session shutdown tracking is integrated with Runtime Host Stop.
 - The legacy synchronous Dispatcher remains only for isolated compatibility tests and must not return to production composition.
 - Listener/Handshake retain synchronous trusted terminal-error callbacks. DP-027
-  remains Draft/Partial: TASK-110 provides the fixed64 mailbox; TASK-112 adds only
-  component-local Listener Serve/Handshake Provider hooks and copied Producer
-  constructors. Runtime composition still uses zero Producer; Host/Bootstrap
-  value binding, production sink/delivery and W01–W05 remain Planned. Session
-  terminal observation remains no-op; Gate 11 OPEN. Legacy callback blocking is
-  unchanged; this does not establish Windows/native qualification.
+  remains Draft/Partial: TASK-110 fixed64 mailbox, TASK-112 component hooks and
+  TASK-113 optional copied value binding/private Host composition are implemented.
+  One externally created mailbox reaches both existing producers; Reader stays
+  external. W01–W05 wiring proof scope does not supply production sink/delivery.
+  Session terminal observation stays no-op; Gate11 OPEN. Legacy callback blocking,
+  cleanup and Windows/native qualification limitations remain unchanged.
 - Basic and asymmetric JWT Runtime coverage is incomplete.
 - Origin behavior relies on library defaults rather than explicit Configuration.
 

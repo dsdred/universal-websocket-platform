@@ -5,7 +5,7 @@
 ## 1. Status and scope
 
 - **Design Status:** Draft.
-- **Implementation Status:** Partial — isolated mailbox (TASK-110) and component-local producer hooks (TASK-112); Host/Bootstrap wiring and delivery Planned.
+- **Implementation Status:** Partial — mailbox (TASK-110), component hooks (TASK-112), optional Host/Bootstrap wiring (TASK-113); production sink/delivery Planned.
 - **Target Milestone:** Beta, Gate 11; this document does not close Gate 11.
 - **Task:** [TASK-109](../../tasks/TASK-109-RUNTIME-DIAGNOSTICS-V1-DESIGN.md).
 - **Source baseline:** `67ca1b200d42fda5be8b6dc8741d8f0bc24bd2a6`.
@@ -17,13 +17,14 @@ component-local source hooks and copied Producer construction under separate Own
 authorization: unexpected Listener Serve return and Handshake Provider operational
 failure. The package schema/fixed64 loss contract is unchanged.
 
-Production Runtime composition still uses legacy constructors with zero Producer.
-No Host/Runtime Bootstrap wiring, production sink, transport, Metrics or durable
-delivery is implemented. DP-009 value-binding extension remains Planned. Design
-remains Draft; Gate 11 remains OPEN. TASK-112 verifies applicable I01–I12 component
-proofs; W01–W05 remain future wiring proofs. I06 narrow offer/timeout-callback
-coexistence uses compositional source-order proof, not an empirically forced window.
-Exact commands, findings and environment limits are in the TASK-112 evidence envelope.
+[TASK-113](../../tasks/TASK-113-RUNTIME-DIAGNOSTICS-WIRING.md) implements the
+optional copied DP-009 Producer binding and private Host/Bootstrap passage into
+both existing component constructors. Zero remains disabled. One external mailbox
+pair belongs to one Host lifetime; Reader stays external through rollback/retry/Stop.
+No production sink, transport, Metrics or durable delivery exists. Design remains
+Draft/Partial; Gate11 OPEN. TASK-112 supplies I01–I12; TASK-113 supplies W01–W05
+wiring proofs and their exact limitations in its evidence envelope. I06 narrow
+offer/timeout-callback coexistence remains compositional source-order proof.
 
 Integration design: [TASK-111](../../tasks/TASK-111-RUNTIME-DIAGNOSTICS-INTEGRATION-DESIGN.md),
 baseline `060cf22cf040a2e84d49c52095af9ed4ab9390a7`. Section 15 retains that historical
@@ -329,6 +330,12 @@ rejections, Stop errors, Accept/handoff failures and Session outcomes add neithe
 code. DP-018 management categories and report keys are not reused.
 
 ## 16. Exact value dependency and construction design
+
+TASK-113 implementation note: the complete value passage and lifetime requirements
+below are now implemented under separate Owner authorization. Prospective wording
+and “Later wiring” W-row labels retain the TASK-111 design chronology; they no
+longer describe absent Host wiring. The original TASK-112 scope remains historical.
+No source hook, delivery capability or normative status is promoted here.
 
 The following component APIs are implemented by TASK-112; later Host passage remains Planned:
 
