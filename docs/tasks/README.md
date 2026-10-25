@@ -3,22 +3,30 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая engineering task [TASK-110](TASK-110-RUNTIME-DIAGNOSTICS-MAILBOX.md) — Runtime Diagnostics v1 isolated mailbox,
-Implementation, verification-stable `In Progress`, branch
-`codex/task-110-runtime-diagnostics-mailbox`, baseline
-`0955bf469848166491c36dd7d965dadf434f81e9`. Actual checkpoints/closure resolve
-only from its newest valid matching Recovery Evidence Envelope. Scope: isolated
-`internal/runtimediagnostics`, closed three-scalar schema, fixed64 lossy TryLock
-mailbox and package tests. DP-027 Draft / Partial (substrate only); source hooks,
-Runtime wiring, sink, Metrics and full Gate 11 reporting remain absent/deferred.
-Gate 11 OPEN; no staging, commit or publication authorized. TASK-102 unchanged,
-native qualification NOT RUN; C active, B/PoC inactive.
+Текущая engineering task [TASK-111](TASK-111-RUNTIME-DIAGNOSTICS-INTEGRATION-DESIGN.md) — Runtime Diagnostics integration design/readiness,
+verification-stable `In Progress`, branch `codex/task-111-runtime-diagnostics-integration-design`,
+baseline `060cf22cf040a2e84d49c52095af9ed4ab9390a7`. Actual checkpoints/closure resolve only
+from the newest valid matching Recovery Evidence Envelope. Design only: exact
+Listener Serve/Handshake Provider source hooks, immutable producer values and
+later explicit Bootstrap/private Host passage. DP027 remains Draft/Partial
+substrate only; DP009 fourth binding Planned. No source/test/wiring changes;
+minimum component implementation and later Host wiring Not Activated. Gate11 OPEN.
+TASK102 unchanged/unqualified; C active, B/PoC inactive. No staging/commit/publication.
+
+[TASK-110](TASK-110-RUNTIME-DIAGNOSTICS-MAILBOX.md) accepted/published isolated mailbox,
+source `bb6fa71b3500bb4bb1a3f40fada9b9e8323d7177`, PR #110 merged as baseline
+`060cf22cf040a2e84d49c52095af9ed4ab9390a7`; reviewed/merge tree
+`35822cc1afef59933799a9f583e9966754c00ffe`. Fresh GitHub preflight confirms merged
+source/base/merge. PR run40126598216 and exact-merge run40126876098 succeeded,
+including Linux race/tidy/module guards; independent native P10 readback completed.
+Those are historical substrate/publication facts, not new integration or
+Windows/native TASK102 qualification; old task evidence is preserved.
 
 [TASK-109](TASK-109-RUNTIME-DIAGNOSTICS-V1-DESIGN.md) — published design/readiness,
 source `c42eeb93f7dc32a3c4eba7f6af6d2852a4ca131f`, PR #109 merged at
 `0955bf469848166491c36dd7d965dadf434f81e9` (fresh read-only GitHub evidence).
-Historical task record and design Acceptance preserved; current Owner instruction
-separately authorizes only the isolated TASK-110 substrate.
+Historical task record and design Acceptance preserved; TASK-110 had separate
+bounded substrate authorization, not authority for the current design or implementation.
 
 Предыдущая [TASK-108](TASK-108-GATE-9-TECHNICAL-CLOSURE.md) принята как документационный Gate 9 closure cycle;
 source `edc2cbfce8f02ed2c4a1cfd281ccbea0b912ee0d` merged через PR #108 в

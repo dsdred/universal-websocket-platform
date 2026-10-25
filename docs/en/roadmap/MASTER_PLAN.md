@@ -337,7 +337,9 @@ The Runtime Alpha Review identifies implementation debt that must be tracked ind
   open. [DP-027](../design/DP-027-runtime-diagnostics-v1.md) remains Draft;
   implementation is Partial: TASK-110 adds only an isolated fixed64 safe mailbox
   and package tests. Listener Serve/Handshake Provider hooks, Runtime wiring and
-  production sink remain absent; this does not close Gate 11.
+  production sink remain absent; this does not close Gate 11. TASK-111 defines
+  only the component-source hooks and later explicit value-binding design;
+  the minimum implementation slice is Not Activated.
 - Basic and asymmetric JWT Runtime coverage is incomplete.
 - Origin behavior relies on library defaults rather than explicit Configuration.
 
