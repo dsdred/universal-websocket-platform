@@ -6,6 +6,7 @@ import (
 
 	"github.com/dsdred/universal-websocket-platform/internal/message"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
+	"github.com/dsdred/universal-websocket-platform/internal/runtimediagnostics"
 	"github.com/dsdred/universal-websocket-platform/internal/secretresolver"
 )
 
@@ -44,6 +45,9 @@ type DependencyBindings struct {
 	SecretResolver        secretresolver.Resolver
 	LegacyMessageHandler  message.Handler
 	TerminalErrorReporter func(error)
+	// DiagnosticsProducer is an optional copied capability; zero disables diagnostics.
+	// The external composition owner retains the mailbox Reader and its lifetime.
+	DiagnosticsProducer runtimediagnostics.Producer
 }
 
 // BootstrapRequest is the complete static input for one Runtime Host launch.
@@ -163,7 +167,12 @@ type bootstrapHostFactory func(
 
 // Bootstrap validates one request, constructs one Host, and synchronously starts it.
 func Bootstrap(request *BootstrapRequest) BootstrapOutcome {
-	return bootstrap(request, newProductionBootstrapHost)
+	return bootstrap(request, func(snapshot runtimeconfig.Snapshot, resolver secretresolver.Resolver,
+		handler message.Handler, reportError func(error),
+	) (Host, error) {
+		return newProductionBootstrapHost(snapshot, resolver, handler, reportError,
+			request.Dependencies.DiagnosticsProducer)
+	})
 }
 
 func newProductionBootstrapHost(
@@ -171,8 +180,9 @@ func newProductionBootstrapHost(
 	resolver secretresolver.Resolver,
 	handler message.Handler,
 	reportError func(error),
+	producer runtimediagnostics.Producer,
 ) (Host, error) {
-	return newHostWithTerminalErrorReporter(snapshot, resolver, handler, nil, reportError)
+	return newHostWithDiagnostics(snapshot, resolver, handler, nil, reportError, producer)
 }
 
 func bootstrap(request *BootstrapRequest, factory bootstrapHostFactory) BootstrapOutcome {

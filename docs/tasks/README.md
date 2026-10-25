@@ -3,15 +3,20 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая engineering task [TASK-112](TASK-112-COMPONENT-LOCAL-DIAGNOSTICS.md) — Component-local Runtime Diagnostics Integration v1,
-verification-stable `In Progress`, branch `feature/task-112-component-local-diagnostics`,
-baseline `358248de65860a65746b8338c164dedde2b29283`. Actual checkpoints/closure resolve
-only from the newest valid matching Recovery Evidence Envelope. Component-local
-Listener Serve/Handshake Provider producer hooks and copied Producer constructors;
-DP027 Draft/Partial. Host/Runtime Bootstrap wiring, DP009 fourth value binding,
-production sink and W01–W05 remain Planned / Not Activated; Gate11 OPEN.
-Legacy callbacks/lifecycle unchanged, no new cleanup or blocking guarantee.
-TASK102 unchanged/unqualified; C active, B/PoC inactive. No staging/commit/publication.
+Текущая engineering task [TASK-113](TASK-113-RUNTIME-DIAGNOSTICS-WIRING.md) — Runtime Diagnostics Host/Bootstrap wiring,
+verification-stable `In Progress`, branch `feature/task-113-runtime-diagnostics-wiring`,
+baseline `324a97776dc7f522c13bee5e19607505c9c40548`. Actual checkpoints/closure resolve
+only from the newest valid matching Recovery Evidence Envelope. Optional copied
+DiagnosticsProducer binding/private Host composition connects the existing Listener
+and Handshake hooks to one externally created bounded mailbox. W01–W05 proof scope;
+DP027 Draft/Partial, DP009 Design Draft. Production sink/delivery absent; Gate11 OPEN.
+Legacy callbacks/lifecycle/cleanup guarantees unchanged. TASK102 unchanged/unqualified;
+C active, B/PoC inactive. No staging/commit/publication.
+
+[TASK-112](TASK-112-COMPONENT-LOCAL-DIAGNOSTICS.md) published component hooks: PR #112 merged, source
+`8ae8028a508bfb8ce44393f1712864a1875318cb`, merge/current baseline
+`324a97776dc7f522c13bee5e19607505c9c40548` (fresh Git/GitHub readback TASK113).
+Historical Acceptance/integrity preserved; publication creates no new authority.
 
 [TASK-111](TASK-111-RUNTIME-DIAGNOSTICS-INTEGRATION-DESIGN.md) accepted/published design,
 source `e4ab6fececbeb6de00fdfb9134c5cd42256f8620`, PR #111 merged as current baseline

@@ -13,6 +13,7 @@ import (
 	"github.com/dsdred/universal-websocket-platform/internal/message"
 	"github.com/dsdred/universal-websocket-platform/internal/router"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
+	"github.com/dsdred/universal-websocket-platform/internal/runtimediagnostics"
 	"github.com/dsdred/universal-websocket-platform/internal/secretresolver"
 	"github.com/dsdred/universal-websocket-platform/internal/session"
 	"github.com/dsdred/universal-websocket-platform/internal/sessionmanager"
@@ -62,7 +63,14 @@ func composeRuntime(
 func composeRuntimeForStartup(ctx context.Context, snapshot runtimeconfig.Snapshot, resolver secretresolver.Resolver,
 	handler message.Handler, capabilities *handshakeCapabilities, reportError func(error),
 ) (runtimeComposition, error) {
-	return composeRuntimeWithFactoriesContext(ctx, snapshot, resolver, handler, capabilities, reportError,
+	return composeRuntimeForStartupWithDiagnostics(ctx, snapshot, resolver, handler, capabilities, reportError,
+		runtimediagnostics.Producer{})
+}
+
+func composeRuntimeForStartupWithDiagnostics(ctx context.Context, snapshot runtimeconfig.Snapshot, resolver secretresolver.Resolver,
+	handler message.Handler, capabilities *handshakeCapabilities, reportError func(error), producer runtimediagnostics.Producer,
+) (runtimeComposition, error) {
+	return composeRuntimeWithDiagnostics(ctx, snapshot, resolver, handler, capabilities, reportError, producer,
 		buildMessageRouter, session.NewTransactionalDispatcherWithIdleTimeout)
 }
 
@@ -98,6 +106,21 @@ func composeRuntimeWithFactoriesContext(
 	handler message.Handler,
 	capabilities *handshakeCapabilities,
 	reportError func(error),
+	newMessageRouter messageRouterFactory,
+	newSessionDispatcher sessionDispatcherFactory,
+) (runtimeComposition, error) {
+	return composeRuntimeWithDiagnostics(ctx, snapshot, resolver, handler, capabilities, reportError,
+		runtimediagnostics.Producer{}, newMessageRouter, newSessionDispatcher)
+}
+
+func composeRuntimeWithDiagnostics(
+	ctx context.Context,
+	snapshot runtimeconfig.Snapshot,
+	resolver secretresolver.Resolver,
+	handler message.Handler,
+	capabilities *handshakeCapabilities,
+	reportError func(error),
+	producer runtimediagnostics.Producer,
 	newMessageRouter messageRouterFactory,
 	newSessionDispatcher sessionDispatcherFactory,
 ) (runtimeComposition, error) {
@@ -150,12 +173,13 @@ func composeRuntimeWithFactoriesContext(
 	if err != nil {
 		return runtimeComposition{}, fmt.Errorf("create transactional Session Dispatcher: %w", err)
 	}
-	handshakeHandler, err := handshake.NewHandlerWithTerminalErrorReporter(
+	handshakeHandler, err := handshake.NewHandlerWithDiagnostics(
 		capabilities,
 		capabilities,
 		authenticationService,
 		sessionDispatcher,
 		reportError,
+		producer,
 	)
 	if err != nil {
 		return runtimeComposition{}, fmt.Errorf("create Handshake: %w", err)
@@ -174,7 +198,7 @@ func composeRuntimeWithFactoriesContext(
 		timedHandshakeHandler,
 		reportError,
 		preparedTLS,
-	).Build(listenerSnapshot)
+	).WithDiagnosticsProducer(producer).Build(listenerSnapshot)
 	if err != nil {
 		return runtimeComposition{}, fmt.Errorf("build Listener: %w", err)
 	}

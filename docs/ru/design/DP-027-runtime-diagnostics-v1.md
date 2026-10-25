@@ -5,7 +5,7 @@
 ## 1. Статус и scope
 
 - **Design Status:** Draft.
-- **Implementation Status:** Partial — isolated mailbox (TASK-110) and component-local producer hooks (TASK-112); Host/Bootstrap wiring and delivery Planned.
+- **Implementation Status:** Partial — mailbox (TASK-110), component hooks (TASK-112), optional Host/Bootstrap wiring (TASK-113); production sink/delivery Planned.
 - **Целевая веха:** Beta, Gate 11; этот документ не закрывает Gate 11.
 - **Задача:** [TASK-109](../../tasks/TASK-109-RUNTIME-DIAGNOSTICS-V1-DESIGN.md).
 - **Source baseline:** `67ca1b200d42fda5be8b6dc8741d8f0bc24bd2a6`.
@@ -17,13 +17,14 @@ component-local source hooks и copied Producer construction по отдельн
 authorization: unexpected Listener Serve return и Handshake Provider operational
 failure. Package schema/fixed64 loss contract неизменен.
 
-Production Runtime composition сохраняет legacy constructors с zero Producer.
-Host/Runtime Bootstrap wiring, production sink, transport, Metrics и durable delivery
-не реализованы. DP009 value-binding extension остаётся Planned. Design остаётся
-Draft; Gate 11 OPEN. TASK112 проверяет applicable I01–I12 component proofs;
-W01–W05 остаются future wiring proofs. Узкое окно I06 offer/timeout-callback
-coexistence подтверждается compositional source-order proof, не empirically forced.
-Exact commands/findings/environment limits находятся в evidence envelope TASK112.
+[TASK-113](../../tasks/TASK-113-RUNTIME-DIAGNOSTICS-WIRING.md) реализует optional
+copied DP-009 Producer binding и private Host/Bootstrap passage в оба существующих
+component constructors. Zero отключает diagnostics. Одна external mailbox pair
+принадлежит одному Host lifetime; Reader внешний при rollback/retry/Stop.
+Production sink, transport, Metrics и durable delivery отсутствуют. Design остаётся
+Draft/Partial; Gate11 OPEN. TASK-112 даёт I01–I12, TASK-113 — W01–W05 wiring proofs
+с exact limitations в evidence envelope. I06 narrow offer/timeout-callback
+coexistence остаётся compositional source-order proof.
 
 Integration design: [TASK-111](../../tasks/TASK-111-RUNTIME-DIAGNOSTICS-INTEGRATION-DESIGN.md),
 baseline `060cf22cf040a2e84d49c52095af9ed4ab9390a7`. Раздел15 сохраняет historical
@@ -329,6 +330,13 @@ rejections, Stop errors, Accept/handoff failures и Session outcomes не доб
 ни одного code. Management categories/report keys DP018 не переиспользуются.
 
 ## 16. Exact value dependency и construction design
+
+TASK-113 implementation note: полные value passage/lifetime requirements ниже
+реализованы по отдельной Owner authorization. Prospective wording и W-row labels
+«Later wiring» сохраняют хронологию design TASK-111, а не отсутствие Host wiring.
+Исходный scope TASK-112 — historical. Source hooks/delivery capability/normative
+status здесь не повышаются.
+
 
 Следующие component APIs реализованы TASK112; later Host passage остаётся Planned:
 
