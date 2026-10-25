@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/dsdred/universal-websocket-platform/internal/runtimediagnostics"
 )
 
 var (
@@ -56,6 +58,7 @@ type DefaultListener struct {
 	serverStop       context.CancelFunc
 	handshakeHandler http.Handler
 	reportError      func(error)
+	diagnostics      runtimediagnostics.Producer
 	serveHTTP        func(*http.Server, net.Listener) error
 	shutdownHTTP     func(*http.Server, context.Context) error
 	closeTCP         func(net.Listener) error
@@ -213,6 +216,7 @@ func (listener *DefaultListener) serve(httpServer *http.Server, tcpListener net.
 	defer listener.wg.Done()
 	err := listener.serveHTTP(httpServer, tcpListener)
 	if err != nil && !errors.Is(err, http.ErrServerClosed) && !errors.Is(err, net.ErrClosed) {
+		listener.diagnostics.Offer(runtimediagnostics.ListenerServeFailed)
 		reportListenerTerminalError(listener.reportError, listenerServeError{cause: err})
 	}
 }

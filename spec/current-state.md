@@ -1,14 +1,22 @@
 # Текущее состояние
 
-**Текущая задача:** [TASK-111](../docs/tasks/TASK-111-RUNTIME-DIAGNOSTICS-INTEGRATION-DESIGN.md) — Runtime Diagnostics integration design/readiness,
-verification-stable `In Progress`, branch `codex/task-111-runtime-diagnostics-integration-design`,
-baseline `060cf22cf040a2e84d49c52095af9ed4ab9390a7`. Actual checkpoints/closure resolve only
-from the newest valid matching Recovery Evidence Envelope. Design only: exact
-Listener Serve/Handshake Provider source hooks, immutable producer values and
-later explicit Bootstrap/private Host passage. DP027 remains Draft/Partial
-substrate only; DP009 fourth binding Planned. No source/test/wiring changes;
-minimum component implementation and later Host wiring Not Activated. Gate11 OPEN.
+**Текущая задача:** [TASK-112](../docs/tasks/TASK-112-COMPONENT-LOCAL-DIAGNOSTICS.md) — Component-local Runtime Diagnostics Integration v1,
+verification-stable `In Progress`, branch `feature/task-112-component-local-diagnostics`,
+baseline `358248de65860a65746b8338c164dedde2b29283`. Actual checkpoints/closure resolve
+only from the newest valid matching Recovery Evidence Envelope. Component-local
+Listener Serve/Handshake Provider producer hooks and copied Producer constructors;
+DP027 Draft/Partial. Host/Runtime Bootstrap wiring, DP009 fourth value binding,
+production sink and W01–W05 remain Planned / Not Activated; Gate11 OPEN.
+Legacy callbacks/lifecycle unchanged, no new cleanup or blocking guarantee.
 TASK102 unchanged/unqualified; C active, B/PoC inactive. No staging/commit/publication.
+
+[TASK-111](../docs/tasks/TASK-111-RUNTIME-DIAGNOSTICS-INTEGRATION-DESIGN.md) accepted/published design,
+source `e4ab6fececbeb6de00fdfb9134c5cd42256f8620`, PR #111 merged as current baseline
+`358248de65860a65746b8338c164dedde2b29283`, reviewed/merge tree
+`87ddbe224aaaab920e3a5d42d68d7abd22cd96d1`. PR run40182631784 and exact-merge
+run40182784761 succeeded, including Linux race/tidy/module guards; independent
+durable native P10 readback PASS. Historical evidence remains unchanged; current
+TASK112 component authorization does not activate later wiring or qualify Windows/native.
 
 [TASK-110](../docs/tasks/TASK-110-RUNTIME-DIAGNOSTICS-MAILBOX.md) accepted/published isolated mailbox,
 source `bb6fa71b3500bb4bb1a3f40fada9b9e8323d7177`, PR #110 merged as baseline

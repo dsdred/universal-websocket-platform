@@ -5,25 +5,29 @@
 ## 1. Status and scope
 
 - **Design Status:** Draft.
-- **Implementation Status:** Partial — isolated mailbox only (TASK-110); source integration and delivery Planned.
+- **Implementation Status:** Partial — isolated mailbox (TASK-110) and component-local producer hooks (TASK-112); Host/Bootstrap wiring and delivery Planned.
 - **Target Milestone:** Beta, Gate 11; this document does not close Gate 11.
 - **Task:** [TASK-109](../../tasks/TASK-109-RUNTIME-DIAGNOSTICS-V1-DESIGN.md).
 - **Source baseline:** `67ca1b200d42fda5be8b6dc8741d8f0bc24bd2a6`.
 
-The accepted deliverable may be design/readiness evidence without normative
-Approval or implementation authorization. Source integration is not implemented here.
-The only proposed source kinds are unexpected Listener Serve return and
-Handshake Authentication Provider operational failure. Existing behavior,
-proposed eligibility and future implementation proofs are distinguished below.
+The original TASK-109 deliverable was design/readiness evidence, without normative
+Approval. TASK-110 published the isolated `internal/runtimediagnostics` mailbox.
+[TASK-112](../../tasks/TASK-112-COMPONENT-LOCAL-DIAGNOSTICS.md) implements the two
+component-local source hooks and copied Producer construction under separate Owner
+authorization: unexpected Listener Serve return and Handshake Provider operational
+failure. The package schema/fixed64 loss contract is unchanged.
 
-Implementation boundary: [TASK-110](../../tasks/TASK-110-RUNTIME-DIAGNOSTICS-MAILBOX.md)
-implements only the isolated `internal/runtimediagnostics` substrate and package
-proof tests under separate Owner authorization. There are no Runtime call sites,
-source hooks or production sink. Design remains Draft; Gate 11 remains open.
-The future matrix below is proved only for package-local V06–V14 subsets stated
-in TASK-110; V01–V05 and integration portions remain Planned.
+Production Runtime composition still uses legacy constructors with zero Producer.
+No Host/Runtime Bootstrap wiring, production sink, transport, Metrics or durable
+delivery is implemented. DP-009 value-binding extension remains Planned. Design
+remains Draft; Gate 11 remains OPEN. TASK-112 verifies applicable I01–I12 component
+proofs; W01–W05 remain future wiring proofs. I06 narrow offer/timeout-callback
+coexistence uses compositional source-order proof, not an empirically forced window.
+Exact commands, findings and environment limits are in the TASK-112 evidence envelope.
 
-Integration design: [TASK-111](../../tasks/TASK-111-RUNTIME-DIAGNOSTICS-INTEGRATION-DESIGN.md), baseline `060cf22cf040a2e84d49c52095af9ed4ab9390a7`; sections 15–19 are Planned design/readiness only.
+Integration design: [TASK-111](../../tasks/TASK-111-RUNTIME-DIAGNOSTICS-INTEGRATION-DESIGN.md),
+baseline `060cf22cf040a2e84d49c52095af9ed4ab9390a7`. Section 15 retains that historical
+source inventory; sections 16–19 separate implemented component APIs from later wiring.
 
 ## 2. Authority and invariants
 
@@ -301,7 +305,7 @@ TASK-109 verified the original design only. TASK-110 subsequently implemented an
 published the isolated mailbox through PR110 at this integration baseline; its
 PR/post-merge Linux CI passed race/tidy/module guards. These historical facts do
 not prove new integration. TASK-111 verifies only the design in sections 15–19;
-source integration, consumer/delivery and Gate11 closure remain absent.
+at that design baseline source integration, consumer/delivery and Gate11 closure were absent. Current TASK-112 component status is stated in section 1.
 
 ## 15. Source integration inventory at TASK-111 baseline
 
@@ -326,7 +330,7 @@ code. DP-018 management categories and report keys are not reused.
 
 ## 16. Exact value dependency and construction design
 
-The following signatures are proposed design, not implemented APIs:
+The following component APIs are implemented by TASK-112; later Host passage remains Planned:
 
 - `DefaultBootstrap.WithDiagnosticsProducer(producer runtimediagnostics.Producer) DefaultBootstrap` returns a copy of the Listener Bootstrap with a private Producer value. Existing constructors and the Build interface stay unchanged; Build copies the value to DefaultListener without offering or new validation.
 - `handshake.NewHandlerWithDiagnostics(admission AdmissionCapability, runtimeContext RuntimeContextProvider, authenticationService authentication.Service, handoff connection.AuthenticatedDispatcher, reportError func(error), producer runtimediagnostics.Producer) (*Handler, error)` stores a private Producer value. Existing constructors keep signatures and required-dependency validation order, delegating with zero Producer.
@@ -444,7 +448,7 @@ Implementation verification requires formatting, full test/build/vet/module chec
 available race and stress; unavailable checks remain explicit limitations. Linux
 race does not qualify Windows/native TASK-102.
 
-**Ready, Not Activated:** the minimum next implementation is only component-local
+**TASK-112 component slice:** the implemented scope is only component-local
 hooks/construction: listener.go, listener/bootstrap.go, handshake/handler.go, two
 focused package test files and necessary task/status docs. No runtime, Authentication,
 Session/Manager, mailbox or module edits. Existing production composition keeps its

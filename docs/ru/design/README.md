@@ -30,7 +30,7 @@
 | [DP-022: Граница containment исполнения Runtime и evidence](DP-022-runtime-execution-containment-and-evidence.md) | Approved; partial: prerequisites TASK-070/TASK-071/TASK-073 и private composition gate TASK-074 опубликованы; production wiring отсутствует |
 | [DP-023: Bootstrap process-containment Runtime](DP-023-runtime-process-containment-bootstrap.md) | Approved; реализован изолированно; ordered items 1–5 опубликованы, а TASK-075 реализует item 6 read-only assessment изолированно; production wiring отсутствует |
 | [DP-024: Граница recovery claim и admission Runtime](DP-024-runtime-recovery-claim-admission-boundary.md) | Approved / Partial; TASK-081 isolated local ordering/fence test-owner models; real-owner/provenance/durable claim/permit absent; integrated proofs Planned |
-| [DP-027: Runtime Diagnostics v1](DP-027-runtime-diagnostics-v1.md) | Draft / Partial; TASK110 mailbox implemented; TASK111 source-hook/value-passage design only, implementation Not Activated; Gate11 открыт |
+| [DP-027: Runtime Diagnostics v1](DP-027-runtime-diagnostics-v1.md) | Draft / Partial; TASK110 mailbox и TASK112 component hooks реализованы; Host/value-binding wiring Planned; Gate11 открыт |
 
 ## Publisher governance proposals
 

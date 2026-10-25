@@ -5,25 +5,29 @@
 ## 1. Статус и scope
 
 - **Design Status:** Draft.
-- **Implementation Status:** Partial — isolated mailbox only (TASK-110); source integration and delivery Planned.
+- **Implementation Status:** Partial — isolated mailbox (TASK-110) and component-local producer hooks (TASK-112); Host/Bootstrap wiring and delivery Planned.
 - **Целевая веха:** Beta, Gate 11; этот документ не закрывает Gate 11.
 - **Задача:** [TASK-109](../../tasks/TASK-109-RUNTIME-DIAGNOSTICS-V1-DESIGN.md).
 - **Source baseline:** `67ca1b200d42fda5be8b6dc8741d8f0bc24bd2a6`.
 
-Принятый deliverable может быть design/readiness evidence без нормативного
-Approval и без разрешения реализации. Source integration здесь не реализована.
-Единственные предлагаемые source kinds — неожиданный возврат Listener Serve и
-operational failure Authentication Provider в Handshake. Ниже разделяются
-текущее поведение, предлагаемая eligibility и proofs будущей реализации.
+Исходный deliverable TASK-109 — design/readiness evidence без нормативного Approval.
+TASK-110 опубликовала isolated `internal/runtimediagnostics` mailbox.
+[TASK-112](../../tasks/TASK-112-COMPONENT-LOCAL-DIAGNOSTICS.md) реализует два
+component-local source hooks и copied Producer construction по отдельной Owner
+authorization: unexpected Listener Serve return и Handshake Provider operational
+failure. Package schema/fixed64 loss contract неизменен.
 
-Граница реализации: [TASK-110](../../tasks/TASK-110-RUNTIME-DIAGNOSTICS-MAILBOX.md)
-реализует только изолированный `internal/runtimediagnostics` substrate и package
-proof tests по отдельной Owner authorization. Runtime call sites, source hooks
-и production sink отсутствуют. Design остаётся Draft; Gate 11 открыт.
-Будущая матрица ниже доказана только для package-local subsets V06–V14,
-указанных в TASK-110; V01–V05 и integration portions остаются Planned.
+Production Runtime composition сохраняет legacy constructors с zero Producer.
+Host/Runtime Bootstrap wiring, production sink, transport, Metrics и durable delivery
+не реализованы. DP009 value-binding extension остаётся Planned. Design остаётся
+Draft; Gate 11 OPEN. TASK112 проверяет applicable I01–I12 component proofs;
+W01–W05 остаются future wiring proofs. Узкое окно I06 offer/timeout-callback
+coexistence подтверждается compositional source-order proof, не empirically forced.
+Exact commands/findings/environment limits находятся в evidence envelope TASK112.
 
-Integration design: [TASK-111](../../tasks/TASK-111-RUNTIME-DIAGNOSTICS-INTEGRATION-DESIGN.md), baseline `060cf22cf040a2e84d49c52095af9ed4ab9390a7`; разделы15–19 — только Planned design/readiness.
+Integration design: [TASK-111](../../tasks/TASK-111-RUNTIME-DIAGNOSTICS-INTEGRATION-DESIGN.md),
+baseline `060cf22cf040a2e84d49c52095af9ed4ab9390a7`. Раздел15 сохраняет historical
+source inventory; разделы16–19 отделяют implemented component APIs от later wiring.
 
 ## 2. Authority и invariants
 
@@ -301,8 +305,7 @@ deployment feature. Gate 9 closure неизменен и не означает p
 TASK109 проверила первоначальный design. TASK110 затем реализовала/опубликовала
 isolated mailbox через PR110 на integration baseline; PR/post-merge Linux CI
 прошли race/tidy/module guards. Эти historical facts не доказывают новую
-integration. TASK111 проверяет только design разделов15–19; source integration,
-consumer/delivery и Gate11 closure отсутствуют.
+integration. TASK111 проверила только design разделов15–19; на том baseline source integration, consumer/delivery и Gate11 closure отсутствовали. Текущий component status TASK112 указан в разделе1.
 
 ## 15. Source integration inventory на baseline TASK-111
 
@@ -327,7 +330,7 @@ rejections, Stop errors, Accept/handoff failures и Session outcomes не доб
 
 ## 16. Exact value dependency и construction design
 
-Следующие signatures — proposed design, не реализованные APIs:
+Следующие component APIs реализованы TASK112; later Host passage остаётся Planned:
 
 - `DefaultBootstrap.WithDiagnosticsProducer(producer runtimediagnostics.Producer) DefaultBootstrap` возвращает копию Listener Bootstrap с private Producer value. Existing constructors/Build interface неизменны; Build копирует value в DefaultListener без offer и новой validation.
 - `handshake.NewHandlerWithDiagnostics(admission AdmissionCapability, runtimeContext RuntimeContextProvider, authenticationService authentication.Service, handoff connection.AuthenticatedDispatcher, reportError func(error), producer runtimediagnostics.Producer) (*Handler, error)` хранит private Producer value. Existing constructors сохраняют signatures и порядок required-dependency validation, делегируя с zero Producer.
@@ -444,7 +447,7 @@ verification требует formatting/full test/build/vet/module checks, дос
 и stress; недоступные checks — явные limitations. Linux race не квалифицирует
 Windows/native TASK102.
 
-**Ready, Not Activated:** минимальный следующий implementation — только component-local
+**Component slice TASK112:** реализованный scope — только component-local
 hooks/construction: listener.go, listener/bootstrap.go, handshake/handler.go, два
 focused package test files и необходимые task/status docs. Без runtime,
 Authentication, Session/Manager, mailbox/module edits. Production composition
