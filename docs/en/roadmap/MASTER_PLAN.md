@@ -338,7 +338,9 @@ The Runtime Alpha Review identifies implementation debt that must be tracked ind
   external. W01–W05 wiring proof scope does not supply production sink/delivery.
   Session terminal observation stays no-op; Gate11 OPEN. Legacy callback blocking,
   cleanup and Windows/native qualification limitations remain unchanged.
-  TASK-114 adds Planned caller-owned bounded consumer/delivery design (no code):
+  TASK-114 supplied consumer/delivery design; TASK-115 implements only isolated C1
+  under separate Owner authorization, with external caller scheduling and no sink.
+  C2/C3 remain Not Ready / Not Activated. The existing Gate11 criteria are unchanged:
   no built-in logger is required for the core prerequisite; isolated core/test
   sinks alone cannot close Gate11 or provide sanctioned operational exposure.
   Dispatcher/Handler/shutdown coverage and exposure-owner design remain open.

@@ -5,7 +5,7 @@
 ## 1. Статус и scope
 
 - **Design Status:** Draft.
-- **Implementation Status:** Partial — mailbox (TASK-110), component hooks (TASK-112), optional Host/Bootstrap wiring (TASK-113); production sink/delivery Planned.
+- **Implementation Status:** Partial — mailbox (TASK-110), component hooks (TASK-112), optional Host/Bootstrap wiring (TASK-113), isolated consumer core C1 (TASK-115); production sink/exposure Planned.
 - **Целевая веха:** Beta, Gate 11; этот документ не закрывает Gate 11.
 - **Задача:** [TASK-109](../../tasks/TASK-109-RUNTIME-DIAGNOSTICS-V1-DESIGN.md).
 - **Source baseline:** `67ca1b200d42fda5be8b6dc8741d8f0bc24bd2a6`.
@@ -27,7 +27,8 @@ Draft/Partial; Gate11 OPEN. TASK-112 даёт I01–I12, TASK-113 — W01–W05 
 coexistence остаётся compositional source-order proof.
 
 Consumer/delivery refinement: [TASK-114](../../tasks/TASK-114-RUNTIME-DIAGNOSTICS-CONSUMER-DESIGN.md),
-разделы20–26 ниже, — только Planned design. Consumer/sink не реализованы.
+разделы20–26 ниже, сохраняют historical design. TASK-115 отдельно активирует
+и реализует только C1; раздел27 фиксирует текущие implementation boundaries.
 
 Integration design: [TASK-111](../../tasks/TASK-111-RUNTIME-DIAGNOSTICS-INTEGRATION-DESIGN.md),
 baseline `060cf22cf040a2e84d49c52095af9ed4ab9390a7`. Раздел15 сохраняет historical
@@ -474,9 +475,10 @@ slice не вводит sink/consumer lifecycle. Acceptance этого design н
 
 [TASK-114](../../tasks/TASK-114-RUNTIME-DIAGNOSTICS-CONSUMER-DESIGN.md) —
 design/readiness addendum на baseline `fd739a87a602229293c41f50c23a7854b2b5e90f`.
-Всё в разделах20–26 **proposed / Planned**: это не действующий API,
+На closure TASK114 разделы20–26 были **proposed / Planned**, не действующий API,
 implementation permission, normative Approval или выполненный consumer proof.
-Design остаётся Draft; implementation Partial относится только к TASK110/112/113.
+TASK115 отдельно разрешает C1 и реализует разделы21–24 без amendment; раздел27
+и task envelope задают current proofs. Design остаётся Draft/Partial.
 Historical component/wiring scopes и evidence выше сохранены.
 
 MASTER_PLAN §5 Gate11 требует reporting server, Dispatcher, Provider, Handler и
@@ -646,7 +648,7 @@ source eligibility/cancellation и errors.Is.
 
 | Slice | Readiness / exact boundary |
 | --- | --- |
-| C1 isolated consumer core | Ready для отдельно разрешённого fresh intake; Not Activated. Один новый internal/runtimediagnosticsconsumer package, consumer.go и consumer_test.go; без existing source/test/mailbox edits, worker, Runtime wiring или adapter. Acceptance требует разделы21–24 и C01–C16 proofs |
+| C1 isolated consumer core | Activated отдельной Owner authorization TASK-115; implemented in isolation. Один новый internal/runtimediagnosticsconsumer package, consumer.go и consumer_test.go; без existing source/test/mailbox edits, worker, Runtime wiring или adapter. Acceptance требует разделы21–24 и C01–C16 proofs |
 | C2 operational exposure/adapter | Not Ready / Not Activated. Сначала separate design выбора external owner/scheduling/access/resources/deployment и actual sink/exposure contract, затем отдельно разрешённая реализация. C1 Acceptance не активирует C2 |
 | C3 remaining Gate11 coverage | Not Ready / Not Activated. Отдельные Dispatcher/Handler/shutdown source-category designs/readiness; нельзя переиспользовать DP018 management categories или объявлять существующие два codes полным Gate11 coverage |
 
@@ -682,3 +684,28 @@ tidy guards. Недоступные checks остаются explicit limitations
 квалифицирует Windows/native TASK102. Текущая design verification — source-backed
 manual decision traces, authority/parity/link/manifest/protected-path checks и
 independent review, не executable consumer/delivery evidence.
+
+## 27. Isolated C1 implementation (TASK-115)
+
+[TASK-115](../../tasks/TASK-115-RUNTIME-DIAGNOSTICS-CONSUMER-CORE.md) реализует только
+`internal/runtimediagnosticsconsumer/consumer.go` и новые external-package tests.
+Ранее proposed signatures, scalar fields и восемь local Stop names разделов21–24
+теперь являются isolated C1 API. Один captured concrete Reader/Sink и shared TryLock
+guard; budget1..64 actual read attempts, без retry/reinsert/worker. Nil/error/
+recoverable-panic outcomes и cancellation сохраняют exact documented precedence;
+panic adapter отбрасывает payload и отслеживает normal return. Returned error только
+сравнивается с nil; Error/Unwrap/Is/formatting не вызываются.
+
+Task сопоставляет C01–C16 с executable consumer proofs, existing regressions и explicit
+source-order/compositional portions. C06 forced mailbox busy/invalid false использует
+unchanged mailbox white-box tests; C14 actual Host rollback/retry/Stop и late source
+eligibility — unchanged wiring/component proofs. Runtime/Host consumer integration или
+production exposure test не заявляются; C2/C3 остаются DEFERRED, Not Ready / Not Activated.
+Exact verification results/limitations определяются task envelope. Матрица раздела26
+остаётся requirements, впервые заданными TASK114, а не claim executable tests TASK114.
+
+Consumer запускается только explicit external Drain caller. Нет sink implementation,
+нового Host binding, lifecycle ownership, startup/Stop join, metrics, transport или
+durable delivery. Producer drops unknown; NoItem != proven empty; нет retry,
+durable/lossless guarantee или hard sink termination. Gate11 OPEN. Draft design и
+higher-authority contracts неизменны; C1 не активирует C2/C3.

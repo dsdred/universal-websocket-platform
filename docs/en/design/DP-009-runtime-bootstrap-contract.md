@@ -295,7 +295,8 @@ integration, production sink/delivery or Gate11 closure.
 
 ### External consumer boundary (TASK-114)
 
-The Planned consumer design in DP-027 sections20–26 stays outside Bootstrap and
+The DP-027 consumer contract (sections20–27; C1 implemented in isolation by
+TASK-115 under separate authorization) stays outside Bootstrap and
 Host lifecycle. Reader, Consumer and Sink are not a fifth binding, Host capability,
 Bootstrap outcome or ADR-0004 carrier member. The existing optional Producer value
 passage is unchanged. External composition owns consumer scheduling and sink
