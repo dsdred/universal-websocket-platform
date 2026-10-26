@@ -14,7 +14,7 @@
 | [DP-006: Production-интеграция Runtime](DP-006-runtime-production-integration.md) | Draft; реализован частично |
 | [DP-007: Configuration Loader Contract](DP-007-configuration-loader-contract.md) | Draft; реализован изолированно |
 | [DP-008: Snapshot Builder Contract](DP-008-snapshot-builder-contract.md) | Draft; реализован изолированно |
-| [DP-009: Runtime Bootstrap Contract](DP-009-runtime-bootstrap-contract.md) | Draft; реализован изолированно; diagnostics value binding реализован (TASK-113) |
+| [DP-009: Runtime Bootstrap Contract](DP-009-runtime-bootstrap-contract.md) | Draft; реализован изолированно; diagnostics value binding реализован (TASK-113); TASK-114 consumer внешний / Planned |
 | [DP-010: Контракт Runtime Lifecycle Owner](DP-010-runtime-lifecycle-owner-contract.md) | Draft; base и extension expected-attempt Stop реализованы изолированно |
 | [DP-011: Интеграция Runtime Launch Pipeline](DP-011-runtime-launch-pipeline-integration.md) | Draft; base, managed continuation и exact invoker реализованы изолированно; callback/production composition запланированы |
 | [DP-012: Композиция Runtime Source](DP-012-runtime-source-composition.md) | Draft; реализован изолированно |
@@ -30,7 +30,7 @@
 | [DP-022: Граница containment исполнения Runtime и evidence](DP-022-runtime-execution-containment-and-evidence.md) | Approved; partial: prerequisites TASK-070/TASK-071/TASK-073 и private composition gate TASK-074 опубликованы; production wiring отсутствует |
 | [DP-023: Bootstrap process-containment Runtime](DP-023-runtime-process-containment-bootstrap.md) | Approved; реализован изолированно; ordered items 1–5 опубликованы, а TASK-075 реализует item 6 read-only assessment изолированно; production wiring отсутствует |
 | [DP-024: Граница recovery claim и admission Runtime](DP-024-runtime-recovery-claim-admission-boundary.md) | Approved / Partial; TASK-081 isolated local ordering/fence test-owner models; real-owner/provenance/durable claim/permit absent; integrated proofs Planned |
-| [DP-027: Runtime Diagnostics v1](DP-027-runtime-diagnostics-v1.md) | Draft / Partial; TASK110 mailbox и TASK112 component hooks реализованы; Host/value-binding wiring реализован (TASK-113); Gate11 открыт |
+| [DP-027: Runtime Diagnostics v1](DP-027-runtime-diagnostics-v1.md) | Draft / Partial; TASK110 mailbox и TASK112 component hooks реализованы; Host/value-binding wiring реализован (TASK-113); TASK-114 consumer/delivery design Planned; Gate11 открыт |
 
 ## Publisher governance proposals
 

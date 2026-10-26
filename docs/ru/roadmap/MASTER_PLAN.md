@@ -336,6 +336,10 @@ Runtime Alpha Review фиксирует implementation debt, который не
   proof scope не даёт production sink/delivery. Session terminal observation no-op;
   Gate11 OPEN. Ограничения legacy callback blocking/cleanup и Windows/native
   qualification остаются неизменны.
+  TASK-114 добавляет Planned caller-owned bounded consumer/delivery design без
+  code: built-in logger для core prerequisite не нужен; isolated core/test sinks
+  не закрывают Gate11 и не дают sanctioned operational exposure. Coverage
+  Dispatcher/Handler/shutdown и exposure-owner design остаются открыты.
 - Покрытие Runtime для Basic и asymmetric JWT неполное.
 - Поведение Origin полагается на defaults библиотеки, а не на явную Configuration.
 

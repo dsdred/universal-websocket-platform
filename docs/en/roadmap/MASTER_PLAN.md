@@ -338,6 +338,10 @@ The Runtime Alpha Review identifies implementation debt that must be tracked ind
   external. W01–W05 wiring proof scope does not supply production sink/delivery.
   Session terminal observation stays no-op; Gate11 OPEN. Legacy callback blocking,
   cleanup and Windows/native qualification limitations remain unchanged.
+  TASK-114 adds Planned caller-owned bounded consumer/delivery design (no code):
+  no built-in logger is required for the core prerequisite; isolated core/test
+  sinks alone cannot close Gate11 or provide sanctioned operational exposure.
+  Dispatcher/Handler/shutdown coverage and exposure-owner design remain open.
 - Basic and asymmetric JWT Runtime coverage is incomplete.
 - Origin behavior relies on library defaults rather than explicit Configuration.
 

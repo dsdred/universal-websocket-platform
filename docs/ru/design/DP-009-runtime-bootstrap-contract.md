@@ -297,6 +297,15 @@ Start и cause/cleanup contracts неизменны. Design остаётся Dra
 implementation не является Approved/Frozen amendment, полной launch-pipeline
 integration, production sink/delivery или Gate11 closure.
 
+### External consumer boundary (TASK-114)
+
+Planned consumer design DP-027 разделов20–26 остаётся вне Bootstrap и Host
+lifecycle. Reader/Consumer/Sink не становятся fifth binding, Host capability,
+Bootstrap outcome или ADR-0004 carrier member. Existing optional Producer value
+passage неизменен. External composition владеет consumer scheduling и sink
+resources; Host Start/rollback/Stop не drain/flush/join этого caller. Note не
+активирует consumer implementation или production exposure.
+
 ## 12. Граница запуска Host
 
 Исключительно `Host.Start()`:
