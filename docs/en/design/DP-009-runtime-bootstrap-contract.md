@@ -293,6 +293,15 @@ Start and cause/cleanup contracts stay unchanged. Design remains Draft; this
 bounded implementation is not an Approved/Frozen amendment, full launch-pipeline
 integration, production sink/delivery or Gate11 closure.
 
+### External consumer boundary (TASK-114)
+
+The Planned consumer design in DP-027 sections20–26 stays outside Bootstrap and
+Host lifecycle. Reader, Consumer and Sink are not a fifth binding, Host capability,
+Bootstrap outcome or ADR-0004 carrier member. The existing optional Producer value
+passage is unchanged. External composition owns consumer scheduling and sink
+resources; Host Start/rollback/Stop never drain, flush or join that caller. No
+consumer implementation or production exposure is activated by this design note.
+
 ## 12. Host Startup Boundary
 
 `Host.Start()` exclusively:

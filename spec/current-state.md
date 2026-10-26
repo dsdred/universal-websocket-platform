@@ -1,26 +1,35 @@
 # Текущее состояние
 
-Текущая engineering task [TASK-113](../docs/tasks/TASK-113-RUNTIME-DIAGNOSTICS-WIRING.md) — Runtime Diagnostics Host/Bootstrap wiring,
-verification-stable `In Progress`, branch `feature/task-113-runtime-diagnostics-wiring`,
-baseline `324a97776dc7f522c13bee5e19607505c9c40548`. Actual checkpoints/closure resolve
-only from the newest valid matching Recovery Evidence Envelope. Optional copied
-DiagnosticsProducer binding/private Host composition connects the existing Listener
-and Handshake hooks to one externally created bounded mailbox. W01–W05 proof scope;
-DP027 Draft/Partial, DP009 Design Draft. Production sink/delivery absent; Gate11 OPEN.
-Legacy callbacks/lifecycle/cleanup guarantees unchanged. TASK102 unchanged/unqualified;
-C active, B/PoC inactive. No staging/commit/publication.
+Текущая engineering task [TASK-114](../docs/tasks/TASK-114-RUNTIME-DIAGNOSTICS-CONSUMER-DESIGN.md) — Runtime Diagnostics consumer/delivery Design/Readiness,
+verification-stable `In Progress`, branch `docs/task-114-runtime-diagnostics-consumer-design`,
+baseline `fd739a87a602229293c41f50c23a7854b2b5e90f`. Actual checkpoints/closure resolve
+only from the newest valid matching Recovery Evidence Envelope. Design only:
+external caller-owned bounded consumer, typed sink function and lossy receipt;
+consumer/sink implementation and operational exposure remain Planned / Not Activated.
+Existing mailbox/component hooks/optional Host wiring stay unchanged. DP027
+Draft/Partial, DP009 Draft, Gate11 OPEN; no new source/test/module/Runtime wiring.
+No staging/commit/publication. TASK102 unqualified; C active, B/PoC inactive.
+
+[TASK-113](../docs/tasks/TASK-113-RUNTIME-DIAGNOSTICS-WIRING.md) accepted/published Host/Bootstrap wiring:
+source `de31f470c1cbda1120fbd3bf936adc7be7ae7735`, PR #113 merged as baseline
+`fd739a87a602229293c41f50c23a7854b2b5e90f`, reviewed/merge tree
+`5ccf33277d989c92334f810950c51098060761a4`. Fresh TASK114 Git/GitHub readback
+corroborates publication. PR CI40231156241 and exact-merge CI40231433375 passed
+Linux race/tidy/module guards; independent durable P10R113001 readback PASS.
+Historical evidence preserved; this is no new consumer/Windows/native qualification
+or implementation authority. Existing legacy blocking/cleanup/proof limits remain.
 
 [TASK-112](../docs/tasks/TASK-112-COMPONENT-LOCAL-DIAGNOSTICS.md) published component hooks: PR #112 merged, source
-`8ae8028a508bfb8ce44393f1712864a1875318cb`, merge/current baseline
+`8ae8028a508bfb8ce44393f1712864a1875318cb`, merge/historical baseline
 `324a97776dc7f522c13bee5e19607505c9c40548` (fresh Git/GitHub readback TASK113).
 Historical Acceptance/integrity preserved; publication creates no new authority.
 
 [TASK-111](../docs/tasks/TASK-111-RUNTIME-DIAGNOSTICS-INTEGRATION-DESIGN.md) accepted/published design,
-source `e4ab6fececbeb6de00fdfb9134c5cd42256f8620`, PR #111 merged as current baseline
+source `e4ab6fececbeb6de00fdfb9134c5cd42256f8620`, PR #111 merged as historical baseline
 `358248de65860a65746b8338c164dedde2b29283`, reviewed/merge tree
 `87ddbe224aaaab920e3a5d42d68d7abd22cd96d1`. PR run40182631784 and exact-merge
 run40182784761 succeeded, including Linux race/tidy/module guards; independent
-durable native P10 readback PASS. Historical evidence remains unchanged; current
+durable native P10 readback PASS. Historical evidence remains unchanged; historical
 TASK112 component authorization does not activate later wiring or qualify Windows/native.
 
 [TASK-110](../docs/tasks/TASK-110-RUNTIME-DIAGNOSTICS-MAILBOX.md) accepted/published isolated mailbox,

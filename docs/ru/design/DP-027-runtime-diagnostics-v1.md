@@ -26,6 +26,9 @@ Draft/Partial; Gate11 OPEN. TASK-112 даёт I01–I12, TASK-113 — W01–W05 
 с exact limitations в evidence envelope. I06 narrow offer/timeout-callback
 coexistence остаётся compositional source-order proof.
 
+Consumer/delivery refinement: [TASK-114](../../tasks/TASK-114-RUNTIME-DIAGNOSTICS-CONSUMER-DESIGN.md),
+разделы20–26 ниже, — только Planned design. Consumer/sink не реализованы.
+
 Integration design: [TASK-111](../../tasks/TASK-111-RUNTIME-DIAGNOSTICS-INTEGRATION-DESIGN.md),
 baseline `060cf22cf040a2e84d49c52095af9ed4ab9390a7`. Раздел15 сохраняет historical
 source inventory; разделы16–19 отделяют implemented component APIs от later wiring.
@@ -466,3 +469,216 @@ prerequisite, fresh readiness/Size Guard и отдельную Owner authorizati
 slice не вводит sink/consumer lifecycle. Acceptance этого design не является
 нормативным DP Approval, implementation permission или Gate11 closure.
 **STOP BEFORE COMMIT GATE AND IMPLEMENTATION AUTHORIZATION.**
+
+## 20. Consumer / delivery readiness (TASK-114)
+
+[TASK-114](../../tasks/TASK-114-RUNTIME-DIAGNOSTICS-CONSUMER-DESIGN.md) —
+design/readiness addendum на baseline `fd739a87a602229293c41f50c23a7854b2b5e90f`.
+Всё в разделах20–26 **proposed / Planned**: это не действующий API,
+implementation permission, normative Approval или выполненный consumer proof.
+Design остаётся Draft; implementation Partial относится только к TASK110/112/113.
+Historical component/wiring scopes и evidence выше сохранены.
+
+MASTER_PLAN §5 Gate11 требует reporting server, Dispatcher, Provider, Handler и
+shutdown failures с Secret/credential redaction. Конкретный built-in logger или
+transport не предписан; §9 требует не связывать компоненты с одним logging
+implementation. Bounded core достаточен как следующий независимо проверяемый
+consumer prerequisite без production sink в этом slice. Isolated consumer с test
+sinks **недостаточен для полного Gate11**: отсутствуют actual sanctioned operator
+exposure, scheduling/access/lifecycle evidence и Dispatcher/Handler/shutdown
+coverage. Поздний exposure design может выбрать caller-supplied sink; built-in
+production logger не является обязательной формой. Сокращённый критерий завершения
+Gate11-v1 не вводится неявно. Gate11 OPEN.
+
+## 21. Proposed consumer API и ownership
+
+Будущий leaf-layer package `internal/runtimediagnosticsconsumer` импортирует только
+стандартные `context`/`sync` и существующий `internal/runtimediagnostics`. Sink
+execution вне mailbox package сохраняет его текущий package godoc и все
+существующие source files. Новый module/dependency не предлагается.
+
+Предлагаемые signatures, не текущий Go API:
+
+```go
+type Sink func(runtimediagnostics.Event) error
+func NewConsumer(reader runtimediagnostics.Reader, sink Sink) Consumer
+func (consumer Consumer) Drain(ctx context.Context, budget uint8) DrainResult
+```
+
+Consumer — opaque copyable value с private pointer на shared state: copied Reader,
+captured Sink function и один private TryLock guard. Копии разделяют state/guard;
+mailbox/mutex state не копируется. Construction не выполняет read/offer/callback/
+I/O/timer/worker/lifecycle operation. Zero Reader (comparable concrete value) или
+nil Sink даёт zero/disabled Consumer. Nil Reader не представим в value signature;
+caller проверяет pointer до dereference. Последующие Reader/Sink reassignment не
+перенаправляют созданный Consumer. Concurrent mutation construction inputs —
+unsupported caller misuse.
+
+Один trusted external composition owner сохраняет Reader/Consumer/Sink и scheduling.
+External означает вне Host/producer lifecycle, а не public management access.
+Один logical Reader owner на mailbox — precondition ordering. Дополнительные Reader
+copies или отдельно созданные Consumers могут destructively partition records;
+это не fanout, а guard нового Consumer не разделяется с другими instances.
+Global registry/enforcement cross-instance ownership отсутствуют.
+
+Один TryLock attempt допускает Drain; concurrent/reentrant calls того же Consumer
+или копий возвращают Busy без ожидания/read/sink. Consumer guard удерживается во
+время synchronous sink call и освобождается defer на возвращающихся путях. Mailbox
+lock уже отпущен; Host/Manager/Session locks не берутся. Blocked sink задерживает
+только своего caller и делает этот Consumer Busy.
+
+## 22. Exact turn algorithm и scalar receipt
+
+Budget — 1…64 **TryRead attempts**, а не нужное число success и не безграничный
+drain-until-empty. Одновременно удерживается максимум одна Event copy, без batch queue.
+
+DrainResult содержит только bounded scalar fields:
+
+| Field | Proposed type / exact meaning |
+| --- | --- |
+| ReadAttempts | uint8; фактические TryRead calls этого turn, не больше budget |
+| Observed | uint8; successful valid TryRead results, не все physical removals |
+| SinkSucceeded | uint8; sink invocations этого turn с nil return |
+| SinkFailed | uint8; nonnil sink return, максимум один до остановки |
+| SinkPanicked | uint8; recovered abnormal sink return, максимум один до остановки |
+| Discarded | uint8; known valid copy, пропущенная при cancellation after read/before sink |
+| Stop | closed DrainStop enum ниже, не raw cause/free-form message |
+
+DrainStop names: Disabled, InvalidInput, Busy, NoItem, Budget, Canceled,
+SinkFailed, SinkPanicked. Это local API outcomes, не новая wire schema.
+Receipt не содержит mutable caller labels, strings, errors, maps или global totals.
+Для каждого нормально возвращённого receipt:
+`Observed = SinkSucceeded + SinkFailed + SinkPanicked + Discarded`;
+все counts не больше64, ReadAttempts не меньше Observed.
+
+Упорядоченный algorithm / precedence:
+
+1. Disabled Consumer возвращает Disabled с нулевыми counts; context не читается.
+2. Nil context или budget0/>64 возвращает InvalidInput без read/sink. Typed-nil или
+   malformed context вне caller precondition; его обнаружение не обещается.
+3. Одна попытка consumer guard. При неуспехе Busy, zero counts, без context sample/
+   read/sink. Input validation поэтому предшествует Busy.
+4. Перед каждой read attempt sample `ctx.Err()`. Nonnil останавливает Canceled без
+   нового read. Увеличить ReadAttempts, затем ровно один TryRead.
+5. False немедленно останавливает NoItem без retry. True увеличивает Observed.
+6. Снова sample cancellation перед sink invocation. Nonnil увеличивает Discarded
+   и останавливает Canceled; removed copy никогда не возвращается в mailbox.
+7. Иначе вызвать Sink один раз с detached Event value. Cancellation после этого
+   sample не предотвращает и не прерывает call.
+8. Nonnil return увеличивает SinkFailed и останавливает SinkFailed. Recoverable
+   panic увеличивает SinkPanicked и останавливает SinkPanicked. Эти факты имеют
+   приоритет над более поздней cancellation. Нет retry/recursive diagnostic.
+9. Nil return увеличивает SinkSucceeded, затем sample cancellation: Canceled,
+   если видна; иначе продолжить или Budget после исчерпания attempts.
+
+Caller передаёт nonnil well-formed Context: Err/Done соблюдают Context contract,
+возвращаются promptly и без panic. Well-formed forwarding context допустим;
+typed-nil/hostile implementation не получает safety/termination guarantee.
+Sink получает только Event, без context/cancellation authority/Host capability.
+
+Panic adapter отслеживает normal return (flag устанавливается только после Sink
+return), использует deferred recover и отбрасывает payload. Nil recovered payload
+не приравнивается к normal success. Запрещены Error/Unwrap/Is, formatting и retention
+error/panic payload. Nonreturning callback, Goexit, fatal runtime/process termination/
+resource exhaustion не получают receipt или hard termination guarantee.
+Goroutine-per-call timeout/preemption wrapper не вводится.
+
+## 23. Delivery, ordering и честное наблюдение loss
+
+Delivery destructive и lossy: максимум один sink invocation для каждой valid copy,
+полученной этим turn. SinkSucceeded означает только nil return этого вызова, а не
+external observation, persistence, acknowledgment или durable delivery. Нет
+at-least-once, global exactly-once, retry/reinsert/replay/reliable-delivery guarantee.
+Sink failure/panic или post-read cancellation теряют эту copy; первый такой outcome
+останавливает turn. Arbitrary sink side effects — ответственность его owner;
+consumer не может их rollback.
+
+При одном logical Reader owner и shared consumer guard порядок sink invocations
+следует accepted-insertion FIFO. Нет global/wall-clock/source-failure/cross-mailbox
+order или гарантии для asynchronously retained sink effects. Полученные Sink
+copies не могут менять queued events или будущие receipts.
+
+NoItem **не означает** empty/drained/flushed/complete/successful shutdown. Existing
+TryRead false объединяет disabled/busy/empty/invalid-record cases; invalid slot
+может физически удаляться/очищаться до false. Constructor-zero Reader вместо этого
+даёт Disabled. Observed считает только valid successful reads; ReadAttempts не
+раскрывает exact physical removals или remaining queue length.
+
+Producer busy/full/invalid/exhaustion loss остаётся **unknown** для consumer.
+Sequence присваивается только accepted insertion: source drops не создают gaps.
+Gaps с несколькими readers могут означать partitioning, не измеренные drops;
+отсутствие gaps не доказывает отсутствие loss. Receipt показывает только attempts,
+valid copies, local sink outcomes и known post-read discard этого turn. Не вводятся
+producer-drop estimate, cumulative counter, telemetry label, sampling или metrics.
+False/Busy не разрешает internal retry loop; позднее scheduling — новая внешняя
+opportunity, без implicit retry consumed event.
+
+## 24. Shutdown, backpressure, redaction и compatibility
+
+External owner прекращает scheduling при собственном shutdown. У Consumer нет
+Start/Stop/Close/flush/reset/drain-to-completion/join lifecycle. Host Stop/rollback/
+cleanup никогда не ждут Consumer, его guard/result/Sink. Retained Reader/Consumer
+может выполнить поздний bounded turn с active caller context после Host Stop;
+late eligible source facts допустимы, поэтому final emptiness/attempt/liveness/
+cleanup completion из этого не выводятся.
+
+Запрещён Drain внутри Listener/Handshake legacy callbacks, Approved Session
+Observer/lease accounting, Host lifecycle methods или под Runtime locks. Это
+ownership restriction необходимо: composition, сама ожидающая arbitrary sink code,
+не может заявлять isolation. Existing blocking legacy callbacks/Providers и hostile
+Listener error filters сохраняют текущие limitations.
+
+Slow/blocked/failing/panicking Sink не создаёт producer backpressure. Без progress
+existing mailbox capacity64 ограничивает retained records, поздние offers drops;
+consumer state/receipt constant size, не новая retry queue. Sink-owned allocations,
+retained copies/resources внешние, их объём этот API не ограничивает.
+
+Sink видит только существующие allowlisted SchemaVersion/Code/Sequence Event:
+не добавляются raw cause/request/credential/Principal/provider metadata/timestamp/
+Host/arbitrary labels. Consumer не вводит public endpoint/authorization model,
+serializer/fallback logger/raw-error adapter. Поздний exposure design должен явно
+определить caller access и retention. DP018 management categories/replay keys
+отдельны. Не меняются ARCH002 startup/rollback/Stop, ADR004 carrier2, DP003/004
+Observer/accounting/leases, Host/NewHost, configuration, DP009 bindings,
+source eligibility/cancellation и errors.Is.
+
+## 25. Minimal slices и acceptance boundaries
+
+| Slice | Readiness / exact boundary |
+| --- | --- |
+| C1 isolated consumer core | Ready для отдельно разрешённого fresh intake; Not Activated. Один новый internal/runtimediagnosticsconsumer package, consumer.go и consumer_test.go; без existing source/test/mailbox edits, worker, Runtime wiring или adapter. Acceptance требует разделы21–24 и C01–C16 proofs |
+| C2 operational exposure/adapter | Not Ready / Not Activated. Сначала separate design выбора external owner/scheduling/access/resources/deployment и actual sink/exposure contract, затем отдельно разрешённая реализация. C1 Acceptance не активирует C2 |
+| C3 remaining Gate11 coverage | Not Ready / Not Activated. Отдельные Dispatcher/Handler/shutdown source-category designs/readiness; нельзя переиспользовать DP018 management categories или объявлять существующие два codes полным Gate11 coverage |
+
+Successor Task IDs/branches не назначены. TASK114 Acceptance не даёт design
+Approval/promotion, production adapter readiness, Gate11 closure или implementation
+permission.
+
+## 26. Exact future consumer verification matrix
+
+Это **future requirements**, не tests/code, выполненные или добавленные TASK114.
+
+| ID | Proposed proof / required result |
+| --- | --- |
+| C01 | Inert construction; zero Consumer/Reader/nil Sink => Disabled; без read/offer/callback/resources |
+| C02 | Reader/Sink reassignment isolation; Consumer copies разделяют guard, mailboxes независимы |
+| C03 | Precedence Disabled, затем nil-context/budget0/>64, затем Busy; invalid input ничего не потребляет |
+| C04 | Concurrent/reentrant same Consumer => immediate Busy, zero read/sink; без waiting/spin |
+| C05 | Budget1/64 ограничивает actual TryRead attempts при continuous producer refill; без drain-until-empty loop |
+| C06 | Enabled Reader false => NoItem, не empty/drained; forced busy/invalid cases COMPOSITIONAL через existing mailbox white-box tests и consumer source-order audit; без unsafe/fake Reader/new production hooks |
+| C07 | Single-owner FIFO sink invocation, detached safe copies, independent mailboxes; extra readers partition без global order |
+| C08 | Before-read против after-read/pre-sink cancellation: exact attempts/valid counts/one known discard. Deterministic well-formed forwarding Context может вызвать standard CancelFunc на выбранном Err sample, сохраняя Done/Err; оставшиеся scheduling races — explicit source-order proof |
+| C09 | Post-entry cancellation не отменяет sink call; nil return учитывается перед Canceled; sink error/panic имеет приоритет над поздней cancellation |
+| C10 | Hostile error/panic payload (включая nil где поддерживается) не inspected/formatted/retained; normal-return flag классифицирует panic; один local failure, stop, без reinsert/retry |
+| C11 | Controllably blocked sink: producer/independent Reader progress, same Consumer Busy; fixtures освобождаются до cleanup; без hard callback termination claim |
+| C12 | Full mailbox/abandoned consumer сохраняет capacity64/FIFO/loss; без upstream wait/retry/new worker |
+| C13 | Per-turn receipt equation/bounds; physical-removal/producer-drop counts unknown, без sequence-gap inference/cumulative metrics |
+| C14 | Retained capability/sequence при rollback/retry/Stop; без reset/flush/join/lifecycle mutation; late source eligibility compositional с existing component proofs |
+| C15 | Existing source HTTP/cancellation/errors.Is/legacy/Session/Manager regressions неизменны; без Runtime dependency/Observer repurposing |
+| C16 | API/godoc/import/schema/scope audit; zero workers/timers/I/O/production adapter/Configuration/Host API changes |
+
+Будущий C1 требует focused/full tests, build/vet, available race/stress и module/
+tidy guards. Недоступные checks остаются explicit limitations; Linux race не
+квалифицирует Windows/native TASK102. Текущая design verification — source-backed
+manual decision traces, authority/parity/link/manifest/protected-path checks и
+independent review, не executable consumer/delivery evidence.
