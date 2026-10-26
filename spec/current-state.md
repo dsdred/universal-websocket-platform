@@ -1,14 +1,22 @@
 # Текущее состояние
 
-Текущая engineering task [TASK-114](../docs/tasks/TASK-114-RUNTIME-DIAGNOSTICS-CONSUMER-DESIGN.md) — Runtime Diagnostics consumer/delivery Design/Readiness,
-verification-stable `In Progress`, branch `docs/task-114-runtime-diagnostics-consumer-design`,
-baseline `fd739a87a602229293c41f50c23a7854b2b5e90f`. Actual checkpoints/closure resolve
-only from the newest valid matching Recovery Evidence Envelope. Design only:
-external caller-owned bounded consumer, typed sink function and lossy receipt;
-consumer/sink implementation and operational exposure remain Planned / Not Activated.
-Existing mailbox/component hooks/optional Host wiring stay unchanged. DP027
-Draft/Partial, DP009 Draft, Gate11 OPEN; no new source/test/module/Runtime wiring.
+Текущая engineering task [TASK-115](../docs/tasks/TASK-115-RUNTIME-DIAGNOSTICS-CONSUMER-CORE.md) — isolated bounded Runtime Diagnostics consumer core C1,
+verification-stable `In Progress`, branch `feature/task-115-runtime-diagnostics-consumer-core`,
+baseline `192cb117a10568b309a1d6d454f47424a68dbb64`. Actual checkpoints/closure resolve
+only from the newest valid matching Recovery Evidence Envelope. Owner activated C1:
+caller-owned Consumer, budget1..64 read attempts, scalar receipt and lossy Sink boundary
+implemented in isolation; no production sink, Host wiring or delivery worker.
+C2/C3 Not Ready / Not Activated; DP027 Draft/Partial, DP009 Draft, Gate11 OPEN.
 No staging/commit/publication. TASK102 unqualified; C active, B/PoC inactive.
+
+[TASK-114](../docs/tasks/TASK-114-RUNTIME-DIAGNOSTICS-CONSUMER-DESIGN.md) accepted/published design:
+source `7854e6cb036da9a33af6ef6113b3fd85075ffa31`, PR #114 merged as baseline
+`192cb117a10568b309a1d6d454f47424a68dbb64`, reviewed/merge tree
+`58cb01f37e87b17dbe5a7c37a711365934e0db41`. Fresh TASK115 Git/GitHub readback confirms
+publication; PR CI40268968095 and merge CI40269104229 passed all seven required steps,
+including hosted Linux race/tidy/module guards. Independent durable P10R114001 PASS.
+Historical readiness alone did not activate C1; current separate Owner gate does.
+No consumer production exposure, Windows/native qualification or stronger guarantee.
 
 [TASK-113](../docs/tasks/TASK-113-RUNTIME-DIAGNOSTICS-WIRING.md) accepted/published Host/Bootstrap wiring:
 source `de31f470c1cbda1120fbd3bf936adc7be7ae7735`, PR #113 merged as baseline

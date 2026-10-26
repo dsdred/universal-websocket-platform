@@ -5,7 +5,7 @@
 ## 1. Status and scope
 
 - **Design Status:** Draft.
-- **Implementation Status:** Partial — mailbox (TASK-110), component hooks (TASK-112), optional Host/Bootstrap wiring (TASK-113); production sink/delivery Planned.
+- **Implementation Status:** Partial — mailbox (TASK-110), component hooks (TASK-112), optional Host/Bootstrap wiring (TASK-113), isolated consumer core C1 (TASK-115); production sink/exposure Planned.
 - **Target Milestone:** Beta, Gate 11; this document does not close Gate 11.
 - **Task:** [TASK-109](../../tasks/TASK-109-RUNTIME-DIAGNOSTICS-V1-DESIGN.md).
 - **Source baseline:** `67ca1b200d42fda5be8b6dc8741d8f0bc24bd2a6`.
@@ -27,7 +27,8 @@ wiring proofs and their exact limitations in its evidence envelope. I06 narrow
 offer/timeout-callback coexistence remains compositional source-order proof.
 
 Consumer/delivery refinement: [TASK-114](../../tasks/TASK-114-RUNTIME-DIAGNOSTICS-CONSUMER-DESIGN.md),
-sections20–26 below, is Planned design only. No consumer or sink is implemented.
+sections20–26 below, records the historical design. TASK-115 separately activates
+and implements only C1; section27 records current implementation boundaries.
 
 Integration design: [TASK-111](../../tasks/TASK-111-RUNTIME-DIAGNOSTICS-INTEGRATION-DESIGN.md),
 baseline `060cf22cf040a2e84d49c52095af9ed4ab9390a7`. Section 15 retains that historical
@@ -474,9 +475,10 @@ not normative DP Approval, implementation permission or Gate11 closure.
 
 [TASK-114](../../tasks/TASK-114-RUNTIME-DIAGNOSTICS-CONSUMER-DESIGN.md) is a
 design/readiness addendum at baseline `fd739a87a602229293c41f50c23a7854b2b5e90f`.
-Everything in sections 20–26 is **proposed / Planned**, not executable API,
-implementation permission, normative Approval or completed consumer proof.
-Design stays Draft; implementation stays Partial for TASK-110/112/113 only.
+At TASK-114 closure, sections20–26 were **proposed / Planned**, not executable
+API, implementation permission, normative Approval or completed consumer proof.
+TASK-115 separately authorizes C1 and implements sections21–24 without amendment;
+section27 and its task envelope identify current proofs. Design stays Draft/Partial.
 Historical component/wiring scopes and evidence above are preserved.
 
 MASTER_PLAN section 5 Gate 11 requires reporting server, Dispatcher, Provider,
@@ -646,7 +648,7 @@ source eligibility/cancellation and errors.Is remain unchanged.
 
 | Slice | Readiness / exact boundary |
 | --- | --- |
-| C1 isolated consumer core | Ready for separately authorized fresh intake; Not Activated. One new internal/runtimediagnosticsconsumer package, consumer.go and consumer_test.go; no existing source/test/mailbox edits, worker, Runtime wiring or adapter. Acceptance requires sections21–24 and C01–C16 proofs |
+| C1 isolated consumer core | Activated by separate Owner authorization in TASK-115; implemented in isolation. One new internal/runtimediagnosticsconsumer package, consumer.go and consumer_test.go; no existing source/test/mailbox edits, worker, Runtime wiring or adapter. Acceptance requires sections21–24 and C01–C16 proofs |
 | C2 operational exposure/adapter | Not Ready / Not Activated. First choose external owner, scheduling, access, resources, deployment and actual sink/exposure contract in separate design; then a separately authorized implementation. C1 acceptance cannot activate it |
 | C3 remaining Gate11 coverage | Not Ready / Not Activated. Separate Dispatcher/Handler/shutdown source-category designs and readiness; do not reuse DP018 management categories or claim all Gate11 covered by the existing two codes |
 
@@ -682,3 +684,29 @@ tidy guards. Unavailable checks remain explicit limitations; Linux race never
 qualifies Windows/native TASK102. Design verification now consists of source-backed
 manual decision traces, authority/parity/link/manifest/protected-path checks and
 independent review, not executable consumer or delivery evidence.
+
+## 27. Isolated C1 implementation (TASK-115)
+
+[TASK-115](../../tasks/TASK-115-RUNTIME-DIAGNOSTICS-CONSUMER-CORE.md) implements only
+`internal/runtimediagnosticsconsumer/consumer.go` and its new external-package tests.
+The previously proposed signatures, scalar fields and eight local Stop names in
+sections21–24 are now the isolated C1 API. One captured concrete Reader/Sink and
+shared TryLock guard; budget1..64 actual read attempts, no retry/reinsert/worker.
+Nil/error/recoverable-panic outcomes and cancellation use the exact documented
+precedence; the panic adapter discards the payload and tracks normal return.
+The returned error is only compared with nil; no Error/Unwrap/Is/formatting is called.
+
+The task maps C01–C16 to executable consumer proofs, existing regressions and explicit
+source-order/compositional portions. C06 forced mailbox busy/invalid false uses
+unchanged mailbox white-box tests; C14 actual Host rollback/retry/Stop and late
+source eligibility use unchanged wiring/component proofs. No Runtime/Host consumer
+integration or production exposure test is claimed; C2/C3 remain DEFERRED, Not Ready /
+Not Activated. Exact verification results/limitations resolve from the task envelope.
+The section26 matrix remains the requirements first specified by TASK-114, not a
+claim that TASK-114 ran executable consumer tests.
+
+Consumer runs only when its external caller invokes Drain. No sink implementation,
+new Host binding, lifecycle ownership, startup/Stop join, metrics, transport or durable
+delivery is added. Loss stays explicit: producer drops unknown; NoItem != proven empty;
+no retry, durable/lossless guarantee or hard sink termination. Gate11 OPEN. Draft design
+status and higher-authority contracts are unchanged; C1 does not activate C2/C3.
