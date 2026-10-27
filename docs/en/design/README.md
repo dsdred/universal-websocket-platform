@@ -30,7 +30,7 @@ This directory contains focused Runtime design documents. A design document expl
 | [DP-022: Runtime Execution Containment and Evidence](DP-022-runtime-execution-containment-and-evidence.md) | Approved; partial: TASK-070/TASK-071/TASK-073 prerequisites and TASK-074 private composition gate are published; no production wiring |
 | [DP-023: Runtime Process-Containment Bootstrap](DP-023-runtime-process-containment-bootstrap.md) | Approved; implemented in isolation; ordered items 1–5 are published and TASK-075 implements item 6 read-only assessment in isolation; no production wiring |
 | [DP-024: Runtime Recovery Claim and Admission Boundary](DP-024-runtime-recovery-claim-admission-boundary.md) | Approved / Partial; TASK-081 isolated local ordering/fence test-owner models; real-owner/provenance/durable claim/permit absent; integrated proofs Planned |
-| [DP-027: Runtime Diagnostics v1](DP-027-runtime-diagnostics-v1.md) | Draft / Partial; TASK-110 mailbox and TASK-112 component hooks implemented; Host/value-binding wiring implemented (TASK-113); TASK-114 consumer/delivery design; TASK-115 C1 implemented in isolation, C2/C3 Not Activated; Gate11 open |
+| [DP-027: Runtime Diagnostics v1](DP-027-runtime-diagnostics-v1.md) | Draft / Partial; TASK-110 mailbox and TASK-112 component hooks implemented; Host/value-binding wiring implemented (TASK-113); TASK-114 consumer/delivery design; TASK-115 C1 implemented in isolation, TASK-116 C2-Pull design Ready / Not Activated, production C2/C3 Not Ready / Not Activated; Gate11 open |
 
 ## Publisher governance proposals
 

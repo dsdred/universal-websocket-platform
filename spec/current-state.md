@@ -1,13 +1,28 @@
 # Текущее состояние
 
-Текущая engineering task [TASK-115](../docs/tasks/TASK-115-RUNTIME-DIAGNOSTICS-CONSUMER-CORE.md) — isolated bounded Runtime Diagnostics consumer core C1,
-verification-stable `In Progress`, branch `feature/task-115-runtime-diagnostics-consumer-core`,
-baseline `192cb117a10568b309a1d6d454f47424a68dbb64`. Actual checkpoints/closure resolve
-only from the newest valid matching Recovery Evidence Envelope. Owner activated C1:
-caller-owned Consumer, budget1..64 read attempts, scalar receipt and lossy Sink boundary
-implemented in isolation; no production sink, Host wiring or delivery worker.
-C2/C3 Not Ready / Not Activated; DP027 Draft/Partial, DP009 Draft, Gate11 OPEN.
-No staging/commit/publication. TASK102 unqualified; C active, B/PoC inactive.
+Текущая engineering task [TASK-116](../docs/tasks/TASK-116-RUNTIME-DIAGNOSTICS-OPERATIONAL-INTEGRATION-DESIGN.md) — Runtime Diagnostics operational integration Design/Readiness,
+verification-stable `In Progress`, branch `docs/task-116-runtime-diagnostics-operational-integration-design`,
+baseline `008a170e1c87aaa0195140c42ad740f2c968a340`. Actual checkpoints/closure resolve
+only from the newest valid matching Recovery Evidence Envelope. Documentation First:
+C2 operational exposure/owner/scheduling/access/resources/deployment and independent
+C3 Dispatcher/Handler/shutdown coverage are design-only, no implementation activated.
+C2-Pull fixed64 View.Poll prerequisite design is Ready for separate implementation
+intake only / Not Activated; production C2/C3 remain Not Ready / Not Activated.
+C1 remains implemented in isolation; no production sink/exposure/wiring is added.
+DP027 Draft/Partial, DP009 Draft, Gate11 OPEN. No staging/commit/publication.
+TASK102 unqualified; C active, B/PoC inactive.
+
+[TASK-115](../docs/tasks/TASK-115-RUNTIME-DIAGNOSTICS-CONSUMER-CORE.md) accepted/published isolated C1:
+source `64ba98cc29ede69701bf4c9b74a4b687cbe0138c`, PR #115 merged as baseline
+`008a170e1c87aaa0195140c42ad740f2c968a340`, reviewed/merge tree
+`36c5f5dfbd6d2bd0a0977454ba11e28c86b1597c`. Fresh TASK116 Git/GitHub readback confirms
+publication. PR CI40368793585 and merge CI40369135821 passed all seven required steps,
+including Linux race/tidy/module guards; independent durable P10R115001 final readback
+PASS completed original transaction, Consumed(P10)/NoneTerminal/Unissued, no replay.
+C01–C16 scope/limitations preserved, including C06/C14 composition, unknown producer
+drops, NoItem != proven empty, no retry/durable/lossless/hard sink termination.
+Historical local race/CRLF/parallel limitations remain; no Windows/native qualification.
+C1 publication did not activate C2/C3 or close Gate11; this task permits design only.
 
 [TASK-114](../docs/tasks/TASK-114-RUNTIME-DIAGNOSTICS-CONSUMER-DESIGN.md) accepted/published design:
 source `7854e6cb036da9a33af6ef6113b3fd85075ffa31`, PR #114 merged as baseline

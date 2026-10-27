@@ -341,6 +341,11 @@ Runtime Alpha Review фиксирует implementation debt, который не
   Not Ready / Not Activated; Gate11 criteria неизменны: built-in logger для core prerequisite не нужен; isolated core/test sinks
   не закрывают Gate11 и не дают sanctioned operational exposure. Coverage
   Dispatcher/Handler/shutdown и exposure-owner design остаются открыты.
+  TASK-116 задаёт Planned fixed64 process-local View.Poll prerequisite; Ready /
+  Not Activated только isolated implementation intake. Production C2 owner/per-Host
+  binding/consume access/scheduling/operator exposure и C3 source/schema work
+  Not Ready / Not Activated. O01–O16/P01–P08/S01–S12 — future proofs, не выполненный
+  operational evidence. Существующие Gate11 criteria не сокращаются.
 - Покрытие Runtime для Basic и asymmetric JWT неполное.
 - Поведение Origin полагается на defaults библиотеки, а не на явную Configuration.
 

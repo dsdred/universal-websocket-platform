@@ -30,6 +30,10 @@ Consumer/delivery refinement: [TASK-114](../../tasks/TASK-114-RUNTIME-DIAGNOSTIC
 разделы20–26 ниже, сохраняют historical design. TASK-115 отдельно активирует
 и реализует только C1; раздел27 фиксирует текущие implementation boundaries.
 
+Operational integration refinement: [TASK-116](../../tasks/TASK-116-RUNTIME-DIAGNOSTICS-OPERATIONAL-INTEGRATION-DESIGN.md),
+разделы28–34 — только proposed design. C2-Pull prerequisite Ready для separate intake /
+Not Activated; production C2/C3 Not Ready / Not Activated.
+
 Integration design: [TASK-111](../../tasks/TASK-111-RUNTIME-DIAGNOSTICS-INTEGRATION-DESIGN.md),
 baseline `060cf22cf040a2e84d49c52095af9ed4ab9390a7`. Раздел15 сохраняет historical
 source inventory; разделы16–19 отделяют implemented component APIs от later wiring.
@@ -709,3 +713,249 @@ Consumer запускается только explicit external Drain caller. Н�
 durable delivery. Producer drops unknown; NoItem != proven empty; нет retry,
 durable/lossless guarantee или hard sink termination. Gate11 OPEN. Draft design и
 higher-authority contracts неизменны; C1 не активирует C2/C3.
+
+## 28. Operational integration inventory (TASK-116)
+
+[TASK-116](../../tasks/TASK-116-RUNTIME-DIAGNOSTICS-OPERATIONAL-INTEGRATION-DESIGN.md)
+добавляет **proposed / Planned** design/readiness после опубликованного C1 на baseline
+`008a170e1c87aaa0195140c42ad740f2c968a340`. Разделы28–34 не вводят executable API,
+production wiring, operational sink, Approval или Gate11 closure. C1 разделов21–24
+и implementation раздела27 неизменен. C2 — operational exposure/adapter (owner,
+scheduling, access, resources, deployment, actual sink/exposure); C3 — отдельные
+Dispatcher/Handler/shutdown source categories. C2 prerequisite не переопределяет
+и не завершает эти parent categories.
+
+| Actual repository boundary | Факт / отсутствующая integration boundary |
+| --- | --- |
+| cmd/control-service/main.go | Только management HTTP/application slog; нет Runtime/Consumer production composition. stdout logger не является sanctioned Runtime sink |
+| internal/runtime/bootstrap.go / composition.go | Existing fourth optional copied Producer передан Listener/Handshake; Reader/Consumer внешние, terminalObserver no-op |
+| internal/runtimelifecycle/owner.go | Retained dependency pointer повторно используется для последующих launches; один Owner-level Producer смешал бы разные Host lifetimes |
+| internal/runtimelaunchflow/flow.go / runtimemanagement/directory.go | Isolated launch/management seams; ActionObserve не разрешает destructive diagnostic consumption |
+| internal/session/transactional_dispatcher.go / session.go / message/handler.go | PreCommit cleanup/error и exact Handler invocation — разные potential source owners, не текущее diagnostics coverage |
+| internal/runtime/host.go / executionowner/terminal_lifecycle.go | Physical Stop winner кэширует joined outcome; synchronous Observer предшествует drain/seal/lease и не покрывает все late anomalies |
+
+## 29. Minimal process-local pull prerequisite
+
+Предлагается **C2-Pull**, один будущий leaf `internal/runtimediagnosticspull`, только
+pull.go и pull_test.go. Imports: standard context/sync, existing mailbox/C1. Без
+Host/management/HTTP/logger/transport/new module. Existing source/tests неизменны.
+Ниже proposed API, не реализация TASK116:
+
+```go
+func New(reader runtimediagnostics.Reader) View
+func (view View) Poll(ctx context.Context, budget uint8) PollResult
+type PollResult struct {
+    Receipt runtimediagnosticsconsumer.DrainResult
+    Count uint8
+    Events [64]runtimediagnostics.Event
+}
+```
+
+View — opaque/copyable value с одним shared private state: outer TryLock guard,
+captured C1 Consumer, private fixed64 capture array/count. Copies разделяют state,
+отдельные Views — нет. Нет Reader/Consumer/Sink accessors или global enforcement.
+Zero Reader даёт disabled View. Constructor копирует Reader value и создаёт inert C1
+Consumer с fixed private capture Sink, не caller-supplied sink. Без read/offer/output
+I/O/worker/timer/lifecycle action. Один logical reader owner на mailbox — precondition
+FIFO; дополнительные readers/Views destructively partition records.
+
+Exact ordinary-turn algorithm:
+
+1. Disabled возвращает zero PollResult с Receipt.Stop Disabled без ctx inspection.
+2. Nil ctx или budget0/>64 возвращает zero InvalidInput до guard. C1 precondition
+   well-formed/prompt/nonpanic Context неизменен; typed-nil/hostile contexts не
+   detected и не получают гарантий receipt/termination.
+3. Одна outer TryLock attempt. При failure zero Busy без context sample/read/capture.
+   Это local admission, не claim запуска C1 Drain. Copies и reentrant Poll из Context
+   method не обходят тот же guard.
+4. После admission очистить private array/count; удерживать outer guard через ровно
+   **один** C1 Consumer.Drain(ctx,budget), detach/copy результата и очистку storage.
+   Deferred private clearing/guard release на returning/unwinding paths; fatal
+   process/runtime failure вне guarantees. Не loop/retry вокруг Drain.
+5. Private Sink копирует каждый delivered safe Event в следующий bounded slot,
+   увеличивает Count, возвращает nil. C1 budget<=64 доказывает storage bound. Нет
+   caller Sink/renderer/output I/O; Context.Err остаётся caller interface с C1
+   precondition. Это не утверждение буквально отсутствующего caller code.
+6. Вернуть receipt/Count/detached Events by value, unused slots zero.
+   Count==Receipt.SinkSucceeded<=64; pre-sink canceled/discarded copy отсутствует в
+   Events. Nil capture учитывается перед post-capture cancellation, как в C1.
+   Fixed capture не вводит sink failures при соблюдении contract; нельзя фабриковать
+   successful receipt при нарушении invariant.
+7. Очистить private array/count перед unlock; нет stale cross-turn history/replay.
+   Returned copies принадлежат caller; следующий Poll — новая external opportunity.
+
+Outer guard нужен поверх C1 guard: он покрывает buffer reset, Drain, result copy и
+clear после освобождения private C1 guard. State/result constant size; fixed batch —
+external Sink-owned capture detached copies, не изменение C1 algorithm или retry queue.
+Caller retention returned batches — внешняя ответственность, API её не ограничивает.
+
+В Poll нет caller-selected Sink/output formatter. Rendering/sending/retention после
+return выполняются вне Poll/Runtime locks/lifecycle; failure/blocking могут потерять
+result, но не join/изменить Host work. Нет goroutine-per-call timeout или hard wall-clock/
+latency guarantee. Observable только existing SchemaVersion/Code/Sequence и scalar
+receipt. NoItem != proven empty/drained/flushed/complete; producer drops, physical
+removals, remaining length и external observation/persistence unknown. Sequence —
+mailbox insertion-local, не Host identity/drop metric. Нет retry/reinsert/replay,
+durable/lossless/at-least-once guarantee или cumulative metrics.
+
+## 30. Production admission, lifetime and security
+
+Ровно одна mailbox pair на **concrete Host lifetime**, включая rollback/retry того же
+Host. Producer копируется в existing optional binding только на stable concrete
+construction boundary; Reader принадлежит external View owner. Разные Hosts, включая
+новые attempts одного Owner/RuntimeInstance, требуют разных pairs. Нельзя infer scope
+по Sequence, делить Owner-level mailbox между Hosts, вводить identity labels или
+mutate/rebind retained Owner.dependencies во время launch. Production per-Host
+allocation пока отсутствует.
+
+Reader/View/Sink — не fifth Bootstrap binding, public Host capability, Bootstrap
+outcome или ADR004 carrier member. Host остаётся sole operational graph/lifecycle
+owner. View не имеет Start/Stop/Close/flush/reset/join. External owner прекращает
+scheduling независимо, не ждёт arbitrary presentation перед Host.Stop и может
+отбросить retired pair/results без flush. Retained active-context Poll после rollback/
+Stop может видеть late facts; final emptiness/liveness не выводится.
+
+Trusted in-process capability possession — boundary только isolated prerequisite,
+не public/API authorization. Нет HTTP/CLI route/serializer/query по Runtime ID,
+target registry/default slog/stdout sink/remote endpoint. Перед любым untrusted/remote
+destructive Poll нужна current exact target/lifetime consume authorization **до read**,
+anti-enumeration/no side effects on denial, revocation, bounds/rate/pending-call/
+retention и deployment/transport contracts. Existing ActionObserve/lifecycle observation
+и DP018 replay/categories не consume authority. Никаких raw errors/causes/requests/
+credentials/Principal/provider metadata/Host pointer/timestamp/arbitrary labels в
+Event/batch/receipt. External target context требует отдельной authorization, не
+добавляется в Event.
+
+Production C2 admission остаётся **Not Ready / Not Activated** до выбора concrete
+sanctioned application/process/deployment owner; per-Host pair allocation/binding/
+retirement с retained dependencies; lifetime handles/consume access/revocation;
+external scheduling/bounded resources/concurrency; actual operator presentation/
+transport/sink/retention/redaction; real lifecycle isolation и late-fact/failed-retirement
+proofs. cmd/control-service не назначается этим owner по предположению. C2-Pull сам
+по себе — не production exposure или Gate11.
+
+## 31. Independent C3 coverage and schema prerequisites
+
+Current Event validation сохраняет ровно два existing codes/schema. Нельзя alias
+Dispatcher/Handler/shutdown в Listener/Provider, брать DP018 categories или назначать
+новые code numbers/version values в этой task. До C3 implementation focused design
+должен определить closed identities/version/backward compatibility/validation и exact
+source provenance/negative eligibility/panic/deduplication. Source/validator changes
+сейчас не разрешены.
+
+| Candidate source owner | Необходимое separate decision / preserved result |
+| --- | --- |
+| Dispatcher authoritative preCommit failure после retire/Abort, до accepted=false/error return | Trusted branch/phase отделяет operational failure от cancellation/BeginShutdown/rejection без новых Error/Unwrap/Is/formatting. Cleanup aggregates/panic policy/одна offer/no duplicate Handshake/legacy пока не определены |
+| Exact Handler invocation в Session.Run или narrowly composed adapter | Отделить selected Handler error от Router selection/transport/read/send/generic Run failure. Сохранить synchronous invocation и %w/errors.Is. Panic provenance нельзя infer из RunPanicked/TerminalResult или ad-hoc recover/repanic |
+| Physical winning stopRuntime после joined Listener/Manager result, вне lifecycle mutex до cache/publication | Определить nonnil shutdown-completion/deadline/cancellation eligibility, no-op/rollback scope/once-only offer; repeat/concurrent Stop читает cache без duplicate offers. Сохранить joined causes/lifecycle; nonreturning cleanup не даёт completion fact |
+
+Не помещать Drain/sink/worker в legacy callbacks/Approved Observer/Complete/
+UnregisterAndDrain/lease paths. Observer synchronous once до последующих accounting/
+sealing/lease operations; generic TerminalResult не даёт полной Dispatcher/Handler/
+shutdown provenance или late-anomaly coverage. Даже nonblocking source projection
+требует focused compatibility proof. C3 implementation Not Ready / Not Activated.
+C3 source/schema design может идти независимо от C2 transport только по отдельной
+authorization; actual operator visibility требует и source coverage, и sanctioned C2.
+
+## 32. Slices, amendments and acceptance boundaries
+
+| Slice | Readiness / dependency |
+| --- | --- |
+| C2-Pull isolated bounded View | Ready только для separately authorized fresh implementation intake; Not Activated. Published C1, exact раздел29/O01–O16; один leaf package/new pull.go+pull_test.go, без existing source/test changes |
+| C2-Binding concrete Host-lifetime scope | Not Ready / Not Activated. Concrete sanctioned owner/per-Host allocation/retirement/launch-management decisions; без mutable dependency rebind |
+| C2-Exposure operator bridge/deployment | Not Ready / Not Activated. C2-Binding, exact consume authorization/scheduling/resources/rate/retention/transport и P01–P08 |
+| C3-Schema/source designs | Not Ready for implementation / Not Activated. Separate source/closed schema/version/eligibility/panic/deduplication и S01–S12; design не обязан ждать C2 transport |
+| C3 source/private passage/integrated coverage | Not Ready / Not Activated. Accepted focused designs/separate implementation authorizations/compatibility/race и eventual C2 admission для operator visibility |
+
+Amendment inventory: DP027 Draft фиксирует proposed pull API и future C3 schema/source
+work; current C1/two-code schema неизменны. DP009 Draft уточняет external View/existing
+fourth Producer only. Future production per-Host allocation/destructive consumption
+требуют отдельных DP010/011/012/013 Draft launch/management design updates после выбора
+owner; current retained bindings/isolation нельзя silently override. Selected isolated
+plan не требует ARCH002 Frozen/ADR004/Approved DP003/004/005/018 amendment. Любая future
+proposal, требующая их change, — STOP для Owner decision; эта task не изменяет и не
+preauthorizes такие amendments.
+
+## 33. Exact future verification matrices
+
+Все rows — **future requirements**, не выполненные O/P/S implementation proofs
+TASK116. Текущая verification — source-backed manual design traces.
+
+### O01–O16 — isolated C2-Pull
+
+| ID | Required proof / acceptance result |
+| --- | --- |
+| O01 | Inert constructor/zero View/zero Reader; no read/offer/sink/lifecycle/resources. |
+| O02 | Reader capture and View-copy shared guard; distinct mailboxes isolated; no capability accessor. |
+| O03 | Disabled→InvalidInput→Busy precedence with nilctx/budget0/65/255; zero work invalid/busy. |
+| O04 | Concurrent copies return immediate Busy, no read/capture/wait/spin; one outer TryLock source audit. |
+| O05 | Budget1/64 under producer refill; exactly one C1 Drain per Poll, ≤budget read attempts. |
+| O06 | Count==Receipt.SinkSucceeded, all receipt equations/bounds; canceled-after-read discard absent from Events. |
+| O07 | FIFO detached batch and zero unused slots; returned mutation cannot affect queued events/later receipts. |
+| O08 | Admitted turn clears private buffer under its guard before/after Drain; Busy/InvalidInput return zero result without touching an active turn storage. No cross-turn replay/stale returned slots. |
+| O09 | NoItem not empty; forced mailbox busy/invalid COMPOSITIONAL with unchanged mailbox tests and C1 false handling; no unsafe/fake Reader. |
+| O10 | Cancellation before read/pre-sink/post-capture preserves C1 sample/receipt semantics; well-formed forwarded Context. |
+| O11 | Caller presentation blocked or fails after Poll return while Producer/independent Reader/later Poll proceed; release/join test fixtures externally. |
+| O12 | Extra readers destructively partition; distinct mailboxes isolated, separate Views have no global guard/fanout. Actual cross-Host allocation/isolation is P02/P08, not an isolated View proof. |
+| O13 | Retained View across rollback/Stop compositional with unchanged Host/component proofs; no reset/flush/join/final empty claim. |
+| O14 | No producer loss/drop estimate or sequence-gap inference; only allowlisted Event and scalar receipt; fixed64 result shape. |
+| O15 | Godoc/import/API/source scope audit: no Runtime/http/log/io/management dependency, arbitrary callbacks, worker/timer/new modules or existing source/test changes. |
+| O16 | Focused/full tests/build/vet, available race/stress, tidy/module guards and meaningful public behavior; unavailable checks explicit limits, not operational/deployment proof. |
+
+### P01–P08 — production admission
+
+| ID | Required proof / acceptance result |
+| --- | --- |
+| P01 | Concrete sanctioned owner/deployment and exact Host-lifetime handle/access action declared before any public exposure. |
+| P02 | Two Hosts/Owner attempts distinct pairs; same Host retry retains pair/sequence; no mutable dependency rebinding. |
+| P03 | Authorization before destructive Poll, current exact lifetime target, unauthorized/nonexistent anti-enumeration and no side effect. |
+| P04 | Bounded scheduling/concurrency/pending request/resource/rate/retention contract; no implicit worker or unbounded target registry. |
+| P05 | Blocked/failed rendering/sink/bridge never joined by Host.Start/Stop/rollback or Manager.Wait; real lifecycle overlap proofs. |
+| P06 | Retirement/late events/failed startup accurately lossy, no flush/final emptiness/delivery acknowledgment claim. |
+| P07 | Operator output Event/receipt allowlist only; no raw error/credential/request/Principal/identity leakage; no reused DP018 replay authority. |
+| P08 | Exact production composition import/cause/config/API compatibility, full tests/race and source/category coverage evidence; cannot be supplied by isolated O proofs. |
+
+### S01–S12 — C3 schema/source
+
+| ID | Required proof / acceptance result |
+| --- | --- |
+| S01 | Closed code/schema/version decisions before offer/read validation changes; old values and invalid cases explicit. |
+| S02 | Dispatcher expected cancellation/BeginShutdown/rejection emits zero; one eligible authoritative failed handoff emits ≤one offer after cleanup. |
+| S03 | Dispatcher panic/cleanup aggregate/error identity/accepted ownership preserved; no duplicate Handshake/legacy reporting. |
+| S04 | Handler nonnil error active sample vs cancellation; nil/no-match zero; errors.Is/synchronous selected invocation/transport outcome unchanged. |
+| S05 | Handler panic provenance distinct from generic Session Run failures; no Observer inference or raw payload retention. |
+| S06 | Winning shutdown failure once, concurrent/repeat cached Stop zero duplicates; no-op/never-started behavior unchanged. |
+| S07 | Shutdown deadlines/joined Listener+Manager causes retain errors.Is and truthful outcome; nonreturning cleanup has no fabricated completion event. |
+| S08 | Full/busy/disabled/exhausted mailbox loss never retries, blocks, alters response/lifecycle/cleanup; no new raw cause methods. |
+| S09 | Private Producer passage/capture/one mailbox per Host/lifetime and cross-Host isolation; no new Host API/carrier capability. |
+| S10 | Session Observer/Complete/UnregisterAndDrain/lease terminal order and Manager accounting untouched; no sink/Drain in covered callbacks. |
+| S11 | Actual operator exposure of each eligible source requires C2 production admission; integrated live source→mailbox→Poll proofs separate from isolated tests. |
+| S12 | Full regression/race/stress/security, documented deferred categories/anomalies and exact scoped Gate11 evidence; never auto-close Gate11. |
+
+O01–O08/O10–O12: будущие automated public/appropriate new-package white-box proofs
+плюс source-order audit. O04 может детерминированно удерживать new private guard в
+new package tests, без production hooks/fake Reader. O05 при concurrent refill не
+обещает success каждого read; exactly-one Drain — source audit плюс unchanged C1
+boundedness. O09/O13 явно COMPOSITIONAL с unchanged C1/mailbox/Host/component proofs.
+O14–O16 — schema/API/import audit и applicable executable checks. Isolated O proofs не
+дают actual cross-Host binding P02/P08/exposure/Dispatcher/Handler/shutdown coverage.
+P/S rows требуют future concrete designs и real lifecycle/source/integration proofs;
+все DEFERRED, не current PASS.
+
+## 34. Acceptance, exclusions and next work
+
+TASK116 принимает только source-backed design/readiness/manual scenario traces,
+mirrors/links/authority/scope checks, independent Verification/Review/Acceptance и
+final integrity. Future C2-Pull acceptance требует O01–O16 exact implementation,
+focused/full tests/build/vet/available race/stress/tidy/module guards с explicit
+unavailable limitations. Production C2 требует P01–P08 и owner/access/deployment
+choices; C3 — accepted focused schema/source designs и S01–S12. Ни один этап не
+даёт complete Gate11 evidence/Owner closure. Successor task ID/branch не назначен.
+
+Отклонены implicit Control Service slog sink; Reader/Consumer/View в Host/fifth
+binding/Observer/Stop; shared Owner-level mailbox/mutable rebind/identity labels;
+ActionObserve HTTP reuse; periodic workers/sink timeout goroutines/stop flush/
+retry/durable delivery; existing Listener/Provider code aliases/generic TerminalResult
+для missing categories. C2-Pull Ready только для separately authorized isolated
+implementation intake, Not Activated. DP027 Draft/Partial, DP009 Draft,
+C2 production/C3 Not Ready; Gate11 OPEN.
