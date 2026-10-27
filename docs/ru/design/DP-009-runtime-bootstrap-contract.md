@@ -299,13 +299,22 @@ integration, production sink/delivery или Gate11 closure.
 
 ### External consumer boundary (TASK-114)
 
-Consumer contract DP-027 разделов20–27 (C1 implemented in isolation TASK-115
+Consumer contract DP-027 разделов20–34 (C1 implemented in isolation TASK-115
 по отдельной authorization) остаётся вне Bootstrap и Host
 lifecycle. Reader/Consumer/Sink не становятся fifth binding, Host capability,
 Bootstrap outcome или ADR-0004 carrier member. Existing optional Producer value
 passage неизменен. External composition владеет consumer scheduling и sink
 resources; Host Start/rollback/Stop не drain/flush/join этого caller. Note не
 активирует consumer implementation или production exposure.
+
+TASK-116 предлагает только trusted process-local View.Poll capture prerequisite.
+Reader/View внешние, без fifth binding/Host API/outcome/carrier change или production
+deployment. Одна pair на concrete Host lifetime включая rollback/retry; разные Hosts
+требуют разных pairs. Retained runtimelifecycle.Owner.dependencies повторно передают
+bindings между launches: Owner-level Producer не доказывает per-Host isolation.
+Mutable rebind/hidden allocation workaround запрещён. Concrete production owner/
+allocation/admission требуют отдельного DP010/011/012/013 design; C2 production/C3
+Not Ready / Not Activated, Gate11 OPEN. Нет Bootstrap/Host diagnostic drain/flush/join.
 
 ## 12. Граница запуска Host
 

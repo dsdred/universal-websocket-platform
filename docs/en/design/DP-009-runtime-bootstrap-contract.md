@@ -295,13 +295,23 @@ integration, production sink/delivery or Gate11 closure.
 
 ### External consumer boundary (TASK-114)
 
-The DP-027 consumer contract (sections20–27; C1 implemented in isolation by
+The DP-027 consumer contract (sections20–34; C1 implemented in isolation by
 TASK-115 under separate authorization) stays outside Bootstrap and
 Host lifecycle. Reader, Consumer and Sink are not a fifth binding, Host capability,
 Bootstrap outcome or ADR-0004 carrier member. The existing optional Producer value
 passage is unchanged. External composition owns consumer scheduling and sink
 resources; Host Start/rollback/Stop never drain, flush or join that caller. No
 consumer implementation or production exposure is activated by this design note.
+
+TASK-116 proposes a trusted process-local View.Poll capture prerequisite only.
+Reader/View stay external, no fifth binding/Host API/outcome/carrier change or
+production deployment. Exactly one pair must belong to one concrete Host lifetime,
+including its rollback/retry; distinct Hosts require distinct pairs. Retained
+runtimelifecycle.Owner.dependencies currently reuse bindings across launches: an
+Owner-level Producer is not proven per-Host isolation. No mutable rebinding or hidden
+allocation workaround is allowed. Concrete production ownership/allocation/admission
+requires separate DP010/011/012/013 design; C2 production/C3 remain Not Ready / Not
+Activated, Gate11 OPEN. No Bootstrap/Host diagnostic drain/flush/join is introduced.
 
 ## 12. Host Startup Boundary
 
