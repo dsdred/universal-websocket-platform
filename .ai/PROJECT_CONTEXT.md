@@ -8,17 +8,24 @@
 
 ## Текущее состояние
 
-Текущая engineering task [TASK-116](../docs/tasks/TASK-116-RUNTIME-DIAGNOSTICS-OPERATIONAL-INTEGRATION-DESIGN.md) — Runtime Diagnostics operational integration Design/Readiness,
-verification-stable `In Progress`, branch `docs/task-116-runtime-diagnostics-operational-integration-design`,
-baseline `008a170e1c87aaa0195140c42ad740f2c968a340`. Actual checkpoints/closure resolve
-only from the newest valid matching Recovery Evidence Envelope. Documentation First:
-C2 operational exposure/owner/scheduling/access/resources/deployment and independent
-C3 Dispatcher/Handler/shutdown coverage are design-only, no implementation activated.
-C2-Pull fixed64 View.Poll prerequisite design is Ready for separate implementation
-intake only / Not Activated; production C2/C3 remain Not Ready / Not Activated.
-C1 remains implemented in isolation; no production sink/exposure/wiring is added.
-DP027 Draft/Partial, DP009 Draft, Gate11 OPEN. No staging/commit/publication.
-TASK102 unqualified; C active, B/PoC inactive.
+Текущая engineering task [TASK-117](../docs/tasks/TASK-117-MANAGED-STOP-ADMISSION-TEST-CORRECTION.md) — test-only correction синхронизации managed Stop admission,
+verification-stable `In Progress`, branch `codex/task-117-managed-stop-admission-test`,
+baseline `d4042fd44852930f066921b5557b63ce682bb7be`. Actual checkpoints/closure resolve
+only from the newest valid matching Recovery Evidence Envelope. Documentation First;
+actual admission acknowledgment вместо scheduler-yield budget, без production changes.
+Отдельный Owner-authorized corrective cycle до Coordinator Acceptance/integrity;
+Commit Gate и Publication Gate не разрешены.
+
+Исходная [TASK-116](../docs/tasks/TASK-116-RUNTIME-DIAGNOSTICS-OPERATIONAL-INTEGRATION-DESIGN.md)
+CA-116-001 ACCEPTED; PR116 MERGED как baseline, source
+`6eb81e2738b9c7d394f31f0f1c417d13b217b989`, reviewed/merge tree
+`368832b6463d900e9de59ab079065d2af4f805ba`. PR CI40469349689 SUCCESS;
+post-merge CI40469617734 FAILURE, test synchronization defect подтверждён forensics.
+Original Publisher transaction Active / Owned(original trusted context) / Unissued;
+P10 не consumed, task refs сохранены, cleanup не выполнен. TASK117 не выполняет
+rerun, publication recovery, target mutation или ownership transfer.
+C1 isolated; C2-Pull Ready / Not Activated; production C2/C3 Not Ready / Not Activated.
+DP027 Draft/Partial, DP009 Draft, Gate11 OPEN. TASK102 unqualified; B/PoC inactive.
 
 [TASK-115](../docs/tasks/TASK-115-RUNTIME-DIAGNOSTICS-CONSUMER-CORE.md) accepted/published isolated C1:
 source `64ba98cc29ede69701bf4c9b74a4b687cbe0138c`, PR #115 merged as baseline

@@ -3,10 +3,12 @@ package runtimecommandidempotency
 import (
 	"context"
 	"errors"
+	"fmt"
 	"runtime"
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeorchestrationbinding"
 )
@@ -41,74 +43,42 @@ func TestManagedPrimitiveEarlyAndFinalGatesResolveExactBinding(t *testing.T) {
 
 func TestManagedFinalGateConvergesStopAdmittedDuringBinding(t *testing.T) {
 	boundary := newTestBoundary(t)
-	startScope := testScope(t, "domain-a", "instance-a", OperationStart)
-	stopScope := testScope(t, "domain-a", "instance-a", OperationStop)
-	startIntent := startIntent(t, 41)
-	stopIntent := NewStopIntent()
-	bound := make(chan struct{})
-	stopAdmitted := make(chan struct{})
-	var wg sync.WaitGroup
-	var startErr, stopErr error
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		_, startErr = boundary.ExecuteManagedStart(
-			context.Background(), startScope, "start-a", startIntent, 7, "generation-a",
-			func(context.Context, OrchestrationAuthorizationRequest) error { return nil },
-			func(binding runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error) {
-				if gate, err := boundary.ResolveManagedStartEarly(binding, "attempt-a"); err != nil || gate != GateClear {
-					return TerminalOutcome{}, err
-				}
-				close(bound)
-				<-stopAdmitted
-				gate, err := boundary.ResolveManagedStartFinal(binding, FinalContinue)
-				if err != nil || gate != GateStopConverged {
-					t.Errorf("final gate = %v, %v", gate, err)
-				}
-				return NewTerminalOutcome(OutcomeSucceeded, "attempt-a")
-			},
-		)
-	}()
-	<-bound
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		_, stopErr = boundary.Execute(
-			context.Background(), stopScope, "stop-a", stopIntent,
-			func(context.Context, Scope, Intent) error { return nil },
-			func() (TerminalOutcome, error) {
-				return NewTerminalOutcome(OutcomeSucceeded, "attempt-a")
-			},
-		)
-	}()
-	// Stop callback runs only after the final gate signal, so admission is
-	// observed through the command record rather than callback entry.
-	admitted := false
-	for attempts := 0; attempts < 10000; attempts++ {
-		boundary.storage.clientMu.RLock()
-		ledger := boundary.storage.existingLedger(startScope.instanceScope())
-		if ledger != nil {
-			ledger.mu.Lock()
-			for identity := range ledger.records {
-				if identity.scope.operation == OperationStop {
-					admitted = true
-				}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	var stop *managedPendingStop
+	var helperErr error
+	defer func() {
+		if stop != nil {
+			if err := stop.cancelAndJoin(); err != nil {
+				t.Error(err)
 			}
-			ledger.mu.Unlock()
 		}
-		boundary.storage.clientMu.RUnlock()
-		if admitted {
-			close(stopAdmitted)
-			break
-		}
-		runtime.Gosched()
+	}()
+	scope := testScope(t, "domain-a", "instance-a", OperationStart)
+	_, err := boundary.ExecuteManagedStart(ctx, scope, "start-a", startIntent(t, 41), 7, "generation-a", allowOrchestration,
+		func(binding runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error) {
+			if gate, err := boundary.ResolveManagedStartEarly(binding, "attempt-a"); err != nil || gate != GateClear {
+				return TerminalOutcome{}, fmt.Errorf("early gate = %v, %v", gate, err)
+			}
+			var err error
+			stop, err = admitManagedPendingStop(ctx, boundary, binding)
+			helperErr = err
+			if err != nil {
+				return TerminalOutcome{}, err
+			}
+			if gate, err := boundary.ResolveManagedStartFinal(binding, FinalContinue); err != nil || gate != GateStopConverged {
+				return TerminalOutcome{}, fmt.Errorf("final gate = %v, %v", gate, err)
+			}
+			if err := stop.wait(ctx); err != nil {
+				return TerminalOutcome{}, err
+			}
+			return NewTerminalOutcome(OutcomeSucceeded, "attempt-a")
+		})
+	if helperErr != nil {
+		t.Fatal(helperErr)
 	}
-	if !admitted {
-		t.Fatal("Stop was not admitted within bounded scheduler yields")
-	}
-	wg.Wait()
-	if startErr != nil || stopErr != nil {
-		t.Fatalf("start=%v stop=%v", startErr, stopErr)
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -187,18 +157,32 @@ func TestManagedNoClaimAllCausesPrimitiveAndLinked(t *testing.T) {
 				}
 				t.Run(tc.name+"/"+name, func(t *testing.T) {
 					boundary := newTestBoundary(t)
+					ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+					defer cancel()
+					var stop *managedPendingStop
+					var helperErr error
+					defer func() {
+						if stop != nil {
+							if err := stop.cancelAndJoin(); err != nil {
+								t.Error(err)
+							}
+						}
+					}()
 					invoke := func(binding runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error) {
-						var stopResult <-chan error
-						var stopCallbacks *atomic.Int32
 						if withStop {
-							stopResult, stopCallbacks = admitManagedPendingStop(t, boundary, binding.Authorization())
+							var err error
+							stop, err = admitManagedPendingStop(ctx, boundary, binding)
+							helperErr = err
+							if err != nil {
+								return TerminalOutcome{}, err
+							}
 						}
 						if err := boundary.SignalManagedStartNoClaim(binding, tc.cause); err != nil {
-							t.Fatal(err)
+							return TerminalOutcome{}, err
 						}
 						if withStop {
-							if err := <-stopResult; err != nil || stopCallbacks.Load() != 0 {
-								t.Fatalf("no-claim Stop = %v, callbacks=%d", err, stopCallbacks.Load())
+							if err := stop.wait(ctx); err != nil || stop.callbacks.Load() != 0 {
+								return TerminalOutcome{}, fmt.Errorf("no-claim Stop = %v, callbacks=%d", err, stop.callbacks.Load())
 							}
 						}
 						return NewTerminalOutcome(tc.category, "")
@@ -210,6 +194,9 @@ func TestManagedNoClaimAllCausesPrimitiveAndLinked(t *testing.T) {
 							context.Background(), scope, "start-a", intent, 7, "generation-a",
 							func(context.Context, OrchestrationAuthorizationRequest) error { return nil }, invoke,
 						)
+						if helperErr != nil {
+							t.Fatal(helperErr)
+						}
 						if err != nil {
 							t.Fatal(err)
 						}
@@ -238,6 +225,9 @@ func TestManagedNoClaimAllCausesPrimitiveAndLinked(t *testing.T) {
 							return publishErr
 						},
 					)
+					if helperErr != nil {
+						t.Fatal(helperErr)
+					}
 					if err != nil {
 						t.Fatal(err)
 					}
@@ -247,66 +237,333 @@ func TestManagedNoClaimAllCausesPrimitiveAndLinked(t *testing.T) {
 	}
 }
 
-func admitManagedPendingStop(
-	t *testing.T,
-	boundary *Boundary,
-	authorization runtimeorchestrationbinding.OrchestrationAuthorizationRequest,
-) (<-chan error, *atomic.Int32) {
-	t.Helper()
-	result := make(chan error, 1)
-	callbacks := &atomic.Int32{}
-	stopScope, _ := NewScope(
-		authorization.OperationalDomain(), authorization.WorkspaceID(), authorization.ConfigurationID(),
-		authorization.RuntimeInstanceID(), OperationStop,
-	)
-	go func() {
-		_, err := boundary.Execute(
-			context.Background(), stopScope, "stop-a", NewStopIntent(),
-			func(context.Context, Scope, Intent) error { return nil },
-			func() (TerminalOutcome, error) {
-				callbacks.Add(1)
-				return NewTerminalOutcome(OutcomeSucceeded, "attempt-a")
-			},
-		)
-		result <- err
-	}()
-	ledger := boundary.storage.existingLedger(stopScope.instanceScope())
-	for attempts := 0; attempts < 10000; attempts++ {
-		admitted := false
-		if ledger != nil {
-			ledger.mu.Lock()
-			for identity := range ledger.records {
-				if identity.scope.operation == OperationStop {
-					admitted = true
-				}
-			}
-			ledger.mu.Unlock()
-		}
-		if admitted {
-			return result, callbacks
-		}
-		runtime.Gosched()
+// managedPendingStop observes the existing admission notification, not callback entry.
+// Result fields are immutable after done closes; cleanup never consumes a result twice.
+type managedPendingStop struct {
+	ledger    *commandLedger
+	bridge    *startRendezvous
+	identity  commandIdentity
+	notify    <-chan struct{}
+	admitted  chan struct{}
+	ack       sync.Once
+	done      chan struct{}
+	cancel    context.CancelFunc
+	admission Admission
+	err       error
+	callbacks atomic.Int32
+}
+
+func startManagedPendingStop(ctx context.Context, boundary *Boundary, binding runtimeorchestrationbinding.StartExecutionBinding, authorize Authorize) (*managedPendingStop, error) {
+	authorization := binding.Authorization()
+	scope, err := NewScope(authorization.OperationalDomain(), authorization.WorkspaceID(), authorization.ConfigurationID(), authorization.RuntimeInstanceID(), OperationStop)
+	if err != nil {
+		return nil, err
 	}
-	t.Fatal("pending Stop was not admitted within bounded scheduler yields")
-	return nil, nil
+	ledger := boundary.storage.existingLedger(scope.instanceScope())
+	if ledger == nil {
+		return nil, fmt.Errorf("managed Start ledger missing")
+	}
+	identity := commandIdentity{scope: scope, key: "stop-a"}
+	ledger.mu.Lock()
+	managed := ledger.managedStart[binding.Rendezvous()]
+	if managed == nil || managed.binding != binding || managed.bridge == nil || ledger.records[identity] != nil || managed.bridge.stopConsumed || !managed.liveLocked(boundary, ledger) {
+		ledger.mu.Unlock()
+		return nil, fmt.Errorf("managed Stop fixture is not fresh")
+	}
+	// Subscribe under the admission lock BEFORE launching the Stop worker.
+	bridge, notify := managed.bridge, managed.bridge.notify
+	ledger.mu.Unlock()
+	workerCtx, cancel := context.WithCancel(ctx)
+	stop := &managedPendingStop{ledger: ledger, bridge: bridge, identity: identity, notify: notify, admitted: make(chan struct{}), done: make(chan struct{}), cancel: cancel}
+	go func() {
+		defer close(stop.done)
+		stop.admission, stop.err = boundary.Execute(workerCtx, scope, "stop-a", NewStopIntent(), authorize,
+			func() (TerminalOutcome, error) {
+				// Keep the synthetic callback from completing a Claimed record before
+				// the observer acknowledges it, including the already-OwnerClaimed case.
+				select {
+				case <-stop.admitted:
+				case <-workerCtx.Done():
+					return TerminalOutcome{}, workerCtx.Err()
+				}
+				stop.callbacks.Add(1)
+				return NewTerminalOutcome(OutcomeSucceeded, "attempt-a")
+			})
+	}()
+	return stop, nil
+}
+
+func (stop *managedPendingStop) admissionSnapshot() (bool, <-chan struct{}) {
+	stop.ledger.mu.Lock()
+	defer stop.ledger.mu.Unlock()
+	record := stop.ledger.records[stop.identity]
+	state := stop.bridge.stopState
+	admitted := record != nil && record.identity == stop.identity && record.state == CommandStateClaimed &&
+		stop.bridge.stop == stop.identity && stop.bridge.stopConsumed && state != nil && record.revision == state.revision &&
+		stop.ledger.live[stop.identity] == state
+	return admitted, stop.bridge.notify
+}
+
+func (stop *managedPendingStop) awaitAdmission(ctx context.Context) error {
+	notify := stop.notify
+	acknowledge := func() { stop.ack.Do(func() { close(stop.admitted) }) }
+	for {
+		admitted, nextNotify := stop.admissionSnapshot()
+		if admitted {
+			acknowledge()
+			return nil
+		}
+		select {
+		case <-stop.done:
+			if admitted, _ := stop.admissionSnapshot(); admitted {
+				acknowledge()
+				return nil
+			}
+			if stop.err != nil {
+				return fmt.Errorf("Stop returned before admission acknowledgment (kind=%v): %w", stop.admission.Kind(), stop.err)
+			}
+			return fmt.Errorf("Stop returned before admission acknowledgment without error (kind=%v)", stop.admission.Kind())
+		case <-ctx.Done():
+			if admitted, _ := stop.admissionSnapshot(); admitted {
+				acknowledge()
+				return nil
+			}
+			return fmt.Errorf("Stop admission watchdog: %w", ctx.Err())
+		case <-notify:
+			notify = nextNotify
+		}
+	}
+}
+
+func admitManagedPendingStop(ctx context.Context, boundary *Boundary, binding runtimeorchestrationbinding.StartExecutionBinding) (*managedPendingStop, error) {
+	stop, err := startManagedPendingStop(ctx, boundary, binding, func(context.Context, Scope, Intent) error { return nil })
+	if err != nil {
+		return stop, err
+	}
+	return stop, stop.awaitAdmission(ctx)
+}
+
+func (stop *managedPendingStop) wait(ctx context.Context) error {
+	select {
+	case <-stop.done:
+		return stop.err
+	case <-ctx.Done():
+		return fmt.Errorf("Stop completion watchdog: %w", ctx.Err())
+	}
+}
+
+func (stop *managedPendingStop) cancelAndJoin() error {
+	stop.cancel()
+	watchdog := time.NewTimer(10 * time.Second)
+	defer watchdog.Stop()
+	select {
+	case <-stop.done:
+		return nil
+	case <-watchdog.C:
+		return fmt.Errorf("Stop worker did not join after cancellation")
+	}
 }
 
 func TestManagedEarlyPendingStopConvergesOwnerClaimed(t *testing.T) {
 	boundary := newTestBoundary(t)
-	scope := testScope(t, "domain-a", "instance-a", OperationStart)
-	_, err := boundary.ExecuteManagedStart(context.Background(), scope, "start-a", startIntent(t, 41), 7, "generation-a", allowOrchestration, func(binding runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error) {
-		stopResult, callbacks := admitManagedPendingStop(t, boundary, binding.Authorization())
-		gate, gateErr := boundary.ResolveManagedStartEarly(binding, "attempt-a")
-		if gateErr != nil || gate != GateStopConverged {
-			return TerminalOutcome{}, gateErr
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	var stop *managedPendingStop
+	var helperErr error
+	defer func() {
+		if stop != nil {
+			if err := stop.cancelAndJoin(); err != nil {
+				t.Error(err)
+			}
 		}
-		if stopErr := <-stopResult; stopErr != nil || callbacks.Load() != 1 {
-			t.Fatalf("stop=%v callbacks=%d", stopErr, callbacks.Load())
+	}()
+	scope := testScope(t, "domain-a", "instance-a", OperationStart)
+	_, err := boundary.ExecuteManagedStart(ctx, scope, "start-a", startIntent(t, 41), 7, "generation-a", allowOrchestration, func(binding runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error) {
+		var err error
+		stop, err = admitManagedPendingStop(ctx, boundary, binding)
+		helperErr = err
+		if err != nil {
+			return TerminalOutcome{}, err
+		}
+		if gate, gateErr := boundary.ResolveManagedStartEarly(binding, "attempt-a"); gateErr != nil || gate != GateStopConverged {
+			return TerminalOutcome{}, fmt.Errorf("early gate = %v, %v", gate, gateErr)
+		}
+		if stopErr := stop.wait(ctx); stopErr != nil || stop.callbacks.Load() != 1 {
+			return TerminalOutcome{}, fmt.Errorf("stop=%v callbacks=%d", stopErr, stop.callbacks.Load())
 		}
 		return NewTerminalOutcome(OutcomeSucceeded, "attempt-a")
 	})
+	if helperErr != nil {
+		t.Fatal(helperErr)
+	}
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestManagedPendingStopAdmissionSynchronization(t *testing.T) {
+	for _, scenario := range []string{"delayed-admission", "notification-before-wait", "early-rejection", "watchdog"} {
+		t.Run(scenario, func(t *testing.T) {
+			boundary := newTestBoundary(t)
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			var stop *managedPendingStop
+			defer func() {
+				if stop != nil {
+					if err := stop.cancelAndJoin(); err != nil {
+						t.Error(err)
+					}
+				}
+			}()
+			denied := errors.New("controlled Stop authorization rejection")
+			var proofErr error
+			scope := testScope(t, "domain-a", "instance-a", OperationStart)
+			_, executionErr := boundary.ExecuteManagedStart(ctx, scope, "start-a", startIntent(t, 41), 7, "generation-a", allowOrchestration,
+				func(binding runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error) {
+					authorizationEntered := make(chan struct{})
+					releaseAuthorization := make(chan struct{})
+					authorize := func(workerCtx context.Context, _ Scope, _ Intent) error {
+						close(authorizationEntered)
+						if scenario == "early-rejection" {
+							return denied
+						}
+						if scenario == "delayed-admission" || scenario == "watchdog" {
+							select {
+							case <-releaseAuthorization:
+							case <-workerCtx.Done():
+								return workerCtx.Err()
+							}
+						}
+						return nil
+					}
+					var err error
+					stop, err = startManagedPendingStop(ctx, boundary, binding, authorize)
+					if err != nil {
+						proofErr = err
+						return TerminalOutcome{}, err
+					}
+					prove := func() (proofError error) {
+						switch scenario {
+						case "delayed-admission":
+							waitCtx, cancelWait := context.WithCancel(ctx)
+							defer cancelWait()
+							waitDone := make(chan struct{})
+							var admissionErr error
+							go func() { defer close(waitDone); admissionErr = stop.awaitAdmission(waitCtx) }()
+							defer func() {
+								cancelWait()
+								join := time.NewTimer(10 * time.Second)
+								defer join.Stop()
+								select {
+								case <-waitDone:
+								case <-join.C:
+									proofError = fmt.Errorf("admission observer did not join")
+								}
+							}()
+							select {
+							case <-authorizationEntered:
+							case <-ctx.Done():
+								return ctx.Err()
+							}
+							if admitted, _ := stop.admissionSnapshot(); admitted {
+								return fmt.Errorf("admission acknowledged while authorization held")
+							}
+							select {
+							case <-waitDone:
+								return fmt.Errorf("admission observer returned before authorization release: %v", admissionErr)
+							default:
+							}
+							close(releaseAuthorization)
+							select {
+							case <-waitDone:
+							case <-ctx.Done():
+								return ctx.Err()
+							}
+							if admissionErr != nil {
+								return admissionErr
+							}
+						case "notification-before-wait":
+							// Consume no new notification: the pre-launch subscription is
+							// already closed before awaitAdmission is called.
+							select {
+							case <-stop.notify:
+							case <-ctx.Done():
+								return ctx.Err()
+							}
+							if err := stop.awaitAdmission(ctx); err != nil {
+								return err
+							}
+						case "early-rejection":
+							if err := stop.awaitAdmission(ctx); !errors.Is(err, denied) {
+								return fmt.Errorf("early rejection = %v", err)
+							}
+							if err := stop.wait(ctx); err != denied {
+								return fmt.Errorf("Stop rejection result = %v", err)
+							}
+						case "watchdog":
+							select {
+							case <-authorizationEntered:
+							case <-ctx.Done():
+								return ctx.Err()
+							}
+							// An already-expired observer deadline deterministically exercises
+							// the watchdog; the worker has a separate live context.
+							waitCtx, cancelWait := context.WithDeadline(ctx, time.Now().Add(-time.Second))
+							defer cancelWait()
+							if err := stop.awaitAdmission(waitCtx); !errors.Is(err, context.DeadlineExceeded) {
+								return fmt.Errorf("admission watchdog = %v", err)
+							}
+							if err := stop.cancelAndJoin(); err != nil {
+								return err
+							}
+							if err := stop.wait(ctx); !errors.Is(err, context.Canceled) {
+								return fmt.Errorf("cancelled Stop result = %v", err)
+							}
+						}
+						if scenario == "early-rejection" || scenario == "watchdog" {
+							stop.ledger.mu.Lock()
+							record := stop.ledger.records[stop.identity]
+							stop.ledger.mu.Unlock()
+							if record != nil {
+								return fmt.Errorf("failed admission created stop-a claim")
+							}
+						} else if admitted, _ := stop.admissionSnapshot(); !admitted {
+							return fmt.Errorf("exact stop-a claim missing after acknowledgment")
+						}
+						if err := boundary.SignalManagedStartNoClaim(binding, runtimeorchestrationbinding.StartNoClaimRejected); err != nil {
+							return err
+						}
+						if scenario == "delayed-admission" || scenario == "notification-before-wait" {
+							if err := stop.wait(ctx); err != nil {
+								return fmt.Errorf("no-claim Stop result = %v", err)
+							}
+						}
+						if stop.callbacks.Load() != 0 {
+							return fmt.Errorf("no-claim/failed admission invoked lifecycle callback")
+						}
+						if err := stop.cancelAndJoin(); err != nil {
+							return err
+						}
+						select {
+						case <-stop.done:
+						default:
+							return fmt.Errorf("Stop worker not joined")
+						}
+						return nil
+					}
+					proofErr = prove()
+					if proofErr != nil {
+						return TerminalOutcome{}, proofErr
+					}
+					return NewTerminalOutcome(OutcomeRejected, "")
+				})
+			if proofErr != nil {
+				t.Fatal(proofErr)
+			}
+			if executionErr != nil {
+				t.Fatal(executionErr)
+			}
+		})
 	}
 }
 
@@ -367,10 +624,36 @@ func TestManagedCallbackExitWithoutSignalBlocksPendingStopAndLeavesClaimed(t *te
 			}
 			t.Run(name, func(t *testing.T) {
 				boundary := newTestBoundary(t)
-				var stopResult <-chan error
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+				startScope := testScope(t, "domain-a", "instance-a", OperationStart)
+				parentScope := testScope(t, "domain-a", "instance-a", OperationReplace)
+				intent := startIntent(t, 41)
+				parentIntent, _ := NewReplaceIntent(41)
+				var stop *managedPendingStop
+				var helperErr error
 				done := make(chan struct{})
+				defer func() {
+					cancel()
+					join := time.NewTimer(10 * time.Second)
+					defer join.Stop()
+					select {
+					case <-done:
+					case <-join.C:
+						t.Error("Start worker did not join")
+						return
+					}
+					if stop != nil {
+						if err := stop.cancelAndJoin(); err != nil {
+							t.Error(err)
+						}
+					}
+				}()
 				invoke := func(binding runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error) {
-					stopResult, _ = admitManagedPendingStop(t, boundary, binding.Authorization())
+					stop, helperErr = admitManagedPendingStop(ctx, boundary, binding)
+					if helperErr != nil {
+						return TerminalOutcome{}, helperErr
+					}
 					switch mode {
 					case "panic":
 						panic("lost callback")
@@ -382,47 +665,52 @@ func TestManagedCallbackExitWithoutSignalBlocksPendingStopAndLeavesClaimed(t *te
 				go func() {
 					defer close(done)
 					if !linked {
-						scope := testScope(t, "domain-a", "instance-a", OperationStart)
-						intent := startIntent(t, 41)
-						_, _ = boundary.ExecuteManagedStart(
-							context.Background(), scope, "start-a", intent, 7, "generation-a",
-							func(context.Context, OrchestrationAuthorizationRequest) error { return nil }, invoke,
-						)
+						_, _ = boundary.ExecuteManagedStart(ctx, startScope, "start-a", intent, 7, "generation-a", allowOrchestration, invoke)
 						return
 					}
-					scope := testScope(t, "domain-a", "instance-a", OperationReplace)
-					intent, _ := NewReplaceIntent(41)
-					_, _ = boundary.ExecuteManagedParent(
-						context.Background(), scope, "replace-a", intent,
-						func(context.Context, OrchestrationAuthorizationRequest) error { return nil },
+					_, _ = boundary.ExecuteManagedParent(ctx, parentScope, "replace-a", parentIntent, allowOrchestration,
 						func(parent *ManagedParentExecution) error {
-							_, _, err := parent.ContinueOrExecuteManagedStartTarget(
-								context.Background(), 7, "generation-a", invoke,
-							)
+							_, _, err := parent.ContinueOrExecuteManagedStartTarget(ctx, 7, "generation-a", invoke)
 							return err
-						},
-					)
+						})
 				}()
-				<-done
-				if stopResult == nil {
+				select {
+				case <-done:
+				case <-ctx.Done():
+					t.Fatal("Start completion watchdog:", ctx.Err())
+				}
+				if helperErr != nil {
+					t.Fatal(helperErr)
+				}
+				if stop == nil {
 					t.Fatal("callback exited before pending Stop admission")
 				}
-				if err := <-stopResult; err != ErrIndeterminateExecution {
+				if err := stop.wait(ctx); err != ErrIndeterminateExecution {
 					t.Fatalf("pending Stop error = %v", err)
 				}
+				if stop.callbacks.Load() != 0 {
+					t.Fatal("lost callback authority invoked Stop lifecycle")
+				}
 				if !linked {
-					scope := testScope(t, "domain-a", "instance-a", OperationStart)
-					intent := startIntent(t, 41)
-					observation, err := boundary.ExecuteManagedStart(
-						context.Background(), scope, "start-a", intent, 7, "generation-a",
-						func(context.Context, OrchestrationAuthorizationRequest) error { return nil },
+					calls := 0
+					observation, err := boundary.ExecuteManagedStart(ctx, startScope, "start-a", intent, 7, "generation-a", allowOrchestration,
 						func(runtimeorchestrationbinding.StartExecutionBinding) (TerminalOutcome, error) {
-							t.Fatal("lost claim was reissued")
+							calls++
 							return TerminalOutcome{}, nil
-						},
-					)
-					if err != nil || observation.Kind() != AdmissionInProgress || observation.Record().State() != CommandStateClaimed {
-						t.Fatalf("durable observation = %#v/%v", observation, err)
+						})
+					if err != nil || observation.Kind() != AdmissionInProgress || observation.Record().State() != CommandStateClaimed || calls != 0 {
+						t.Fatalf("durable observation = %#v/%v, reissues=%d", observation, err, calls)
+					}
+				} else {
+					ledger := boundary.storage.existingLedger(parentScope.instanceScope())
+					parentID := commandIdentity{scope: parentScope, key: "replace-a"}
+					phaseID, _ := newPhaseIdentity(parentID, PhaseStartTarget)
+					ledger.mu.Lock()
+					parent, phase := ledger.parents[parentID], ledger.phases[phaseID]
+					claimed := parent != nil && phase != nil && parent.state == CommandStateClaimed && phase.state == CommandStateClaimed && ledger.liveParents[parentID] == nil && ledger.livePhases[phaseID] == nil
+					ledger.mu.Unlock()
+					if !claimed {
+						t.Fatal("lost linked callback did not preserve unresolved parent/phase claims")
 					}
 				}
 			})
