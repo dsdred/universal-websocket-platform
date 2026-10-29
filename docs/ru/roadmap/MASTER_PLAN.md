@@ -346,6 +346,23 @@ Runtime Alpha Review фиксирует implementation debt, который не
   binding/consume access/scheduling/operator exposure и C3 source/schema work
   Not Ready / Not Activated. O01–O16/P01–P08/S01–S12 — future proofs, не выполненный
   operational evidence. Существующие Gate11 criteria не сокращаются.
+  Сверка publication state [TASK-118](../../tasks/TASK-118-PROJECT-STATE-ROADMAP-RECONCILIATION.md)
+  независимо подтверждает TASK-116 source `6eb81e2738b9c7d394f31f0f1c417d13b217b989`
+  / PR #116 merge `d4042fd44852930f066921b5557b63ce682bb7be`, original source-authored
+  P10 и durable P10R-116-001 PASS. Post-merge CI40469617734 attempt 1 FAILURE остаётся
+  historical; отдельно разрешённый attempt 2 SUCCESS относится к exact original
+  merge. TASK-117 source `e692cb4ab75d1751fa8118eb24cf78960bf576ce` / PR #117 merge
+  `411afde4004970481356170834880b88cfd560d0` отдельно публикует correction managed Stop
+  admission test, без production changes. Его PR/post-merge CI PASS и independent
+  P10R-117-001 PASS — отдельное evidence, а не TASK-116 recovery. Обе публикации
+  terminal; их immutable task records и failure evidence сохранены. Hosted Linux CI
+  success не квалифицирует Windows/native TASK-102.
+  Следующий bounded engineering candidate — **isolated C2-Pull implementation**
+  по DP-027 §29/§32–34, Ready только для отдельного Owner-authorized fresh intake /
+  **Not Activated**, без successor Task ID или branch. Production C2 и C3 implementation
+  остаются Not Ready / Not Activated; C3 source/schema design также требует отдельного
+  допуска. Gate 11 остаётся **OPEN**, criteria неизменны; сверка не меняет capability,
+  DP-027 Draft/Partial или DP-009 Draft status.
 - Покрытие Runtime для Basic и asymmetric JWT неполное.
 - Поведение Origin полагается на defaults библиотеки, а не на явную Configuration.
 

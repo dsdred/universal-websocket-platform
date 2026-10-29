@@ -3,24 +3,49 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая engineering task [TASK-117](TASK-117-MANAGED-STOP-ADMISSION-TEST-CORRECTION.md) — test-only correction синхронизации managed Stop admission,
-verification-stable `In Progress`, branch `codex/task-117-managed-stop-admission-test`,
-baseline `d4042fd44852930f066921b5557b63ce682bb7be`. Actual checkpoints/closure resolve
-only from the newest valid matching Recovery Evidence Envelope. Documentation First;
-actual admission acknowledgment вместо scheduler-yield budget, без production changes.
-Отдельный Owner-authorized corrective cycle до Coordinator Acceptance/integrity;
-Commit Gate и Publication Gate не разрешены.
+Текущая engineering task [TASK-118](TASK-118-PROJECT-STATE-ROADMAP-RECONCILIATION.md) —
+Documentation-only / Reconciliation состояния проекта и roadmap после TASK-116/117.
+Verification-stable `In Progress`, branch `docs/task-118-project-state-roadmap-reconciliation`,
+baseline `411afde4004970481356170834880b88cfd560d0`. Фактические checkpoints/closure
+определяются только newest valid matching Recovery Evidence Envelope этого record.
+Commit и publication требуют отдельных Owner gates; successor не активирован.
 
-Исходная [TASK-116](TASK-116-RUNTIME-DIAGNOSTICS-OPERATIONAL-INTEGRATION-DESIGN.md)
-CA-116-001 ACCEPTED; PR116 MERGED как baseline, source
-`6eb81e2738b9c7d394f31f0f1c417d13b217b989`, reviewed/merge tree
-`368832b6463d900e9de59ab079065d2af4f805ba`. PR CI40469349689 SUCCESS;
-post-merge CI40469617734 FAILURE, test synchronization defect подтверждён forensics.
-Original Publisher transaction Active / Owned(original trusted context) / Unissued;
-P10 не consumed, task refs сохранены, cleanup не выполнен. TASK117 не выполняет
-rerun, publication recovery, target mutation или ownership transfer.
-C1 isolated; C2-Pull Ready / Not Activated; production C2/C3 Not Ready / Not Activated.
-DP027 Draft/Partial, DP009 Draft, Gate11 OPEN. TASK102 unqualified; B/PoC inactive.
+[TASK-116](TASK-116-RUNTIME-DIAGNOSTICS-OPERATIONAL-INTEGRATION-DESIGN.md) —
+исторически CA-116-001 Accepted; source `6eb81e2738b9c7d394f31f0f1c417d13b217b989`,
+[PR #116](https://github.com/dsdred/universal-websocket-platform/pull/116) MERGED как
+`d4042fd44852930f066921b5557b63ce682bb7be`, reviewed/merge tree
+`368832b6463d900e9de59ab079065d2af4f805ba`. Original native source P10 и независимый
+durable P10R-116-001 PASS подтверждены TASK-118 audit; publication завершена:
+`Consumed(P10) / NoneTerminal / Unissued`. PR CI40469349689 SUCCESS;
+post-merge CI40469617734 attempt1 FAILURE сохранён, отдельно разрешённый attempt2
+SUCCESS на исходном exact merge, все семь verification steps (включая hosted Linux
+race/tidy/module guards). Поздний PASS не устраняет historical failure evidence.
+
+[TASK-117](TASK-117-MANAGED-STOP-ADMISSION-TEST-CORRECTION.md) —
+исторически CA-117-001 Accepted, отдельная test-only correction actual managed Stop
+admission acknowledgment вместо scheduler-yield budget, без production changes.
+Source `e692cb4ab75d1751fa8118eb24cf78960bf576ce`,
+[PR #117](https://github.com/dsdred/universal-websocket-platform/pull/117) MERGED как
+`411afde4004970481356170834880b88cfd560d0`, reviewed/merge tree
+`cfa76741d5c9895fd26739fd6c47a6b24a129eaa`. PR CI40543158222 и post-merge CI40707937041
+SUCCESS, attempt1. Отдельный native P10/P10R-117-001 PASS подтверждён независимо;
+publication завершена. TASK-116/117 task refs удалены, clean synchronized main
+подтверждён перед intake TASK-118. Их immutable records и historical evidence сохранены.
+
+Следующий engineering candidate по DP-027 §29/§32–34 и MASTER_PLAN §5/§8 —
+**C2-Pull isolated process-local View.Poll**, Ready только для отдельного Owner-authorized
+fresh intake / **Not Activated**, без successor Task ID/branch. C2-Pull ещё не реализован;
+O01–O16 остаются будущими proof obligations. Production C2-Binding/Exposure и C3
+implementation — **Not Ready / Not Activated**: нужны sanctioned per-Host owner,
+allocation/retirement/consume access/scheduling/deployment/retention и отдельные C3
+schema/source decisions. C3 design возможен лишь с отдельным допуском. C1 isolated;
+DP-027 Draft/Partial, DP-009 Draft, Gate 11 **OPEN**. TASK-102 вне scope, Windows/native
+qualification отсутствует; Architecture B/PoC inactive. Historical local race/CRLF/
+parallel, cancellation/shutdown и loss limitations не повышены и не сняты сверкой.
+
+Нижеследующие записи предыдущих задач сохраняют historical context. Их closure-time
+запреты и projected `In Progress` не являются текущей task или новым разрешением;
+актуальные outcomes определяются exact evidence, а не такими историческими labels.
 
 [TASK-115](TASK-115-RUNTIME-DIAGNOSTICS-CONSUMER-CORE.md) accepted/published isolated C1:
 source `64ba98cc29ede69701bf4c9b74a4b687cbe0138c`, PR #115 merged as baseline

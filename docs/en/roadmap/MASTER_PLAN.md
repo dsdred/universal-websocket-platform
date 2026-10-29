@@ -349,6 +349,23 @@ The Runtime Alpha Review identifies implementation debt that must be tracked ind
   per-Host binding/consume access/scheduling/operator exposure and C3 source/schema
   work remain Not Ready / Not Activated. O01–O16/P01–P08/S01–S12 are future proofs,
   not executed operational evidence. No existing Gate11 criterion is reduced.
+  Publication-state reconciliation [TASK-118](../../tasks/TASK-118-PROJECT-STATE-ROADMAP-RECONCILIATION.md)
+  independently confirms TASK-116 source `6eb81e2738b9c7d394f31f0f1c417d13b217b989`
+  / PR #116 merge `d4042fd44852930f066921b5557b63ce682bb7be`, original source-authored
+  P10 and durable P10R-116-001 PASS. Post-merge CI40469617734 attempt 1 FAILURE remains
+  historical; separately authorized attempt 2 SUCCESS belongs to the exact original
+  merge. TASK-117 source `e692cb4ab75d1751fa8118eb24cf78960bf576ce` / PR #117 merge
+  `411afde4004970481356170834880b88cfd560d0` separately publishes the managed Stop
+  admission test correction, without production changes. Its PR/post-merge CI pass
+  and independent P10R-117-001 PASS are separate evidence, not TASK-116 recovery.
+  Both publications are terminal; their immutable task records and failure evidence
+  are preserved. Hosted Linux CI success does not qualify Windows/native TASK-102.
+  The next bounded engineering candidate remains **isolated C2-Pull implementation**
+  under DP-027 sections 29/32–34, Ready only for a separately Owner-authorized fresh
+  intake / **Not Activated**, without a successor Task ID or branch. Production C2
+  and C3 implementation remain Not Ready / Not Activated; C3 source/schema design
+  also requires separate admission. Gate 11 remains **OPEN**, with unchanged criteria;
+  this reconciliation changes no capability, DP-027 Draft/Partial or DP-009 Draft status.
 - Basic and asymmetric JWT Runtime coverage is incomplete.
 - Origin behavior relies on library defaults rather than explicit Configuration.
 
