@@ -1,11 +1,25 @@
 # Текущее состояние
 
-Текущая engineering task [TASK-118](../docs/tasks/TASK-118-PROJECT-STATE-ROADMAP-RECONCILIATION.md) —
-Documentation-only / Reconciliation состояния проекта и roadmap после TASK-116/117.
-Verification-stable `In Progress`, branch `docs/task-118-project-state-roadmap-reconciliation`,
-baseline `411afde4004970481356170834880b88cfd560d0`. Фактические checkpoints/closure
-определяются только newest valid matching Recovery Evidence Envelope этого record.
-Commit и publication требуют отдельных Owner gates; successor не активирован.
+Текущая engineering task [TASK-119](../docs/tasks/TASK-119-RUNTIME-DIAGNOSTICS-PULL-INTAKE.md) —
+repository-first intake isolated C2-Pull (View.Poll) по TASK-116 / DP-027 §29/§32–34.
+Verification-stable `In Progress`, branch `docs/task-119-runtime-diagnostics-pull-intake`,
+baseline `24f829e60a83976bb89f9e9166a6e752eecbc01d`. Scope текущего допуска — intake;
+implementation Not Started / Not Activated. Scope, coverage gaps и разделение intake/
+implementation gates записаны в task record. Actual checkpoints, intake Acceptance и
+closure — только newest valid matching Recovery Evidence Envelope после независимого
+canonical manifest reconstruction. Commit и publication
+требуют отдельных Owner разрешений. Production exposure, Control Service wiring,
+C3 и TASK-102 вне scope; Gate 11 OPEN.
+
+[TASK-118](../docs/tasks/TASK-118-PROJECT-STATE-ROADMAP-RECONCILIATION.md) завершила publication:
+source `b3817e6492d2b633fbbb09ae6760939ea3e493ba`, PR #118 MERGED как
+`24f829e60a83976bb89f9e9166a6e752eecbc01d`, reviewed/merge tree
+`b44fa1bf281d4d9241f9b160f6edbd103051d8ae`. Original source P10 и отдельный
+P10R-118-001 PASS read back при TASK-119 intake; transaction terminal
+`Consumed(P10) / NoneTerminal / Unissued`. PR CI40927444923 и post-merge CI40927836360
+SUCCESS attempt1 по original terminal evidence. Fresh remote/API подтверждают exact
+merge и отсутствие TASK-118 refs; clean synchronized main проверен до intake.
+Immutable TASK-118 record сохраняется; его projected In Progress не active barrier.
 
 [TASK-116](../docs/tasks/TASK-116-RUNTIME-DIAGNOSTICS-OPERATIONAL-INTEGRATION-DESIGN.md) —
 исторически CA-116-001 Accepted; source `6eb81e2738b9c7d394f31f0f1c417d13b217b989`,
@@ -31,7 +45,7 @@ publication завершена. TASK-116/117 task refs удалены, clean syn
 
 Следующий engineering candidate по DP-027 §29/§32–34 и MASTER_PLAN §5/§8 —
 **C2-Pull isolated process-local View.Poll**, Ready только для отдельного Owner-authorized
-fresh intake / **Not Activated**, без successor Task ID/branch. C2-Pull ещё не реализован;
+fresh intake: TASK-119 фиксирует только intake; implementation **Not Activated**. C2-Pull ещё не реализован;
 O01–O16 остаются будущими proof obligations. Production C2-Binding/Exposure и C3
 implementation — **Not Ready / Not Activated**: нужны sanctioned per-Host owner,
 allocation/retirement/consume access/scheduling/deployment/retention и отдельные C3
