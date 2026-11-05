@@ -360,15 +360,16 @@ The Runtime Alpha Review identifies implementation debt that must be tracked ind
   and independent P10R-117-001 PASS are separate evidence, not TASK-116 recovery.
   Both publications are terminal; their immutable task records and failure evidence
   are preserved. Hosted Linux CI success does not qualify Windows/native TASK-102.
-  [TASK-120](../../tasks/TASK-120-RUNTIME-DIAGNOSTICS-PULL.md) separately admits
-  **isolated C2-Pull implementation**, DP027 sections29/32–34, after TASK119 published
-  intake (PR119, merge ac021e9402f37d60ab826f100534c88415c08a21). Source/tests prepared,
-  verification-stable In Progress; matching task evidence envelope alone resolves
-  actual O01–O16 gates and Acceptance after independent reconstruction. This does not
-  declare completion. Historical readiness statements above are not current execution
-  permission. Production C2 and C3 remain Not Ready / Not Activated; C3 schema/source
-  design needs separate admission. Gate11 OPEN and criteria unchanged; DP027
-  Draft/Partial, DP009 Draft, no new Windows/native TASK102 qualification.
+  [TASK-120](../../tasks/TASK-120-RUNTIME-DIAGNOSTICS-PULL.md) published the accepted
+  **isolated C2-Pull implementation** through source
+  `40e90d82599fd42ef9bf7fa967a83575829db603`, PR #120 merge
+  `da0ea8c8f8c0c5f412171bbc59c2cb35cbb3c63b`, required `go-ci` SUCCESS and
+  P10R-120-001 PASS. Its O01–O16 evidence does not supply production Host binding or
+  operator exposure. [TASK-121](../../tasks/TASK-121-RUNTIME-DIAGNOSTICS-C2-BINDING-DESIGN.md)
+  is the current design-only Host-lifetime ownership/admission task; it does not
+  activate production C2. C2-Exposure and C3 remain Not Ready / Not Activated.
+  Gate11 OPEN and criteria unchanged; DP027 Draft/Partial, DP009 Draft, no new
+  Windows/native TASK102 qualification.
 - Basic and asymmetric JWT Runtime coverage is incomplete.
 - Origin behavior relies on library defaults rather than explicit Configuration.
 

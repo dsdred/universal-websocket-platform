@@ -419,7 +419,7 @@ arguments не могут изменить attempt и намеренно не п
 
 ## 15. Fixed Launcher call
 
-Для accepted Snapshot result production path точен:
+Текущий implemented isolated path для accepted Snapshot точен:
 
 ```go
 runtime.Launch(&runtime.BootstrapRequest{
@@ -428,6 +428,25 @@ runtime.Launch(&runtime.BootstrapRequest{
     Dependencies:   owner.dependencies,
 })
 ```
+
+Он остаётся current implementation truth до отдельно авторизованного изменения
+C2-Binding из section 33. Для C2-bound production Owner section 33 supersede-ит
+только источник `Dependencies`, сохраняя тот же single Launcher call:
+
+```go
+runtime.Launch(&runtime.BootstrapRequest{
+    Snapshot:       snapshot,
+    StartupContext: ownerPreparationContext,
+    Dependencies:   attempt.launchDependencies,
+})
+```
+
+`attempt.launchDependencies` указывает на attempt-owned private copy stable base
+envelope. C2-Binding admission требует zero/disabled value base
+`DiagnosticsProducer`. Nonzero base Producer non-conforming и обязан fail closed до
+pair allocation или Launch; он никогда не перезаписывается молча, не merge-ится и не
+reuse-ится. Возможность текущей isolated implementation получить nonzero binding
+остаётся только historical compatibility, а не production C2 path.
 
 Для attempt существует ровно один вызов `runtime.Launch`. Owner никогда не
 вызывает напрямую `runtime.Bootstrap` или `Host.Start`.
@@ -705,7 +724,9 @@ waits.
 | Exact pin ConfigurationVersion | Выбирается StartRequest и pin Owner до Loader/Builder. |
 | LoadRequest | Создаётся Owner и раскрывается read-only через preparation. |
 | Snapshot или preparation failure | Создаётся снаружи и возвращается через closed PreparationResult. Snapshot сохраняется только tracked launch operation до возврата Launcher; exact failure сохраняется в convergent outcome. |
-| Dependency bindings | Внешний owner; stable borrowed без изменений Owner. |
+| Base dependency bindings | Внешний owner; stable borrowed без изменений Owner. C2-bound production требует zero base DiagnosticsProducer. |
+| Attempt launch dependency copy | Создаётся и owned accepted attempt; копирует base envelope и содержит Producer только этого attempt. Retained через Launcher call и не rebind-ится later attempt. |
+| Diagnostics lifetime handle | Private owned accepted attempt; exact attempt identity, View и active/retired state не выходят через Host, Bootstrap или lifecycle outcomes. |
 | Preparation/start context | Создаётся, отменяется и owned Owner. |
 | Runtime Launcher | Stateless и не владеет lifecycle state. |
 | Runtime Host reference | Owned Owner после Launch до доказанного cleanup. |
@@ -813,7 +834,8 @@ DP-010 не определяет:
 - concrete distributed или persistent ID-allocation strategy;
 - retry, restart, replacement, rollback, recovery, reconciliation или reload;
 - PID, worker, process supervision, scheduling или clustering;
-- diagnostics, logging, redaction, metrics или alerting;
+- operator diagnostics exposure, logging, redaction, metrics или alerting; section 33
+  определяет только ещё не реализованный private C2 Host-lifetime binding;
 - timeout, force или cleanup-retry policy Stop;
 - изменения Host API или polling unexpected termination;
 - generic manager, registry, service locator или policy framework.
@@ -849,3 +871,85 @@ Builder. Затем `Start` accepts один closed preparation result и выз
 same-token convergence, caller-cancellation rules, conservative Host
 ownership и truthful operational state без преждевременного проектирования
 persistence, management, policy, supervision или production wiring.
+
+## 33. Design C2 diagnostics binding для Host lifetime (TASK-121)
+
+Этот раздел — Draft design addendum. Он не меняет текущий implementation status
+и не активирует production diagnostics.
+
+### 33.1 Sanctioned owner и scope
+
+Существующий per-Runtime-Instance `Runtime Lifecycle Owner` является production
+owner одного private diagnostics lifetime для каждого accepted Host launch. Выбор
+следует ARCH-004: Owner создаёт Launch Attempt, единственный вызывает stateless
+Runtime Launcher, удерживает active Host и определяет, когда cleanup Host доказан.
+Deployment scope — тот же single Control Service process, что Owner и Host. Текущий
+`cmd/control-service` не компонует этот graph, поэтому выбор является contract, а
+не Production Activation.
+
+Diagnostics lifetime принадлежит concrete attempt/Host execution, а не Owner как
+reusable binding. Существующий pointer `Owner.dependencies` остаётся borrowed,
+stable и неизменным весь lifetime Owner.
+
+### 33.2 Allocation и immutable launch binding
+
+`NewOwner` и `PrepareStart` не создают mailbox. Когда `Start` принимает один valid
+Snapshot и commit-ит attempt в `AttemptLaunching`, Owner создаёт ровно одну fixed
+mailbox pair до единственного Launcher call. Construction inert и не может вернуть
+ошибку. Затем Owner:
+
+1. удерживает Reader только внутри private attempt diagnostics lifetime и создаёт
+   его единственный C2-Pull View;
+2. копирует stable value `DependencyBindings` в storage, принадлежащее launch operation;
+3. записывает новый Producer value только в существующее optional поле
+   `DiagnosticsProducer` этой private copy;
+4. передаёт pointer на private copy в единственный request `runtime.Launch`.
+
+Owner никогда не пишет через `Owner.dependencies`, не заменяет и не rebind-ит его.
+Пятый Bootstrap binding не добавляется. Runtime Bootstrap и Host по-прежнему
+копируют только existing Producer value. Internal Build/Start rollback и retry на
+том же Host поэтому сохраняют mailbox. Последующий accepted attempt создаёт новую
+pair перед отдельным Launcher call; Sequence остаётся mailbox-local и не является
+Host identity.
+
+### 33.3 Private lifetime handle и access
+
+Attempt state владеет одним opaque diagnostics lifetime с exact Launch Attempt
+identity, View и состоянием `active/retired`. Raw Reader, View и Producer capabilities
+не входят в `Observation`, `AttemptFact`, `StartOutcome`, `StopOutcome`, Bootstrap
+outcomes или Host API. Они не persist-ятся и не возвращаются application handlers.
+
+Будущая management-only expected-attempt operation может запросить у Owner Poll этого
+private lifetime. Owner под существующим mutex обязан сопоставить exact active Launch
+Attempt и active lifetime, захватить один value View и освободить mutex до `View.Poll`.
+Mismatch и retirement выполняют zero Poll/read и возвращают один normalized unavailable
+result. Mailbox call, callback, context wait и sink не выполняются под lifecycle mutex.
+Authorization остаётся ответственностью DP-013 и обязана завершиться до вызова этой
+Owner operation.
+
+### 33.4 Retirement и revocation
+
+| Lifecycle result | Diagnostics disposition |
+| --- | --- |
+| Preparation fails или Stop побеждает до Snapshot acceptance | Pair не создавалась. |
+| Launch/Bootstrap или Host startup fails без возвращённого live Host | При convergence Launch lifetime помечается retired; View/Producer references и unread events отбрасываются без Poll/flush. |
+| Launch возвращает Host после победы Stop | Pair сохраняется, пока Owner останавливает тот же Host; retirement только после successful Host cleanup. |
+| Host reaches Running | Та же pair active весь retained Host lifetime. |
+| Caller wait canceled | Retirement отсутствует; Owner-owned launch/Stop work и pair продолжаются. |
+| Host Stop fails | Host и pair conservatively retained; следующий same-attempt Stop retry использует ту же pair. |
+| Host Stop succeeds | Под Owner mutex новый access revoke-ится, lifetime помечается retired, Owner detaches View/Producer references; unread или racing late facts могут быть потеряны. |
+| Later attempt accepted | Создаётся новая независимая pair; retired pair не rebind-ится и не reuse-ится. |
+
+Revocation запрещает новый Poll admission после locked retirement point. Poll,
+допущенный раньше, может завершиться на captured View; retirement не join-ит, не
+cancel-ит и не flush-ит его. Clearing Owner references не доказывает final emptiness,
+delivery acknowledgment или отсутствие поздней lossy Offer через copied Producer.
+Stop никогда не ждёт Poll, rendering или sink.
+
+### 33.5 Implementation boundary
+
+TASK-121 даёт только design. Будущая isolated binding implementation обязана доказать
+одну allocation на accepted Launcher call, identity private dependency copy, same-Host
+retention, distinct-attempt isolation, races exact-attempt access/revocation,
+failed-Stop retention, successful-Stop retirement и отсутствие lifecycle joins.
+Control Service wiring/operator exposure требуют отдельного gate.

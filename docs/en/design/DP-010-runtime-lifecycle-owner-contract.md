@@ -420,7 +420,7 @@ All runtime calls and waits occur outside the mutex.
 
 ## 15. Fixed Launcher Call
 
-For an accepted Snapshot result, the production path is exactly:
+The currently implemented isolated path for an accepted Snapshot is exactly:
 
 ```go
 runtime.Launch(&runtime.BootstrapRequest{
@@ -429,6 +429,25 @@ runtime.Launch(&runtime.BootstrapRequest{
     Dependencies:   owner.dependencies,
 })
 ```
+
+It remains current implementation truth until the separately authorized C2-Binding
+change in section 33 exists. For a C2-bound production Owner, section 33 supersedes
+only the `Dependencies` source while preserving the same single Launcher call:
+
+```go
+runtime.Launch(&runtime.BootstrapRequest{
+    Snapshot:       snapshot,
+    StartupContext: ownerPreparationContext,
+    Dependencies:   attempt.launchDependencies,
+})
+```
+
+`attempt.launchDependencies` points to the attempt-owned private copy of the stable
+base envelope. C2-Binding admission requires the base `DiagnosticsProducer` to be its
+zero/disabled value. A nonzero base Producer is non-conforming and must fail closed
+before pair allocation or Launch; it is never silently overwritten, merged or reused.
+The existing isolated implementation's ability to receive a nonzero binding remains
+historical compatibility only and is not a production C2 path.
 
 There is one and only one `runtime.Launch` call for the attempt. Owner never
 calls `runtime.Bootstrap` or `Host.Start` directly.
@@ -708,7 +727,9 @@ waits.
 | Exact ConfigurationVersion pin | Selected by StartRequest and pinned by Owner before Loader/Builder. |
 | LoadRequest | Constructed by Owner and exposed read-only through preparation. |
 | Snapshot or preparation failure | Produced externally and returned through closed PreparationResult. Snapshot is retained only by the tracked launch operation until Launcher returns; exact failure is retained in the convergent outcome. |
-| Dependency bindings | Externally owned; borrowed stable and unchanged by Owner. |
+| Base dependency bindings | Externally owned; borrowed stable and unchanged by Owner. C2-bound production requires a zero base DiagnosticsProducer. |
+| Attempt launch dependency copy | Created and owned by the accepted attempt; copies the base envelope and contains only that attempt's Producer. Retained through the Launcher call and never rebound to a later attempt. |
+| Diagnostics lifetime handle | Owned privately by the accepted attempt; exact attempt identity, View and active/retired state never escape through Host, Bootstrap or lifecycle outcomes. |
 | Preparation/start context | Created, canceled, and owned by Owner. |
 | Runtime Launcher | Stateless and owns no lifecycle state. |
 | Runtime Host reference | Owned by Owner after Launch until cleanup is proven. |
@@ -814,7 +835,8 @@ DP-010 does not define:
 - concrete distributed or persistent ID-allocation strategy;
 - retry, restart, replacement, rollback, recovery, reconciliation, or reload;
 - PID, worker, process supervision, scheduling, or clustering;
-- diagnostics, logging, redaction, metrics, or alerting;
+- operator diagnostics exposure, logging, redaction, metrics, or alerting; section 33
+  defines only the still-unimplemented private C2 Host-lifetime binding;
 - Stop timeout, force, or cleanup-retry policy;
 - Host API changes or unexpected-termination polling;
 - generic manager, registry, service locator, or policy framework.
@@ -850,3 +872,86 @@ One short-held state boundary preserves per-Instance serialization,
 same-token convergence, caller-cancellation rules, conservative Host
 ownership, and truthful operational state without prematurely designing
 persistence, management, policy, supervision, or production wiring.
+
+## 33. C2 diagnostics Host-lifetime binding design (TASK-121)
+
+This section is a Draft design addendum. It changes no current implementation
+status and does not activate production diagnostics.
+
+### 33.1 Sanctioned owner and scope
+
+The existing per-Runtime-Instance `Runtime Lifecycle Owner` is the production
+owner of one private diagnostics lifetime for each accepted Host launch. This
+selection follows ARCH-004: Owner creates the Launch Attempt, is the only caller
+of the stateless Runtime Launcher, retains the active Host, and decides when Host
+cleanup is proven. The deployment scope is the same single Control Service
+process as that Owner and Host. Current `cmd/control-service` does not compose
+this graph, so the selection is a contract, not Production Activation.
+
+The diagnostics lifetime belongs to the concrete attempt/Host execution, never
+to Owner as a reusable binding. Owner's existing `dependencies` pointer remains
+borrowed, stable and unchanged for the complete Owner lifetime.
+
+### 33.2 Allocation and immutable launch binding
+
+No mailbox is allocated by `NewOwner` or `PrepareStart`. When `Start` accepts one
+valid Snapshot and commits the attempt to `AttemptLaunching`, Owner creates exactly
+one fixed mailbox pair before the sole Launcher call. Construction is inert and
+cannot fail. Owner then:
+
+1. retains the Reader only inside a private attempt diagnostics lifetime and
+   constructs its single C2-Pull View;
+2. copies the stable `DependencyBindings` value into launch-operation-owned storage;
+3. writes the new Producer value only into that private copy's existing optional
+   `DiagnosticsProducer` field;
+4. passes a pointer to the private copy in the one `runtime.Launch` request.
+
+Owner never writes through, swaps or rebinds `Owner.dependencies`. No fifth
+Bootstrap binding is introduced. Runtime Bootstrap and Host continue to copy only
+the existing Producer value. Internal Build/Start rollback and retry on that same
+Host therefore retain the same mailbox. A later accepted attempt allocates a new
+pair before its distinct Launcher call; Sequence remains mailbox-local and is not
+Host identity.
+
+### 33.3 Private lifetime handle and access
+
+The attempt state owns one opaque diagnostics lifetime containing exact Launch
+Attempt identity, the View and an `active/retired` state. Raw Reader, View and
+Producer capabilities never appear in `Observation`, `AttemptFact`, `StartOutcome`,
+`StopOutcome`, Bootstrap outcomes or Host APIs. They are not persisted or returned
+to application handlers.
+
+A future management-only expected-attempt operation may ask Owner to Poll this
+private lifetime. Owner must, under its existing mutex, match the exact active
+Launch Attempt and active lifetime, capture one View value, and release the mutex
+before `View.Poll`. Mismatch and retirement perform zero Poll/read and return one
+normalized unavailable result. No mailbox call, callback, context wait or sink runs
+under the lifecycle mutex. Authorization remains DP-013's responsibility and must
+complete before this Owner operation is invoked.
+
+### 33.4 Retirement and revocation
+
+| Lifecycle result | Diagnostics disposition |
+| --- | --- |
+| Preparation fails or Stop wins before Snapshot acceptance | No pair was allocated. |
+| Launch/Bootstrap or Host startup fails without a returned live Host | Mark the lifetime retired when Launch converges; discard View/Producer references and unread events without Poll or flush. |
+| Launch returns a Host while Stop already won | Keep the pair while Owner stops that same Host; retire only after successful Host cleanup. |
+| Host reaches Running | Keep the same pair active for the complete retained Host lifetime. |
+| Caller wait is canceled | No retirement; Owner-owned launch/Stop work and the pair continue. |
+| Host Stop fails | Keep Host and pair conservatively retained; a later same-attempt Stop retry uses the same pair. |
+| Host Stop succeeds | Under the Owner mutex revoke new access, mark retired and detach Owner's View/Producer references; unread or racing late facts may be lost. |
+| A later attempt is accepted | Allocate a new independent pair; the retired pair is never rebound or reused. |
+
+Revocation prevents new Poll admission after the locked retirement point. A Poll
+already admitted before that point may finish on its captured View; retirement does
+not join, cancel or flush it. Clearing Owner references is not final-emptiness proof,
+delivery acknowledgment or a guarantee that no late copied Producer can attempt a
+lossy Offer. Stop never waits for Poll, rendering or a sink.
+
+### 33.5 Implementation boundary
+
+TASK-121 supplies design only. A future isolated binding implementation must prove
+one allocation per accepted Launcher call, private dependency-copy identity, same-
+Host retention, distinct-attempt isolation, exact-attempt access/revocation races,
+failed-Stop retention, successful-Stop retirement and absence of lifecycle joins.
+It must not add Control Service wiring or operator exposure without a separate gate.

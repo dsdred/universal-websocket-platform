@@ -5,7 +5,7 @@
 ## 1. Статус и scope
 
 - **Design Status:** Draft.
-- **Implementation Status:** Partial — mailbox (TASK-110), component hooks (TASK-112), optional Host/Bootstrap wiring (TASK-113), isolated consumer core C1 (TASK-115); production sink/exposure Planned.
+- **Implementation Status:** Partial — mailbox (TASK-110), component hooks (TASK-112), optional Host/Bootstrap wiring (TASK-113), isolated consumer core C1 (TASK-115), isolated C2-Pull (TASK-120); production C2 binding/exposure Planned.
 - **Целевая веха:** Beta, Gate 11; этот документ не закрывает Gate 11.
 - **Задача:** [TASK-109](../../tasks/TASK-109-RUNTIME-DIAGNOSTICS-V1-DESIGN.md).
 - **Source baseline:** `67ca1b200d42fda5be8b6dc8741d8f0bc24bd2a6`.
@@ -31,8 +31,8 @@ Consumer/delivery refinement: [TASK-114](../../tasks/TASK-114-RUNTIME-DIAGNOSTIC
 и реализует только C1; раздел27 фиксирует текущие implementation boundaries.
 
 Operational integration refinement: [TASK-116](../../tasks/TASK-116-RUNTIME-DIAGNOSTICS-OPERATIONAL-INTEGRATION-DESIGN.md),
-разделы28–34 — только proposed design. C2-Pull prerequisite Ready для separate intake /
-Not Activated; production C2/C3 Not Ready / Not Activated.
+разделы28–34 — proposed design baseline. TASK-120 опубликовала isolated C2-Pull;
+production C2-Binding/Exposure и C3 остаются Not Activated.
 
 Integration design: [TASK-111](../../tasks/TASK-111-RUNTIME-DIAGNOSTICS-INTEGRATION-DESIGN.md),
 baseline `060cf22cf040a2e84d49c52095af9ed4ab9390a7`. Раздел15 сохраняет historical
@@ -861,8 +861,8 @@ authorization; actual operator visibility требует и source coverage, и 
 
 | Slice | Readiness / dependency |
 | --- | --- |
-| C2-Pull isolated bounded View | Ready только для separately authorized fresh implementation intake; Not Activated. Published C1, exact раздел29/O01–O16; один leaf package/new pull.go+pull_test.go, без existing source/test changes |
-| C2-Binding concrete Host-lifetime scope | Not Ready / Not Activated. Concrete sanctioned owner/per-Host allocation/retirement/launch-management decisions; без mutable dependency rebind |
+| C2-Pull isolated bounded View | Реализован и опубликован TASK-120. O01–O16 accepted с зафиксированными platform limitations; это не production Host binding или operator exposure |
+| C2-Binding concrete Host-lifetime scope | Design-only TASK-121 active / production Not Activated. Нужны concrete sanctioned owner, per-Host allocation/retirement и launch/management seam decisions; mutable dependency rebind запрещён |
 | C2-Exposure operator bridge/deployment | Not Ready / Not Activated. C2-Binding, exact consume authorization/scheduling/resources/rate/retention/transport и P01–P08 |
 | C3-Schema/source designs | Not Ready for implementation / Not Activated. Separate source/closed schema/version/eligibility/panic/deduplication и S01–S12; design не обязан ждать C2 transport |
 | C3 source/private passage/integrated coverage | Not Ready / Not Activated. Accepted focused designs/separate implementation authorizations/compatibility/race и eventual C2 admission для operator visibility |
@@ -960,19 +960,102 @@ retry/durable delivery; existing Listener/Provider code aliases/generic Terminal
 implementation intake, Not Activated. DP027 Draft/Partial, DP009 Draft,
 C2 production/C3 Not Ready; Gate11 OPEN.
 
-## 35. Подготовка isolated C2-Pull implementation (TASK-120)
+## 35. Опубликованный isolated C2-Pull (TASK-120)
 
-[TASK-120](../../tasks/TASK-120-RUNTIME-DIAGNOSTICS-PULL.md) отдельно допускает только
-leaf раздела29 `internal/runtimediagnosticspull` (pull.go/pull_test.go).
-Source/tests подготовлены; verification-stable In Progress. Acceptance и actual
-O01–O16 dispositions определяются только newest valid matching evidence envelope
-task после independent canonical subject reconstruction; наличие source само по
-себе не доказывает completion. Разделы28–34 сохраняют historical proposed
-design/readiness baseline; их Not Activated не является текущим execution admission
-TASK120. Production C2-Binding/Exposure и C3 остаются Not Ready / Not Activated,
-P01–P08/S01–S12 deferred. Нет Host/Bootstrap/Control Service wiring, новых schema/
-codes, worker, retry или stronger delivery guarantee. DP027 Draft/Partial, DP009
-Draft, Gate11 OPEN и TASK102 Windows/native qualification limits неизменны.
-O09/O13 явно compositional; isolated O proofs не дают production binding/operator
-visibility. Точные недоступные проверки остаются limitations в task record.
-Commit и publication требуют отдельных Owner gates.
+[TASK-120](../../tasks/TASK-120-RUNTIME-DIAGNOSTICS-PULL.md) опубликовала только
+leaf раздела29 `internal/runtimediagnosticspull` (pull.go/pull_test.go): source
+`40e90d82599fd42ef9bf7fa967a83575829db603`, merge PR #120
+`da0ea8c8f8c0c5f412171bbc59c2cb35cbb3c63b`, required `go-ci` SUCCESS и
+P10R-120-001 PASS. O01–O16 accepted в пределах зафиксированных task ограничений:
+Windows race, sandbox regression и CRLF-only tidy. O09/O13 остаются compositional;
+isolated O proofs не дают production binding или operator visibility.
+Production C2-Binding/Exposure и C3 остаются Not Activated, P01–P08/S01–S12 не
+являются production implementation evidence. Host/Bootstrap/Control Service wiring,
+новые schema/codes, worker, retry или stronger delivery guarantee не добавлены.
+DP027 остаётся Draft/Partial, DP009 Draft, Gate11 OPEN, TASK102 неизменна.
+
+## 36. Design ownership C2-Binding для Host lifetime (TASK-121)
+
+TASK-121 разрешает design-вопрос, оставленный разделами 30–34. Этот раздел — более
+новое Draft design evidence; он не переписывает историю TASK-116 и не активирует C2.
+
+### 36.1 Решение owner и deployment
+
+Repository предоставляет одного обоснованного production owner: per-Runtime-Instance
+`runtimelifecycle.Owner`, определённого ARCH-004 и DP-010. Он создаёт Launch Attempts,
+является единственным path к `runtime.Launch`, удерживает active Host и доказывает
+cleanup. Поэтому он владеет одним private diagnostics lifetime для каждого accepted
+Host launch.
+
+Application/process/deployment scope — future single Control Service process с этим
+Owner и его in-process Host. Текущий `cmd/control-service` не создаёт Runtime Owner
+или Directory, поэтому существующий binary не активируется и stdout logger не становится
+diagnostics sink. Future multi-process adapter требует отдельного решения, потому что
+Reader/View capabilities process-local.
+
+Application composition передаёт один stable base `DependencyBindings` на Owner с
+disabled diagnostics. После valid Snapshot acceptance и до sole Launcher call Owner
+создаёт одну mailbox pair, удерживает View в private attempt state, копирует base
+bindings и устанавливает Producer только в launch-private copy. Stable pointer и его
+value не мутируются. Flow, Source, Loader, Builder, Directory и application root не
+создают Owner-level mailbox.
+
+Private lifetime handle принадлежит только active attempt state Owner. Он содержит
+exact Launch Attempt identity, один C2-Pull View и state active/retired; он не
+экспортируется через Host, Bootstrap, outcomes или Observation. Future authorized
+management operation достигает его только через exact expected-attempt matching;
+raw Reader/View capability не распространяется.
+
+### 36.2 Lifecycle traces
+
+| Trace | Required result |
+| --- | --- |
+| Prepare -> Load/Build failure | Accepted Host launch и diagnostics pair отсутствуют. |
+| Snapshot accepted -> Launch | Pair создаётся один раз; private dependency copy; один Launch call получает её Producer. |
+| Host construction/Build/Start rollback внутри Launch | Тот же launch-private Producer/pair; без reallocation/reset. |
+| Launch failure без retained Host | Lifetime revoke/retire при convergence, unread data отбрасываются без drain/flush. |
+| Stop побеждает, пока Launch может вернуть Host | Pair сохраняется с attempt; возвращённый Host останавливается до retirement. |
+| Running -> concurrent Poll | Owner match-ит exact active attempt под lock; Poll выполняется вне lifecycle locks и не join-ит Host. |
+| Caller cancellation | Отменяет только wait; Owner work и pair lifetime продолжаются. |
+| Stop failure | Host/pair conservatively retained для same-attempt retry. |
+| Successful Stop | Locked retirement revoke-ит новый access и detaches Owner references; admitted Poll может завершиться, unread/late events могут быть потеряны. |
+| Next accepted attempt | Новая independent pair/sequence domain; retired pair не rebind/reuse. |
+
+Ни один trace не обещает final read, empty mailbox, сохранение late event, delivery
+ACK, retry, replay, persistence или lossless shutdown. Stop, rollback и Manager waits
+не ждут Poll, bridge, renderer или sink.
+
+### 36.3 Consume authorization и boundary C2-Exposure
+
+C2-Binding определяет только ownership и fail-closed access seam. Future C2-Exposure
+request обязан передать exact Target и expected Launch Attempt identity dedicated
+consume authorizer до Directory lookup, Owner access или destructive Poll. Denial,
+invalid input, absent/mismatched target, successor attempt и retired lifetime выполняют
+zero read и используют anti-enumerating external unavailable class. `ActionObserve`,
+его current version parameter и authority DP-018 не переиспользуются.
+
+После authorization Owner atomically match-ит expected active attempt/active lifetime,
+захватывает один View, unlock-ит и выполняет не более одного bounded Poll. Revocation
+до claim предотвращает Poll; более поздняя revocation не retract-ит уже admitted
+operation. Concrete policy, concurrency/pending/rate limits, transport, rendering,
+retention и redaction остаются работой C2-Exposure. Worker/registry не подразумеваются.
+
+### 36.4 Design traceability P01–P08
+
+Dispositions оценивают completeness design, а не executable production proof.
+
+| Proof | Disposition | Result TASK-121 / remaining evidence |
+| --- | --- | --- |
+| P01 | Satisfied by Design | Lifecycle Owner, single-process Control Service scope и private exact-attempt handle/access seam выбраны. Wiring current binary отсутствует. |
+| P02 | Satisfied by Design | Exact: одна allocation на accepted Host launch, retention при same-Host rollback/Stop, новая pair для later attempt, private dependency copy; implementation tests будущие. |
+| P03 | Deferred | Authorization-before-lookup/read, exact attempt, revocation и anti-enumeration заданы; concrete policy/Directory/API implementation принадлежит C2-Exposure. |
+| P04 | Deferred | Implicit worker/registry запрещены; scheduling, concurrency, pending-call, rate и retention limits требуют exposure contract. |
+| P05 | Deferred | Design запрещает lifecycle joins и выполняет Poll вне Owner locks; real bridge/rendering overlap proof требует production composition. |
+| P06 | Satisfied by Design | Failed launch/Stop, successful retirement, admitted-Poll race и late/unread loss semantics явны, без flush/final-empty/ACK. |
+| P07 | Deferred | Existing Event/Poll allowlist и запрет identity/raw data сохранены; operator rendering/redaction proof требует C2-Exposure. |
+| P08 | Deferred | Exact code composition, API compatibility, full/race tests и real source-to-operator evidence требуют separately authorized implementation/integration. |
+
+Blocking design rows отсутствуют. Production C2 остаётся **Not Activated** и не готова
+как одна undivided implementation: isolated C2-Binding implementation можно оценить
+отдельно, а C2-Exposure зависит от P03–P05/P07/P08. C3 не меняется и Not Activated.
+Gate 11 остаётся OPEN.
