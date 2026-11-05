@@ -360,12 +360,15 @@ The Runtime Alpha Review identifies implementation debt that must be tracked ind
   and independent P10R-117-001 PASS are separate evidence, not TASK-116 recovery.
   Both publications are terminal; their immutable task records and failure evidence
   are preserved. Hosted Linux CI success does not qualify Windows/native TASK-102.
-  The next bounded engineering candidate remains **isolated C2-Pull implementation**
-  under DP-027 sections 29/32–34, Ready only for a separately Owner-authorized fresh
-  intake / **Not Activated**, without a successor Task ID or branch. Production C2
-  and C3 implementation remain Not Ready / Not Activated; C3 source/schema design
-  also requires separate admission. Gate 11 remains **OPEN**, with unchanged criteria;
-  this reconciliation changes no capability, DP-027 Draft/Partial or DP-009 Draft status.
+  [TASK-120](../../tasks/TASK-120-RUNTIME-DIAGNOSTICS-PULL.md) separately admits
+  **isolated C2-Pull implementation**, DP027 sections29/32–34, after TASK119 published
+  intake (PR119, merge ac021e9402f37d60ab826f100534c88415c08a21). Source/tests prepared,
+  verification-stable In Progress; matching task evidence envelope alone resolves
+  actual O01–O16 gates and Acceptance after independent reconstruction. This does not
+  declare completion. Historical readiness statements above are not current execution
+  permission. Production C2 and C3 remain Not Ready / Not Activated; C3 schema/source
+  design needs separate admission. Gate11 OPEN and criteria unchanged; DP027
+  Draft/Partial, DP009 Draft, no new Windows/native TASK102 qualification.
 - Basic and asymmetric JWT Runtime coverage is incomplete.
 - Origin behavior relies on library defaults rather than explicit Configuration.
 

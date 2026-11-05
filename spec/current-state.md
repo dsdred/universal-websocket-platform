@@ -1,15 +1,23 @@
 # Текущее состояние
 
-Текущая engineering task [TASK-119](../docs/tasks/TASK-119-RUNTIME-DIAGNOSTICS-PULL-INTAKE.md) —
-repository-first intake isolated C2-Pull (View.Poll) по TASK-116 / DP-027 §29/§32–34.
-Verification-stable `In Progress`, branch `docs/task-119-runtime-diagnostics-pull-intake`,
-baseline `24f829e60a83976bb89f9e9166a6e752eecbc01d`. Scope текущего допуска — intake;
-implementation Not Started / Not Activated. Scope, coverage gaps и разделение intake/
-implementation gates записаны в task record. Actual checkpoints, intake Acceptance и
-closure — только newest valid matching Recovery Evidence Envelope после независимого
-canonical manifest reconstruction. Commit и publication
-требуют отдельных Owner разрешений. Production exposure, Control Service wiring,
-C3 и TASK-102 вне scope; Gate 11 OPEN.
+Текущая engineering task [TASK-120](../docs/tasks/TASK-120-RUNTIME-DIAGNOSTICS-PULL.md) — isolated C2-Pull
+implementation по DP-027 §29/§32–34, branch `feature/task-120-runtime-diagnostics-pull`,
+baseline `ac021e9402f37d60ab826f100534c88415c08a21`. Verification-stable `In Progress`:
+новый leaf `internal/runtimediagnosticspull` подготовлен; implementation Acceptance
+не подразумевается. Actual gates/closure — только newest valid matching Recovery
+Evidence Envelope после independent canonical manifest reconstruction. O01–O16
+требуют explicit automated/compositional/source-audit dispositions и exact checks.
+Production C2-Binding/Exposure и C3 Not Ready / Not Activated; Gate11 OPEN.
+TASK102 вне scope. Commit/Publication Gates требуют отдельных Owner разрешений.
+
+[TASK-119](../docs/tasks/TASK-119-RUNTIME-DIAGNOSTICS-PULL-INTAKE.md) завершила publication:
+source `4623505b62ab126ebf2fe029de754f42faee1bb4`, PR119 MERGED как baseline
+`ac021e9402f37d60ab826f100534c88415c08a21`, source/merge tree
+`3e2cbd14e653e617af538af79d24b770fddd3dad`. Original native terminal P10/P10R PASS
+read back при intake TASK120; original backing payload SHA256 совпал с receipt.
+Publication terminal `Consumed(P10) / NoneTerminal / Unissued`; task refs отсутствуют,
+clean synchronized main доказан до подготовки TASK120. Immutable TASK119 record и
+его historical projected In Progress сохранены; это не active work/новая authority.
 
 [TASK-118](../docs/tasks/TASK-118-PROJECT-STATE-ROADMAP-RECONCILIATION.md) завершила publication:
 source `b3817e6492d2b633fbbb09ae6760939ea3e493ba`, PR #118 MERGED как
@@ -43,16 +51,15 @@ SUCCESS, attempt1. Отдельный native P10/P10R-117-001 PASS подтве�
 publication завершена. TASK-116/117 task refs удалены, clean synchronized main
 подтверждён перед intake TASK-118. Их immutable records и historical evidence сохранены.
 
-Следующий engineering candidate по DP-027 §29/§32–34 и MASTER_PLAN §5/§8 —
-**C2-Pull isolated process-local View.Poll**, Ready только для отдельного Owner-authorized
-fresh intake: TASK-119 фиксирует только intake; implementation **Not Activated**. C2-Pull ещё не реализован;
-O01–O16 остаются будущими proof obligations. Production C2-Binding/Exposure и C3
-implementation — **Not Ready / Not Activated**: нужны sanctioned per-Host owner,
-allocation/retirement/consume access/scheduling/deployment/retention и отдельные C3
-schema/source decisions. C3 design возможен лишь с отдельным допуском. C1 isolated;
-DP-027 Draft/Partial, DP-009 Draft, Gate 11 **OPEN**. TASK-102 вне scope, Windows/native
-qualification отсутствует; Architecture B/PoC inactive. Historical local race/CRLF/
-parallel, cancellation/shutdown и loss limitations не повышены и не сняты сверкой.
+Текущий isolated C2-Pull slice отдельно допущен Owner только для TASK120:
+New(Reader)/View.Poll, fixed64 detached batch, shared outer TryLock, one C1 Drain,
+guarded clearing. Acceptance и O proofs определяет record, не наличие source.
+Production C2/C3 остаются отдельными Not Ready / Not Activated: sanctioned per-Host
+owner/allocation/retirement/consume access/scheduling/deployment/retention и C3
+schema/source решения не приняты. DP027 Draft/Partial, DP009 Draft неизменны;
+Gate11 OPEN; Windows/native TASK102 qualification отсутствует, Architecture B/PoC
+inactive. Historical local race/CRLF/parallel/cancellation/shutdown/loss limitations
+не сняты. Следующий production/design candidate автоматически не активируется.
 
 Нижеследующие записи предыдущих задач сохраняют historical context. Их closure-time
 запреты и projected `In Progress` не являются текущей task или новым разрешением;
