@@ -357,12 +357,15 @@ Runtime Alpha Review фиксирует implementation debt, который не
   P10R-117-001 PASS — отдельное evidence, а не TASK-116 recovery. Обе публикации
   terminal; их immutable task records и failure evidence сохранены. Hosted Linux CI
   success не квалифицирует Windows/native TASK-102.
-  Следующий bounded engineering candidate — **isolated C2-Pull implementation**
-  по DP-027 §29/§32–34, Ready только для отдельного Owner-authorized fresh intake /
-  **Not Activated**, без successor Task ID или branch. Production C2 и C3 implementation
-  остаются Not Ready / Not Activated; C3 source/schema design также требует отдельного
-  допуска. Gate 11 остаётся **OPEN**, criteria неизменны; сверка не меняет capability,
-  DP-027 Draft/Partial или DP-009 Draft status.
+  [TASK-120](../../tasks/TASK-120-RUNTIME-DIAGNOSTICS-PULL.md) отдельно допускает
+  **isolated C2-Pull implementation**, DP027 §29/32–34, после published intake TASK119
+  (PR119, merge ac021e9402f37d60ab826f100534c88415c08a21). Source/tests подготовлены,
+  verification-stable In Progress; только matching task evidence envelope определяет
+  actual O01–O16 gates и Acceptance после independent reconstruction. Completion не
+  объявлена. Historical readiness выше не является текущим execution permission.
+  Production C2 и C3 Not Ready / Not Activated; C3 schema/source design требует
+  отдельного допуска. Gate11 OPEN и criteria неизменны; DP027 Draft/Partial, DP009
+  Draft, новой Windows/native TASK102 qualification нет.
 - Покрытие Runtime для Basic и asymmetric JWT неполное.
 - Поведение Origin полагается на defaults библиотеки, а не на явную Configuration.
 

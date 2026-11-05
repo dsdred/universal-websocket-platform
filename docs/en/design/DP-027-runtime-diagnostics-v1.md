@@ -963,3 +963,20 @@ retry/durable delivery; reusing Listener/Provider codes or generic TerminalResul
 missing categories. These alternatives do not satisfy current boundaries. C2-Pull
 is only Ready for a separately authorized isolated implementation intake, Not Activated.
 DP027 Draft/Partial, DP009 Draft, C2 production/C3 Not Ready; Gate11 OPEN.
+
+## 35. Isolated C2-Pull implementation preparation (TASK-120)
+
+[TASK-120](../../tasks/TASK-120-RUNTIME-DIAGNOSTICS-PULL.md) separately admits only
+the section29 leaf `internal/runtimediagnosticspull` (pull.go/pull_test.go).
+Source/tests are prepared; verification-stable In Progress. Acceptance and actual
+O01–O16 dispositions resolve only from the task's newest valid matching evidence
+envelope after independent canonical subject reconstruction; source presence alone
+does not establish completion. Sections28–34 retain their historical proposed
+design/readiness baseline; their Not Activated wording is not the current TASK120
+execution admission. Production C2-Binding/Exposure and C3 remain Not Ready /
+Not Activated, P01–P08/S01–S12 deferred. No Host/Bootstrap/Control Service wiring,
+new schema/codes, worker, retry or stronger delivery guarantee. DP027 Draft/Partial,
+DP009 Draft, Gate11 OPEN and TASK102 Windows/native qualification limits unchanged.
+O09/O13 are explicitly compositional; isolated O proofs do not supply production
+binding/operator visibility. Exact unavailable checks remain limitations in the
+task record. Commit and publication require separate Owner gates.
