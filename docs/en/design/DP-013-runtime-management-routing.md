@@ -710,3 +710,37 @@ persistence simulation, retry, transport API, or Production Activation.
 The Draft design is implemented in isolation. Full integration and Production
 Activation remain blocked by the unimplemented dependencies and wiring
 identified above.
+
+## 31. C2 diagnostics consume-admission boundary (TASK-121)
+
+This section defines the boundary required by C2-Binding but does not add a current
+Directory method, endpoint or production capability.
+
+`ActionObserve` authorizes only detached lifecycle observation and never authorizes a
+destructive diagnostics Poll. DP-018 command/replay authority is also inapplicable.
+A later C2-Exposure design must introduce a distinct diagnostics-consume authorization
+contract whose input includes the exact `Target` and expected non-empty Launch Attempt
+identity. It must not overload the current `Authorize` version parameter.
+
+The mandatory order for each future request is:
+
+1. validate context, syntactic Target, expected attempt identity and Poll budget;
+2. call the dedicated consume authorizer before target lookup, Owner access or Poll;
+3. on denial, cancellation or invalid input, return without Directory lookup that can
+   reveal existence and with zero mailbox read;
+4. after authorization, select the exact immutable Directory scope; absent/mismatched
+   targets use the same externally safe unavailable class;
+5. invoke Owner's expected-attempt diagnostics operation, which atomically matches the
+   active attempt and non-retired private lifetime before copying its View;
+6. perform at most one bounded `View.Poll` outside Directory/Owner locks.
+
+Authorization that wins permits that one admitted operation. Revocation visible before
+Owner's locked lifetime claim prevents Poll; revocation after the claim affects later
+requests and does not retract the admitted Poll. A successor attempt never satisfies an
+older expected-attempt request. Unauthorized, nonexistent, retired and mismatched
+requests consume no event and must not disclose which condition occurred.
+
+C2-Exposure must separately define concrete policy, rate/concurrency/pending-request
+bounds, transport, output rendering, retention and redaction. It may not add an
+unbounded target/handle registry, background worker or lifecycle wait. Directory keeps
+only its existing Owner scope; the raw Reader/View handle remains private to Owner.

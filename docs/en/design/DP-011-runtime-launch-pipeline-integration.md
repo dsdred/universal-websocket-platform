@@ -710,3 +710,32 @@ The Flow does not become a second lifecycle owner and does not hide product,
 persistence, or recovery policy. Until separate Production Activation, the
 repository retains the truthful state: the integration contract is defined,
 but Runtime management from the Control Service is not implemented.
+
+## 29. C2 diagnostics launch trace (TASK-121)
+
+This Draft design trace leaves `Flow` unchanged. Flow neither allocates nor retains
+diagnostics capabilities and never becomes their owner. The authoritative order is:
+
+1. Flow obtains one Owner-issued `LaunchPreparation` and performs Load/Build as now.
+2. On a valid Snapshot, `Owner.Start` accepts that exact preparation and commits the
+   attempt to `AttemptLaunching`.
+3. Owner allocates the attempt's diagnostics mailbox pair and private View.
+4. Owner copies its stable base `DependencyBindings`, replaces only the copy's
+   existing optional Producer field, and schedules the one Launcher call.
+5. `runtime.Launch` constructs/starts one Host from that private immutable launch
+   envelope; all rollback inside that call keeps the same Producer/mailbox.
+6. Launch convergence leaves the pair with the retained Host attempt or retires it
+   according to DP-010 section 33.4.
+
+Load failure, Builder diagnostics, cancellation/Stop before Snapshot acceptance and
+rejected preparation allocate no pair. Once Snapshot acceptance wins, caller
+cancellation cannot abandon the pair or its Owner duties. A Stop that overlaps Launch
+uses the same attempt and pair and cannot construct a replacement. Distinct accepted
+attempts necessarily pass through a new allocation.
+
+The current process scope remains future single-process Control Service composition:
+application composition constructs stable repositories, Source, Loader and one Owner
+per Runtime Instance; Owner alone performs the per-attempt diagnostics allocation.
+No application root, Flow or Directory may preallocate an Owner-level mailbox. Current
+`cmd/control-service` still does not construct this chain, so no production path is
+activated by this design.

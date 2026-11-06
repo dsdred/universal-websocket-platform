@@ -362,3 +362,21 @@ concrete in-memory repositories. Он читает exact Version до exact pare
 runtime failures в применимую часть существующего Loader error set, не
 синтезируя inconsistent-observation errors. Он позволяет future construction,
 не разрешая management routing, persistence или Production Activation.
+
+## 29. Composition constraint C2 diagnostics (TASK-121)
+
+Future single-process application composition root по-прежнему владеет repositories,
+services и stable base `DependencyBindings`, переданным каждому Runtime Lifecycle
+Owner. Base diagnostics Producer должен оставаться disabled. Root не создаёт и не
+удерживает Owner-level mailbox, Reader или View и не изменяет bindings после Owner
+construction.
+
+Per-attempt diagnostics allocation confined в Lifecycle Owner после valid Snapshot
+acceptance по DP-010 section 33. MemorySource, Loader, Builder и Flow не получают
+diagnostics capability и не имеют retirement duty. Composition Audit должен доказать
+один stable base envelope на Owner, отсутствие mailbox creation в application/Source/
+Loader/Flow chain и единственную per-attempt allocation в Owner.
+
+Это constraint не назначает текущий `cmd/control-service` composition root и не
+активирует Runtime, management routing или diagnostics exposure. Source loading
+semantics и implemented adapter не меняются.

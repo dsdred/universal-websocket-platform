@@ -360,3 +360,21 @@ observation, and maps runtime failures into the existing applicable Loader
 error set without synthesizing inconsistent-observation errors. It enables
 future construction without authorizing management routing, persistence, or
 Production Activation.
+
+## 29. C2 diagnostics composition constraint (TASK-121)
+
+The future single-process application composition root still owns repositories,
+services and the stable base `DependencyBindings` supplied to each Runtime Lifecycle
+Owner. It must leave the base diagnostics Producer disabled. It must not construct or
+retain an Owner-level mailbox, Reader or View and must not mutate the bindings after
+Owner construction.
+
+Per-attempt diagnostics allocation is confined to the Lifecycle Owner after valid
+Snapshot acceptance, as defined by DP-010 section 33. MemorySource, Loader, Builder and
+Flow receive no diagnostics capability and have no retirement duty. A Composition
+Audit must prove one stable base envelope per Owner, zero mailbox creation in the
+application/Source/Loader/Flow chain, and the sole per-attempt allocation in Owner.
+
+This constraint does not make current `cmd/control-service` the composition root and
+does not activate Runtime, management routing or diagnostics exposure. Source loading
+semantics and the implemented adapter remain unchanged.

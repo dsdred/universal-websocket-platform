@@ -5,7 +5,7 @@
 ## 1. Status and scope
 
 - **Design Status:** Draft.
-- **Implementation Status:** Partial — mailbox (TASK-110), component hooks (TASK-112), optional Host/Bootstrap wiring (TASK-113), isolated consumer core C1 (TASK-115); production sink/exposure Planned.
+- **Implementation Status:** Partial — mailbox (TASK-110), component hooks (TASK-112), optional Host/Bootstrap wiring (TASK-113), isolated consumer core C1 (TASK-115), isolated C2-Pull (TASK-120); production C2 binding/exposure Planned.
 - **Target Milestone:** Beta, Gate 11; this document does not close Gate 11.
 - **Task:** [TASK-109](../../tasks/TASK-109-RUNTIME-DIAGNOSTICS-V1-DESIGN.md).
 - **Source baseline:** `67ca1b200d42fda5be8b6dc8741d8f0bc24bd2a6`.
@@ -31,8 +31,8 @@ sections20–26 below, records the historical design. TASK-115 separately activa
 and implements only C1; section27 records current implementation boundaries.
 
 Operational integration refinement: [TASK-116](../../tasks/TASK-116-RUNTIME-DIAGNOSTICS-OPERATIONAL-INTEGRATION-DESIGN.md),
-sections28–34, is proposed design only. C2-Pull prerequisite Ready for separate intake /
-Not Activated; production C2/C3 Not Ready / Not Activated.
+sections28–34, is the proposed design baseline. TASK-120 published isolated C2-Pull;
+production C2-Binding/Exposure and C3 remain Not Activated.
 
 Integration design: [TASK-111](../../tasks/TASK-111-RUNTIME-DIAGNOSTICS-INTEGRATION-DESIGN.md),
 baseline `060cf22cf040a2e84d49c52095af9ed4ab9390a7`. Section 15 retains that historical
@@ -865,8 +865,8 @@ operator visibility needs both source coverage and sanctioned C2 production expo
 
 | Slice | Readiness / dependency |
 | --- | --- |
-| C2-Pull isolated bounded View | Ready for separately authorized fresh implementation intake only; Not Activated. Published C1, exact section29 algorithm, O01–O16; one leaf package/new pull.go+pull_test.go, no existing source/test changes |
-| C2-Binding concrete Host-lifetime scope | Not Ready / Not Activated. Concrete sanctioned owner, per-Host allocation/retirement and launch/management seam decisions; no mutable dependency rebind |
+| C2-Pull isolated bounded View | Implemented and published by TASK-120. O01–O16 accepted with recorded platform limitations; this is not production Host binding or operator exposure |
+| C2-Binding concrete Host-lifetime scope | Design-only TASK-121 active / production Not Activated. Concrete sanctioned owner, per-Host allocation/retirement and launch/management seam decisions; no mutable dependency rebind |
 | C2-Exposure operator bridge/deployment | Not Ready / Not Activated. C2-Binding, exact consume authorization, scheduling/resources/rate/retention/transport and P01–P08 |
 | C3-Schema/source designs | Not Ready for implementation / Not Activated. Separate source/closed schema/version/eligibility/panic/deduplication decisions and S01–S12; design need not wait for C2 transport |
 | C3 source/private passage/integrated coverage | Not Ready / Not Activated. Accepted focused designs, separate implementation authorizations, compatibility/race evidence and eventual C2 admission for operator visibility |
@@ -964,19 +964,102 @@ missing categories. These alternatives do not satisfy current boundaries. C2-Pul
 is only Ready for a separately authorized isolated implementation intake, Not Activated.
 DP027 Draft/Partial, DP009 Draft, C2 production/C3 Not Ready; Gate11 OPEN.
 
-## 35. Isolated C2-Pull implementation preparation (TASK-120)
+## 35. Published isolated C2-Pull (TASK-120)
 
-[TASK-120](../../tasks/TASK-120-RUNTIME-DIAGNOSTICS-PULL.md) separately admits only
-the section29 leaf `internal/runtimediagnosticspull` (pull.go/pull_test.go).
-Source/tests are prepared; verification-stable In Progress. Acceptance and actual
-O01–O16 dispositions resolve only from the task's newest valid matching evidence
-envelope after independent canonical subject reconstruction; source presence alone
-does not establish completion. Sections28–34 retain their historical proposed
-design/readiness baseline; their Not Activated wording is not the current TASK120
-execution admission. Production C2-Binding/Exposure and C3 remain Not Ready /
-Not Activated, P01–P08/S01–S12 deferred. No Host/Bootstrap/Control Service wiring,
-new schema/codes, worker, retry or stronger delivery guarantee. DP027 Draft/Partial,
-DP009 Draft, Gate11 OPEN and TASK102 Windows/native qualification limits unchanged.
-O09/O13 are explicitly compositional; isolated O proofs do not supply production
-binding/operator visibility. Exact unavailable checks remain limitations in the
-task record. Commit and publication require separate Owner gates.
+[TASK-120](../../tasks/TASK-120-RUNTIME-DIAGNOSTICS-PULL.md) published only the
+section29 leaf `internal/runtimediagnosticspull` (pull.go/pull_test.go): source
+`40e90d82599fd42ef9bf7fa967a83575829db603`, PR #120 merge
+`da0ea8c8f8c0c5f412171bbc59c2cb35cbb3c63b`, required `go-ci` SUCCESS and
+P10R-120-001 PASS. O01–O16 are accepted within the task's recorded Windows race,
+sandbox regression and CRLF-only tidy limitations. O09/O13 remain compositional;
+isolated O proofs do not supply production binding or operator visibility.
+Production C2-Binding/Exposure and C3 remain Not Activated, P01–P08/S01–S12 are
+not production implementation evidence. No Host/Bootstrap/Control Service wiring,
+new schema/codes, worker, retry or stronger delivery guarantee was added. DP027
+remains Draft/Partial, DP009 Draft, Gate11 OPEN and TASK102 unchanged.
+
+## 36. C2-Binding Host-lifetime ownership design (TASK-121)
+
+TASK-121 resolves the design question left open by sections 30–34. This section is
+newer Draft design evidence; it does not rewrite TASK-116 history or activate C2.
+
+### 36.1 Owner and deployment decision
+
+The repository provides one justified production owner: the per-Runtime-Instance
+`runtimelifecycle.Owner` defined by ARCH-004 and DP-010. It creates Launch Attempts,
+is the only path to `runtime.Launch`, retains the active Host and proves cleanup.
+Therefore it owns one private diagnostics lifetime for each accepted Host launch.
+
+The application/process/deployment scope is the future single Control Service process
+containing that Owner and its in-process Host. Current `cmd/control-service` constructs
+neither Runtime Owner nor Directory, so no existing binary is activated and no stdout
+logger becomes a diagnostics sink. A future multi-process adapter requires a separate
+decision because Reader/View capabilities are process-local.
+
+Application composition supplies one stable base `DependencyBindings` per Owner with
+diagnostics disabled. After valid Snapshot acceptance and before the sole Launcher
+call, Owner allocates one mailbox pair, retains the View in private attempt state,
+copies the base bindings and installs Producer only in that launch-private copy.
+Neither the stable pointer nor its value is mutated. Flow, Source, Loader, Builder,
+Directory and application root never allocate an Owner-level mailbox.
+
+The private lifetime handle is owned only by Owner's active attempt state. It contains
+the exact Launch Attempt identity, one C2-Pull View and active/retired state; it is not
+exported through Host, Bootstrap, outcomes or Observation. A future authorized
+management operation reaches it only through exact expected-attempt matching; raw
+Reader/View capability is never distributed.
+
+### 36.2 Lifecycle traces
+
+| Trace | Required result |
+| --- | --- |
+| Prepare -> Load/Build failure | No accepted Host launch and no diagnostics pair. |
+| Snapshot accepted -> Launch | Allocate pair once; make private dependency copy; one Launch call receives its Producer. |
+| Host construction/Build/Start rollback inside Launch | Same launch-private Producer and pair; no reallocation or reset. |
+| Launch failure with no retained Host | Revoke/retire lifetime on convergence and discard unread data without drain/flush. |
+| Stop wins while Launch may return Host | Keep pair with that attempt; if Host returns, Stop the same Host before retirement. |
+| Running -> concurrent Poll | Owner matches exact active attempt under lock; Poll runs outside lifecycle locks and never joins Host. |
+| Caller cancellation | Cancels only that wait; Owner work and pair lifetime continue. |
+| Stop failure | Host and pair remain conservatively retained for same-attempt retry. |
+| Successful Stop | Locked retirement revokes new access and detaches Owner references; admitted Poll may finish, unread/late events may be lost. |
+| Next accepted attempt | New independent pair and sequence domain; retired pair is never rebound or reused. |
+
+No trace promises a final read, empty mailbox, retained late event, delivery ACK,
+retry, replay, persistence or lossless shutdown. Stop, rollback and Manager waits never
+wait for Poll, bridge, renderer or sink.
+
+### 36.3 Consume authorization and C2-Exposure boundary
+
+C2-Binding defines ownership and the fail-closed access seam only. A later C2-Exposure
+request must provide exact Target plus expected Launch Attempt identity to a dedicated
+consume authorizer before Directory lookup, Owner access or destructive Poll. Denial,
+invalid input, absent/mismatched target, successor attempt and retired lifetime perform
+zero read and use an anti-enumerating external unavailable class. `ActionObserve`, its
+current version parameter and DP-018 authority are never reused.
+
+After authorization, Owner atomically matches the expected active attempt and active
+lifetime, captures one View, unlocks and performs at most one bounded Poll. Revocation
+before that claim prevents Poll; a later revocation does not retract the already
+admitted operation. Concrete policy, concurrency/pending/rate limits, transport,
+rendering, retention and redaction remain C2-Exposure work. No worker or registry is
+implied.
+
+### 36.4 P01–P08 design traceability
+
+These dispositions assess design completeness, not executable production proof.
+
+| Proof | Disposition | TASK-121 result / remaining evidence |
+| --- | --- | --- |
+| P01 | Satisfied by Design | Lifecycle Owner, single-process Control Service scope and private exact-attempt handle/access seam are selected. Current binary wiring remains absent. |
+| P02 | Satisfied by Design | One allocation per accepted Host launch, same-Host rollback/Stop retention, new pair per later attempt and private dependency copy are exact; implementation tests remain future. |
+| P03 | Deferred | Authorization-before-lookup/read, exact attempt, revocation and anti-enumeration are specified; concrete policy/Directory/API implementation belongs to C2-Exposure. |
+| P04 | Deferred | No implicit worker/registry is allowed; scheduling, concurrency, pending-call, rate and retention limits require the exposure contract. |
+| P05 | Deferred | Design forbids lifecycle joins and places Poll outside Owner locks; real bridge/rendering overlap proof requires production composition. |
+| P06 | Satisfied by Design | Failed launch, failed Stop, successful retirement, admitted-Poll race and late/unread loss semantics are explicit with no flush/final-empty/ACK claim. |
+| P07 | Deferred | Existing Event/Poll allowlist and prohibition on identity/raw data remain; operator rendering/redaction proof requires C2-Exposure. |
+| P08 | Deferred | Exact code composition, API compatibility, full/race tests and real source-to-operator evidence require separately authorized implementation/integration. |
+
+There are no blocking design rows. Production C2 remains **Not Activated** and is not
+ready as one undivided implementation: an isolated C2-Binding implementation may be
+assessed separately, while C2-Exposure remains dependent on P03–P05/P07/P08. C3 is
+unchanged and Not Activated. Gate 11 remains OPEN.

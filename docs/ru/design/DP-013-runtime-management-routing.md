@@ -711,3 +711,37 @@ Runtime Instance, авторизует Start, Stop и Observe до lifecycle del
 
 Draft design реализован изолированно. Full integration и Production Activation
 остаются blocked отсутствующими dependencies и wiring, перечисленными выше.
+
+## 31. Boundary consume admission для C2 diagnostics (TASK-121)
+
+Этот раздел определяет boundary, необходимый C2-Binding, но не добавляет current
+Directory method, endpoint или production capability.
+
+`ActionObserve` разрешает только detached lifecycle observation и никогда не даёт
+право destructive diagnostics Poll. Authority command/replay DP-018 также неприменима.
+Будущий design C2-Exposure обязан ввести отдельный diagnostics-consume authorization
+contract с exact `Target` и expected non-empty Launch Attempt identity во входе.
+Перегружать version parameter текущего `Authorize` запрещено.
+
+Mandatory order каждого future request:
+
+1. validate context, syntactic Target, expected attempt identity и Poll budget;
+2. вызвать dedicated consume authorizer до target lookup, Owner access или Poll;
+3. при denial, cancellation или invalid input вернуть результат без Directory lookup,
+   раскрывающего existence, и с zero mailbox read;
+4. после authorization выбрать exact immutable Directory scope; absent/mismatched
+   targets используют тот же externally safe unavailable class;
+5. вызвать expected-attempt diagnostics operation Owner, которая atomically match-ит
+   active attempt и non-retired private lifetime до копирования View;
+6. выполнить не более одного bounded `View.Poll` вне Directory/Owner locks.
+
+Победившая authorization разрешает одну admitted operation. Revocation, видимая до
+locked lifetime claim Owner, предотвращает Poll; revocation после claim влияет на
+следующие requests и не retract-ит admitted Poll. Successor attempt никогда не
+удовлетворяет старый expected-attempt request. Unauthorized, nonexistent, retired и
+mismatched requests не consume-ят event и не раскрывают конкретное condition.
+
+C2-Exposure отдельно определяет concrete policy, bounds rate/concurrency/pending
+requests, transport, output rendering, retention и redaction. Он не добавляет unbounded
+target/handle registry, background worker или lifecycle wait. Directory хранит только
+existing Owner scope; raw Reader/View handle остаётся private у Owner.

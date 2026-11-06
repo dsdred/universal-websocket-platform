@@ -8,15 +8,25 @@
 
 ## Текущее состояние
 
-Текущая engineering task [TASK-120](../docs/tasks/TASK-120-RUNTIME-DIAGNOSTICS-PULL.md) — isolated C2-Pull
-implementation по DP-027 §29/§32–34, branch `feature/task-120-runtime-diagnostics-pull`,
-baseline `ac021e9402f37d60ab826f100534c88415c08a21`. Verification-stable `In Progress`:
-новый leaf `internal/runtimediagnosticspull` подготовлен; implementation Acceptance
-не подразумевается. Actual gates/closure — только newest valid matching Recovery
-Evidence Envelope после independent canonical manifest reconstruction. O01–O16
-требуют explicit automated/compositional/source-audit dispositions и exact checks.
-Production C2-Binding/Exposure и C3 Not Ready / Not Activated; Gate11 OPEN.
-TASK102 вне scope. Commit/Publication Gates требуют отдельных Owner разрешений.
+Текущая engineering task [TASK-121](../docs/tasks/TASK-121-RUNTIME-DIAGNOSTICS-C2-BINDING-DESIGN.md) —
+design-only C2-Binding: Host-lifetime ownership and production admission design.
+Baseline `main`/`origin/main` — `da0ea8c8f8c0c5f412171bbc59c2cb35cbb3c63b`.
+Owner принял intake и Architecture Confirmation PASS; implementation, Commit и
+Publication Gates не разрешены. Production C2-Binding/Exposure и C3 остаются
+Not Activated; Gate11 OPEN; TASK102 вне scope. Source-backed Draft design выбирает
+per-Runtime-Instance Lifecycle Owner с private per-attempt binding; independent
+Architecture Confirmation PASS (0 findings); independent Verification/Final Review
+и Acceptance определяются только newest valid matching TASK-121 Recovery Evidence
+Envelope. Projected state остаётся verification-stable `In Progress` и сам по себе
+не объявляет completion.
+
+[TASK-120](../docs/tasks/TASK-120-RUNTIME-DIAGNOSTICS-PULL.md) завершила publication:
+accepted source `40e90d82599fd42ef9bf7fa967a83575829db603`, PR #120 MERGED как
+`da0ea8c8f8c0c5f412171bbc59c2cb35cbb3c63b`, source/merge tree
+`fb7c36f7909787f7b47fc5a144048f78aaf1b16f`. Required `go-ci` SUCCESS и
+P10R-120-001 PASS; publication terminal `Consumed(P10) / NoneTerminal / Unissued`.
+Isolated C2-Pull реализован и опубликован с зафиксированными Windows race NOT RUN,
+sandbox regression и CRLF-only tidy limitations; они не являются production C2 proof.
 
 [TASK-119](../docs/tasks/TASK-119-RUNTIME-DIAGNOSTICS-PULL-INTAKE.md) завершила publication:
 source `4623505b62ab126ebf2fe029de754f42faee1bb4`, PR119 MERGED как baseline
@@ -59,15 +69,13 @@ SUCCESS, attempt1. Отдельный native P10/P10R-117-001 PASS подтве�
 publication завершена. TASK-116/117 task refs удалены, clean synchronized main
 подтверждён перед intake TASK-118. Их immutable records и historical evidence сохранены.
 
-Текущий isolated C2-Pull slice отдельно допущен Owner только для TASK120:
-New(Reader)/View.Poll, fixed64 detached batch, shared outer TryLock, one C1 Drain,
-guarded clearing. Acceptance и O proofs определяет record, не наличие source.
-Production C2/C3 остаются отдельными Not Ready / Not Activated: sanctioned per-Host
-owner/allocation/retirement/consume access/scheduling/deployment/retention и C3
-schema/source решения не приняты. DP027 Draft/Partial, DP009 Draft неизменны;
-Gate11 OPEN; Windows/native TASK102 qualification отсутствует, Architecture B/PoC
-inactive. Historical local race/CRLF/parallel/cancellation/shutdown/loss limitations
-не сняты. Следующий production/design candidate автоматически не активируется.
+Опубликованный TASK120 предоставляет только isolated C2-Pull New(Reader)/View.Poll,
+fixed64 detached batch, shared outer TryLock, one C1 Drain и guarded clearing.
+TASK121 проектирует C2-Binding, но не активирует production C2/C3: per-Host owner,
+allocation/retirement, consume access, scheduling/deployment/retention и C3
+schema/source implementation по-прежнему отсутствуют. DP027 Draft/Partial, DP009
+Draft; Gate11 OPEN; Windows/native TASK102 qualification отсутствует, Architecture
+B/PoC inactive. Следующий implementation candidate автоматически не активируется.
 
 Нижеследующие записи предыдущих задач сохраняют historical context. Их closure-time
 запреты и projected `In Progress` не являются текущей task или новым разрешением;

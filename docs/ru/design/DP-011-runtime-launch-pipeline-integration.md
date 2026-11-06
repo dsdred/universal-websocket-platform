@@ -700,3 +700,32 @@ Flow не становится вторым lifecycle owner и не скрыва
 или recovery policy. До отдельной Production Activation repository сохраняет
 честный статус: integration contract определён, но управление Runtime из
 Control Service не реализовано.
+
+## 29. Launch trace C2 diagnostics (TASK-121)
+
+Этот Draft design trace не меняет `Flow`. Flow не создаёт и не удерживает diagnostics
+capabilities и никогда не становится их owner. Authoritative order:
+
+1. Flow получает один Owner-issued `LaunchPreparation` и выполняет Load/Build как сейчас.
+2. При valid Snapshot `Owner.Start` принимает exact preparation и commit-ит attempt в
+   `AttemptLaunching`.
+3. Owner создаёт diagnostics mailbox pair и private View этого attempt.
+4. Owner копирует stable base `DependencyBindings`, заменяет только existing optional
+   Producer field в copy и планирует единственный Launcher call.
+5. `runtime.Launch` конструирует/запускает один Host из private immutable launch
+   envelope; весь rollback внутри call сохраняет тот же Producer/mailbox.
+6. Launch convergence оставляет pair у retained Host attempt или retire-ит её по
+   DP-010 section 33.4.
+
+Load failure, Builder diagnostics, cancellation/Stop до Snapshot acceptance и rejected
+preparation не создают pair. После победы Snapshot acceptance caller cancellation не
+может abandon-ить pair или Owner duties. Stop, пересекающийся с Launch, использует тот
+же attempt/pair и не создаёт replacement. Разные accepted attempts обязательно проходят
+через новую allocation.
+
+Текущий process scope остаётся future single-process Control Service composition:
+application composition создаёт stable repositories, Source, Loader и один Owner на
+Runtime Instance; только Owner выполняет per-attempt diagnostics allocation. Application
+root, Flow и Directory не могут preallocate Owner-level mailbox. Текущий
+`cmd/control-service` всё ещё не создаёт эту chain, поэтому design не активирует
+production path.
