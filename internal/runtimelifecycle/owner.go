@@ -19,7 +19,9 @@ type launchResult struct {
 type launchFunction func(*runtime.BootstrapRequest) launchResult
 
 type attemptState struct {
-	fact AttemptFact
+	fact               AttemptFact
+	diagnostics        *diagnosticsLifetime
+	launchDependencies *runtime.DependencyBindings
 
 	context context.Context
 	cancel  context.CancelFunc
@@ -88,6 +90,7 @@ func newOwner(
 		instanceID == "" ||
 		nextAttemptID == nil ||
 		dependencies == nil ||
+		!diagnosticsBaseDisabled(dependencies) ||
 		launch == nil {
 		return nil, ErrInvalidOwner
 	}
@@ -284,6 +287,12 @@ func (o *Owner) Start(
 		return outcome, nil
 	}
 
+	diagnostics, launchDependencies := newDiagnosticsLifetime(
+		attempt.fact.launchAttemptID,
+		o.dependencies,
+	)
+	attempt.diagnostics = diagnostics
+	attempt.launchDependencies = launchDependencies
 	attempt.fact.phase = AttemptLaunching
 	done := attempt.startDone
 	o.mu.Unlock()
@@ -496,13 +505,14 @@ func (o *Owner) runLaunch(attempt *attemptState, snapshot runtimeconfig.Snapshot
 	result := o.launch(&runtime.BootstrapRequest{
 		Snapshot:       snapshot,
 		StartupContext: attempt.context,
-		Dependencies:   o.dependencies,
+		Dependencies:   attempt.launchDependencies,
 	})
 
 	var stopHost runtime.Host
 	var runStop bool
 
 	o.mu.Lock()
+	attempt.launchDependencies = nil
 	if !result.success {
 		attempt.launchOutcome = result.outcome
 	}
@@ -526,6 +536,7 @@ func (o *Owner) runLaunch(attempt *attemptState, snapshot runtimeconfig.Snapshot
 			}
 		}
 	} else if attempt.fact.stopOrigin == StopBeforeRunning {
+		retireDiagnosticsLocked(attempt)
 		attempt.fact.phase = AttemptHistorical
 		attempt.fact.terminalKind = AttemptStoppedBeforeRunning
 		o.active = nil
@@ -541,6 +552,7 @@ func (o *Owner) runLaunch(attempt *attemptState, snapshot runtimeconfig.Snapshot
 			hasAttempt: true,
 		})
 	} else {
+		retireDiagnosticsLocked(attempt)
 		attempt.fact.phase = AttemptHistorical
 		attempt.fact.terminalKind = AttemptLaunchFailed
 		o.active = nil
@@ -566,6 +578,7 @@ func (o *Owner) runHostStop(attempt *attemptState, host runtime.Host) {
 
 	o.mu.Lock()
 	if err == nil {
+		retireDiagnosticsLocked(attempt)
 		attempt.host = nil
 		attempt.fact.phase = AttemptHistorical
 		attempt.fact.terminalKind = AttemptStopped

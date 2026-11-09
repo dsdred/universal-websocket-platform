@@ -6,8 +6,8 @@
 
 **Design Status:** Draft
 
-**Implementation Status:** base Lifecycle Owner и расширение expected-attempt
-Stop реализованы изолированно
+**Implementation Status:** base Lifecycle Owner, расширение expected-attempt Stop и
+isolated C2-Binding TASK-122 реализованы; production composition отсутствует
 
 **Статус архитектуры:** implementation contract утверждённой модели
 operational identity из
@@ -22,6 +22,11 @@ Loader-to-Builder-to-Launcher не реализован. Контракт
 изолированно завершённой и Coordinator-Accepted TASK-040; его private invoker,
 integration и production
 wiring отсутствуют. Этот Draft не пересматривает утверждённую архитектуру.
+
+TASK-122 реализует раздел 33 внутри `internal/runtimelifecycle`: fail-closed
+zero-base admission, одну private mailbox/View на accepted attempt, immutable launch
+dependency copy, exact-attempt bounded Poll и lifecycle revocation. Control Service,
+Directory и Host wiring не добавлены; production C2 не активирован.
 
 ## 2. Назначение
 
@@ -874,8 +879,8 @@ persistence, management, policy, supervision или production wiring.
 
 ## 33. Design C2 diagnostics binding для Host lifetime (TASK-121)
 
-Этот раздел — Draft design addendum. Он не меняет текущий implementation status
-и не активирует production diagnostics.
+Этот раздел остаётся Draft design addendum. TASK-122 реализует его изолированно;
+current binary его не компонует, production diagnostics остаётся Not Activated.
 
 ### 33.1 Sanctioned owner и scope
 
@@ -919,8 +924,8 @@ identity, View и состоянием `active/retired`. Raw Reader, View и Pro
 не входят в `Observation`, `AttemptFact`, `StartOutcome`, `StopOutcome`, Bootstrap
 outcomes или Host API. Они не persist-ятся и не возвращаются application handlers.
 
-Будущая management-only expected-attempt operation может запросить у Owner Poll этого
-private lifetime. Owner под существующим mutex обязан сопоставить exact active Launch
+Изолированная management-only operation `PollDiagnosticsExpectedAttempt` запрашивает
+у Owner Poll этого private lifetime. Owner под существующим mutex обязан сопоставить exact active Launch
 Attempt и active lifetime, захватить один value View и освободить mutex до `View.Poll`.
 Mismatch и retirement выполняют zero Poll/read и возвращают один normalized unavailable
 result. Mailbox call, callback, context wait и sink не выполняются под lifecycle mutex.
@@ -936,7 +941,7 @@ Owner operation.
 | Launch возвращает Host после победы Stop | Pair сохраняется, пока Owner останавливает тот же Host; retirement только после successful Host cleanup. |
 | Host reaches Running | Та же pair active весь retained Host lifetime. |
 | Caller wait canceled | Retirement отсутствует; Owner-owned launch/Stop work и pair продолжаются. |
-| Host Stop fails | Host и pair conservatively retained; следующий same-attempt Stop retry использует ту же pair. |
+| Host Stop fails | Host и pair conservatively retained. Повторный same-attempt Stop request наблюдает сохранённую failure без cleanup retry; та же pair остаётся retained. |
 | Host Stop succeeds | Под Owner mutex новый access revoke-ится, lifetime помечается retired, Owner detaches View/Producer references; unread или racing late facts могут быть потеряны. |
 | Later attempt accepted | Создаётся новая независимая pair; retired pair не rebind-ится и не reuse-ится. |
 
@@ -948,8 +953,8 @@ Stop никогда не ждёт Poll, rendering или sink.
 
 ### 33.5 Implementation boundary
 
-TASK-121 даёт только design. Будущая isolated binding implementation обязана доказать
-одну allocation на accepted Launcher call, identity private dependency copy, same-Host
-retention, distinct-attempt isolation, races exact-attempt access/revocation,
-failed-Stop retention, successful-Stop retirement и отсутствие lifecycle joins.
-Control Service wiring/operator exposure требуют отдельного gate.
+TASK-121 предоставила design. TASK-122 реализует и тестирует одну allocation на
+accepted Launcher call, identity private dependency copy, same-Host retention,
+distinct-attempt isolation, races exact-attempt access/revocation, failed-Stop
+retention, successful-Stop retirement и отсутствие lifecycle joins. Control Service
+wiring/operator exposure по-прежнему требуют отдельного gate.

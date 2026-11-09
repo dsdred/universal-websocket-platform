@@ -3,17 +3,24 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая engineering task [TASK-121](TASK-121-RUNTIME-DIAGNOSTICS-C2-BINDING-DESIGN.md) —
-design-only C2-Binding: Host-lifetime ownership and production admission design.
-Baseline `main`/`origin/main` — `da0ea8c8f8c0c5f412171bbc59c2cb35cbb3c63b`.
-Owner принял intake и Architecture Confirmation PASS; implementation, Commit и
-Publication Gates не разрешены. Production C2-Binding/Exposure и C3 остаются
-Not Activated; Gate11 OPEN; TASK102 вне scope. Source-backed Draft design выбирает
-per-Runtime-Instance Lifecycle Owner с private per-attempt binding; independent
-Architecture Confirmation PASS (0 findings); independent Verification/Final Review
-и Acceptance определяются только newest valid matching TASK-121 Recovery Evidence
-Envelope. Projected state остаётся verification-stable `In Progress` и сам по себе
-не объявляет completion.
+Текущая engineering task [TASK-122](TASK-122-RUNTIME-DIAGNOSTICS-C2-BINDING.md) —
+isolated C2-Binding implementation в per-Runtime-Instance Lifecycle Owner.
+Implementation и B01–B08 focused evidence завершены; independent gates и
+Coordinator Acceptance выполняются. Baseline `main`/`origin/main` —
+`0bf83bd394071f4ca9a6c102201a2f117acec819`. Architecture Confirmation PASS,
+blocking findings 0. Разрешены только три `internal/runtimelifecycle` production/test
+пути и двенадцать сопроводительных documentation paths. Commit и Publication Gates
+не разрешены. C2-Exposure, production C2/C3 activation, TASK102 и Gate11 closure
+вне scope; Gate11 OPEN. GitHub Issue #121 остаётся отдельным Not Activated
+Publisher infrastructure item.
+
+[TASK-121](TASK-121-RUNTIME-DIAGNOSTICS-C2-BINDING-DESIGN.md) завершила design
+publication: accepted source `dc36e85d4de5b0c22f97ad4e3f2599905a5cc94c`,
+PR #122 MERGED как `0bf83bd394071f4ca9a6c102201a2f117acec819`, merge tree
+`76ad378ef6b8c6b31b4dba98e7ca538666ececcb`. Publication Gate PASS и independent
+P10R PASS. TASK-121 выбрала Lifecycle Owner, private per-attempt mailbox binding,
+immutable launch dependency copy и exact-attempt revocation boundary; она не
+активировала production C2/C3 или C2-Exposure.
 
 [TASK-120](TASK-120-RUNTIME-DIAGNOSTICS-PULL.md) завершила publication:
 accepted source `40e90d82599fd42ef9bf7fa967a83575829db603`, PR #120 MERGED как
@@ -64,13 +71,13 @@ SUCCESS, attempt1. Отдельный native P10/P10R-117-001 PASS подтве�
 publication завершена. TASK-116/117 task refs удалены, clean synchronized main
 подтверждён перед intake TASK-118. Их immutable records и historical evidence сохранены.
 
-Опубликованный TASK120 предоставляет только isolated C2-Pull New(Reader)/View.Poll,
+Опубликованный TASK120 предоставляет isolated C2-Pull New(Reader)/View.Poll,
 fixed64 detached batch, shared outer TryLock, one C1 Drain и guarded clearing.
-TASK121 проектирует C2-Binding, но не активирует production C2/C3: per-Host owner,
-allocation/retirement, consume access, scheduling/deployment/retention и C3
-schema/source implementation по-прежнему отсутствуют. DP027 Draft/Partial, DP009
-Draft; Gate11 OPEN; Windows/native TASK102 qualification отсутствует, Architecture
-B/PoC inactive. Следующий implementation candidate автоматически не активируется.
+Опубликованный TASK121 определяет C2-Binding design. TASK122 реализовала только
+изолированные allocation/private binding/exact-attempt Poll/retirement semantics;
+production composition, consume authorization, scheduling/deployment/retention,
+C2-Exposure и C3 остаются Not Activated. DP027 Draft/Partial, DP009 Draft; Gate11
+OPEN; Windows/native TASK102 qualification отсутствует, Architecture B/PoC inactive.
 
 Нижеследующие записи предыдущих задач сохраняют historical context. Их closure-time
 запреты и projected `In Progress` не являются текущей task или новым разрешением;
