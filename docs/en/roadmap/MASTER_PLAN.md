@@ -378,15 +378,18 @@ The Runtime Alpha Review identifies implementation debt that must be tracked ind
   verification steps, hosted Linux race and tidy/module guards. Publication is
   terminal `Consumed(P10) / NoneTerminal / Unissued`; B01–B08 remain isolated
   evidence, not production P03–P05/P07/P08. Current binary composition is absent.
-  [TASK-123](../../tasks/TASK-123-RUNTIME-DIAGNOSTICS-C2-EXPOSURE-READINESS.md) is
-  the Owner-authorized C2-Exposure Design-only task, projected In Progress.
-  Its exact design subject/verdict/checkpoint resolves from the newest valid
-  task-record envelope matching the independently recomputed manifest.
-  Production C2/C3 and C2-Exposure remain Not Activated; Gate11 OPEN and criteria
-  unchanged; DP027 Draft/Partial, DP009 Draft. TASK102 is untouched; hosted Linux
-  evidence is not Windows/native qualification. GitHub Issue #121 remains a
-  separate Not Activated Publisher infrastructure item. No implementation,
-  Commit Gate or Publication Gate is authorized by this design task.
+  [TASK-123](../../tasks/TASK-123-RUNTIME-DIAGNOSTICS-C2-EXPOSURE-READINESS.md)
+  published accepted Design M123-002: source `19743ee1630c906c6f1388a95d80b43e188cadf1`,
+  PR #124 merge `448f1e13a23db64bcb73b70b6ff6056ffd8e8ccb`, source/merge tree
+  `c1f5d4f478d7efc889c925abf0da6d3e779f946d`, P10R-123-001 PASS.
+  PR CI `43048492597` and post-merge CI `43048831584` SUCCESS;
+  terminal Consumed(P10) / NoneTerminal / Unissued. Historical record preserved.
+  [TASK-124](../../tasks/TASK-124-C2-EXPOSURE-ADMISSION-CORE.md) is the authorized
+  admission/resource core implemented in isolation, projected In Progress; exact gates resolve
+  from its matching task-record envelope. Transport, trusted provisioning and
+  production composition remain deferred. DP027 Draft/Partial, DP009 Draft;
+  production C2/C3 and C2-Exposure Not Activated; Gate 11 OPEN, criteria unchanged.
+  TASK-102 untouched; Issue #121 Not Activated; no Commit/Publication Gate.
 - Basic and asymmetric JWT Runtime coverage is incomplete.
 - Origin behavior relies on library defaults rather than explicit Configuration.
 

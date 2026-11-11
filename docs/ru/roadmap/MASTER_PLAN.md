@@ -375,15 +375,18 @@ Runtime Alpha Review фиксирует implementation debt, который не
   verification steps, hosted Linux race и tidy/module guards. Publication
   terminal `Consumed(P10) / NoneTerminal / Unissued`; B01–B08 остаются isolated
   evidence, не production P03–P05/P07/P08. Current binary composition отсутствует.
-  [TASK-123](../../tasks/TASK-123-RUNTIME-DIAGNOSTICS-C2-EXPOSURE-READINESS.md) —
-  Owner-authorized C2-Exposure Design-only task, projected In Progress.
-  Exact design subject/verdict/checkpoint определяется newest valid task-record
-  envelope, совпадающей с independently recomputed manifest.
-  Production C2/C3 и C2-Exposure остаются Not Activated; Gate11 OPEN, criteria
-  неизменны; DP027 Draft/Partial, DP009 Draft. TASK102 не затронута; hosted Linux
-  evidence не является Windows/native qualification. GitHub Issue #121 остаётся
-  отдельным Not Activated Publisher infrastructure item. Эта design task не
-  разрешает implementation, Commit Gate или Publication Gate.
+  [TASK-123](../../tasks/TASK-123-RUNTIME-DIAGNOSTICS-C2-EXPOSURE-READINESS.md)
+  опубликовала accepted Design M123-002: source `19743ee1630c906c6f1388a95d80b43e188cadf1`,
+  PR #124 merge `448f1e13a23db64bcb73b70b6ff6056ffd8e8ccb`, source/merge tree
+  `c1f5d4f478d7efc889c925abf0da6d3e779f946d`, P10R-123-001 PASS.
+  PR CI `43048492597` и post-merge CI `43048831584` SUCCESS;
+  terminal Consumed(P10) / NoneTerminal / Unissued. Historical record сохранён.
+  [TASK-124](../../tasks/TASK-124-C2-EXPOSURE-ADMISSION-CORE.md) — разрешённый
+  admission/resource core реализован в изоляции, projected In Progress; exact gates определяются
+  matching task-record envelope. Transport, trusted provisioning и production
+  composition deferred. DP027 Draft/Partial, DP009 Draft; production C2/C3 и
+  C2-Exposure Not Activated; Gate 11 OPEN, criteria unchanged.
+  TASK-102 не затронута; Issue #121 Not Activated; Commit/Publication Gates отсутствуют.
 - Покрытие Runtime для Basic и asymmetric JWT неполное.
 - Поведение Origin полагается на defaults библиотеки, а не на явную Configuration.
 
