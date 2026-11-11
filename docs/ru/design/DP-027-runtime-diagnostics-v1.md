@@ -864,7 +864,7 @@ authorization; actual operator visibility требует и source coverage, и 
 | --- | --- |
 | C2-Pull isolated bounded View | Реализован и опубликован TASK-120. O01–O16 accepted с зафиксированными platform limitations; это не production Host binding или operator exposure |
 | C2-Binding concrete Host-lifetime scope | TASK-121 design опубликован; TASK-122 isolated implementation complete / production Not Activated. Concrete sanctioned owner, per-Host allocation/retirement и launch/management seam; mutable dependency rebind запрещён |
-| C2-Exposure operator bridge/deployment | Not Ready / Not Activated. C2-Binding, exact consume authorization/scheduling/resources/rate/retention/transport и P01–P08 |
+| C2-Exposure operator bridge/deployment | TASK-123 selected Draft design в разделе 37 и DP-013 разделе 32; implementation требует отдельного intake/authorization. Production Not Ready / Not Activated до real trust/composition и P01–P08 |
 | C3-Schema/source designs | Not Ready for implementation / Not Activated. Separate source/closed schema/version/eligibility/panic/deduplication и S01–S12; design не обязан ждать C2 transport |
 | C3 source/private passage/integrated coverage | Not Ready / Not Activated. Accepted focused designs/separate implementation authorizations/compatibility/race и eventual C2 admission для operator visibility |
 
@@ -1037,14 +1037,16 @@ zero read и используют anti-enumerating external unavailable class. `
 его current version parameter и authority DP-018 не переиспользуются.
 
 После authorization Owner atomically match-ит expected active attempt/active lifetime,
-захватывает один View, unlock-ит и выполняет не более одного bounded Poll. Revocation
-до claim предотвращает Poll; более поздняя revocation не retract-ит уже admitted
-operation. Concrete policy, concurrency/pending/rate limits, transport, rendering,
-retention и redaction остаются работой C2-Exposure. Worker/registry не подразумеваются.
+захватывает один View, unlock-ит и выполняет не более одного bounded Poll. Owner lifetime
+retirement до claim запрещает Poll, после claim не retract-ит captured Poll. Security-grant
+admission/revocation — отдельный cut DP-013 раздела 32.2. Concrete policy, concurrency/
+pending/rate limits, transport, rendering, retention и redaction заданы TASK-123
+разделом 37 и DP-013 разделом 32 как Draft design. Worker/registry не подразумеваются.
 
 ### 36.4 Design traceability P01–P08
 
-Dispositions оценивают completeness design, а не executable production proof.
+Dispositions сохраняют historical TASK-121 design assessment, не executable production
+proof. Current TASK-123 design traceability — в разделе 37.5.
 
 | Proof | Disposition | Result TASK-121 / remaining evidence |
 | --- | --- | --- |
@@ -1065,3 +1067,206 @@ Gate 11 остаётся OPEN.
 TASK-122 даёт isolated executable B01–B08 evidence для allocation, immutable binding,
 exact-attempt Poll, revocation и lifecycle retention. Она не повышает Deferred
 production/exposure rows P03–P05/P07/P08 и не заявляет operator visibility.
+
+## 37. Resources, results и proofs C2-Exposure (TASK-123)
+
+Этот выбранный **Draft / Planned** contract закрывает exposure design inputs после
+TASK-122, но не реализует/активирует adapter, route или production C2/C3. Authority,
+exact routing order, transport request/failure API и implementation split канонически
+заданы в [DP-013, раздел 32](DP-013-runtime-management-routing.md#32-consume-contract-c2-exposure-task-123).
+Dispositions раздела 36.4 остаются historical TASK-121 assessment; current design
+dispositions ниже не превращают production obligations в runtime PASS.
+
+### 37.1 Bounded scheduling и resources
+
+Process владеет одним sanctioned adapter над existing immutable Directory/Owner scopes.
+Request scheduling находится вне Runtime; worker/timer/dynamic registry,
+goroutine-per-timeout или pending admission queue отсутствуют. Это conservative initial
+finite bounds, не throughput или hard latency guarantees.
+
+| Resource | Selected bound |
+| --- | --- |
+| Configured principal slots / Target slots / current exact grants | 32 / 64 / 2,048 |
+| Open ingress connections / concurrent TLS handshakes | 32 / 8 |
+| TLS handshake / header-read / idle deadlines | 2 s / 1 s / 5 s |
+| Header / request body / encoded response bounds | 8 KiB / 1,024 bytes / 16 KiB |
+| Active process / principal / Target requests | 8 / 1 / 1 |
+| Waiting/pending admission queue | 0 |
+| Process token bucket | 8 requests/s, burst 8 |
+| Principal token bucket, across Targets | 2 requests/s, burst 2 |
+| Target token bucket, across principals and attempts | 1 request/s, burst 1 |
+| Required Poll budget | integer 1..64 |
+| Adapter request-context / body-read / response-write deadlines | 2 s / 1 s / 1 s |
+
+Process request slot берётся до body decoding и удерживается до конца response
+handling, поэтому slow body/write не обходят cap; ingress connection/header/body
+bounds и deadlines действуют ещё до core admission. 2 s request context начинается сразу после process-slot admission, до decoding.
+Body reads имеют также 1 s deadline, ограниченный remaining time этого context.
+Request deadline кооперативно ограничивает ordinary decoding/evaluation/Poll/serialization. Blocked trusted callback
+не получает вымышленного hard termination guarantee. Runtime mutex/Manager wait не
+используется для этих limits. Выбранный future ingress — mTLS HTTP/1.1, TLS 1.3,
+HTTP/2 off; это не current HTTP configuration Control Service.
+
+Process/principal buckets charge каждый syntactically valid identified request,
+включая authorization denial, независимо от Target existence; их capacity/rate refusal
+— prelookup 429. Target slots/buckets используются только после consume authorization
+и exact routing; refusal даёт тот же 404 unavailable, что absent/mismatched/retired
+lifetime. Target-specific Retry-After, quota value или existence hint не возвращаются.
+Consumed tokens при failure/cancellation никогда не refund.
+
+Refill lazy с trusted monotonic clock: один whole token за **125 ms process,
+500 ms principal и 1 s Target**. Сохраняется только subinterval fractional remainder,
+burst clamp отбрасывает excess whole credit при saturation. Backward clock или
+overflow отклоняет current operation с неизменными counter/time state, не создавая
+extra credit. Initial bursts возникают только при adapter construction/restart.
+Grant updates, later attempts и lifetime retirement counters не сбрасывают. State
+фиксирован на configured principal/Target, никогда не на request-supplied attempt/ID;
+нет request-created slot, unbounded history или refill worker.
+
+На principal и configured Target допускается максимум одна active request across
+attempts. Process/principal/Target slots удерживаются до конца response handling
+и освобождаются на returning/unwinding paths. Short nonblocking admission updates
+не держат quota/Directory lock через policy, Owner/Poll, rendering или I/O; contention
+отказывает вместо ожидания. Competing callers не получают отдельные Views/readers.
+
+### 37.2 Bounded Poll и success projection
+
+Adapter один раз передаёт original expected attempt/context/budget Owner. Owner
+matches active attempt/lifetime под mutex, captures private View и unlocks до Poll.
+Shared TryLock View и existing fixed sink выполняют максимум один C1 Drain, detach
+максимум 64 safe Events и clear private storage. Budget 0/>64 до Poll не доходит.
+Retry/reinsert/fanout/second reader не добавляются.
+
+Один planned 200 JSON response имеет ровно такую field shape:
+
+```json
+{
+  "apiVersion": 1,
+  "count": 1,
+  "events": [{"schemaVersion": 1, "code": 1, "sequence": "7"}],
+  "receipt": {
+    "readAttempts": 2,
+    "observed": 1,
+    "sinkSucceeded": 1,
+    "sinkFailed": 0,
+    "sinkPanicked": 0,
+    "discarded": 0,
+    "stop": "no_item"
+  }
+}
+```
+
+Пример использует existing schema/code values, не новые Event definitions. Проецируются
+только current closed valid Event SchemaVersion/Code и nonzero Sequence; Sequence —
+canonical uint64 decimal string, сохраняющая precision, не identity/drop count.
+Events содержит ровно Count entries, без unused array slots. Counters — JSON integers
+в пределах budget; Observed равен SinkSucceeded + SinkFailed + SinkPanicked + Discarded,
+Count равен SinkSucceeded. Selected fixed sink не допускает SinkFailed/SinkPanicked.
+Successful stop — только no_item или budget из existing NoItem/Budget с соответствующими
+receipt invariants: для no_item ReadAttempts == Observed + 1 и Observed ==
+SinkSucceeded == Count, ReadAttempts <= budget; Count zero/ReadAttempts one valid. Для
+budget ReadAttempts == Observed == SinkSucceeded == Count == requested budget. В обоих
+случаях SinkFailed == SinkPanicked == Discarded == 0. SchemaVersion — existing 1, Code —
+existing 1 или 2, Sequence — canonical nonzero uint64 decimal string. E11 проверяет
+эти stop-specific invariants.
+
+Disabled/InvalidInput/Busy/Canceled/SinkFailed/SinkPanicked либо unexpected/inconsistent
+receipt/Event не превращаются в fabricated successful batch: если response возможен,
+возвращается fixed unavailable 404 DP-013. Cancellation/disconnect останавливает
+invocation, никогда не вызывает automatic Poll retry. Failure после Poll уже может
+consumed detached batch; batch discarded без replay/reinsert. NoItem не доказывает
+empty/drained/flushed/complete; receipt success не delivery ACK/external observation/
+persistence. Drops/removals/remaining length неизвестны. Typed-nil/hostile contexts
+сохраняют existing unsupported precondition.
+
+Adapter validate/buffer весь <=16 KiB JSON body до output, не streams partial fields
+или raw errors. Все success/error responses application/json и Cache-Control: no-store,
+без cache validators/Retry-After. Unknown fields, identity echo, arbitrary labels и
+extra codes/schema запрещены. Network/renderer failure может потерять этот result,
+но не меняет Host work.
+
+### 37.3 Classification, redaction и retention
+
+Safe operational diagnostic data — только existing Event allowlist и bounded scalar
+receipt. Workspace/Configuration/Instance/attempt — security-sensitive request routing
+data; principal handles/grants/authenticated identity mappings — security-sensitive
+control data, не diagnostic records. Target/attempt/principal никогда не echo в batch,
+Event, receipt, error или diagnostic log/metric label.
+
+Redaction — allowlist construction до rendering. Не логировать body, certificates/
+identity mapping, target/attempt IDs, grants, headers/credentials, raw causes или
+request/response contents; arbitrary error не форматируется для output. Adapter health
+может использовать fixed aggregate rejected/failed counters без identity/Target labels
+или recursive diagnostics offers. DP-018 management categories/replay/correlation
+authority не переиспользуются. Raw Reader/View/Producer/Owner не serialize/expose.
+
+Adapter-owned diagnostic retention — **один request**: один detached fixed64 batch и
+один <=16 KiB output buffer, clear/release на ordinary return/unwind, включая failure/
+cancellation. Нет per-Target/principal result, history/cache/retry queue/replay storage/
+persistence/audit payload. Existing mailbox capacity64 и lossy drops не меняются.
+External clients могут хранить полученные copies вне server control; client erasure,
+secure memory erasure или durable/lossless observation не обещаются. Transport buffers
+не являются durable diagnostic store.
+
+### 37.4 Stop, shutdown и независимые revocation cuts
+
+Exposure admission закрывается атомарно до любого нового lookup/Poll. Максимум восемь
+existing requests получают cancellation и ordinary deadlines; detached work, forced
+flush или final Poll не создаётся. Host Start/Stop/rollback и Manager waits **никогда
+не ждут** adapter slots, authorizer, Poll, renderer, writer или ingress shutdown.
+Application composition обязана сохранять разделение и при shutdown HTTP ingress.
+
+Successful security-grant evaluation admits одну invocation; более поздний grant
+revoke запрещает subsequent requests, не already admitted invocation. Независимо от
+этого successful Owner Stop retire lifetime на existing locked boundary: до View capture
+Poll запрещён, после capture in-flight Poll может завершиться. Failed launch без
+retained Host retire; failed Stop сохраняет тот же Host/pair. Repeated same-attempt
+Stop возвращает stored failure **без cleanup retry**. Caller cancellation не retire
+Owner lifetime. Later accepted attempt получает независимую pair; quotas не reset.
+
+Unread/late facts и captured output могут discarded/lost. Flush, drain-to-completion,
+final emptiness, delivery ACK, post-revoke retraction или arbitrary-callback termination
+guarantee не добавляются. Lifecycle truth и existing cause/API/config contracts сохранены.
+
+### 37.5 Acceptance proofs и разделение design/runtime
+
+Это required **future executable proofs**, не tests, выполненные TASK-123. Full design
+acceptance их специфицирует; isolated core, transport и production integration требуют
+отдельного scoped authorization и applicable independent verification.
+
+| Proof | Required acceptance evidence |
+| --- | --- |
+| E01 | Exact dedicated action/principal/full Target/expected-attempt grant membership; Observe/admin/replay/wildcard/stale grants не authorize. |
+| E02 | Missing/failed policy, unknown handle и cancellation до admission дают zero Directory/Owner/mailbox calls. |
+| E03 | Authorizer до lookup; absent/mismatch/retired/successor/Target-busy дают identical 404 bytes без identity echo. |
+| E04 | Security admission/grant revoke отделены от Owner retirement-before/after-capture; ровно одна admitted invocation. |
+| E05 | Budget 0/1/64/65 и one Poll/Drain bound; нет retry/reinsert/fanout/phantom receipt success. |
+| E06 | Process8/principal1/Target1 active bounds, zero pending; blocked policy/output не превышает limits и не joins lifecycle. |
+| E07 | Exact refill/bursts/denied charging/no refund; monotonic remainder/saturation/backward-time/overflow cases fail closed. |
+| E08 | Fixed32/64 state; hostile arbitrary IDs/attempts не создают slots; later attempt/grant update не reset quotas. |
+| E09 | POST-only; DTO canonicality/duplicate/unknown fields/body/header/connection/deadline bounds; нет GET consume/retry/replay/streaming. |
+| E10 | Verified mTLS identity-to-handle provenance; forged headers/context/body не создают handles; нет missing-backend allow-all. |
+| E11 | Success Event/counter invariants, uint64 sequence accuracy, <=16 KiB output, только existing closed enums. |
+| E12 | Fixed error body/header allowlists исключают Target/attempt/principal/policy/raw errors/credentials; нет Target-aware 429/cache/diagnostic labels. |
+| E13 | Нет retained batch после normal return/unwind; failed output/cancellation теряет только этот detached batch без replay/reinsert/ACK. |
+| E14 | Shutdown admission race и bounded in-flight cancellation; Host Stop/rollback/Manager не joins blocked bridge/output. |
+| E15 | Failed launch/successful Stop retirement, failed Stop retention/stored failure, later-attempt isolation и late lossy facts. |
+| E16 | Единственная sanctioned production composition; import/API/cause/config compatibility, full regression/hosted race/module/source-to-operator evidence до activation. |
+
+| Production proof | Selected design traceability / remaining runtime obligation |
+| --- | --- |
+| P01 | Specified by Design: single process/exact Owner scope/authenticated handle provenance; production composition E10/E16 ещё required. |
+| P02 | Existing TASK-121 design и TASK-122 B01-B08 isolated substrate сохранены; real production pair/composition isolation ещё required. |
+| P03 | Specified by Design: E01-E04 exact consume authorization/anti-enumeration; executable production proof deferred. |
+| P04 | Specified by Design: E06-E10 finite ingress/rate/state/resources; executable production proof deferred. |
+| P05 | Specified by Design: E06/E14 nonjoining blocked bridge/lifecycle; real overlap proof deferred. |
+| P06 | Specified by Design: E04/E13/E15 retirement/security-cut/loss; isolated evidence не заменяет bridge proof. |
+| P07 | Specified by Design: E11-E13 allowlist/retention/failure projection; executable production output proof deferred. |
+| P08 | Specified by Design: E10/E16 compatibility/composition/source-to-operator; full integrated regression/race/module proof deferred. |
+
+Smallest next candidate — two-file isolated admission/resource core DP-013, Ready
+только к отдельному implementation intake после Acceptance этого design. Transport —
+отдельный candidate; production integration NOT READY до real trust/grant provisioning,
+bounded ingress, sanctioned composition, ARCH-004 section 19 prerequisites и всех
+applicable P01-P08 proofs. TASK-123 не реализует dependencies, не активирует C2/C3
+и не закрывает Gate 11.

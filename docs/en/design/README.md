@@ -18,7 +18,7 @@ This directory contains focused Runtime design documents. A design document expl
 | [DP-010: Runtime Lifecycle Owner Contract](DP-010-runtime-lifecycle-owner-contract.md) | Draft; base and expected-attempt Stop extension implemented in isolation |
 | [DP-011: Runtime Launch Pipeline Integration](DP-011-runtime-launch-pipeline-integration.md) | Draft; base, managed continuation, and exact invoker implemented in isolation; callback/production composition planned |
 | [DP-012: Runtime Source Composition](DP-012-runtime-source-composition.md) | Draft; implemented in isolation |
-| [DP-013: Runtime Management Routing](DP-013-runtime-management-routing.md) | Draft; implemented in isolation; integration blocked |
+| [DP-013: Runtime Management Routing](DP-013-runtime-management-routing.md) | Draft; Start/Stop/Observe implemented in isolation; C2-Exposure section 32 Planned; integration blocked |
 | [DP-014: Runtime Operational Identity Persistence](DP-014-runtime-operational-identity-persistence.md) | Approved; implemented in isolation |
 | [DP-015: Runtime Management Command Idempotency](DP-015-runtime-management-command-idempotency.md) | Approved; Partial implementation: TASK-062/TASK-064 repairs published; TASK-075 read-only per-Instance assessment snapshot implemented and verified in isolation |
 | [DP-016: Runtime Activation, Replacement, and Rollback](DP-016-runtime-activation-replacement-rollback.md) | Approved; implemented in isolation by Coordinator-Accepted TASK-026; Tester, PROCESS-002, Scope Audit 31/0/0, and final Reviewer pass |
@@ -30,7 +30,7 @@ This directory contains focused Runtime design documents. A design document expl
 | [DP-022: Runtime Execution Containment and Evidence](DP-022-runtime-execution-containment-and-evidence.md) | Approved; partial: TASK-070/TASK-071/TASK-073 prerequisites and TASK-074 private composition gate are published; no production wiring |
 | [DP-023: Runtime Process-Containment Bootstrap](DP-023-runtime-process-containment-bootstrap.md) | Approved; implemented in isolation; ordered items 1–5 are published and TASK-075 implements item 6 read-only assessment in isolation; no production wiring |
 | [DP-024: Runtime Recovery Claim and Admission Boundary](DP-024-runtime-recovery-claim-admission-boundary.md) | Approved / Partial; TASK-081 isolated local ordering/fence test-owner models; real-owner/provenance/durable claim/permit absent; integrated proofs Planned |
-| [DP-027: Runtime Diagnostics v1](DP-027-runtime-diagnostics-v1.md) | Draft / Partial; mailbox, component hooks, Host/value-binding wiring and isolated C1/C2-Pull/C2-Binding implemented; TASK-121 design published, TASK-122 isolated acceptance in progress; production C2/C3 Not Activated; Gate11 open |
+| [DP-027: Runtime Diagnostics v1](DP-027-runtime-diagnostics-v1.md) | Draft / Partial; mailbox, component hooks, Host/value-binding wiring and isolated C1/C2-Pull/C2-Binding implemented; TASK-121 design and TASK-122 isolated binding published (PR #123, P10R-122-001 PASS); TASK-123 C2-Exposure Design-only In Progress; production C2/C3 Not Activated; Gate11 open |
 
 ## Publisher governance proposals
 

@@ -18,7 +18,7 @@
 | [DP-010: Контракт Runtime Lifecycle Owner](DP-010-runtime-lifecycle-owner-contract.md) | Draft; base и extension expected-attempt Stop реализованы изолированно |
 | [DP-011: Интеграция Runtime Launch Pipeline](DP-011-runtime-launch-pipeline-integration.md) | Draft; base, managed continuation и exact invoker реализованы изолированно; callback/production composition запланированы |
 | [DP-012: Композиция Runtime Source](DP-012-runtime-source-composition.md) | Draft; реализован изолированно |
-| [DP-013: Маршрутизация управления Runtime](DP-013-runtime-management-routing.md) | Draft; реализован изолированно; integration blocked |
+| [DP-013: Маршрутизация управления Runtime](DP-013-runtime-management-routing.md) | Draft; Start/Stop/Observe реализованы изолированно; C2-Exposure раздел 32 Planned; integration blocked |
 | [DP-014: Персистентность operational identity Runtime](DP-014-runtime-operational-identity-persistence.md) | Approved; реализован изолированно |
 | [DP-015: Идемпотентность management commands Runtime](DP-015-runtime-management-command-idempotency.md) | Approved; Partial implementation: repairs TASK-062/TASK-064 опубликованы; read-only per-Instance assessment snapshot TASK-075 реализован и проверен изолированно |
 | [DP-016: Activation, replacement и rollback Runtime](DP-016-runtime-activation-replacement-rollback.md) | Approved; реализован изолированно Coordinator-Accepted TASK-026; Tester, PROCESS-002, Scope Audit 31/0/0 и final Reviewer проходят |
@@ -30,7 +30,7 @@
 | [DP-022: Граница containment исполнения Runtime и evidence](DP-022-runtime-execution-containment-and-evidence.md) | Approved; partial: prerequisites TASK-070/TASK-071/TASK-073 и private composition gate TASK-074 опубликованы; production wiring отсутствует |
 | [DP-023: Bootstrap process-containment Runtime](DP-023-runtime-process-containment-bootstrap.md) | Approved; реализован изолированно; ordered items 1–5 опубликованы, а TASK-075 реализует item 6 read-only assessment изолированно; production wiring отсутствует |
 | [DP-024: Граница recovery claim и admission Runtime](DP-024-runtime-recovery-claim-admission-boundary.md) | Approved / Partial; TASK-081 isolated local ordering/fence test-owner models; real-owner/provenance/durable claim/permit absent; integrated proofs Planned |
-| [DP-027: Runtime Diagnostics v1](DP-027-runtime-diagnostics-v1.md) | Draft / Partial; mailbox, component hooks, Host/value-binding wiring и isolated C1/C2-Pull/C2-Binding реализованы; TASK-121 design опубликован, TASK-122 isolated acceptance выполняется; production C2/C3 Not Activated; Gate11 открыт |
+| [DP-027: Runtime Diagnostics v1](DP-027-runtime-diagnostics-v1.md) | Draft / Partial; mailbox, component hooks, Host/value-binding wiring и isolated C1/C2-Pull/C2-Binding реализованы; TASK-121 design и TASK-122 isolated binding опубликованы (PR #123, P10R-122-001 PASS); TASK-123 C2-Exposure Design-only In Progress; production C2/C3 Not Activated; Gate11 открыт |
 
 ## Publisher governance proposals
 
