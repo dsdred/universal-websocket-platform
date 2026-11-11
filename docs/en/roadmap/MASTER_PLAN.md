@@ -366,10 +366,15 @@ The Runtime Alpha Review identifies implementation debt that must be tracked ind
   `da0ea8c8f8c0c5f412171bbc59c2cb35cbb3c63b`, required `go-ci` SUCCESS and
   P10R-120-001 PASS. Its O01–O16 evidence does not supply production Host binding or
   operator exposure. [TASK-121](../../tasks/TASK-121-RUNTIME-DIAGNOSTICS-C2-BINDING-DESIGN.md)
-  is the current design-only Host-lifetime ownership/admission task; it does not
-  activate production C2. C2-Exposure and C3 remain Not Ready / Not Activated.
-  Gate11 OPEN and criteria unchanged; DP027 Draft/Partial, DP009 Draft, no new
-  Windows/native TASK102 qualification.
+  published the accepted Host-lifetime ownership/admission design through source
+  `dc36e85d4de5b0c22f97ad4e3f2599905a5cc94c`, PR #122 merge
+  `0bf83bd394071f4ca9a6c102201a2f117acec819` and independent P10R PASS.
+  [TASK-122](../../tasks/TASK-122-RUNTIME-DIAGNOSTICS-C2-BINDING.md) implements the
+  isolated Owner binding; acceptance is in progress. It does not compose a current
+  binary or activate production C2. C2-Exposure and C3 remain Not Ready / Not
+  Activated. Gate11 OPEN and criteria unchanged; DP027 Draft/Partial, DP009 Draft,
+  no new Windows/native TASK102 qualification. GitHub Issue #121 remains a separate
+  Not Activated Publisher infrastructure item.
 - Basic and asymmetric JWT Runtime coverage is incomplete.
 - Origin behavior relies on library defaults rather than explicit Configuration.
 

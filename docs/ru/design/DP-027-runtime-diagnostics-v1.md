@@ -5,7 +5,7 @@
 ## 1. Статус и scope
 
 - **Design Status:** Draft.
-- **Implementation Status:** Partial — mailbox (TASK-110), component hooks (TASK-112), optional Host/Bootstrap wiring (TASK-113), isolated consumer core C1 (TASK-115), isolated C2-Pull (TASK-120); production C2 binding/exposure Planned.
+- **Implementation Status:** Partial — mailbox (TASK-110), component hooks (TASK-112), optional Host/Bootstrap wiring (TASK-113), isolated consumer core C1 (TASK-115), isolated C2-Pull (TASK-120) и isolated C2-Binding (TASK-122) реализованы; production C2 exposure Not Activated.
 - **Целевая веха:** Beta, Gate 11; этот документ не закрывает Gate 11.
 - **Задача:** [TASK-109](../../tasks/TASK-109-RUNTIME-DIAGNOSTICS-V1-DESIGN.md).
 - **Source baseline:** `67ca1b200d42fda5be8b6dc8741d8f0bc24bd2a6`.
@@ -31,8 +31,9 @@ Consumer/delivery refinement: [TASK-114](../../tasks/TASK-114-RUNTIME-DIAGNOSTIC
 и реализует только C1; раздел27 фиксирует текущие implementation boundaries.
 
 Operational integration refinement: [TASK-116](../../tasks/TASK-116-RUNTIME-DIAGNOSTICS-OPERATIONAL-INTEGRATION-DESIGN.md),
-разделы28–34 — proposed design baseline. TASK-120 опубликовала isolated C2-Pull;
-production C2-Binding/Exposure и C3 остаются Not Activated.
+разделы28–34 — proposed design baseline. TASK-120 опубликовала isolated C2-Pull.
+TASK-121 опубликовала concrete C2-Binding design; TASK-122 реализует этот binding
+в isolation. Production C2-Exposure и C3 остаются Not Activated.
 
 Integration design: [TASK-111](../../tasks/TASK-111-RUNTIME-DIAGNOSTICS-INTEGRATION-DESIGN.md),
 baseline `060cf22cf040a2e84d49c52095af9ed4ab9390a7`. Раздел15 сохраняет historical
@@ -862,7 +863,7 @@ authorization; actual operator visibility требует и source coverage, и 
 | Slice | Readiness / dependency |
 | --- | --- |
 | C2-Pull isolated bounded View | Реализован и опубликован TASK-120. O01–O16 accepted с зафиксированными platform limitations; это не production Host binding или operator exposure |
-| C2-Binding concrete Host-lifetime scope | Design-only TASK-121 active / production Not Activated. Нужны concrete sanctioned owner, per-Host allocation/retirement и launch/management seam decisions; mutable dependency rebind запрещён |
+| C2-Binding concrete Host-lifetime scope | TASK-121 design опубликован; TASK-122 isolated implementation complete / production Not Activated. Concrete sanctioned owner, per-Host allocation/retirement и launch/management seam; mutable dependency rebind запрещён |
 | C2-Exposure operator bridge/deployment | Not Ready / Not Activated. C2-Binding, exact consume authorization/scheduling/resources/rate/retention/transport и P01–P08 |
 | C3-Schema/source designs | Not Ready for implementation / Not Activated. Separate source/closed schema/version/eligibility/panic/deduplication и S01–S12; design не обязан ждать C2 transport |
 | C3 source/private passage/integrated coverage | Not Ready / Not Activated. Accepted focused designs/separate implementation authorizations/compatibility/race и eventual C2 admission для operator visibility |
@@ -976,8 +977,9 @@ DP027 остаётся Draft/Partial, DP009 Draft, Gate11 OPEN, TASK102 неиз
 
 ## 36. Design ownership C2-Binding для Host lifetime (TASK-121)
 
-TASK-121 разрешает design-вопрос, оставленный разделами 30–34. Этот раздел — более
-новое Draft design evidence; он не переписывает историю TASK-116 и не активирует C2.
+TASK-121 разрешает design-вопрос, оставленный разделами 30–34. TASK-122 реализует
+binding изолированно. Это остаётся Draft evidence; оно не переписывает историю
+TASK-116, не компонует production binary и не активирует C2.
 
 ### 36.1 Решение owner и deployment
 
@@ -1017,7 +1019,7 @@ raw Reader/View capability не распространяется.
 | Stop побеждает, пока Launch может вернуть Host | Pair сохраняется с attempt; возвращённый Host останавливается до retirement. |
 | Running -> concurrent Poll | Owner match-ит exact active attempt под lock; Poll выполняется вне lifecycle locks и не join-ит Host. |
 | Caller cancellation | Отменяет только wait; Owner work и pair lifetime продолжаются. |
-| Stop failure | Host/pair conservatively retained для same-attempt retry. |
+| Stop failure | Host/pair conservatively retained; repeated same-attempt Stop наблюдает сохранённую failure без cleanup retry. |
 | Successful Stop | Locked retirement revoke-ит новый access и detaches Owner references; admitted Poll может завершиться, unread/late events могут быть потеряны. |
 | Next accepted attempt | Новая independent pair/sequence domain; retired pair не rebind/reuse. |
 
@@ -1047,15 +1049,19 @@ Dispositions оценивают completeness design, а не executable producti
 | Proof | Disposition | Result TASK-121 / remaining evidence |
 | --- | --- | --- |
 | P01 | Satisfied by Design | Lifecycle Owner, single-process Control Service scope и private exact-attempt handle/access seam выбраны. Wiring current binary отсутствует. |
-| P02 | Satisfied by Design | Exact: одна allocation на accepted Host launch, retention при same-Host rollback/Stop, новая pair для later attempt, private dependency copy; implementation tests будущие. |
+| P02 | Satisfied by Design | Exact: одна allocation на accepted Host launch, retention при same-Host rollback/Stop, новая pair для later attempt, private dependency copy; TASK-122 даёт isolated implementation tests, production composition остаётся future. |
 | P03 | Deferred | Authorization-before-lookup/read, exact attempt, revocation и anti-enumeration заданы; concrete policy/Directory/API implementation принадлежит C2-Exposure. |
 | P04 | Deferred | Implicit worker/registry запрещены; scheduling, concurrency, pending-call, rate и retention limits требуют exposure contract. |
 | P05 | Deferred | Design запрещает lifecycle joins и выполняет Poll вне Owner locks; real bridge/rendering overlap proof требует production composition. |
 | P06 | Satisfied by Design | Failed launch/Stop, successful retirement, admitted-Poll race и late/unread loss semantics явны, без flush/final-empty/ACK. |
 | P07 | Deferred | Existing Event/Poll allowlist и запрет identity/raw data сохранены; operator rendering/redaction proof требует C2-Exposure. |
-| P08 | Deferred | Exact code composition, API compatibility, full/race tests и real source-to-operator evidence требуют separately authorized implementation/integration. |
+| P08 | Deferred | Isolated code/API/full-test evidence существует в TASK-122; production composition, hosted race qualification и real source-to-operator evidence требуют separately authorized integration. |
 
 Blocking design rows отсутствуют. Production C2 остаётся **Not Activated** и не готова
 как одна undivided implementation: isolated C2-Binding implementation можно оценить
 отдельно, а C2-Exposure зависит от P03–P05/P07/P08. C3 не меняется и Not Activated.
 Gate 11 остаётся OPEN.
+
+TASK-122 даёт isolated executable B01–B08 evidence для allocation, immutable binding,
+exact-attempt Poll, revocation и lifecycle retention. Она не повышает Deferred
+production/exposure rows P03–P05/P07/P08 и не заявляет operator visibility.

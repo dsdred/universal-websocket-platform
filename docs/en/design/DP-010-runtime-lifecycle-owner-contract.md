@@ -6,8 +6,8 @@
 
 **Design Status:** Draft
 
-**Implementation Status:** Base lifecycle Owner and expected-attempt Stop
-extension implemented in isolation
+**Implementation Status:** Base lifecycle Owner, expected-attempt Stop extension and
+TASK-122 isolated C2-Binding implemented; production composition remains absent
 
 **Architecture status:** implementation contract for the approved operational
 identity model in
@@ -22,6 +22,11 @@ implemented and verified in isolation by completed and Coordinator-Accepted
 TASK-040; its private invoker,
 integration, and production wiring remain absent. This Draft does not revise
 approved architecture.
+
+TASK-122 implements section 33 inside `internal/runtimelifecycle`: fail-closed
+zero-base admission, one private mailbox/View per accepted attempt, an immutable
+launch dependency copy, exact-attempt bounded Poll and lifecycle revocation. It adds
+no Control Service/Directory/Host wiring and does not activate production C2.
 
 ## 2. Purpose
 
@@ -875,8 +880,9 @@ persistence, management, policy, supervision, or production wiring.
 
 ## 33. C2 diagnostics Host-lifetime binding design (TASK-121)
 
-This section is a Draft design addendum. It changes no current implementation
-status and does not activate production diagnostics.
+This section remains a Draft design addendum. TASK-122 implements it in isolation;
+the current binary still does not compose it and production diagnostics remain
+Not Activated.
 
 ### 33.1 Sanctioned owner and scope
 
@@ -921,8 +927,8 @@ Producer capabilities never appear in `Observation`, `AttemptFact`, `StartOutcom
 `StopOutcome`, Bootstrap outcomes or Host APIs. They are not persisted or returned
 to application handlers.
 
-A future management-only expected-attempt operation may ask Owner to Poll this
-private lifetime. Owner must, under its existing mutex, match the exact active
+The isolated management-only `PollDiagnosticsExpectedAttempt` operation asks Owner
+to Poll this private lifetime. Owner must, under its existing mutex, match the exact active
 Launch Attempt and active lifetime, capture one View value, and release the mutex
 before `View.Poll`. Mismatch and retirement perform zero Poll/read and return one
 normalized unavailable result. No mailbox call, callback, context wait or sink runs
@@ -938,7 +944,7 @@ complete before this Owner operation is invoked.
 | Launch returns a Host while Stop already won | Keep the pair while Owner stops that same Host; retire only after successful Host cleanup. |
 | Host reaches Running | Keep the same pair active for the complete retained Host lifetime. |
 | Caller wait is canceled | No retirement; Owner-owned launch/Stop work and the pair continue. |
-| Host Stop fails | Keep Host and pair conservatively retained; a later same-attempt Stop retry uses the same pair. |
+| Host Stop fails | Keep Host and pair conservatively retained. A repeated same-attempt Stop request observes the stored failure without a cleanup retry, and the same pair remains retained. |
 | Host Stop succeeds | Under the Owner mutex revoke new access, mark retired and detach Owner's View/Producer references; unread or racing late facts may be lost. |
 | A later attempt is accepted | Allocate a new independent pair; the retired pair is never rebound or reused. |
 
@@ -950,8 +956,8 @@ lossy Offer. Stop never waits for Poll, rendering or a sink.
 
 ### 33.5 Implementation boundary
 
-TASK-121 supplies design only. A future isolated binding implementation must prove
-one allocation per accepted Launcher call, private dependency-copy identity, same-
-Host retention, distinct-attempt isolation, exact-attempt access/revocation races,
-failed-Stop retention, successful-Stop retirement and absence of lifecycle joins.
-It must not add Control Service wiring or operator exposure without a separate gate.
+TASK-121 supplied the design. TASK-122 implements and tests one allocation per
+accepted Launcher call, private dependency-copy identity, same-Host retention,
+distinct-attempt isolation, exact-attempt access/revocation races, failed-Stop
+retention, successful-Stop retirement and absence of lifecycle joins. Control Service
+wiring and operator exposure still require a separate gate.
