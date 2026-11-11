@@ -8,16 +8,26 @@
 
 ## Текущее состояние
 
-Текущая engineering task [TASK-122](../docs/tasks/TASK-122-RUNTIME-DIAGNOSTICS-C2-BINDING.md) —
-isolated C2-Binding implementation в per-Runtime-Instance Lifecycle Owner.
-Implementation и B01–B08 focused evidence завершены; independent gates и
-Coordinator Acceptance выполняются. Baseline `main`/`origin/main` —
-`0bf83bd394071f4ca9a6c102201a2f117acec819`. Architecture Confirmation PASS,
-blocking findings 0. Разрешены только три `internal/runtimelifecycle` production/test
-пути и двенадцать сопроводительных documentation paths. Commit и Publication Gates
-не разрешены. C2-Exposure, production C2/C3 activation, TASK102 и Gate11 closure
-вне scope; Gate11 OPEN. GitHub Issue #121 остаётся отдельным Not Activated
-Publisher infrastructure item.
+Текущая engineering task [TASK-123](../docs/tasks/TASK-123-RUNTIME-DIAGNOSTICS-C2-EXPOSURE-READINESS.md) —
+C2-Exposure Design-only, projected `In Progress`. Owner разрешил только documentation
+checkpoint и Draft design в DP-013/027 EN/RU; production implementation и activation
+не разрешены. Baseline `main`/`origin/main` —
+`6fb5b02bbff3186db86e26cb946be4b24095edfd`. Exact current design subject, verdict и
+checkpoint определяются newest valid task-record envelope с independently recomputed
+manifest; intake Approval не заменяет full design Verification/Review/Acceptance.
+Commit/Publication Gates не разрешены. TASK102 не затронута; GitHub Issue #121,
+production C2/C3 и C2-Exposure Not Activated; Gate11 OPEN.
+
+[TASK-122](../docs/tasks/TASK-122-RUNTIME-DIAGNOSTICS-C2-BINDING.md) завершила isolated
+C2-Binding publication: accepted source
+`7881d66cfe7e4bcd1c5eba7e8e8a5ae50385ae54`, PR #123 MERGED как
+`6fb5b02bbff3186db86e26cb946be4b24095edfd`, source/merge tree
+`4a39c852b2467ac4e2071387eeaab821fc213c63`. Publication Gate и independent
+P10R-122-001 PASS; PR CI `42996024425` и post-merge CI `42996472196` SUCCESS,
+все семь verification steps, включая hosted Linux race и tidy/module guards.
+Publication terminal `Consumed(P10) / NoneTerminal / Unissued`. Isolated B01–B08
+не доказывают production exposure или P03–P05/P07/P08; original task record и
+historical platform limitations сохранены. Production C2/C3 и C2-Exposure не активированы.
 
 [TASK-121](../docs/tasks/TASK-121-RUNTIME-DIAGNOSTICS-C2-BINDING-DESIGN.md)
 завершила design publication: accepted source

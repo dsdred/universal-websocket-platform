@@ -5,7 +5,7 @@
 ## 1. Status
 
 - **Design Status:** Draft
-- **Implementation Status:** Implemented in isolation
+- **Implementation Status:** Start/Stop/Observe implemented in isolation; C2-Exposure section 32 Planned
 - **Integration Readiness:** Blocked; full integration and Production
   Activation require the Approved/Planned DP-019 prerequisites and wiring below
 
@@ -713,12 +713,13 @@ identified above.
 
 ## 31. C2 diagnostics consume-admission boundary (TASK-121)
 
-This section defines the boundary required by C2-Binding but does not add a current
-Directory method, endpoint or production capability.
+This section records the TASK-121 boundary required by C2-Binding. Section 32 supplies
+the TASK-123 selected exposure design; neither adds a current Directory method,
+endpoint or production capability.
 
 `ActionObserve` authorizes only detached lifecycle observation and never authorizes a
 destructive diagnostics Poll. DP-018 command/replay authority is also inapplicable.
-A later C2-Exposure design must introduce a distinct diagnostics-consume authorization
+The C2-Exposure design in section 32 selects a distinct diagnostics-consume authorization
 contract whose input includes the exact `Target` and expected non-empty Launch Attempt
 identity. It must not overload the current `Authorize` version parameter.
 
@@ -734,13 +735,179 @@ The mandatory order for each future request is:
    active attempt and non-retired private lifetime before copying its View;
 6. perform at most one bounded `View.Poll` outside Directory/Owner locks.
 
-Authorization that wins permits that one admitted operation. Revocation visible before
-Owner's locked lifetime claim prevents Poll; revocation after the claim affects later
-requests and does not retract the admitted Poll. A successor attempt never satisfies an
+Current security authorization that wins permits one admitted invocation; later grant
+revocation affects subsequent requests. Separately, Owner lifetime retirement visible
+before its locked View claim prevents Poll; retirement after that claim does not
+retract the admitted Poll. Section 32.2 specifies these independent cuts. A successor attempt never satisfies an
 older expected-attempt request. Unauthorized, nonexistent, retired and mismatched
 requests consume no event and must not disclose which condition occurred.
 
-C2-Exposure must separately define concrete policy, rate/concurrency/pending-request
-bounds, transport, output rendering, retention and redaction. It may not add an
+Section 32 and DP-027 section 37 specify concrete policy, rate/concurrency/pending-request
+bounds, transport, output rendering, retention and redaction as Draft design. It may not add an
 unbounded target/handle registry, background worker or lifecycle wait. Directory keeps
 only its existing Owner scope; the raw Reader/View handle remains private to Owner.
+
+## 32. C2-Exposure consume contract (TASK-123)
+
+This is the selected **Draft / Planned** exposure design, not an implemented route
+or production authorization. Section 31 records the TASK-121 prerequisite; this
+section supplies its concrete consume policy and admission contract. Existing
+Start/Stop/Observe behavior is unchanged. Resource, result, retention and proof
+requirements are canonical in [DP-027 section 37](DP-027-runtime-diagnostics-v1.md#37-c2-exposure-resources-results-and-proofs-task-123).
+
+### 32.1 Topology and trust
+
+The only selected deployment is a future single Control Service process containing
+one immutable Directory, one Lifecycle Owner per Runtime Instance and its in-process
+Host. Current `cmd/control-service` constructs none of these; its HTTP server and
+stdout logger gain no diagnostics authority from this design. Host remains the sole
+operational graph/lifecycle owner. Reader/View remain private to Owner; Producer uses
+only the existing launch-private binding and never the external API. No fifth Bootstrap
+binding, mutable dependency rebind, worker, logger fallback, dynamic target registry
+or cross-process capability transfer is introduced.
+
+The planned wire adapter uses **TLS 1.3 mutually authenticated HTTP/1.1**, with HTTP/2
+disabled for this first contract. Trusted application authentication maps a verified,
+configured client identity to an opaque construction-issued principal handle.
+Request bodies, headers, query parameters, arbitrary context values, unverified
+forwarded identities and client-asserted grants cannot construct that handle.
+There is no cookie, bearer, ambient-browser, redirect or CORS authority.
+
+Composition preconfigures at most **32 principal slots** and **64 immutable Target
+slots**. Unknown/zero/unconfigured handles fail closed. Requests create no principal,
+Target or attempt slots. The future adapter must enforce the bounded ingress in
+DP-027 section 37 before exposing the route; this does not modify the current server.
+
+### 32.2 Exact current consume authority
+
+The dedicated action is `runtime.diagnostics.consume`, separate from ActionObserve,
+Start/Stop, the existing Authorize version parameter and DP-018 reporting/replay or
+durable command authority. One evaluation receives the verified principal handle,
+this action, exact Workspace/Configuration/Runtime Instance Target, nonempty expected
+Launch Attempt ID, requested Poll budget and current caller context.
+
+The concrete policy is **explicit current exact-grant membership**. The trusted grant
+snapshot must enable that principal/action/full Target/expected-attempt tuple. No
+wildcard, admin/role inheritance, cross-Workspace fallback, latest-attempt selection
+or client-asserted grant authorizes consumption. A snapshot contains at most **2,048
+grants** (32 principals x 64 Targets), with at most one current expected-attempt grant
+per principal/Target; it retains no grant history or diagnostic batch.
+
+A trusted policy provider atomically supplies the current snapshot. Missing provider,
+unavailable evaluation, malformed/unknown snapshot, absent/disabled/stale exact grant
+or canceled evaluation denies. Missing production policy must never become allow-all.
+The endpoint cannot provision/update grants. Authenticated trusted application grant
+provisioning and revocation remain a separate **production activation prerequisite**;
+this document does not claim that backend exists. The provider must satisfy the
+trusted prompt, concurrent-safe and nonpanicking callback contract; no remote policy
+I/O, detached evaluation or timeout goroutine is hidden inside this boundary.
+
+Successful current evaluation is the **security admission linearization point** for
+exactly one invocation. Its result is not serialized, replayed, cached or transferred
+to another request. Security-grant revocation before this cut denies; after it,
+revocation affects subsequent requests and does not retract the admitted invocation.
+Independently, Owner lifetime retirement before its locked View capture prevents
+Poll; retirement after capture does not retract that Poll. No external-policy check
+is promised under Owner's mutex, and no atomic multi-lock security/lifetime cut is
+invented. This preserves the existing DP-010 seam.
+
+### 32.3 Admission and exact routing order
+
+1. Attempt the process request slot without waiting; reject closed admission before
+   any lookup. Ingress bounds apply even before parsing or principal resolution.
+2. Validate method, content type, body bound and one fixed DTO. Reject unknown or
+   duplicate fields, compression and noncanonical identities without target lookup.
+3. Resolve the already-authenticated trusted principal handle, sample cancellation,
+   charge process/principal rate buckets and acquire its principal slot independently
+   of the requested Target or its existence. Unknown handles fail closed.
+4. Evaluate the dedicated current consume authorizer exactly once on the full request.
+5. Recheck cancellation. Denial/cancellation before routing makes **zero Directory
+   lookup, Owner call and mailbox read**.
+6. Only after authorization select the existing immutable Directory scope and compare
+   the complete Target. Never route by ConfigurationVersion, PID, Sequence or Host
+   pointer; never fall back to another Workspace or a successor/latest attempt.
+7. Attempt that configured Target's slot and charge its rate bucket without waiting.
+   Absent/mismatched binding and Target quota refusal use the same unavailable result.
+8. Invoke Owner.PollDiagnosticsExpectedAttempt once with the original expected attempt,
+   context and budget. Owner atomically matches active attempt/lifetime under its
+   mutex, captures View, unlocks and performs at most one bounded Poll/Drain.
+9. Validate the detached result and construct only the bounded allowlisted response
+   in DP-027 section 37. Clear temporary copies on ordinary return/unwind.
+10. Release Target/principal/process in-flight slots after response handling finishes,
+    on every returning/unwinding path. Never queue, retry, reinsert or detach work.
+
+Admission/counter updates use short nonblocking critical sections; contention refuses
+admission instead of creating a hidden waiting queue. No adapter/Directory/quota lock
+spans authorizer callbacks, Owner/Poll, serialization or network I/O. Contexts retain
+the existing prompt/nonpanicking precondition. Deadlines do not guarantee termination
+of hostile or nonreturning trusted callbacks. Existing Directory.admit, which looks up
+before management authorization, is not reused as the consume path. Neither d.admit nor
+per-request d.valid/Observe/scope iteration may run before consume authorization;
+construction-time immutable binding validation is allowed. After authorization, the
+new path may directly select the existing package-private immutable map.
+
+### 32.4 Planned request and failure API
+
+The planned resource is `POST /runtime-diagnostics/v1/poll`, Content-Type
+`application/json`, one request/response. There is no GET consumption, streaming,
+WebSocket, pagination, cursor, compression, automatic retry or idempotency/replay key.
+No route or handler is added by this design.
+
+```json
+{"workspaceId":"1","configurationId":"2","runtimeInstanceId":"runtime-opaque-id","expectedLaunchAttemptId":"attempt-opaque-id","budget":16}
+```
+
+Workspace/Configuration IDs are canonical nonzero uint64 decimal strings: 1..20
+digits, within uint64 range, without leading zero/sign/whitespace. Runtime Instance
+and expected-attempt IDs are exact opaque 1..128 ASCII characters `[A-Za-z0-9_-]`.
+No trim, case folding or normalization occurs. This wire grammar changes no internal
+domain type; other internal identities are unavailable through this API version.
+Budget is a required JSON integer 1..64. Expected attempt comes from separately
+authorized management knowledge; this endpoint never discovers it.
+
+| Condition | Exact external behavior |
+| --- | --- |
+| TLS authentication fails | TLS handshake failure; no target-aware HTTP response |
+| Wrong method | 405, Allow: POST, fixed unavailable body; no lookup |
+| Wrong content type, malformed/oversized/noncanonical DTO, duplicate/unknown field or compression | 400, fixed body `{"error":"invalid_diagnostics_request"}`; no lookup/read |
+| Process/principal prelookup capacity/rate refusal | 429, fixed unavailable body, independent of requested Target |
+| Process shutting down | 503, fixed unavailable body, independent of Target |
+| Unknown trusted principal; consume deny/failure/unavailable; absent/mismatched Target; successor/retired lifetime; Target quota refusal; Poll Busy or invalid result | 404, identical bytes `{"error":"diagnostics_unavailable"}` |
+| Valid detached result | 200, only the response in DP-027 section 37 |
+| Caller disconnect/cancellation | Stop this invocation; if no usable connection, no response; no retry/replay/reinsert |
+
+The fixed unavailable body for 405/429/503 is also
+`{"error":"diagnostics_unavailable"}`. All responses use application/json and
+Cache-Control: no-store; no ETag, Last-Modified, shared cache or Retry-After. Error
+bodies never echo Target/attempt/principal, grant epoch/reason, quotas, existence,
+raw causes or internal status. Target-specific Busy/rate refusals are **404**, never
+target-aware 429. Anti-enumeration promises the same external class/body and no denied
+lookup/read, not exact microtiming equality. Failure after Poll admission may already
+have consumed events; its body never promises zero consumption or retraction.
+
+### 32.5 Implementation split and activation gates
+
+The first candidate is an isolated diagnostics admission/resource adapter in only
+`internal/runtimemanagement/diagnostics.go` and `diagnostics_test.go`, borrowing the
+existing Directory's package-private immutable scopes. It needs no changes to existing
+NewDirectory/Start/Stop/Observe/Authorize APIs. A new dedicated adapter API may issue
+opaque principal handles at trusted construction; it exposes no raw Owner/Reader/View.
+Construction rejects missing evaluator, invalid clock/configuration, more than 32
+principals or 64 Targets, and duplicate/reused bindings or principal slots within its
+supplied configuration. Copies of one adapter share all quota state. A constructor
+cannot detect separately constructed adapters or other Directories without a new
+global registry. Exactly one sanctioned adapter per process and absence of bypass
+paths are mandatory Composition Audit/activation proofs, not global enforcement
+claimed by construction. It creates no production authentication backend, route or
+handler. Test grants are not production policy.
+
+This core is a candidate **Ready for separate implementation intake only after final
+design Acceptance**, exact scope/coverage confirmation and separate Owner permission.
+A later independent candidate is bounded mTLS transport/serialization against a fake
+core. Neither candidate is activated here. Production integration is **NOT READY**
+until trusted mTLS configuration, identity-to-handle mapping, actual current exact-grant
+provisioning/revocation, bounded ingress, one sanctioned adapter/Directory/Owner
+composition, relevant ARCH-004 section 19 dependencies and integrated P01-P08 proofs
+exist. An unavailable fail-closed backend is not useful production consume authority.
+No isolated allow-all fixture may cross that gate. C2/C3 remain Not Activated;
+Gate 11 remains OPEN. No Frozen/Approved contract is amended.

@@ -369,12 +369,24 @@ The Runtime Alpha Review identifies implementation debt that must be tracked ind
   published the accepted Host-lifetime ownership/admission design through source
   `dc36e85d4de5b0c22f97ad4e3f2599905a5cc94c`, PR #122 merge
   `0bf83bd394071f4ca9a6c102201a2f117acec819` and independent P10R PASS.
-  [TASK-122](../../tasks/TASK-122-RUNTIME-DIAGNOSTICS-C2-BINDING.md) implements the
-  isolated Owner binding; acceptance is in progress. It does not compose a current
-  binary or activate production C2. C2-Exposure and C3 remain Not Ready / Not
-  Activated. Gate11 OPEN and criteria unchanged; DP027 Draft/Partial, DP009 Draft,
-  no new Windows/native TASK102 qualification. GitHub Issue #121 remains a separate
-  Not Activated Publisher infrastructure item.
+  [TASK-122](../../tasks/TASK-122-RUNTIME-DIAGNOSTICS-C2-BINDING.md) published the
+  accepted **isolated C2-Binding implementation**: source
+  `7881d66cfe7e4bcd1c5eba7e8e8a5ae50385ae54`, PR #123 merge
+  `6fb5b02bbff3186db86e26cb946be4b24095edfd`, source/merge tree
+  `4a39c852b2467ac4e2071387eeaab821fc213c63`, independent P10R-122-001 PASS.
+  PR CI `42996024425` and post-merge CI `42996472196` SUCCESS include all seven
+  verification steps, hosted Linux race and tidy/module guards. Publication is
+  terminal `Consumed(P10) / NoneTerminal / Unissued`; B01–B08 remain isolated
+  evidence, not production P03–P05/P07/P08. Current binary composition is absent.
+  [TASK-123](../../tasks/TASK-123-RUNTIME-DIAGNOSTICS-C2-EXPOSURE-READINESS.md) is
+  the Owner-authorized C2-Exposure Design-only task, projected In Progress.
+  Its exact design subject/verdict/checkpoint resolves from the newest valid
+  task-record envelope matching the independently recomputed manifest.
+  Production C2/C3 and C2-Exposure remain Not Activated; Gate11 OPEN and criteria
+  unchanged; DP027 Draft/Partial, DP009 Draft. TASK102 is untouched; hosted Linux
+  evidence is not Windows/native qualification. GitHub Issue #121 remains a
+  separate Not Activated Publisher infrastructure item. No implementation,
+  Commit Gate or Publication Gate is authorized by this design task.
 - Basic and asymmetric JWT Runtime coverage is incomplete.
 - Origin behavior relies on library defaults rather than explicit Configuration.
 

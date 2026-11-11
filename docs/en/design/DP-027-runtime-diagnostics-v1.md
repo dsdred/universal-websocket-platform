@@ -868,7 +868,7 @@ operator visibility needs both source coverage and sanctioned C2 production expo
 | --- | --- |
 | C2-Pull isolated bounded View | Implemented and published by TASK-120. O01–O16 accepted with recorded platform limitations; this is not production Host binding or operator exposure |
 | C2-Binding concrete Host-lifetime scope | TASK-121 design published; TASK-122 isolated implementation complete / production Not Activated. Concrete sanctioned owner, per-Host allocation/retirement and launch/management seam; no mutable dependency rebind |
-| C2-Exposure operator bridge/deployment | Not Ready / Not Activated. C2-Binding, exact consume authorization, scheduling/resources/rate/retention/transport and P01–P08 |
+| C2-Exposure operator bridge/deployment | TASK-123 selected Draft design in section 37 and DP-013 section 32; implementation requires separate intake/authorization. Production Not Ready / Not Activated until actual trust/composition and P01–P08 |
 | C3-Schema/source designs | Not Ready for implementation / Not Activated. Separate source/closed schema/version/eligibility/panic/deduplication decisions and S01–S12; design need not wait for C2 transport |
 | C3 source/private passage/integrated coverage | Not Ready / Not Activated. Accepted focused designs, separate implementation authorizations, compatibility/race evidence and eventual C2 admission for operator visibility |
 
@@ -1040,15 +1040,16 @@ zero read and use an anti-enumerating external unavailable class. `ActionObserve
 current version parameter and DP-018 authority are never reused.
 
 After authorization, Owner atomically matches the expected active attempt and active
-lifetime, captures one View, unlocks and performs at most one bounded Poll. Revocation
-before that claim prevents Poll; a later revocation does not retract the already
-admitted operation. Concrete policy, concurrency/pending/rate limits, transport,
-rendering, retention and redaction remain C2-Exposure work. No worker or registry is
+lifetime, captures one View, unlocks and performs at most one bounded Poll. Owner lifetime retirement
+before that claim prevents Poll; later retirement does not retract the captured Poll.
+Security-grant admission/revocation is a separate cut specified in DP-013 section 32.2. Concrete policy, concurrency/pending/rate limits, transport, rendering, retention
+and redaction are specified by TASK-123 section 37 and DP-013 section 32 as Draft design. No worker or registry is
 implied.
 
 ### 36.4 P01–P08 design traceability
 
-These dispositions assess design completeness, not executable production proof.
+These dispositions preserve the historical TASK-121 design assessment, not executable
+production proof. Current TASK-123 design traceability is in section 37.5.
 
 | Proof | Disposition | TASK-121 result / remaining evidence |
 | --- | --- | --- |
@@ -1069,3 +1070,207 @@ unchanged and Not Activated. Gate 11 remains OPEN.
 TASK-122 supplies the isolated executable B01–B08 evidence for allocation, immutable
 binding, exact-attempt Poll, revocation and lifecycle retention. It does not promote
 the Deferred production/exposure rows P03–P05/P07/P08 or claim operator visibility.
+
+## 37. C2-Exposure resources, results and proofs (TASK-123)
+
+This selected **Draft / Planned** contract completes the exposure design inputs after
+TASK-122; it implements or activates no adapter, route or production C2/C3. Authority,
+exact routing order, transport request/failure API and implementation split are
+canonical in [DP-013 section 32](DP-013-runtime-management-routing.md#32-c2-exposure-consume-contract-task-123).
+Sections 36.4's dispositions remain the historical TASK-121 assessment; the current
+design dispositions below do not promote those production obligations to runtime PASS.
+
+### 37.1 Bounded scheduling and resources
+
+One process owns one sanctioned adapter over the existing immutable Directory and
+Owner scopes. Request scheduling is external to Runtime; no worker, timer, dynamic
+registry, goroutine-per-timeout or pending admission queue is supplied. These are
+conservative initial finite bounds, not throughput or hard latency guarantees.
+
+| Resource | Selected bound |
+| --- | --- |
+| Configured principal slots / Target slots / current exact grants | 32 / 64 / 2,048 |
+| Open ingress connections / concurrent TLS handshakes | 32 / 8 |
+| TLS handshake / header-read / idle deadlines | 2 s / 1 s / 5 s |
+| Header / request body / encoded response bounds | 8 KiB / 1,024 bytes / 16 KiB |
+| Active process / principal / Target requests | 8 / 1 / 1 |
+| Waiting/pending admission queue | 0 |
+| Process token bucket | 8 requests/s, burst 8 |
+| Principal token bucket, across Targets | 2 requests/s, burst 2 |
+| Target token bucket, across principals and attempts | 1 request/s, burst 1 |
+| Required Poll budget | integer 1..64 |
+| Adapter request-context / body-read / response-write deadlines | 2 s / 1 s / 1 s |
+
+The process request slot is acquired before body decoding and held through response
+handling, so slow bodies/writes cannot bypass its cap; ingress connection/header/body
+bounds and deadlines also apply before core admission. The 2 s request context starts immediately after process-slot admission, before
+decoding. Body reads also have a 1 s deadline bounded by that context’s remaining
+time. The request deadline bounds ordinary decoding/evaluation/Poll/serialization
+work cooperatively. A blocked trusted
+callback has no fabricated hard termination guarantee. No Runtime mutex/Manager wait
+is used to implement any of these limits. The selected future ingress is mTLS HTTP/1.1,
+TLS 1.3, HTTP/2 off; it is not the current Control Service HTTP configuration.
+
+Process/principal buckets are charged for every syntactically valid identified
+request, including authorization denial, independently of Target existence; their
+capacity/rate refusal is prelookup 429. Target slots/buckets are consulted only after
+consume authorization and exact routing; their refusal is the same 404 unavailable
+as absent/mismatched/retired lifetime. No Target-specific Retry-After, quota value or
+existence hint is returned. Consumed tokens are never refunded on failure/cancellation.
+
+Refill is lazy using a trusted monotonic clock: one whole token per **125 ms process,
+500 ms principal and 1 s Target**. Retain only the subinterval fractional remainder,
+clamp to burst and discard excess whole credit on saturation. Backward clock or
+overflow refuses the current operation with counter/time state unchanged; it cannot
+create extra credit. Initial bursts exist only at adapter construction/restart.
+Grant updates, later attempts and lifetime retirement do not reset counters. State
+is fixed per configured principal/Target, never per request-supplied attempt or ID;
+there is no request-created slot, unbounded history or refill worker.
+
+At most one request per principal and per configured Target is active across all
+attempts. Process/principal/Target slots remain owned through response handling and
+are released on returning/unwinding paths. Short nonblocking admission updates never
+hold a quota/Directory lock across policy, Owner/Poll, rendering or I/O; contention
+refuses instead of waiting. Competing callers never get independent Views or readers.
+
+### 37.2 Bounded Poll and success projection
+
+The adapter passes the original expected attempt, context and budget to Owner once.
+Owner matches the active attempt/lifetime under its mutex, captures one private View
+then unlocks before Poll. The View's shared TryLock and existing fixed sink perform
+at most one C1 Drain, detach at most 64 safe Events and clear private storage. Budget
+0 or above 64 never reaches Poll. No retry, reinsert, fanout or second reader is added.
+
+One planned 200 JSON response has exactly this field shape:
+
+```json
+{
+  "apiVersion": 1,
+  "count": 1,
+  "events": [{"schemaVersion": 1, "code": 1, "sequence": "7"}],
+  "receipt": {
+    "readAttempts": 2,
+    "observed": 1,
+    "sinkSucceeded": 1,
+    "sinkFailed": 0,
+    "sinkPanicked": 0,
+    "discarded": 0,
+    "stop": "no_item"
+  }
+}
+```
+
+The example uses existing schema/code values, not new Event definitions. Only current
+closed valid Event SchemaVersion/Code and nonzero Sequence are projected; Sequence is
+a canonical uint64 decimal string, preserving precision without becoming identity or
+a drop count. Events has exactly Count entries, with no unused array slots. Counters
+are JSON integers within budget, Observed equals SinkSucceeded + SinkFailed +
+SinkPanicked + Discarded, and Count equals SinkSucceeded. The selected fixed sink
+permits neither SinkFailed nor SinkPanicked. Successful stop is only `no_item` or
+`budget`, mapped from existing NoItem/Budget. For no_item, ReadAttempts == Observed + 1
+and Observed == SinkSucceeded == Count, with ReadAttempts <= budget; Count zero and
+ReadAttempts one is valid. For budget, ReadAttempts == Observed == SinkSucceeded ==
+Count == requested budget. In both cases SinkFailed == SinkPanicked == Discarded == 0.
+SchemaVersion must be existing value 1, Code existing value 1 or 2, and Sequence a
+canonical nonzero uint64 decimal string. E11 must prove these stop-specific invariants.
+
+Disabled, InvalidInput, Busy, Canceled, SinkFailed, SinkPanicked or an unexpected/
+inconsistent receipt/Event never becomes a fabricated successful batch: use DP-013's
+fixed unavailable 404 if response remains possible. Cancellation/disconnect stops
+this invocation; it never triggers automatic Poll retry. A failure after Poll may
+have consumed a detached batch, which is discarded without replay or reinsert.
+NoItem does not prove empty/drained/flushed/complete; receipt success is not delivery
+ACK, external observation or persistence. Drops, removals and remaining length stay
+unknown. Typed-nil/hostile contexts retain the existing unsupported precondition.
+
+The adapter validates and buffers the entire <=16 KiB JSON body before output, never
+streams partial diagnostic fields or raw errors. All success/error responses have
+application/json and Cache-Control: no-store, no cache validators or Retry-After.
+Unknown fields, identity echo, arbitrary labels and extra codes/schema are forbidden.
+Network/renderer failure may lose this result and cannot alter Host work.
+
+### 37.3 Classification, redaction and retention
+
+Safe operational diagnostic data consists only of the existing Event allowlist and
+bounded scalar receipt. Workspace/Configuration/Instance/attempt are security-sensitive
+request routing data; principal handles, grants and authenticated identity mappings
+are security-sensitive control data, not diagnostic records. Target/attempt/principal
+is never echoed in a batch, Event, receipt, error or diagnostic log/metric label.
+
+Redaction is allowlist construction before rendering. Do not log bodies, certificates/
+identity mapping, target/attempt IDs, grants, headers/credentials, raw causes or request/
+response contents; do not format an arbitrary error for output. Adapter health may
+use fixed aggregate rejected/failed counters without identity/Target labels or recursive
+diagnostics offers. DP-018 management categories, replay and correlation authority are
+not reused. No raw Reader/View/Producer/Owner is serialized or exposed.
+
+Adapter-owned diagnostic retention is **one request only**: one detached fixed64 batch
+and one <=16 KiB output buffer, cleared/released on ordinary return/unwind including
+failure/cancellation. There is no per-Target/principal result, history, cache, retry
+queue, replay storage, persistence or audit payload. Existing mailbox capacity64 and
+lossy drops remain unchanged. External clients may retain received copies beyond the
+server's control; no client erasure, secure memory erasure or durable/lossless observation
+is promised. Transport buffers are not a durable diagnostic store.
+
+### 37.4 Stop, shutdown and independent revocation cuts
+
+Exposure admission closes atomically before any new lookup/Poll. At most eight existing
+requests receive cancellation and ordinary deadlines; no detached work, forced flush
+or final Poll is created. Host Start/Stop/rollback and Manager waits **never wait for**
+adapter slots, authorizer, Poll, renderer, writer or ingress shutdown. Application
+composition must preserve this separation even when shutting down its HTTP ingress.
+
+Security-grant evaluation success admits one invocation; later grant revocation blocks
+subsequent requests, not that already admitted one. Independently, successful Owner
+Stop retires lifetime at the existing locked boundary: before View capture no Poll,
+after capture the in-flight Poll may finish. Failed launch without retained Host
+retires; failed Stop retains the same Host/pair. Repeated same-attempt Stop observes
+stored failure **without cleanup retry**. Caller cancellation does not retire Owner
+lifetime. A later accepted attempt gets its own independent pair; quotas do not reset.
+
+Unread/late facts and captured output may be discarded/lost. No flush, drain-to-completion,
+final emptiness, delivery ACK, post-revoke retraction or arbitrary-callback termination
+guarantee is added. Lifecycle truth and existing cause/API/config contracts remain intact.
+
+### 37.5 Acceptance proofs and design/runtime separation
+
+These are required **future executable proofs**, not tests run by TASK-123. Full design
+acceptance specifies them; isolated core, transport and production integration each
+need separate scoped authorization and applicable independent verification.
+
+| Proof | Required acceptance evidence |
+| --- | --- |
+| E01 | Exact dedicated action/principal/full Target/expected-attempt grant membership; Observe/admin/replay/wildcard/stale grants cannot authorize. |
+| E02 | Missing/failed policy, unknown handle and cancellation before admission make zero Directory/Owner/mailbox calls. |
+| E03 | Authorizer precedes lookup; absent/mismatch/retired/successor/Target-busy cases use identical 404 bytes without identity echo. |
+| E04 | Security admission versus grant revoke is distinct from Owner retirement-before/after-capture; exactly one admitted invocation. |
+| E05 | Budget 0/1/64/65 and one Poll/Drain bound; no retry/reinsert/fanout or phantom receipt success. |
+| E06 | Process8/principal1/Target1 active bounds and zero pending; blocked policy/output cannot exceed limits or join lifecycle. |
+| E07 | Exact refill/bursts/denied charging/no refund; monotonic remainder/saturation/backward-time/overflow cases fail closed. |
+| E08 | Fixed32/64 state; hostile arbitrary IDs/attempts create no slots; later attempt or grant update never resets quotas. |
+| E09 | POST-only; DTO canonicality/duplicate/unknown fields/body/header/connection/deadline bounds; no GET consume/retry/replay/streaming. |
+| E10 | Verified mTLS identity-to-handle provenance; forged headers/context/body cannot construct handles; no missing-backend allow-all. |
+| E11 | Success Event/counter invariants, uint64 sequence accuracy, <=16 KiB output, existing closed enums only. |
+| E12 | Fixed error body/header allowlists omit Target/attempt/principal/policy/raw errors/credentials; no Target-aware 429, cache or diagnostic labels. |
+| E13 | No retained batch after normal return/unwind; failed output/cancellation loses only this detached batch without replay/reinsert/ACK. |
+| E14 | Shutdown admission race and bounded in-flight cancellation; Host Stop/rollback/Manager never join blocked bridge/output. |
+| E15 | Failed launch/successful Stop retirement, failed Stop retention/stored failure, later-attempt isolation and late lossy facts. |
+| E16 | One sanctioned production composition; import/API/cause/config compatibility, full regression/hosted race/module and source-to-operator evidence before activation. |
+
+| Production proof | Selected design traceability / remaining runtime obligation |
+| --- | --- |
+| P01 | Specified by Design: single process, exact Owner scope and authenticated handle provenance; E10/E16 production composition proof still required. |
+| P02 | Existing TASK-121 design and TASK-122 B01-B08 isolated substrate retained; real production pair/composition isolation remains required. |
+| P03 | Specified by Design: E01-E04 exact consume authorization/anti-enumeration; executable production proof deferred. |
+| P04 | Specified by Design: E06-E10 finite ingress/rate/state/resources; executable production proof deferred. |
+| P05 | Specified by Design: E06/E14 nonjoining blocked bridge/lifecycle; real overlap proof deferred. |
+| P06 | Specified by Design: E04/E13/E15 retirement/security-cut/loss; existing isolated evidence does not substitute for bridge proof. |
+| P07 | Specified by Design: E11-E13 allowlist/retention/failure projection; executable production output proof deferred. |
+| P08 | Specified by Design: E10/E16 compatibility/composition/source-to-operator; full integrated regression/race/module proof deferred. |
+
+The smallest next candidate is DP-013's two-file isolated admission/resource core,
+Ready for a separate implementation intake only after this design's Acceptance.
+Transport remains a separate candidate; production integration remains NOT READY
+until actual trust/grant provisioning, bounded ingress, sanctioned composition,
+ARCH-004 section 19 prerequisites and all applicable P01-P08 evidence exist. TASK-123
+does not implement those dependencies, activate C2/C3 or close Gate 11.

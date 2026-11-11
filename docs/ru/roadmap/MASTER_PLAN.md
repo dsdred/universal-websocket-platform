@@ -366,12 +366,24 @@ Runtime Alpha Review фиксирует implementation debt, который не
   опубликовала принятый Host-lifetime ownership/admission design: source
   `dc36e85d4de5b0c22f97ad4e3f2599905a5cc94c`, merge PR #122
   `0bf83bd394071f4ca9a6c102201a2f117acec819`, independent P10R PASS.
-  [TASK-122](../../tasks/TASK-122-RUNTIME-DIAGNOSTICS-C2-BINDING.md) реализует isolated
-  Owner binding; acceptance выполняется. Она не композирует current binary
-  и не активирует production C2. C2-Exposure и C3 остаются Not Ready / Not Activated.
-  Gate11 OPEN, criteria неизменны; DP027 Draft/Partial, DP009 Draft, новой
-  Windows/native TASK102 qualification нет. GitHub Issue #121 остаётся отдельным
-  Not Activated Publisher infrastructure item.
+  [TASK-122](../../tasks/TASK-122-RUNTIME-DIAGNOSTICS-C2-BINDING.md) опубликовала
+  accepted **isolated C2-Binding implementation**: source
+  `7881d66cfe7e4bcd1c5eba7e8e8a5ae50385ae54`, merge PR #123
+  `6fb5b02bbff3186db86e26cb946be4b24095edfd`, source/merge tree
+  `4a39c852b2467ac4e2071387eeaab821fc213c63`, independent P10R-122-001 PASS.
+  PR CI `42996024425` и post-merge CI `42996472196` SUCCESS включают все семь
+  verification steps, hosted Linux race и tidy/module guards. Publication
+  terminal `Consumed(P10) / NoneTerminal / Unissued`; B01–B08 остаются isolated
+  evidence, не production P03–P05/P07/P08. Current binary composition отсутствует.
+  [TASK-123](../../tasks/TASK-123-RUNTIME-DIAGNOSTICS-C2-EXPOSURE-READINESS.md) —
+  Owner-authorized C2-Exposure Design-only task, projected In Progress.
+  Exact design subject/verdict/checkpoint определяется newest valid task-record
+  envelope, совпадающей с independently recomputed manifest.
+  Production C2/C3 и C2-Exposure остаются Not Activated; Gate11 OPEN, criteria
+  неизменны; DP027 Draft/Partial, DP009 Draft. TASK102 не затронута; hosted Linux
+  evidence не является Windows/native qualification. GitHub Issue #121 остаётся
+  отдельным Not Activated Publisher infrastructure item. Эта design task не
+  разрешает implementation, Commit Gate или Publication Gate.
 - Покрытие Runtime для Basic и asymmetric JWT неполное.
 - Поведение Origin полагается на defaults библиотеки, а не на явную Configuration.
 

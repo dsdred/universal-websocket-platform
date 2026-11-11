@@ -5,7 +5,7 @@
 ## 1. Статус
 
 - **Design Status:** Draft
-- **Implementation Status:** Implemented in isolation
+- **Implementation Status:** Start/Stop/Observe implemented in isolation; C2-Exposure раздел 32 Planned
 - **Integration Readiness:** Blocked; full integration и Production Activation
   требуют Approved/Planned prerequisites DP-019 и wiring ниже
 
@@ -714,12 +714,13 @@ Draft design реализован изолированно. Full integration и 
 
 ## 31. Boundary consume admission для C2 diagnostics (TASK-121)
 
-Этот раздел определяет boundary, необходимый C2-Binding, но не добавляет current
-Directory method, endpoint или production capability.
+Этот раздел сохраняет TASK-121 boundary C2-Binding. Раздел 32 задаёт selected
+exposure design TASK-123; ни один не добавляет current Directory method, endpoint
+или production capability.
 
 `ActionObserve` разрешает только detached lifecycle observation и никогда не даёт
 право destructive diagnostics Poll. Authority command/replay DP-018 также неприменима.
-Будущий design C2-Exposure обязан ввести отдельный diagnostics-consume authorization
+C2-Exposure design раздела 32 выбирает отдельный diagnostics-consume authorization
 contract с exact `Target` и expected non-empty Launch Attempt identity во входе.
 Перегружать version parameter текущего `Authorize` запрещено.
 
@@ -735,13 +736,174 @@ Mandatory order каждого future request:
    active attempt и non-retired private lifetime до копирования View;
 6. выполнить не более одного bounded `View.Poll` вне Directory/Owner locks.
 
-Победившая authorization разрешает одну admitted operation. Revocation, видимая до
-locked lifetime claim Owner, предотвращает Poll; revocation после claim влияет на
-следующие requests и не retract-ит admitted Poll. Successor attempt никогда не
+Победившая current security authorization разрешает одну admitted invocation; grant
+revocation после cut влияет на subsequent requests. Независимо от этого Owner lifetime
+retirement до locked View claim предотвращает Poll, а после claim не retract-ит Poll.
+Раздел 32.2 задаёт эти независимые cuts. Successor attempt никогда не
 удовлетворяет старый expected-attempt request. Unauthorized, nonexistent, retired и
 mismatched requests не consume-ят event и не раскрывают конкретное condition.
 
-C2-Exposure отдельно определяет concrete policy, bounds rate/concurrency/pending
-requests, transport, output rendering, retention и redaction. Он не добавляет unbounded
+Раздел 32 и DP-027 раздел 37 задают concrete policy, bounds rate/concurrency/pending
+requests, transport, output rendering, retention и redaction как Draft design. Он не добавляет unbounded
 target/handle registry, background worker или lifecycle wait. Directory хранит только
 existing Owner scope; raw Reader/View handle остаётся private у Owner.
+
+## 32. Consume contract C2-Exposure (TASK-123)
+
+Это выбранный **Draft / Planned** exposure design, не реализованный route или
+production authorization. Раздел 31 сохраняет prerequisite TASK-121; этот раздел
+задаёт его concrete consume policy и admission contract. Existing Start/Stop/Observe
+не меняются. Resource/result/retention/proof requirements канонически заданы в
+[DP-027, раздел 37](DP-027-runtime-diagnostics-v1.md#37-resources-results-и-proofs-c2-exposure-task-123).
+
+### 32.1 Topology и trust
+
+Единственный выбранный deployment — будущий single Control Service process с одним
+immutable Directory, одним Lifecycle Owner на Runtime Instance и его in-process Host.
+Current cmd/control-service их не создаёт; его HTTP server и stdout logger не получают
+diagnostics authority из этого design. Host остаётся sole operational graph/lifecycle
+owner. Reader/View остаются private у Owner; Producer проходит только через existing
+launch-private binding, никогда через external API. Нет пятого Bootstrap binding,
+mutable dependency rebind, worker, logger fallback, dynamic target registry или
+cross-process capability transfer.
+
+Planned wire adapter использует **TLS 1.3 mutually authenticated HTTP/1.1**, HTTP/2
+отключён в initial contract. Trusted application authentication сопоставляет verified
+configured client identity с opaque construction-issued principal handle. Body,
+headers, query, arbitrary context values, unverified forwarded identities и
+client-asserted grants не могут создать handle. Cookie/bearer/ambient-browser,
+redirect или CORS authority отсутствуют.
+
+Composition заранее задаёт максимум **32 principal slots** и **64 immutable Target
+slots**. Unknown/zero/unconfigured handles fail closed. Requests не создают principal,
+Target или attempt slots. Future adapter обязан обеспечить bounded ingress DP-027
+раздела 37 до exposure route; current server этим не меняется.
+
+### 32.2 Exact current consume authority
+
+Dedicated action — `runtime.diagnostics.consume`, отдельно от ActionObserve,
+Start/Stop, current Authorize version parameter и reporting/replay DP-018 либо durable
+command authority. Одна evaluation получает verified principal handle, этот action,
+exact Workspace/Configuration/Runtime Instance Target, nonempty expected Launch Attempt
+ID, requested Poll budget и current caller context.
+
+Concrete policy — **explicit current exact-grant membership**. Trusted grant snapshot
+должен разрешать именно principal/action/full Target/expected-attempt tuple. Wildcard,
+admin/role inheritance, cross-Workspace fallback, latest-attempt selection или
+client-asserted grant consumption не разрешают. Snapshot содержит максимум **2,048
+grants** (32 principals x 64 Targets), не более одного current expected-attempt grant
+на principal/Target; grant history и diagnostic batch не хранит.
+
+Trusted policy provider атомарно предоставляет current snapshot. Missing provider,
+unavailable evaluation, malformed/unknown snapshot, absent/disabled/stale exact grant
+или canceled evaluation означают deny. Missing production policy нельзя заменить
+allow-all. Endpoint не provision/update grants. Authenticated trusted application grant
+provisioning и revocation остаются отдельным **production activation prerequisite**;
+существование backend этим не заявляется. Provider обязан соблюдать trusted prompt,
+concurrent-safe и nonpanicking callback contract; remote policy I/O, detached evaluation
+или timeout goroutine не прячутся в этой boundary.
+
+Successful current evaluation — **security admission linearization point** ровно одной
+invocation. Result не сериализуется, не replay/cache и не передаётся другому request.
+Security-grant revocation до cut даёт deny; после cut влияет на последующие requests,
+не отзывая уже admitted invocation. Независимо от этого Owner lifetime retirement до
+locked View capture запрещает Poll, а после capture уже admitted Poll не отзывает.
+External-policy check под Owner mutex и atomic multi-lock security/lifetime cut не
+обещаются. Existing DP-010 seam сохраняется.
+
+### 32.3 Admission и exact routing order
+
+1. Попытаться взять process request slot без ожидания; closed admission отклонить до
+   lookup. Ingress bounds действуют ещё до parsing или principal resolution.
+2. Validate method/content type/body bound и один fixed DTO. Unknown/duplicate fields,
+   compression и noncanonical identities отклонить без target lookup.
+3. Resolve already-authenticated trusted principal handle, sample cancellation,
+   charge process/principal rate buckets и acquire principal slot независимо от
+   requested Target и его existence. Unknown handles fail closed.
+4. Ровно один раз evaluate dedicated current consume authorizer на full request.
+5. Recheck cancellation. Denial/cancellation до routing дают **zero Directory lookup,
+   Owner call и mailbox read**.
+6. Только после authorization выбрать existing immutable Directory scope и сравнить
+   full Target. Не маршрутизировать по ConfigurationVersion/PID/Sequence/Host pointer,
+   не fallback в другой Workspace или successor/latest attempt.
+7. Попытаться взять configured Target slot и charge его rate bucket без ожидания.
+   Absent/mismatched binding и Target quota refusal дают одинаковый unavailable result.
+8. Один раз вызвать Owner.PollDiagnosticsExpectedAttempt с original expected attempt,
+   context и budget. Owner атомарно matches active attempt/lifetime под mutex, captures
+   View, unlocks и выполняет максимум один bounded Poll/Drain.
+9. Validate detached result и построить только bounded allowlisted response DP-027
+   раздела 37. Очистить temporary copies на ordinary return/unwind.
+10. Освободить Target/principal/process in-flight slots после response handling на
+    каждом returning/unwinding path. Никаких queue/retry/reinsert/detached work.
+
+Admission/counter updates используют короткие nonblocking critical sections; contention
+отказывает admission вместо скрытой waiting queue. Adapter/Directory/quota lock не
+охватывает authorizer callback, Owner/Poll, serialization или network I/O. Contexts
+сохраняют existing prompt/nonpanicking precondition. Deadlines не гарантируют завершение
+hostile/nonreturning trusted callbacks. Existing Directory.admit, делающий lookup до
+management authorization, не переиспользуется как consume path. Ни d.admit, ни
+per-request d.valid/Observe/scope iteration не выполняются до consume authorization;
+construction-time immutable binding validation допустима. После authorization новый
+path может прямо выбрать existing package-private immutable map.
+
+### 32.4 Planned request и failure API
+
+Planned resource — `POST /runtime-diagnostics/v1/poll`, Content-Type application/json,
+один request/response. Нет GET consumption, streaming, WebSocket, pagination, cursor,
+compression, automatic retry или idempotency/replay key. Design не добавляет route/handler.
+
+```json
+{"workspaceId":"1","configurationId":"2","runtimeInstanceId":"runtime-opaque-id","expectedLaunchAttemptId":"attempt-opaque-id","budget":16}
+```
+
+Workspace/Configuration IDs — canonical nonzero uint64 decimal strings: 1..20 digits
+в пределах uint64, без leading zero/sign/whitespace. Runtime Instance и expected-attempt
+IDs — exact opaque 1..128 ASCII characters `[A-Za-z0-9_-]`. Trim/case-fold/normalization
+отсутствуют. Wire grammar не меняет internal domain types; другие internal identities
+недоступны через эту API version. Budget — required JSON integer 1..64. Expected
+attempt берётся из отдельно authorized management knowledge; endpoint его не discovers.
+
+| Condition | Exact external behavior |
+| --- | --- |
+| TLS authentication failure | TLS handshake failure; target-aware HTTP response отсутствует |
+| Wrong method | 405, Allow: POST, fixed unavailable body; без lookup |
+| Wrong content type, malformed/oversized/noncanonical DTO, duplicate/unknown field или compression | 400, fixed body `{"error":"invalid_diagnostics_request"}`; без lookup/read |
+| Process/principal prelookup capacity/rate refusal | 429, fixed unavailable body, независимо от requested Target |
+| Process shutting down | 503, fixed unavailable body, независимо от Target |
+| Unknown trusted principal; consume deny/failure/unavailable; absent/mismatched Target; successor/retired lifetime; Target quota refusal; Poll Busy или invalid result | 404, identical bytes `{"error":"diagnostics_unavailable"}` |
+| Valid detached result | 200, только response DP-027 раздела 37 |
+| Caller disconnect/cancellation | Остановить invocation; без usable connection response нет; без retry/replay/reinsert |
+
+Fixed unavailable body для 405/429/503 также равен
+`{"error":"diagnostics_unavailable"}`. Все responses используют application/json и
+Cache-Control: no-store; ETag/Last-Modified/shared cache/Retry-After отсутствуют.
+Error body не echo Target/attempt/principal, grant epoch/reason, quotas, existence,
+raw causes или internal status. Target-specific Busy/rate refusal — **404**, никогда
+не target-aware 429. Anti-enumeration гарантирует same external class/body и zero
+denied lookup/read, не exact microtiming equality. После Poll admission failure уже
+может означать consumption; его body не обещает zero consumption или retraction.
+
+### 32.5 Implementation split и activation gates
+
+Первый candidate — isolated diagnostics admission/resource adapter только в
+internal/runtimemanagement/diagnostics.go и diagnostics_test.go с existing Directory
+package-private immutable scopes. Existing NewDirectory/Start/Stop/Observe/Authorize
+APIs менять не требуется. Новый dedicated adapter API может выдавать opaque principal
+handles при trusted construction; raw Owner/Reader/View он не exposes. Construction
+rejects missing evaluator, invalid clock/configuration, более 32 principals/64 Targets
+и duplicate/reused bindings или principal slots внутри supplied configuration. Copies одного adapter разделяют quota state. Constructor не обнаруживает отдельно
+созданные adapters/Directories без нового global registry. Один sanctioned adapter на
+process и отсутствие bypass — обязательные Composition Audit/activation proofs, не
+вымышленный global enforcement конструктора. Production authentication backend/route/handler не создаёт.
+Test grants не являются production policy.
+
+Core — candidate **Ready только для отдельного implementation intake после final design
+Acceptance**, exact scope/coverage confirmation и отдельного Owner permission. Следующий
+отдельный candidate — bounded mTLS transport/serialization с fake core. Ни один здесь
+не активируется. Production integration **NOT READY** до trusted mTLS configuration,
+identity-to-handle mapping, real current exact-grant provisioning/revocation, bounded
+ingress, единственной sanctioned adapter/Directory/Owner composition, применимых
+ARCH-004 section 19 dependencies и integrated P01-P08 proofs. Unavailable fail-closed
+backend не является useful production consume authority. Isolated allow-all fixture
+через этот gate не проходит. C2/C3 Not Activated; Gate 11 OPEN. Frozen/Approved
+contract не изменяется.
