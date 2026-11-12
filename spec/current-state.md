@@ -1,14 +1,22 @@
 # Текущее состояние
 
-Текущая engineering task [TASK-123](../docs/tasks/TASK-123-RUNTIME-DIAGNOSTICS-C2-EXPOSURE-READINESS.md) —
-C2-Exposure Design-only, projected `In Progress`. Owner разрешил только documentation
-checkpoint и Draft design в DP-013/027 EN/RU; production implementation и activation
-не разрешены. Baseline `main`/`origin/main` —
-`6fb5b02bbff3186db86e26cb946be4b24095edfd`. Exact current design subject, verdict и
-checkpoint определяются newest valid task-record envelope с independently recomputed
-manifest; intake Approval не заменяет full design Verification/Review/Acceptance.
-Commit/Publication Gates не разрешены. TASK102 не затронута; GitHub Issue #121,
-production C2/C3 и C2-Exposure Not Activated; Gate11 OPEN.
+Текущая engineering task [TASK-124](../docs/tasks/TASK-124-C2-EXPOSURE-ADMISSION-CORE.md) —
+isolated C2-Exposure admission/resource core, projected `In Progress`. Owner разрешил
+только два implementation paths в runtimemanagement и seven-path state reconciliation.
+Добавлено isolated admission/resource ядро без transport/backend/wiring; это не production exposure.
+Baseline — `448f1e13a23db64bcb73b70b6ff6056ffd8e8ccb`; exact gates и verdict
+определяются newest valid task-record envelope с independently recomputed manifest.
+Commit/Publication Gates не разрешены. TASK-102 не затронута; Issue #121,
+production C2/C3 и C2-Exposure Not Activated; Gate 11 OPEN.
+
+[TASK-123](../docs/tasks/TASK-123-RUNTIME-DIAGNOSTICS-C2-EXPOSURE-READINESS.md) завершила
+Design-only publication M123-002: source `19743ee1630c906c6f1388a95d80b43e188cadf1`,
+PR #124 MERGED как `448f1e13a23db64bcb73b70b6ff6056ffd8e8ccb`, source/merge tree
+`c1f5d4f478d7efc889c925abf0da6d3e779f946d`; P10R-123-001 PASS.
+PR CI `43048492597` и post-merge CI `43048831584` SUCCESS; terminal
+`Consumed(P10) / NoneTerminal / Unissued`. Accepted design не повышает DP Draft
+и не является runtime E01–E16/P01–P08 proof. Historical TASK-123 record сохранён.
+Transport, trusted provisioning и production composition остаются отдельными prerequisites.
 
 [TASK-122](../docs/tasks/TASK-122-RUNTIME-DIAGNOSTICS-C2-BINDING.md) завершила isolated
 C2-Binding publication: accepted source
