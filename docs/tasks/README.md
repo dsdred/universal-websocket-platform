@@ -3,13 +3,22 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая engineering task [TASK-124](TASK-124-C2-EXPOSURE-ADMISSION-CORE.md) —
-isolated C2-Exposure admission/resource core, projected `In Progress`. Owner разрешил
-только два implementation paths в runtimemanagement и seven-path state reconciliation.
-Добавлено isolated admission/resource ядро без transport/backend/wiring; это не production exposure.
-Baseline — `448f1e13a23db64bcb73b70b6ff6056ffd8e8ccb`; exact gates и verdict
-определяются newest valid task-record envelope с independently recomputed manifest.
-Commit/Publication Gates не разрешены. TASK-102 не затронута; Issue #121,
+Текущая engineering task [TASK-125](TASK-125-C2-BOUNDED-TRANSPORT.md) —
+Stage A only: isolated strict DTO codec/HTTP projection с fake admission capabilities
+реализована в изоляции; projected `In Progress`; exact gates/verdict определяются matching task-record envelope
+с independently recomputed manifest. Owner принял historical A+B Size Guard STOP
+и отдельно разрешил narrowed scope; Stage B transport/TLS ingress Not Activated.
+Baseline — `cc1fd9cdc0b915b3681352242712734be1dc10d3`. Без production identity,
+Directory/Owner graph и cmd/control-service wiring. Commit/Publication Gates отсутствуют.
+
+[TASK-124](TASK-124-C2-EXPOSURE-ADMISSION-CORE.md) опубликована: source
+`f3431910376dd83e3afa864612630e929c3d5bb7`, PR #125 MERGED как
+`cc1fd9cdc0b915b3681352242712734be1dc10d3`, source/merge tree
+`2dc648bff7959907b285723843ef35af1a02193d`; P10R-124-001 PASS.
+PR CI `43240535796` и post-merge CI `43241061741` SUCCESS, включая hosted Linux
+race/tidy/module guards; terminal `Consumed(P10) / NoneTerminal / Unissued`.
+Isolated admission/resource core не является transport/production proof.
+Historical TASK-124 record сохранён. TASK-102 не затронута; Issue #121,
 production C2/C3 и C2-Exposure Not Activated; Gate 11 OPEN.
 
 [TASK-123](TASK-123-RUNTIME-DIAGNOSTICS-C2-EXPOSURE-READINESS.md) завершила
