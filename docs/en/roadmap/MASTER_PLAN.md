@@ -384,11 +384,19 @@ The Runtime Alpha Review identifies implementation debt that must be tracked ind
   `c1f5d4f478d7efc889c925abf0da6d3e779f946d`, P10R-123-001 PASS.
   PR CI `43048492597` and post-merge CI `43048831584` SUCCESS;
   terminal Consumed(P10) / NoneTerminal / Unissued. Historical record preserved.
-  [TASK-124](../../tasks/TASK-124-C2-EXPOSURE-ADMISSION-CORE.md) is the authorized
-  admission/resource core implemented in isolation, projected In Progress; exact gates resolve
-  from its matching task-record envelope. Transport, trusted provisioning and
-  production composition remain deferred. DP027 Draft/Partial, DP009 Draft;
-  production C2/C3 and C2-Exposure Not Activated; Gate 11 OPEN, criteria unchanged.
+  [TASK-124](../../tasks/TASK-124-C2-EXPOSURE-ADMISSION-CORE.md) published the isolated
+  admission/resource core: source `f3431910376dd83e3afa864612630e929c3d5bb7`, PR #125
+  merge `cc1fd9cdc0b915b3681352242712734be1dc10d3`, source/merge tree
+  `2dc648bff7959907b285723843ef35af1a02193d`, P10R-124-001 PASS. PR CI
+  `43240535796` and post-merge CI `43241061741` SUCCESS include hosted Linux
+  race/tidy/module guards; terminal Consumed(P10) / NoneTerminal / Unissued.
+  Historical record and isolated evidence limitations are preserved.
+  [TASK-125](../../tasks/TASK-125-C2-BOUNDED-TRANSPORT.md) is separately authorized
+  Stage A only: strict DTO codec/HTTP projection with fake admission capabilities,
+  implemented in isolation, projected In Progress; exact gates resolve from the matching task envelope.
+  Historical A+B Size Guard STOP retained; Stage B ingress/TLS Not Activated.
+  Trusted provisioning and production composition remain deferred. DP027 Draft/Partial,
+  DP009 Draft; production C2/C3 and C2-Exposure Not Activated; Gate 11 OPEN.
   TASK-102 untouched; Issue #121 Not Activated; no Commit/Publication Gate.
 - Basic and asymmetric JWT Runtime coverage is incomplete.
 - Origin behavior relies on library defaults rather than explicit Configuration.

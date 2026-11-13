@@ -381,11 +381,19 @@ Runtime Alpha Review фиксирует implementation debt, который не
   `c1f5d4f478d7efc889c925abf0da6d3e779f946d`, P10R-123-001 PASS.
   PR CI `43048492597` и post-merge CI `43048831584` SUCCESS;
   terminal Consumed(P10) / NoneTerminal / Unissued. Historical record сохранён.
-  [TASK-124](../../tasks/TASK-124-C2-EXPOSURE-ADMISSION-CORE.md) — разрешённый
-  admission/resource core реализован в изоляции, projected In Progress; exact gates определяются
-  matching task-record envelope. Transport, trusted provisioning и production
-  composition deferred. DP027 Draft/Partial, DP009 Draft; production C2/C3 и
-  C2-Exposure Not Activated; Gate 11 OPEN, criteria unchanged.
+  [TASK-124](../../tasks/TASK-124-C2-EXPOSURE-ADMISSION-CORE.md) опубликовала isolated
+  admission/resource core: source `f3431910376dd83e3afa864612630e929c3d5bb7`, PR #125
+  merge `cc1fd9cdc0b915b3681352242712734be1dc10d3`, source/merge tree
+  `2dc648bff7959907b285723843ef35af1a02193d`, P10R-124-001 PASS. PR CI
+  `43240535796` и post-merge CI `43241061741` SUCCESS, включая hosted Linux
+  race/tidy/module guards; terminal Consumed(P10) / NoneTerminal / Unissued.
+  Historical record и ограничения isolated evidence сохранены.
+  [TASK-125](../../tasks/TASK-125-C2-BOUNDED-TRANSPORT.md) отдельно разрешена
+  только Stage A: strict DTO codec/HTTP projection с fake admission capabilities,
+  реализована в изоляции, projected In Progress; exact gates определяются matching task envelope.
+  Historical A+B Size Guard STOP сохранён; Stage B ingress/TLS Not Activated.
+  Trusted provisioning и production composition deferred. DP027 Draft/Partial,
+  DP009 Draft; production C2/C3 и C2-Exposure Not Activated; Gate 11 OPEN.
   TASK-102 не затронута; Issue #121 Not Activated; Commit/Publication Gates отсутствуют.
 - Покрытие Runtime для Basic и asymmetric JWT неполное.
 - Поведение Origin полагается на defaults библиотеки, а не на явную Configuration.
