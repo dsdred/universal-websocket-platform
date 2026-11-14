@@ -3,13 +3,26 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая engineering task [TASK-125](TASK-125-C2-BOUNDED-TRANSPORT.md) —
-Stage A only: isolated strict DTO codec/HTTP projection с fake admission capabilities
-реализована в изоляции; projected `In Progress`; exact gates/verdict определяются matching task-record envelope
-с independently recomputed manifest. Owner принял historical A+B Size Guard STOP
-и отдельно разрешил narrowed scope; Stage B transport/TLS ingress Not Activated.
-Baseline — `cc1fd9cdc0b915b3681352242712734be1dc10d3`. Без production identity,
-Directory/Owner graph и cmd/control-service wiring. Commit/Publication Gates отсутствуют.
+Текущая engineering task [TASK-126](TASK-126-STAGE-B-TRANSPORT-REFINEMENT.md) —
+Design-only Stage B transport refinement; projected `In Progress`. Exact gates,
+verdict и subject определяются newest matching task-record Recovery Evidence Envelope
+с independently recomputed canonical manifest. Baseline —
+`f537d5eceafede6eec1e168c1db4acfdc57ccc2c`. Scope: strict framing, pre-handler
+failures, network response lifetime, TLS handshake ownership и construction-owned
+identity dispatch. Runtime proofs не заявляются; Stage B implementation Not Activated.
+Без production identity/grants, Directory/Owner graph и cmd/control-service wiring.
+Commit Gate и Publication Gate не разрешены.
+
+[TASK-125](TASK-125-C2-BOUNDED-TRANSPORT.md) опубликована: Stage A strict
+DTO codec/HTTP projection с fake admission capabilities; source
+`13311d957cccd479c456bab9635c382f3cbdd28b`, PR #126 MERGED как
+`f537d5eceafede6eec1e168c1db4acfdc57ccc2c`, source/merge tree
+`70c09e554c2942a86e3dd0c47be2b26fde318e38`; P10R-125-001 PASS.
+Terminal `Consumed(P10) / NoneTerminal / Unissued`. Historical TASK-125 record,
+A+B Size Guard STOP и recovery limitations сохранены; isolated Stage A evidence
+не является E09 ingress/E10 TLS или production trust proof. TASK-102 не затронута;
+Issue #121, Stage B implementation, production C2/C3 и C2-Exposure Not Activated;
+Gate 11 OPEN.
 
 [TASK-124](TASK-124-C2-EXPOSURE-ADMISSION-CORE.md) опубликована: source
 `f3431910376dd83e3afa864612630e929c3d5bb7`, PR #125 MERGED как

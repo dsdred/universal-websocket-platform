@@ -391,13 +391,21 @@ The Runtime Alpha Review identifies implementation debt that must be tracked ind
   `43240535796` and post-merge CI `43241061741` SUCCESS include hosted Linux
   race/tidy/module guards; terminal Consumed(P10) / NoneTerminal / Unissued.
   Historical record and isolated evidence limitations are preserved.
-  [TASK-125](../../tasks/TASK-125-C2-BOUNDED-TRANSPORT.md) is separately authorized
-  Stage A only: strict DTO codec/HTTP projection with fake admission capabilities,
-  implemented in isolation, projected In Progress; exact gates resolve from the matching task envelope.
-  Historical A+B Size Guard STOP retained; Stage B ingress/TLS Not Activated.
-  Trusted provisioning and production composition remain deferred. DP027 Draft/Partial,
-  DP009 Draft; production C2/C3 and C2-Exposure Not Activated; Gate 11 OPEN.
-  TASK-102 untouched; Issue #121 Not Activated; no Commit/Publication Gate.
+  [TASK-125](../../tasks/TASK-125-C2-BOUNDED-TRANSPORT.md) published isolated
+  Stage A strict DTO/HTTP projection with fake admission capabilities: source
+  `13311d957cccd479c456bab9635c382f3cbdd28b`, PR #126 merge
+  `f537d5eceafede6eec1e168c1db4acfdc57ccc2c`, source/merge tree
+  `70c09e554c2942a86e3dd0c47be2b26fde318e38`, P10R-125-001 PASS;
+  terminal Consumed(P10) / NoneTerminal / Unissued. Historical A+B Size Guard STOP,
+  task record and recovery limitations remain; no ingress/TLS/production proof.
+  Current [TASK-126](../../tasks/TASK-126-STAGE-B-TRANSPORT-REFINEMENT.md) is
+  Design-only Stage B transport refinement, projected In Progress; exact gates,
+  verdict and subject resolve from its newest matching task envelope and independently
+  recomputed manifest. Baseline is `f537d5eceafede6eec1e168c1db4acfdc57ccc2c`.
+  Stage B implementation, trusted provisioning and production composition remain
+  Not Activated. DP027 Draft/Partial, DP009 Draft; production C2/C3 and C2-Exposure
+  Not Activated; Gate 11 OPEN. TASK-102 untouched; Issue #121 Not Activated;
+  no Commit Gate or Publication Gate.
 - Basic and asymmetric JWT Runtime coverage is incomplete.
 - Origin behavior relies on library defaults rather than explicit Configuration.
 

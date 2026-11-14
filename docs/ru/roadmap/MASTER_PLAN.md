@@ -388,13 +388,21 @@ Runtime Alpha Review фиксирует implementation debt, который не
   `43240535796` и post-merge CI `43241061741` SUCCESS, включая hosted Linux
   race/tidy/module guards; terminal Consumed(P10) / NoneTerminal / Unissued.
   Historical record и ограничения isolated evidence сохранены.
-  [TASK-125](../../tasks/TASK-125-C2-BOUNDED-TRANSPORT.md) отдельно разрешена
-  только Stage A: strict DTO codec/HTTP projection с fake admission capabilities,
-  реализована в изоляции, projected In Progress; exact gates определяются matching task envelope.
-  Historical A+B Size Guard STOP сохранён; Stage B ingress/TLS Not Activated.
-  Trusted provisioning и production composition deferred. DP027 Draft/Partial,
-  DP009 Draft; production C2/C3 и C2-Exposure Not Activated; Gate 11 OPEN.
-  TASK-102 не затронута; Issue #121 Not Activated; Commit/Publication Gates отсутствуют.
+  [TASK-125](../../tasks/TASK-125-C2-BOUNDED-TRANSPORT.md) опубликовала isolated
+  Stage A strict DTO/HTTP projection с fake admission capabilities: source
+  `13311d957cccd479c456bab9635c382f3cbdd28b`, PR #126 merge
+  `f537d5eceafede6eec1e168c1db4acfdc57ccc2c`, source/merge tree
+  `70c09e554c2942a86e3dd0c47be2b26fde318e38`, P10R-125-001 PASS;
+  terminal Consumed(P10) / NoneTerminal / Unissued. Historical A+B Size Guard STOP,
+  task record и recovery limitations сохранены; ingress/TLS/production proof отсутствует.
+  Текущая [TASK-126](../../tasks/TASK-126-STAGE-B-TRANSPORT-REFINEMENT.md) —
+  Design-only Stage B transport refinement, projected In Progress; exact gates,
+  verdict и subject определяются newest matching task envelope и independently
+  recomputed manifest. Baseline — `f537d5eceafede6eec1e168c1db4acfdc57ccc2c`.
+  Stage B implementation, trusted provisioning и production composition остаются
+  Not Activated. DP027 Draft/Partial, DP009 Draft; production C2/C3 и C2-Exposure
+  Not Activated; Gate 11 OPEN. TASK-102 не затронута; Issue #121 Not Activated;
+  Commit Gate и Publication Gate не разрешены.
 - Покрытие Runtime для Basic и asymmetric JWT неполное.
 - Поведение Origin полагается на defaults библиотеки, а не на явную Configuration.
 

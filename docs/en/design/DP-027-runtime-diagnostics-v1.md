@@ -1274,3 +1274,202 @@ Transport remains a separate candidate; production integration remains NOT READY
 until actual trust/grant provisioning, bounded ingress, sanctioned composition,
 ARCH-004 section 19 prerequisites and all applicable P01-P08 evidence exist. TASK-123
 does not implement those dependencies, activate C2/C3 or close Gate 11.
+
+### 37.6 Connection and TLS ownership (TASK-126)
+
+The selected one-transaction ingress in DP-013 sections 32.6–32.8 has a single
+accept loop owning a fixed 32-entry live-connection registry. Reserve one of the
+32 connection slots BEFORE Accept. If all are reserved, the single accept loop
+waits on a fixed-capacity/shutdown notification without accepting another socket
+or creating an application request queue; kernel backlog is outside the adapter.
+A reserved but not yet accepted slot counts against 32. On Accept error release
+the reservation. After Accept publish the raw connection in that slot and check
+the closed-admission race, then try one of eight handshake slots without waiting.
+Refusal hard-closes the raw connection BEFORE releasing its reservation; no
+goroutine or queue is created. Start one ordinary connection goroutine only after
+both admissions. No worker pool or goroutine-per-timeout exists. The connection
+slot covers handshake, initial idle/header collection,
+admitted request, response finalization and raw close. The TLS handshake slot covers
+exactly the entire manual `tls.Server.HandshakeContext` operation and releases on
+every success/failure/unwind. Set its absolute read/write/context deadline to
+admission + 2 s, independently of header/body/write deadlines.
+
+Select MinVersion = MaxVersion TLS 1.3, RequireAndVerifyClientCert, immutable trusted
+test ClientCAs/server material and NextProtos containing only `http/1.1`. Empty ALPN
+is allowed as HTTP/1.1; any other negotiated protocol is refused. No ServeTLS/
+http.Server ALPN machinery, plaintext fallback, dynamic TLS callbacks, KeyLogWriter
+or raw error log is configured. On success clear handshake deadlines, release only
+the handshake slot, then apply the 5 s initial-idle/1 s first-byte-header phases.
+TLS handshake or client-certificate verification failure emits no HTTP. A verified
+certificate absent from the construction mapping is a different case: after process
+admission and valid DTO it yields fixed unavailable 404 under DP-013 section 32.8.
+Immutable verified certificate evidence is retained solely for this connection;
+capability lookup waits for admitted valid DTO.
+
+At most 32 connection goroutines and eight handshakes exist; accepted-refused
+sockets close synchronously rather than queue. Kernel accept backlog and TLS
+implementation protocol/record buffers are not application request queues or
+accepted DTO/header records. This is future Draft design, not runtime evidence.
+
+### 37.7 Completion-capable fake transaction seam (TASK-126)
+
+Stage B selects this explicitly new fixture-only seam, reusing existing typed
+Request[P], Response and Status shapes:
+
+```go
+type Run[P comparable] func(
+    context.Context,
+    func(context.Context) (Request[P], Status),
+    func(context.Context, Response) error,
+    func(status Status, abort bool),
+) Status
+```
+
+Run is synchronous: exactly one prepare, at most one output; callbacks cannot be
+retained, detached or concurrent. Violations seal/abort/close silently without
+fallback and provide no proof of trusted core lease conformance. Driver process-8
+admission is THE actual named process lease, never a shadow of another fake
+process counter. Run does not acquire, reset or refund a second process slot.
+
+One construction-owned ingress state supplies the single process-eight admission
+pool for the sanctioned ingress/process scope. All connections, driver copies and
+Run invocations share this same pool/state; no per-connection pool, reconstructed/
+copied counter, second driver pool or independent Run process authority is
+permitted. Copies retain shared state, not fresh capacity. Separately constructing
+another pool is not sanctioned additional process capacity; enforcing one
+sanctioned construction remains a composition obligation, not a claimed global
+constructor registry.
+
+Outer process-8 admission and the 2 s context precede Run and prepare. Prepare
+performs method/body/strict DTO validation before construction-capability resolution:
+OK means valid DTO/configured P; Invalid means parsed request/DTO failure, with
+wrongMethod remembered for 405; Unavailable means cancellation or unknown verified
+identity. A non-OK prepare result forbids authorization, Target admission and
+consumption. No arbitrary callback error is serialized. The fake core may acquire
+its own named principal/Target leases only after successful prepare.
+
+The ingress-owned `finish(status, abort)` is idempotent and synchronous. Run MUST
+call it before releasing any acquired request lease, on normal output,
+missing-output return, cancellation, error and panic unwind. Output itself defers
+finish, completing network handling before output returns. On ordinary no-output
+return Run passes its chosen status to finish(status, false) before lease release
+or return. On cancellation/panic it passes finish(Unavailable, true); the finalizer
+also samples context independently. Abort defaults true and is set false only on
+ordinary return; Run's finish defer precedes all lease-release defers in execution
+order. Tests observe actual fake leases, never a second shadow semaphore.
+
+The output closure likewise passes callback status and abort-on-unwind. Once
+output was called, finish never writes fallback, even if no bytes were committed.
+Without output, unknown/OK maps to unavailable 404; Invalid/Limited/Closed maps
+only to fixed 400/429/503, and 405 requires prepare-recorded wrongMethod. Canceled,
+panic or protocol-violation paths emit nothing new. The first finish seals/disposes
+once; later calls do nothing. A writer failure/short write/panic cannot be retried
+or overwritten. The Status returned by Run never causes I/O after Run returns.
+A Run releasing/returning before finish violates the trusted seam: later ingress
+safety-close cannot prove that original leases were retained.
+
+The current real DiagnosticsAdapter.Execute and Stage A Execute are NOT claimed
+to satisfy this stronger protocol, especially canceled returns without output.
+Neither is wired or changed. A future real-core integration requires a separately
+reviewed completion adapter/API decision and integrated proofs. Stage A New still
+fixes P and is not used to choose an authenticated Handler before DTO. Stage B's
+new explicit bridge calls the shared strict codec/project/write helpers.
+
+After output Flush succeeds or irreversibly fails, finish seals the writer,
+clears adapter-owned header/body/output references, closes the in-memory
+request body without live drain, and hard-closes the underlying raw connection
+exactly once. Completion is final write/flush disposition + no live body drain +
+raw close + owned-buffer cleanup; only after the underlying raw Close returns
+may the driver process lease and Run's principal/Target leases release. No later
+finishRequest, implicit chunk terminator, TLS close_notify,
+cleanup write, next request or post-release response is scheduled. Use raw
+connection Close, not a later tls.Conn.Close that could write close_notify. This
+local resource cut is not client receipt, secure erasure, persistence or delivery ACK.
+
+### 37.8 Controlled response writer and cancellation/shutdown (TASK-126)
+
+The writer implements only synchronous Stage A-required Header/WriteHeader/Write/
+FlushError behavior. WriteHeader stages a closed status; Write borrows the already
+fully validated <=16 KiB body until Flush/finish and emits nothing. Flush writes
+one fixed HTTP/1.1 envelope and the complete staged body under
+`min(flushStart + 1 s, requestDeadline)` for admitted requests. A pre-admission
+503/429 has no admitted context and uses flushStart + 1 s. Closed transport headers are
+Content-Type: application/json, Cache-Control: no-store, canonical Content-Length,
+Connection: close, and Allow: POST only for 405. Status/reason strings are fixed;
+no Date/Server/Transfer-Encoding/Trailer/100 Continue/redirect or arbitrary
+header/cause is emitted. Request bytes never form response headers. Flush samples
+cancellation before and between writes, detects short/failed writes, seals on
+failure and never retries a consumed transaction. Stage A schema/receipt/sequence/
+error rules are unchanged. The driver emits no implicit response on callback return
+or panic; every output route uses this writer/finalizer. A connection-boundary
+final defer recovers unexpected panic only after mandatory Run/finish cleanup,
+then hard-closes silently without cause logging or retry. Direct Stage A panic
+behavior is unchanged. If Run violates finish-before-release, recovery is only
+safety-close, never evidence that named leases were retained.
+
+Shutdown first atomically closes admission, closes the listener, cancels at most
+eight admitted contexts and hard-closes the bounded <=32 live raw connections
+outside short registry/admission locks. It does not join fake core callbacks,
+connection goroutines, Host lifecycle or Manager waits. Returning/cooperating
+transactions still execute finish before releasing leases; unreturned trusted
+callbacks retain their request leases rather than fabricate completed cleanup.
+Caller disconnect is acted on when observed by bounded reads/writes; detection
+during a silent trusted callback is not promised, and the 2 s context remains
+cooperative. No detached evaluation, timeout goroutine, retry, final Poll,
+flush-to-completion or Owner retirement action is added. Never log request/header/
+body/certificate/identity/capability/Target/attempt/raw TLS/parser/callback errors.
+Fixed aggregate health counters carry none of those labels. These are future
+design obligations, not executable PASS or arbitrary-callback termination guarantees.
+
+### 37.9 Future proof classes and bounded decomposition (TASK-126)
+
+These are future executable requirements, not runtime PASS from TASK-126 design
+evidence. Unit framer/net.Pipe/recording-writer evidence, test-CA/real-socket
+transport evidence and real production evidence are separate classes.
+
+| Proof | Isolated transport requirement | Compositional / production-deferred boundary |
+| --- | --- | --- |
+| E06 | Observe actual driver process and fake principal/Target leases during blocked body, writer and finish; absent output/cancel/panic completes raw close/cleanup before any named lease release; zero pending. | Real adapter completion compatibility and no lifecycle join need integrated evidence; a shadow semaphore does not prove it. |
+| E09 | Valid raw terminator at 8,192 passes size gate; 8,193 rejects with zero parser/core/mapping calls and no 8,193rd application read. Cover CRLF/control/obs-fold, duplicate/overflow CL, TE/Trailer/Expect/Upgrade, no automatic 431/501/plaintext 400/100, zero application body read-ahead, one first transaction/no reuse. Prove independent handshake/header/initial-idle/body/request/write deadlines 2/1/5/1/2/1 s and connection/handshake/process caps 32/8/8. | Actual sockets/test CA are required for full isolated ingress evidence; client connect success/kernel backlog is not server admission evidence. |
+| E10 | Test CA verified chain and immutable verified-leaf-DER digest mapping after valid DTO; wrong/missing cert, TLS version/ALPN, unknown verified identity 404, missing map construction failure, forged header/body/query/context/foreign P. | Fixture provenance does not prove production identity, exact grants or trusted provisioning. |
+| E11/E12 | Existing strict Event/receipt/uint64/16 KiB plus real-wire closed status/header/body allowlists; silent pre-handler close/log capture omits raw causes/certificate/identity/Target and TLS plaintext fallback. | Existing Stage A unit evidence alone does not prove network projection or production redaction/composition. |
+| E13 | Complete buffering before write; short/failed write, absent/duplicate output, panic/cancel, exactly-once finalizer, raw close before lease release, no late implicit write/drain/retry, request-owned buffer cleanup. | No delivery ACK or secure-erasure claim; violating trusted Run cannot supply original-lease lifetime proof. |
+| E14 | Race shutdown with reservation/Accept/handshake/header/body/fake core/flush: admission/listener close, bounded eight contexts cancel and <=32 raw connections close without joining callbacks/lifecycle. | Real Host Stop/rollback/Manager overlap remains compositional, not inferred from a fixture. |
+| E15 | Discard late/detached results without replay/reinsert. | Actual Owner retirement, failed Stop/stored failure and later-attempt isolation remain production-deferred. |
+| E16 | Unchanged Stage A API/semantics/imports/module; Go 1.26.5 parser-source guard; focused/stress/full regression/build/vet/hosted race/module and actual socket proofs for applicable implementation slices. | One sanctioned production composition, source-to-operator and P01–P08 remain deferred. |
+
+The selected full Stage B estimate is **580–850 additional physical production
+LOC**, in the existing package. This is a planning estimate, not measured code or
+Size Guard PASS. It exceeds a single <=500-LOC implementation budget and selects
+the following decomposition; TLS and HTTP are not split merely by technology:
+
+1. **B1 — bounded single-transaction wire-exchange kit.** Fixed framer, strict
+   in-memory header parser, controlled writer and completion-capable Run/finalizer
+   protocol; no TLS, listener or identity graph. Target 280–400 production LOC.
+   Existing package `internal/runtimediagnosticstransport`: `wire_frame.go`,
+   `wire_response.go`, `wire_transaction.go`, `wire_frame_test.go`,
+   `wire_response_test.go`, `wire_transaction_test.go`. Record + seven state paths
+   + six code/test paths = **14 paths**, zero new packages. Independently usable
+   and reviewable as a bounded scripted-I/O/net.Pipe exchange with observable fake
+   named leases; not E10 or network ingress proof.
+2. **B2 — authenticated bounded connection driver.** Integrate accepted B1 with
+   TLS admission/caps/deadlines, verified identity dispatch after process/DTO,
+   shutdown and real test-CA/socket proofs. Target 300–450 production LOC in
+   `tls_ingress.go`, `ingress_dispatch.go`, `ingress_shutdown.go`,
+   `tls_ingress_test.go`, `ingress_dispatch_test.go`, `ingress_shutdown_test.go`
+   in the same existing package. Record + seven state paths + six code/test paths
+   = **14 paths**, zero new packages. Prior B1/Stage A files remain read-only unless
+   a fresh scope explicitly justifies changes. This is independently deliverable
+   authenticated bounded transport only after B1, not production activation.
+
+B1/B2 are recommendations with no Task IDs or activation. Each requires fresh
+intake, Existing Coverage, Size Guard and separate Owner permission. Measured
+>500 production LOC, >15 paths, >1 new package/contract/independent behavior causes
+STOP and reassessment/decomposition before expansion; no minification or hidden
+production logic in tests. Design acceptance makes only B1 a candidate for fresh
+implementation intake; full Stage B is not one <=500 task. Production integration
+remains NOT READY until trusted provisioning, a real completion adapter, sanctioned
+graph and integrated proofs exist. This supersedes historical next-core candidate
+ordering in section 37.5 without rewriting historical records or promoting
+Draft/Partial. Issue #121, Stage B implementation, production C2/C3 and C2-Exposure
+remain Not Activated; TASK-102 untouched; Gate 11 OPEN.
