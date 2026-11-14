@@ -1270,3 +1270,204 @@ Smallest next candidate — two-file isolated admission/resource core DP-013, Re
 bounded ingress, sanctioned composition, ARCH-004 section 19 prerequisites и всех
 applicable P01-P08 proofs. TASK-123 не реализует dependencies, не активирует C2/C3
 и не закрывает Gate 11.
+
+### 37.6 Connection and TLS ownership (TASK-126)
+
+Выбранный one-transaction ingress DP-013 разделов 32.6–32.8 имеет один accept loop
+с fixed 32-entry live-connection registry. Один из 32 connection slots
+резервируется ДО Accept. Если все slots зарезервированы, один accept loop ожидает
+fixed-capacity/shutdown notification, не принимая следующий socket и не создавая
+application request queue; kernel backlog находится вне adapter. Reserved, но ещё
+не accepted slot учитывается в 32. При Accept error reservation освобождается.
+После Accept raw connection публикуется в этом slot и проверяется closed-admission
+race; затем без ожидания запрашивается один из восьми handshake slots. Refusal
+hard-closes raw connection ДО освобождения reservation; goroutine или queue не
+создаются. Один обычный connection goroutine запускается лишь после обоих
+admissions. Worker pool или goroutine-per-timeout отсутствуют. Connection slot
+охватывает handshake, initial idle/header collection, admitted
+request, response finalization и raw close. TLS handshake slot охватывает ровно
+всю manual `tls.Server.HandshakeContext` operation и освобождается на каждом
+success/failure/unwind. Absolute read/write/context deadline равен admission + 2 s
+независимо от header/body/write deadlines.
+
+Выбираются MinVersion = MaxVersion TLS 1.3, RequireAndVerifyClientCert, immutable
+trusted test ClientCAs/server material и NextProtos только `http/1.1`. Empty ALPN
+допускается как HTTP/1.1; любой другой negotiated protocol отклоняется. ServeTLS/
+http.Server ALPN machinery, plaintext fallback, dynamic TLS callbacks, KeyLogWriter
+или raw error log не настраиваются. После success handshake deadlines очищаются,
+освобождается только handshake slot, затем действуют 5 s initial-idle/1 s
+first-byte-header phases. TLS handshake или client-certificate verification
+failure не выдаёт HTTP. Verified certificate, отсутствующий в construction
+mapping, — другой случай: после process admission и valid DTO он даёт fixed
+unavailable 404 по DP-013 разделу 32.8. Immutable verified certificate evidence
+хранится только для этого connection; capability lookup ожидает admitted valid DTO.
+
+Существует максимум 32 connection goroutines и восемь handshakes; accepted-refused
+sockets закрываются синхронно, не queue-ятся. Kernel accept backlog и TLS
+implementation protocol/record buffers не являются application request queues или
+accepted DTO/header records. Это future Draft design, не runtime evidence.
+
+### 37.7 Completion-capable fake transaction seam (TASK-126)
+
+Stage B выбирает явно новый fixture-only seam с existing typed Request[P],
+Response и Status shapes:
+
+```go
+type Run[P comparable] func(
+    context.Context,
+    func(context.Context) (Request[P], Status),
+    func(context.Context, Response) error,
+    func(status Status, abort bool),
+) Status
+```
+
+Run synchronous: ровно один prepare, максимум один output; callbacks нельзя
+retain, detach или вызывать concurrently. Violations seals/aborts/closes молча
+без fallback и не доказывают trusted core lease conformance. Driver process-8
+admission — ИМЕННО actual named process lease, не shadow другого fake process
+counter. Run не получает, не resets и не refunds второй process slot.
+
+Один construction-owned ingress state предоставляет единственный process-eight
+admission pool для sanctioned ingress/process scope. Все connections, driver
+copies и Run invocations используют один и тот же pool/state; запрещены
+per-connection pool, reconstructed/copied counter, второй driver pool или
+independent Run process authority. Copies сохраняют shared state, не fresh
+capacity. Отдельное создание ещё одного pool не является sanctioned additional
+process capacity; обеспечение одной sanctioned construction остаётся composition
+obligation, не claimed global constructor registry.
+
+Outer process-8 admission и 2 s context предшествуют Run и prepare. Prepare
+проверяет method/body/strict DTO до construction-capability resolution: OK означает
+valid DTO/configured P; Invalid — parsed request/DTO failure с сохранением
+wrongMethod для 405; Unavailable — cancellation или unknown verified identity.
+Non-OK prepare result запрещает authorization, Target admission и consumption.
+Произвольный callback error не сериализуется. Fake core может получать свои
+именованные principal/Target leases лишь после успешного prepare.
+
+Ingress-owned `finish(status, abort)` idempotent и synchronous. Run ОБЯЗАН вызвать
+его до освобождения любого acquired request lease при normal output, missing-output
+return, cancellation, error и panic unwind. Сам output defers finish, завершая
+network handling до возврата output. При ordinary no-output return Run передаёт
+выбранный status в finish(status, false) до lease release или return. При
+cancellation/panic вызывается finish(Unavailable, true); finalizer независимо
+samples context. Abort по умолчанию true и становится false только при ordinary
+return; Run finish defer исполняется раньше всех lease-release defers. Tests
+наблюдают actual fake leases, никогда не второй shadow semaphore.
+
+Output closure аналогично передаёт callback status и abort-on-unwind. Если output
+был вызван, finish никогда не пишет fallback, даже если bytes ещё не committed.
+Без output unknown/OK отображается в unavailable 404; Invalid/Limited/Closed —
+только fixed 400/429/503, а 405 требует prepare-recorded wrongMethod. Canceled,
+panic или protocol-violation paths ничего нового не выводят. Первый finish
+seals/disposes ровно один раз; последующие вызовы ничего не делают. Writer failure/
+short write/panic не retry-ится и не overwrite-ится. Возвращённый Run Status не
+запускает I/O после возврата Run. Run, который releases/returns до finish,
+нарушает trusted seam: последующий ingress safety-close не доказывает удержание
+original leases.
+
+Текущие real DiagnosticsAdapter.Execute и Stage A Execute НЕ объявляются
+соответствующими более сильному protocol, особенно canceled returns без output.
+Они не подключаются и не меняются. Future real-core integration требует отдельно
+reviewed completion adapter/API decision и integrated proofs. Stage A New всё ещё
+фиксирует P и не выбирает authenticated Handler до DTO. Новый explicit Stage B
+bridge вызывает shared strict codec/project/write helpers.
+
+После успешного либо irreversibly failed output Flush finalizer seals writer,
+очищает adapter-owned header/body/output references, закрывает in-memory
+request body без live drain и hard-closes underlying raw connection ровно один
+раз. Completion — final write/flush disposition + отсутствие live body drain +
+raw close + owned-buffer cleanup; лишь после возврата underlying raw Close
+driver process lease и Run principal/Target leases могут release. Поздние
+finishRequest, implicit chunk terminator, TLS close_notify,
+cleanup write, next request или post-release response не планируются. Используется
+raw connection Close, не поздний tls.Conn.Close, способный писать close_notify.
+Этот local resource cut не означает client receipt, secure erasure, persistence
+или delivery ACK.
+
+### 37.8 Controlled response writer and cancellation/shutdown (TASK-126)
+
+Writer реализует только synchronous Stage A-required Header/WriteHeader/Write/
+FlushError behavior. WriteHeader stages closed status; Write заимствует уже
+полностью проверенный <=16 KiB body до Flush/finish и ничего не выводит. Flush
+пишет один fixed HTTP/1.1 envelope и полный staged body под
+`min(flushStart + 1 s, requestDeadline)` для admitted requests. Pre-admission
+503/429 не имеет admitted context и использует flushStart + 1 s. Closed transport headers:
+Content-Type: application/json, Cache-Control: no-store, canonical Content-Length,
+Connection: close и Allow: POST только для 405. Status/reason strings фиксированы;
+Date/Server/Transfer-Encoding/Trailer/100 Continue/redirect или arbitrary
+header/cause отсутствуют. Request bytes никогда не формируют response headers.
+Flush samples cancellation до и между writes, обнаруживает short/failed writes,
+seals при failure и никогда не retry-ит consumed transaction. Stage A schema/
+receipt/sequence/error rules неизменны. Driver не выдаёт implicit response при
+callback return или panic; каждый output route проходит writer/finalizer.
+Connection-boundary final defer перехватывает unexpected panic только после
+обязательного Run/finish cleanup, затем hard-closes молча без cause logging/retry.
+Direct Stage A panic behavior неизменен. Если Run нарушает finish-before-release,
+recovery — только safety-close, не evidence удержания named leases.
+
+Shutdown сначала атомарно closes admission, закрывает listener, отменяет максимум
+восемь admitted contexts и hard-closes bounded <=32 live raw connections вне
+коротких registry/admission locks. Он не joins fake core callbacks, connection
+goroutines, Host lifecycle или Manager waits. Returning/cooperating transactions
+по-прежнему вызывают finish до lease release; unreturned trusted callbacks
+сохраняют request leases, а не фабрикуют completed cleanup. Caller disconnect
+обрабатывается при наблюдении bounded reads/writes; обнаружение во время silent
+trusted callback не обещается, а 2 s context остаётся cooperative. Detached
+evaluation, timeout goroutine, retry, final Poll, flush-to-completion или Owner
+retirement action не добавляются. Запрещены логи request/header/body/certificate/
+identity/capability/Target/attempt/raw TLS/parser/callback errors. Fixed aggregate
+health counters не имеют таких labels. Это future design obligations, не
+executable PASS или arbitrary-callback termination guarantee.
+
+### 37.9 Future proof classes and bounded decomposition (TASK-126)
+
+Это future executable requirements, не runtime PASS от design evidence TASK-126.
+Unit framer/net.Pipe/recording-writer evidence, test-CA/real-socket transport
+evidence и real production evidence составляют отдельные классы.
+
+| Proof | Isolated transport requirement | Compositional / production-deferred boundary |
+| --- | --- | --- |
+| E06 | Наблюдать actual driver process и fake principal/Target leases при blocked body, writer и finish; absent output/cancel/panic завершают raw close/cleanup до любого named lease release; zero pending. | Real adapter completion compatibility и отсутствие lifecycle join требуют integrated evidence; shadow semaphore этого не доказывает. |
+| E09 | Valid raw terminator на 8,192 проходит size gate; 8,193 отклоняется с zero parser/core/mapping calls и без 8,193-го application read. Проверить CRLF/control/obs-fold, duplicate/overflow CL, TE/Trailer/Expect/Upgrade, отсутствие automatic 431/501/plaintext 400/100, zero application body read-ahead, одну first transaction/no reuse. Доказать independent handshake/header/initial-idle/body/request/write deadlines 2/1/5/1/2/1 s и connection/handshake/process caps 32/8/8. | Для полного isolated ingress evidence нужны actual sockets/test CA; client connect success/kernel backlog не доказывает server admission. |
+| E10 | Test CA verified chain и immutable verified-leaf-DER digest mapping после valid DTO; wrong/missing cert, TLS version/ALPN, unknown verified identity 404, missing map construction failure, forged header/body/query/context/foreign P. | Fixture provenance не доказывает production identity, exact grants или trusted provisioning. |
+| E11/E12 | Existing strict Event/receipt/uint64/16 KiB и real-wire closed status/header/body allowlists; silent pre-handler close/log capture исключает raw causes/certificate/identity/Target и TLS plaintext fallback. | Одних existing Stage A unit evidence недостаточно для network projection или production redaction/composition. |
+| E13 | Complete buffering до write; short/failed write, absent/duplicate output, panic/cancel, exactly-once finalizer, raw close до lease release, отсутствие late implicit write/drain/retry, request-owned buffer cleanup. | Нет delivery ACK или secure-erasure claim; нарушающий trusted Run не доказывает original-lease lifetime. |
+| E14 | Shutdown race с reservation/Accept/handshake/header/body/fake core/flush: admission/listener close, bounded восемь contexts cancel и <=32 raw connections close без joining callbacks/lifecycle. | Real Host Stop/rollback/Manager overlap остаётся compositional, не выводится из fixture. |
+| E15 | Отбрасывать late/detached results без replay/reinsert. | Actual Owner retirement, failed Stop/stored failure и later-attempt isolation остаются production-deferred. |
+| E16 | Неизменные Stage A API/semantics/imports/module; Go 1.26.5 parser-source guard; focused/stress/full regression/build/vet/hosted race/module и actual socket proofs применимых implementation slices. | One sanctioned production composition, source-to-operator и P01–P08 остаются deferred. |
+
+Выбранная полная Stage B estimate — **580–850 дополнительных physical production
+LOC** в existing package. Это planning estimate, не measured code или Size Guard
+PASS. Она превышает single <=500-LOC implementation budget; выбирается следующая
+decomposition, разделяющая TLS/HTTP не просто по technology:
+
+1. **B1 — bounded single-transaction wire-exchange kit.** Fixed framer, strict
+   in-memory header parser, controlled writer и completion-capable Run/finalizer
+   protocol; без TLS, listener или identity graph. Target 280–400 production LOC.
+   Existing package `internal/runtimediagnosticstransport`: `wire_frame.go`,
+   `wire_response.go`, `wire_transaction.go`, `wire_frame_test.go`,
+   `wire_response_test.go`, `wire_transaction_test.go`. Record + семь state paths
+   + шесть code/test paths = **14 paths**, zero new packages. Независимо usable
+   и reviewable как bounded scripted-I/O/net.Pipe exchange с наблюдаемыми fake
+   named leases; не E10 или network ingress proof.
+2. **B2 — authenticated bounded connection driver.** Интегрировать accepted B1 с
+   TLS admission/caps/deadlines, verified identity dispatch после process/DTO,
+   shutdown и real test-CA/socket proofs. Target 300–450 production LOC в
+   `tls_ingress.go`, `ingress_dispatch.go`, `ingress_shutdown.go`,
+   `tls_ingress_test.go`, `ingress_dispatch_test.go`, `ingress_shutdown_test.go`
+   того же existing package. Record + семь state paths + шесть code/test paths
+   = **14 paths**, zero new packages. Предыдущие B1/Stage A files остаются read-only,
+   если fresh scope явно не обосновывает changes. Это independently deliverable
+   authenticated bounded transport только после B1, не production activation.
+
+B1/B2 — рекомендации без Task IDs или activation. Каждой нужны fresh intake,
+Existing Coverage, Size Guard и отдельное Owner permission. Measured >500
+production LOC, >15 paths, >1 new package/contract/independent behavior вызывают
+STOP и reassessment/decomposition до expansion; minification и hidden production
+logic в tests запрещены. Design acceptance делает только B1 candidate для fresh
+implementation intake; full Stage B не является одной <=500 task. Production
+integration остаётся NOT READY до trusted provisioning, real completion adapter,
+sanctioned graph и integrated proofs. Это заменяет historical next-core candidate
+ordering раздела 37.5 без переписывания historical records или повышения
+Draft/Partial. Issue #121, Stage B implementation, production C2/C3 и C2-Exposure
+остаются Not Activated; TASK-102 не затронута; Gate 11 OPEN.

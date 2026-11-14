@@ -907,3 +907,110 @@ ARCH-004 section 19 dependencies и integrated P01-P08 proofs. Unavailable fail-
 backend не является useful production consume authority. Isolated allow-all fixture
 через этот gate не проходит. C2/C3 Not Activated; Gate 11 OPEN. Frozen/Approved
 contract не изменяется.
+
+### 32.6 Dedicated one-transaction ingress (TASK-126)
+
+Выбранный Stage B ingress — dedicated HTTP/1.1 transaction driver поверх вручную
+аутентифицированного TLS. Для connection ownership он не использует
+`net/http.Server`, `Serve`, `ServeTLS` или Handler-return hooks.
+`net/http.ReadRequest` может разбирать только уже ограниченный in-memory header
+frame; он никогда не читает live connection и не пишет responses. Existing Stage A
+`New`/`Handler`/`Execute` APIs и fixed-principal semantics неизменны. Новый Stage B
+код явно использует package-private strict codec/projection helpers; dispatch в
+выбранный по principal Stage A Handler до admission/DTO validation запрещён. Это
+selected Draft design, не реализованный listener или runtime PASS; historical
+candidates раздела 32.5 не активируют refinement или последующую implementation.
+
+Каждый accepted connection несёт максимум один request и один final response,
+после чего закрывается. Connection reuse и выполнение pipelined requests
+отключены. Этот conservative profile не предоставляет keep-alive-idle capability.
+**5 s idle bound** применяется только между успешным handshake и первым HTTP
+byte; **1 s header deadline** начинается на этом первом byte. Второй/pipelined
+request никогда не разбирается, не dispatch-ится и не replay-ится; bytes после
+первого framed body отбрасываются при close.
+
+### 32.7 Raw framing and pre-handler failure (TASK-126)
+
+Считается каждый application-level octet от первого request-line byte до конца
+`CRLFCRLF`, включая request line, каждый header separator/CRLF и final terminator.
+Cap — **8,192 включительно**: terminator, заканчивающийся на 8,192, проходит size
+gate; на 8,193 — отклоняется. Первый byte читается под 5 s idle deadline, затем
+bytes собираются в один fixed 8,192-byte frame под absolute deadline first byte +
+1 s. Каждый application slice TLS.Read имеет длину один. Ищется первый `CRLFCRLF`,
+read немедленно прекращается на его конце; если capacity исчерпана без terminator,
+connection закрывается без чтения 8,193-го application byte. До process admission
+ingress-owned application body/pipeline read-ahead отсутствует: нет retained
+suffix/prefix или buffered live HTTP reader. TLS implementation protocol/record
+buffers — bounded protocol machinery, не accepted DTO/body data или второй header
+frame. `net/http` 4,096-byte slop не используется. Максимум 8,192 application reads
+— conservative cost, не throughput guarantee. Сам `MaxHeaderBytes=8192` этого не
+доказывает.
+
+Отклоняются bare LF, embedded NUL/forbidden controls, obs-fold, malformed request
+line, non-HTTP/1.1, non-origin-form request target и invalid header syntax.
+Требуется один Host; отклоняются duplicate Content-Length даже с одинаковым value,
+noncanonical/negative/overflow Content-Length и любой Transfer-Encoding, Trailer
+или Expect header. Content-Length после удаления только HTTP field OWS (SP/HTAB)
+должен быть ровно `0` или `[1-9][0-9]*` в int64: без sign, commas, internal
+whitespace, leading zero или overflow. Raw frame count включает этот OWS.
+Отклоняются Upgrade и Connection token `upgrade`; CONNECT/authority-form/
+absolute-form/asterisk/HTTP/2 transition недоступны. Требуется valid origin-form
+path/query syntax. Query, если есть, ограничен frame и не имеет authority.
+Обычный parsed nonmatching resource использует fixed 404 только на admitted
+cut раздела 32.8; redirect/path-normalization service отсутствует. Поэтому
+chunked bodies, trailers, 100 Continue
+и ambiguous CL/TE framing недоступны. Missing Content-Length означает zero body; canonical
+Content-Length может структурно разбираться выше 1,024, но body-size validation
+после process admission отклоняет его без чтения body. `net/http.ReadRequest`
+разбирает только exact bounded header slice; любой parser error отклоняется.
+
+Structural/framing/parser/idle/header failure вызывает **silent hard close**:
+без HTTP response, identity-to-capability lookup или core call. Это выбранная
+pre-handler failure boundary, отличная от parsed-DTO 400 раздела 32.4. Stock
+431/501/plaintext 400/redirect/100 Continue или raw parser reason не выводятся.
+Каждый фактически выданный HTTP response сохраняет JSON/no-store allowlist.
+TLS failure аналогично закрывает connection без HTTP fallback или target-aware
+response. Запрещено логировать raw parser/TLS errors, addresses, certificates,
+identity mappings, headers, request contents или credentials; допустимы только
+fixed aggregate failure classes.
+
+### 32.8 Admission and construction-owned identity dispatch (TASK-126)
+
+TLS проверяет chain/ClientAuth и сохраняет verified certificate evidence, но
+capability не resolves. После valid structural header без ожидания запрашивается
+shared process 8 slot; closed admission/capacity refusal использует fixed 503/429
+только если usable transaction допускает response, иначе close. 2 s request
+context начинается сразу после admission, до body reads/DTO decoding.
+
+Только после получения этого process slot и запуска request context обычный
+parsed nonmatching resource может выдать fixed 404. Он не выполняет identity
+mapping/core consumption/body read, использует те же controlled writer и
+finish-before-process-release cut и закрывается без drain. Он не может обходить
+process capacity или request/write bounds; более ранний process refusal сохраняет
+target-independent 503/429 precedence. Это explicit Stage B profile placement
+не меняет existing Stage A Handler behavior.
+
+Body-read deadline равен `min(now + 1 s, requestDeadline)`. После complete-header validation
+до process/body handling прежний header deadline очищается; он не должен случайно
+продолжать ограничивать последующие body/request phases.
+
+Method/content-type/compression/declared-body-size и strict DTO failures дают
+fixed 405/400 без identity resolution или consumption. Читается ровно declared
+Content-Length <=1,024 только после process admission; нет prefix consumption,
+EOF search, live `ReadRequest` body parser или body drain. Extra body/pipeline
+bytes никогда не читаются/разбираются и отбрасываются при hard close.
+Existing strict codec декодирует
+с zero generic P **только для validation**, никогда как admitted authority.
+Лишь после valid DTO/cancellation check SHA-256 verified leaf DER ищется в
+immutable constructor-configured map максимум 32 identities к construction-issued
+fake P. CN/forwarded/header/query/context fallback отсутствует.
+
+Unknown identity даёт fail-closed Unavailable 404 без lookup/consume; requests
+не provision handles. Уже вызванный Run получает original canonical fields и
+selected P как свой single prepare result; только затем он может один раз
+authorize/admit/consume. Это не второй Run invocation и не повторный DTO decode.
+Отсутствие map/backend закрывает
+construction, никогда не превращается в allow-all. Real DiagnosticsPrincipal,
+Directory/Owner или production trust graph не создаются. Verified identity lookup
+до DTO или трактовка TLS authentication как consume authorization запрещены.
+Test capability provenance не доказывает production trust, grants или authorization.
