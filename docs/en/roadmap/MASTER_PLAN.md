@@ -42,17 +42,27 @@ The repository currently contains an Alpha foundation rather than a production-r
   `f37e523eab143ad9cec5c1281aae716d89438f5e`, source/merge tree
   `828917196a0134914d19982b1275a02e144dee4b`; P10 and P10R-127-001 PASS;
   terminal Consumed(P10) / NoneTerminal / Unissued. Historical record preserved.
-- Current [TASK-128](../../tasks/TASK-128-VIKING-BRANDING.md) adds presentation-only
-  Viking branding, projected In Progress; exact gates/subject resolve from its
-  newest matching task envelope and independently recomputed manifest. Baseline:
-  `f37e523eab143ad9cec5c1281aae716d89438f5e`. Both pages use a transparent RGBA
+- Current [TASK-129](../../tasks/TASK-129-README-DOCUMENTATION-REFRESH.md) is a
+  bounded documentation-only refresh, projected In Progress; exact gates/subject
+  resolve from its newest matching task envelope and independently recomputed
+  manifest. Baseline: `f0a05eb29cf1b34b4c48dc3d7b675e3e517bfe9a`. Current README
+  and mirrored local Quick Start documentation are being prepared with the existing
+  approved full Viking logo, real Dashboard/Studio screenshots and actual launch/
+  create-publish instructions. No production/API/Runtime change or task acceptance,
+  commit or publication is claimed. Owner Commit/Publication gates remain separate.
+- [TASK-128](../../tasks/TASK-128-VIKING-BRANDING.md) published presentation-only
+  Viking branding: source `923e64c710460479ab64b8428f81bd5d0d51fb1e`, PR #129 merge
+  `f0a05eb29cf1b34b4c48dc3d7b675e3e517bfe9a`, source/merge tree
+  `727e7b19784a451107db14f6ae32fb6fe5a4c85c`; P10 and P10R-128-001 PASS;
+  terminal Consumed(P10) / NoneTerminal / Unissued. Historical record preserved.
+  Both pages use a transparent RGBA
   portrait PNG 128x128 at 40px and an opaque navy helmet favicon ICO 16/32/48 (`?v=128`).
   Two other embedded GET assets provide a genuine 256x256 full-face Windows ICO for
   a future shortcut (not installed) and the opaque full branding PNG 1254x1254.
   All four branding assets retain MIME/CSP/nosniff with no-cache; only img-src self
   is added to CSP. API, JavaScript flows and Runtime behavior remain unchanged.
   No Stage B, B1/B2, production C2/C3 or C2-Exposure activation; TASK-102 untouched,
-  Gate 11 OPEN. Commit Gate and Publication Gate remain separate unauthorized gates.
+  Gate 11 OPEN. Commit Gate and Publication Gate for TASK-129 remain unauthorized.
 
 ### Snapshot
 

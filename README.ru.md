@@ -1,5 +1,11 @@
 # Universal WebSocket Platform
 
+<p align="center">
+  <img src="internal/configurationstudio/assets/branding/uwp-logo.png" alt="UWP Viking — Universal WebSocket Platform" width="320">
+</p>
+
+[Быстрый старт](docs/ru/quick-start.md) · [Dashboard](http://127.0.0.1:18085/dashboard) · [Configuration Studio](http://127.0.0.1:18085/)
+
 [English version](README.md)
 
 Universal WebSocket Platform — open-source платформа для создания, настройки, развертывания и эксплуатации независимых WebSocket-серверов без написания инфраструктурного кода.
@@ -31,17 +37,18 @@ Refresh выполняется вручную; polling и WebSocket probes от�
 вывода и вложенных запросов. Raw JSON и secret references не отображаются.
 Unauthenticated сервис предназначен только для trusted localhost/same-origin.
 Dashboard не делает Studio или существующий API read-only.
+Endpoint `/health` подтверждает только доступность Control Service, не Runtime status.
 
 Локальный запуск с Go, без npm и frontend build:
 
 ```powershell
 $env:UWP_HTTP_HOST="127.0.0.1"
-$env:UWP_HTTP_PORT="18081"
+$env:UWP_HTTP_PORT="18085"
 go run ./cmd/control-service
 ```
 
-Откройте [Dashboard](http://127.0.0.1:18081/dashboard) или
-[Configuration Studio](http://127.0.0.1:18081/). Без environment overrides
+Откройте [Dashboard](http://127.0.0.1:18085/dashboard) или
+[Configuration Studio](http://127.0.0.1:18085/). Без environment overrides
 адрес по умолчанию — `127.0.0.1:8080`. После запуска списки пусты; создайте и
 опубликуйте конфигурацию в Studio, вернитесь в Dashboard и выберите её Workspace
 и Configuration. После перезапуска сервиса данные исчезают.
@@ -54,6 +61,18 @@ Activation, реализации external persistence, recovery и reporting,
 Control Service Runtime API отсутствуют. Runtime vertical поддерживает одну
 startup-loaded TLS certificate/key pair и configured Session timeouts;
 certificate rotation/reload и mTLS не реализованы.
+
+## Скриншоты UWP Control
+
+Реальный локальный UI с примером конфигурации. Published не означает Running.
+
+### Dashboard
+
+![UWP Control Dashboard с опубликованной конфигурацией](docs/images/dashboard.jpg)
+
+### Configuration Studio
+
+![Configuration Studio после создания и публикации конфигурации](docs/images/configuration-studio.jpg)
 
 ## Текущий релиз
 
@@ -81,6 +100,7 @@ Workspace, Configuration и ConfigurationVersion. Текущий репозит�
 ## Документация
 
 - [Главная страница документации](docs/ru/README.md)
+- [Локальный быстрый старт](docs/ru/quick-start.md)
 - [Архитектурные руководства](docs/ru/architecture/README.md)
 - [Документы проектирования Runtime](docs/ru/design/README.md)
 - [Архитектурные решения](docs/ru/adr/README.md)
