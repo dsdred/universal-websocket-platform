@@ -1,10 +1,23 @@
 # Текущее состояние
 
-Текущая engineering task [TASK-128](../docs/tasks/TASK-128-VIKING-BRANDING.md) —
-Implementation, bounded Viking branding integration; projected `In Progress`.
-Exact gates, verdict и subject определяются newest matching task-record Recovery
-Evidence Envelope с independently recomputed canonical manifest. Baseline —
-`f37e523eab143ad9cec5c1281aae716d89438f5e`. Обе страницы `/` и `/dashboard`
+Текущая engineering task [TASK-129](../docs/tasks/TASK-129-README-DOCUMENTATION-REFRESH.md) —
+bounded documentation-only refresh; projected `In Progress`. Exact gates, verdict
+и subject определяются newest matching task-record Recovery Evidence Envelope
+с independently recomputed canonical manifest. Baseline —
+`f0a05eb29cf1b34b4c48dc3d7b675e3e517bfe9a`. Готовятся актуальные README и mirrored
+EN/RU Quick Start: существующий approved full Viking logo, реальные Dashboard/Studio
+screenshots, локальный запуск и create/publish flow с текущими ограничениями.
+Production-код, API, Runtime и существующие assets не меняются. Никакие acceptance,
+commit или publication TASK-129 не заявляются этой status projection.
+TASK-102 untouched; B1/B2, Stage B implementation, production C2/C3 и C2-Exposure
+Not Activated; Gate 11 OPEN. Commit Gate и Publication Gate TASK-129 не разрешены.
+
+[TASK-128](../docs/tasks/TASK-128-VIKING-BRANDING.md) завершила branding publication:
+source `923e64c710460479ab64b8428f81bd5d0d51fb1e`, PR #129 MERGED как
+`f0a05eb29cf1b34b4c48dc3d7b675e3e517bfe9a`, source/merge tree
+`727e7b19784a451107db14f6ae32fb6fe5a4c85c`; P10 и P10R-128-001 PASS.
+Terminal `Consumed(P10) / NoneTerminal / Unissued`. Historical task record сохранён.
+Обе страницы `/` и `/dashboard`
 используют отдельный Viking portrait PNG 128x128 RGBA в sidebar размером 40px и helmet
 favicon ICO с exact 16/32/48 frames (`/favicon.ico?v=128`). Дополнительно embedded
 GET предоставляет Windows ICO с genuine 256x256 full-face frame для будущего shortcut
@@ -14,8 +27,6 @@ GET предоставляет Windows ICO с genuine 256x256 full-face frame д
 branding resources используют MIME/CSP/nosniff и `Cache-Control: no-cache`.
 В CSP добавлен только `img-src 'self'`; остальные ограничения сохранены.
 Это presentation-only scope: API, JavaScript flows и Runtime не меняются.
-TASK-102 untouched; B1/B2, Stage B implementation, production C2/C3 и C2-Exposure
-Not Activated; Gate 11 OPEN. Commit Gate и Publication Gate не разрешены.
 
 [TASK-127](../docs/tasks/TASK-127-UWP-CONTROL-UI.md) завершила publication: source
 `d19d7a112abc51725d0154e918c94f4793e9e265`, PR #128 MERGED как

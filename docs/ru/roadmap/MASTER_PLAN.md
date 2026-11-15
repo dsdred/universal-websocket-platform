@@ -42,17 +42,27 @@ Universal WebSocket Platform — open-source платформа для созд�
   `f37e523eab143ad9cec5c1281aae716d89438f5e`, source/merge tree
   `828917196a0134914d19982b1275a02e144dee4b`; P10 и P10R-127-001 PASS;
   terminal Consumed(P10) / NoneTerminal / Unissued. Historical record сохранён.
-- Текущая [TASK-128](../../tasks/TASK-128-VIKING-BRANDING.md) добавляет только
-  presentation Viking branding, projected In Progress; exact gates/subject задаёт
-  newest matching task envelope и independently recomputed manifest. Baseline:
-  `f37e523eab143ad9cec5c1281aae716d89438f5e`. Обе страницы используют прозрачный
+- Текущая [TASK-129](../../tasks/TASK-129-README-DOCUMENTATION-REFRESH.md) —
+  bounded documentation-only refresh, projected In Progress; exact gates/subject
+  определяются newest matching task envelope и independently recomputed manifest.
+  Baseline: `f0a05eb29cf1b34b4c48dc3d7b675e3e517bfe9a`. Готовятся актуальные README
+  и mirrored local Quick Start с существующим approved full Viking logo, реальными
+  Dashboard/Studio screenshots и фактическими инструкциями запуска/create-publish.
+  Production/API/Runtime не меняются; acceptance, commit или publication этой task
+  не заявляются. Owner Commit/Publication gates остаются отдельными.
+- [TASK-128](../../tasks/TASK-128-VIKING-BRANDING.md) опубликовала presentation-only
+  Viking branding: source `923e64c710460479ab64b8428f81bd5d0d51fb1e`, PR #129 merge
+  `f0a05eb29cf1b34b4c48dc3d7b675e3e517bfe9a`, source/merge tree
+  `727e7b19784a451107db14f6ae32fb6fe5a4c85c`; P10 и P10R-128-001 PASS;
+  terminal Consumed(P10) / NoneTerminal / Unissued. Historical record сохранён.
+  Обе страницы используют прозрачный
   RGBA portrait PNG 128x128 при 40px и непрозрачный navy helmet favicon ICO 16/32/48 (`?v=128`).
   Ещё два embedded GET assets предоставляют genuine 256x256 full-face Windows ICO для
   будущего shortcut (не устанавливается) и непрозрачный full branding PNG 1254x1254.
   Все четыре branding assets сохраняют MIME/CSP/nosniff с no-cache; в CSP добавлен
   только img-src self. API, JavaScript flows и Runtime behavior не меняются.
   Stage B, B1/B2, production C2/C3 и C2-Exposure не активируются; TASK-102 untouched,
-  Gate 11 OPEN. Commit Gate и Publication Gate остаются отдельными неразрешёнными gates.
+  Gate 11 OPEN. Commit Gate и Publication Gate TASK-129 не разрешены.
 
 ### Snapshot
 

@@ -6,6 +6,9 @@
 
 Choose the route that matches what you need:
 
+- **Try the local UI:** follow the [Quick Start](quick-start.md) to run the
+  trusted localhost Control Service, publish a configuration in Studio and browse
+  it in Dashboard. This local guide does not activate or start Runtime.
 - **What works in the current repository?** Read the root
   [project status](../../README.md#status), then use the factual
   [current implementation state](../../spec/current-state.md) for the detailed

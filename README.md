@@ -1,5 +1,11 @@
 # Universal WebSocket Platform
 
+<p align="center">
+  <img src="internal/configurationstudio/assets/branding/uwp-logo.png" alt="UWP Viking — Universal WebSocket Platform" width="320">
+</p>
+
+[Quick Start](docs/en/quick-start.md) · [Dashboard](http://127.0.0.1:18085/dashboard) · [Configuration Studio](http://127.0.0.1:18085/)
+
 [Russian version](README.ru.md)
 
 Universal WebSocket Platform is an open-source platform for creating, configuring, deploying, and operating independent WebSocket servers without writing infrastructure code.
@@ -30,17 +36,18 @@ Unsafe JavaScript integer IDs produce an unsupported-response state before
 rendering or nested requests. Raw JSON and secret references are not displayed.
 The unauthenticated service is for trusted localhost/same-origin use only.
 Dashboard does not make the Studio or existing API read-only.
+The `/health` endpoint confirms Control Service availability only, not Runtime status.
 
 Run locally with Go, without npm or a frontend build:
 
 ```powershell
 $env:UWP_HTTP_HOST="127.0.0.1"
-$env:UWP_HTTP_PORT="18081"
+$env:UWP_HTTP_PORT="18085"
 go run ./cmd/control-service
 ```
 
-Open [Dashboard](http://127.0.0.1:18081/dashboard) or
-[Configuration Studio](http://127.0.0.1:18081/). Without environment overrides,
+Open [Dashboard](http://127.0.0.1:18085/dashboard) or
+[Configuration Studio](http://127.0.0.1:18085/). Without environment overrides,
 the default address is `127.0.0.1:8080`. A fresh service has empty lists; use
 Studio to create and publish a configuration, then return to Dashboard and
 select its Workspace and Configuration. Data disappears on service restart.
@@ -53,6 +60,18 @@ Activation, external persistence, recovery and reporting implementations,
 and the Control Service Runtime API remain absent. The Runtime vertical supports
 one startup-loaded TLS certificate/key pair and configured Session timeouts;
 certificate rotation/reload and mTLS are not implemented.
+
+## UWP Control screenshots
+
+Real local UI with an example configuration. Published does not mean Running.
+
+### Dashboard
+
+![UWP Control Dashboard showing a published configuration](docs/images/dashboard.jpg)
+
+### Configuration Studio
+
+![Configuration Studio after creating and publishing a configuration](docs/images/configuration-studio.jpg)
 
 ## Current release
 
@@ -80,6 +99,7 @@ contains later, unreleased Beta engineering progress described above. See the
 ## Documentation
 
 - [Documentation home](docs/en/README.md)
+- [Local Quick Start](docs/en/quick-start.md)
 - [Architecture guides](docs/en/architecture/README.md)
 - [Runtime design documents](docs/en/design/README.md)
 - [Architecture Decision Records](docs/en/adr/README.md)
