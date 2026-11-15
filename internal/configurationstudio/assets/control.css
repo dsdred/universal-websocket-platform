@@ -19,7 +19,7 @@ button:disabled, select:disabled { opacity: .6; cursor: default; }
 .brand { display: flex; gap: .7rem; align-items: center; padding: 1.2rem; color: var(--text); border-bottom: 1px solid var(--border); font-weight: 700; }
 .brand:hover { text-decoration: none; }
 .brand small { display: block; font-size: .72rem; font-weight: 400; color: var(--muted); }
-.brand-mark { width: 30px; height: 30px; background: var(--accent); color: var(--bg); display: grid; place-items: center; border-radius: 8px; }
+.brand-mark { width: 40px; height: 40px; flex-shrink: 0; object-fit: contain; }
 nav { padding: .8rem .65rem; display: flex; flex-direction: column; gap: .15rem; }
 nav a { color: var(--muted); padding: .55rem .7rem; border-radius: 7px; }
 nav a:hover { background: var(--secondary); color: var(--text); text-decoration: none; }

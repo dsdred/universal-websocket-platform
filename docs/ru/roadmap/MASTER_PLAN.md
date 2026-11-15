@@ -37,11 +37,22 @@ Universal WebSocket Platform — open-source платформа для созд�
   Manual Refresh, явные unavailable/error states и safe-ID rejection сохраняют
   trusted localhost/same-origin, unauthenticated boundary. Runtime, Connections
   и Diagnostics не имеют HTTP GET API; Published не означает Running.
-- Текущая [TASK-127](../../tasks/TASK-127-UWP-CONTROL-UI.md) — эта bounded UI
-  implementation, projected In Progress; exact gates/subject определяются newest
-  matching task envelope и independently recomputed manifest. Baseline:
-  `e5975d5a36cd4c1e431ad76d0629275f17ceab81`. Runtime/Stage B не активируются;
-  Commit Gate и Publication Gate остаются отдельными неразрешёнными Owner gates.
+- [TASK-127](../../tasks/TASK-127-UWP-CONTROL-UI.md) опубликовала этот UI:
+  source `d19d7a112abc51725d0154e918c94f4793e9e265`, PR #128 merge
+  `f37e523eab143ad9cec5c1281aae716d89438f5e`, source/merge tree
+  `828917196a0134914d19982b1275a02e144dee4b`; P10 и P10R-127-001 PASS;
+  terminal Consumed(P10) / NoneTerminal / Unissued. Historical record сохранён.
+- Текущая [TASK-128](../../tasks/TASK-128-VIKING-BRANDING.md) добавляет только
+  presentation Viking branding, projected In Progress; exact gates/subject задаёт
+  newest matching task envelope и independently recomputed manifest. Baseline:
+  `f37e523eab143ad9cec5c1281aae716d89438f5e`. Обе страницы используют прозрачный
+  RGBA portrait PNG 128x128 при 40px и непрозрачный navy helmet favicon ICO 16/32/48 (`?v=128`).
+  Ещё два embedded GET assets предоставляют genuine 256x256 full-face Windows ICO для
+  будущего shortcut (не устанавливается) и непрозрачный full branding PNG 1254x1254.
+  Все четыре branding assets сохраняют MIME/CSP/nosniff с no-cache; в CSP добавлен
+  только img-src self. API, JavaScript flows и Runtime behavior не меняются.
+  Stage B, B1/B2, production C2/C3 и C2-Exposure не активируются; TASK-102 untouched,
+  Gate 11 OPEN. Commit Gate и Publication Gate остаются отдельными неразрешёнными gates.
 
 ### Snapshot
 

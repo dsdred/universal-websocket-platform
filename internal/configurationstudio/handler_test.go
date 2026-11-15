@@ -1,8 +1,15 @@
 package configurationstudio
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/binary"
+	"fmt"
+	"image"
+	"image/png"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -179,6 +186,190 @@ func TestScriptUsesExactMutationSequence(t *testing.T) {
 		}
 		previous = index
 	}
+}
+
+func TestBrandingRoutesDeliverExactAssetsAndSecurityHeaders(t *testing.T) {
+	const expectedCSP = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+	for _, asset := range []struct {
+		path string
+		mime string
+		body []byte
+	}{
+		{"/favicon.ico?v=128", "image/vnd.microsoft.icon", faviconICO},
+		{"/configuration-studio/branding/viking-128.png", "image/png", vikingPNG},
+		{"/configuration-studio/branding/uwp-viking.ico", "image/vnd.microsoft.icon", windowsICO},
+		{"/configuration-studio/branding/uwp-logo.png", "image/png", logoPNG},
+	} {
+		t.Run(asset.path, func(t *testing.T) {
+			response := httptest.NewRecorder()
+			newRouter().ServeHTTP(response, httptest.NewRequest(http.MethodGet, asset.path, nil))
+			if response.Code != http.StatusOK || !bytes.Equal(response.Body.Bytes(), asset.body) {
+				t.Fatal("branding route did not deliver exact embedded bytes with status 200")
+			}
+			for key, want := range map[string]string{
+				"Content-Type": asset.mime, "Cache-Control": "no-cache",
+				"X-Content-Type-Options": "nosniff", "Content-Security-Policy": expectedCSP,
+			} {
+				if got := response.Header().Get(key); got != want {
+					t.Errorf("%s = %q, want %q", key, got, want)
+				}
+			}
+			for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete} {
+				response = httptest.NewRecorder()
+				newRouter().ServeHTTP(response, httptest.NewRequest(method, asset.path, nil))
+				if response.Code != http.StatusMethodNotAllowed {
+					t.Errorf("%s status = %d, want 405", method, response.Code)
+				}
+			}
+		})
+	}
+	for _, path := range []string{"/favicon.ico/", "/configuration-studio/branding/", "/configuration-studio/branding/missing.png", "/configuration-studio/branding/README.md", "/configuration-studio/branding/favicon.ico"} {
+		response := httptest.NewRecorder()
+		newRouter().ServeHTTP(response, httptest.NewRequest(http.MethodGet, path, nil))
+		if response.Code != http.StatusNotFound {
+			t.Errorf("GET %s status = %d, want 404", path, response.Code)
+		}
+	}
+}
+
+func TestBothPagesReferenceVersionedFaviconAndDecorativePortrait(t *testing.T) {
+	for _, page := range []struct {
+		name string
+		body []byte
+	}{{"Studio", indexHTML}, {"Dashboard", dashboardHTML}} {
+		t.Run(page.name, func(t *testing.T) {
+			html := string(page.body)
+			icons := regexp.MustCompile(`<link\b[^>]*\brel="icon"[^>]*>`).FindAllString(html, -1)
+			if len(icons) != 1 {
+				t.Fatalf("favicon links = %d, want one", len(icons))
+			}
+			for _, required := range []string{`href="/favicon.ico?v=128"`, `type="image/vnd.microsoft.icon"`, `sizes="16x16 32x32 48x48"`} {
+				if !strings.Contains(icons[0], required) {
+					t.Errorf("favicon link missing %s", required)
+				}
+			}
+			portraits := regexp.MustCompile(`<img\b[^>]*\bsrc="/configuration-studio/branding/viking-128.png"[^>]*>`).FindAllString(html, -1)
+			if len(portraits) != 1 {
+				t.Fatalf("portrait images = %d, want one", len(portraits))
+			}
+			for _, required := range []string{`alt=""`, `width="40"`, `height="40"`} {
+				if !strings.Contains(portraits[0], required) {
+					t.Errorf("decorative portrait missing %s", required)
+				}
+			}
+			if strings.Contains(html, `class="brand-mark">U</span>`) {
+				t.Error("temporary U brand mark remains")
+			}
+		})
+	}
+}
+
+func TestBrandingPNGDimensionsAndPortraitTransparency(t *testing.T) {
+	portrait := decodeBrandPNG(t, vikingPNG, 128)
+	assertTransparentInset(t, portrait, 4)
+	// Pin the independently admitted face asset, preventing accidental helmet substitution.
+	if got := fmt.Sprintf("%x", sha256.Sum256(vikingPNG)); got != "61a14ed986a4260ec214d5912a93d1a5deadcc4e9b47d0ab6d413bd43d82799c" {
+		t.Errorf("sidebar asset differs from approved standalone portrait: %s", got)
+	}
+	logo := decodeBrandPNG(t, logoPNG, 1254)
+	if got := fmt.Sprintf("%x", sha256.Sum256(logoPNG)); got != "883163ba0332fb3f992450ce17fe78399c2dff6904738254306535cdf8128743" {
+		t.Errorf("full branding is not byte-exact approved archive logo: %s", got)
+	}
+	if _, _, _, alpha := logo.At(0, 0).RGBA(); alpha != 65535 {
+		t.Error("archive full logo should preserve its documented opaque background")
+	}
+}
+
+func TestICOFramesSeparateHelmetFaviconsFromWindowsFace(t *testing.T) {
+	faviconFrames := decodeBrandICO(t, faviconICO, []int{16, 32, 48})
+	approvedHelmetHashes := []string{
+		"eb74111fe6a752e55241fac6b117c8f397ed2faaccbda1a5e7f81edaeab9b064",
+		"002b1973a4c5118c7ae06f490dd58857a86c0db1c0a990929394844c82609b34",
+		"777d87a28986e9ae44adc4b28abbdaeb7ce5d0c3fc98099a9f7a1ff4b907425e",
+	}
+	for i, frame := range faviconFrames {
+		if got := fmt.Sprintf("%x", sha256.Sum256(frame)); got != approvedHelmetHashes[i] {
+			t.Errorf("favicon frame %d differs from actual approved archive helmet PNG: %s", i, got)
+		}
+	}
+	face := decodeBrandICO(t, windowsICO, []int{256})[0]
+	assertTransparentInset(t, decodeBrandPNG(t, face, 256), 8)
+	if got := fmt.Sprintf("%x", sha256.Sum256(face)); got != "1ce27684c53a1356bce42bfdd956e79eedb36fe0b677748c0319d3d114004b0c" {
+		t.Errorf("Windows frame is not the admitted standalone face rendering: %s", got)
+	}
+}
+
+func decodeBrandPNG(t *testing.T, data []byte, size int) image.Image {
+	t.Helper()
+	img, err := png.Decode(bytes.NewReader(data))
+	if err != nil {
+		t.Fatalf("invalid PNG: %v", err)
+	}
+	if img.Bounds() != image.Rect(0, 0, size, size) {
+		t.Fatalf("PNG bounds = %v, want %dx%d", img.Bounds(), size, size)
+	}
+	return img
+}
+
+func assertTransparentInset(t *testing.T, img image.Image, inset int) {
+	t.Helper()
+	bounds := img.Bounds()
+	var transparent, visible int
+	for y := 0; y < bounds.Dy(); y++ {
+		for x := 0; x < bounds.Dx(); x++ {
+			_, _, _, alpha := img.At(x, y).RGBA()
+			if alpha == 0 {
+				transparent++
+			} else {
+				visible++
+			}
+			if (x < inset || y < inset || x >= bounds.Dx()-inset || y >= bounds.Dy()-inset) && alpha != 0 {
+				t.Fatalf("portrait inset is not transparent at (%d,%d)", x, y)
+			}
+		}
+	}
+	if transparent == 0 || visible == 0 {
+		t.Fatal("portrait must contain both actual visible artwork and transparent background")
+	}
+}
+
+func decodeBrandICO(t *testing.T, data []byte, sizes []int) [][]byte {
+	t.Helper()
+	if len(data) < 6 || binary.LittleEndian.Uint16(data[0:2]) != 0 || binary.LittleEndian.Uint16(data[2:4]) != 1 || int(binary.LittleEndian.Uint16(data[4:6])) != len(sizes) {
+		t.Fatal("invalid ICO header or unexpected frame count")
+	}
+	directoryEnd := 6 + 16*len(sizes)
+	if len(data) < directoryEnd {
+		t.Fatal("ICO directory is truncated")
+	}
+	previousEnd := uint64(directoryEnd)
+	frames := make([][]byte, len(sizes))
+	for i, size := range sizes {
+		entry := data[6+16*i : 6+16*(i+1)]
+		width, height := int(entry[0]), int(entry[1])
+		if width == 0 {
+			width = 256
+		}
+		if height == 0 {
+			height = 256
+		}
+		if width != size || height != size {
+			t.Fatalf("frame %d dimensions = %dx%d, want %dx%d", i, width, height, size, size)
+		}
+		length := uint64(binary.LittleEndian.Uint32(entry[8:12]))
+		offset := uint64(binary.LittleEndian.Uint32(entry[12:16]))
+		end := offset + length
+		if length == 0 || offset != previousEnd || end > uint64(len(data)) {
+			t.Fatalf("frame %d has invalid/overlapping/out-of-bounds payload", i)
+		}
+		frames[i] = data[offset:end]
+		decodeBrandPNG(t, frames[i], size)
+		previousEnd = end
+	}
+	if previousEnd != uint64(len(data)) {
+		t.Fatal("unexpected data outside ICO payloads")
+	}
+	return frames
 }
 
 func newRouter() http.Handler {

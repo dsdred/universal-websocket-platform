@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- UWP Viking portrait branding in the shared Dashboard/Studio sidebar and helmet
+  favicons, delivered as local embedded assets. A full-face Windows icon for a
+  future shortcut and the full branding logo are available separately; no shortcut
+  is installed and API/Studio flows are unchanged.
 - UWP Control Slate Blue Dashboard at `/dashboard`, embedded without frontend
   dependencies, with responsive navigation shared with Configuration Studio.
   GET-only Workspace/Configuration/Version browsing, Control Service health,
