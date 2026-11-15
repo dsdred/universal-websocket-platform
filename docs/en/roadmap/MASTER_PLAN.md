@@ -37,11 +37,22 @@ The repository currently contains an Alpha foundation rather than a production-r
   explicit unavailable/error states and safe-ID rejection preserve the trusted
   localhost/same-origin, unauthenticated boundary. Runtime, Connections and
   Diagnostics have no HTTP GET API; Published does not mean Running.
-- Current [TASK-127](../../tasks/TASK-127-UWP-CONTROL-UI.md) is this bounded UI
-  implementation, projected In Progress; exact gates/subject resolve from its
+- [TASK-127](../../tasks/TASK-127-UWP-CONTROL-UI.md) published that UI:
+  source `d19d7a112abc51725d0154e918c94f4793e9e265`, PR #128 merge
+  `f37e523eab143ad9cec5c1281aae716d89438f5e`, source/merge tree
+  `828917196a0134914d19982b1275a02e144dee4b`; P10 and P10R-127-001 PASS;
+  terminal Consumed(P10) / NoneTerminal / Unissued. Historical record preserved.
+- Current [TASK-128](../../tasks/TASK-128-VIKING-BRANDING.md) adds presentation-only
+  Viking branding, projected In Progress; exact gates/subject resolve from its
   newest matching task envelope and independently recomputed manifest. Baseline:
-  `e5975d5a36cd4c1e431ad76d0629275f17ceab81`. No Runtime/Stage B activation;
-  Commit Gate and Publication Gate remain separate, unauthorized Owner gates.
+  `f37e523eab143ad9cec5c1281aae716d89438f5e`. Both pages use a transparent RGBA
+  portrait PNG 128x128 at 40px and an opaque navy helmet favicon ICO 16/32/48 (`?v=128`).
+  Two other embedded GET assets provide a genuine 256x256 full-face Windows ICO for
+  a future shortcut (not installed) and the opaque full branding PNG 1254x1254.
+  All four branding assets retain MIME/CSP/nosniff with no-cache; only img-src self
+  is added to CSP. API, JavaScript flows and Runtime behavior remain unchanged.
+  No Stage B, B1/B2, production C2/C3 or C2-Exposure activation; TASK-102 untouched,
+  Gate 11 OPEN. Commit Gate and Publication Gate remain separate unauthorized gates.
 
 ### Snapshot
 

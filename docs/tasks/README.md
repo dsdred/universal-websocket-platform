@@ -3,22 +3,37 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая engineering task [TASK-127](TASK-127-UWP-CONTROL-UI.md) —
-Implementation UWP Control UI v0.1 / Slate Blue; projected `In Progress`.
+Текущая engineering task [TASK-128](TASK-128-VIKING-BRANDING.md) —
+Implementation, bounded Viking branding integration; projected `In Progress`.
 Exact gates, verdict и subject определяются newest matching task-record Recovery
 Evidence Envelope с independently recomputed canonical manifest. Baseline —
-`e5975d5a36cd4c1e431ad76d0629275f17ceab81`. Встроенный GET-only `/dashboard`
-показывает фактическую доступность Control Service и позволяет выбрать Workspace,
-Configuration и просмотреть Versions, state, listener host/port и available updatedAt.
-Общая responsive-оболочка сохраняет Configuration Studio `/` и его create/publish
-flow. Только trusted localhost/same-origin; сервис остаётся unauthenticated.
-Manual Refresh без polling/probes; loading/empty/offline/error/unsupported states.
-Unsafe uint64 IDs отклоняются до вывода и дальнейших запросов; raw JSON и secret
-references не отображаются. Время получения данных в браузере отделено от resource
-updatedAt. `/health` подтверждает только Control Service; Published != Running.
-Runtime, Connections и Diagnostics unavailable: HTTP GET API отсутствуют.
+`f37e523eab143ad9cec5c1281aae716d89438f5e`. Обе страницы `/` и `/dashboard`
+используют отдельный Viking portrait PNG 128x128 RGBA в sidebar размером 40px и helmet
+favicon ICO с exact 16/32/48 frames (`/favicon.ico?v=128`). Дополнительно embedded
+GET предоставляет Windows ICO с genuine 256x256 full-face frame для будущего shortcut
+(не устанавливается) и full branding PNG 1254x1254. Portrait прозрачен; favicon/full logo
+сохраняют исходный непрозрачный navy background. Начальный missing-face blocker
+архива снят отдельным Owner portrait; T128-ASSET-002 READY. Четыре exact GET
+branding resources используют MIME/CSP/nosniff и `Cache-Control: no-cache`.
+В CSP добавлен только `img-src 'self'`; остальные ограничения сохранены.
+Это presentation-only scope: API, JavaScript flows и Runtime не меняются.
 TASK-102 untouched; B1/B2, Stage B implementation, production C2/C3 и C2-Exposure
 Not Activated; Gate 11 OPEN. Commit Gate и Publication Gate не разрешены.
+
+[TASK-127](TASK-127-UWP-CONTROL-UI.md) завершила publication: source
+`d19d7a112abc51725d0154e918c94f4793e9e265`, PR #128 MERGED как
+`f37e523eab143ad9cec5c1281aae716d89438f5e`, source/merge tree
+`828917196a0134914d19982b1275a02e144dee4b`; P10 и P10R-127-001 PASS.
+Terminal `Consumed(P10) / NoneTerminal / Unissued`. Historical task record сохранён.
+Встроенный GET-only `/dashboard` показывает фактическую доступность Control Service,
+Workspace -> Configuration -> Versions, state, listener host/port и available updatedAt.
+Общая responsive Slate Blue оболочка сохраняет Studio `/` и create/publish flow.
+Только trusted localhost/same-origin; сервис остаётся unauthenticated. Manual Refresh
+без polling/probes; loading/empty/offline/error/unsupported states. Unsafe uint64 IDs
+отклоняются до вывода и дальнейших запросов; raw JSON и secret references скрыты.
+Время получения данных в браузере отделено от resource updatedAt. `/health` подтверждает
+только Control Service; Published != Running. Runtime, Connections и Diagnostics
+unavailable: HTTP GET API отсутствуют. Branding не расширяет эти возможности.
 
 [TASK-126](TASK-126-STAGE-B-TRANSPORT-REFINEMENT.md) завершила Design-only
 publication: source `16f91f1f0ba42d2a4309be1bb856a859445436cf`, PR #127 MERGED как
