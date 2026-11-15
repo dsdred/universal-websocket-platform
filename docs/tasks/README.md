@@ -3,15 +3,30 @@
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 
-Текущая engineering task [TASK-126](TASK-126-STAGE-B-TRANSPORT-REFINEMENT.md) —
-Design-only Stage B transport refinement; projected `In Progress`. Exact gates,
-verdict и subject определяются newest matching task-record Recovery Evidence Envelope
-с independently recomputed canonical manifest. Baseline —
-`f537d5eceafede6eec1e168c1db4acfdc57ccc2c`. Scope: strict framing, pre-handler
-failures, network response lifetime, TLS handshake ownership и construction-owned
-identity dispatch. Runtime proofs не заявляются; Stage B implementation Not Activated.
-Без production identity/grants, Directory/Owner graph и cmd/control-service wiring.
-Commit Gate и Publication Gate не разрешены.
+Текущая engineering task [TASK-127](TASK-127-UWP-CONTROL-UI.md) —
+Implementation UWP Control UI v0.1 / Slate Blue; projected `In Progress`.
+Exact gates, verdict и subject определяются newest matching task-record Recovery
+Evidence Envelope с independently recomputed canonical manifest. Baseline —
+`e5975d5a36cd4c1e431ad76d0629275f17ceab81`. Встроенный GET-only `/dashboard`
+показывает фактическую доступность Control Service и позволяет выбрать Workspace,
+Configuration и просмотреть Versions, state, listener host/port и available updatedAt.
+Общая responsive-оболочка сохраняет Configuration Studio `/` и его create/publish
+flow. Только trusted localhost/same-origin; сервис остаётся unauthenticated.
+Manual Refresh без polling/probes; loading/empty/offline/error/unsupported states.
+Unsafe uint64 IDs отклоняются до вывода и дальнейших запросов; raw JSON и secret
+references не отображаются. Время получения данных в браузере отделено от resource
+updatedAt. `/health` подтверждает только Control Service; Published != Running.
+Runtime, Connections и Diagnostics unavailable: HTTP GET API отсутствуют.
+TASK-102 untouched; B1/B2, Stage B implementation, production C2/C3 и C2-Exposure
+Not Activated; Gate 11 OPEN. Commit Gate и Publication Gate не разрешены.
+
+[TASK-126](TASK-126-STAGE-B-TRANSPORT-REFINEMENT.md) завершила Design-only
+publication: source `16f91f1f0ba42d2a4309be1bb856a859445436cf`, PR #127 MERGED как
+`e5975d5a36cd4c1e431ad76d0629275f17ceab81`, source/merge tree
+`f622b8ef07af7c94f4a7c4115532db6e68061196`; P10R-126-001 PASS.
+Terminal `Consumed(P10) / NoneTerminal / Unissued`. Historical task record
+сохранён. Design refinement не является transport/TLS/runtime или production-trust
+proof и не активирует Stage B, trusted provisioning или production composition.
 
 [TASK-125](TASK-125-C2-BOUNDED-TRANSPORT.md) опубликована: Stage A strict
 DTO codec/HTTP projection с fake admission capabilities; source

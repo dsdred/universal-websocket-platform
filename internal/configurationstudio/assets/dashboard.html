@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard · UWP Control</title>
+  <link rel="stylesheet" href="/configuration-studio/control.css">
+  <script src="/configuration-studio/dashboard.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <aside class="sidebar" aria-label="UWP Control">
+    <a class="brand" href="/dashboard"><span class="brand-mark">U</span><span>UWP Control<small>Local development</small></span></a>
+    <nav aria-label="Main navigation">
+      <span class="nav-label">Workspace</span>
+      <a href="/dashboard" aria-current="page">Dashboard</a>
+      <a href="/">Configuration Studio</a>
+      <a href="/dashboard#workspaces">Workspaces</a>
+      <a href="/dashboard#configurations">Configurations</a>
+      <span class="nav-label">System</span>
+      <a href="#availability">API availability</a>
+    </nav>
+    <p class="sidebar-note">Trusted localhost only<br>Unauthenticated Control Service</p>
+  </aside>
+  <main id="main" class="control-main">
+    <header class="topbar"><span>UWP Control / <strong>Dashboard</strong></span><a class="button" href="/">Open Studio</a></header>
+    <div class="content">
+      <header class="page-heading"><div><p class="eyebrow">CONTROL OVERVIEW</p><h1>Dashboard</h1><p class="muted">Browse the configuration held by this Control Service.</p></div><button id="refresh" type="button">Refresh</button></header>
+      <p class="notice"><strong>Published does not mean Running.</strong> Data is in memory and lost on restart. This view uses GET only; it does not manage Runtime.</p>
+      <section id="availability" class="cards" aria-label="API availability">
+        <article class="card"><h2>Control Service</h2><p id="health-status" class="value" role="status">Loading…</p><p class="muted">/health · Control Service availability only</p><p id="health-time" class="muted">Not checked yet</p></article>
+        <article class="card"><h2>Runtime</h2><p class="value unavailable">Unavailable</p><p class="muted">No HTTP GET API</p></article>
+        <article class="card"><h2>Connections</h2><p class="value unavailable">Unavailable</p><p class="muted">No HTTP GET API</p></article>
+        <article class="card"><h2>Diagnostics</h2><p class="value unavailable">Unavailable</p><p class="muted">No HTTP GET API</p></article>
+      </section>
+      <p id="data-status" class="status" role="status" aria-live="polite">Loading workspaces…</p>
+      <div id="browser" aria-busy="true">
+        <div class="selection-grid">
+          <section id="workspaces" class="card"><h2>Workspaces</h2><label for="workspace">Workspace</label><select id="workspace" disabled><option value="">Loading…</option></select><p id="workspace-meta" class="muted">Not loaded</p></section>
+          <section id="configurations" class="card"><h2>Configurations</h2><label for="configuration">Configuration in selected workspace</label><select id="configuration" disabled><option value="">Select a workspace</option></select><p id="configuration-meta" class="muted">Not loaded</p></section>
+        </div>
+        <section class="card versions" aria-labelledby="versions-heading">
+          <div class="card-heading"><h2 id="versions-heading">Versions</h2><span id="version-count" class="muted">Select a configuration</span></div>
+          <p class="muted">Listener values are configuration settings, not live endpoint checks. Resource timestamps are supplied by the API.</p>
+          <div class="table-scroll" role="region" aria-label="Configuration versions" tabindex="0"><table><thead><tr><th scope="col">Version / ID</th><th scope="col">State</th><th scope="col">Listener host / port</th><th scope="col">Resource updated</th></tr></thead><tbody id="versions"><tr><td colspan="4">Select a configuration to view its versions.</td></tr></tbody></table></div>
+        </section>
+      </div>
+      <footer class="muted">No automatic refresh. Use Refresh to reload lists and health. Selections load their nested data once.</footer>
+    </div>
+  </main>
+</body>
+</html>

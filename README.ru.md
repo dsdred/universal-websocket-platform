@@ -21,6 +21,31 @@ vertical с Authentication до Upgrade, детерминированной ма
 reachability. Studio не является production Admin UI и не запускает Runtime и
 не управляет им.
 
+Встроенный **UWP Control Dashboard** на `/dashboard` добавляет общую со Studio
+оболочку Slate Blue и GET-only просмотр существующих Workspaces, Configurations
+и Versions. Он показывает доступность Control Service, state версий, listener
+host/port, доступное время изменения ресурса и время получения данных в браузере.
+Runtime, Connections и Diagnostics явно недоступны: HTTP GET API не подключён.
+Refresh выполняется вручную; polling и WebSocket probes отсутствуют.
+Небезопасные для JavaScript integer IDs вызывают unsupported-response state до
+вывода и вложенных запросов. Raw JSON и secret references не отображаются.
+Unauthenticated сервис предназначен только для trusted localhost/same-origin.
+Dashboard не делает Studio или существующий API read-only.
+
+Локальный запуск с Go, без npm и frontend build:
+
+```powershell
+$env:UWP_HTTP_HOST="127.0.0.1"
+$env:UWP_HTTP_PORT="18081"
+go run ./cmd/control-service
+```
+
+Откройте [Dashboard](http://127.0.0.1:18081/dashboard) или
+[Configuration Studio](http://127.0.0.1:18081/). Без environment overrides
+адрес по умолчанию — `127.0.0.1:8080`. После запуска списки пусты; создайте и
+опубликуйте конфигурацию в Studio, вернитесь в Dashboard и выберите её Workspace
+и Configuration. После перезапуска сервиса данные исчезают.
+
 Configuration Loader, Snapshot Builder, Runtime Bootstrap и Launcher,
 Lifecycle Owner, management routing, operational identity, command
 idempotency и orchestration prerequisites также существуют изолированно. Они

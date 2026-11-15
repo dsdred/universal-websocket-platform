@@ -30,6 +30,19 @@ The repository currently contains an Alpha foundation rather than a production-r
   `Published` and its WebSocket URL preview without claiming Running state or
   reachability.
 
+- UWP Control adds an embedded GET-only `/dashboard` with a shared Slate Blue
+  shell and responsive navigation to the existing Studio. It browses existing
+  Workspace/Configuration/Version APIs and reports only Control Service health,
+  version states, listener settings and available timestamps. Manual Refresh,
+  explicit unavailable/error states and safe-ID rejection preserve the trusted
+  localhost/same-origin, unauthenticated boundary. Runtime, Connections and
+  Diagnostics have no HTTP GET API; Published does not mean Running.
+- Current [TASK-127](../../tasks/TASK-127-UWP-CONTROL-UI.md) is this bounded UI
+  implementation, projected In Progress; exact gates/subject resolve from its
+  newest matching task envelope and independently recomputed manifest. Baseline:
+  `e5975d5a36cd4c1e431ad76d0629275f17ceab81`. No Runtime/Stage B activation;
+  Commit Gate and Publication Gate remain separate, unauthorized Owner gates.
+
 ### Snapshot
 
 - `runtimeconfig.Builder` accepts the neutral `DetachedLoadResult` and supports
@@ -398,14 +411,16 @@ The Runtime Alpha Review identifies implementation debt that must be tracked ind
   `70c09e554c2942a86e3dd0c47be2b26fde318e38`, P10R-125-001 PASS;
   terminal Consumed(P10) / NoneTerminal / Unissued. Historical A+B Size Guard STOP,
   task record and recovery limitations remain; no ingress/TLS/production proof.
-  Current [TASK-126](../../tasks/TASK-126-STAGE-B-TRANSPORT-REFINEMENT.md) is
-  Design-only Stage B transport refinement, projected In Progress; exact gates,
-  verdict and subject resolve from its newest matching task envelope and independently
-  recomputed manifest. Baseline is `f537d5eceafede6eec1e168c1db4acfdc57ccc2c`.
+  [TASK-126](../../tasks/TASK-126-STAGE-B-TRANSPORT-REFINEMENT.md) published
+  Design-only Stage B transport refinement: source
+  `16f91f1f0ba42d2a4309be1bb856a859445436cf`, PR #127 merge
+  `e5975d5a36cd4c1e431ad76d0629275f17ceab81`, source/merge tree
+  `f622b8ef07af7c94f4a7c4115532db6e68061196`; P10R-126-001 PASS;
+  terminal Consumed(P10) / NoneTerminal / Unissued. Historical record preserved;
+  design refinement supplies no transport/TLS/runtime or production-trust proof.
   Stage B implementation, trusted provisioning and production composition remain
   Not Activated. DP027 Draft/Partial, DP009 Draft; production C2/C3 and C2-Exposure
-  Not Activated; Gate 11 OPEN. TASK-102 untouched; Issue #121 Not Activated;
-  no Commit Gate or Publication Gate.
+  Not Activated; Gate 11 OPEN. TASK-102 untouched; Issue #121 and B1/B2 Not Activated.
 - Basic and asymmetric JWT Runtime coverage is incomplete.
 - Origin behavior relies on library defaults rather than explicit Configuration.
 

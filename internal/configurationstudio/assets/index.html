@@ -5,9 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Local Configuration Studio</title>
   <link rel="stylesheet" href="/configuration-studio/studio.css">
+  <link rel="stylesheet" href="/configuration-studio/control.css">
   <script src="/configuration-studio/studio.js" defer></script>
 </head>
 <body>
+  <a class="skip" href="#studio">Skip to content</a>
+  <aside class="sidebar" aria-label="UWP Control">
+    <a class="brand" href="/dashboard"><span class="brand-mark">U</span><span>UWP Control<small>Local development</small></span></a>
+    <nav aria-label="Main navigation">
+      <span class="nav-label">Workspace</span>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/" aria-current="page">Configuration Studio</a>
+      <a href="/dashboard#workspaces">Workspaces</a>
+      <a href="/dashboard#configurations">Configurations</a>
+      <span class="nav-label">System</span>
+      <a href="/dashboard#availability">API availability</a>
+    </nav>
+    <p class="sidebar-note">Trusted localhost only<br>Unauthenticated Control Service</p>
+  </aside>
+  <div id="studio" class="control-main studio-main">
+  <div class="topbar"><span>UWP Control / <strong>Configuration Studio</strong></span><a class="button" href="/dashboard">Dashboard</a></div>
   <main class="shell">
     <header>
       <p class="eyebrow">Universal WebSocket Platform · local/dev</p>
@@ -69,5 +86,6 @@
       <p class="result-warning">This preliminary URL is not a live endpoint check. Published does not mean Running.</p>
     </section>
   </main>
+  </div>
 </body>
 </html>
