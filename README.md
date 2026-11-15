@@ -20,6 +20,31 @@ preliminary WebSocket URL. `Published` does not mean `Running`; data remains
 in memory and is lost on restart; the URL is not a reachability check. The
 Studio is not a production Admin UI and does not start or manage Runtime.
 
+The embedded **UWP Control Dashboard** at `/dashboard` adds a Slate Blue shell
+shared with Studio and GET-only browsing of existing Workspaces, Configurations
+and Versions. It shows Control Service availability, version state, listener
+host/port, available resource update times and browser fetch times. Runtime,
+Connections and Diagnostics are explicitly unavailable because no HTTP GET API
+is connected. Refresh is manual; there is no polling or WebSocket probing.
+Unsafe JavaScript integer IDs produce an unsupported-response state before
+rendering or nested requests. Raw JSON and secret references are not displayed.
+The unauthenticated service is for trusted localhost/same-origin use only.
+Dashboard does not make the Studio or existing API read-only.
+
+Run locally with Go, without npm or a frontend build:
+
+```powershell
+$env:UWP_HTTP_HOST="127.0.0.1"
+$env:UWP_HTTP_PORT="18081"
+go run ./cmd/control-service
+```
+
+Open [Dashboard](http://127.0.0.1:18081/dashboard) or
+[Configuration Studio](http://127.0.0.1:18081/). Without environment overrides,
+the default address is `127.0.0.1:8080`. A fresh service has empty lists; use
+Studio to create and publish a configuration, then return to Dashboard and
+select its Workspace and Configuration. Data disappears on service restart.
+
 The Configuration Loader, Snapshot Builder, Runtime Bootstrap and Launcher,
 Lifecycle Owner, management routing, operational identity, command
 idempotency, and orchestration prerequisites also exist in isolation. They are

@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- UWP Control Slate Blue Dashboard at `/dashboard`, embedded without frontend
+  dependencies, with responsive navigation shared with Configuration Studio.
+  GET-only Workspace/Configuration/Version browsing, Control Service health,
+  manual Refresh, version/listener metadata and explicit unavailable/error states.
+  Runtime, Connections and Diagnostics remain unavailable; Published is not
+  Running. Trusted localhost/same-origin only; the service remains unauthenticated.
 - Runtime TLS v1 with one startup-loaded certificate/key pair from Secret
   References, fail-closed validation before socket acquisition, TLS1.2/1.3
   minimums, HTTP1 WSS and bounded TLS handshake/header phases. Existing

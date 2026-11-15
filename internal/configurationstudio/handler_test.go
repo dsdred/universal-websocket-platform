@@ -19,6 +19,9 @@ func TestEmbeddedAssetRoutes(t *testing.T) {
 		{name: "index", path: "/", contentType: "text/html; charset=utf-8", body: indexHTML},
 		{name: "stylesheet", path: "/configuration-studio/studio.css", contentType: "text/css; charset=utf-8", body: studioCSS},
 		{name: "script", path: "/configuration-studio/studio.js", contentType: "text/javascript; charset=utf-8", body: studioJS},
+		{name: "dashboard", path: "/dashboard", contentType: "text/html; charset=utf-8", body: dashboardHTML},
+		{name: "control theme", path: "/configuration-studio/control.css", contentType: "text/css; charset=utf-8", body: controlCSS},
+		{name: "dashboard script", path: "/configuration-studio/dashboard.js", contentType: "text/javascript; charset=utf-8", body: dashboardJS},
 	}
 
 	for _, test := range tests {
@@ -56,6 +59,12 @@ func TestRoutesAreExact(t *testing.T) {
 		{method: http.MethodGet, path: "/configuration-studio/", status: http.StatusNotFound},
 		{method: http.MethodGet, path: "/configuration-studio/missing.js", status: http.StatusNotFound},
 		{method: http.MethodPost, path: "/", status: http.StatusMethodNotAllowed},
+		{method: http.MethodGet, path: "/dashboard/", status: http.StatusNotFound},
+		{method: http.MethodGet, path: "/dashboard/missing", status: http.StatusNotFound},
+		{method: http.MethodPost, path: "/dashboard", status: http.StatusMethodNotAllowed},
+		{method: http.MethodPut, path: "/dashboard", status: http.StatusMethodNotAllowed},
+		{method: http.MethodDelete, path: "/dashboard", status: http.StatusMethodNotAllowed},
+		{method: http.MethodPost, path: "/configuration-studio/dashboard.js", status: http.StatusMethodNotAllowed},
 	}
 
 	for _, test := range tests {
@@ -84,11 +93,33 @@ func TestAssetsAreSelfContainedAndShowRequiredNotices(t *testing.T) {
 		}
 	}
 
-	allAssets := string(indexHTML) + string(studioCSS) + string(studioJS)
+	allAssets := string(indexHTML) + string(studioCSS) + string(studioJS) + string(dashboardHTML) + string(controlCSS) + string(dashboardJS)
 	for _, forbidden := range []string{"https://", "http://", "//cdn", "@import", "innerHTML", "new WebSocket", "window.open"} {
 		if strings.Contains(allAssets, forbidden) {
 			t.Errorf("embedded assets contain forbidden dependency or behavior %q", forbidden)
 		}
+	}
+}
+
+func TestDashboardReadOnlyBoundaries(t *testing.T) {
+	html := string(dashboardHTML)
+	for _, required := range []string{
+		`href="/"`, `href="/dashboard#workspaces"`, `href="/dashboard#configurations"`,
+		`href="/configuration-studio/control.css"`, `src="/configuration-studio/dashboard.js"`,
+		"Published does not mean Running.", "No HTTP GET API", "Unavailable", "Refresh",
+		"Unauthenticated Control Service", `aria-live="polite"`,
+	} {
+		if !strings.Contains(html, required) {
+			t.Errorf("Dashboard is missing required boundary/navigation %q", required)
+		}
+	}
+	for _, forbidden := range []string{`"POST"`, `"PUT"`, `"DELETE"`, `"PATCH"`, "setInterval", "WebSocket", "/runtime", "/diagnostics", "secretRef", "certificateRef", "privateKeyRef", "innerHTML"} {
+		if strings.Contains(string(dashboardJS), forbidden) {
+			t.Errorf("Dashboard contains forbidden behavior %q", forbidden)
+		}
+	}
+	if strings.Contains(html, `src="/configuration-studio/studio.js"`) {
+		t.Error("Dashboard must not load the Studio mutation script")
 	}
 }
 

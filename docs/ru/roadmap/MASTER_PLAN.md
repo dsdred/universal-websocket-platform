@@ -30,6 +30,19 @@ Universal WebSocket Platform — open-source платформа для созд�
   управляется, а `Published` и preview WebSocket URL не выдаются за Running
   state или доказательство reachability.
 
+- UWP Control добавляет встроенный GET-only `/dashboard` с общей оболочкой
+  Slate Blue и responsive-навигацией к существующему Studio. Он использует
+  существующие Workspace/Configuration/Version API и показывает только health
+  Control Service, state версий, listener settings и доступные timestamps.
+  Manual Refresh, явные unavailable/error states и safe-ID rejection сохраняют
+  trusted localhost/same-origin, unauthenticated boundary. Runtime, Connections
+  и Diagnostics не имеют HTTP GET API; Published не означает Running.
+- Текущая [TASK-127](../../tasks/TASK-127-UWP-CONTROL-UI.md) — эта bounded UI
+  implementation, projected In Progress; exact gates/subject определяются newest
+  matching task envelope и independently recomputed manifest. Baseline:
+  `e5975d5a36cd4c1e431ad76d0629275f17ceab81`. Runtime/Stage B не активируются;
+  Commit Gate и Publication Gate остаются отдельными неразрешёнными Owner gates.
+
 ### Snapshot
 
 - `runtimeconfig.Builder` принимает neutral `DetachedLoadResult` и
@@ -395,14 +408,16 @@ Runtime Alpha Review фиксирует implementation debt, который не
   `70c09e554c2942a86e3dd0c47be2b26fde318e38`, P10R-125-001 PASS;
   terminal Consumed(P10) / NoneTerminal / Unissued. Historical A+B Size Guard STOP,
   task record и recovery limitations сохранены; ingress/TLS/production proof отсутствует.
-  Текущая [TASK-126](../../tasks/TASK-126-STAGE-B-TRANSPORT-REFINEMENT.md) —
-  Design-only Stage B transport refinement, projected In Progress; exact gates,
-  verdict и subject определяются newest matching task envelope и independently
-  recomputed manifest. Baseline — `f537d5eceafede6eec1e168c1db4acfdc57ccc2c`.
+  [TASK-126](../../tasks/TASK-126-STAGE-B-TRANSPORT-REFINEMENT.md) опубликовала
+  Design-only Stage B transport refinement: source
+  `16f91f1f0ba42d2a4309be1bb856a859445436cf`, PR #127 merge
+  `e5975d5a36cd4c1e431ad76d0629275f17ceab81`, source/merge tree
+  `f622b8ef07af7c94f4a7c4115532db6e68061196`; P10R-126-001 PASS;
+  terminal Consumed(P10) / NoneTerminal / Unissued. Historical record сохранён;
+  design refinement не даёт transport/TLS/runtime или production-trust proof.
   Stage B implementation, trusted provisioning и production composition остаются
   Not Activated. DP027 Draft/Partial, DP009 Draft; production C2/C3 и C2-Exposure
-  Not Activated; Gate 11 OPEN. TASK-102 не затронута; Issue #121 Not Activated;
-  Commit Gate и Publication Gate не разрешены.
+  Not Activated; Gate 11 OPEN. TASK-102 untouched; Issue #121 и B1/B2 Not Activated.
 - Покрытие Runtime для Basic и asymmetric JWT неполное.
 - Поведение Origin полагается на defaults библиотеки, а не на явную Configuration.
 

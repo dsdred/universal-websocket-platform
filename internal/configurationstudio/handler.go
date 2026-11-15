@@ -19,11 +19,23 @@ var (
 
 	//go:embed assets/studio.js
 	studioJS []byte
+
+	//go:embed assets/dashboard.html
+	dashboardHTML []byte
+
+	//go:embed assets/control.css
+	controlCSS []byte
+
+	//go:embed assets/dashboard.js
+	dashboardJS []byte
 )
 
 // RegisterRoutes registers the exact routes for the embedded local/dev UI.
 func RegisterRoutes(router chi.Router) {
 	router.Get("/", serveAsset("text/html; charset=utf-8", indexHTML))
+	router.Get("/dashboard", serveAsset("text/html; charset=utf-8", dashboardHTML))
+	router.Get("/configuration-studio/control.css", serveAsset("text/css; charset=utf-8", controlCSS))
+	router.Get("/configuration-studio/dashboard.js", serveAsset("text/javascript; charset=utf-8", dashboardJS))
 	router.Get("/configuration-studio/studio.css", serveAsset("text/css; charset=utf-8", studioCSS))
 	router.Get("/configuration-studio/studio.js", serveAsset("text/javascript; charset=utf-8", studioJS))
 }
