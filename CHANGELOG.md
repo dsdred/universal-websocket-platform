@@ -10,7 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Documentation refresh: README branding and real UI screenshots, with mirrored
   English/Russian local Quick Start guidance for the existing Control UI and its
-  current limitations. No executable behavior changes.
+  current limitations. README navigation uses repository links; local UI addresses
+  require running UWP locally. No executable behavior changes.
 - UWP Viking portrait branding in the shared Dashboard/Studio sidebar and helmet
   favicons, delivered as local embedded assets. A full-face Windows icon for a
   future shortcut and the full branding logo are available separately; no shortcut

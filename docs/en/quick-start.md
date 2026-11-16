@@ -36,6 +36,9 @@ already in use, choose another `UWP_HTTP_PORT` and use it in the URLs below.
 The startup log reports the actual address. These variables configure the
 Control Service HTTP address, not a Runtime WebSocket listener.
 
+These addresses point to your own computer. Dashboard and Configuration Studio
+are available only after you start UWP locally as described above.
+
 | Route | Purpose |
 |---|---|
 | [Dashboard](http://127.0.0.1:18085/dashboard) (`/dashboard`) | Read-only GET browsing; manual Refresh |

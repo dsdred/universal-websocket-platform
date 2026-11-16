@@ -36,6 +36,9 @@ UWP_HTTP_HOST=127.0.0.1 UWP_HTTP_PORT=18085 go run ./cmd/control-service
 показывает фактический адрес. Эти переменные задают HTTP address Control Service,
 а не WebSocket listener Runtime.
 
+Эти адреса ведут на ваш компьютер. Dashboard и Configuration Studio доступны
+только после локального запуска UWP по инструкции выше.
+
 | Маршрут | Назначение |
 |---|---|
 | [Dashboard](http://127.0.0.1:18085/dashboard) (`/dashboard`) | Read-only GET просмотр; ручной Refresh |
