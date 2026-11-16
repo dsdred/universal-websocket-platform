@@ -1,16 +1,21 @@
 # Текущее состояние
 
-Текущая engineering task [TASK-129](../docs/tasks/TASK-129-README-DOCUMENTATION-REFRESH.md) —
-bounded documentation-only refresh; projected `In Progress`. Exact gates, verdict
-и subject определяются newest matching task-record Recovery Evidence Envelope
-с independently recomputed canonical manifest. Baseline —
-`f0a05eb29cf1b34b4c48dc3d7b675e3e517bfe9a`. Готовятся актуальные README и mirrored
-EN/RU Quick Start: существующий approved full Viking logo, реальные Dashboard/Studio
-screenshots, локальный запуск и create/publish flow с текущими ограничениями.
-Production-код, API, Runtime и существующие assets не меняются. Никакие acceptance,
-commit или publication TASK-129 не заявляются этой status projection.
-TASK-102 untouched; B1/B2, Stage B implementation, production C2/C3 и C2-Exposure
-Not Activated; Gate 11 OPEN. Commit Gate и Publication Gate TASK-129 не разрешены.
+Текущая engineering task [TASK-130](../docs/tasks/TASK-130-README-NAVIGATION-CLEANUP.md) —
+bounded documentation-only README navigation cleanup; projected `In Progress`.
+Exact gates, verdict и subject определяются newest matching Recovery Evidence
+Envelope с independently recomputed canonical manifest. Baseline —
+`ed0592c87c872427fcaa783a72c43140ebd0e873`. Из верхней навигации README EN/RU
+убираются localhost-ссылки; сохраняются relative Quick Start/language links.
+Quick Start EN/RU поясняет доступность UI после локального запуска UWP;
+команды, порты, production/API/архитектура/assets/screenshots не меняются.
+TASK-102 untouched; Gate 11 OPEN; Stage B/B1/B2, Production C2/C3 и C2-Exposure
+Not Activated. Эта projection не заявляет Acceptance или commit/publication.
+
+[TASK-129](../docs/tasks/TASK-129-README-DOCUMENTATION-REFRESH.md) завершила documentation
+publication: source `9bfa286011185f0658438a72c19298fac7d51498`, PR #130 MERGED
+как `ed0592c87c872427fcaa783a72c43140ebd0e873`; P10/P10R-129-001 PASS,
+CI `43755384997` и `43755613965` SUCCESS. Terminal
+`Consumed(P10) / NoneTerminal / Unissued`. Historical record сохранён.
 
 [TASK-128](../docs/tasks/TASK-128-VIKING-BRANDING.md) завершила branding publication:
 source `923e64c710460479ab64b8428f81bd5d0d51fb1e`, PR #129 MERGED как

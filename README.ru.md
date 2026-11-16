@@ -4,9 +4,9 @@
   <img src="internal/configurationstudio/assets/branding/uwp-logo.png" alt="UWP Viking — Universal WebSocket Platform" width="320">
 </p>
 
-[Быстрый старт](docs/ru/quick-start.md) · [Dashboard](http://127.0.0.1:18085/dashboard) · [Configuration Studio](http://127.0.0.1:18085/)
-
-[English version](README.md)
+<p align="center">
+  <a href="docs/ru/quick-start.md">Быстрый старт</a> · <a href="README.md">English version</a>
+</p>
 
 Universal WebSocket Platform — open-source платформа для создания, настройки, развертывания и эксплуатации независимых WebSocket-серверов без написания инфраструктурного кода.
 
