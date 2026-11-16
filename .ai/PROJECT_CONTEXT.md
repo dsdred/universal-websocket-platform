@@ -8,16 +8,22 @@
 
 ## Текущее состояние
 
-Текущая engineering task [TASK-130](../docs/tasks/TASK-130-README-NAVIGATION-CLEANUP.md) —
-bounded documentation-only README navigation cleanup; projected `In Progress`.
-Exact gates, verdict и subject определяются newest matching Recovery Evidence
-Envelope с independently recomputed canonical manifest. Baseline —
-`ed0592c87c872427fcaa783a72c43140ebd0e873`. Из верхней навигации README EN/RU
-убираются localhost-ссылки; сохраняются relative Quick Start/language links.
-Quick Start EN/RU поясняет доступность UI после локального запуска UWP;
-команды, порты, production/API/архитектура/assets/screenshots не меняются.
-TASK-102 untouched; Gate 11 OPEN; Stage B/B1/B2, Production C2/C3 и C2-Exposure
-Not Activated. Эта projection не заявляет Acceptance или commit/publication.
+Текущая engineering task [TASK-132](../docs/tasks/TASK-132-PRODUCTION-RUNTIME-OBSERVATION-DESIGN.md) —
+Design-only Production Runtime Observation; projected `In Progress`.
+Exact gates/verdict/subject resolve from newest matching Recovery Evidence Envelope
+and independently recomputed manifest. Baseline —
+`88fb333453ab9563285d65cd44a8b0a4019f447a`. Draft ADR-0005 proposes sampled
+lifecycle facts, Host-owned execution evidence and explicit validity; no
+production/API/UI/lifecycle implementation or status promotion. TASK-131
+implementation remains stopped; forensic evidence is reconstructed in TASK-132.
+TASK-102 untouched; Gate 11 OPEN; Stage B/B1/B2, Production C2/C3 and C2-Exposure
+Not Activated. No automatic successor or publication permission.
+
+[TASK-130](../docs/tasks/TASK-130-README-NAVIGATION-CLEANUP.md) README navigation changes are present in main:
+source `3bd2e6a1c162bd76c632153aa9c62e7c11f68176`, PR #131 merge
+`88fb333453ab9563285d65cd44a8b0a4019f447a` by local immutable Git metadata.
+Owner reports terminal P10/P10R PASS; this intake does not reconstruct fresh
+remote/CI/Publisher ownership evidence. Historical TASK-130 record unchanged.
 
 [TASK-129](../docs/tasks/TASK-129-README-DOCUMENTATION-REFRESH.md) завершила documentation
 publication: source `9bfa286011185f0658438a72c19298fac7d51498`, PR #130 MERGED

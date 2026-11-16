@@ -108,6 +108,14 @@
 
 ## Ожидающие отдельного решения
 
+[TASK-132](../docs/tasks/TASK-132-PRODUCTION-RUNTIME-OBSERVATION-DESIGN.md)
+предлагает [ADR-0005 Draft / Not Implemented](../docs/ru/adr/0005-production-runtime-observation.md):
+Owner lifecycle authority, retained Host-owned execution facts и read-only
+validity adapter. Это pending proposal, не Approved решение или implementation
+permission. Production composition/target/security admission остаются отдельными
+prerequisites; TASK-131 и protected stages не активируются, Gate 11 OPEN.
+Actual task gates и admission verdict определяются newest matching task envelope.
+
 TASK-078 Completed — Coordinator Accepted; accepted readiness subject
 `4c73bc9fd72ca61d28c2e67f454e936178d46b2a` опубликован source `8687758` через
 PR #83 как merge `4dad1af14102f516784cb1ae0ef39a59fec6b0ec` (local Git facts).
