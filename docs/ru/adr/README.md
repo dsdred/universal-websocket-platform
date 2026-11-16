@@ -17,3 +17,4 @@
 - [`0002-configuration-dsl.md`](0002-configuration-dsl.md) — ConfigurationVersion как декларативный Configuration DSL, исполняемый Runtime.
 - [`0003-runtime-architecture.md`](0003-runtime-architecture.md) — компонентная архитектура Runtime для исполнения immutable Configuration Snapshot.
 - [`0004-handshake-runtime-dependencies.md`](0004-handshake-runtime-dependencies.md) — read-only Runtime capabilities для admission и lifecycle context Handshake.
+- [`0005-production-runtime-observation.md`](0005-production-runtime-observation.md) — Draft proposal sampled Runtime lifecycle observation, source evidence и validity; production admission blocked.
