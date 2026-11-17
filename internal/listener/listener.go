@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/dsdred/universal-websocket-platform/internal/runtimediagnostics"
@@ -26,6 +27,23 @@ type Listener interface {
 	Running() bool
 	Start(context.Context) error
 	Stop(context.Context) error
+}
+
+// ServeCompletion is a copyable, non-consuming view of one Listener's Serve return.
+// It does not report liveness, readiness, shutdown completion or resource cleanup.
+// Its zero value has no source coverage.
+type ServeCompletion struct {
+	returned *atomic.Bool
+}
+
+// Observe reports whether the bound underlying Serve call returned and whether
+// source coverage exists. Available without a return does not imply Serve started
+// or is still running. A returned fact remains true for every copy of this view.
+func (completion ServeCompletion) Observe() (returned bool, available bool) {
+	if completion.returned == nil {
+		return false, false
+	}
+	return completion.returned.Load(), true
 }
 
 type listenerState uint8
@@ -59,6 +77,7 @@ type DefaultListener struct {
 	handshakeHandler http.Handler
 	reportError      func(error)
 	diagnostics      runtimediagnostics.Producer
+	serveReturned    *atomic.Bool
 	serveHTTP        func(*http.Server, net.Listener) error
 	shutdownHTTP     func(*http.Server, context.Context) error
 	closeTCP         func(net.Listener) error
@@ -215,6 +234,9 @@ func trackedHandler(handler http.Handler, waitGroup *sync.WaitGroup) http.Handle
 func (listener *DefaultListener) serve(httpServer *http.Server, tcpListener net.Listener) {
 	defer listener.wg.Done()
 	err := listener.serveHTTP(httpServer, tcpListener)
+	if listener.serveReturned != nil {
+		listener.serveReturned.Store(true)
+	}
 	if err != nil && !errors.Is(err, http.ErrServerClosed) && !errors.Is(err, net.ErrClosed) {
 		listener.diagnostics.Offer(runtimediagnostics.ListenerServeFailed)
 		reportListenerTerminalError(listener.reportError, listenerServeError{cause: err})

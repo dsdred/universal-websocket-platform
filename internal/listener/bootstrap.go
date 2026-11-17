@@ -4,6 +4,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
@@ -52,6 +53,26 @@ func (bootstrap DefaultBootstrap) WithDiagnosticsProducer(producer runtimediagno
 
 // Build validates and copies Listener Snapshot metadata without opening a socket.
 func (bootstrap DefaultBootstrap) Build(snapshot runtimeconfig.ListenerSnapshot) (Listener, error) {
+	created, err := bootstrap.build(snapshot)
+	if err != nil {
+		return nil, err
+	}
+	return created, nil
+}
+
+// BuildWithServeCompletion builds a Listener and a read-only view bound only to
+// that Listener's underlying Serve return. Each successful build has a fresh
+// source; errors return a nil Listener and unavailable view. The view is available
+// before Start and does not prove liveness or complete Runtime termination.
+func (bootstrap DefaultBootstrap) BuildWithServeCompletion(snapshot runtimeconfig.ListenerSnapshot) (Listener, ServeCompletion, error) {
+	created, err := bootstrap.build(snapshot)
+	if err != nil {
+		return nil, ServeCompletion{}, err
+	}
+	return created, ServeCompletion{returned: created.serveReturned}, nil
+}
+
+func (bootstrap DefaultBootstrap) build(snapshot runtimeconfig.ListenerSnapshot) (*DefaultListener, error) {
 	host := strings.TrimSpace(snapshot.Host)
 	certificateRef := strings.TrimSpace(snapshot.TLS.CertificateRef)
 	privateKeyRef := strings.TrimSpace(snapshot.TLS.PrivateKeyRef)
@@ -91,6 +112,7 @@ func (bootstrap DefaultBootstrap) Build(snapshot runtimeconfig.ListenerSnapshot)
 		handshakeHandler: bootstrap.handshakeHandler,
 		reportError:      bootstrap.reportError,
 		diagnostics:      bootstrap.diagnostics,
+		serveReturned:    new(atomic.Bool),
 		serveHTTP: func(server *http.Server, listener net.Listener) error {
 			return server.Serve(listener)
 		},

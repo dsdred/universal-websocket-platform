@@ -117,3 +117,57 @@ func validListenerSnapshot() runtimeconfig.ListenerSnapshot {
 		},
 	}
 }
+
+func TestBuildWithServeCompletionFreshBuildsAndCopies(t *testing.T) {
+	bootstrap := NewBootstrapWithHandshake(http.NotFoundHandler())
+	copy := bootstrap
+	first, firstView, err := bootstrap.BuildWithServeCompletion(validListenerSnapshot())
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, secondView, err := bootstrap.BuildWithServeCompletion(validListenerSnapshot())
+	if err != nil {
+		t.Fatal(err)
+	}
+	third, thirdView, err := copy.BuildWithServeCompletion(validListenerSnapshot())
+	if err != nil {
+		t.Fatal(err)
+	}
+	legacy, err := bootstrap.Build(validListenerSnapshot())
+	if err != nil {
+		t.Fatal(err)
+	}
+	views := []ServeCompletion{firstView, secondView, thirdView, {returned: legacy.(*DefaultListener).serveReturned}}
+	for i, view := range views {
+		assertServeCompletion(t, view, false, true)
+		for j := 0; j < i; j++ {
+			if view == views[j] {
+				t.Fatal("Build reused source identity")
+			}
+		}
+	}
+	diagnosticServe(first.(*DefaultListener), nil)
+	assertServeCompletion(t, firstView, true, true)
+	assertServeCompletion(t, secondView, false, true)
+	assertServeCompletion(t, thirdView, false, true)
+	diagnosticServe(second.(*DefaultListener), nil)
+	assertServeCompletion(t, firstView, true, true)
+	assertServeCompletion(t, secondView, true, true)
+	assertServeCompletion(t, thirdView, false, true)
+	diagnosticServe(third.(*DefaultListener), nil)
+}
+
+func TestBuildWithServeCompletionErrorHasNoSource(t *testing.T) {
+	for _, bootstrap := range []DefaultBootstrap{{}, NewBootstrapWithHandshake(http.NotFoundHandler())} {
+		for _, snapshot := range []runtimeconfig.ListenerSnapshot{{}, validListenerSnapshot()} {
+			if bootstrap.handshakeHandler != nil && snapshot.Port != 0 {
+				continue
+			}
+			built, view, err := bootstrap.BuildWithServeCompletion(snapshot)
+			if built != nil || !errors.Is(err, ErrInvalidListenerConfiguration) {
+				t.Fatalf("BuildWithServeCompletion = (%v, %v)", built, err)
+			}
+			assertServeCompletion(t, view, false, false)
+		}
+	}
+}

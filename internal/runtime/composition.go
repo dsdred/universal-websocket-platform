@@ -26,8 +26,9 @@ type messageRouterFactory func(*runtimeconfig.RoutingSnapshot, message.Handler) 
 type sessionDispatcherFactory func(*sessionmanager.Manager, session.RuntimeContextProvider, message.Handler, executionowner.TerminalObserver, time.Duration, time.Duration, time.Duration) (*session.TransactionalDispatcher, error)
 
 type runtimeComposition struct {
-	listener       listener.Listener
-	sessionManager *sessionmanager.Manager
+	listener        listener.Listener
+	sessionManager  *sessionmanager.Manager
+	serveCompletion listener.ServeCompletion
 }
 
 type terminalObserver struct{}
@@ -194,17 +195,18 @@ func composeRuntimeWithDiagnostics(
 			return runtimeComposition{}, err
 		}
 	}
-	runtimeListener, err := listener.NewBootstrapWithTLSAndHandshake(
+	runtimeListener, serveCompletion, err := listener.NewBootstrapWithTLSAndHandshake(
 		timedHandshakeHandler,
 		reportError,
 		preparedTLS,
-	).WithDiagnosticsProducer(producer).Build(listenerSnapshot)
+	).WithDiagnosticsProducer(producer).BuildWithServeCompletion(listenerSnapshot)
 	if err != nil {
 		return runtimeComposition{}, fmt.Errorf("build Listener: %w", err)
 	}
 	return runtimeComposition{
-		listener:       runtimeListener,
-		sessionManager: sessionManager,
+		listener:        runtimeListener,
+		sessionManager:  sessionManager,
+		serveCompletion: serveCompletion,
 	}, nil
 }
 

@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dsdred/universal-websocket-platform/internal/configurationversion"
 	"github.com/dsdred/universal-websocket-platform/internal/listener"
 	"github.com/dsdred/universal-websocket-platform/internal/message"
 	"github.com/dsdred/universal-websocket-platform/internal/runtimeconfig"
@@ -313,5 +314,233 @@ func waitForResult(t *testing.T, result <-chan error, operation string) {
 		}
 	case <-time.After(time.Second):
 		t.Fatalf("%s deadlocked", operation)
+	}
+}
+
+func TestHostServeCompletionProductionLifetime(t *testing.T) {
+	snapshot, diagnostics := buildSnapshotForTest(func(version *configurationversion.ConfigurationVersion) {
+		version.Listener.Port = availablePort(t)
+	})
+	if len(diagnostics) != 0 {
+		t.Fatal(diagnostics)
+	}
+	host, err := NewHost(snapshot, emptyResolver(t), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = host.Stop(context.Background()) })
+	assertHostServeCompletion(t, host.listenerServeCompletion(), false, false)
+	if err := host.Build(); err != nil {
+		t.Fatal(err)
+	}
+	assertHostServeCompletion(t, host.listenerServeCompletion(), false, false)
+	if err := host.Start(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	view := host.listenerServeCompletion()
+	assertHostServeCompletion(t, view, false, true)
+	copied := view
+	var readers sync.WaitGroup
+	var invalid atomic.Int32
+	for range 4 {
+		readers.Add(1)
+		go func() {
+			defer readers.Done()
+			seenReturn := false
+			for range 1000 {
+				returned, available := host.listenerServeCompletion().Observe()
+				if !available || (seenReturn && !returned) {
+					invalid.Add(1)
+				}
+				seenReturn = seenReturn || returned
+			}
+		}()
+	}
+	if err := host.Stop(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	readers.Wait()
+	if invalid.Load() != 0 {
+		t.Fatal("Host observation lost coverage or regressed")
+	}
+	for range 3 {
+		assertHostServeCompletion(t, host.listenerServeCompletion(), true, true)
+		assertHostServeCompletion(t, copied, true, true)
+	}
+	if host.Ready() || host.Running() || host.CanAccept() {
+		t.Fatal("Stop lifecycle changed")
+	}
+	assertContextCanceled(t, host.RuntimeContext(), "stopped Host")
+
+	second, err := NewHost(snapshot, emptyResolver(t), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = second.Stop(context.Background()) })
+	if err := second.Build(); err != nil {
+		t.Fatal(err)
+	}
+	if err := second.Start(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	secondView := second.listenerServeCompletion()
+	if secondView == view {
+		t.Fatal("different Host reused source view")
+	}
+	assertHostServeCompletion(t, secondView, false, true)
+	assertHostServeCompletion(t, copied, true, true)
+	if err := second.Stop(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	assertHostServeCompletion(t, secondView, true, true)
+	assertHostServeCompletion(t, copied, true, true)
+}
+
+func TestHostServeCompletionEarlyReturnBeforeCommit(t *testing.T) {
+	host := newServeCompletionProductionHost(t)
+	original := host.compose
+	returnedBeforeCommit, releaseStart := make(chan struct{}), make(chan struct{})
+	var releaseOnce sync.Once
+	release := func() { releaseOnce.Do(func() { close(releaseStart) }) }
+	var sourceView listener.ServeCompletion
+	host.compose = func(ctx context.Context, snapshot runtimeconfig.Snapshot, resolver secretresolver.Resolver, handler message.Handler) (runtimeComposition, error) {
+		components, err := original(ctx, snapshot, resolver, handler)
+		if err != nil {
+			return runtimeComposition{}, err
+		}
+		sourceView = components.serveCompletion
+		actual := components.listener
+		components.listener = &serveCompletionStartWrapper{Listener: actual, afterStart: func() {
+			// The existing private composer seam forces a real Serve shutdown
+			// before Host commit, without writing the retained source cell.
+			if err := actual.Stop(context.Background()); err != nil {
+				t.Errorf("source Stop: %v", err)
+			}
+			close(returnedBeforeCommit)
+			<-releaseStart
+		}}
+		return components, nil
+	}
+	t.Cleanup(func() { release(); _ = host.Stop(context.Background()) })
+	started := make(chan error, 1)
+	go func() { started <- host.Start(context.Background()) }()
+	waitForSignal(t, returnedBeforeCommit, "real source return before Host commit")
+	assertHostServeCompletion(t, sourceView, true, true)
+	assertHostServeCompletion(t, host.listenerServeCompletion(), false, false)
+	if host.Ready() || host.CanAccept() {
+		t.Fatal("Host published before successful Start returned")
+	}
+	release()
+	waitForResult(t, started, "Host Start")
+	if host.listenerServeCompletion() != sourceView {
+		t.Fatal("Host did not publish its exact source view")
+	}
+	assertHostServeCompletion(t, host.listenerServeCompletion(), true, true)
+	// Evidence does not silently rewrite the existing committed lifecycle.
+	if !host.Ready() {
+		t.Fatal("completion evidence changed Host readiness semantics")
+	}
+	if err := host.Stop(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	assertHostServeCompletion(t, sourceView, true, true)
+}
+
+func TestHostServeCompletionFailedStartupRetryIsolation(t *testing.T) {
+	host := newServeCompletionProductionHost(t)
+	original := host.compose
+	firstFailure := errors.New("source Start refused before Serve")
+	var views []listener.ServeCompletion
+	host.compose = func(ctx context.Context, snapshot runtimeconfig.Snapshot, resolver secretresolver.Resolver, handler message.Handler) (runtimeComposition, error) {
+		components, err := original(ctx, snapshot, resolver, handler)
+		if err != nil {
+			return runtimeComposition{}, err
+		}
+		views = append(views, components.serveCompletion)
+		if len(views) == 1 {
+			components.listener = &serveCompletionStartWrapper{Listener: components.listener, startErr: firstFailure}
+		}
+		return components, nil
+	}
+	if err := host.Start(context.Background()); !errors.Is(err, firstFailure) {
+		t.Fatalf("first Start = %v", err)
+	}
+	assertHostServeCompletion(t, host.listenerServeCompletion(), false, false)
+	assertHostServeCompletion(t, views[0], false, true)
+	if host.RuntimeContext() != nil || host.runtimeListener != nil || host.Ready() || host.CanAccept() || currentHostState(host) != hostBuilt {
+		t.Fatal("failed startup changed lifecycle/resource publication")
+	}
+	if err := host.Start(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if len(views) != 2 || views[0] == views[1] || host.listenerServeCompletion() != views[1] {
+		t.Fatal("retry source binding incorrect")
+	}
+	assertHostServeCompletion(t, views[0], false, true)
+	assertHostServeCompletion(t, views[1], false, true)
+	if err := host.Stop(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	assertHostServeCompletion(t, views[0], false, true)
+	assertHostServeCompletion(t, views[1], true, true)
+}
+
+func TestHostServeCompletionLegacyCompositionUnavailable(t *testing.T) {
+	host := newTestHost(t, fixedComposer(newControlledListener(nil, false)))
+	if err := host.Build(); err != nil {
+		t.Fatal(err)
+	}
+	if err := host.Start(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	assertHostServeCompletion(t, host.listenerServeCompletion(), false, false)
+	if err := host.Stop(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	assertHostServeCompletion(t, host.listenerServeCompletion(), false, false)
+}
+
+type serveCompletionStartWrapper struct {
+	listener.Listener
+	startErr   error
+	afterStart func()
+}
+
+func (source *serveCompletionStartWrapper) Start(ctx context.Context) error {
+	if source.startErr != nil {
+		return source.startErr
+	}
+	if err := source.Listener.Start(ctx); err != nil {
+		return err
+	}
+	if source.afterStart != nil {
+		source.afterStart()
+	}
+	return nil
+}
+
+func newServeCompletionProductionHost(t *testing.T) *DefaultHost {
+	t.Helper()
+	snapshot, diagnostics := buildSnapshotForTest(func(version *configurationversion.ConfigurationVersion) {
+		version.Listener.Port = availablePort(t)
+	})
+	if len(diagnostics) != 0 {
+		t.Fatal(diagnostics)
+	}
+	host, err := NewHost(snapshot, emptyResolver(t), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = host.Stop(context.Background()) })
+	if err := host.Build(); err != nil {
+		t.Fatal(err)
+	}
+	return host
+}
+
+func assertHostServeCompletion(t *testing.T, view listener.ServeCompletion, wantReturned, wantAvailable bool) {
+	t.Helper()
+	if returned, available := view.Observe(); returned != wantReturned || available != wantAvailable {
+		t.Fatalf("Observe() = (%t, %t), want (%t, %t)", returned, available, wantReturned, wantAvailable)
 	}
 }

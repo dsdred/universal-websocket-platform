@@ -1,15 +1,21 @@
 # Текущее состояние
 
-Текущая engineering task [TASK-132](../docs/tasks/TASK-132-PRODUCTION-RUNTIME-OBSERVATION-DESIGN.md) —
-Design-only Production Runtime Observation; projected `In Progress`.
-Exact gates/verdict/subject resolve from newest matching Recovery Evidence Envelope
-and independently recomputed manifest. Baseline —
-`88fb333453ab9563285d65cd44a8b0a4019f447a`. Draft ADR-0005 proposes sampled
-lifecycle facts, Host-owned execution evidence and explicit validity; no
-production/API/UI/lifecycle implementation or status promotion. TASK-131
-implementation remains stopped; forensic evidence is reconstructed in TASK-132.
-TASK-102 untouched; Gate 11 OPEN; Stage B/B1/B2, Production C2/C3 and C2-Exposure
-Not Activated. No automatic successor or publication permission.
+Текущая engineering task [TASK-134](../docs/tasks/TASK-134-RETAINED-SERVE-COMPLETION-EVIDENCE.md) —
+bounded isolated retained Serve-completion source evidence; projected `In Progress`.
+Exact implementation/verification/review/subject resolve only from the newest
+matching Recovery Evidence Envelope and independently recomputed raw manifest.
+Baseline `f408dc2735589e53c009662c4fc2110f6c083bd7`. Scope: per-Listener sticky
+non-consuming completion view and private Host bridge, preserving lifecycle;
+no Control/API/UI/security wiring or end-to-end Runtime liveness claim.
+ADR-0005 remains Draft; TASK-131 production admission BLOCKED. TASK-102 untouched;
+Gate 11 OPEN; Stage B/B1/B2, Production C2/C3 and C2-Exposure Not Activated.
+No automatic successor or commit/publication permission.
+
+[TASK-132](../docs/tasks/TASK-132-PRODUCTION-RUNTIME-OBSERVATION-DESIGN.md) design documentation is present in main:
+source `cb322e016c062b32f86a6294ae1ad411fe4e92cb`, PR #132 merge
+`f408dc2735589e53c009662c4fc2110f6c083bd7` by immutable local Git metadata.
+Original native P10/P10R-132-001 recorded PASS; historical task bytes unchanged.
+This design publication does not approve ADR-0005 or production observation.
 
 [TASK-130](../docs/tasks/TASK-130-README-NAVIGATION-CLEANUP.md) README navigation changes are present in main:
 source `3bd2e6a1c162bd76c632153aa9c62e7c11f68176`, PR #131 merge

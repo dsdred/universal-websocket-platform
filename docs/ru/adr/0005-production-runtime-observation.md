@@ -142,6 +142,36 @@ Unknown; blocked/panicking reporter не скрывает публикацию. 
 связан с тем же owned Host reference; нет replay/history store или cross-Attempt
 reuse capability.
 
+### Изолированный source contract TASK-134
+
+Owner разрешает только эту bounded R2 source implementation в
+[TASK-134](../../tasks/TASK-134-RETAINED-SERVE-COMPLETION-EVIDENCE.md)
+contract; это не Approval всего Draft и не activation production observation.
+Implementation verification фиксируется в envelope TASK-134.
+Статус Not Implemented выше относится к overall production observation
+proposal; isolated source primitive учитывается отдельно и не реализует
+capture, transport, security или Dashboard contract.
+
+`listener.ServeCompletion` — opaque copyable view. `Observe()` возвращает
+`(returned, available)`: zero — `(false, false)`, bound source без наблюдаемого
+return — `(false, true)`, returned source — навсегда `(true, true)`.
+Available не означает started/alive/healthy/ready.
+`DefaultBootstrap.BuildWithServeCompletion` возвращает exact Listener и его
+view; existing Build и Listener/Bootstrap interfaces совместимы. Каждый
+successful Build выделяет fresh cell; нет externally supplied producer, reset
+или cross-source rebinding. Normal Serve return публикуется до error
+classification; underlying panic не превращается в return evidence.
+
+Production Runtime composition переносит тот же view. Host публикует его только
+с successful startup graph; private accessor копирует под RLock. До commit/после
+failed startup Host view unavailable. Default Listener запускает Serve прямо
+перед unconditional successful return; у Host нет fallible шага после успешного
+Listener.Start, поэтому failed default startup не запускал Serve. Early Serve
+return до Host commit сохраняется. Stop сохраняет committed view без proof
+cleanup; retry строит новый source, old copied views остаются bound к старому.
+Custom legacy composition имеет unavailable coverage. Не добавляются Host
+interface, lifecycle, HTTP, source-incarnation adapter, security или Control wiring.
+
 ### Capture и concurrency
 
 1. Authentication и exact observation authorization предшествуют target-aware

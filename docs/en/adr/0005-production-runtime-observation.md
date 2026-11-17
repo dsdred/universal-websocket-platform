@@ -142,6 +142,37 @@ Serve completion does not prove handlers drained, Host cleanup or resources
 released. Retention lasts with the same owned Host reference; no replay/history
 store or cross-Attempt capability reuse.
 
+### TASK-134 isolated source contract
+
+Owner authorizes only this bounded R2 source implementation in
+[TASK-134](../../tasks/TASK-134-RETAINED-SERVE-COMPLETION-EVIDENCE.md)
+contract; this does not approve the overall Draft or activate production
+observation. Implementation verification is recorded in the TASK-134 envelope.
+The Not Implemented status above refers to the overall production observation
+proposal; the isolated source primitive is separately tracked here and does not
+implement the capture, transport, security or Dashboard contract.
+
+`listener.ServeCompletion` is an opaque copyable view. `Observe()` returns
+`(returned, available)`: zero is `(false, false)`, a bound source without an
+observed return is `(false, true)`, and a returned source is permanently
+`(true, true)`. Available does not imply started, alive, healthy or ready.
+`DefaultBootstrap.BuildWithServeCompletion` returns the exact Listener and its
+view; existing Build and Listener/Bootstrap interfaces remain compatible.
+Every successful Build allocates a fresh cell; no externally supplied producer,
+reset or cross-source rebinding. Normal Serve return publishes before even
+error classification; an underlying panic is not converted into return evidence.
+
+Production Runtime composition carries that same view. Host publishes it only
+with its successful startup graph; a private accessor copies it under RLock.
+Before commit/after failed startup the Host view is unavailable. The default
+Listener starts Serve only immediately before unconditional successful return,
+and Host has no fallible step after successful Listener.Start; failed default
+startup therefore started no Serve. An early Serve return before Host commit
+remains retained. Stop retains the committed view without proving cleanup;
+retry builds a new source, and old copied views remain bound to the old source.
+Custom legacy composition has unavailable coverage. No Host interface, lifecycle,
+HTTP, source-incarnation adapter, security or Control Service wiring is added.
+
 ### Capture and concurrency
 
 1. Authenticate and authorize exact observation before target-aware external

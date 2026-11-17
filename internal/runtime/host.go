@@ -65,6 +65,7 @@ type DefaultHost struct {
 	admission         admissionGate
 	capabilities      *handshakeCapabilities
 	runtimeListener   listener.Listener
+	serveCompletion   listener.ServeCompletion
 	sessionManager    *sessionmanager.Manager
 	runtimeContext    context.Context
 	runtimeCancel     context.CancelFunc
@@ -196,6 +197,15 @@ func (host *DefaultHost) RuntimeContext() context.Context {
 	return host.runtimeContext
 }
 
+// listenerServeCompletion returns the committed source view without exposing
+// lifecycle mutation. Failed, pre-commit and legacy composition have no coverage.
+// The view survives Stop but does not prove complete shutdown or cleanup.
+func (host *DefaultHost) listenerServeCompletion() listener.ServeCompletion {
+	host.mu.RLock()
+	defer host.mu.RUnlock()
+	return host.serveCompletion
+}
+
 // Build prepares the Host for an atomic startup transaction.
 func (host *DefaultHost) Build() error {
 	host.mu.Lock()
@@ -231,10 +241,12 @@ func (host *DefaultHost) Start(ctx context.Context) error {
 	host.startErr = err
 	if err == nil {
 		host.runtimeListener = components.listener
+		host.serveCompletion = components.serveCompletion
 		host.sessionManager = components.sessionManager
 		host.runtimeContext, host.runtimeCancel = host.newRuntimeContext()
 	} else {
 		host.runtimeListener = nil
+		host.serveCompletion = listener.ServeCompletion{}
 		host.sessionManager = nil
 		host.runtimeContext = nil
 		host.runtimeCancel = nil
