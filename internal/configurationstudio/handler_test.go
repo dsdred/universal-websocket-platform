@@ -376,3 +376,16 @@ func newRouter() http.Handler {
 	RegisterRoutes(router)
 	return router
 }
+
+func TestStudioExistingDraftEditorSurface(t *testing.T) {
+	for _, required := range []string{
+		`value="existing-draft"`, `id="existing-draft"`, `id="reload-draft"`,
+		`id="draft-status"`, `aria-live="polite"`,
+		"Only listener host and port are editable.", "Saving does not publish.",
+		"Concurrent edits by other clients can overwrite each other.",
+	} {
+		if !strings.Contains(string(indexHTML), required) {
+			t.Errorf("editor surface is missing %q", required)
+		}
+	}
+}

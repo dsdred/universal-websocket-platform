@@ -20,6 +20,8 @@ The repository currently contains an Alpha foundation rather than a production-r
 
 ### Configuration
 
+- TASK-136 adds a bounded existing-Draft listener editor in Studio: scoped discovery/open and explicit host/port Save to the same Draft, with dirty-navigation guards and no implicit publication. Other configuration sections and all TASK-135 creation flows are preserved. Concurrent writers have no revision/CAS protection; exact gates are recorded in TASK-136.
+
 - TASK-135 extends local/dev Studio with existing Workspace/Configuration selection and Draft-only creation in an existing Configuration. New Configuration in an existing Workspace preserves listener/publish flow. Existing APIs and in-memory/trusted-local boundaries remain; no Runtime integration. Exact verification/review is in its task record.
 
 - Workspace, Configuration, and ConfigurationVersion have in-memory Control Service APIs.

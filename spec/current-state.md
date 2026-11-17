@@ -1,14 +1,22 @@
 # Текущее состояние
 
-Текущая engineering task [TASK-135](../docs/tasks/TASK-135-STUDIO-EXISTING-CONFIGURATION.md) —
-Configuration Studio: Draft в существующей Configuration и новая Configuration
-в существующем Workspace. Baseline main `f408dc2735589e53c009662c4fc2110f6c083bd7`;
-projected In Progress; exact checkpoints — в task record. Только existing API
-и Studio UI; Dashboard GET-only. TASK-131 DEFERRED по решению Owner; Runtime
-Liveness не активируется. TASK-134 сохранена отдельным локальным commit
+Текущая engineering task [TASK-136](../docs/tasks/TASK-136-EXISTING-DRAFT-MANAGEMENT.md) —
+Existing Draft Management в Studio: открыть существующий Draft и сохранить
+его listener host/port через existing API, без создания версии или публикации.
+Baseline main `3683b7734a692a97ea8b423cc6bba9376a9976ef`; projected In Progress;
+exact implementation/verification/review — в task record. Три flow TASK135
+сохраняются; Dashboard GET-only. TASK131 DEFERRED; Runtime Liveness не активируется.
+TASK134 сохранена отдельным локальным commit
 `c12a3f531f497475062a1672c0abb66872aab9fc`, вне main и вне этой task.
-ADR-0005 Draft; TASK-102 untouched; Gate11 OPEN; Stage B/B1/B2,
+ADR0005 Draft; TASK102 untouched; Gate11 OPEN; Stage B/B1/B2,
 Production C2/C3 и C2-Exposure Not Activated. Commit/publication не разрешены.
+
+[TASK-135](../docs/tasks/TASK-135-STUDIO-EXISTING-CONFIGURATION.md) опубликована через
+PR #134: source `371d33d9fcc1ff0f74f8c8fd341c78c73a43a34f`, merge
+`3683b7734a692a97ea8b423cc6bba9376a9976ef`, source/merge tree
+`5a94ad88a7dc6a9b505b1a55dac3c6d5ff9bac81`. Native P10/P10R135001 PASS;
+PR CI44103952132 и post-merge CI44104448561 SUCCESS, включая race.
+Historical task record неизменён; три режима создания остаются доступны.
 
 [TASK-132](../docs/tasks/TASK-132-PRODUCTION-RUNTIME-OBSERVATION-DESIGN.md) design-only
 изменения присутствуют в main через PR #132, merge
