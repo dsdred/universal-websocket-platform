@@ -137,6 +137,7 @@ func TestScriptStaysWithinApprovedAPIScope(t *testing.T) {
 		`/configurations`,
 		`/versions`,
 		`/listener`,
+		`/listener/timeouts`,
 		`/publish`,
 		`Number.isSafeInteger`,
 		`textContent`,
@@ -154,7 +155,6 @@ func TestScriptStaysWithinApprovedAPIScope(t *testing.T) {
 		`/recovery`,
 		`/authentication`,
 		`/routing`,
-		`/timeouts`,
 		`listener/tls`,
 		`setInterval`,
 	} {
@@ -381,7 +381,10 @@ func TestStudioExistingDraftEditorSurface(t *testing.T) {
 	for _, required := range []string{
 		`value="existing-draft"`, `id="existing-draft"`, `id="reload-draft"`,
 		`id="draft-status"`, `aria-live="polite"`,
-		"Only listener host and port are editable.", "Saving does not publish.",
+		`id="draft-section"`, `value="listener"`, `value="timeouts"`,
+		`id="timeout-handshake"`, `id="timeout-read"`, `id="timeout-write"`, `id="timeout-idle"`,
+		"Save updates only the selected section of this Draft.", "Saving does not publish.",
+		"Read and idle may be zero to disable that timeout.",
 		"Concurrent edits by other clients can overwrite each other.",
 	} {
 		if !strings.Contains(string(indexHTML), required) {

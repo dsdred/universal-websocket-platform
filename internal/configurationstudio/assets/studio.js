@@ -5,6 +5,13 @@ const mode = $("creation-mode");
 const workspaceChoice = $("existing-workspace");
 const configurationChoice = $("existing-configuration");
 const draftChoice = $("existing-draft");
+const sectionChoice = $("draft-section");
+const timeoutFields = [
+  ["handshakeSeconds", $("timeout-handshake"), 1, 300, "Handshake"],
+  ["readSeconds", $("timeout-read"), 0, 86400, "Read"],
+  ["writeSeconds", $("timeout-write"), 1, 300, "Write"],
+  ["idleSeconds", $("timeout-idle"), 0, 86400, "Idle"],
+];
 const submitButton = $("submit-button");
 const statusOutput = $("flow-status");
 const result = $("result");
@@ -12,14 +19,17 @@ const resultState = $("result-state");
 const resultVersion = $("result-version");
 const resultURL = $("result-url");
 const controls = [mode, workspaceChoice, configurationChoice, $("reload-lists"),
-  $("workspace-name"), $("configuration-name"), $("listener-host"), $("listener-port"), submitButton];
+  $("workspace-name"), $("configuration-name"), $("listener-host"), $("listener-port"), sectionChoice,
+  ...timeoutFields.map(([, input]) => input), submitButton];
 let busy = false, locked = false, loading = false, listGeneration = 0, listController;
 let workspaces = new Map(), configurations = new Map(), drafts = new Map();
 let openedDraft = null, saveUnknown = false;
+let editorSection = "listener";
 let choices = { mode: mode.value, workspace: "", configuration: "", draft: "" };
 const editing = () => mode.value === "existing-draft";
 const hostInput = $("listener-host"), portInput = $("listener-port");
 function dirty() {
+  if (openedDraft && editorSection === "timeouts") return timeoutFields.some(([key, input]) => input.value !== String(openedDraft.timeouts[key]));
   return !!openedDraft && (hostInput.value !== openedDraft.host || portInput.value !== String(openedDraft.port));
 }
 function rememberChoices() {
@@ -28,8 +38,9 @@ function rememberChoices() {
 function restoreChoices() {
   mode.value = choices.mode; workspaceChoice.value = choices.workspace;
   configurationChoice.value = choices.configuration; draftChoice.value = choices.draft;
+  sectionChoice.value = editorSection;
 }
-function allowNavigation(message = "Discard local listener edits and leave this Draft?") {
+function allowNavigation(message = "Discard local Draft edits and leave this Draft?") {
   if (busy || locked) { restoreChoices(); return false; }
   if ((dirty() || saveUnknown) && !window.confirm(message + (saveUnknown ? " The previous save outcome is unknown; stored values must be reloaded before another save." : ""))) {
     restoreChoices(); return false;
@@ -39,14 +50,15 @@ function allowNavigation(message = "Discard local listener edits and leave this 
 function draftStatus(message) { $("draft-status").textContent = message; }
 function clearDrafts() {
   drafts = new Map(); openedDraft = null; saveUnknown = false;
+  editorSection = "listener"; sectionChoice.value = editorSection;
   placeholder(draftChoice, "Select a Draft");
   draftStatus("Select a Configuration to discover Drafts.");
 }
 function updateDirty() {
-  if (editing() && openedDraft && !saveUnknown) draftStatus(dirty() ? "Unsaved listener changes." : "Draft listener is unchanged.");
+  if (editing() && openedDraft && !saveUnknown) draftStatus(dirty() ? "Unsaved Draft changes." : "Draft section is unchanged.");
   syncControls();
 }
-for (const input of [hostInput, portInput]) input.addEventListener("input", updateDirty);
+for (const input of [hostInput, portInput, ...timeoutFields.map(([, input]) => input)]) input.addEventListener("input", updateDirty);
 window.addEventListener("beforeunload", (event) => {
   if (busy || dirty() || saveUnknown) { event.preventDefault(); event.returnValue = ""; }
 });
@@ -87,7 +99,12 @@ function syncControls() {
   submitButton.disabled ||= loading;
   draftChoice.disabled = busy || locked || loading || drafts.size === 0;
   $("reload-draft").disabled = busy || locked || loading || !openedDraft;
+  sectionChoice.disabled ||= loading || !openedDraft;
+  $("timeout-fields").hidden = !editing() || editorSection !== "timeouts";
+  $("listener-fields").hidden = editing() ? editorSection !== "listener" : mode.value === "existing-configuration";
+  for (const [, input] of timeoutFields) input.disabled ||= !editing() || !openedDraft || loading;
   if (editing()) {
+    submitButton.textContent = editorSection === "timeouts" ? "Save timeouts" : "Save listener";
     hostInput.disabled ||= !openedDraft || loading;
     portInput.disabled ||= !openedDraft || loading;
     submitButton.disabled ||= !openedDraft || saveUnknown || !dirty();
@@ -282,8 +299,27 @@ function draftProjection(version, configurationID) {
   const listener = version.listener;
   if (!listener || typeof listener.host !== "string" || !listener.host.trim() || listener.host.length > 255 ||
       !Number.isInteger(listener.port) || listener.port < 1 || listener.port > 65535) throw new Error("Invalid listener response.");
-  return { id: version.id, configurationID, number: version.number, state: version.state, host: listener.host, port: listener.port };
+  const timeouts = {};
+  for (const [key, , min, max] of timeoutFields) {
+    const value = listener.timeouts && listener.timeouts[key];
+    if (!Number.isInteger(value) || value < min || value > max) throw new Error("Invalid timeout response.");
+    timeouts[key] = value;
+  }
+  return { id: version.id, configurationID, number: version.number, state: version.state, host: listener.host, port: listener.port, timeouts };
 }
+function restoreEditorInputs() {
+  if (!openedDraft) return;
+  hostInput.value = openedDraft.host; portInput.value = String(openedDraft.port);
+  for (const [key, input] of timeoutFields) input.value = String(openedDraft.timeouts[key]);
+}
+sectionChoice.addEventListener("change", () => {
+  if (loading || !allowNavigation("Discard local Draft edits and change the editing section?")) { restoreChoices(); return; }
+  if (!["listener", "timeouts"].includes(sectionChoice.value)) { restoreChoices(); return; }
+  editorSection = sectionChoice.value;
+  restoreEditorInputs();
+  if (!saveUnknown) draftStatus("Editing section changed. No unsaved changes.");
+  syncControls();
+});
 function editorScope() {
   return { workspaceID: selectedID(workspaceChoice, workspaces), configurationID: selectedID(configurationChoice, configurations) };
 }
@@ -317,9 +353,9 @@ async function loadDrafts(versionID) {
     if (selected) {
       openedDraft = { ...selected, workspaceID: scope.workspaceID };
       draftChoice.value = String(selected.id);
-      hostInput.value = selected.host; portInput.value = String(selected.port);
+      restoreEditorInputs();
       saveUnknown = false; clearResult();
-      draftStatus("Draft opened. Listener host and port can be saved.");
+      draftStatus("Draft opened. Choose listener address or timeouts to edit.");
       setStatus("Draft opened without creating or publishing a version.");
     } else draftStatus(items.size ? "Select a Draft to open it." : "No Drafts in this Configuration.");
     rememberChoices();
@@ -339,29 +375,44 @@ draftChoice.addEventListener("change", () => {
   catch (error) { restoreChoices(); setStatus(error.message, "error"); }
 });
 $("reload-draft").addEventListener("click", () => {
-  if (!openedDraft || !allowNavigation("Discard local listener edits and load the current stored listener from Control Service?")) return;
+  if (!openedDraft || !allowNavigation("Discard local Draft edits and load the current stored values from Control Service?")) return;
   return loadDrafts(openedDraft.id);
 });
 async function saveDraft() {
   if (!openedDraft || saveUnknown || !dirty()) return;
-  let scope, host, port;
+  let scope, body;
   try {
     scope = editorScope();
     if (selectedID(draftChoice, drafts) !== openedDraft.id || scope.workspaceID !== openedDraft.workspaceID || scope.configurationID !== openedDraft.configurationID) throw new Error("Draft selection changed. Reload before saving.");
-    host = hostInput.value.trim(); port = Number(portInput.value);
-    if (!host || host.length > 255 || !Number.isInteger(port) || port < 1 || port > 65535) throw new Error("Enter a listener host and whole port between 1 and 65535.");
+    if (editorSection === "timeouts") {
+      body = {};
+      for (const [key, input, min, max, label] of timeoutFields) {
+        const value = Number(input.value);
+        if (!/^[0-9]+$/.test(input.value) || !Number.isInteger(value) || value < min || value > max) throw new Error(`${label} timeout must be a whole number between ${min} and ${max} seconds.`);
+        body[key] = value;
+      }
+    } else {
+      const host = hostInput.value.trim(), port = Number(portInput.value);
+      if (!host || host.length > 255 || !Number.isInteger(port) || port < 1 || port > 65535) throw new Error("Enter a listener host and whole port between 1 and 65535.");
+      body = { host, port };
+    }
   } catch (error) { setStatus(error.message, "error"); return; }
-  invalidateLists(); busy = true; syncControls(); setStatus("Saving Draft listener…");
+  const section = editorSection;
+  invalidateLists(); busy = true; syncControls(); setStatus(`Saving Draft ${section}…`);
   try {
-    const response = await requestJSON(`${versionsPath(scope)}/${openedDraft.id}/listener`, "PUT", 200, { host, port });
+    const suffix = section === "timeouts" ? "/listener/timeouts" : "/listener";
+    const response = await requestJSON(`${versionsPath(scope)}/${openedDraft.id}${suffix}`, "PUT", 200, body);
     const saved = draftProjection(response, scope.configurationID);
-    if (saved.id !== openedDraft.id || saved.number !== openedDraft.number || saved.state !== "Draft" || saved.host !== host || saved.port !== port) throw new Error("Unexpected saved listener response.");
-    openedDraft = { ...saved, workspaceID: scope.workspaceID }; drafts.set(saved.id, saved);
-    hostInput.value = saved.host; portInput.value = String(saved.port);
-    draftStatus("Draft listener saved. No unsaved changes."); setStatus("Listener saved to the existing Draft. It has not been published.", "success");
+    const savedSection = section === "timeouts" ? saved.timeouts : saved;
+    if (saved.id !== openedDraft.id || saved.number !== openedDraft.number || saved.state !== "Draft" ||
+        Object.keys(body).some((key) => savedSection[key] !== body[key])) throw new Error("Unexpected saved section response.");
+    // A section Save acknowledges only that section; unrelated baselines require an explicit fresh read.
+    openedDraft = { ...openedDraft, ...(section === "timeouts" ? { timeouts: saved.timeouts } : { host: saved.host, port: saved.port }) };
+    drafts.set(saved.id, openedDraft); restoreEditorInputs();
+    draftStatus("Draft section saved. No unsaved changes."); setStatus(`${section === "timeouts" ? "Timeouts" : "Listener"} saved to the existing Draft. It has not been published.`, "success");
   } catch (error) {
     saveUnknown = !(error instanceof RequestError) || error.status >= 500;
-    draftStatus(saveUnknown ? "Save outcome unknown. Edits retained; use Reload Draft to reconcile before saving again." : "Save failed. Unsaved listener changes are retained.");
+    draftStatus(saveUnknown ? "Save outcome unknown. Edits retained; use Reload Draft to reconcile before saving again." : "Save failed. Unsaved Draft changes are retained.");
     setStatus(error instanceof RequestError ? error.message : "The save outcome is unknown.", "error");
   } finally { busy = false; restoreChoices(); syncControls(); }
 }
@@ -394,7 +445,7 @@ form.addEventListener("submit", async (event) => {
 });
 $("start-another").addEventListener("click", () => {
   if (busy || !locked) return;
-  if ((dirty() || saveUnknown) && !window.confirm("Discard local listener edits?")) return;
+  if ((dirty() || saveUnknown) && !window.confirm("Discard local Draft edits?")) return;
   clearDrafts();
   locked = false; $("start-another").hidden = true;
   return updateMode();

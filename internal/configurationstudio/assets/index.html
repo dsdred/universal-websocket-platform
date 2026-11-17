@@ -67,7 +67,12 @@
           <select id="existing-draft" disabled><option value="">Select a Draft</option></select>
           <button id="reload-draft" type="button">Reload Draft</button>
           <p id="draft-status" class="status" role="status" aria-live="polite">Select a Configuration to discover Drafts.</p>
-          <p>Only listener host and port are editable. Other settings remain unchanged. Saving does not publish. Concurrent edits by other clients can overwrite each other.</p>
+          <label for="draft-section">Editing section</label>
+          <select id="draft-section" disabled>
+            <option value="listener">Listener address</option>
+            <option value="timeouts">Timeouts</option>
+          </select>
+          <p>Save updates only the selected section of this Draft. TLS, authentication and routing remain unchanged. Saving does not publish. Concurrent edits by other clients can overwrite each other.</p>
         </div>
         <div id="workspace-fields">
         <label for="workspace-name">Workspace name</label>
@@ -90,6 +95,21 @@
           </div>
         </div>
 
+        <div id="timeout-fields" hidden>
+          <p>Timeout settings in seconds. Read and idle may be zero to disable that timeout. Saving settings does not start or change a Runtime.</p>
+          <div class="listener-fields">
+            <div><label for="timeout-handshake">Handshake timeout (1–300 seconds)</label>
+              <input id="timeout-handshake" type="number" min="1" max="300" step="1" required disabled></div>
+            <div><label for="timeout-read">Read timeout (0–86400 seconds)</label>
+              <input id="timeout-read" type="number" min="0" max="86400" step="1" required disabled></div>
+          </div>
+          <div class="listener-fields">
+            <div><label for="timeout-write">Write timeout (1–300 seconds)</label>
+              <input id="timeout-write" type="number" min="1" max="300" step="1" required disabled></div>
+            <div><label for="timeout-idle">Idle timeout (0–86400 seconds)</label>
+              <input id="timeout-idle" type="number" min="0" max="86400" step="1" required disabled></div>
+          </div>
+        </div>
         <button id="submit-button" type="submit">Create and publish</button>
       </form>
 

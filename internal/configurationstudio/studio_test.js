@@ -18,7 +18,7 @@ const reply = (payload, status = 200) => ({ status, json: async () => payload })
 const deferred = () => { let resolve; const promise = new Promise((yes) => { resolve = yes; }); return { resolve, promise }; };
 async function settle() { for (let i = 0; i < 8; i++) await new Promise(setImmediate); }
 function start(route) {
-  const ids = ["configuration-form", "creation-mode", "existing-workspace", "existing-configuration", "submit-button", "flow-status", "result", "result-state", "result-version", "result-url", "reload-lists", "workspace-name", "configuration-name", "listener-host", "listener-port", "list-status", "existing-resources", "configuration-choice", "workspace-fields", "configuration-fields", "listener-fields", "result-url-row", "start-another", "existing-draft", "draft-fields", "draft-status", "reload-draft"];
+  const ids = ["configuration-form", "creation-mode", "existing-workspace", "existing-configuration", "submit-button", "flow-status", "result", "result-state", "result-version", "result-url", "reload-lists", "workspace-name", "configuration-name", "listener-host", "listener-port", "list-status", "existing-resources", "configuration-choice", "workspace-fields", "configuration-fields", "listener-fields", "result-url-row", "start-another", "existing-draft", "draft-fields", "draft-status", "reload-draft", "draft-section", "timeout-fields", "timeout-handshake", "timeout-read", "timeout-write", "timeout-idle"];
   const nodes = Object.fromEntries(ids.map((id) => [id, new Element()]));
   Object.assign(nodes["creation-mode"], { value: "new-workspace" });
   nodes["workspace-name"].value = "Workspace"; nodes["configuration-name"].value = "Configuration";
@@ -42,7 +42,8 @@ function start(route) {
 }
 function version(state = "Draft", extra = {}) {
   return { id: 3, configurationId: 2, number: 1, state,
-    listener: { host: "127.0.0.1", port: 8080, tls: { enabled: false } }, ...extra };
+    ...extra, listener: { host: "127.0.0.1", port: 8080, tls: { enabled: false },
+      timeouts: { handshakeSeconds: 10, readSeconds: 0, writeSeconds: 10, idleSeconds: 0 }, ...extra.listener } };
 }
 function routes(url, options) {
   if (options.method === "GET") {
@@ -385,4 +386,181 @@ test("unknown timeout is not automatically retried and Save remains disabled", a
   for (const callback of app.timers.values()) callback(); await saving; await app.submit();
   assert.equal(mutations(app).length, 1); assert.equal(app.nodes["submit-button"].disabled, true);
   assert.equal(app.nodes["listener-host"].value, "localhost");
+});
+
+const timeoutIDs = ["timeout-handshake", "timeout-read", "timeout-write", "timeout-idle"];
+const timeoutValues = { handshakeSeconds: 25, readSeconds: 40, writeSeconds: 30, idleSeconds: 90 };
+function timeoutVersion(timeouts = timeoutValues, extra = {}) {
+  return version("Draft", { ...extra, listener: { ...extra.listener, timeouts } });
+}
+function timeoutRoutes(url, options) {
+  if (options.method === "GET" && url === versionsURL) return reply([timeoutVersion()]);
+  if (options.method === "PUT") return reply(timeoutVersion(JSON.parse(options.body)));
+  return editorRoutes(url, options);
+}
+async function timeoutEditor(app) { await editor(app); await app.select("draft-section", "timeouts"); }
+async function editTimeout(app, value = "45", id = "timeout-handshake") {
+  app.nodes[id].value = value; await app.nodes[id].fire("input");
+}
+
+test("timeout section loads current values, exposes no references and creates nothing", async () => {
+  const app = start(timeoutRoutes); await timeoutEditor(app);
+  assert.deepEqual(timeoutIDs.map((id) => app.nodes[id].value), ["25", "40", "30", "90"]);
+  assert.equal(app.nodes["listener-fields"].hidden, true);
+  assert.equal(app.nodes["timeout-fields"].hidden, false);
+  assert.equal(app.nodes["submit-button"].textContent, "Save timeouts");
+  assert.equal(app.nodes["submit-button"].disabled, true);
+  assert.equal(mutations(app).length, 0);
+});
+
+test("timeout Save persists one pinned section, reopens same ID without duplicate versions or publication", async () => {
+  let stored = timeoutVersion(timeoutValues, { listener: { host: "example.test", tls: { enabled: true, certificateRef: "not-for-ui" } }, authentication: { enabled: true }, routing: { defaultHandlerRef: "echo" } });
+  const before = structuredClone(stored);
+  const app = start((url, options) => {
+    if (url === versionsURL && options.method === "GET") return reply([structuredClone(stored)]);
+    if (url === `${versionsURL}/3/listener/timeouts` && options.method === "PUT") {
+      stored.listener.timeouts = JSON.parse(options.body); return reply(structuredClone(stored));
+    }
+    return editorRoutes(url, options);
+  });
+  await timeoutEditor(app); await editTimeout(app); await app.submit();
+  assert.deepEqual(mutations(app).map(({ url, options }) => [url, options.method]), [[`${versionsURL}/3/listener/timeouts`, "PUT"]]);
+  assert.deepEqual(JSON.parse(mutations(app)[0].options.body), { ...timeoutValues, handshakeSeconds: 45 });
+  assert.equal(app.nodes["submit-button"].disabled, true);
+  await app.nodes["reload-draft"].fire("click");
+  assert.equal(app.nodes["timeout-handshake"].value, "45");
+  assert.equal(app.nodes["existing-draft"].value, "3");
+  const after = structuredClone(stored); after.listener.timeouts = before.listener.timeouts;
+  assert.deepEqual(after, before);
+  for (const node of Object.values(app.nodes)) assert.doesNotMatch(node.textContent, /not-for-ui/);
+});
+
+for (const [id, invalid] of [
+  ["timeout-handshake", "0"], ["timeout-handshake", "301"],
+  ["timeout-write", "0"], ["timeout-write", "301"],
+  ["timeout-read", "-1"], ["timeout-read", "86401"],
+  ["timeout-idle", "-1"], ["timeout-idle", "86401"],
+  ["timeout-read", ""], ["timeout-read", " "], ["timeout-idle", "1.5"], ["timeout-handshake", "1e2"],
+]) test(`invalid ${id}=${JSON.stringify(invalid)} retains input without PUT`, async () => {
+  const app = start(timeoutRoutes); await timeoutEditor(app); await editTimeout(app, invalid, id); await app.submit();
+  assert.equal(mutations(app).length, 0); assert.equal(app.nodes[id].value, invalid);
+  assert.match(app.nodes["flow-status"].textContent, /timeout must be a whole number/);
+});
+
+for (const values of [
+  { handshakeSeconds: 1, readSeconds: 0, writeSeconds: 1, idleSeconds: 0 },
+  { handshakeSeconds: 300, readSeconds: 86400, writeSeconds: 300, idleSeconds: 86400 },
+]) test("timeout endpoints accept all four boundary values including explicit zero", async () => {
+  const app = start(timeoutRoutes); await timeoutEditor(app);
+  for (const [index, value] of Object.values(values).entries()) await editTimeout(app, String(value), timeoutIDs[index]);
+  await app.submit(); assert.deepEqual(JSON.parse(mutations(app)[0].options.body), values);
+  assert.equal(app.nodes["submit-button"].disabled, true);
+});
+
+for (const [name, action] of [
+  ["section", (app) => app.select("draft-section", "listener")],
+  ["mode", (app) => app.select("creation-mode", "new-workspace")],
+  ["Workspace", (app) => app.select("existing-workspace", "4")],
+  ["Configuration", (app) => app.select("existing-configuration", "")],
+  ["Draft", (app) => app.select("existing-draft", "6")],
+  ["reload", (app) => app.nodes["reload-draft"].fire("click")],
+  ["reset", (app) => app.nodes["configuration-form"].fire("reset")],
+]) test(`Cancel dirty timeout ${name} retains section, selections and values`, async () => {
+  const app = start(timeoutRoutes); await timeoutEditor(app); await editTimeout(app);
+  const count = app.requests.length; app.decisions.push(false); await action(app);
+  assert.equal(app.nodes["draft-section"].value, "timeouts"); assert.equal(app.nodes["timeout-handshake"].value, "45");
+  assert.equal(app.nodes["existing-draft"].value, "3"); assert.equal(app.requests.length, count);
+  const event = { preventDefault() { this.prevented = true; } }; app.windowEvents.beforeunload(event); assert.equal(event.prevented, true);
+});
+
+test("confirmed section switch discards only local edits and keeps address baseline", async () => {
+  const app = start(timeoutRoutes); await timeoutEditor(app); await editTimeout(app);
+  await app.select("draft-section", "listener");
+  assert.equal(app.nodes["listener-host"].value, "127.0.0.1");
+  assert.equal(app.nodes["submit-button"].textContent, "Save listener");
+  await app.select("draft-section", "timeouts");
+  assert.equal(app.nodes["timeout-handshake"].value, "25"); assert.equal(mutations(app).length, 0);
+});
+
+test("address dirty section Cancel preserves TASK136 address input", async () => {
+  const app = start(timeoutRoutes); await editor(app); await editHost(app);
+  app.decisions.push(false); await app.select("draft-section", "timeouts");
+  assert.equal(app.nodes["draft-section"].value, "listener"); assert.equal(app.nodes["listener-host"].value, "localhost");
+  assert.equal(app.nodes["listener-fields"].hidden, false);
+});
+
+test("duplicate timeout Save and pending section changes cannot redirect request", async () => {
+  const pending = deferred(); const app = start((url, options) => options.method === "PUT" ? pending.promise : timeoutRoutes(url, options));
+  await timeoutEditor(app); await editTimeout(app); const saving = app.submit(); await app.submit();
+  for (const id of ["draft-section", ...timeoutIDs]) assert.equal(app.nodes[id].disabled, true);
+  await app.select("draft-section", "listener"); assert.equal(app.nodes["draft-section"].value, "timeouts");
+  pending.resolve(reply(timeoutVersion({ ...timeoutValues, handshakeSeconds: 45 }))); await saving;
+  assert.equal(mutations(app).length, 1); assert.equal(app.nodes["submit-button"].disabled, true);
+});
+
+for (const status of [400, 404, 409]) test(`timeout HTTP ${status} retains values and same Draft, no create fallback`, async () => {
+  const app = start((url, options) => options.method === "PUT" ? reply({}, status) : timeoutRoutes(url, options));
+  await timeoutEditor(app); await editTimeout(app); await app.submit();
+  assert.equal(app.nodes["timeout-handshake"].value, "45"); assert.equal(app.nodes["existing-draft"].value, "3");
+  assert.match(app.nodes["draft-status"].textContent, /retained/); assert.equal(mutations(app).length, 1);
+});
+
+for (const failure of ["network", "500", "invalid JSON", "ID", "scope", "number", "Published", "timeout values"]) test(`timeout unknown ${failure} prevents retry until confirmed fresh read`, async () => {
+  const app = start((url, options) => {
+    if (options.method !== "PUT") return timeoutRoutes(url, options);
+    if (failure === "network") throw new Error("private internal message");
+    if (failure === "500") return reply({}, 500);
+    if (failure === "invalid JSON") return { status: 200, json: async () => { throw new Error("bad JSON"); } };
+    return reply(timeoutVersion(failure === "timeout values" ? timeoutValues : { ...timeoutValues, handshakeSeconds: 45 },
+      { id: failure === "ID" ? 6 : 3, configurationId: failure === "scope" ? 9 : 2,
+        number: failure === "number" ? 2 : 1, state: failure === "Published" ? "Published" : "Draft" }));
+  });
+  await timeoutEditor(app); await editTimeout(app); await app.submit(); await app.submit();
+  assert.equal(mutations(app).length, 1); assert.equal(app.nodes["timeout-handshake"].value, "45");
+  assert.equal(app.nodes["submit-button"].disabled, true); assert.match(app.nodes["draft-status"].textContent, /outcome unknown/);
+  app.decisions.push(false); await app.nodes["reload-draft"].fire("click"); assert.equal(app.nodes["timeout-handshake"].value, "45");
+  await app.nodes["reload-draft"].fire("click"); assert.equal(app.nodes["timeout-handshake"].value, "25");
+  await editTimeout(app); assert.equal(app.nodes["submit-button"].disabled, false);
+});
+
+test("unknown timeout result stays locked across section switch and failed reload", async () => {
+  let failed = false;
+  const app = start((url, options) => {
+    if (options.method === "PUT") { failed = true; throw new Error("offline"); }
+    if (failed && url === versionsURL) throw new Error("offline");
+    return timeoutRoutes(url, options);
+  });
+  await timeoutEditor(app); await editTimeout(app); await app.submit();
+  await app.nodes["reload-draft"].fire("click"); assert.equal(app.nodes["timeout-handshake"].value, "45");
+  await app.select("draft-section", "listener"); await editHost(app); await app.submit();
+  assert.equal(mutations(app).length, 1); assert.equal(app.nodes["submit-button"].disabled, true);
+});
+
+test("late timeout reload cannot overwrite another mode or its creation controls", async () => {
+  const pending = deferred(); let calls = 0;
+  const app = start((url, options) => url === versionsURL && ++calls === 3 ? pending.promise : timeoutRoutes(url, options));
+  await timeoutEditor(app); const loading = app.nodes["reload-draft"].fire("click");
+  await app.select("creation-mode", "new-workspace"); pending.resolve(reply([timeoutVersion({ ...timeoutValues, handshakeSeconds: 99 })])); await loading;
+  assert.equal(app.nodes["creation-mode"].value, "new-workspace"); assert.equal(app.nodes["timeout-fields"].hidden, true);
+  assert.equal(app.nodes["submit-button"].textContent, "Create and publish");
+});
+
+test("timeout Save does not adopt unrelated address values from response", async () => {
+  const app = start((url, options) => options.method === "PUT"
+    ? reply(timeoutVersion(JSON.parse(options.body), { listener: { host: "external.example", port: 9999 } })) : timeoutRoutes(url, options));
+  await timeoutEditor(app); await editTimeout(app); await app.submit(); await app.select("draft-section", "listener");
+  assert.equal(app.nodes["listener-host"].value, "127.0.0.1"); assert.equal(app.nodes["listener-port"].value, "8080");
+});
+
+test("address Save does not adopt unrelated timeout values from response", async () => {
+  const app = start((url, options) => options.method === "PUT"
+    ? reply(timeoutVersion({ ...timeoutValues, idleSeconds: 888 }, { listener: JSON.parse(options.body) })) : timeoutRoutes(url, options));
+  await editor(app); await editHost(app); await app.submit(); await app.select("draft-section", "timeouts");
+  assert.equal(app.nodes["timeout-idle"].value, "90");
+});
+
+for (const timeouts of [null, {}, { ...timeoutValues, readSeconds: -1 }, { ...timeoutValues, idleSeconds: 86401 }, { ...timeoutValues, writeSeconds: 1.5 }]) test("invalid timeout GET data cannot open Draft or enable Save", async () => {
+  const app = start((url, options) => url === versionsURL ? reply([timeoutVersion(timeouts)]) : timeoutRoutes(url, options));
+  await editor(app, false); await app.submit(); assert.equal(mutations(app).length, 0); assert.equal(app.nodes["submit-button"].disabled, true);
+  assert.equal(app.nodes["existing-draft"].children.length, 1);
 });

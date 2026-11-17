@@ -91,10 +91,13 @@ archive и Runtime management остаются недоступными.
 1. Выберите **Edit existing Draft** в Studio.
 2. Выберите существующие Workspace и Configuration. Список предлагает только
    их Draft; выбор Draft открывает его через новое чтение, без создания версии.
-3. Измените **Listener host** и **Listener port**, нажмите **Save listener**.
-   Сохраняется тот же Draft, без публикации. Остальные sections, включая TLS,
-   authentication, routing и timeouts, остаются неизменными.
-4. Смена Action, Workspace, Configuration или Draft и обновление несохранённых
+3. Выберите **Listener address** для host/port и **Save listener** или **Timeouts**
+   для четырёх значений в секундах и **Save timeouts**. Handshake/write допускают
+   целые 1–300, read/idle — целые 0–86400 (ноль отключает соответствующий timeout).
+   Все поля обязательны. Один Save одним запросом меняет только выбранную section
+   того же Draft, без публикации. TLS, authentication, routing и другая section
+   редактора остаются неизменными.
+4. Смена section редактора, Action, Workspace, Configuration или Draft и обновление несохранённых
    данных требуют подтверждения discard. Cancel сохраняет выбор и поля.
    При уходе со страницы запрашивается браузерное предупреждение; при crash
    или завершении браузера его показ гарантировать нельзя.
@@ -106,8 +109,8 @@ archive и Runtime management остаются недоступными.
 Если версия опубликована, архивирована, удалена или parent недоступен,
 Save не создаёт заменяющую версию. Сохраните свой ввод и проверьте ресурсы.
 Пустой список Draft нормален. Параллельные Save других клиентов могут перезаписать
-host/port: существующий API не проверяет expected revision. Редактор не добавляет
-настройку TLS/authentication/routing/timeouts, archive или Runtime management.
+сохранённую section: существующий API не проверяет revision, ETag или CAS.
+Редактор не добавляет TLS/authentication/routing, archive или Runtime management.
 
 ## Скриншоты
 
