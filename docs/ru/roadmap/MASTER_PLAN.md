@@ -20,6 +20,8 @@ Universal WebSocket Platform — open-source платформа для созд�
 
 ### Configuration
 
+- TASK-136 добавляет bounded listener editor существующего Draft в Studio: scoped discovery/open и явный Save host/port в ту же версию с защитой несохранённых правок и без неявной публикации. Остальные sections и три flow TASK135 сохранены. Revision/CAS-защиты от параллельного редактирования нет; exact gates — в TASK136.
+
 - TASK-135 расширяет local/dev Studio выбором существующих Workspace/Configuration и созданием только Draft в существующей Configuration. Новая Configuration в существующем Workspace сохраняет listener/publish flow. Existing API и in-memory/trusted-local границы сохранены; Runtime не подключается. Exact verification/review — в task record.
 
 - Workspace, Configuration и ConfigurationVersion имеют in-memory API Control Service.

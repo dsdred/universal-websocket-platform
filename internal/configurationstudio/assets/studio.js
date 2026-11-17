@@ -4,6 +4,7 @@ const form = $("configuration-form");
 const mode = $("creation-mode");
 const workspaceChoice = $("existing-workspace");
 const configurationChoice = $("existing-configuration");
+const draftChoice = $("existing-draft");
 const submitButton = $("submit-button");
 const statusOutput = $("flow-status");
 const result = $("result");
@@ -13,7 +14,42 @@ const resultURL = $("result-url");
 const controls = [mode, workspaceChoice, configurationChoice, $("reload-lists"),
   $("workspace-name"), $("configuration-name"), $("listener-host"), $("listener-port"), submitButton];
 let busy = false, locked = false, loading = false, listGeneration = 0, listController;
-let workspaces = new Map(), configurations = new Map();
+let workspaces = new Map(), configurations = new Map(), drafts = new Map();
+let openedDraft = null, saveUnknown = false;
+let choices = { mode: mode.value, workspace: "", configuration: "", draft: "" };
+const editing = () => mode.value === "existing-draft";
+const hostInput = $("listener-host"), portInput = $("listener-port");
+function dirty() {
+  return !!openedDraft && (hostInput.value !== openedDraft.host || portInput.value !== String(openedDraft.port));
+}
+function rememberChoices() {
+  choices = { mode: mode.value, workspace: workspaceChoice.value, configuration: configurationChoice.value, draft: draftChoice.value };
+}
+function restoreChoices() {
+  mode.value = choices.mode; workspaceChoice.value = choices.workspace;
+  configurationChoice.value = choices.configuration; draftChoice.value = choices.draft;
+}
+function allowNavigation(message = "Discard local listener edits and leave this Draft?") {
+  if (busy || locked) { restoreChoices(); return false; }
+  if ((dirty() || saveUnknown) && !window.confirm(message + (saveUnknown ? " The previous save outcome is unknown; stored values must be reloaded before another save." : ""))) {
+    restoreChoices(); return false;
+  }
+  return true;
+}
+function draftStatus(message) { $("draft-status").textContent = message; }
+function clearDrafts() {
+  drafts = new Map(); openedDraft = null; saveUnknown = false;
+  placeholder(draftChoice, "Select a Draft");
+  draftStatus("Select a Configuration to discover Drafts.");
+}
+function updateDirty() {
+  if (editing() && openedDraft && !saveUnknown) draftStatus(dirty() ? "Unsaved listener changes." : "Draft listener is unchanged.");
+  syncControls();
+}
+for (const input of [hostInput, portInput]) input.addEventListener("input", updateDirty);
+window.addEventListener("beforeunload", (event) => {
+  if (busy || dirty() || saveUnknown) { event.preventDefault(); event.returnValue = ""; }
+});
 class RequestError extends Error {}
 function setStatus(message, kind = "") {
   statusOutput.textContent = message;
@@ -41,6 +77,7 @@ function placeholder(select, label) {
 function clearConfigurations() {
   configurations = new Map();
   placeholder(configurationChoice, "Select a Configuration");
+  clearDrafts();
   clearResult();
 }
 function syncControls() {
@@ -48,6 +85,13 @@ function syncControls() {
   workspaceChoice.disabled ||= loading || workspaces.size === 0;
   configurationChoice.disabled ||= loading || configurations.size === 0;
   submitButton.disabled ||= loading;
+  draftChoice.disabled = busy || locked || loading || drafts.size === 0;
+  $("reload-draft").disabled = busy || locked || loading || !openedDraft;
+  if (editing()) {
+    hostInput.disabled ||= !openedDraft || loading;
+    portInput.disabled ||= !openedDraft || loading;
+    submitButton.disabled ||= !openedDraft || saveUnknown || !dirty();
+  }
 }
 function invalidateLists() {
   listGeneration++;
@@ -65,7 +109,7 @@ async function requestJSON(path, method, expectedStatus, body, signal) {
   }
   try {
     const response = await fetch(path, options);
-    if (response.status !== expectedStatus) throw new RequestError(`Control Service returned HTTP ${response.status}.`);
+    if (response.status !== expectedStatus) throw Object.assign(new RequestError(`Control Service returned HTTP ${response.status}.`), { status: response.status });
     const payload = await response.json();
     if (payload === null || typeof payload !== "object") throw new Error("Unexpected Control Service response.");
     return payload;
@@ -124,37 +168,45 @@ async function loadLists(workspaceID) {
   }
 }
 function updateMode() {
-  if (busy || locked) return;
+  if (!allowNavigation()) return;
   invalidateLists();
   workspaces = new Map();
   placeholder(workspaceChoice, "Select a Workspace");
   clearConfigurations();
-  const existing = mode.value === "existing-configuration";
+  const existing = mode.value === "existing-configuration" || editing();
   $("existing-resources").hidden = mode.value === "new-workspace";
   $("configuration-choice").hidden = !existing;
   $("workspace-fields").hidden = mode.value !== "new-workspace";
   $("configuration-fields").hidden = existing;
-  $("listener-fields").hidden = existing;
-  submitButton.textContent = existing ? "Create Draft" : "Create and publish";
+  $("listener-fields").hidden = existing && !editing();
+  $("draft-fields").hidden = !editing();
+  submitButton.textContent = editing() ? "Save listener" : existing ? "Create Draft" : "Create and publish";
+  rememberChoices();
   setStatus("Ready.");
   syncControls();
   if (mode.value !== "new-workspace") return loadLists();
 }
 mode.addEventListener("change", updateMode);
 workspaceChoice.addEventListener("change", () => {
-  if (busy || locked) return;
+  if (!allowNavigation()) return;
   invalidateLists(); clearConfigurations();
+  rememberChoices();
   setStatus("Ready."); syncControls();
-  if (mode.value === "existing-configuration" && workspaceChoice.value) {
+  if ((mode.value === "existing-configuration" || editing()) && workspaceChoice.value) {
     try { return loadLists(selectedID(workspaceChoice, workspaces)); }
     catch (error) { setStatus(error.message, "error"); }
   }
 });
-configurationChoice.addEventListener("change", () => { if (!busy && !locked) { clearResult(); setStatus("Ready."); } });
+configurationChoice.addEventListener("change", () => {
+  if (!allowNavigation()) return;
+  invalidateLists(); clearDrafts(); clearResult(); rememberChoices(); setStatus("Ready."); syncControls();
+  if (editing() && configurationChoice.value) return loadDrafts();
+});
 $("reload-lists").addEventListener("click", () => {
-  if (busy || locked) return;
+  if (!allowNavigation()) return;
   clearConfigurations();
   workspaces = new Map(); placeholder(workspaceChoice, "Select a Workspace");
+  rememberChoices();
   return loadLists();
 });
 function inputValues() {
@@ -224,9 +276,105 @@ async function runFlow(values) {
   versionResponse(published, configurationID, "Published", versionID);
   showVersion(published, true);
 }
+function draftProjection(version, configurationID) {
+  versionResponse(version, configurationID, version.state);
+  if (!["Draft", "Validated", "Published", "Archived"].includes(version.state)) throw new Error("Invalid version state.");
+  const listener = version.listener;
+  if (!listener || typeof listener.host !== "string" || !listener.host.trim() || listener.host.length > 255 ||
+      !Number.isInteger(listener.port) || listener.port < 1 || listener.port > 65535) throw new Error("Invalid listener response.");
+  return { id: version.id, configurationID, number: version.number, state: version.state, host: listener.host, port: listener.port };
+}
+function editorScope() {
+  return { workspaceID: selectedID(workspaceChoice, workspaces), configurationID: selectedID(configurationChoice, configurations) };
+}
+function versionsPath(scope) { return `/api/v1/workspaces/${scope.workspaceID}/configurations/${scope.configurationID}/versions`; }
+async function loadDrafts(versionID) {
+  invalidateLists();
+  const generation = listGeneration;
+  listController = new AbortController();
+  const timer = setTimeout(() => generation === listGeneration && listController.abort(), 10000);
+  loading = true; syncControls(); draftStatus("Loading Drafts…");
+  try {
+    const scope = editorScope();
+    const payload = await requestJSON(versionsPath(scope), "GET", 200, undefined, listController.signal);
+    if (generation !== listGeneration) return;
+    if (!Array.isArray(payload)) throw new Error("Invalid version list.");
+    const items = new Map(), seen = new Set();
+    for (const version of payload) {
+      const item = draftProjection(version, scope.configurationID);
+      if (seen.has(item.id)) throw new Error("Duplicate version ID.");
+      seen.add(item.id);
+      if (item.state === "Draft") items.set(item.id, item);
+    }
+    const selected = versionID === undefined ? null : items.get(versionID);
+    if (versionID !== undefined && !selected) throw new Error("Selected Draft is no longer available. Local edits are retained.");
+    drafts = items;
+    placeholder(draftChoice, "Select a Draft");
+    for (const item of items.values()) {
+      const option = document.createElement("option");
+      option.value = String(item.id); option.textContent = `Draft v${item.number} (#${item.id})`; draftChoice.append(option);
+    }
+    if (selected) {
+      openedDraft = { ...selected, workspaceID: scope.workspaceID };
+      draftChoice.value = String(selected.id);
+      hostInput.value = selected.host; portInput.value = String(selected.port);
+      saveUnknown = false; clearResult();
+      draftStatus("Draft opened. Listener host and port can be saved.");
+      setStatus("Draft opened without creating or publishing a version.");
+    } else draftStatus(items.size ? "Select a Draft to open it." : "No Drafts in this Configuration.");
+    rememberChoices();
+  } catch (error) {
+    if (generation !== listGeneration) return;
+    restoreChoices();
+    draftStatus("Drafts unavailable or invalid. Local edits are retained. Reload to try again.");
+    setStatus(error instanceof RequestError ? error.message : "Could not open Drafts. Check the selection and reload.", "error");
+  } finally {
+    clearTimeout(timer);
+    if (generation === listGeneration) { loading = false; syncControls(); }
+  }
+}
+draftChoice.addEventListener("change", () => {
+  if (!allowNavigation()) return;
+  try { return loadDrafts(selectedID(draftChoice, drafts)); }
+  catch (error) { restoreChoices(); setStatus(error.message, "error"); }
+});
+$("reload-draft").addEventListener("click", () => {
+  if (!openedDraft || !allowNavigation("Discard local listener edits and load the current stored listener from Control Service?")) return;
+  return loadDrafts(openedDraft.id);
+});
+async function saveDraft() {
+  if (!openedDraft || saveUnknown || !dirty()) return;
+  let scope, host, port;
+  try {
+    scope = editorScope();
+    if (selectedID(draftChoice, drafts) !== openedDraft.id || scope.workspaceID !== openedDraft.workspaceID || scope.configurationID !== openedDraft.configurationID) throw new Error("Draft selection changed. Reload before saving.");
+    host = hostInput.value.trim(); port = Number(portInput.value);
+    if (!host || host.length > 255 || !Number.isInteger(port) || port < 1 || port > 65535) throw new Error("Enter a listener host and whole port between 1 and 65535.");
+  } catch (error) { setStatus(error.message, "error"); return; }
+  invalidateLists(); busy = true; syncControls(); setStatus("Saving Draft listener…");
+  try {
+    const response = await requestJSON(`${versionsPath(scope)}/${openedDraft.id}/listener`, "PUT", 200, { host, port });
+    const saved = draftProjection(response, scope.configurationID);
+    if (saved.id !== openedDraft.id || saved.number !== openedDraft.number || saved.state !== "Draft" || saved.host !== host || saved.port !== port) throw new Error("Unexpected saved listener response.");
+    openedDraft = { ...saved, workspaceID: scope.workspaceID }; drafts.set(saved.id, saved);
+    hostInput.value = saved.host; portInput.value = String(saved.port);
+    draftStatus("Draft listener saved. No unsaved changes."); setStatus("Listener saved to the existing Draft. It has not been published.", "success");
+  } catch (error) {
+    saveUnknown = !(error instanceof RequestError) || error.status >= 500;
+    draftStatus(saveUnknown ? "Save outcome unknown. Edits retained; use Reload Draft to reconcile before saving again." : "Save failed. Unsaved listener changes are retained.");
+    setStatus(error instanceof RequestError ? error.message : "The save outcome is unknown.", "error");
+  } finally { busy = false; restoreChoices(); syncControls(); }
+}
+form.addEventListener("reset", (event) => {
+  event.preventDefault();
+  if (!allowNavigation()) return;
+  clearDrafts();
+  return updateMode();
+});
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (busy || locked || loading) return;
+  if (editing()) return saveDraft();
   clearResult();
   let values;
   try { values = inputValues(); }
@@ -246,6 +394,8 @@ form.addEventListener("submit", async (event) => {
 });
 $("start-another").addEventListener("click", () => {
   if (busy || !locked) return;
+  if ((dirty() || saveUnknown) && !window.confirm("Discard local listener edits?")) return;
+  clearDrafts();
   locked = false; $("start-another").hidden = true;
   return updateMode();
 });

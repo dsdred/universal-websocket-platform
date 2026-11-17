@@ -84,7 +84,32 @@ reloading and selecting again. Studio does not create replacement parents.
 Only one creation action runs at a time. After a partial failure or an unknown
 request outcome, inspect Dashboard before explicitly starting another action;
 mutations are not automatically retried and earlier created resources may remain.
-The UI does not edit existing Drafts, archive versions or start Runtime.
+Existing Draft listener editing is available through the separate action below;
+archive and Runtime management remain unavailable.
+
+## Open and save an existing Draft
+
+1. Choose **Edit existing Draft** in Studio.
+2. Select the existing Workspace and Configuration. Only its Draft versions are
+   offered; choosing a Draft opens it through a fresh read, without creating one.
+3. Edit **Listener host** and **Listener port**, then choose **Save listener**.
+   The same Draft is updated; saving does not publish it. Other settings remain
+   unchanged, including TLS, authentication, routing and timeout sections.
+4. Switching Action, Workspace, Configuration or Draft, or reloading dirty data,
+   asks before discarding local changes. Cancel keeps your edits and selections.
+   The page also requests a browser warning when leaving with unsaved work;
+   browser termination or crashes cannot guarantee that warning.
+5. Save errors retain your input. If the outcome is unknown, Save stays blocked
+   until you explicitly use **Reload Draft** to reconcile stored data. Confirmed
+   reload replaces local values only after a successful read. Read values show
+   current server state, not proof that an earlier uncertain request succeeded.
+
+If the version was published, archived, removed or its parent became unavailable,
+Save cannot silently create a replacement. Preserve your input and inspect the
+current resources. Empty Draft lists are normal. Concurrent saves from other
+clients can overwrite host/port: the existing API has no conditional revision
+check. This editor does not provide TLS/authentication/routing/timeout controls,
+archive or Runtime management.
 
 ## Screenshots
 

@@ -30,7 +30,7 @@
     <header>
       <p class="eyebrow">Universal WebSocket Platform · local/dev</p>
       <h1>Local Configuration Studio</h1>
-      <p class="intro">Create a new configuration, or create a Draft in an existing configuration using the Control Service API. Use this studio only in a trusted local development environment.</p>
+      <p class="intro">Create a configuration or Draft, or edit an existing Draft listener using the Control Service API. Use this studio only in a trusted local development environment.</p>
     </header>
 
     <aside class="notices" aria-label="Important limitations">
@@ -43,13 +43,14 @@
     </aside>
 
     <section class="panel" aria-labelledby="configuration-heading">
-      <h2 id="configuration-heading">Create a configuration or Draft</h2>
+      <h2 id="configuration-heading">Create or edit a Draft</h2>
       <form id="configuration-form" novalidate>
         <label for="creation-mode">Action</label>
         <select id="creation-mode">
           <option value="new-workspace">New Workspace and Configuration</option>
           <option value="new-configuration">New Configuration in existing Workspace</option>
           <option value="existing-configuration">New Draft in existing Configuration</option>
+          <option value="existing-draft">Edit existing Draft</option>
         </select>
         <div id="existing-resources" hidden>
           <label for="existing-workspace">Workspace</label>
@@ -60,6 +61,13 @@
           </div>
           <button id="reload-lists" type="button">Reload lists</button>
           <p id="list-status" class="status" role="status" aria-live="polite"></p>
+        </div>
+        <div id="draft-fields" hidden>
+          <label for="existing-draft">Draft</label>
+          <select id="existing-draft" disabled><option value="">Select a Draft</option></select>
+          <button id="reload-draft" type="button">Reload Draft</button>
+          <p id="draft-status" class="status" role="status" aria-live="polite">Select a Configuration to discover Drafts.</p>
+          <p>Only listener host and port are editable. Other settings remain unchanged. Saving does not publish. Concurrent edits by other clients can overwrite each other.</p>
         </div>
         <div id="workspace-fields">
         <label for="workspace-name">Workspace name</label>
