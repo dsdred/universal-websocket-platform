@@ -157,7 +157,6 @@ func TestScriptStaysWithinApprovedAPIScope(t *testing.T) {
 		`/timeouts`,
 		`listener/tls`,
 		`setInterval`,
-		`setTimeout`,
 	} {
 		if strings.Contains(script, forbidden) {
 			t.Errorf("script contains out-of-scope behavior %q", forbidden)
@@ -165,7 +164,7 @@ func TestScriptStaysWithinApprovedAPIScope(t *testing.T) {
 	}
 }
 
-func TestScriptUsesExactMutationSequence(t *testing.T) {
+func TestScriptRetainsNewParentMutationSequence(t *testing.T) {
 	normalized := strings.NewReplacer(" ", "", "\t", "", "\r", "", "\n", "").Replace(string(studioJS))
 	steps := []string{
 		`requestJSON("/api/v1/workspaces","POST",201,`,

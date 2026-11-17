@@ -20,6 +20,8 @@ The repository currently contains an Alpha foundation rather than a production-r
 
 ### Configuration
 
+- TASK-135 extends local/dev Studio with existing Workspace/Configuration selection and Draft-only creation in an existing Configuration. New Configuration in an existing Workspace preserves listener/publish flow. Existing APIs and in-memory/trusted-local boundaries remain; no Runtime integration. Exact verification/review is in its task record.
+
 - Workspace, Configuration, and ConfigurationVersion have in-memory Control Service APIs.
 - ConfigurationVersion supports create, publish, and archive lifecycle operations.
 - Listener, TLS, timeout, and Authentication metadata are represented in the Configuration DSL.

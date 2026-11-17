@@ -20,6 +20,8 @@ Universal WebSocket Platform — open-source платформа для созд�
 
 ### Configuration
 
+- TASK-135 расширяет local/dev Studio выбором существующих Workspace/Configuration и созданием только Draft в существующей Configuration. Новая Configuration в существующем Workspace сохраняет listener/publish flow. Existing API и in-memory/trusted-local границы сохранены; Runtime не подключается. Exact verification/review — в task record.
+
 - Workspace, Configuration и ConfigurationVersion имеют in-memory API Control Service.
 - ConfigurationVersion поддерживает lifecycle create, publish и archive.
 - Metadata Listener, TLS, timeout и Authentication представлены в Configuration DSL.

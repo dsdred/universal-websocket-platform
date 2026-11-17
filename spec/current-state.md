@@ -1,15 +1,19 @@
 # Текущее состояние
 
-Текущая engineering task [TASK-132](../docs/tasks/TASK-132-PRODUCTION-RUNTIME-OBSERVATION-DESIGN.md) —
-Design-only Production Runtime Observation; projected `In Progress`.
-Exact gates/verdict/subject resolve from newest matching Recovery Evidence Envelope
-and independently recomputed manifest. Baseline —
-`88fb333453ab9563285d65cd44a8b0a4019f447a`. Draft ADR-0005 proposes sampled
-lifecycle facts, Host-owned execution evidence and explicit validity; no
-production/API/UI/lifecycle implementation or status promotion. TASK-131
-implementation remains stopped; forensic evidence is reconstructed in TASK-132.
-TASK-102 untouched; Gate 11 OPEN; Stage B/B1/B2, Production C2/C3 and C2-Exposure
-Not Activated. No automatic successor or publication permission.
+Текущая engineering task [TASK-135](../docs/tasks/TASK-135-STUDIO-EXISTING-CONFIGURATION.md) —
+Configuration Studio: Draft в существующей Configuration и новая Configuration
+в существующем Workspace. Baseline main `f408dc2735589e53c009662c4fc2110f6c083bd7`;
+projected In Progress; exact checkpoints — в task record. Только existing API
+и Studio UI; Dashboard GET-only. TASK-131 DEFERRED по решению Owner; Runtime
+Liveness не активируется. TASK-134 сохранена отдельным локальным commit
+`c12a3f531f497475062a1672c0abb66872aab9fc`, вне main и вне этой task.
+ADR-0005 Draft; TASK-102 untouched; Gate11 OPEN; Stage B/B1/B2,
+Production C2/C3 и C2-Exposure Not Activated. Commit/publication не разрешены.
+
+[TASK-132](../docs/tasks/TASK-132-PRODUCTION-RUNTIME-OBSERVATION-DESIGN.md) design-only
+изменения присутствуют в main через PR #132, merge
+`f408dc2735589e53c009662c4fc2110f6c083bd7`. ADR-0005 Draft; это не production
+observation admission. Historical task record сохранён.
 
 [TASK-130](../docs/tasks/TASK-130-README-NAVIGATION-CLEANUP.md) README navigation changes are present in main:
 source `3bd2e6a1c162bd76c632153aa9c62e7c11f68176`, PR #131 merge
