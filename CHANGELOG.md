@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Configuration Studio editing of handshake, read, write and idle timeout seconds in existing Drafts. Separate address/timeout saves use the same version and existing section APIs, with validation, unsaved-change guards and explicit recovery after unknown outcomes. No automatic creation or publication.
+
 - Configuration Studio discovery and opening of existing Draft versions, with explicit listener host/port Save, unsaved-change guards and recovery after uncertain save outcomes. Opening or saving uses the selected existing version without creating or publishing another version.
 
 - Configuration Studio selection of existing Workspaces/Configurations: create a fresh Draft without recreating parents, or create and publish a new Configuration within an existing Workspace. Existing new-Workspace flow and trusted-local boundaries are preserved.

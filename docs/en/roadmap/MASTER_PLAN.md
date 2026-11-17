@@ -20,6 +20,8 @@ The repository currently contains an Alpha foundation rather than a production-r
 
 ### Configuration
 
+- TASK-137 extends the existing-Draft editor with four listener timeout values through the existing timeout API. Listener address and Timeouts are saved separately to the same version; no implicit create/publish, backend or Runtime change. Dirty, pending and unknown-outcome guards apply to section switches. Concurrent writers have no revision/ETag/CAS protection.
+
 - TASK-136 adds a bounded existing-Draft listener editor in Studio: scoped discovery/open and explicit host/port Save to the same Draft, with dirty-navigation guards and no implicit publication. Other configuration sections and all TASK-135 creation flows are preserved. Concurrent writers have no revision/CAS protection; exact gates are recorded in TASK-136.
 
 - TASK-135 extends local/dev Studio with existing Workspace/Configuration selection and Draft-only creation in an existing Configuration. New Configuration in an existing Workspace preserves listener/publish flow. Existing APIs and in-memory/trusted-local boundaries remain; no Runtime integration. Exact verification/review is in its task record.

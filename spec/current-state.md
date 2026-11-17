@@ -1,15 +1,21 @@
 # Текущее состояние
 
-Текущая engineering task [TASK-136](../docs/tasks/TASK-136-EXISTING-DRAFT-MANAGEMENT.md) —
-Existing Draft Management в Studio: открыть существующий Draft и сохранить
-его listener host/port через existing API, без создания версии или публикации.
-Baseline main `3683b7734a692a97ea8b423cc6bba9376a9976ef`; projected In Progress;
-exact implementation/verification/review — в task record. Три flow TASK135
-сохраняются; Dashboard GET-only. TASK131 DEFERRED; Runtime Liveness не активируется.
-TASK134 сохранена отдельным локальным commit
-`c12a3f531f497475062a1672c0abb66872aab9fc`, вне main и вне этой task.
-ADR0005 Draft; TASK102 untouched; Gate11 OPEN; Stage B/B1/B2,
-Production C2/C3 и C2-Exposure Not Activated. Commit/publication не разрешены.
+Текущая engineering task [TASK-137](../docs/tasks/TASK-137-EXTENDED-DRAFT-EDITING.md) —
+Extended Draft Editing в Studio: отдельный редактор четырёх listener timeouts
+через existing API, с сохранением того же Draft ID без создания и публикации.
+Baseline main `0dfd13bf49db2a3bd63d03111f46cedcb07261d7`; projected In Progress;
+exact implementation/verification/review — в task record и matching envelope.
+TASK135 creation flows и TASK136 host/port editor сохраняются; Dashboard GET-only.
+TASK131 DEFERRED; TASK134 local `c12a3f531f497475062a1672c0abb66872aab9fc`
+вне main, untouched; TASK102 untouched. ADR0005 Draft; Gate11 OPEN;
+Stage B/B1/B2, Production C2/C3 и C2-Exposure Not Activated.
+Commit/publication не разрешены.
+
+[TASK-136](../docs/tasks/TASK-136-EXISTING-DRAFT-MANAGEMENT.md) присутствует в main через
+PR #135, merge `0dfd13bf49db2a3bd63d03111f46cedcb07261d7`, source
+`10cdb543ffc4f10749cfe6f8699a1a8a68f9a191` (local Git ancestry). Owner сообщает terminal PASS; fresh remote/CI/
+Publisher certification этой задачей не заявляется. Historical record неизменён.
+Listener host/port можно сохранять в существующий Draft; revision/ETag/CAS нет.
 
 [TASK-135](../docs/tasks/TASK-135-STUDIO-EXISTING-CONFIGURATION.md) опубликована через
 PR #134: source `371d33d9fcc1ff0f74f8c8fd341c78c73a43a34f`, merge

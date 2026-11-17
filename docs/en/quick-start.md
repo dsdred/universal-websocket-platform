@@ -92,10 +92,13 @@ archive and Runtime management remain unavailable.
 1. Choose **Edit existing Draft** in Studio.
 2. Select the existing Workspace and Configuration. Only its Draft versions are
    offered; choosing a Draft opens it through a fresh read, without creating one.
-3. Edit **Listener host** and **Listener port**, then choose **Save listener**.
-   The same Draft is updated; saving does not publish it. Other settings remain
-   unchanged, including TLS, authentication, routing and timeout sections.
-4. Switching Action, Workspace, Configuration or Draft, or reloading dirty data,
+3. Choose **Listener address** to edit host/port and **Save listener**, or choose
+   **Timeouts** to edit all four second values and **Save timeouts**. Handshake
+   and write accept whole numbers 1–300; read and idle accept 0–86400 (zero
+   disables that timeout). Every field is required. Each Save updates only the
+   selected section of the same Draft through one request; it never publishes.
+   TLS, authentication, routing and the other editor section remain unchanged.
+4. Switching editor section, Action, Workspace, Configuration or Draft, or reloading dirty data,
    asks before discarding local changes. Cancel keeps your edits and selections.
    The page also requests a browser warning when leaving with unsaved work;
    browser termination or crashes cannot guarantee that warning.
@@ -107,8 +110,8 @@ archive and Runtime management remain unavailable.
 If the version was published, archived, removed or its parent became unavailable,
 Save cannot silently create a replacement. Preserve your input and inspect the
 current resources. Empty Draft lists are normal. Concurrent saves from other
-clients can overwrite host/port: the existing API has no conditional revision
-check. This editor does not provide TLS/authentication/routing/timeout controls,
+clients can overwrite the saved section: the existing API has no revision, ETag
+or CAS check. This editor does not provide TLS/authentication/routing controls,
 archive or Runtime management.
 
 ## Screenshots
