@@ -30,7 +30,7 @@
     <header>
       <p class="eyebrow">Universal WebSocket Platform · local/dev</p>
       <h1>Local Configuration Studio</h1>
-      <p class="intro">Create and publish one listener configuration using the Control Service API. Use this studio only in a trusted local development environment.</p>
+      <p class="intro">Create a new configuration, or create a Draft in an existing configuration using the Control Service API. Use this studio only in a trusted local development environment.</p>
     </header>
 
     <aside class="notices" aria-label="Important limitations">
@@ -43,15 +43,35 @@
     </aside>
 
     <section class="panel" aria-labelledby="configuration-heading">
-      <h2 id="configuration-heading">Create a configuration</h2>
+      <h2 id="configuration-heading">Create a configuration or Draft</h2>
       <form id="configuration-form" novalidate>
+        <label for="creation-mode">Action</label>
+        <select id="creation-mode">
+          <option value="new-workspace">New Workspace and Configuration</option>
+          <option value="new-configuration">New Configuration in existing Workspace</option>
+          <option value="existing-configuration">New Draft in existing Configuration</option>
+        </select>
+        <div id="existing-resources" hidden>
+          <label for="existing-workspace">Workspace</label>
+          <select id="existing-workspace" disabled><option value="">Select a Workspace</option></select>
+          <div id="configuration-choice" hidden>
+            <label for="existing-configuration">Configuration</label>
+            <select id="existing-configuration" disabled><option value="">Select a Configuration</option></select>
+          </div>
+          <button id="reload-lists" type="button">Reload lists</button>
+          <p id="list-status" class="status" role="status" aria-live="polite"></p>
+        </div>
+        <div id="workspace-fields">
         <label for="workspace-name">Workspace name</label>
         <input id="workspace-name" name="workspaceName" type="text" maxlength="120" required>
 
+        </div>
+        <div id="configuration-fields">
         <label for="configuration-name">Configuration name</label>
         <input id="configuration-name" name="configurationName" type="text" maxlength="120" required>
 
-        <div class="listener-fields">
+        </div>
+        <div id="listener-fields" class="listener-fields">
           <div>
             <label for="listener-host">Listener host</label>
             <input id="listener-host" name="listenerHost" type="text" value="127.0.0.1" maxlength="255" required>
@@ -65,11 +85,13 @@
         <button id="submit-button" type="submit">Create and publish</button>
       </form>
 
+      <p><a href="/dashboard" target="_blank" rel="noopener">Inspect current resources in Dashboard</a></p>
+      <button id="start-another" type="button" hidden>Start another action</button>
       <p id="flow-status" class="status" role="status" aria-live="polite">Ready.</p>
     </section>
 
     <section id="result" class="panel result" aria-labelledby="result-heading" hidden>
-      <h2 id="result-heading">Published configuration</h2>
+      <h2 id="result-heading">Created version</h2>
       <dl>
         <div>
           <dt>State</dt>
@@ -79,7 +101,7 @@
           <dt>Version</dt>
           <dd id="result-version"></dd>
         </div>
-        <div>
+        <div id="result-url-row">
           <dt>Preliminary WebSocket URL</dt>
           <dd id="result-url" class="url"></dd>
         </div>

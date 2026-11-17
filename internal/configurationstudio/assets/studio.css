@@ -74,7 +74,8 @@ label {
   margin-top: 0.6rem;
   font-weight: 700;
 }
-input {
+input,
+select {
   width: 100%;
   border: 1px solid #9aada2;
   border-radius: 0.45rem;
@@ -160,3 +161,6 @@ button:disabled {
     gap: 0.25rem;
   }
 }
+
+[hidden] { display: none !important; }
+body .studio-main select { background: var(--bg); color: var(--text); border-color: var(--border); }

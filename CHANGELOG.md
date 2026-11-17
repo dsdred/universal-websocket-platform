@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Configuration Studio selection of existing Workspaces/Configurations: create a fresh Draft without recreating parents, or create and publish a new Configuration within an existing Workspace. Existing new-Workspace flow and trusted-local boundaries are preserved.
+
 - Documentation refresh: README branding and real UI screenshots, with mirrored
   English/Russian local Quick Start guidance for the existing Control UI and its
   current limitations. README navigation uses repository links; local UI addresses

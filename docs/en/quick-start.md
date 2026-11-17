@@ -42,7 +42,7 @@ are available only after you start UWP locally as described above.
 | Route | Purpose |
 |---|---|
 | [Dashboard](http://127.0.0.1:18085/dashboard) (`/dashboard`) | Read-only GET browsing; manual Refresh |
-| [Configuration Studio](http://127.0.0.1:18085/) (`/`) | Existing create/publish flow |
+| [Configuration Studio](http://127.0.0.1:18085/) (`/`) | Create/publish or Draft in an existing Configuration |
 | [Health](http://127.0.0.1:18085/health) (`/health`) | Control Service availability only |
 
 A fresh service has no Workspaces. Empty lists are expected, not a failure.
@@ -65,6 +65,26 @@ A fresh service has no Workspaces. Empty lists are expected, not a failure.
 Dashboard is read-only. Studio uses the existing mutation API; the shared shell
 does not make the entire service read-only. The example names are illustrative
 local data, not seeded product records or fabricated metrics.
+
+## Use an existing Workspace or Configuration
+
+In Studio, choose an **Action**:
+
+- **New Workspace and Configuration** preserves the create-and-publish flow above.
+- **New Configuration in existing Workspace** lets you select a Workspace,
+  enter the new Configuration name and listener settings, then create and publish.
+- **New Draft in existing Configuration** lets you select a Workspace and its
+  Configuration, then create a fresh **Draft** only. Existing settings are not
+  cloned; this action does not update the listener or publish the Draft.
+
+Changing Workspace clears the Configuration choice; changing Action or
+Configuration clears the previous result. **Reload lists** refreshes available
+resources. Empty lists are normal; a removed or inaccessible resource requires
+reloading and selecting again. Studio does not create replacement parents.
+Only one creation action runs at a time. After a partial failure or an unknown
+request outcome, inspect Dashboard before explicitly starting another action;
+mutations are not automatically retried and earlier created resources may remain.
+The UI does not edit existing Drafts, archive versions or start Runtime.
 
 ## Screenshots
 
