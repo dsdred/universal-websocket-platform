@@ -2,6 +2,7 @@ package configurationversion
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -188,35 +189,95 @@ func TestHandlerUpdateListener(t *testing.T) {
 
 func TestHandlerUpdateListenerInvalidRequest(t *testing.T) {
 	tests := []struct {
-		name     string
-		body     string
-		wantCode string
+		name        string
+		body        string
+		wantCode    string
+		wantMessage string
 	}{
-		{name: "validation failed", body: `{"host":"","port":8080}`, wantCode: "validation_failed"},
-		{name: "zero port", body: `{"host":"localhost","port":0}`, wantCode: "validation_failed"},
+		{name: "empty host", body: `{"host":"","port":8080}`, wantCode: "validation_failed", wantMessage: "host: must not be empty"},
+		{name: "zero port", body: `{"host":"localhost","port":0}`, wantCode: "validation_failed", wantMessage: "port: must be between 1 and 65535"},
+		{name: "missing port", body: `{"host":"localhost"}`, wantCode: "validation_failed", wantMessage: "port: must be between 1 and 65535"},
+		{name: "null port", body: `{"host":"localhost","port":null}`, wantCode: "validation_failed", wantMessage: "port: must be between 1 and 65535"},
+		{name: "owner dotted host", body: `{"host":"127.0.0.1.4.5.6.7.8.9.0","port":8080}`, wantCode: "validation_failed", wantMessage: "host: must be a valid IP address or hostname"},
+		{name: "octet out of range", body: `{"host":"192.168.1.999","port":8080}`, wantCode: "validation_failed", wantMessage: "host: must be a valid IP address or hostname"},
+		{name: "numeric trailing dot", body: `{"host":"127.0.0.1.","port":8080}`, wantCode: "validation_failed", wantMessage: "host: must be a valid IP address or hostname"},
+		{name: "numeric empty label", body: `{"host":"1..2.3","port":8080}`, wantCode: "validation_failed", wantMessage: "host: must be a valid IP address or hostname"},
+		{name: "numeric leading zero", body: `{"host":"127.00.0.1","port":8080}`, wantCode: "validation_failed", wantMessage: "host: must be a valid IP address or hostname"},
 		{name: "malformed JSON", body: `{"host":`, wantCode: "invalid_request"},
 		{name: "unknown field", body: `{"host":"localhost","port":8080,"tls":true}`, wantCode: "invalid_request"},
 		{name: "empty body", body: "", wantCode: "invalid_request"},
 		{name: "additional JSON", body: `{"host":"localhost","port":8080}{}`, wantCode: "invalid_request"},
 		{name: "string port", body: `{"host":"localhost","port":"8080"}`, wantCode: "invalid_request"},
+		{name: "empty port", body: `{"host":"localhost","port":""}`, wantCode: "invalid_request"},
 		{name: "fractional port", body: `{"host":"localhost","port":1.5}`, wantCode: "invalid_request"},
+		{name: "exponential port", body: `{"host":"localhost","port":8e3}`, wantCode: "invalid_request"},
 		{name: "negative port", body: `{"host":"localhost","port":-1}`, wantCode: "invalid_request"},
 		{name: "port above range", body: `{"host":"localhost","port":65536}`, wantCode: "invalid_request"},
+		{name: "owner oversized port", body: `{"host":"localhost","port":8777777777777777777777}`, wantCode: "invalid_request"},
 	}
+
+	router := newTestRouter(t, true)
+	versionsPath := "/api/v1/workspaces/1/configurations/1/versions"
+	assertStatus(t, performRequest(router, http.MethodPost, versionsPath), http.StatusCreated)
+	listenerPath := versionsPath + "/1/listener"
+	tls := performRequestWithBody(router, http.MethodPut, listenerPath+"/tls", `{"enabled":true,"certificateRef":"certs/test","privateKeyRef":"keys/test","minVersion":"1.3"}`)
+	assertStatus(t, tls, http.StatusOK)
+	timeouts := performRequestWithBody(router, http.MethodPut, listenerPath+"/timeouts", `{"handshakeSeconds":15,"readSeconds":45,"writeSeconds":30,"idleSeconds":120}`)
+	assertStatus(t, timeouts, http.StatusOK)
+	before := performRequest(router, http.MethodGet, versionsPath)
+	assertStatus(t, before, http.StatusOK)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			router := newTestRouter(t, true)
-			performRequest(router, http.MethodPost, "/api/v1/workspaces/1/configurations/1/versions")
-			response := performRequestWithBody(
-				router,
-				http.MethodPut,
-				"/api/v1/workspaces/1/configurations/1/versions/1/listener",
-				tt.body,
-			)
+			response := performRequestWithBody(router, http.MethodPut, listenerPath, tt.body)
 			assertStatus(t, response, http.StatusBadRequest)
 			assertContentType(t, response)
-			assertErrorCode(t, response, tt.wantCode)
+			var failure httpapi.ErrorResponse
+			decodeResponse(t, response, &failure)
+			if failure.Error.Code != tt.wantCode || tt.wantMessage != "" && failure.Error.Message != tt.wantMessage {
+				t.Errorf("error = %#v, want code %q and message %q", failure.Error, tt.wantCode, tt.wantMessage)
+			}
+
+			after := performRequest(router, http.MethodGet, versionsPath)
+			assertStatus(t, after, http.StatusOK)
+			if after.Body.String() != before.Body.String() {
+				t.Errorf("rejected update changed persisted versions: before %s, after %s", before.Body, after.Body)
+			}
+		})
+	}
+}
+
+func TestHandlerUpdateListenerAcceptsSupportedAddresses(t *testing.T) {
+	tests := []struct {
+		host string
+		port uint16
+	}{
+		{host: "127.0.0.1", port: 1},
+		{host: "0.0.0.0", port: 65535},
+		{host: "localhost", port: 8080},
+		{host: "2001:db8::1", port: 8080},
+		{host: "::", port: 8080},
+		{host: "::ffff:192.0.2.1", port: 8080},
+		{host: "App-1.example.", port: 8080},
+		{host: "12.example.34", port: 8080},
+		{host: "123", port: 8080},
+	}
+	router := newTestRouter(t, true)
+	versionsPath := "/api/v1/workspaces/1/configurations/1/versions"
+	created := performRequest(router, http.MethodPost, versionsPath)
+	assertStatus(t, created, http.StatusCreated)
+	draft := decodeVersion(t, created)
+	listenerPath := versionsPath + "/1/listener"
+	for _, tt := range tests {
+		t.Run(tt.host, func(t *testing.T) {
+			body := fmt.Sprintf(`{"host":%q,"port":%d}`, tt.host, tt.port)
+			response := performRequestWithBody(router, http.MethodPut, listenerPath, body)
+			assertStatus(t, response, http.StatusOK)
+			updated := decodeVersion(t, response)
+			if updated.ID != draft.ID || updated.Number != draft.Number || updated.State != Draft ||
+				updated.Listener.Host != tt.host || updated.Listener.Port != tt.port {
+				t.Errorf("unexpected updated version: %#v", updated)
+			}
 		})
 	}
 }

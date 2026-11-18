@@ -376,7 +376,10 @@ func validateListener(listener ListenerSettings) (ListenerSettings, error) {
 	if utf8.RuneCountInString(host) > maxListenerHostLength {
 		return ListenerSettings{}, &ValidationError{Field: "host", Message: "must not exceed 255 characters"}
 	}
-	if net.ParseIP(host) == nil && !validHostname(host) {
+	// A dotted string made entirely of digits and dots must be an IP literal.
+	// Do not let invalid IPv4 syntax fall back to the hostname grammar.
+	dottedNumeric := strings.Contains(host, ".") && strings.Trim(host, "0123456789.") == ""
+	if net.ParseIP(host) == nil && (dottedNumeric || !validHostname(host)) {
 		return ListenerSettings{}, &ValidationError{Field: "host", Message: "must be a valid IP address or hostname"}
 	}
 	if listener.Port == 0 {

@@ -114,6 +114,20 @@ clients can overwrite the saved section: the existing API has no revision, ETag
 or CAS check. This editor does not provide TLS/authentication/routing controls,
 archive or Runtime management.
 
+### Listener address validation
+
+Use a bare IPv4 or IPv6 address, or a supported hostname such as `localhost`.
+A host made only of digits and dots with at least one dot must be a valid IPv4
+address. Entries such as `192.168.1.999` and `127.0.0.1.` are rejected.
+Port must be a decimal whole number from 1 to 65535. Studio shows errors by the
+fields and checks them before sending the creation or address Save request.
+Existing stored addresses remain readable. Correct an address that fails the
+new rule before saving its Listener address section.
+
+Creation uses separate requests. If the server rejects a later request after
+an earlier step succeeded, inspect Dashboard for the Workspace, Configuration
+or Draft already created. Saving an existing Draft address updates that Draft.
+
 ## Screenshots
 
 Actual running local UI, captured after the example workflow above. The Viking

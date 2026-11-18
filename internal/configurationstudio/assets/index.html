@@ -87,11 +87,13 @@
         <div id="listener-fields" class="listener-fields">
           <div>
             <label for="listener-host">Listener host</label>
-            <input id="listener-host" name="listenerHost" type="text" value="127.0.0.1" maxlength="255" required>
+            <input id="listener-host" name="listenerHost" type="text" value="127.0.0.1" aria-describedby="listener-host-error" required>
+            <p id="listener-host-error" class="listener-field-error" aria-live="polite"></p>
           </div>
           <div>
             <label for="listener-port">Listener port</label>
-            <input id="listener-port" name="listenerPort" type="number" value="8080" min="1" max="65535" step="1" required>
+            <input id="listener-port" name="listenerPort" type="text" inputmode="numeric" value="8080" aria-describedby="listener-port-error" required>
+            <p id="listener-port-error" class="listener-field-error" aria-live="polite"></p>
           </div>
         </div>
 
@@ -115,7 +117,7 @@
 
       <p><a href="/dashboard" target="_blank" rel="noopener">Inspect current resources in Dashboard</a></p>
       <button id="start-another" type="button" hidden>Start another action</button>
-      <p id="flow-status" class="status" role="status" aria-live="polite">Ready.</p>
+      <p id="flow-status" class="status" role="status" aria-live="polite" tabindex="-1">Ready.</p>
     </section>
 
     <section id="result" class="panel result" aria-labelledby="result-heading" hidden>

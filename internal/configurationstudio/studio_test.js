@@ -8,17 +8,27 @@ const vm = require("node:vm");
 const script = fs.readFileSync(path.join(__dirname, "assets/studio.js"), "utf8");
 const base = "/api/v1/workspaces";
 class Element {
-  constructor() { this.value = ""; this.textContent = ""; this.hidden = false; this.disabled = false; this.listeners = {}; this.children = []; }
-  addEventListener(event, callback) { this.listeners[event] = callback; }
+  constructor() {
+    this.value = ""; this.textContent = ""; this.hidden = false; this.disabled = false;
+    this.listeners = {}; this.children = []; this.attributes = {};
+  }
+  addEventListener(event, callback) { (this.listeners[event] ||= []).push(callback); }
+  setAttribute(name, value) { this.attributes[name] = value; }
+  removeAttribute(name) { delete this.attributes[name]; }
+  focus() { this.focused = true; }
   append(node) { this.children.push(node); }
   replaceChildren(...nodes) { this.children = nodes; this.value = ""; }
-  fire(event) { return this.listeners[event]({ preventDefault() {} }); }
+  fire(event, details = {}) {
+    let result;
+    for (const callback of this.listeners[event]) result = callback({ preventDefault() {}, ...details });
+    return result;
+  }
 }
 const reply = (payload, status = 200) => ({ status, json: async () => payload });
 const deferred = () => { let resolve; const promise = new Promise((yes) => { resolve = yes; }); return { resolve, promise }; };
 async function settle() { for (let i = 0; i < 8; i++) await new Promise(setImmediate); }
 function start(route) {
-  const ids = ["configuration-form", "creation-mode", "existing-workspace", "existing-configuration", "submit-button", "flow-status", "result", "result-state", "result-version", "result-url", "reload-lists", "workspace-name", "configuration-name", "listener-host", "listener-port", "list-status", "existing-resources", "configuration-choice", "workspace-fields", "configuration-fields", "listener-fields", "result-url-row", "start-another", "existing-draft", "draft-fields", "draft-status", "reload-draft", "draft-section", "timeout-fields", "timeout-handshake", "timeout-read", "timeout-write", "timeout-idle"];
+  const ids = ["configuration-form", "creation-mode", "existing-workspace", "existing-configuration", "submit-button", "flow-status", "result", "result-state", "result-version", "result-url", "reload-lists", "workspace-name", "configuration-name", "listener-host", "listener-host-error", "listener-port", "listener-port-error", "list-status", "existing-resources", "configuration-choice", "workspace-fields", "configuration-fields", "listener-fields", "result-url-row", "start-another", "existing-draft", "draft-fields", "draft-status", "reload-draft", "draft-section", "timeout-fields", "timeout-handshake", "timeout-read", "timeout-write", "timeout-idle"];
   const nodes = Object.fromEntries(ids.map((id) => [id, new Element()]));
   Object.assign(nodes["creation-mode"], { value: "new-workspace" });
   nodes["workspace-name"].value = "Workspace"; nodes["configuration-name"].value = "Configuration";
@@ -563,4 +573,203 @@ for (const timeouts of [null, {}, { ...timeoutValues, readSeconds: -1 }, { ...ti
   const app = start((url, options) => url === versionsURL ? reply([timeoutVersion(timeouts)]) : timeoutRoutes(url, options));
   await editor(app, false); await app.submit(); assert.equal(mutations(app).length, 0); assert.equal(app.nodes["submit-button"].disabled, true);
   assert.equal(app.nodes["existing-draft"].children.length, 1);
+});
+
+const invalidListenerHosts = [
+  "127.0.0.1.4.5.6.7.8.9.0", "192.168.1.999", "127.0.0.1.", "1..2.3", "127.00.0.1",
+  "http://localhost", "localhost:8080", "[::1]", "fe80::1%eth0", "::ffff:192.0.02.128", "-bad.host", "bad-.host",
+  "2001:::1", "1::2::3", "1:2:3:4:5:6::192.0.2.128", "1:2:3:4:5:6:7", "1:2:3:4:5:6:7:",
+  "foo\n.bar", "\ufefflocalhost", "ä.example", "a".repeat(64) + ".example", "a".repeat(256), "", " \t ",
+];
+const invalidListenerPorts = ["8777777777777777777777", "0", "000", "65536", "99999", "-1", "+1", "1.5", "1e3", "0x50", " 80 ", "80\n", "", "８０"];
+
+async function listenerInput(app, field, value, event = "input") {
+  const input = app.nodes[`listener-${field}`];
+  input.value = value;
+  await input.fire(event, { inputType: "insertFromPaste" });
+  return input;
+}
+
+for (const [flow, setup, route] of [
+  ["new workspace", async () => {}, routes],
+  ["existing workspace", async (app) => {
+    await app.select("creation-mode", "new-configuration");
+    await app.select("existing-workspace", "1");
+  }, routes],
+  ["existing Draft", editor, editorRoutes],
+]) test(`${flow} rejects invalid Listener host and port before any mutation`, async () => {
+  const app = start(route);
+  await setup(app);
+  for (const [field, invalid, valid] of [
+    ["host", invalidListenerHosts, "localhost"],
+    ["port", invalidListenerPorts, "8081"],
+  ]) {
+    for (const value of invalid) {
+      const input = await listenerInput(app, field, value);
+      const error = app.nodes[`listener-${field}-error`];
+      assert.notEqual(error.textContent, "", JSON.stringify(value));
+      assert.equal(input.attributes["aria-invalid"], "true");
+      await input.fire("blur");
+      assert.notEqual(error.textContent, "", JSON.stringify(value));
+      input.focused = false;
+      await app.submit();
+      assert.equal(input.focused, true);
+      assert.equal(input.value, value);
+      assert.equal(mutations(app).length, 0);
+      await listenerInput(app, field, valid);
+      assert.equal(error.textContent, "");
+      assert.equal(input.attributes["aria-invalid"], undefined);
+      assert.doesNotMatch(app.nodes["flow-status"].textContent, /highlighted Listener fields/);
+    }
+  }
+});
+
+test("blur validates a field and submit focuses host before port when both are invalid", async () => {
+  const app = start(routes);
+  const host = await listenerInput(app, "host", "", "blur");
+  const port = await listenerInput(app, "port", "", "blur");
+  assert.match(app.nodes["listener-host-error"].textContent, /host/);
+  assert.match(app.nodes["listener-port-error"].textContent, /port/);
+  await app.submit();
+  assert.equal(host.focused, true);
+  assert.equal(port.focused, undefined);
+  assert.equal(mutations(app).length, 0);
+});
+
+for (const [host, rawPort, port, canonicalHost = host] of [
+  ["127.0.0.1", "1", 1], ["0.0.0.0", "65535", 65535], ["::", "8081", 8081],
+  ["2001:DB8::1", "8081", 8081], ["::ffff:192.0.2.128", "8081", 8081],
+  ["1:2:3:4:5:6:192.0.2.128", "8081", 8081], ["1:2:3:4:5:6:7:8", "8081", 8081],
+  ["localhost", "0".repeat(30) + "8081", 8081], ["App-1.example.", "8081", 8081],
+  ["label.123", "8081", 8081], ["123", "8081", 8081], ["\u0085 localhost \u0085", "8081", 8081, "localhost"],
+]) test(`same Draft accepts valid Listener address ${JSON.stringify(host)} and port ${port}`, async () => {
+  const app = start(editorRoutes);
+  await editor(app);
+  await listenerInput(app, "host", host);
+  await listenerInput(app, "port", rawPort);
+  await app.submit();
+  const sent = mutations(app);
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].url, `${versionsURL}/3/listener`);
+  assert.equal(sent[0].options.method, "PUT");
+  assert.deepEqual(JSON.parse(sent[0].options.body), { host: canonicalHost, port });
+  assert.match(app.nodes["flow-status"].textContent, /saved to the existing Draft/);
+});
+
+test("configuration creation accepts IPv6 and keeps its original publish sequence", async () => {
+  let listener;
+  const app = start((url, options) => {
+    if (url.endsWith("/listener")) {
+      listener = JSON.parse(options.body);
+      return reply(version("Draft", { listener }));
+    }
+    if (url.endsWith("/publish")) return reply(version("Published", { listener }));
+    return routes(url, options);
+  });
+  await listenerInput(app, "host", "2001:db8::1");
+  await listenerInput(app, "port", "65535");
+  await app.submit();
+  assert.deepEqual(listener, { host: "2001:db8::1", port: 65535 });
+  assert.deepEqual(mutations(app).map(({ options }) => options.method), ["POST", "POST", "POST", "PUT", "POST"]);
+  assert.equal(app.nodes["result-url"].textContent, "ws://[2001:db8::1]:65535/ws");
+});
+
+function fieldRejection(field, message) {
+  return reply({ error: { code: "validation_failed", message: `${field}: ${message}` } }, 400);
+}
+
+test("Draft API field rejection survives blur and preserves input until correction", async () => {
+  const app = start((url, options) => options.method === "PUT" && JSON.parse(options.body).host === "localhost"
+    ? fieldRejection("host", "must be a valid IP address or hostname") : editorRoutes(url, options));
+  await editor(app);
+  const host = await listenerInput(app, "host", "localhost");
+  await app.submit();
+  assert.equal(host.value, "localhost");
+  assert.equal(host.focused, true);
+  assert.equal(host.disabled, false);
+  assert.equal(host.attributes["aria-invalid"], "true");
+  assert.equal(app.nodes["listener-host-error"].textContent, "must be a valid IP address or hostname");
+  assert.match(app.nodes["draft-status"].textContent, /changes are retained/);
+  await host.fire("blur");
+  await app.submit();
+  assert.equal(mutations(app).length, 1);
+  assert.equal(app.nodes["listener-host-error"].textContent, "must be a valid IP address or hostname");
+  await listenerInput(app, "host", "example.test");
+  assert.equal(app.nodes["listener-host-error"].textContent, "");
+  await app.submit();
+  assert.deepEqual(mutations(app).map((entry) => entry.url), [`${versionsURL}/3/listener`, `${versionsURL}/3/listener`]);
+  assert.equal(app.nodes["existing-draft"].value, "3");
+});
+
+for (const reuseWorkspace of [false, true]) test(`creation reports confirmed partial writes after Listener validation rejection (${reuseWorkspace ? "existing" : "new"} Workspace)`, async () => {
+  const app = start((url, options) => url.endsWith("/listener")
+    ? fieldRejection("port", "must be between 1 and 65535") : routes(url, options));
+  if (reuseWorkspace) {
+    await app.select("creation-mode", "new-configuration");
+    await app.select("existing-workspace", "1");
+  }
+  const port = await listenerInput(app, "port", "8081");
+  await app.submit();
+  assert.equal(port.value, "8081");
+  assert.equal(app.nodes["listener-port-error"].textContent, "must be between 1 and 65535");
+  assert.equal(app.nodes["listener-host-error"].textContent, "");
+  assert.equal(app.nodes["flow-status"].focused, true);
+  assert.match(app.nodes["flow-status"].textContent, reuseWorkspace
+    ? /Created Configuration #2 in Workspace #1 and Draft #3/ : /Created Workspace #1, Configuration #2 and Draft #3/);
+  assert.match(app.nodes["flow-status"].textContent, /Studio did not publish the Draft.*Inspect Dashboard/);
+  assert.deepEqual(mutations(app).map(({ options }) => options.method), reuseWorkspace ? ["POST", "POST", "PUT"] : ["POST", "POST", "POST", "PUT"]);
+  await app.submit();
+  assert.equal(mutations(app).length, reuseWorkspace ? 3 : 4);
+  await app.again();
+  assert.equal(app.nodes["listener-port-error"].textContent, "");
+});
+
+test("timeout validation rejection does not project Listener field errors", async () => {
+  const app = start((url, options) => url.endsWith("/listener/timeouts")
+    ? fieldRejection("port", "not a Listener address reply") : timeoutRoutes(url, options));
+  await timeoutEditor(app);
+  await editTimeout(app);
+  await app.submit();
+  assert.match(app.nodes["flow-status"].textContent, /HTTP 400/);
+  assert.equal(app.nodes["listener-port-error"].textContent, "");
+});
+
+test("invalid Listener message survives cancelled navigation and clears after confirmed section change", async () => {
+  const app = start(editorRoutes);
+  await editor(app);
+  await listenerInput(app, "host", "127.0.0.1.");
+  app.decisions.push(false);
+  await app.select("draft-section", "timeouts");
+  assert.equal(app.nodes["listener-host"].value, "127.0.0.1.");
+  assert.match(app.nodes["listener-host-error"].textContent, /IPv4/);
+  await app.select("draft-section", "timeouts");
+  assert.equal(app.nodes["listener-host"].value, "127.0.0.1");
+  assert.equal(app.nodes["listener-host-error"].textContent, "");
+});
+
+test("legacy dotted numeric host stays readable while only address writes require correction", async () => {
+  const legacyHost = "127.0.0.1.4.5.6.7.8.9.0";
+  const app = start((url, options) => {
+    if (options.method === "GET" && url === versionsURL) return reply([
+      timeoutVersion(timeoutValues, { listener: { host: legacyHost } }),
+    ]);
+    if (options.method === "PUT") return reply(
+      timeoutVersion(JSON.parse(options.body), { listener: { host: legacyHost } }),
+    );
+    return timeoutRoutes(url, options);
+  });
+  await editor(app);
+  assert.equal(app.nodes["listener-host"].value, legacyHost);
+  await listenerInput(app, "port", "8081");
+  await app.submit();
+  assert.match(app.nodes["listener-host-error"].textContent, /IPv4/);
+  assert.equal(mutations(app).length, 0);
+  await app.select("draft-section", "timeouts");
+  await editTimeout(app);
+  await app.submit();
+  const [saved] = mutations(app);
+  assert.equal(mutations(app).length, 1);
+  assert.equal(saved.url, `${versionsURL}/3/listener/timeouts`);
+  assert.deepEqual(JSON.parse(saved.options.body), { ...timeoutValues, handshakeSeconds: 45 });
+  assert.match(app.nodes["flow-status"].textContent, /Timeouts saved to the existing Draft/);
 });
