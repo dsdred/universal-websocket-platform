@@ -3,140 +3,153 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Local Configuration Studio</title>
+  <title data-i18n>Local Configuration Studio</title>
   <link rel="icon" type="image/vnd.microsoft.icon" sizes="16x16 32x32 48x48" href="/favicon.ico?v=128">
   <link rel="stylesheet" href="/configuration-studio/studio.css">
   <link rel="stylesheet" href="/configuration-studio/control.css">
+  <script src="/configuration-studio/control-language.js" defer></script>
   <script src="/configuration-studio/studio.js" defer></script>
 </head>
 <body>
-  <a class="skip" href="#studio">Skip to content</a>
+  <a class="skip" href="#studio" data-i18n>Skip to content</a>
   <aside class="sidebar" aria-label="UWP Control">
-    <a class="brand" href="/dashboard"><img class="brand-mark" src="/configuration-studio/branding/viking-128.png" width="40" height="40" alt=""><span>UWP Control<small>Local development</small></span></a>
-    <nav aria-label="Main navigation">
-      <span class="nav-label">Workspace</span>
-      <a href="/dashboard">Dashboard</a>
-      <a href="/" aria-current="page">Configuration Studio</a>
-      <a href="/dashboard#workspaces">Workspaces</a>
-      <a href="/dashboard#configurations">Configurations</a>
-      <span class="nav-label">System</span>
-      <a href="/dashboard#availability">API availability</a>
+    <a class="brand" href="/dashboard"><img class="brand-mark" src="/configuration-studio/branding/viking-128.png" width="40" height="40" alt=""><span>UWP Control<small data-i18n>Local development</small></span></a>
+    <nav data-i18n-label aria-label="Main navigation">
+      <span class="nav-label" data-i18n>Workspace</span>
+      <a href="/dashboard" data-i18n>Dashboard</a>
+      <a href="/" aria-current="page" data-i18n>Configuration Studio</a>
+      <a href="/dashboard#workspaces" data-i18n>Workspaces</a>
+      <a href="/dashboard#configurations" data-i18n>Configurations</a>
+      <span class="nav-label" data-i18n>System</span>
+      <a href="/dashboard#availability" data-i18n>API availability</a>
     </nav>
-    <p class="sidebar-note">Trusted localhost only<br>Unauthenticated Control Service</p>
+    <p class="sidebar-note"><span data-i18n>Trusted localhost only</span><br><span data-i18n>Unauthenticated Control Service</span></p>
   </aside>
   <div id="studio" class="control-main studio-main">
-  <div class="topbar"><span>UWP Control / <strong>Configuration Studio</strong></span><a class="button" href="/dashboard">Dashboard</a></div>
+  <div class="topbar">
+    <span>UWP Control / <strong data-i18n>Configuration Studio</strong></span>
+    <div class="topbar-actions">
+      <label class="language-control">
+        <span data-i18n>Language</span>
+        <select id="control-language">
+          <option value="en" lang="en">EN</option>
+          <option value="ru" lang="ru">RU</option>
+        </select>
+      </label>
+      <a class="button" href="/dashboard" data-i18n>Dashboard</a>
+    </div>
+  </div>
   <main class="shell">
     <header>
-      <p class="eyebrow">Universal WebSocket Platform · local/dev</p>
-      <h1>Local Configuration Studio</h1>
-      <p class="intro">Create a configuration or Draft, or edit an existing Draft listener using the Control Service API. Use this studio only in a trusted local development environment.</p>
+      <p class="eyebrow" data-i18n>Universal WebSocket Platform · local/dev</p>
+      <h1 data-i18n>Local Configuration Studio</h1>
+      <p class="intro" data-i18n>Create a configuration or Draft, or edit an existing Draft listener using the Control Service API. Use this studio only in a trusted local development environment.</p>
     </header>
 
-    <aside class="notices" aria-label="Important limitations">
-      <h2>Before you continue</h2>
+    <aside class="notices" data-i18n-label aria-label="Important limitations">
+      <h2 data-i18n>Before you continue</h2>
       <ul>
-        <li><strong>Published does not mean Running.</strong> This studio does not start or manage a Runtime.</li>
-        <li><strong>Control Service data is stored only in memory</strong> and is lost after the Control Service restarts.</li>
-        <li><strong>Any WebSocket URL shown here is preliminary.</strong> It is not a reachability or Runtime-status check.</li>
+        <li><strong data-i18n>Published does not mean Running.</strong> <span data-i18n>This studio does not start or manage a Runtime.</span></li>
+        <li><strong data-i18n>Control Service data is stored only in memory</strong> <span data-i18n>and is lost after the Control Service restarts.</span></li>
+        <li><strong data-i18n>Any WebSocket URL shown here is preliminary.</strong> <span data-i18n>It is not a reachability or Runtime-status check.</span></li>
       </ul>
     </aside>
 
     <section class="panel" aria-labelledby="configuration-heading">
-      <h2 id="configuration-heading">Create or edit a Draft</h2>
+      <h2 id="configuration-heading" data-i18n>Create or edit a Draft</h2>
       <form id="configuration-form" novalidate>
-        <label for="creation-mode">Action</label>
+        <label for="creation-mode" data-i18n>Action</label>
         <select id="creation-mode">
-          <option value="new-workspace">New Workspace and Configuration</option>
-          <option value="new-configuration">New Configuration in existing Workspace</option>
-          <option value="existing-configuration">New Draft in existing Configuration</option>
-          <option value="existing-draft">Edit existing Draft</option>
+          <option value="new-workspace" data-i18n>New Workspace and Configuration</option>
+          <option value="new-configuration" data-i18n>New Configuration in existing Workspace</option>
+          <option value="existing-configuration" data-i18n>New Draft in existing Configuration</option>
+          <option value="existing-draft" data-i18n>Edit existing Draft</option>
         </select>
         <div id="existing-resources" hidden>
-          <label for="existing-workspace">Workspace</label>
-          <select id="existing-workspace" disabled><option value="">Select a Workspace</option></select>
+          <label for="existing-workspace" data-i18n>Workspace</label>
+          <select id="existing-workspace" disabled><option value="" data-i18n>Select a Workspace</option></select>
           <div id="configuration-choice" hidden>
-            <label for="existing-configuration">Configuration</label>
-            <select id="existing-configuration" disabled><option value="">Select a Configuration</option></select>
+            <label for="existing-configuration" data-i18n>Configuration</label>
+            <select id="existing-configuration" disabled><option value="" data-i18n>Select a Configuration</option></select>
           </div>
-          <button id="reload-lists" type="button">Reload lists</button>
+          <button id="reload-lists" type="button" data-i18n>Reload lists</button>
           <p id="list-status" class="status" role="status" aria-live="polite"></p>
         </div>
         <div id="draft-fields" hidden>
-          <label for="existing-draft">Draft</label>
-          <select id="existing-draft" disabled><option value="">Select a Draft</option></select>
-          <button id="reload-draft" type="button">Reload Draft</button>
-          <p id="draft-status" class="status" role="status" aria-live="polite">Select a Configuration to discover Drafts.</p>
-          <label for="draft-section">Editing section</label>
+          <label for="existing-draft" data-i18n>Draft</label>
+          <select id="existing-draft" disabled><option value="" data-i18n>Select a Draft</option></select>
+          <button id="reload-draft" type="button" data-i18n>Reload Draft</button>
+          <p id="draft-status" class="status" role="status" aria-live="polite" data-i18n>Select a Configuration to discover Drafts.</p>
+          <label for="draft-section" data-i18n>Editing section</label>
           <select id="draft-section" disabled>
-            <option value="listener">Listener address</option>
-            <option value="timeouts">Timeouts</option>
+            <option value="listener" data-i18n>Listener address</option>
+            <option value="timeouts" data-i18n>Timeouts</option>
           </select>
-          <p>Save updates only the selected section of this Draft. TLS, authentication and routing remain unchanged. Saving does not publish. Concurrent edits by other clients can overwrite each other.</p>
+          <p data-i18n>Save updates only the selected section of this Draft. TLS, authentication and routing remain unchanged. Saving does not publish. Concurrent edits by other clients can overwrite each other.</p>
         </div>
         <div id="workspace-fields">
-        <label for="workspace-name">Workspace name</label>
+        <label for="workspace-name" data-i18n>Workspace name</label>
         <input id="workspace-name" name="workspaceName" type="text" maxlength="120" required>
 
         </div>
         <div id="configuration-fields">
-        <label for="configuration-name">Configuration name</label>
+        <label for="configuration-name" data-i18n>Configuration name</label>
         <input id="configuration-name" name="configurationName" type="text" maxlength="120" required>
 
         </div>
         <div id="listener-fields" class="listener-fields">
           <div>
-            <label for="listener-host">Listener host</label>
+            <label for="listener-host" data-i18n>Listener host</label>
             <input id="listener-host" name="listenerHost" type="text" value="127.0.0.1" aria-describedby="listener-host-error" required>
             <p id="listener-host-error" class="listener-field-error" aria-live="polite"></p>
           </div>
           <div>
-            <label for="listener-port">Listener port</label>
+            <label for="listener-port" data-i18n>Listener port</label>
             <input id="listener-port" name="listenerPort" type="text" inputmode="numeric" value="8080" aria-describedby="listener-port-error" required>
             <p id="listener-port-error" class="listener-field-error" aria-live="polite"></p>
           </div>
         </div>
 
         <div id="timeout-fields" hidden>
-          <p>Timeout settings in seconds. Read and idle may be zero to disable that timeout. Saving settings does not start or change a Runtime.</p>
+          <p data-i18n>Timeout settings in seconds. Read and idle may be zero to disable that timeout. Saving settings does not start or change a Runtime.</p>
           <div class="listener-fields">
-            <div><label for="timeout-handshake">Handshake timeout (1–300 seconds)</label>
+            <div><label for="timeout-handshake" data-i18n>Handshake timeout (1–300 seconds)</label>
               <input id="timeout-handshake" type="number" min="1" max="300" step="1" required disabled></div>
-            <div><label for="timeout-read">Read timeout (0–86400 seconds)</label>
+            <div><label for="timeout-read" data-i18n>Read timeout (0–86400 seconds)</label>
               <input id="timeout-read" type="number" min="0" max="86400" step="1" required disabled></div>
           </div>
           <div class="listener-fields">
-            <div><label for="timeout-write">Write timeout (1–300 seconds)</label>
+            <div><label for="timeout-write" data-i18n>Write timeout (1–300 seconds)</label>
               <input id="timeout-write" type="number" min="1" max="300" step="1" required disabled></div>
-            <div><label for="timeout-idle">Idle timeout (0–86400 seconds)</label>
+            <div><label for="timeout-idle" data-i18n>Idle timeout (0–86400 seconds)</label>
               <input id="timeout-idle" type="number" min="0" max="86400" step="1" required disabled></div>
           </div>
         </div>
-        <button id="submit-button" type="submit">Create and publish</button>
+        <button id="submit-button" type="submit" data-i18n>Create and publish</button>
       </form>
 
-      <p><a href="/dashboard" target="_blank" rel="noopener">Inspect current resources in Dashboard</a></p>
-      <button id="start-another" type="button" hidden>Start another action</button>
-      <p id="flow-status" class="status" role="status" aria-live="polite" tabindex="-1">Ready.</p>
+      <p><a href="/dashboard" target="_blank" rel="noopener" data-i18n>Inspect current resources in Dashboard</a></p>
+      <button id="start-another" type="button" hidden data-i18n>Start another action</button>
+      <p id="flow-status" class="status" role="status" aria-live="polite" tabindex="-1" data-i18n>Ready.</p>
     </section>
 
     <section id="result" class="panel result" aria-labelledby="result-heading" hidden>
-      <h2 id="result-heading">Created version</h2>
+      <h2 id="result-heading" data-i18n>Created version</h2>
       <dl>
         <div>
-          <dt>State</dt>
+          <dt data-i18n>State</dt>
           <dd id="result-state"></dd>
         </div>
         <div>
-          <dt>Version</dt>
+          <dt data-i18n>Version</dt>
           <dd id="result-version"></dd>
         </div>
         <div id="result-url-row">
-          <dt>Preliminary WebSocket URL</dt>
+          <dt data-i18n>Preliminary WebSocket URL</dt>
           <dd id="result-url" class="url"></dd>
         </div>
       </dl>
-      <p class="result-warning">This preliminary URL is not a live endpoint check. Published does not mean Running.</p>
+      <p class="result-warning" data-i18n>This preliminary URL is not a live endpoint check. Published does not mean Running.</p>
     </section>
   </main>
   </div>

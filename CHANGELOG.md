@@ -15,6 +15,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- English and Russian in the Configuration Studio and Dashboard. The shared
+  language selector remembers the preference in the browser and updates the page
+  in place, including validation and save feedback, while keeping selections and
+  unsaved Draft edits.
+
 - Configuration Studio editing of handshake, read, write and idle timeout seconds in existing Drafts. Separate address/timeout saves use the same version and existing section APIs, with validation, unsaved-change guards and explicit recovery after unknown outcomes. No automatic creation or publication.
 
 - Configuration Studio discovery and opening of existing Draft versions, with explicit listener host/port Save, unsaved-change guards and recovery after uncertain save outcomes. Opening or saving uses the selected existing version without creating or publishing another version.

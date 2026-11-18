@@ -3,50 +3,63 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dashboard · UWP Control</title>
+  <title data-i18n>Dashboard · UWP Control</title>
   <link rel="icon" type="image/vnd.microsoft.icon" sizes="16x16 32x32 48x48" href="/favicon.ico?v=128">
   <link rel="stylesheet" href="/configuration-studio/control.css">
+  <script src="/configuration-studio/control-language.js" defer></script>
   <script src="/configuration-studio/dashboard.js" defer></script>
 </head>
 <body>
-  <a class="skip" href="#main">Skip to content</a>
+  <a class="skip" href="#main" data-i18n>Skip to content</a>
   <aside class="sidebar" aria-label="UWP Control">
-    <a class="brand" href="/dashboard"><img class="brand-mark" src="/configuration-studio/branding/viking-128.png" width="40" height="40" alt=""><span>UWP Control<small>Local development</small></span></a>
-    <nav aria-label="Main navigation">
-      <span class="nav-label">Workspace</span>
-      <a href="/dashboard" aria-current="page">Dashboard</a>
-      <a href="/">Configuration Studio</a>
-      <a href="/dashboard#workspaces">Workspaces</a>
-      <a href="/dashboard#configurations">Configurations</a>
-      <span class="nav-label">System</span>
-      <a href="#availability">API availability</a>
+    <a class="brand" href="/dashboard"><img class="brand-mark" src="/configuration-studio/branding/viking-128.png" width="40" height="40" alt=""><span>UWP Control<small data-i18n>Local development</small></span></a>
+    <nav data-i18n-label aria-label="Main navigation">
+      <span class="nav-label" data-i18n>Workspace</span>
+      <a href="/dashboard" aria-current="page" data-i18n>Dashboard</a>
+      <a href="/" data-i18n>Configuration Studio</a>
+      <a href="/dashboard#workspaces" data-i18n>Workspaces</a>
+      <a href="/dashboard#configurations" data-i18n>Configurations</a>
+      <span class="nav-label" data-i18n>System</span>
+      <a href="#availability" data-i18n>API availability</a>
     </nav>
-    <p class="sidebar-note">Trusted localhost only<br>Unauthenticated Control Service</p>
+    <p class="sidebar-note"><span data-i18n>Trusted localhost only</span><br><span data-i18n>Unauthenticated Control Service</span></p>
   </aside>
   <main id="main" class="control-main">
-    <header class="topbar"><span>UWP Control / <strong>Dashboard</strong></span><a class="button" href="/">Open Studio</a></header>
+    <header class="topbar">
+      <span>UWP Control / <strong data-i18n>Dashboard</strong></span>
+      <div class="topbar-actions">
+        <label class="language-control">
+          <span data-i18n>Language</span>
+          <select id="control-language">
+            <option value="en" lang="en">EN</option>
+            <option value="ru" lang="ru">RU</option>
+          </select>
+        </label>
+        <a class="button" href="/" data-i18n>Open Studio</a>
+      </div>
+    </header>
     <div class="content">
-      <header class="page-heading"><div><p class="eyebrow">CONTROL OVERVIEW</p><h1>Dashboard</h1><p class="muted">Browse the configuration held by this Control Service.</p></div><button id="refresh" type="button">Refresh</button></header>
-      <p class="notice"><strong>Published does not mean Running.</strong> Data is in memory and lost on restart. This view uses GET only; it does not manage Runtime.</p>
-      <section id="availability" class="cards" aria-label="API availability">
-        <article class="card"><h2>Control Service</h2><p id="health-status" class="value" role="status">Loading…</p><p class="muted">/health · Control Service availability only</p><p id="health-time" class="muted">Not checked yet</p></article>
-        <article class="card"><h2>Runtime</h2><p class="value unavailable">Unavailable</p><p class="muted">No HTTP GET API</p></article>
-        <article class="card"><h2>Connections</h2><p class="value unavailable">Unavailable</p><p class="muted">No HTTP GET API</p></article>
-        <article class="card"><h2>Diagnostics</h2><p class="value unavailable">Unavailable</p><p class="muted">No HTTP GET API</p></article>
+      <header class="page-heading"><div><p class="eyebrow" data-i18n>CONTROL OVERVIEW</p><h1 data-i18n>Dashboard</h1><p class="muted" data-i18n>Browse the configuration held by this Control Service.</p></div><button id="refresh" type="button" data-i18n>Refresh</button></header>
+      <p class="notice"><strong data-i18n>Published does not mean Running.</strong> <span data-i18n>Data is in memory and lost on restart. This view uses GET only; it does not manage Runtime.</span></p>
+      <section id="availability" class="cards" data-i18n-label aria-label="API availability">
+        <article class="card"><h2 data-i18n>Control Service</h2><p id="health-status" class="value" role="status" data-i18n>Loading…</p><p class="muted" data-i18n>/health · Control Service availability only</p><p id="health-time" class="muted" data-i18n>Not checked yet</p></article>
+        <article class="card"><h2 data-i18n>Runtime</h2><p class="value unavailable" data-i18n>Unavailable</p><p class="muted" data-i18n>No HTTP GET API</p></article>
+        <article class="card"><h2 data-i18n>Connections</h2><p class="value unavailable" data-i18n>Unavailable</p><p class="muted" data-i18n>No HTTP GET API</p></article>
+        <article class="card"><h2 data-i18n>Diagnostics</h2><p class="value unavailable" data-i18n>Unavailable</p><p class="muted" data-i18n>No HTTP GET API</p></article>
       </section>
-      <p id="data-status" class="status" role="status" aria-live="polite">Loading workspaces…</p>
+      <p id="data-status" class="status" role="status" aria-live="polite" data-i18n>Loading workspaces…</p>
       <div id="browser" aria-busy="true">
         <div class="selection-grid">
-          <section id="workspaces" class="card"><h2>Workspaces</h2><label for="workspace">Workspace</label><select id="workspace" disabled><option value="">Loading…</option></select><p id="workspace-meta" class="muted">Not loaded</p></section>
-          <section id="configurations" class="card"><h2>Configurations</h2><label for="configuration">Configuration in selected workspace</label><select id="configuration" disabled><option value="">Select a workspace</option></select><p id="configuration-meta" class="muted">Not loaded</p></section>
+          <section id="workspaces" class="card"><h2 data-i18n>Workspaces</h2><label for="workspace" data-i18n>Workspace</label><select id="workspace" disabled><option value="" data-i18n>Loading…</option></select><p id="workspace-meta" class="muted" data-i18n>Not loaded</p></section>
+          <section id="configurations" class="card"><h2 data-i18n>Configurations</h2><label for="configuration" data-i18n>Configuration in selected workspace</label><select id="configuration" disabled><option value="" data-i18n>Select a workspace</option></select><p id="configuration-meta" class="muted" data-i18n>Not loaded</p></section>
         </div>
         <section class="card versions" aria-labelledby="versions-heading">
-          <div class="card-heading"><h2 id="versions-heading">Versions</h2><span id="version-count" class="muted">Select a configuration</span></div>
-          <p class="muted">Listener values are configuration settings, not live endpoint checks. Resource timestamps are supplied by the API.</p>
-          <div class="table-scroll" role="region" aria-label="Configuration versions" tabindex="0"><table><thead><tr><th scope="col">Version / ID</th><th scope="col">State</th><th scope="col">Listener host / port</th><th scope="col">Resource updated</th></tr></thead><tbody id="versions"><tr><td colspan="4">Select a configuration to view its versions.</td></tr></tbody></table></div>
+          <div class="card-heading"><h2 id="versions-heading" data-i18n>Versions</h2><span id="version-count" class="muted" data-i18n>Select a configuration</span></div>
+          <p class="muted" data-i18n>Listener values are configuration settings, not live endpoint checks. Resource timestamps are supplied by the API.</p>
+          <div class="table-scroll" role="region" data-i18n-label aria-label="Configuration versions" tabindex="0"><table><thead><tr><th scope="col" data-i18n>Version / ID</th><th scope="col" data-i18n>State</th><th scope="col" data-i18n>Listener host / port</th><th scope="col" data-i18n>Resource updated</th></tr></thead><tbody id="versions"><tr><td colspan="4" data-i18n>Select a configuration to view its versions.</td></tr></tbody></table></div>
         </section>
       </div>
-      <footer class="muted">No automatic refresh. Use Refresh to reload lists and health. Selections load their nested data once.</footer>
+      <footer class="muted" data-i18n>No automatic refresh. Use Refresh to reload lists and health. Selections load their nested data once.</footer>
     </div>
   </main>
 </body>

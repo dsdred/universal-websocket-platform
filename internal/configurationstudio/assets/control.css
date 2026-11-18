@@ -29,6 +29,10 @@ nav a[aria-current] { color: var(--accent); background: #7298d41f; font-weight: 
 .control-main { flex: 1; min-width: 0; }
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .9rem 1.75rem; border-bottom: 1px solid var(--border); color: var(--muted); }
 .topbar strong { color: var(--text); }
+.topbar, .topbar-actions { flex-wrap: wrap; }
+.topbar-actions { display: flex; align-items: center; gap: .6rem; }
+.language-control { display: flex; align-items: center; gap: .4rem; margin: 0; }
+.language-control select { width: auto; padding: .45rem .55rem; }
 .content { padding: 1.75rem; max-width: 1500px; margin: auto; }
 h1, h2, p { margin-top: 0; }
 h1 { font-size: 1.7rem; letter-spacing: -.03em; margin-bottom: .35rem; line-height: 1.2; }

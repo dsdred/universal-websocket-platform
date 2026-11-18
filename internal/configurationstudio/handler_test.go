@@ -28,6 +28,7 @@ func TestEmbeddedAssetRoutes(t *testing.T) {
 		{name: "script", path: "/configuration-studio/studio.js", contentType: "text/javascript; charset=utf-8", body: studioJS},
 		{name: "dashboard", path: "/dashboard", contentType: "text/html; charset=utf-8", body: dashboardHTML},
 		{name: "control theme", path: "/configuration-studio/control.css", contentType: "text/css; charset=utf-8", body: controlCSS},
+		{name: "language script", path: "/configuration-studio/control-language.js", contentType: "text/javascript; charset=utf-8", body: controlLanguageJS},
 		{name: "dashboard script", path: "/configuration-studio/dashboard.js", contentType: "text/javascript; charset=utf-8", body: dashboardJS},
 	}
 

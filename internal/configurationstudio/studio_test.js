@@ -6,6 +6,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 const script = fs.readFileSync(path.join(__dirname, "assets/studio.js"), "utf8");
+const languageScript = fs.readFileSync(path.join(__dirname, "assets/control-language.js"), "utf8");
 const base = "/api/v1/workspaces";
 class Element {
   constructor() {
@@ -27,23 +28,35 @@ class Element {
 const reply = (payload, status = 200) => ({ status, json: async () => payload });
 const deferred = () => { let resolve; const promise = new Promise((yes) => { resolve = yes; }); return { resolve, promise }; };
 async function settle() { for (let i = 0; i < 8; i++) await new Promise(setImmediate); }
-function start(route) {
-  const ids = ["configuration-form", "creation-mode", "existing-workspace", "existing-configuration", "submit-button", "flow-status", "result", "result-state", "result-version", "result-url", "reload-lists", "workspace-name", "configuration-name", "listener-host", "listener-host-error", "listener-port", "listener-port-error", "list-status", "existing-resources", "configuration-choice", "workspace-fields", "configuration-fields", "listener-fields", "result-url-row", "start-another", "existing-draft", "draft-fields", "draft-status", "reload-draft", "draft-section", "timeout-fields", "timeout-handshake", "timeout-read", "timeout-write", "timeout-idle"];
+function start(route, storage = new Map()) {
+  const ids = ["control-language", "configuration-form", "creation-mode", "existing-workspace", "existing-configuration", "submit-button", "flow-status", "result", "result-state", "result-version", "result-url", "reload-lists", "workspace-name", "configuration-name", "listener-host", "listener-host-error", "listener-port", "listener-port-error", "list-status", "existing-resources", "configuration-choice", "workspace-fields", "configuration-fields", "listener-fields", "result-url-row", "start-another", "existing-draft", "draft-fields", "draft-status", "reload-draft", "draft-section", "timeout-fields", "timeout-handshake", "timeout-read", "timeout-write", "timeout-idle"];
   const nodes = Object.fromEntries(ids.map((id) => [id, new Element()]));
   Object.assign(nodes["creation-mode"], { value: "new-workspace" });
   nodes["workspace-name"].value = "Workspace"; nodes["configuration-name"].value = "Configuration";
   nodes["listener-host"].value = "127.0.0.1"; nodes["listener-port"].value = "8080";
   const requests = [], timers = new Map(), confirms = [], windowEvents = {}; let timerID = 0;
   const decisions = [];
-  vm.runInNewContext(script, {
+  const environment = vm.createContext({
     window: { confirm: (message) => { confirms.push(message); return decisions.length ? decisions.shift() : true; }, addEventListener: (event, callback) => { windowEvents[event] = callback; } },
-    document: { getElementById: (id) => nodes[id], createElement: () => new Element() }, AbortController,
+    document: {
+      documentElement: {},
+      getElementById: (id) => nodes[id],
+      createElement: () => new Element(),
+      querySelectorAll(selector) {
+        const visit = (node) => [node, ...node.children.flatMap(visit)];
+        return Object.values(nodes).flatMap(visit).filter((node) => Object.hasOwn(node.attributes, selector.slice(1, -1)));
+      },
+    },
+    localStorage: { getItem: (key) => storage.get(key), setItem: (key, value) => storage.set(key, value) },
+    AbortController,
     setTimeout: (callback) => { const id = ++timerID; timers.set(id, callback); return id; },
     clearTimeout: (id) => timers.delete(id),
     fetch: async (url, options) => { requests.push({ url, options }); return route(url, options); },
   });
+  vm.runInContext(languageScript, environment, { filename: "control-language.js" });
+  vm.runInContext(script, environment, { filename: "studio.js" });
   return {
-    nodes, requests, timers, confirms, decisions, windowEvents,
+    nodes, requests, document: environment.document, timers, confirms, decisions, windowEvents,
     select: async (id, value) => { nodes[id].value = value; await nodes[id].fire("change"); },
     submit: () => nodes["configuration-form"].fire("submit"),
     again: () => nodes["start-another"].fire("click"),
@@ -772,4 +785,87 @@ test("legacy dotted numeric host stays readable while only address writes requir
   assert.equal(saved.url, `${versionsURL}/3/listener/timeouts`);
   assert.deepEqual(JSON.parse(saved.options.body), { ...timeoutValues, handshakeSeconds: 45 });
   assert.match(app.nodes["flow-status"].textContent, /Timeouts saved to the existing Draft/);
+});
+
+test("language changes preserve active Draft, local timeout validation and translated Save result", async () => {
+  const storage = new Map();
+  const app = start(timeoutRoutes, storage);
+  assert.equal(app.document.documentElement.lang, "en");
+  await timeoutEditor(app);
+  await editTimeout(app, "301");
+  await app.submit();
+  const values = () => ["creation-mode", "existing-workspace", "existing-configuration", "existing-draft",
+    "draft-section", "timeout-handshake"].map((id) => app.nodes[id].value);
+  const before = values();
+  const reads = app.requests.length;
+  for (const locale of ["ru", "en", "ru"]) {
+    await app.select("control-language", locale);
+    assert.equal(app.document.documentElement.lang, locale);
+    assert.match(app.nodes["flow-status"].textContent, locale === "ru" ? /Таймаут рукопожатия.*1.*300/ : /Handshake timeout.*1.*300/);
+    assert.deepEqual(values(), before);
+    assert.equal(app.requests.length, reads);
+  }
+  await editTimeout(app, "35");
+  await app.submit();
+  assert.match(app.nodes["flow-status"].textContent, /Таймауты сохранены/);
+  await app.select("control-language", "en");
+  assert.match(app.nodes["flow-status"].textContent, /Timeouts saved/);
+  await app.select("control-language", "ru");
+  assert.match(app.nodes["flow-status"].textContent, /Таймауты сохранены/);
+  assert.deepEqual(values().slice(0, -1), before.slice(0, -1));
+  assert.equal(app.nodes["timeout-handshake"].value, "35");
+  assert.equal(app.nodes["submit-button"].disabled, true);
+  assert.deepEqual(mutations(app).map(({ url, options }) => [url, JSON.parse(options.body)]), [
+    [`${versionsURL}/3/listener/timeouts`, { ...timeoutValues, handshakeSeconds: 35 }],
+  ]);
+  assert.equal(app.requests.length, reads + 1);
+  assert.equal(app.confirms.length, 0);
+  assert.equal(start(timeoutRoutes, storage).document.documentElement.lang, "ru");
+});
+
+test("translated listener rejection stays pinned until the rejected value is corrected", async () => {
+  const app = start((url, options) => options.method === "PUT" && JSON.parse(options.body).host === "localhost"
+    ? fieldRejection("host", "must be a valid IP address or hostname") : editorRoutes(url, options));
+  await editor(app);
+  const input = await listenerInput(app, "host", "localhost");
+  await app.submit();
+  await app.select("control-language", "ru");
+  assert.match(app.nodes["listener-host-error"].textContent, /корректный IP-адрес/);
+  assert.match(app.nodes["flow-status"].textContent, /выделенные поля/);
+  assert.equal(input.attributes["aria-invalid"], "true");
+  await input.fire("blur");
+  await app.submit();
+  assert.equal(mutations(app).length, 1);
+  await listenerInput(app, "host", "example.test");
+  assert.equal(app.nodes["listener-host-error"].textContent, "");
+  assert.equal(app.nodes["flow-status"].textContent, "Готово.");
+});
+
+test("missing translation uses English and both pages have a Russian entry for all marked content", () => {
+  const nodes = [new Element(), new Element()];
+  const unlisted = "Unlisted message {0}";
+  for (const file of ["index.html", "dashboard.html"]) {
+    const html = fs.readFileSync(path.join(__dirname, "assets", file), "utf8");
+    for (const [, copy, label] of html.matchAll(/\bdata-i18n>([^<]+)|\bdata-i18n-label aria-label="([^"]+)"/g)) {
+      const key = copy || label;
+      if (key) {
+        const node = new Element();
+        node.textContent = key;
+        nodes.push(node);
+      }
+    }
+  }
+  nodes[1].textContent = unlisted;
+  const env = vm.createContext({
+    window: { addEventListener() {} },
+    document: { documentElement: {}, getElementById: () => nodes[0],
+      querySelectorAll: (selector) => selector === "[data-i18n]" ? nodes.slice(1) : [] },
+    localStorage: { getItem: () => "unsupported", setItem: () => { throw new Error("storage unavailable"); } },
+  });
+  vm.runInContext(languageScript, env);
+  assert.equal(env.document.documentElement.lang, "en");
+  nodes[0].value = "ru"; nodes[0].fire("change");
+  assert.equal(env.document.documentElement.lang, "ru");
+  assert.equal(vm.runInContext('ControlLanguage.text(ControlLanguage.message("Unlisted message {0}", 1))', env), "Unlisted message 1");
+  for (const node of nodes.slice(2)) assert.match(node.textContent, /[А-Яа-яЁё]/);
 });
