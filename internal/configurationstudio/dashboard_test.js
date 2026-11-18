@@ -6,6 +6,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 const script = fs.readFileSync(path.join(__dirname, "assets/dashboard.js"), "utf8");
+const languageScript = fs.readFileSync(path.join(__dirname, "assets/control-language.js"), "utf8");
 const base = "/api/v1/workspaces";
 
 class Element {
@@ -36,11 +37,21 @@ const deferred = () => {
   return { promise, resolve, reject };
 };
 async function settle() { for (let i = 0; i < 8; i++) await new Promise(setImmediate); }
-function start(routes = {}) {
-  const nodes = Object.fromEntries(["workspace", "configuration", "versions", "version-count", "workspace-meta", "configuration-meta", "health-status", "health-time", "browser", "refresh", "data-status"].map((id) => [id, new Element(["workspace", "configuration"].includes(id) ? "select" : "div")]));
-  const requests = [], timers = new Map(); let timerID = 0;
-  const environment = {
-    document: { getElementById: (id) => nodes[id], createElement: (tag) => new Element(tag) },
+function start(routes = {}, storage = new Map()) {
+  const nodes = Object.fromEntries(["control-language", "workspace", "configuration", "versions", "version-count", "workspace-meta", "configuration-meta", "health-status", "health-time", "browser", "refresh", "data-status"].map((id) => [id, new Element(["workspace", "configuration"].includes(id) ? "select" : "div")]));
+  const requests = [], timers = new Map(), windowEvents = {}; let timerID = 0;
+  const environment = vm.createContext({
+    window: { addEventListener: (event, callback) => { windowEvents[event] = callback; } },
+    document: {
+      documentElement: {},
+      getElementById: (id) => nodes[id],
+      createElement: (tag) => new Element(tag),
+      querySelectorAll(selector) {
+        const visit = (node) => [node, ...node.children.flatMap(visit)];
+        return Object.values(nodes).flatMap(visit).filter((node) => Object.hasOwn(node.attributes, selector.slice(1, -1)));
+      },
+    },
+    localStorage: { getItem: (key) => storage.get(key), setItem: (key, value) => storage.set(key, value) },
     AbortController,
     setTimeout(callback) { const key = ++timerID; timers.set(key, callback); return key; },
     clearTimeout(key) { timers.delete(key); },
@@ -51,10 +62,11 @@ function start(routes = {}) {
       const result = typeof route === "function" ? await route(options) : route;
       return result && typeof result.json === "function" ? result : response(result);
     },
-  };
-  vm.runInNewContext(script, environment, { filename: "dashboard.js" });
+  });
+  vm.runInContext(languageScript, environment, { filename: "control-language.js" });
+  vm.runInContext(script, environment, { filename: "dashboard.js" });
   return {
-    nodes, requests, routes, timers,
+    nodes, requests, routes, timers, windowEvents, document: environment.document,
     text: () => Object.values(nodes).map((n) => n.textContent).join("\n"),
     select: async (id, value) => { nodes[id].value = value; await nodes[id].fire("change"); },
     refresh: () => nodes.refresh.fire("click"),
@@ -230,4 +242,53 @@ test("request deadline aborts pending fetch and offers manual retry without auto
   app.routes[base] = [];
   await app.refresh();
   assert.match(app.nodes["data-status"].textContent, /No workspaces/);
+});
+
+test("locale updates loaded Dashboard rows, selections and feedback without network requests", async () => {
+  const storage = new Map([["uwp-control-language", "ru"]]);
+  const app = start({
+    [base]: [{ id: 1, name: "Published" }],
+    [`${base}/1/configurations`]: [{ id: 3, workspaceId: 1, name: "Draft" }],
+    [`${base}/1/configurations/3/versions`]: [{ id: 4, configurationId: 3, number: 2, state: "Published",
+      listener: { host: "::1", port: 8080 }, updatedAt: "2026-11-15T08:00:00Z" }],
+  }, storage);
+  await settle();
+  await app.select("workspace", "1");
+  await app.select("configuration", "3");
+  const { nodes, document, requests } = app;
+  assert.equal(document.documentElement.lang, "ru");
+  const row = nodes.versions.children[0];
+  const option = nodes.workspace.options[1];
+  const before = requests.length;
+  const russianDate = row.children[3].textContent;
+  assert.match(nodes["health-status"].textContent, /Доступно/);
+  assert.match(nodes["version-count"].textContent, /Версий в выбранной конфигурации: 1/);
+  assert.equal(row.children[1].textContent, "Опубликовано");
+  await app.select("control-language", "en");
+  assert.equal(row.children[1].textContent, "Published");
+  assert.notEqual(row.children[3].textContent, russianDate);
+  await app.select("control-language", "ru");
+  assert.equal(row.children[3].textContent, russianDate);
+  assert.equal(nodes.versions.children[0], row);
+  assert.equal(nodes.workspace.options[1], option);
+  assert.equal(option.textContent, "Published · ID 1");
+  assert.equal(nodes.configuration.options[1].textContent, "Draft · ID 3");
+  assert.equal(nodes.workspace.value, "1");
+  assert.equal(nodes.configuration.value, "3");
+  assert.equal(row.children[2].textContent, "::1 / 8080");
+  assert.equal(requests.length, before);
+  assert.equal(storage.get("uwp-control-language"), "ru");
+});
+
+test("restoring a Dashboard from the back-forward cache applies the newest preference in place", async () => {
+  const storage = new Map();
+  const app = start({}, storage);
+  await settle();
+  const count = app.requests.length;
+  storage.set("uwp-control-language", "ru");
+  app.windowEvents.pageshow({ persisted: true });
+  assert.equal(app.document.documentElement.lang, "ru");
+  assert.equal(app.nodes["control-language"].value, "ru");
+  assert.match(app.nodes["data-status"].textContent, /абочих областей нет/);
+  assert.equal(app.requests.length, count);
 });

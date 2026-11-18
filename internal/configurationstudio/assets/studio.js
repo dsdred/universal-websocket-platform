@@ -1,4 +1,8 @@
 "use strict";
+const { message, text, show, currentMessage } = ControlLanguage;
+class LocalError extends Error {
+  constructor(copy) { super(text(copy)); this.copy = copy; }
+}
 const $ = (id) => document.getElementById(id);
 const form = $("configuration-form");
 const mode = $("creation-mode");
@@ -81,13 +85,13 @@ function listenerPort(raw) {
 
 function setListenerError(field, message = "") {
   const output = listenerErrors[field];
-  if (output.textContent !== message) output.textContent = message;
+  show(output, message);
   if (message) listenerFields[field].setAttribute("aria-invalid", "true");
   else listenerFields[field].removeAttribute("aria-invalid");
 }
 
 function clearListenerSummary() {
-  if (statusOutput.textContent === listenerErrorSummary) setStatus("Ready.");
+  if (currentMessage(statusOutput) === listenerErrorSummary) setStatus("Ready.");
 }
 
 function clearListenerErrors() {
@@ -108,7 +112,7 @@ function showListenerRejection(error) {
 
 function validateListenerInput(field, validate) {
   const value = listenerFields[field].value;
-  if (rejectedListenerValues.get(field) === value) return { error: listenerErrors[field].textContent };
+  if (rejectedListenerValues.get(field) === value) return { error: currentMessage(listenerErrors[field]) };
   rejectedListenerValues.delete(field);
   const result = validate(value);
   setListenerError(field, result.error);
@@ -131,7 +135,7 @@ for (const [field, validate] of [["host", listenerHost], ["port", listenerPort]]
   const input = listenerFields[field];
   function updateListenerError() {
     validateListenerInput(field, validate);
-    if (!listenerErrors.host.textContent && !listenerErrors.port.textContent) clearListenerSummary();
+    if (!currentMessage(listenerErrors.host) && !currentMessage(listenerErrors.port)) clearListenerSummary();
   }
   input.addEventListener("input", updateListenerError);
   input.addEventListener("blur", updateListenerError);
@@ -151,12 +155,12 @@ function restoreChoices() {
 }
 function allowNavigation(message = "Discard local Draft edits and leave this Draft?") {
   if (busy || locked) { restoreChoices(); return false; }
-  if ((dirty() || saveUnknown) && !window.confirm(message + (saveUnknown ? " The previous save outcome is unknown; stored values must be reloaded before another save." : ""))) {
+  if ((dirty() || saveUnknown) && !window.confirm(text(message) + (saveUnknown ? " " + text("The previous save outcome is unknown; stored values must be reloaded before another save.") : ""))) {
     restoreChoices(); return false;
   }
   return true;
 }
-function draftStatus(message) { $("draft-status").textContent = message; }
+function draftStatus(copy) { show($("draft-status"), copy); }
 function clearDrafts() {
   drafts = new Map(); openedDraft = null; saveUnknown = false;
   editorSection = "listener"; sectionChoice.value = editorSection;
@@ -172,28 +176,29 @@ for (const input of [hostInput, portInput, ...timeoutFields.map(([, input]) => i
 window.addEventListener("beforeunload", (event) => {
   if (busy || dirty() || saveUnknown) { event.preventDefault(); event.returnValue = ""; }
 });
-class RequestError extends Error {}
+class RequestError extends LocalError {}
 function setStatus(message, kind = "") {
-  statusOutput.textContent = message;
+  show(statusOutput, message);
   statusOutput.className = `status ${kind}`.trim();
 }
 function requiredID(value) {
-  if (!Number.isSafeInteger(value) || value < 1) throw new Error("Invalid resource ID in Control Service response.");
+  if (!Number.isSafeInteger(value) || value < 1) throw new LocalError("Invalid resource ID in Control Service response.");
   return value;
 }
 function selectedID(select, items) {
-  if (!/^[1-9][0-9]*$/.test(select.value)) throw new Error("Select an available resource first.");
+  if (!/^[1-9][0-9]*$/.test(select.value)) throw new LocalError("Select an available resource first.");
   const id = requiredID(Number(select.value));
-  if (!items.has(id)) throw new Error("Select an available resource first.");
+  if (!items.has(id)) throw new LocalError("Select an available resource first.");
   return id;
 }
 function clearResult() {
   result.hidden = true;
-  resultState.textContent = resultVersion.textContent = resultURL.textContent = "";
+  show(resultState, "");
+  resultVersion.textContent = resultURL.textContent = "";
 }
 function placeholder(select, label) {
   const option = document.createElement("option");
-  option.value = ""; option.textContent = label;
+  option.value = ""; show(option, label);
   select.replaceChildren(option);
 }
 function clearConfigurations() {
@@ -214,7 +219,7 @@ function syncControls() {
   $("listener-fields").hidden = editing() ? editorSection !== "listener" : mode.value === "existing-configuration";
   for (const [, input] of timeoutFields) input.disabled ||= !editing() || !openedDraft || loading;
   if (editing()) {
-    submitButton.textContent = editorSection === "timeouts" ? "Save timeouts" : "Save listener";
+    show(submitButton, editorSection === "timeouts" ? "Save timeouts" : "Save listener");
     hostInput.disabled ||= !openedDraft || loading;
     portInput.disabled ||= !openedDraft || loading;
     submitButton.disabled ||= !openedDraft || saveUnknown || !dirty();
@@ -237,30 +242,37 @@ async function requestJSON(path, method, expectedStatus, body, signal) {
   try {
     const response = await fetch(path, options);
     if (response.status !== expectedStatus) {
-      const failure = Object.assign(new RequestError(`Control Service returned HTTP ${response.status}.`), { status: response.status });
+      const failure = Object.assign(new RequestError(message("Control Service returned HTTP {0}.", response.status)), { status: response.status });
       if (response.status === 400 && method === "PUT" && path.endsWith("/listener")) {
         const payload = await response.json().catch(() => null);
         const details = payload?.error;
         const match = details?.code === "validation_failed" && typeof details.message === "string" &&
           /^(host|port): (.+)$/.exec(details.message);
-        if (match) failure.listenerRejection = { field: match[1], message: match[2] };
+        if (match) {
+          const [, field, reason] = match;
+          const known = field === "host"
+            ? ["must not be empty", "must not exceed 255 characters", "must be a valid IP address or hostname"]
+            : ["must be between 1 and 65535"];
+          failure.listenerRejection = { field, message: known.includes(reason) ? reason
+            : field === "host" ? "Control Service rejected the listener host." : "Control Service rejected the listener port." };
+        }
       }
       throw failure;
     }
     const payload = await response.json();
-    if (payload === null || typeof payload !== "object") throw new Error("Unexpected Control Service response.");
+    if (payload === null || typeof payload !== "object") throw new LocalError("Unexpected Control Service response.");
     return payload;
   } finally {
     if (timer !== null) clearTimeout(timer);
   }
 }
 function resourceList(payload, workspaceID) {
-  if (!Array.isArray(payload)) throw new Error("Invalid resource list.");
+  if (!Array.isArray(payload)) throw new LocalError("Invalid resource list.");
   const items = new Map();
   for (const item of payload) {
-    if (!item || typeof item !== "object" || typeof item.name !== "string" || !item.name.trim()) throw new Error("Invalid resource list.");
+    if (!item || typeof item !== "object" || typeof item.name !== "string" || !item.name.trim()) throw new LocalError("Invalid resource list.");
     const id = requiredID(item.id);
-    if (items.has(id) || (workspaceID !== undefined && requiredID(item.workspaceId) !== workspaceID)) throw new Error("Invalid resource scope.");
+    if (items.has(id) || (workspaceID !== undefined && requiredID(item.workspaceId) !== workspaceID)) throw new LocalError("Invalid resource scope.");
     items.set(id, item);
   }
   return items;
@@ -279,7 +291,7 @@ async function loadLists(workspaceID) {
   listController = new AbortController();
   const timer = setTimeout(() => listController && generation === listGeneration && listController.abort(), 10000);
   loading = true;
-  $("list-status").textContent = "Loading resources…";
+  show($("list-status"), "Loading resources…");
   syncControls();
   try {
     const path = workspaceID === undefined ? "/api/v1/workspaces" : `/api/v1/workspaces/${workspaceID}/configurations`;
@@ -293,12 +305,12 @@ async function loadLists(workspaceID) {
       configurations = items;
       fill(configurationChoice, items, "Select a Configuration");
     }
-    $("list-status").textContent = items.size ? "Select a resource to continue." : workspaceID === undefined
+    show($("list-status"), items.size ? "Select a resource to continue." : workspaceID === undefined
       ? "No Workspaces. Choose New Workspace and Configuration to create one."
-      : "No Configurations. Choose New Configuration in existing Workspace to create one.";
+      : "No Configurations. Choose New Configuration in existing Workspace to create one.");
   } catch (_) {
     if (generation !== listGeneration) return;
-    $("list-status").textContent = "Resources unavailable or invalid. Reload lists to try again.";
+    show($("list-status"), "Resources unavailable or invalid. Reload lists to try again.");
   } finally {
     clearTimeout(timer);
     if (generation === listGeneration) { loading = false; syncControls(); }
@@ -317,7 +329,7 @@ function updateMode() {
   $("configuration-fields").hidden = existing;
   $("listener-fields").hidden = existing && !editing();
   $("draft-fields").hidden = !editing();
-  submitButton.textContent = editing() ? "Save listener" : existing ? "Create Draft" : "Create and publish";
+  show(submitButton, editing() ? "Save listener" : existing ? "Create Draft" : "Create and publish");
   rememberChoices();
   setStatus("Ready.");
   syncControls();
@@ -331,7 +343,7 @@ workspaceChoice.addEventListener("change", () => {
   setStatus("Ready."); syncControls();
   if ((mode.value === "existing-configuration" || editing()) && workspaceChoice.value) {
     try { return loadLists(selectedID(workspaceChoice, workspaces)); }
-    catch (error) { setStatus(error.message, "error"); }
+    catch (error) { setStatus(error.copy, "error"); }
   }
 });
 configurationChoice.addEventListener("change", () => {
@@ -347,7 +359,7 @@ $("reload-lists").addEventListener("click", () => {
   return loadLists();
 });
 function inputValues(listener) {
-  if (!["new-workspace", "new-configuration", "existing-configuration"].includes(mode.value)) throw new Error("Select an action.");
+  if (!["new-workspace", "new-configuration", "existing-configuration"].includes(mode.value)) throw new LocalError("Select an action.");
   const values = { mode: mode.value };
   if (mode.value !== "new-workspace") values.workspaceID = selectedID(workspaceChoice, workspaces);
   if (mode.value === "existing-configuration") {
@@ -356,14 +368,14 @@ function inputValues(listener) {
   }
   values.workspaceName = $("workspace-name").value.trim();
   values.configurationName = $("configuration-name").value.trim();
-  if ((mode.value === "new-workspace" && !values.workspaceName) || !values.configurationName) throw new Error("Complete every visible field.");
+  if ((mode.value === "new-workspace" && !values.workspaceName) || !values.configurationName) throw new LocalError("Complete every visible field.");
   values.listenerHost = listener.host;
   values.listenerPort = listener.port;
   return values;
 }
 function versionResponse(version, configurationID, state, versionID) {
   if (Array.isArray(version) || requiredID(version.configurationId) !== configurationID || version.state !== state ||
-      !Number.isSafeInteger(version.number) || version.number < 1 || (versionID !== undefined && requiredID(version.id) !== versionID)) throw new Error("Unexpected version response or scope.");
+      !Number.isSafeInteger(version.number) || version.number < 1 || (versionID !== undefined && requiredID(version.id) !== versionID)) throw new LocalError("Unexpected version response or scope.");
   requiredID(version.id);
 }
 function preliminaryURL(host, port) {
@@ -371,12 +383,12 @@ function preliminaryURL(host, port) {
   return `ws://${renderedHost}:${port}/ws`;
 }
 function showVersion(version, published) {
-  resultState.textContent = version.state;
+  show(resultState, version.state);
   resultVersion.textContent = String(version.number);
   $("result-url-row").hidden = !published;
   if (published) {
     const listener = version.listener;
-    if (!listener || typeof listener.host !== "string" || !listener.host || !Number.isInteger(listener.port) || listener.port < 1 || listener.port > 65535 || !listener.tls || listener.tls.enabled !== false) throw new Error("Unexpected listener response.");
+    if (!listener || typeof listener.host !== "string" || !listener.host || !Number.isInteger(listener.port) || listener.port < 1 || listener.port > 65535 || !listener.tls || listener.tls.enabled !== false) throw new LocalError("Unexpected listener response.");
     resultURL.textContent = preliminaryURL(listener.host, listener.port);
   }
   result.hidden = false;
@@ -395,7 +407,7 @@ async function runFlow(values) {
     const configuration = await requestJSON(`/api/v1/workspaces/${workspaceID}/configurations`, "POST", 201,
       { name: values.configurationName, description: "" });
     configurationID = requiredID(configuration.id);
-    if (requiredID(configuration.workspaceId) !== workspaceID) throw new Error("Unexpected configuration scope.");
+    if (requiredID(configuration.workspaceId) !== workspaceID) throw new LocalError("Unexpected configuration scope.");
   }
   setStatus("Creating draft version…");
   const draft = await requestJSON(`/api/v1/workspaces/${workspaceID}/configurations/${configurationID}/versions`, "POST", 201, {});
@@ -409,14 +421,14 @@ async function runFlow(values) {
       { host: values.listenerHost, port: values.listenerPort });
   } catch (error) {
     if (error instanceof RequestError && error.listenerRejection) {
-      const workspace = values.mode === "new-workspace" ? `Created Workspace #${workspaceID}, Configuration #${configurationID}` :
-        `Created Configuration #${configurationID} in Workspace #${workspaceID}`;
-      error.partialCreation = `${workspace} and Draft #${versionID}. The Listener update was rejected. Studio did not publish the Draft.`;
+      error.partialCreation = values.mode === "new-workspace"
+        ? message("Created Workspace #{0}, Configuration #{1} and Draft #{2}.", workspaceID, configurationID, versionID)
+        : message("Created Configuration #{0} in Workspace #{1} and Draft #{2}.", configurationID, workspaceID, versionID);
     }
     throw error;
   }
   versionResponse(updated, configurationID, "Draft", versionID);
-  if (!updated.listener || updated.listener.host !== values.listenerHost || updated.listener.port !== values.listenerPort || !updated.listener.tls || updated.listener.tls.enabled !== false) throw new Error("Unexpected listener response.");
+  if (!updated.listener || updated.listener.host !== values.listenerHost || updated.listener.port !== values.listenerPort || !updated.listener.tls || updated.listener.tls.enabled !== false) throw new LocalError("Unexpected listener response.");
   setStatus("Publishing draft…");
   const published = await requestJSON(`/api/v1/workspaces/${workspaceID}/configurations/${configurationID}/versions/${versionID}/publish`, "POST", 200, {});
   versionResponse(published, configurationID, "Published", versionID);
@@ -424,14 +436,14 @@ async function runFlow(values) {
 }
 function draftProjection(version, configurationID) {
   versionResponse(version, configurationID, version.state);
-  if (!["Draft", "Validated", "Published", "Archived"].includes(version.state)) throw new Error("Invalid version state.");
+  if (!["Draft", "Validated", "Published", "Archived"].includes(version.state)) throw new LocalError("Invalid version state.");
   const listener = version.listener;
   if (!listener || typeof listener.host !== "string" || !listener.host.trim() || listener.host.length > 255 ||
-      !Number.isInteger(listener.port) || listener.port < 1 || listener.port > 65535) throw new Error("Invalid listener response.");
+      !Number.isInteger(listener.port) || listener.port < 1 || listener.port > 65535) throw new LocalError("Invalid listener response.");
   const timeouts = {};
   for (const [key, , min, max] of timeoutFields) {
     const value = listener.timeouts && listener.timeouts[key];
-    if (!Number.isInteger(value) || value < min || value > max) throw new Error("Invalid timeout response.");
+    if (!Number.isInteger(value) || value < min || value > max) throw new LocalError("Invalid timeout response.");
     timeouts[key] = value;
   }
   return { id: version.id, configurationID, number: version.number, state: version.state, host: listener.host, port: listener.port, timeouts };
@@ -464,21 +476,21 @@ async function loadDrafts(versionID) {
     const scope = editorScope();
     const payload = await requestJSON(versionsPath(scope), "GET", 200, undefined, listController.signal);
     if (generation !== listGeneration) return;
-    if (!Array.isArray(payload)) throw new Error("Invalid version list.");
+    if (!Array.isArray(payload)) throw new LocalError("Invalid version list.");
     const items = new Map(), seen = new Set();
     for (const version of payload) {
       const item = draftProjection(version, scope.configurationID);
-      if (seen.has(item.id)) throw new Error("Duplicate version ID.");
+      if (seen.has(item.id)) throw new LocalError("Duplicate version ID.");
       seen.add(item.id);
       if (item.state === "Draft") items.set(item.id, item);
     }
     const selected = versionID === undefined ? null : items.get(versionID);
-    if (versionID !== undefined && !selected) throw new Error("Selected Draft is no longer available. Local edits are retained.");
+    if (versionID !== undefined && !selected) throw new LocalError("Selected Draft is no longer available. Local edits are retained.");
     drafts = items;
     placeholder(draftChoice, "Select a Draft");
     for (const item of items.values()) {
       const option = document.createElement("option");
-      option.value = String(item.id); option.textContent = `Draft v${item.number} (#${item.id})`; draftChoice.append(option);
+      option.value = String(item.id); show(option, message("Draft v{0} (#{1})", item.number, item.id)); draftChoice.append(option);
     }
     if (selected) {
       openedDraft = { ...selected, workspaceID: scope.workspaceID };
@@ -493,7 +505,7 @@ async function loadDrafts(versionID) {
     if (generation !== listGeneration) return;
     restoreChoices();
     draftStatus("Drafts unavailable or invalid. Local edits are retained. Reload to try again.");
-    setStatus(error instanceof RequestError ? error.message : "Could not open Drafts. Check the selection and reload.", "error");
+    setStatus(error instanceof RequestError ? error.copy : "Could not open Drafts. Check the selection and reload.", "error");
   } finally {
     clearTimeout(timer);
     if (generation === listGeneration) { loading = false; syncControls(); }
@@ -502,7 +514,7 @@ async function loadDrafts(versionID) {
 draftChoice.addEventListener("change", () => {
   if (!allowNavigation()) return;
   try { return loadDrafts(selectedID(draftChoice, drafts)); }
-  catch (error) { restoreChoices(); setStatus(error.message, "error"); }
+  catch (error) { restoreChoices(); setStatus(error.copy, "error"); }
 });
 $("reload-draft").addEventListener("click", () => {
   if (!openedDraft || !allowNavigation("Discard local Draft edits and load the current stored values from Control Service?")) return;
@@ -513,21 +525,21 @@ async function saveDraft() {
   let scope, body;
   try {
     scope = editorScope();
-    if (selectedID(draftChoice, drafts) !== openedDraft.id || scope.workspaceID !== openedDraft.workspaceID || scope.configurationID !== openedDraft.configurationID) throw new Error("Draft selection changed. Reload before saving.");
+    if (selectedID(draftChoice, drafts) !== openedDraft.id || scope.workspaceID !== openedDraft.workspaceID || scope.configurationID !== openedDraft.configurationID) throw new LocalError("Draft selection changed. Reload before saving.");
     if (editorSection === "timeouts") {
       body = {};
       for (const [key, input, min, max, label] of timeoutFields) {
         const value = Number(input.value);
-        if (!/^[0-9]+$/.test(input.value) || !Number.isInteger(value) || value < min || value > max) throw new Error(`${label} timeout must be a whole number between ${min} and ${max} seconds.`);
+        if (!/^[0-9]+$/.test(input.value) || !Number.isInteger(value) || value < min || value > max) throw new LocalError(message("{0} timeout must be a whole number between {1} and {2} seconds.", message(label), min, max));
         body[key] = value;
       }
     } else {
       body = validateListenerFields();
       if (!body) return;
     }
-  } catch (error) { setStatus(error.message, "error"); return; }
+  } catch (error) { setStatus(error.copy, "error"); return; }
   const section = editorSection;
-  invalidateLists(); busy = true; syncControls(); setStatus(`Saving Draft ${section}…`);
+  invalidateLists(); busy = true; syncControls(); setStatus(section === "timeouts" ? "Saving Draft timeouts…" : "Saving Draft listener…");
   let rejectedInput;
   try {
     const suffix = section === "timeouts" ? "/listener/timeouts" : "/listener";
@@ -535,17 +547,17 @@ async function saveDraft() {
     const saved = draftProjection(response, scope.configurationID);
     const savedSection = section === "timeouts" ? saved.timeouts : saved;
     if (saved.id !== openedDraft.id || saved.number !== openedDraft.number || saved.state !== "Draft" ||
-        Object.keys(body).some((key) => savedSection[key] !== body[key])) throw new Error("Unexpected saved section response.");
+        Object.keys(body).some((key) => savedSection[key] !== body[key])) throw new LocalError("Unexpected saved section response.");
     // A section Save acknowledges only that section; unrelated baselines require an explicit fresh read.
     openedDraft = { ...openedDraft, ...(section === "timeouts" ? { timeouts: saved.timeouts } : { host: saved.host, port: saved.port }) };
     drafts.set(saved.id, openedDraft); restoreEditorInputs();
-    draftStatus("Draft section saved. No unsaved changes."); setStatus(`${section === "timeouts" ? "Timeouts" : "Listener"} saved to the existing Draft. It has not been published.`, "success");
+    draftStatus("Draft section saved. No unsaved changes."); setStatus(section === "timeouts" ? "Timeouts saved to the existing Draft. It has not been published." : "Listener saved to the existing Draft. It has not been published.", "success");
   } catch (error) {
     saveUnknown = !(error instanceof RequestError) || error.status >= 500;
     draftStatus(saveUnknown ? "Save outcome unknown. Edits retained; use Reload Draft to reconcile before saving again." : "Save failed. Unsaved Draft changes are retained.");
     rejectedInput = showListenerRejection(error);
     setStatus(rejectedInput ? listenerErrorSummary :
-      (error instanceof RequestError ? error.message : "The save outcome is unknown."), "error");
+      (error instanceof RequestError ? error.copy : "The save outcome is unknown."), "error");
   } finally {
     busy = false; restoreChoices(); syncControls();
     rejectedInput?.focus();
@@ -566,27 +578,27 @@ form.addEventListener("submit", async (event) => {
   if (mode.value !== "existing-configuration" && !listener) return;
   let values;
   try { values = inputValues(listener); }
-  catch (error) { setStatus(error.message, "error"); return; }
+  catch (error) { setStatus(error.copy, "error"); return; }
   invalidateLists(); busy = true; syncControls();
   let success = false;
   try { await runFlow(values); success = true; }
   catch (error) {
     clearResult();
     showListenerRejection(error);
-    const message = error instanceof RequestError ? error.message : "The request outcome is unknown.";
+    const reason = error instanceof RequestError ? error.copy : "The request outcome is unknown.";
     setStatus(error instanceof RequestError && error.partialCreation
-      ? `${error.partialCreation} Inspect Dashboard before another attempt.`
-      : `${message} Inspect Dashboard before another attempt; resources from earlier steps may remain in memory.`, "error");
+      ? message("{0} The Listener update was rejected. Studio did not publish the Draft. Inspect Dashboard before another attempt.", error.partialCreation)
+      : message("{0} Inspect Dashboard before another attempt; resources from earlier steps may remain in memory.", message(reason)), "error");
   } finally {
     busy = false; locked = true; syncControls();
-    $("start-another").textContent = success ? "Start another action" : "I checked Dashboard — start another action";
+    show($("start-another"), success ? "Start another action" : "I checked Dashboard — start another action");
     $("start-another").hidden = false;
     if (!success) statusOutput.focus();
   }
 });
 $("start-another").addEventListener("click", () => {
   if (busy || !locked) return;
-  if ((dirty() || saveUnknown) && !window.confirm("Discard local Draft edits?")) return;
+  if ((dirty() || saveUnknown) && !window.confirm(text("Discard local Draft edits?"))) return;
   clearDrafts();
   locked = false; $("start-another").hidden = true;
   return updateMode();

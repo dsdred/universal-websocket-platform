@@ -47,6 +47,10 @@ are available only after you start UWP locally as described above.
 
 A fresh service has no Workspaces. Empty lists are expected, not a failure.
 
+Use the **Language** selector in either page header to choose EN or RU. English
+is the default. Both pages use the saved browser preference. Switching in
+Studio keeps your current selections and unsaved Draft edits.
+
 ## Create and publish a configuration
 
 1. Open Configuration Studio at `/`.

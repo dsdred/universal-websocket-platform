@@ -1,10 +1,13 @@
 "use strict";
 (() => {
+  const { message, show } = ControlLanguage;
   const $ = (id) => document.getElementById(id);
   const workspace = $("workspace"), configuration = $("configuration");
   const base = "/api/v1/workspaces";
   let generation = 0, controller, healthController;
-  class ViewError extends Error {}
+  class ViewError extends Error {
+    constructor(copy) { super(); this.copy = copy; }
+  }
   function requireShape(condition) {
     if (!condition) throw new ViewError("Unsupported response. No data from this response is shown.");
   }
@@ -21,31 +24,31 @@
     return data;
   }
   function timestamp(value) {
-    return typeof value === "string" && Number.isFinite(Date.parse(value)) ? new Date(value).toLocaleString() : "Unavailable";
+    return typeof value === "string" && Number.isFinite(Date.parse(value)) ? new Date(value) : message("Unavailable");
   }
   function option(select, text, value = "") {
     const node = document.createElement("option");
-    node.textContent = text; node.value = value; select.append(node);
+    show(node, text); node.value = value; select.append(node);
   }
   function clearSelect(select, message) {
     select.replaceChildren(); option(select, message); select.disabled = true;
   }
-  function fill(select, items, previous, label) {
-    select.replaceChildren(); option(select, items.length ? `Select ${label}` : `No ${label}s`);
-    for (const item of items) option(select, `${item.name} · ID ${item.id}`, String(item.id));
+  function fill(select, items, previous, selectLabel, emptyLabel) {
+    select.replaceChildren(); option(select, items.length ? selectLabel : emptyLabel);
+    for (const item of items) option(select, message("{0} · ID {1}", item.name, item.id), String(item.id));
     select.disabled = items.length === 0;
     select.value = items.some((item) => String(item.id) === previous) ? previous : "";
   }
   function versionsMessage(message) {
     $("versions").replaceChildren();
     const row = document.createElement("tr"), cell = document.createElement("td");
-    cell.colSpan = 4; cell.textContent = message; row.append(cell); $("versions").append(row);
-    $("version-count").textContent = "Not loaded";
+    cell.colSpan = 4; show(cell, message); row.append(cell); $("versions").append(row);
+    show($("version-count"), "Not loaded");
   }
   function clearVersions() { versionsMessage("Select a configuration to view its versions."); }
   function clearConfigurations() {
     clearSelect(configuration, "Select a workspace");
-    $("configuration-meta").textContent = "Not loaded"; clearVersions();
+    show($("configuration-meta"), "Not loaded"); clearVersions();
   }
   async function get(path, signal) {
     let response;
@@ -55,7 +58,7 @@
       if (signal.aborted) throw error;
       throw new ViewError("Offline / unreachable. Check the local Control Service and use Refresh.");
     }
-    if (!response.ok) throw new ViewError(`Request error (HTTP ${response.status}). Use Refresh to try again.`);
+    if (!response.ok) throw new ViewError(message("Request error (HTTP {0}). Use Refresh to try again.", response.status));
     requireShape((response.headers.get("Content-Type") || "").split(";")[0].trim() === "application/json");
     try { return await response.json(); }
     catch (_) { throw new ViewError("Unsupported response. Expected valid JSON."); }
@@ -65,19 +68,19 @@
     const cycle = new AbortController(), signal = cycle.signal;
     healthController = cycle;
     const deadline = setTimeout(() => cycle.abort(), 15000);
-    $("health-status").textContent = "Loading…";
-    $("health-time").textContent = "Checking now…";
+    show($("health-status"), "Loading…");
+    show($("health-time"), "Checking now…");
     try {
       const data = await get("/health", signal);
       requireShape(object(data) && data.status === "ok");
-      if (!signal.aborted) $("health-status").textContent = "Available";
+      if (!signal.aborted) show($("health-status"), "Available");
     } catch (error) {
-      if (!signal.aborted) $("health-status").textContent = error.message;
+      if (!signal.aborted) show($("health-status"), error instanceof ViewError ? error.copy : "Unexpected response. Use Refresh to try again.");
     }
     clearTimeout(deadline);
     if (healthController === cycle) {
-      if (signal.aborted) $("health-status").textContent = "Not confirmed — request timed out";
-      $("health-time").textContent = `Checked in this browser: ${new Date().toLocaleString()}`;
+      if (signal.aborted) show($("health-status"), "Not confirmed — request timed out");
+      show($("health-time"), message("Checked in this browser: {0}", new Date()));
     }
   }
   async function loadConfigurations(signal, previous) {
@@ -86,8 +89,8 @@
     clearSelect(configuration, "Loading…");
     const items = entities(await get(`${base}/${parent}/configurations`, signal), "workspaceId", parent);
     if (signal.aborted) return;
-    fill(configuration, items, previous, "configuration");
-    $("configuration-meta").textContent = `${items.length} configurations in selected workspace`;
+    fill(configuration, items, previous, "Select configuration", "No configurations");
+    show($("configuration-meta"), message("{0} configurations in selected workspace", items.length));
   }
   async function loadVersions(signal) {
     const parent = configuration.value;
@@ -108,13 +111,13 @@
     if (!data.length) versionsMessage("No versions in this configuration.");
     for (const v of data) {
       const row = document.createElement("tr");
-      for (const text of [`v${v.number} · ID ${v.id}`, v.state, v.listener && v.listener.host && v.listener.port ? `${v.listener.host} / ${v.listener.port}` : "Unavailable", timestamp(v.updatedAt)]) {
-        const cell = document.createElement("td"); cell.textContent = text; row.append(cell);
+      for (const text of [message("v{0} · ID {1}", v.number, v.id), v.state, v.listener && v.listener.host && v.listener.port ? message("{0} / {1}", v.listener.host, v.listener.port) : "Unavailable", message("{0}", timestamp(v.updatedAt))]) {
+        const cell = document.createElement("td"); show(cell, text); row.append(cell);
       }
       row.children[1].className = "badge";
       $("versions").append(row);
     }
-    $("version-count").textContent = `${data.length} versions in selected configuration`;
+    show($("version-count"), message("{0} versions in selected configuration", data.length));
   }
   async function run(level) {
     if (controller) controller.abort();
@@ -127,25 +130,25 @@
     $("browser").setAttribute("aria-busy", "true");
     $("refresh").disabled = true;
     $("data-status").className = "status";
-    $("data-status").textContent = "Loading configuration data…";
+    show($("data-status"), "Loading configuration data…");
     let healthRequest = Promise.resolve();
     try {
       if (level === "all") {
-        clearSelect(workspace, "Loading…"); $("workspace-meta").textContent = "Not loaded";
+        clearSelect(workspace, "Loading…"); show($("workspace-meta"), "Not loaded");
         clearConfigurations(); healthRequest = health();
         const items = entities(await get(base, signal));
         if (signal.aborted) return;
-        fill(workspace, items, oldWorkspace, "workspace");
-        $("workspace-meta").textContent = `${items.length} workspaces · fetched in this browser: ${new Date().toLocaleString()}`;
+        fill(workspace, items, oldWorkspace, "Select workspace", "No workspaces");
+        show($("workspace-meta"), message("{0} workspaces · fetched in this browser: {1}", items.length, new Date()));
       }
       if (level !== "versions") {
         clearConfigurations(); await loadConfigurations(signal, level === "all" ? oldConfiguration : "");
       } else clearVersions();
       await loadVersions(signal);
-      if (!signal.aborted) $("data-status").textContent = workspace.options.length === 1 ? "No workspaces. Create one in Configuration Studio." : `Data loaded in this browser: ${new Date().toLocaleString()}. Select a workspace and configuration to browse.`;
+      if (!signal.aborted) show($("data-status"), workspace.options.length === 1 ? "No workspaces. Create one in Configuration Studio." : message("Data loaded in this browser: {0}. Select a workspace and configuration to browse.", new Date()));
     } catch (error) {
       if (current === generation && !signal.aborted) {
-        $("data-status").textContent = error.message;
+        show($("data-status"), error instanceof ViewError ? error.copy : "Unexpected response. Use Refresh to try again.");
         $("data-status").className = "status error";
         if (configuration.disabled && workspace.value) clearSelect(configuration, "Not loaded — use Refresh");
         if (workspace.disabled) clearSelect(workspace, "Not loaded — use Refresh");
@@ -156,7 +159,7 @@
       await healthRequest;
       if (current === generation) {
         if (signal.aborted) {
-          $("data-status").textContent = "Request timed out. Use Refresh to try again.";
+          show($("data-status"), "Request timed out. Use Refresh to try again.");
           if (workspace.disabled) clearSelect(workspace, "Not loaded — use Refresh");
           if (configuration.disabled) clearSelect(configuration, "Not loaded — use Refresh");
           versionsMessage("Data unavailable. Use Refresh to try again.");

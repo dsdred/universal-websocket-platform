@@ -23,6 +23,9 @@ var (
 	//go:embed assets/dashboard.html
 	dashboardHTML []byte
 
+	//go:embed assets/control-language.js
+	controlLanguageJS []byte
+
 	//go:embed assets/control.css
 	controlCSS []byte
 
@@ -46,6 +49,7 @@ var (
 func RegisterRoutes(router chi.Router) {
 	router.Get("/", serveAsset("text/html; charset=utf-8", indexHTML))
 	router.Get("/dashboard", serveAsset("text/html; charset=utf-8", dashboardHTML))
+	router.Get("/configuration-studio/control-language.js", serveAsset("text/javascript; charset=utf-8", controlLanguageJS))
 	router.Get("/configuration-studio/control.css", serveAsset("text/css; charset=utf-8", controlCSS))
 	router.Get("/configuration-studio/dashboard.js", serveAsset("text/javascript; charset=utf-8", dashboardJS))
 	router.Get("/configuration-studio/studio.css", serveAsset("text/css; charset=utf-8", studioCSS))
