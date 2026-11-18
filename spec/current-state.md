@@ -1,15 +1,15 @@
 # Текущее состояние
 
-Текущая engineering task [TASK-137](../docs/tasks/TASK-137-EXTENDED-DRAFT-EDITING.md) —
-Extended Draft Editing в Studio: отдельный редактор четырёх listener timeouts
-через existing API, с сохранением того же Draft ID без создания и публикации.
-Baseline main `0dfd13bf49db2a3bd63d03111f46cedcb07261d7`; projected In Progress;
-exact implementation/verification/review — в task record и matching envelope.
-TASK135 creation flows и TASK136 host/port editor сохраняются; Dashboard GET-only.
-TASK131 DEFERRED; TASK134 local `c12a3f531f497475062a1672c0abb66872aab9fc`
-вне main, untouched; TASK102 untouched. ADR0005 Draft; Gate11 OPEN;
-Stage B/B1/B2, Production C2/C3 и C2-Exposure Not Activated.
-Commit/publication не разрешены.
+Текущая engineering task [TASK-139](../docs/tasks/TASK-139-LISTENER-VALIDATION-UX.md) —
+проверка listener host/port в Studio и Control API. Новые записи отклоняют
+числовые имена с точками, если это не корректный IPv4. Studio показывает ошибки
+у полей для создания Configuration и сохранения Draft. Точные результаты —
+в task record. TASK-138 Owner Acceptance остаётся открытой в отдельной ветке.
+
+[TASK-137](../docs/tasks/TASK-137-EXTENDED-DRAFT-EDITING.md) опубликована через PR #136,
+merge `a41e1569710b0245de584919cea2ed1d610d87ad`, terminal P10/P10R PASS.
+TASK-134 локально вне main, TASK-131 DEFERRED, TASK-102 untouched. ADR0005 Draft;
+Gate 11 OPEN; Stage B/B1/B2, Production C2/C3 и C2-Exposure Not Activated.
 
 [TASK-136](../docs/tasks/TASK-136-EXISTING-DRAFT-MANAGEMENT.md) присутствует в main через
 PR #135, merge `0dfd13bf49db2a3bd63d03111f46cedcb07261d7`, source

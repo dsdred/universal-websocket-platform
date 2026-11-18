@@ -392,3 +392,23 @@ func TestStudioExistingDraftEditorSurface(t *testing.T) {
 		}
 	}
 }
+
+func TestStudioListenerFieldErrorAssociations(t *testing.T) {
+	html := string(indexHTML)
+	for _, field := range []string{"host", "port"} {
+		id := "listener-" + field
+		input := regexp.MustCompile(`<input id="` + id + `"[^>]*>`).FindString(html)
+		if !strings.Contains(input, `type="text"`) ||
+			!strings.Contains(input, `aria-describedby="`+id+`-error"`) ||
+			strings.Contains(input, `maxlength=`) {
+			t.Errorf("listener input must preserve raw text and associate its error: %q", input)
+		}
+		if field == "port" && !strings.Contains(input, `inputmode="numeric"`) {
+			t.Errorf("listener port must request the numeric keyboard: %q", input)
+		}
+		errorOutput := regexp.MustCompile(`<p id="` + id + `-error"[^>]*>`).FindString(html)
+		if !strings.Contains(errorOutput, `aria-live="polite"`) {
+			t.Errorf("listener error must announce updates: %q", errorOutput)
+		}
+	}
+}

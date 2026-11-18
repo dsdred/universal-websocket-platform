@@ -165,3 +165,10 @@ button:disabled {
 
 [hidden] { display: none !important; }
 body .studio-main select { background: var(--bg); color: var(--text); border-color: var(--border); }
+body .studio-main .listener-fields input[aria-invalid="true"] { border-color: #e9a0a0; }
+.listener-field-error {
+  margin: 0.35rem 0 0;
+  color: #e9a0a0;
+  overflow-wrap: anywhere;
+}
+.listener-field-error:empty { margin: 0; }

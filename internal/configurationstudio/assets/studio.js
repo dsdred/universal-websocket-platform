@@ -28,6 +28,115 @@ let editorSection = "listener";
 let choices = { mode: mode.value, workspace: "", configuration: "", draft: "" };
 const editing = () => mode.value === "existing-draft";
 const hostInput = $("listener-host"), portInput = $("listener-port");
+const listenerErrors = { host: $("listener-host-error"), port: $("listener-port-error") };
+const listenerFields = { host: hostInput, port: portInput };
+const rejectedListenerValues = new Map();
+const listenerErrorSummary = "Check the highlighted Listener fields.";
+
+function validIPv4(host) {
+  const octets = host.split(".");
+  return octets.length === 4 && octets.every((part) =>
+    part.length > 0 && part.length <= 3 && !/[^0-9]/.test(part) &&
+    (part.length === 1 || part[0] !== "0") && Number(part) <= 255);
+}
+
+function validIPv6(host) {
+  if (host.includes(".")) {
+    const suffix = host.lastIndexOf(":") + 1;
+    if (!validIPv4(host.slice(suffix))) return false;
+    // An embedded IPv4 address occupies two 16-bit groups.
+    host = host.slice(0, suffix) + "0:0";
+  }
+  const sides = host.split("::");
+  if (sides.length > 2) return false;
+  const groups = sides.flatMap((side) => side ? side.split(":") : []);
+  if (groups.some((group) => !group || group.length > 4 || /[^0-9a-f]/i.test(group))) return false;
+  return sides.length === 1 ? groups.length === 8 : groups.length < 8;
+}
+
+function listenerHost(value) {
+  // Go strings.TrimSpace follows Unicode White_Space, including NEL but excluding BOM.
+  const host = value.replace(/^\p{White_Space}+|\p{White_Space}+$/gu, "");
+  if (!host) return { error: "Enter a Listener host." };
+  if ([...host].length > 255) return { error: "Listener host must not exceed 255 characters." };
+
+  if (host.includes(".") && !/[^0-9.]/.test(host)) {
+    if (validIPv4(host)) return { value: host };
+    return { error: "Enter a valid IPv4 address for a dotted numeric host." };
+  }
+  if (host.includes(":")) return validIPv6(host) ? { value: host } : { error: "Enter a valid IPv6 address." };
+  const labels = (host.endsWith(".") ? host.slice(0, -1) : host).split(".");
+  if (labels.every((label) => label.length > 0 && label.length <= 63 &&
+    !/[^a-z0-9-]/i.test(label) && !label.startsWith("-") && !label.endsWith("-"))) return { value: host };
+  return { error: "Enter a valid IP address or hostname." };
+}
+
+function listenerPort(raw) {
+  const error = "Enter a whole port number between 1 and 65535.";
+  if (!raw || /[^0-9]/.test(raw)) return { error };
+  const digits = raw.replace(/^0+/, "");
+  if (!digits || digits.length > 5 || (digits.length === 5 && digits > "65535")) return { error };
+  return { value: Number(digits) };
+}
+
+function setListenerError(field, message = "") {
+  const output = listenerErrors[field];
+  if (output.textContent !== message) output.textContent = message;
+  if (message) listenerFields[field].setAttribute("aria-invalid", "true");
+  else listenerFields[field].removeAttribute("aria-invalid");
+}
+
+function clearListenerSummary() {
+  if (statusOutput.textContent === listenerErrorSummary) setStatus("Ready.");
+}
+
+function clearListenerErrors() {
+  rejectedListenerValues.clear();
+  setListenerError("host");
+  setListenerError("port");
+  clearListenerSummary();
+}
+
+function showListenerRejection(error) {
+  if (!(error instanceof RequestError) || !error.listenerRejection) return null;
+  const { field, message } = error.listenerRejection;
+  const input = listenerFields[field];
+  rejectedListenerValues.set(field, input.value);
+  setListenerError(field, message);
+  return input;
+}
+
+function validateListenerInput(field, validate) {
+  const value = listenerFields[field].value;
+  if (rejectedListenerValues.get(field) === value) return { error: listenerErrors[field].textContent };
+  rejectedListenerValues.delete(field);
+  const result = validate(value);
+  setListenerError(field, result.error);
+  return result;
+}
+
+function validateListenerFields() {
+  const host = validateListenerInput("host", listenerHost);
+  const port = validateListenerInput("port", listenerPort);
+  if (host.error || port.error) {
+    setStatus(listenerErrorSummary, "error");
+    (host.error ? hostInput : portInput).focus();
+    return null;
+  }
+  clearListenerSummary();
+  return { host: host.value, port: port.value };
+}
+
+for (const [field, validate] of [["host", listenerHost], ["port", listenerPort]]) {
+  const input = listenerFields[field];
+  function updateListenerError() {
+    validateListenerInput(field, validate);
+    if (!listenerErrors.host.textContent && !listenerErrors.port.textContent) clearListenerSummary();
+  }
+  input.addEventListener("input", updateListenerError);
+  input.addEventListener("blur", updateListenerError);
+}
+
 function dirty() {
   if (openedDraft && editorSection === "timeouts") return timeoutFields.some(([key, input]) => input.value !== String(openedDraft.timeouts[key]));
   return !!openedDraft && (hostInput.value !== openedDraft.host || portInput.value !== String(openedDraft.port));
@@ -51,6 +160,7 @@ function draftStatus(message) { $("draft-status").textContent = message; }
 function clearDrafts() {
   drafts = new Map(); openedDraft = null; saveUnknown = false;
   editorSection = "listener"; sectionChoice.value = editorSection;
+  clearListenerErrors();
   placeholder(draftChoice, "Select a Draft");
   draftStatus("Select a Configuration to discover Drafts.");
 }
@@ -126,7 +236,17 @@ async function requestJSON(path, method, expectedStatus, body, signal) {
   }
   try {
     const response = await fetch(path, options);
-    if (response.status !== expectedStatus) throw Object.assign(new RequestError(`Control Service returned HTTP ${response.status}.`), { status: response.status });
+    if (response.status !== expectedStatus) {
+      const failure = Object.assign(new RequestError(`Control Service returned HTTP ${response.status}.`), { status: response.status });
+      if (response.status === 400 && method === "PUT" && path.endsWith("/listener")) {
+        const payload = await response.json().catch(() => null);
+        const details = payload?.error;
+        const match = details?.code === "validation_failed" && typeof details.message === "string" &&
+          /^(host|port): (.+)$/.exec(details.message);
+        if (match) failure.listenerRejection = { field: match[1], message: match[2] };
+      }
+      throw failure;
+    }
     const payload = await response.json();
     if (payload === null || typeof payload !== "object") throw new Error("Unexpected Control Service response.");
     return payload;
@@ -226,7 +346,7 @@ $("reload-lists").addEventListener("click", () => {
   rememberChoices();
   return loadLists();
 });
-function inputValues() {
+function inputValues(listener) {
   if (!["new-workspace", "new-configuration", "existing-configuration"].includes(mode.value)) throw new Error("Select an action.");
   const values = { mode: mode.value };
   if (mode.value !== "new-workspace") values.workspaceID = selectedID(workspaceChoice, workspaces);
@@ -236,10 +356,9 @@ function inputValues() {
   }
   values.workspaceName = $("workspace-name").value.trim();
   values.configurationName = $("configuration-name").value.trim();
-  values.listenerHost = $("listener-host").value.trim();
-  values.listenerPort = Number($("listener-port").value);
-  if ((mode.value === "new-workspace" && !values.workspaceName) || !values.configurationName || !values.listenerHost) throw new Error("Complete every visible field.");
-  if (!Number.isInteger(values.listenerPort) || values.listenerPort < 1 || values.listenerPort > 65535) throw new Error("Listener port must be a whole number between 1 and 65535.");
+  if ((mode.value === "new-workspace" && !values.workspaceName) || !values.configurationName) throw new Error("Complete every visible field.");
+  values.listenerHost = listener.host;
+  values.listenerPort = listener.port;
   return values;
 }
 function versionResponse(version, configurationID, state, versionID) {
@@ -284,8 +403,18 @@ async function runFlow(values) {
   if (values.mode === "existing-configuration") { showVersion(draft, false); return; }
   const versionID = draft.id;
   setStatus("Updating listener…");
-  const updated = await requestJSON(`/api/v1/workspaces/${workspaceID}/configurations/${configurationID}/versions/${versionID}/listener`, "PUT", 200,
-    { host: values.listenerHost, port: values.listenerPort });
+  let updated;
+  try {
+    updated = await requestJSON(`/api/v1/workspaces/${workspaceID}/configurations/${configurationID}/versions/${versionID}/listener`, "PUT", 200,
+      { host: values.listenerHost, port: values.listenerPort });
+  } catch (error) {
+    if (error instanceof RequestError && error.listenerRejection) {
+      const workspace = values.mode === "new-workspace" ? `Created Workspace #${workspaceID}, Configuration #${configurationID}` :
+        `Created Configuration #${configurationID} in Workspace #${workspaceID}`;
+      error.partialCreation = `${workspace} and Draft #${versionID}. The Listener update was rejected. Studio did not publish the Draft.`;
+    }
+    throw error;
+  }
   versionResponse(updated, configurationID, "Draft", versionID);
   if (!updated.listener || updated.listener.host !== values.listenerHost || updated.listener.port !== values.listenerPort || !updated.listener.tls || updated.listener.tls.enabled !== false) throw new Error("Unexpected listener response.");
   setStatus("Publishing draft…");
@@ -309,6 +438,7 @@ function draftProjection(version, configurationID) {
 }
 function restoreEditorInputs() {
   if (!openedDraft) return;
+  clearListenerErrors();
   hostInput.value = openedDraft.host; portInput.value = String(openedDraft.port);
   for (const [key, input] of timeoutFields) input.value = String(openedDraft.timeouts[key]);
 }
@@ -392,13 +522,13 @@ async function saveDraft() {
         body[key] = value;
       }
     } else {
-      const host = hostInput.value.trim(), port = Number(portInput.value);
-      if (!host || host.length > 255 || !Number.isInteger(port) || port < 1 || port > 65535) throw new Error("Enter a listener host and whole port between 1 and 65535.");
-      body = { host, port };
+      body = validateListenerFields();
+      if (!body) return;
     }
   } catch (error) { setStatus(error.message, "error"); return; }
   const section = editorSection;
   invalidateLists(); busy = true; syncControls(); setStatus(`Saving Draft ${section}…`);
+  let rejectedInput;
   try {
     const suffix = section === "timeouts" ? "/listener/timeouts" : "/listener";
     const response = await requestJSON(`${versionsPath(scope)}/${openedDraft.id}${suffix}`, "PUT", 200, body);
@@ -413,8 +543,13 @@ async function saveDraft() {
   } catch (error) {
     saveUnknown = !(error instanceof RequestError) || error.status >= 500;
     draftStatus(saveUnknown ? "Save outcome unknown. Edits retained; use Reload Draft to reconcile before saving again." : "Save failed. Unsaved Draft changes are retained.");
-    setStatus(error instanceof RequestError ? error.message : "The save outcome is unknown.", "error");
-  } finally { busy = false; restoreChoices(); syncControls(); }
+    rejectedInput = showListenerRejection(error);
+    setStatus(rejectedInput ? listenerErrorSummary :
+      (error instanceof RequestError ? error.message : "The save outcome is unknown."), "error");
+  } finally {
+    busy = false; restoreChoices(); syncControls();
+    rejectedInput?.focus();
+  }
 }
 form.addEventListener("reset", (event) => {
   event.preventDefault();
@@ -427,20 +562,26 @@ form.addEventListener("submit", async (event) => {
   if (busy || locked || loading) return;
   if (editing()) return saveDraft();
   clearResult();
+  const listener = mode.value === "existing-configuration" ? null : validateListenerFields();
+  if (mode.value !== "existing-configuration" && !listener) return;
   let values;
-  try { values = inputValues(); }
+  try { values = inputValues(listener); }
   catch (error) { setStatus(error.message, "error"); return; }
   invalidateLists(); busy = true; syncControls();
   let success = false;
   try { await runFlow(values); success = true; }
   catch (error) {
     clearResult();
+    showListenerRejection(error);
     const message = error instanceof RequestError ? error.message : "The request outcome is unknown.";
-    setStatus(`${message} Inspect Dashboard before another attempt; resources from earlier steps may remain in memory.`, "error");
+    setStatus(error instanceof RequestError && error.partialCreation
+      ? `${error.partialCreation} Inspect Dashboard before another attempt.`
+      : `${message} Inspect Dashboard before another attempt; resources from earlier steps may remain in memory.`, "error");
   } finally {
     busy = false; locked = true; syncControls();
     $("start-another").textContent = success ? "Start another action" : "I checked Dashboard — start another action";
     $("start-another").hidden = false;
+    if (!success) statusOutput.focus();
   }
 });
 $("start-another").addEventListener("click", () => {
