@@ -8,11 +8,17 @@
 
 ## Текущее состояние
 
-Текущая engineering task [TASK-139](../docs/tasks/TASK-139-LISTENER-VALIDATION-UX.md) —
-проверка listener host/port в Studio и Control API. Новые записи отклоняют
-числовые имена с точками, если это не корректный IPv4. Studio показывает ошибки
-у полей для создания Configuration и сохранения Draft. Точные результаты —
-в task record. TASK-138 Owner Acceptance остаётся открытой в отдельной ветке.
+[TASK-138 — Studio UI Owner Acceptance](../docs/tasks/TASK-138-STUDIO-OWNER-ACCEPTANCE.md) —
+Owner functional PASS: 12/12 ручных сценариев на Control Service 18139,
+собранном из опубликованного TASK-139. Документационный gate и точное evidence —
+в task record. Отдельные Studio UI/UX improvements остаются Not Activated.
+
+[TASK-139](../docs/tasks/TASK-139-LISTENER-VALIDATION-UX.md) опубликована через PR #137,
+merge `aa5326353f0042956cbb313bff1dc60b093fef12`, P10/P10R PASS.
+Studio показывает ошибки listener host/port рядом с полями; Studio и Control API
+отклоняют числовые имена с точками, если это не корректный IPv4.
+TASK-134 локально вне main, TASK-131 DEFERRED, TASK-102 untouched. ADR0005 Draft;
+Gate 11 OPEN; Stage B/B1/B2, Production C2/C3 и C2-Exposure Not Activated.
 
 [TASK-137](../docs/tasks/TASK-137-EXTENDED-DRAFT-EDITING.md) опубликована через PR #136,
 merge `a41e1569710b0245de584919cea2ed1d610d87ad`, terminal P10/P10R PASS.
