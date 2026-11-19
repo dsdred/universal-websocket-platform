@@ -7,13 +7,24 @@
   <link rel="icon" type="image/vnd.microsoft.icon" sizes="16x16 32x32 48x48" href="/favicon.ico?v=128">
   <link rel="stylesheet" href="/configuration-studio/control.css">
   <script src="/configuration-studio/control-language.js" defer></script>
+  <script src="/configuration-studio/control-navigation.js" defer></script>
   <script src="/configuration-studio/dashboard.js" defer></script>
 </head>
 <body>
   <a class="skip" href="#main" data-i18n>Skip to content</a>
   <aside class="sidebar" aria-label="UWP Control">
-    <a class="brand" href="/dashboard"><img class="brand-mark" src="/configuration-studio/branding/viking-128.png" width="40" height="40" alt=""><span>UWP Control<small data-i18n>Local development</small></span></a>
-    <nav data-i18n-label aria-label="Main navigation">
+    <div class="sidebar-header">
+      <a class="brand" href="/dashboard"><img class="brand-mark" src="/configuration-studio/branding/viking-128.png" width="40" height="40" alt=""><span>UWP Control<small data-i18n>Local development</small></span></a>
+      <div class="mobile-controls">
+        <div id="mobile-language-slot"></div>
+        <button class="navigation-toggle" id="navigation-toggle" type="button" aria-controls="control-navigation" aria-expanded="false" data-i18n-label aria-label="Navigation menu" hidden>
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <nav id="control-navigation" data-i18n-label aria-label="Main navigation">
       <span class="nav-label" data-i18n>Workspace</span>
       <a href="/dashboard" aria-current="page" data-i18n>Dashboard</a>
       <a href="/" data-i18n>Configuration Studio</a>

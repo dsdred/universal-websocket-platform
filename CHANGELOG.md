@@ -15,6 +15,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- On mobile, Studio and Dashboard put the language toggle and a collapsible
+  navigation menu in one compact header. Desktop keeps the sidebar.
+
 - English and Russian in the Configuration Studio and Dashboard. The shared
   header button shows the current language, switches EN/RU with one click,
   remembers the preference in the browser and updates the page

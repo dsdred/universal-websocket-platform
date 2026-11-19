@@ -51,7 +51,8 @@ Use the language button in either page header to switch between EN and RU.
 The button shows the current language. English is the default, and both pages
 use the saved browser preference. Switching in Studio keeps your current
 selections and unsaved Draft edits. Use the main navigation to move between
-Studio and Dashboard.
+Studio and Dashboard. On narrow screens, use the menu button beside EN/RU in
+the global header. Select a link or press Escape to close the menu.
 
 ## Create and publish a configuration
 
