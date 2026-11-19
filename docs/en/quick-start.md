@@ -50,7 +50,8 @@ A fresh service has no Workspaces. Empty lists are expected, not a failure.
 Use the language button in either page header to switch between EN and RU.
 The button shows the current language. English is the default, and both pages
 use the saved browser preference. Switching in Studio keeps your current
-selections and unsaved Draft edits.
+selections and unsaved Draft edits. Use the main navigation to move between
+Studio and Dashboard.
 
 ## Create and publish a configuration
 

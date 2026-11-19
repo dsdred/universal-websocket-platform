@@ -19,7 +19,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   header button shows the current language, switches EN/RU with one click,
   remembers the preference in the browser and updates the page
   in place, including validation and save feedback, while keeping selections and
-  unsaved Draft edits.
+  unsaved Draft edits. The button displays EN or RU. Use the main navigation
+  to switch between Studio and Dashboard.
 
 - Configuration Studio editing of handshake, read, write and idle timeout seconds in existing Drafts. Separate address/timeout saves use the same version and existing section APIs, with validation, unsaved-change guards and explicit recovery after unknown outcomes. No automatic creation or publication.
 
