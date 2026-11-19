@@ -5,8 +5,10 @@
 [Упрощение шапки](../docs/tasks/TASK-140-OWNER-HEADER-CLEANUP.md) оставляет на кнопке
 только код текущего языка. Переходы между страницами доступны в основной навигации.
 Выбор хранится в браузере, по умолчанию используется EN. Смена языка сохраняет
-поля, выборы и обратную связь без API-запросов. Корректировка в `In Progress`;
-актуальный gate определяется Recovery Evidence Envelope.
+поля, выборы и обратную связь без API-запросов. Упрощение опубликовано в PR #141.
+[TASK-142](../docs/tasks/TASK-142-RESPONSIVE-NAVIGATION.md) добавляет компактную
+мобильную шапку с языком и меню. Desktop сохраняет боковую навигацию.
+Актуальный gate определяется Recovery Evidence Envelope. TASK-141 Not Activated.
 
 [TASK-138 — Studio UI Owner Acceptance](../docs/tasks/TASK-138-STUDIO-OWNER-ACCEPTANCE.md) —
 Owner functional PASS: 12/12 ручных сценариев на Control Service 18139,

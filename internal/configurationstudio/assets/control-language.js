@@ -6,6 +6,7 @@ const ControlLanguage = (() => {
     "Local Configuration Studio": "Локальная студия конфигураций",
     "Skip to content": "Перейти к содержимому",
     "Local development": "Локальная разработка",
+    "Navigation menu": "Меню навигации",
     "Main navigation": "Основная навигация",
     "Workspace": "Рабочая область",
     "Dashboard": "Панель управления",
