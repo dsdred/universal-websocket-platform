@@ -16,7 +16,7 @@ const ControlLanguage = (() => {
     "API availability": "Доступность API",
     "Trusted localhost only": "Только для доверенной локальной среды",
     "Unauthenticated Control Service": "Служба управления без аутентификации",
-    "Language": "Язык",
+    "RU (Russian). Switch to English.": "RU (русский). Переключить на английский.",
     "Open Studio": "Открыть студию",
     "CONTROL OVERVIEW": "ОБЗОР СИСТЕМЫ",
     "Browse the configuration held by this Control Service.": "Просматривайте конфигурации, хранящиеся в этой службе управления.",
@@ -206,7 +206,8 @@ const ControlLanguage = (() => {
   const preferenceKey = "uwp-control-language";
   const messages = new WeakMap();
   const labels = new WeakMap();
-  const picker = document.getElementById("control-language");
+  const toggle = document.getElementById("control-language");
+  const toggleCode = document.getElementById("control-language-code");
   function savedLanguage() {
     try {
       const saved = localStorage.getItem(preferenceKey);
@@ -241,12 +242,14 @@ const ControlLanguage = (() => {
 
   function applyLanguage() {
     document.documentElement.lang = language;
-    picker.value = language;
+    toggleCode.textContent = language.toUpperCase();
+    toggle.setAttribute("aria-label", text(language === "ru"
+      ? "RU (Russian). Switch to English." : "EN (English). Switch to Russian."));
     for (const node of document.querySelectorAll("[data-i18n]")) render(node, messages.get(node));
     for (const node of document.querySelectorAll("[data-i18n-label]")) node.setAttribute("aria-label", text(labels.get(node)));
   }
-  picker.addEventListener("change", () => {
-    language = picker.value === "ru" ? "ru" : "en";
+  toggle.addEventListener("click", () => {
+    language = language === "en" ? "ru" : "en";
     try { localStorage.setItem(preferenceKey, language); } catch (_) {}
     applyLanguage();
   });

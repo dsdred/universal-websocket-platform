@@ -16,7 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - English and Russian in the Configuration Studio and Dashboard. The shared
-  language selector remembers the preference in the browser and updates the page
+  header button shows the current language, switches EN/RU with one click,
+  remembers the preference in the browser and updates the page
   in place, including validation and save feedback, while keeping selections and
   unsaved Draft edits.
 

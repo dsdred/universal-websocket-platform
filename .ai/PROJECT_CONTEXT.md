@@ -8,7 +8,10 @@
 
 ## Текущее состояние
 
-[TASK-140 — Локализация Studio и Dashboard](../docs/tasks/TASK-140-CONTROL-LOCALIZATION.md) — текущий ограниченный frontend-срез (`In Progress`). Актуальные результаты проверок и gate определяются применимой записью Recovery Evidence Envelope.
+[TASK-140 — Локализация Studio и Dashboard](../docs/tasks/TASK-140-CONTROL-LOCALIZATION.md) опубликована через PR #139,
+merge `4fcbbacfdfacbd8a39b4ab2233136bb2cb546d29`.
+Текущий срез: [корректировка переключателя по замечанию Owner](../docs/tasks/TASK-140-OWNER-UX-CORRECTION.md), `In Progress`.
+Актуальный gate определяется Recovery Evidence Envelope.
 
 [TASK-138 — Studio UI Owner Acceptance](../docs/tasks/TASK-138-STUDIO-OWNER-ACCEPTANCE.md) —
 Owner functional PASS: 12/12 ручных сценариев на Control Service 18139,

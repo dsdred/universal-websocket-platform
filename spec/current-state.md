@@ -1,6 +1,10 @@
 # Текущее состояние
 
-[TASK-140](../docs/tasks/TASK-140-CONTROL-LOCALIZATION.md) добавляет в локальные Studio (`/`) и Dashboard (`/dashboard`) переключатель EN/RU. Выбор хранится в браузере, по умолчанию используется EN. Язык текущих надписей, ошибок и результатов меняется на месте с сохранением полей и выборов. Смена языка не отправляет API-запросы. Текущий gate (`In Progress`) определяется Recovery Evidence Envelope.
+[TASK-140](../docs/tasks/TASK-140-CONTROL-LOCALIZATION.md) добавила EN/RU в локальные Studio (`/`) и Dashboard (`/dashboard`), PR #139.
+[Корректировка по замечанию Owner](../docs/tasks/TASK-140-OWNER-UX-CORRECTION.md) заменяет выпадающий список кнопкой с текущим языком.
+Выбор хранится в браузере, по умолчанию используется EN. Смена языка сохраняет
+поля, выборы и обратную связь без API-запросов. Корректировка в `In Progress`;
+актуальный gate определяется Recovery Evidence Envelope.
 
 [TASK-138 — Studio UI Owner Acceptance](../docs/tasks/TASK-138-STUDIO-OWNER-ACCEPTANCE.md) —
 Owner functional PASS: 12/12 ручных сценариев на Control Service 18139,

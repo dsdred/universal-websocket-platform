@@ -38,7 +38,7 @@ const deferred = () => {
 };
 async function settle() { for (let i = 0; i < 8; i++) await new Promise(setImmediate); }
 function start(routes = {}, storage = new Map()) {
-  const nodes = Object.fromEntries(["control-language", "workspace", "configuration", "versions", "version-count", "workspace-meta", "configuration-meta", "health-status", "health-time", "browser", "refresh", "data-status"].map((id) => [id, new Element(["workspace", "configuration"].includes(id) ? "select" : "div")]));
+  const nodes = Object.fromEntries(["control-language", "control-language-code", "workspace", "configuration", "versions", "version-count", "workspace-meta", "configuration-meta", "health-status", "health-time", "browser", "refresh", "data-status"].map((id) => [id, new Element(["workspace", "configuration"].includes(id) ? "select" : "div")]));
   const requests = [], timers = new Map(), windowEvents = {}; let timerID = 0;
   const environment = vm.createContext({
     window: { addEventListener: (event, callback) => { windowEvents[event] = callback; } },
@@ -264,10 +264,10 @@ test("locale updates loaded Dashboard rows, selections and feedback without netw
   assert.match(nodes["health-status"].textContent, /Доступно/);
   assert.match(nodes["version-count"].textContent, /Версий в выбранной конфигурации: 1/);
   assert.equal(row.children[1].textContent, "Опубликовано");
-  await app.select("control-language", "en");
+  await app.nodes["control-language"].fire("click");
   assert.equal(row.children[1].textContent, "Published");
   assert.notEqual(row.children[3].textContent, russianDate);
-  await app.select("control-language", "ru");
+  await app.nodes["control-language"].fire("click");
   assert.equal(row.children[3].textContent, russianDate);
   assert.equal(nodes.versions.children[0], row);
   assert.equal(nodes.workspace.options[1], option);
@@ -288,7 +288,7 @@ test("restoring a Dashboard from the back-forward cache applies the newest prefe
   storage.set("uwp-control-language", "ru");
   app.windowEvents.pageshow({ persisted: true });
   assert.equal(app.document.documentElement.lang, "ru");
-  assert.equal(app.nodes["control-language"].value, "ru");
+  assert.equal(app.nodes["control-language-code"].textContent, "RU");
   assert.match(app.nodes["data-status"].textContent, /абочих областей нет/);
   assert.equal(app.requests.length, count);
 });

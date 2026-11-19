@@ -29,7 +29,7 @@ const reply = (payload, status = 200) => ({ status, json: async () => payload })
 const deferred = () => { let resolve; const promise = new Promise((yes) => { resolve = yes; }); return { resolve, promise }; };
 async function settle() { for (let i = 0; i < 8; i++) await new Promise(setImmediate); }
 function start(route, storage = new Map()) {
-  const ids = ["control-language", "configuration-form", "creation-mode", "existing-workspace", "existing-configuration", "submit-button", "flow-status", "result", "result-state", "result-version", "result-url", "reload-lists", "workspace-name", "configuration-name", "listener-host", "listener-host-error", "listener-port", "listener-port-error", "list-status", "existing-resources", "configuration-choice", "workspace-fields", "configuration-fields", "listener-fields", "result-url-row", "start-another", "existing-draft", "draft-fields", "draft-status", "reload-draft", "draft-section", "timeout-fields", "timeout-handshake", "timeout-read", "timeout-write", "timeout-idle"];
+  const ids = ["control-language", "control-language-code", "configuration-form", "creation-mode", "existing-workspace", "existing-configuration", "submit-button", "flow-status", "result", "result-state", "result-version", "result-url", "reload-lists", "workspace-name", "configuration-name", "listener-host", "listener-host-error", "listener-port", "listener-port-error", "list-status", "existing-resources", "configuration-choice", "workspace-fields", "configuration-fields", "listener-fields", "result-url-row", "start-another", "existing-draft", "draft-fields", "draft-status", "reload-draft", "draft-section", "timeout-fields", "timeout-handshake", "timeout-read", "timeout-write", "timeout-idle"];
   const nodes = Object.fromEntries(ids.map((id) => [id, new Element()]));
   Object.assign(nodes["creation-mode"], { value: "new-workspace" });
   nodes["workspace-name"].value = "Workspace"; nodes["configuration-name"].value = "Configuration";
@@ -791,6 +791,8 @@ test("language changes preserve active Draft, local timeout validation and trans
   const storage = new Map();
   const app = start(timeoutRoutes, storage);
   assert.equal(app.document.documentElement.lang, "en");
+  assert.equal(app.nodes["control-language-code"].textContent, "EN");
+  assert.equal(app.nodes["control-language"].attributes["aria-label"], "EN (English). Switch to Russian.");
   await timeoutEditor(app);
   await editTimeout(app, "301");
   await app.submit();
@@ -799,8 +801,11 @@ test("language changes preserve active Draft, local timeout validation and trans
   const before = values();
   const reads = app.requests.length;
   for (const locale of ["ru", "en", "ru"]) {
-    await app.select("control-language", locale);
+    await app.nodes["control-language"].fire("click");
     assert.equal(app.document.documentElement.lang, locale);
+    assert.equal(app.nodes["control-language-code"].textContent, locale.toUpperCase());
+    assert.equal(app.nodes["control-language"].attributes["aria-label"], locale === "ru"
+      ? "RU (русский). Переключить на английский." : "EN (English). Switch to Russian.");
     assert.match(app.nodes["flow-status"].textContent, locale === "ru" ? /Таймаут рукопожатия.*1.*300/ : /Handshake timeout.*1.*300/);
     assert.deepEqual(values(), before);
     assert.equal(app.requests.length, reads);
@@ -808,9 +813,9 @@ test("language changes preserve active Draft, local timeout validation and trans
   await editTimeout(app, "35");
   await app.submit();
   assert.match(app.nodes["flow-status"].textContent, /Таймауты сохранены/);
-  await app.select("control-language", "en");
+  await app.nodes["control-language"].fire("click");
   assert.match(app.nodes["flow-status"].textContent, /Timeouts saved/);
-  await app.select("control-language", "ru");
+  await app.nodes["control-language"].fire("click");
   assert.match(app.nodes["flow-status"].textContent, /Таймауты сохранены/);
   assert.deepEqual(values().slice(0, -1), before.slice(0, -1));
   assert.equal(app.nodes["timeout-handshake"].value, "35");
@@ -829,7 +834,7 @@ test("translated listener rejection stays pinned until the rejected value is cor
   await editor(app);
   const input = await listenerInput(app, "host", "localhost");
   await app.submit();
-  await app.select("control-language", "ru");
+  await app.nodes["control-language"].fire("click");
   assert.match(app.nodes["listener-host-error"].textContent, /корректный IP-адрес/);
   assert.match(app.nodes["flow-status"].textContent, /выделенные поля/);
   assert.equal(input.attributes["aria-invalid"], "true");
@@ -843,6 +848,7 @@ test("translated listener rejection stays pinned until the rejected value is cor
 
 test("missing translation uses English and both pages have a Russian entry for all marked content", () => {
   const nodes = [new Element(), new Element()];
+  const code = new Element();
   const unlisted = "Unlisted message {0}";
   for (const file of ["index.html", "dashboard.html"]) {
     const html = fs.readFileSync(path.join(__dirname, "assets", file), "utf8");
@@ -858,13 +864,14 @@ test("missing translation uses English and both pages have a Russian entry for a
   nodes[1].textContent = unlisted;
   const env = vm.createContext({
     window: { addEventListener() {} },
-    document: { documentElement: {}, getElementById: () => nodes[0],
+    document: { documentElement: {}, getElementById: (id) => id === "control-language" ? nodes[0] : code,
       querySelectorAll: (selector) => selector === "[data-i18n]" ? nodes.slice(1) : [] },
     localStorage: { getItem: () => "unsupported", setItem: () => { throw new Error("storage unavailable"); } },
   });
   vm.runInContext(languageScript, env);
   assert.equal(env.document.documentElement.lang, "en");
-  nodes[0].value = "ru"; nodes[0].fire("change");
+  nodes[0].fire("click");
+  assert.equal(code.textContent, "RU");
   assert.equal(env.document.documentElement.lang, "ru");
   assert.equal(vm.runInContext('ControlLanguage.text(ControlLanguage.message("Unlisted message {0}", 1))', env), "Unlisted message 1");
   for (const node of nodes.slice(2)) assert.match(node.textContent, /[А-Яа-яЁё]/);
