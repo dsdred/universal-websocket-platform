@@ -28,13 +28,12 @@
     <header class="topbar">
       <span>UWP Control / <strong data-i18n>Dashboard</strong></span>
       <div class="topbar-actions">
-        <label class="language-control">
-          <span data-i18n>Language</span>
-          <select id="control-language">
-            <option value="en" lang="en">EN</option>
-            <option value="ru" lang="ru">RU</option>
-          </select>
-        </label>
+        <button class="language-control" id="control-language" type="button" aria-label="EN (English). Switch to Russian.">
+          <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 5h12M9 3v2m4 0c0 5-4 9-9 11m2-8c1 3 3 5 6 7m2 6 4-9 4 9m-7-2h6"/>
+          </svg>
+          <span id="control-language-code">EN</span>
+        </button>
         <a class="button" href="/" data-i18n>Open Studio</a>
       </div>
     </header>
