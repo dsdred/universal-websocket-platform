@@ -17,7 +17,6 @@ const ControlLanguage = (() => {
     "Trusted localhost only": "Только для доверенной локальной среды",
     "Unauthenticated Control Service": "Служба управления без аутентификации",
     "RU (Russian). Switch to English.": "RU (русский). Переключить на английский.",
-    "Open Studio": "Открыть студию",
     "CONTROL OVERVIEW": "ОБЗОР СИСТЕМЫ",
     "Browse the configuration held by this Control Service.": "Просматривайте конфигурации, хранящиеся в этой службе управления.",
     "Refresh": "Обновить",

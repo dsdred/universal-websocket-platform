@@ -1,7 +1,9 @@
 # Текущее состояние
 
 [TASK-140](../docs/tasks/TASK-140-CONTROL-LOCALIZATION.md) добавила EN/RU в локальные Studio (`/`) и Dashboard (`/dashboard`), PR #139.
-[Корректировка по замечанию Owner](../docs/tasks/TASK-140-OWNER-UX-CORRECTION.md) заменяет выпадающий список кнопкой с текущим языком.
+[PR #140](../docs/tasks/TASK-140-OWNER-UX-CORRECTION.md) заменил выпадающий список кнопкой.
+[Упрощение шапки](../docs/tasks/TASK-140-OWNER-HEADER-CLEANUP.md) оставляет на кнопке
+только код текущего языка. Переходы между страницами доступны в основной навигации.
 Выбор хранится в браузере, по умолчанию используется EN. Смена языка сохраняет
 поля, выборы и обратную связь без API-запросов. Корректировка в `In Progress`;
 актуальный gate определяется Recovery Evidence Envelope.

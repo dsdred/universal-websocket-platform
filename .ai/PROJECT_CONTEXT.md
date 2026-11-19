@@ -10,7 +10,8 @@
 
 [TASK-140 — Локализация Studio и Dashboard](../docs/tasks/TASK-140-CONTROL-LOCALIZATION.md) опубликована через PR #139,
 merge `4fcbbacfdfacbd8a39b4ab2233136bb2cb546d29`.
-Текущий срез: [корректировка переключателя по замечанию Owner](../docs/tasks/TASK-140-OWNER-UX-CORRECTION.md), `In Progress`.
+[Корректировка переключателя по замечанию Owner](../docs/tasks/TASK-140-OWNER-UX-CORRECTION.md) опубликована через PR #140.
+Текущий срез: [упрощение шапки](../docs/tasks/TASK-140-OWNER-HEADER-CLEANUP.md), `In Progress`.
 Актуальный gate определяется Recovery Evidence Envelope.
 
 [TASK-138 — Studio UI Owner Acceptance](../docs/tasks/TASK-138-STUDIO-OWNER-ACCEPTANCE.md) —
