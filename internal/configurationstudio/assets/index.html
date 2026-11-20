@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title data-i18n>Local Configuration Studio</title>
   <link rel="icon" type="image/vnd.microsoft.icon" sizes="16x16 32x32 48x48" href="/favicon.ico?v=128">
+  <script src="/configuration-studio/control-theme.js"></script>
   <link rel="stylesheet" href="/configuration-studio/studio.css">
   <link rel="stylesheet" href="/configuration-studio/control.css">
   <script src="/configuration-studio/control-language.js" defer></script>
@@ -17,7 +18,7 @@
     <div class="sidebar-header">
       <a class="brand" href="/dashboard"><img class="brand-mark" src="/configuration-studio/branding/viking-128.png" width="40" height="40" alt=""><span>UWP Control<small data-i18n>Local development</small></span></a>
       <div class="mobile-controls">
-        <div id="mobile-language-slot"></div>
+        <div id="mobile-preferences-slot"></div>
         <button class="navigation-toggle" id="navigation-toggle" type="button" aria-controls="control-navigation" aria-expanded="false" data-i18n-label aria-label="Navigation menu" hidden>
           <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
@@ -39,9 +40,16 @@
   <div id="studio" class="control-main studio-main">
   <div class="topbar">
     <span>UWP Control / <strong data-i18n>Configuration Studio</strong></span>
-    <button class="language-control" id="control-language" type="button" aria-label="EN (English). Switch to Russian.">
-      <span id="control-language-code">EN</span>
-    </button>
+    <div class="control-preferences" id="control-preferences">
+      <select id="control-theme" aria-label="Theme" data-i18n-label>
+        <option value="system" data-i18n>System</option>
+        <option value="light" data-i18n>Light</option>
+        <option value="dark" data-i18n>Dark</option>
+      </select>
+      <button class="language-control" id="control-language" type="button" aria-label="EN (English). Switch to Russian.">
+        <span id="control-language-code">EN</span>
+      </button>
+    </div>
   </div>
   <main class="shell">
     <header>

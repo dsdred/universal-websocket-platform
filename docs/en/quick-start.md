@@ -58,6 +58,11 @@ changes opens a confirmation dialog. Cancel or Escape keeps the Draft open.
 Reloading, closing the tab, or leaving through an external link uses the
 browser’s leave-page warning when the Draft needs protection.
 
+Use **Theme** beside EN/RU to choose **Light**, **Dark**, or **System**.
+System is the default and follows OS appearance changes. The browser shares
+the saved preference between both pages on the same origin. Switching takes
+effect immediately and keeps unsaved Draft edits and validation feedback.
+
 ## Create and publish a configuration
 
 1. Open Configuration Studio at `/`.
