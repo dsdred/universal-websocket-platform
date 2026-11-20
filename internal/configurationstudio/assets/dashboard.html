@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title data-i18n>Dashboard · UWP Control</title>
   <link rel="icon" type="image/vnd.microsoft.icon" sizes="16x16 32x32 48x48" href="/favicon.ico?v=128">
+  <script src="/configuration-studio/control-theme.js"></script>
   <link rel="stylesheet" href="/configuration-studio/control.css">
   <script src="/configuration-studio/control-language.js" defer></script>
   <script src="/configuration-studio/control-navigation.js" defer></script>
@@ -16,7 +17,7 @@
     <div class="sidebar-header">
       <a class="brand" href="/dashboard"><img class="brand-mark" src="/configuration-studio/branding/viking-128.png" width="40" height="40" alt=""><span>UWP Control<small data-i18n>Local development</small></span></a>
       <div class="mobile-controls">
-        <div id="mobile-language-slot"></div>
+        <div id="mobile-preferences-slot"></div>
         <button class="navigation-toggle" id="navigation-toggle" type="button" aria-controls="control-navigation" aria-expanded="false" data-i18n-label aria-label="Navigation menu" hidden>
           <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
@@ -38,9 +39,16 @@
   <main id="main" class="control-main">
     <header class="topbar">
       <span>UWP Control / <strong data-i18n>Dashboard</strong></span>
-      <button class="language-control" id="control-language" type="button" aria-label="EN (English). Switch to Russian.">
-        <span id="control-language-code">EN</span>
-      </button>
+      <div class="control-preferences" id="control-preferences">
+        <select id="control-theme" aria-label="Theme" data-i18n-label>
+          <option value="system" data-i18n>System</option>
+          <option value="light" data-i18n>Light</option>
+          <option value="dark" data-i18n>Dark</option>
+        </select>
+        <button class="language-control" id="control-language" type="button" aria-label="EN (English). Switch to Russian.">
+          <span id="control-language-code">EN</span>
+        </button>
+      </div>
     </header>
     <div class="content">
       <header class="page-heading"><div><p class="eyebrow" data-i18n>CONTROL OVERVIEW</p><h1 data-i18n>Dashboard</h1><p class="muted" data-i18n>Browse the configuration held by this Control Service.</p></div><button id="refresh" type="button" data-i18n>Refresh</button></header>

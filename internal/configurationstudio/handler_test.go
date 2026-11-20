@@ -30,6 +30,7 @@ func TestEmbeddedAssetRoutes(t *testing.T) {
 		{name: "control theme", path: "/configuration-studio/control.css", contentType: "text/css; charset=utf-8", body: controlCSS},
 		{name: "language script", path: "/configuration-studio/control-language.js", contentType: "text/javascript; charset=utf-8", body: controlLanguageJS},
 		{name: "navigation script", path: "/configuration-studio/control-navigation.js", contentType: "text/javascript; charset=utf-8", body: controlNavigationJS},
+		{name: "theme script", path: "/configuration-studio/control-theme.js", contentType: "text/javascript; charset=utf-8", body: controlThemeJS},
 		{name: "dashboard script", path: "/configuration-studio/dashboard.js", contentType: "text/javascript; charset=utf-8", body: dashboardJS},
 	}
 
@@ -53,6 +54,26 @@ func TestEmbeddedAssetRoutes(t *testing.T) {
 			}
 			if got := response.Body.Bytes(); string(got) != string(test.body) {
 				t.Error("response bytes differ from embedded asset")
+			}
+		})
+	}
+}
+
+func TestThemeBootstrapsBeforePageStyles(t *testing.T) {
+	const bootstrap = `<script src="/configuration-studio/control-theme.js"></script>`
+	for _, page := range []struct {
+		name string
+		body []byte
+	}{{"Studio", indexHTML}, {"Dashboard", dashboardHTML}} {
+		t.Run(page.name, func(t *testing.T) {
+			html := string(page.body)
+			script := strings.Index(html, bootstrap)
+			stylesheet := strings.Index(html, `<link rel="stylesheet"`)
+			if script < 0 || stylesheet < script || strings.Count(html, bootstrap) != 1 {
+				t.Fatal("expected one synchronous theme script before the first stylesheet")
+			}
+			if strings.Count(html, `id="control-theme"`) != 1 {
+				t.Fatal("expected one theme control")
 			}
 		})
 	}
@@ -102,7 +123,7 @@ func TestAssetsAreSelfContainedAndShowRequiredNotices(t *testing.T) {
 		}
 	}
 
-	allAssets := string(indexHTML) + string(studioCSS) + string(studioJS) + string(dashboardHTML) + string(controlCSS) + string(dashboardJS)
+	allAssets := string(indexHTML) + string(studioCSS) + string(studioJS) + string(dashboardHTML) + string(controlCSS) + string(dashboardJS) + string(controlThemeJS)
 	for _, forbidden := range []string{"https://", "http://", "//cdn", "@import", "innerHTML", "new WebSocket", "window.open"} {
 		if strings.Contains(allAssets, forbidden) {
 			t.Errorf("embedded assets contain forbidden dependency or behavior %q", forbidden)

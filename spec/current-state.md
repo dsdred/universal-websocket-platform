@@ -12,7 +12,11 @@ TASK-142 опубликована в PR #142, Owner PASS подтверждён.
 [TASK-143](../docs/tasks/TASK-143-STYLED-CONFIRMATION-DIALOGS.md) добавляет
 диалог EN/RU для внутренних переходов и сброса правок в Studio. При выходе
 через браузер действует native beforeunload. TASK-143 опубликована в PR #143,
-Owner Acceptance завершена, PASS 6/6 на 18144. TASK-141 Not Activated.
+Owner Acceptance завершена, PASS 6/6 на 18144.
+[TASK-141](../docs/tasks/TASK-141-CONTROL-THEMES.md) добавляет общие темы
+Light, Dark и System в Studio и Dashboard. System по умолчанию следует ОС.
+Переключение сохраняет правки Draft и не выполняет API-запросов. Статус
+`In Progress` и точные gates фиксируются в task record.
 
 [TASK-138 — Studio UI Owner Acceptance](../docs/tasks/TASK-138-STUDIO-OWNER-ACCEPTANCE.md) —
 Owner functional PASS: 12/12 ручных сценариев на Control Service 18139,

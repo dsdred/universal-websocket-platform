@@ -20,7 +20,8 @@ Universal WebSocket Platform — open-source платформа для созд�
 
 ### Configuration
 
-- [TASK-143](../../tasks/TASK-143-STYLED-CONFIRMATION-DIALOGS.md) опубликовала в PR #143 диалоги EN/RU для внутренних переходов и сброса правок Draft в Studio. Нативная защита при перезагрузке сохраняется. Приёмка Owner завершена, 6 из 6 ручных сценариев прошли на порту 18144. Темы TASK-141 остаются Not Activated.
+- [TASK-143](../../tasks/TASK-143-STYLED-CONFIRMATION-DIALOGS.md) опубликовала в PR #143 диалоги EN/RU для внутренних переходов и сброса правок Draft в Studio. Нативная защита при перезагрузке сохраняется. Приёмка Owner завершена, 6 из 6 ручных сценариев прошли на порту 18144.
+- [TASK-141](../../tasks/TASK-141-CONTROL-THEMES.md) добавляет общие темы Light, Dark и System в Studio и Dashboard. System следует настройке ОС. Смена темы сохраняет правки Draft и не выполняет API-запросов. Проверки и приёмка фиксируются в task record.
 
 - TASK-137 расширяет редактор существующего Draft четырьмя listener timeouts через existing timeout API. Listener address и Timeouts сохраняются отдельно в ту же версию; без implicit create/publish, backend или Runtime changes. Dirty/pending/unknown guards действуют при смене section. Revision/ETag/CAS protection между клиентами отсутствует.
 

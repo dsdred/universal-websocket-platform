@@ -2,9 +2,9 @@
 (() => {
   const menu = document.getElementById("navigation-toggle");
   const nav = document.getElementById("control-navigation");
-  const language = document.getElementById("control-language");
-  const desktopHeader = language.parentElement;
-  const mobileLanguageSlot = document.getElementById("mobile-language-slot");
+  const preferences = document.getElementById("control-preferences");
+  const desktopHeader = preferences.parentElement;
+  const mobilePreferencesSlot = document.getElementById("mobile-preferences-slot");
   const mobile = window.matchMedia("(max-width: 700px)");
   const expanded = () => menu.getAttribute("aria-expanded") === "true";
 
@@ -20,9 +20,9 @@
 
   function syncLayout() {
     const focused = document.activeElement;
-    const destination = mobile.matches ? mobileLanguageSlot : desktopHeader;
+    const destination = mobile.matches ? mobilePreferencesSlot : desktopHeader;
     if (!mobile.matches) desktopHeader.hidden = false;
-    if (language.parentElement !== destination) destination.append(language);
+    if (preferences.parentElement !== destination) destination.append(preferences);
     desktopHeader.hidden = mobile.matches;
     if (mobile.matches) {
       menu.hidden = false;
@@ -32,7 +32,7 @@
       if (focused === menu) nav.querySelector("a").focus();
       menu.hidden = true;
     }
-    if (focused === language && document.activeElement !== language) language.focus();
+    if (preferences.contains(focused) && document.activeElement !== focused) focused.focus();
   }
 
   menu.addEventListener("click", () => {

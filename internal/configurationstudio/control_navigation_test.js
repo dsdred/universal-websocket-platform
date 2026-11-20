@@ -23,8 +23,16 @@ function load(matches) {
     setAttribute(name, value) { this.attributes.set(name, value); }
     getAttribute(name) { return this.attributes.get(name); }
     focus() { document.activeElement = this; }
-    contains(node) { return node === this || node?.parentElement === this; }
-    append(node) { node.parentElement = this; }
+    contains(node) {
+      for (let parent = node; parent; parent = parent.parentElement) {
+        if (parent === this) return true;
+      }
+      return false;
+    }
+    append(node) {
+      if (node.contains(document.activeElement)) document.activeElement = null;
+      node.parentElement = this;
+    }
   }
   const document = new Target();
   const window = new Target();
@@ -33,13 +41,16 @@ function load(matches) {
   window.matchMedia = () => media;
   window.location = { href: "http://localhost/" };
   const menu = new Element(), nav = new Element(), language = new Element(),
+    theme = new Element(), preferences = new Element(),
     desktop = new Element(), slot = new Element(), link = new Element();
-  desktop.append(language);
+  preferences.append(language);
+  preferences.append(theme);
+  desktop.append(preferences);
   nav.append(link);
   nav.querySelector = () => link;
   const nodes = {
     "navigation-toggle": menu, "control-navigation": nav,
-    "control-language": language, "mobile-language-slot": slot,
+    "control-preferences": preferences, "mobile-preferences-slot": slot,
   };
   document.getElementById = (id) => nodes[id];
   vm.runInNewContext(script, { document, window });
@@ -50,12 +61,12 @@ function load(matches) {
   function clickLink(href, props = {}) {
     return nav.emit("click", { button: 0, target: { closest: () => ({ href }) }, ...props });
   }
-  return { document, window, menu, nav, language, desktop, slot, link, resize, clickLink };
+  return { document, window, menu, nav, language, theme, preferences, desktop, slot, link, resize, clickLink };
 }
 
 test("mobile disclosure starts closed and Escape restores focus after opening", () => {
-  const { document, menu, nav, language, desktop, slot, link } = load(true);
-  assert.equal(language.parentElement, slot);
+  const { document, menu, nav, preferences, desktop, slot, link } = load(true);
+  assert.equal(preferences.parentElement, slot);
   assert.equal(desktop.hidden, true);
   assert.equal(menu.hidden, false);
   assert.equal(menu.getAttribute("aria-expanded"), "false");
@@ -86,17 +97,23 @@ test("mobile activation closes, retaining ordinary navigation and suppressing ex
   assert.equal(nav.hidden, true);
 });
 
-test("breakpoints keep one language control and transfer focus out of hidden controls", () => {
-  const { document, window, menu, nav, language, desktop, slot, link, resize } = load(false);
+test("breakpoints move the original preferences and preserve focus on either control", () => {
+  const { document, window, menu, nav, language, theme, preferences, desktop, slot, link, resize } = load(false);
   assert.equal(menu.hidden, true);
   assert.equal(nav.hidden, false);
   language.focus();
   resize(true);
-  assert.equal(language.parentElement, slot);
+  assert.equal(preferences.parentElement, slot);
   assert.equal(document.activeElement, language);
+  theme.focus();
+  resize(false);
+  assert.equal(preferences.parentElement, desktop);
+  assert.equal(document.activeElement, theme);
+  resize(true);
+  assert.equal(document.activeElement, theme);
   menu.focus();
   resize(false);
-  assert.equal(language.parentElement, desktop);
+  assert.equal(preferences.parentElement, desktop);
   assert.equal(desktop.hidden, false);
   assert.equal(menu.hidden, true);
   assert.equal(nav.hidden, false);
