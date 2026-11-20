@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Studio uses a localized in-app confirmation when an internal link or
+  editor action would discard Draft edits. Browser leave-page protection
+  continues to cover reload, tab close, and external links.
+
 - On mobile, Studio and Dashboard put the language toggle and a collapsible
   navigation menu in one compact header. Desktop keeps the sidebar.
 

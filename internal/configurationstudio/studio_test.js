@@ -17,11 +17,12 @@ class Element {
   setAttribute(name, value) { this.attributes[name] = value; }
   removeAttribute(name) { delete this.attributes[name]; }
   focus() { this.focused = true; }
+  getClientRects() { return this.hidden ? [] : [{}]; }
   append(node) { this.children.push(node); }
   replaceChildren(...nodes) { this.children = nodes; this.value = ""; }
   fire(event, details = {}) {
     let result;
-    for (const callback of this.listeners[event]) result = callback({ preventDefault() {}, ...details });
+    for (const callback of this.listeners[event]) result = callback({ currentTarget: this, preventDefault() { this.defaultPrevented = true; }, ...details });
     return result;
   }
 }
@@ -29,17 +30,39 @@ const reply = (payload, status = 200) => ({ status, json: async () => payload })
 const deferred = () => { let resolve; const promise = new Promise((yes) => { resolve = yes; }); return { resolve, promise }; };
 async function settle() { for (let i = 0; i < 8; i++) await new Promise(setImmediate); }
 function start(route, storage = new Map()) {
-  const ids = ["control-language", "control-language-code", "configuration-form", "creation-mode", "existing-workspace", "existing-configuration", "submit-button", "flow-status", "result", "result-state", "result-version", "result-url", "reload-lists", "workspace-name", "configuration-name", "listener-host", "listener-host-error", "listener-port", "listener-port-error", "list-status", "existing-resources", "configuration-choice", "workspace-fields", "configuration-fields", "listener-fields", "result-url-row", "start-another", "existing-draft", "draft-fields", "draft-status", "reload-draft", "draft-section", "timeout-fields", "timeout-handshake", "timeout-read", "timeout-write", "timeout-idle"];
+  const ids = ["studio-confirmation", "confirmation-cancel", "confirmation-discard", "confirmation-message", "confirmation-warning", "navigation-toggle", "control-language", "control-language-code", "configuration-form", "creation-mode", "existing-workspace", "existing-configuration", "submit-button", "flow-status", "result", "result-state", "result-version", "result-url", "reload-lists", "workspace-name", "configuration-name", "listener-host", "listener-host-error", "listener-port", "listener-port-error", "list-status", "existing-resources", "configuration-choice", "workspace-fields", "configuration-fields", "listener-fields", "result-url-row", "start-another", "existing-draft", "draft-fields", "draft-status", "reload-draft", "draft-section", "timeout-fields", "timeout-handshake", "timeout-read", "timeout-write", "timeout-idle"];
   const nodes = Object.fromEntries(ids.map((id) => [id, new Element()]));
   Object.assign(nodes["creation-mode"], { value: "new-workspace" });
   nodes["workspace-name"].value = "Workspace"; nodes["configuration-name"].value = "Configuration";
   nodes["listener-host"].value = "127.0.0.1"; nodes["listener-port"].value = "8080";
   const requests = [], timers = new Map(), confirms = [], windowEvents = {}; let timerID = 0;
-  const decisions = [];
+  const decisions = [], documentEvents = {}, navigationAttempts = [];
+  const navigation = { fail: false };
+  const confirmation = nodes["studio-confirmation"];
+  confirmation.open = false;
+  nodes["navigation-toggle"].hidden = true;
+  confirmation.showModal = () => {
+    assert.equal(confirmation.open, false);
+    confirmation.open = true;
+    confirms.push(nodes["confirmation-message"].textContent);
+    if (navigation.autoConfirm !== false) {
+      const choice = decisions.length ? decisions.shift() : true;
+      queueMicrotask(() => nodes[choice ? "confirmation-discard" : "confirmation-cancel"].fire("click"));
+    }
+  };
+  confirmation.close = () => { confirmation.open = false; };
   const environment = vm.createContext({
-    window: { confirm: (message) => { confirms.push(message); return decisions.length ? decisions.shift() : true; }, addEventListener: (event, callback) => { windowEvents[event] = callback; } },
+    URL,
+    window: {
+      location: { href: "http://localhost/", origin: "http://localhost", pathname: "/", search: "", assign(url) {
+        navigationAttempts.push(url);
+        if (navigation.fail) throw new Error("navigation failed");
+      } },
+      addEventListener: (event, callback) => { windowEvents[event] = callback; },
+    },
     document: {
       documentElement: {},
+      addEventListener: (event, callback) => { documentEvents[event] = callback; },
       getElementById: (id) => nodes[id],
       createElement: () => new Element(),
       querySelectorAll(selector) {
@@ -56,7 +79,17 @@ function start(route, storage = new Map()) {
   vm.runInContext(languageScript, environment, { filename: "control-language.js" });
   vm.runInContext(script, environment, { filename: "studio.js" });
   return {
-    nodes, requests, document: environment.document, timers, confirms, decisions, windowEvents,
+    nodes, requests, document: environment.document, timers, confirms, decisions, windowEvents, navigation, navigationAttempts,
+    follow(href, options = {}) {
+      const link = new Element();
+      Object.assign(link, { href, target: "", closest: () => link, hasAttribute: () => false }, options.link);
+      const { link: _, ...eventOptions } = options;
+      const event = {
+        button: 0, target: link, defaultPrevented: false, preventDefault() { this.defaultPrevented = true; }, ...eventOptions,
+      };
+      const result = documentEvents.click(event);
+      return { link, event, result };
+    },
     select: async (id, value) => { nodes[id].value = value; await nodes[id].fire("change"); },
     submit: () => nodes["configuration-form"].fire("submit"),
     again: () => nodes["start-another"].fire("click"),
@@ -322,6 +355,10 @@ test("duplicate Save and navigation while pending cannot redirect pinned request
   await editor(app); await editHost(app); const saving = app.submit(); await app.submit();
   for (const id of ["creation-mode", "existing-workspace", "existing-configuration", "existing-draft", "listener-host", "listener-port", "reload-lists", "reload-draft"]) assert.equal(app.nodes[id].disabled, true, id);
   await app.select("existing-draft", "6"); await app.select("creation-mode", "new-workspace");
+  const departure = app.follow("http://localhost/dashboard");
+  assert.equal(departure.event.defaultPrevented, true);
+  assert.equal(app.confirms.length, 0);
+  assert.deepEqual(app.navigationAttempts, []);
   assert.equal(app.nodes["existing-draft"].value, "3");
   assert.equal(app.nodes["creation-mode"].value, "existing-draft");
   pending.resolve(reply(version("Draft", { listener: { host: "localhost", port: 8080 } }))); await saving;
@@ -875,4 +912,83 @@ test("missing translation uses English and both pages have a Russian entry for a
   assert.equal(env.document.documentElement.lang, "ru");
   assert.equal(vm.runInContext('ControlLanguage.text(ControlLanguage.message("Unlisted message {0}", 1))', env), "Unlisted message 1");
   for (const node of nodes.slice(2)) assert.match(node.textContent, /[А-Яа-яЁё]/);
+});
+
+test("dirty internal navigation opens one dialog and Escape preserves the draft", async () => {
+  const app = start(editorRoutes);
+  await editor(app);
+  await editHost(app);
+  app.navigation.autoConfirm = false;
+  const original = app.follow("http://localhost/dashboard#workspaces");
+  const duplicate = app.follow("http://localhost/dashboard#configurations");
+  assert.equal(original.event.defaultPrevented, true);
+  assert.equal(duplicate.event.defaultPrevented, true);
+  assert.equal(app.confirms.length, 1);
+  const before = app.requests.length;
+  await app.nodes["studio-confirmation"].fire("cancel");
+  await original.result;
+  assert.equal(app.requests.length, before);
+  assert.deepEqual(app.navigationAttempts, []);
+  assert.equal(app.nodes["listener-host"].value, "localhost");
+  assert.equal(app.nodes["existing-draft"].value, "3");
+  assert.equal(app.nodes["draft-section"].value, "listener");
+  assert.equal(original.link.focused, true);
+  assert.equal(app.nodes["studio-confirmation"].attributes["aria-describedby"], "confirmation-message");
+});
+
+test("confirmed departure attempts the captured route once and later edits still trigger native unload", async () => {
+  const app = start(editorRoutes);
+  await editor(app);
+  await editHost(app);
+  app.navigation.autoConfirm = false;
+  app.navigation.fail = true;
+  const leaving = app.follow("http://localhost/dashboard#workspaces");
+  await app.nodes["confirmation-discard"].fire("click");
+  await app.nodes["confirmation-discard"].fire("click");
+  await leaving.result;
+  assert.deepEqual(app.navigationAttempts, ["http://localhost/dashboard#workspaces"]);
+  assert.equal(app.nodes["listener-host"].value, "127.0.0.1");
+  assert.equal(app.nodes["existing-draft"].value, "3");
+  assert.match(app.nodes["flow-status"].textContent, /Could not open the requested page/);
+  await editHost(app);
+  const unload = { preventDefault() { this.prevented = true; } };
+  app.windowEvents.beforeunload(unload);
+  assert.equal(unload.prevented, true);
+});
+
+test("dirty desktop self reload is guarded while anchors, external and new-tab links retain browser behavior", async () => {
+  const app = start(editorRoutes);
+  await editor(app);
+  await editHost(app);
+  app.decisions.push(false);
+  const same = app.follow("http://localhost/");
+  assert.equal(same.event.defaultPrevented, true);
+  await same.result;
+  for (const [url, opts] of [
+    ["http://localhost/#studio"], ["https://example.test/"],
+    ["http://localhost/dashboard", { ctrlKey: true }],
+    ["http://localhost/dashboard", { link: { target: "_blank" } }],
+    ["http://localhost/dashboard", { link: { hasAttribute: () => true } }],
+  ]) assert.equal(app.follow(url, opts).event.defaultPrevented, false);
+  assert.equal(app.confirms.length, 1);
+});
+
+test("unknown save departure keeps its warning and requires a fresh read before Save on return", async () => {
+  const app = start((url, options) => options.method === "PUT" ? reply({}, 500) : editorRoutes(url, options));
+  await editor(app);
+  await editHost(app);
+  await app.submit();
+  app.navigation.autoConfirm = false;
+  const pending = app.follow("http://localhost/dashboard");
+  assert.equal(app.nodes["confirmation-warning"].hidden, false);
+  assert.equal(app.nodes["studio-confirmation"].attributes["aria-describedby"], "confirmation-message confirmation-warning");
+  await app.nodes["confirmation-discard"].fire("click");
+  await pending.result;
+  assert.deepEqual(app.navigationAttempts, ["http://localhost/dashboard"]);
+  assert.equal(app.nodes["existing-draft"].value, "");
+  assert.equal(app.nodes["submit-button"].disabled, true);
+  const count = app.requests.length;
+  await app.select("existing-draft", "3");
+  assert.equal(app.requests.length, count + 1);
+  assert.equal(app.requests.at(-1).options.method, "GET");
 });

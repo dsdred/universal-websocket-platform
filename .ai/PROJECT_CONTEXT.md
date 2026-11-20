@@ -12,7 +12,8 @@
 merge `4fcbbacfdfacbd8a39b4ab2233136bb2cb546d29`.
 [Корректировка переключателя по замечанию Owner](../docs/tasks/TASK-140-OWNER-UX-CORRECTION.md) опубликована через PR #140.
 [Упрощение шапки](../docs/tasks/TASK-140-OWNER-HEADER-CLEANUP.md) опубликовано через PR #141.
-Текущий срез: [TASK-142 — адаптивная навигация](../docs/tasks/TASK-142-RESPONSIVE-NAVIGATION.md), `In Progress`.
+[TASK-142 — адаптивная навигация](../docs/tasks/TASK-142-RESPONSIVE-NAVIGATION.md) опубликована через PR #142. Owner PASS подтверждён.
+Текущий срез: [TASK-143 — диалоги подтверждения](../docs/tasks/TASK-143-STYLED-CONFIRMATION-DIALOGS.md), `In Progress`.
 Актуальный gate определяется Recovery Evidence Envelope.
 
 [TASK-138 — Studio UI Owner Acceptance](../docs/tasks/TASK-138-STUDIO-OWNER-ACCEPTANCE.md) —

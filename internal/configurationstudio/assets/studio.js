@@ -153,13 +153,99 @@ function restoreChoices() {
   configurationChoice.value = choices.configuration; draftChoice.value = choices.draft;
   sectionChoice.value = editorSection;
 }
-function allowNavigation(message = "Discard local Draft edits and leave this Draft?") {
-  if (busy || locked) { restoreChoices(); return false; }
-  if ((dirty() || saveUnknown) && !window.confirm(text(message) + (saveUnknown ? " " + text("The previous save outcome is unknown; stored values must be reloaded before another save.") : ""))) {
-    restoreChoices(); return false;
-  }
-  return true;
+const confirmation = $("studio-confirmation");
+let pendingConfirmation = null;
+
+function restoreConfirmationFocus(trigger) {
+  if (trigger.getClientRects().length && !trigger.disabled) trigger.focus();
+  else if (!$("navigation-toggle").hidden) $("navigation-toggle").focus();
 }
+
+function finishConfirmation(confirmed) {
+  const pending = pendingConfirmation;
+  if (!pending) return;
+  pendingConfirmation = null;
+  confirmation.close();
+  restoreConfirmationFocus(pending.trigger);
+  if (!confirmed || busy || (locked && !pending.allowLocked)) {
+    pending.resolve();
+    return;
+  }
+  try { pending.resolve(pending.action()); }
+  catch (error) { pending.reject(error); }
+}
+
+$("confirmation-cancel").addEventListener("click", () => finishConfirmation(false));
+$("confirmation-discard").addEventListener("click", () => finishConfirmation(true));
+confirmation.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") event.stopPropagation();
+});
+confirmation.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  finishConfirmation(false);
+});
+window.addEventListener("pagehide", () => finishConfirmation(false));
+
+function requestAction(trigger, action, copy = "Discard local Draft edits and leave this Draft?", allowLocked = false) {
+  if (pendingConfirmation || busy || (locked && !allowLocked)) return;
+  if (!dirty() && !saveUnknown) return action();
+  show($("confirmation-message"), copy);
+  $("confirmation-warning").hidden = !saveUnknown;
+  confirmation.setAttribute("aria-describedby", saveUnknown
+    ? "confirmation-message confirmation-warning" : "confirmation-message");
+  return new Promise((resolve, reject) => {
+    pendingConfirmation = { trigger, action, allowLocked, resolve, reject };
+    try { confirmation.showModal(); }
+    catch (error) { pendingConfirmation = null; reject(error); }
+  });
+}
+
+function guardChoice(select, action, copy) {
+  select.addEventListener("change", () => {
+    const proposed = select.value;
+    restoreChoices();
+    return requestAction(select, () => {
+      select.value = proposed;
+      return action();
+    }, copy);
+  });
+}
+
+function discardAndLeave(url) {
+  // Confirmation authorizes discarding local edits before attempting navigation.
+  // Keep beforeunload armed for any subsequent edit, even if this navigation fails.
+  restoreEditorInputs();
+  if (saveUnknown) {
+    // Reopening from the existing list performs a fresh read before enabling Save.
+    openedDraft = null;
+    draftChoice.value = "";
+    saveUnknown = false;
+    rememberChoices();
+    draftStatus("Select a Draft to open it.");
+  } else updateDirty();
+  syncControls();
+  setStatus("Ready.");
+  try { window.location.assign(url); }
+  catch (_) { setStatus("Could not open the requested page.", "error"); }
+}
+
+document.addEventListener("click", (event) => {
+  if (event.defaultPrevented || event.button !== 0 ||
+      event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+  const link = event.target.closest("a[href]");
+  if (!link || link.hasAttribute("download") || (link.target && link.target !== "_self")) return;
+  const destination = new URL(link.href);
+  const current = window.location;
+  if (destination.origin !== current.origin || !["/", "/dashboard"].includes(destination.pathname)) return;
+  const sameDocument = destination.pathname === current.pathname && destination.search === current.search;
+  if (sameDocument && (destination.hash || (!$("navigation-toggle").hidden &&
+      destination.href === current.href && $("control-navigation").contains(link)))) return;
+  if (!busy && !dirty() && !saveUnknown) return;
+  event.preventDefault();
+  return requestAction(link, () => discardAndLeave(destination.href),
+    "Discard local Draft edits and leave this page?", true);
+}, true);
+
 function draftStatus(copy) { show($("draft-status"), copy); }
 function clearDrafts() {
   drafts = new Map(); openedDraft = null; saveUnknown = false;
@@ -317,7 +403,6 @@ async function loadLists(workspaceID) {
   }
 }
 function updateMode() {
-  if (!allowNavigation()) return;
   invalidateLists();
   workspaces = new Map();
   placeholder(workspaceChoice, "Select a Workspace");
@@ -335,9 +420,8 @@ function updateMode() {
   syncControls();
   if (mode.value !== "new-workspace") return loadLists();
 }
-mode.addEventListener("change", updateMode);
-workspaceChoice.addEventListener("change", () => {
-  if (!allowNavigation()) return;
+guardChoice(mode, updateMode);
+guardChoice(workspaceChoice, () => {
   invalidateLists(); clearConfigurations();
   rememberChoices();
   setStatus("Ready."); syncControls();
@@ -346,18 +430,16 @@ workspaceChoice.addEventListener("change", () => {
     catch (error) { setStatus(error.copy, "error"); }
   }
 });
-configurationChoice.addEventListener("change", () => {
-  if (!allowNavigation()) return;
+guardChoice(configurationChoice, () => {
   invalidateLists(); clearDrafts(); clearResult(); rememberChoices(); setStatus("Ready."); syncControls();
   if (editing() && configurationChoice.value) return loadDrafts();
 });
-$("reload-lists").addEventListener("click", () => {
-  if (!allowNavigation()) return;
+$("reload-lists").addEventListener("click", (event) => requestAction(event.currentTarget, () => {
   clearConfigurations();
   workspaces = new Map(); placeholder(workspaceChoice, "Select a Workspace");
   rememberChoices();
   return loadLists();
-});
+}));
 function inputValues(listener) {
   if (!["new-workspace", "new-configuration", "existing-configuration"].includes(mode.value)) throw new LocalError("Select an action.");
   const values = { mode: mode.value };
@@ -454,14 +536,13 @@ function restoreEditorInputs() {
   hostInput.value = openedDraft.host; portInput.value = String(openedDraft.port);
   for (const [key, input] of timeoutFields) input.value = String(openedDraft.timeouts[key]);
 }
-sectionChoice.addEventListener("change", () => {
-  if (loading || !allowNavigation("Discard local Draft edits and change the editing section?")) { restoreChoices(); return; }
-  if (!["listener", "timeouts"].includes(sectionChoice.value)) { restoreChoices(); return; }
+guardChoice(sectionChoice, () => {
+  if (loading || !["listener", "timeouts"].includes(sectionChoice.value)) { restoreChoices(); return; }
   editorSection = sectionChoice.value;
   restoreEditorInputs();
   if (!saveUnknown) draftStatus("Editing section changed. No unsaved changes.");
   syncControls();
-});
+}, "Discard local Draft edits and change the editing section?");
 function editorScope() {
   return { workspaceID: selectedID(workspaceChoice, workspaces), configurationID: selectedID(configurationChoice, configurations) };
 }
@@ -511,14 +592,14 @@ async function loadDrafts(versionID) {
     if (generation === listGeneration) { loading = false; syncControls(); }
   }
 }
-draftChoice.addEventListener("change", () => {
-  if (!allowNavigation()) return;
+guardChoice(draftChoice, () => {
   try { return loadDrafts(selectedID(draftChoice, drafts)); }
   catch (error) { restoreChoices(); setStatus(error.copy, "error"); }
 });
-$("reload-draft").addEventListener("click", () => {
-  if (!openedDraft || !allowNavigation("Discard local Draft edits and load the current stored values from Control Service?")) return;
-  return loadDrafts(openedDraft.id);
+$("reload-draft").addEventListener("click", (event) => {
+  if (!openedDraft) return;
+  return requestAction(event.currentTarget, () => loadDrafts(openedDraft.id),
+    "Discard local Draft edits and load the current stored values from Control Service?");
 });
 async function saveDraft() {
   if (!openedDraft || saveUnknown || !dirty()) return;
@@ -565,13 +646,11 @@ async function saveDraft() {
 }
 form.addEventListener("reset", (event) => {
   event.preventDefault();
-  if (!allowNavigation()) return;
-  clearDrafts();
-  return updateMode();
+  return requestAction(document.activeElement || mode, updateMode);
 });
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (busy || locked || loading) return;
+  if (pendingConfirmation || busy || locked || loading) return;
   if (editing()) return saveDraft();
   clearResult();
   const listener = mode.value === "existing-configuration" ? null : validateListenerFields();
@@ -596,11 +675,11 @@ form.addEventListener("submit", async (event) => {
     if (!success) statusOutput.focus();
   }
 });
-$("start-another").addEventListener("click", () => {
-  if (busy || !locked) return;
-  if ((dirty() || saveUnknown) && !window.confirm(text("Discard local Draft edits?"))) return;
-  clearDrafts();
-  locked = false; $("start-another").hidden = true;
-  return updateMode();
+$("start-another").addEventListener("click", (event) => {
+  if (!locked) return;
+  return requestAction(event.currentTarget, () => {
+    locked = false; $("start-another").hidden = true;
+    return updateMode();
+  }, "Discard local Draft edits?", true);
 });
 updateMode();
