@@ -20,6 +20,8 @@ The repository currently contains an Alpha foundation rather than a production-r
 
 ### Configuration
 
+- [TASK-143](../../tasks/TASK-143-STYLED-CONFIRMATION-DIALOGS.md) shipped EN/RU Studio confirmation dialogs for internal navigation and discarding Draft edits in PR #143. Native reload protection remains active. Owner Acceptance closed with 6/6 manual scenarios passing on port 18144. TASK-141 themes remain Not Activated.
+
 - TASK-137 extends the existing-Draft editor with four listener timeout values through the existing timeout API. Listener address and Timeouts are saved separately to the same version; no implicit create/publish, backend or Runtime change. Dirty, pending and unknown-outcome guards apply to section switches. Concurrent writers have no revision/ETag/CAS protection.
 
 - TASK-136 adds a bounded existing-Draft listener editor in Studio: scoped discovery/open and explicit host/port Save to the same Draft, with dirty-navigation guards and no implicit publication. Other configuration sections and all TASK-135 creation flows are preserved. Concurrent writers have no revision/CAS protection; exact gates are recorded in TASK-136.
