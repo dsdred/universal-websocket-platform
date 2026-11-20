@@ -53,6 +53,10 @@ use the saved browser preference. Switching in Studio keeps your current
 selections and unsaved Draft edits. Use the main navigation to move between
 Studio and Dashboard. On narrow screens, use the menu button beside EN/RU in
 the global header. Select a link or press Escape to close the menu.
+In Studio, a link that would leave a Draft with unsaved
+changes opens a confirmation dialog. Cancel or Escape keeps the Draft open.
+Reloading, closing the tab, or leaving through an external link uses the
+browser’s leave-page warning when the Draft needs protection.
 
 ## Create and publish a configuration
 

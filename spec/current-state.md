@@ -8,7 +8,11 @@
 поля, выборы и обратную связь без API-запросов. Упрощение опубликовано в PR #141.
 [TASK-142](../docs/tasks/TASK-142-RESPONSIVE-NAVIGATION.md) добавляет компактную
 мобильную шапку с языком и меню. Desktop сохраняет боковую навигацию.
-Актуальный gate определяется Recovery Evidence Envelope. TASK-141 Not Activated.
+TASK-142 опубликована в PR #142, Owner PASS подтверждён.
+[TASK-143](../docs/tasks/TASK-143-STYLED-CONFIRMATION-DIALOGS.md) добавляет
+диалог EN/RU для внутренних переходов и сброса правок в Studio. При выходе
+через браузер действует native beforeunload. TASK-141 Not Activated.
+Актуальный gate определяется Recovery Evidence Envelope.
 
 [TASK-138 — Studio UI Owner Acceptance](../docs/tasks/TASK-138-STUDIO-OWNER-ACCEPTANCE.md) —
 Owner functional PASS: 12/12 ручных сценариев на Control Service 18139,

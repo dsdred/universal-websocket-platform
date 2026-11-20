@@ -172,3 +172,22 @@ body .studio-main .listener-fields input[aria-invalid="true"] { border-color: #e
   overflow-wrap: anywhere;
 }
 .listener-field-error:empty { margin: 0; }
+
+.studio-confirmation {
+  width: min(28rem, calc(100% - 2rem));
+  max-height: calc(100% - 2rem);
+  overflow: auto;
+  padding: 1.25rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.studio-confirmation::backdrop { background: rgb(0 0 0 / 65%); }
+.studio-confirmation h2 { font-size: 1.1rem; }
+.studio-confirmation p { color: var(--muted); }
+#confirmation-warning { color: #d5c394; }
+.confirmation-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .65rem; }
+.confirmation-actions button { margin: 0; min-height: 44px; }
+#confirmation-discard { background: #783640; }
+#confirmation-discard:hover { background: #91434e; }

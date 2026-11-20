@@ -157,5 +157,14 @@
     </section>
   </main>
   </div>
+  <dialog id="studio-confirmation" class="studio-confirmation" aria-labelledby="confirmation-title" aria-describedby="confirmation-message">
+    <h2 id="confirmation-title" data-i18n>Discard Draft edits?</h2>
+    <p id="confirmation-message"></p>
+    <p id="confirmation-warning" data-i18n hidden>The previous save outcome is unknown; stored values must be reloaded before another save.</p>
+    <div class="confirmation-actions">
+      <button id="confirmation-cancel" type="button" data-i18n autofocus>Cancel</button>
+      <button id="confirmation-discard" type="button" data-i18n>Discard edits</button>
+    </div>
+  </dialog>
 </body>
 </html>

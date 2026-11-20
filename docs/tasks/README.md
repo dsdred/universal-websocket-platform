@@ -7,8 +7,9 @@ operational документы ведутся на русском языке и 
 merge `4fcbbacfdfacbd8a39b4ab2233136bb2cb546d29`.
 [Корректировка переключателя по замечанию Owner](TASK-140-OWNER-UX-CORRECTION.md) опубликована через PR #140.
 [Упрощение шапки по замечанию Owner](TASK-140-OWNER-HEADER-CLEANUP.md) опубликовано через PR #141.
-[TASK-142 — Адаптивная навигация Studio и Dashboard](TASK-142-RESPONSIVE-NAVIGATION.md) — `In Progress`.
-TASK-141 остаётся Not Activated. Выбран пункт 3 UX-плана TASK-138.
+[TASK-142 — Адаптивная навигация Studio и Dashboard](TASK-142-RESPONSIVE-NAVIGATION.md) опубликована через PR #142. Owner PASS подтверждён.
+[TASK-143 — Диалоги подтверждения Studio](TASK-143-STYLED-CONFIRMATION-DIALOGS.md) — `In Progress`, пункт 4 UX-плана TASK-138.
+TASK-141 (темы) остаётся Not Activated.
 Актуальный gate определяется Recovery Evidence Envelope.
 
 [TASK-138 — Studio UI Owner Acceptance](TASK-138-STUDIO-OWNER-ACCEPTANCE.md) —
