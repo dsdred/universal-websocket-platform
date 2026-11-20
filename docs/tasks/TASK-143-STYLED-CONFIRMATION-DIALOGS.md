@@ -2,7 +2,7 @@
 
 ## Status
 
-`In Progress`. Текущий gate определяется Recovery Evidence Envelope.
+`Completed`. Реализация опубликована через PR #143. Owner Acceptance завершена, PASS 6/6.
 
 ## Task Contract
 
@@ -64,6 +64,29 @@ project context, task index, current state, CHANGELOG и Quick Start EN/RU.
 Draft и перед новым Save требует повторного открытия со свежим GET.
 Cancel/Escape выполняется до локального сброса. Busy блокирует внутренний
 переход до завершения сохранения и сохраняет браузерную защиту выхода.
+
+## Owner Acceptance Closure
+
+21 ноября 2026 года Owner подтвердил **PASS, 6/6** на локальном Control
+Service `127.0.0.1:18144` для опубликованной ветки `main`.
+[PR #143](https://github.com/dsdred/universal-websocket-platform/pull/143)
+слит в `20d8cba810bbd5765480e4457a04942667e0b36b`. Owner сообщил
+о прохождении всех ручных сценариев и отсутствии функциональных блокеров.
+
+Подтверждены диалог в стиле UWP, сохранение несохранённых правок Draft
+при Cancel, один переход без повторного диалога при Confirm, выход по
+Escape, возврат клавиатурного фокуса, EN/RU, мобильный интерфейс при ширине 390 px и нативная
+защита при перезагрузке. Confirm явно отбрасывает правки до попытки
+перехода. Прерванный переход не восстанавливает их автоматически.
+Нативная защита действует для последующих правок.
+
+Сверка документации охватывает этот task record, реестр задач, контекст
+проекта, текущее состояние и оба MASTER_PLAN. Пункт 4 исторического
+UX-плана TASK-138 связан с итогом через реестр. Реализация, архитектура,
+API, Runtime и стадии roadmap сохраняются. `spec/decisions.md`, корневые
+README, Quick Start и CHANGELOG проверены на применимость: запись о
+приёмке не меняет контракты, инструкции или выпущенные изменения.
+TASK-141 остаётся Not Activated.
 
 ## Recovery Evidence Envelope
 
@@ -141,3 +164,41 @@ Confirm явно отбрасывает локальные правки и ин�
   и результаты Pre-Commit Report относятся к тому же subject.
 - STOP на Commit Gate. Index пуст. Решение Owner о поведении
   не является разрешением на stage, commit или publication.
+
+### Pre-Commit Report — Owner Acceptance Closure, 2026-11-21
+
+- Coordinator Acceptance: `Accepted` для документационного закрытия.
+  Ветка `docs/task-143-owner-acceptance-closure`, HEAD и база
+  `20d8cba810bbd5765480e4457a04942667e0b36b`. Canonical SHA-1
+  `8243574ff9ee2db80ab4bc30049eedbff1394d98`. Scope Audit 6 Required,
+  0 Questionable, 0 Removable. Архитектура и production code сохранены.
+- Независимый Reviewer: `APPROVED`, 0 blocking и 0 unresolved findings.
+  Reviewer независимо воспроизвёл шесть строк, сверил исходный контракт
+  и историческую часть envelope байт-в-байт с опубликованным Git blob,
+  проверил пять относительных ссылок, EN/RU parity и пустой index.
+- Owner Acceptance: **PASS 6/6**, 18144, без функциональных блокеров.
+  GitHub readback: PR #143 `MERGED` в указанный SHA, `go-ci` `SUCCESS`.
+  Ранее подтверждённое ограничение прерванного перехода сохранено.
+- Проверки: 155/155 Node Studio/Dashboard/navigation, пять относительных
+  ссылок, EN/RU parity и `git diff --check` прошли. Полный Go suite
+  повторно не запускался для документационного diff.
+- Сервисы 18138–18144 сохранены. PID в порядке портов
+  `37772`, `21044`, `24148`, `30028`, `26932`, `26260`, `11184`
+  совпали с Owner Acceptance handoff. TASK-141 остаётся Not Activated.
+- STOP на Commit Gate. Изменения подготовлены только в рабочем дереве.
+  Stage, commit и публикация этой записи требуют отдельного разрешения Owner.
+
+#### Exact file manifest — Owner Acceptance Closure
+
+Git object format: SHA-1. Порядок путей по исходным UTF-8 байтам.
+Формат строк в потоке: `path\0projection\0state\0mode\0oid\0`.
+Исторический manifest реализации выше относится к PR #143.
+
+```text
+.ai/PROJECT_CONTEXT.md | full | present | 100644 | 9b8cc2961dbb3881cc35b35b2e09261144cbb521
+docs/en/roadmap/MASTER_PLAN.md | full | present | 100644 | ef9d0163bbbb506b6878a4d91affdc633ed01280
+docs/ru/roadmap/MASTER_PLAN.md | full | present | 100644 | 8231c1a3c3aace97b9a39180c3b44416327a6220
+docs/tasks/README.md | full | present | 100644 | b2be8ade5d4bfef636274162d3889b13b9091b33
+docs/tasks/TASK-143-STYLED-CONFIRMATION-DIALOGS.md | task-record-v1 | present | 100644 | 3eafe7f60892a98303d1c50d60296c98df6ff6cd
+spec/current-state.md | full | present | 100644 | 461bb1fdb6aa80736fa7f3637af24f6c60383226
+```

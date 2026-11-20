@@ -8,14 +8,14 @@ merge `4fcbbacfdfacbd8a39b4ab2233136bb2cb546d29`.
 [Корректировка переключателя по замечанию Owner](TASK-140-OWNER-UX-CORRECTION.md) опубликована через PR #140.
 [Упрощение шапки по замечанию Owner](TASK-140-OWNER-HEADER-CLEANUP.md) опубликовано через PR #141.
 [TASK-142 — Адаптивная навигация Studio и Dashboard](TASK-142-RESPONSIVE-NAVIGATION.md) опубликована через PR #142. Owner PASS подтверждён.
-[TASK-143 — Диалоги подтверждения Studio](TASK-143-STYLED-CONFIRMATION-DIALOGS.md) — `In Progress`, пункт 4 UX-плана TASK-138.
+[TASK-143 — Диалоги подтверждения Studio](TASK-143-STYLED-CONFIRMATION-DIALOGS.md), пункт 4 [UX-плана TASK-138](TASK-138-STUDIO-OWNER-ACCEPTANCE.md), опубликована через PR #143.
+Merge `20d8cba810bbd5765480e4457a04942667e0b36b`. Owner Acceptance завершена, PASS 6/6 на 18144.
 TASK-141 (темы) остаётся Not Activated.
-Актуальный gate определяется Recovery Evidence Envelope.
 
 [TASK-138 — Studio UI Owner Acceptance](TASK-138-STUDIO-OWNER-ACCEPTANCE.md) —
 Owner functional PASS: 12/12 ручных сценариев на Control Service 18139,
 собранном из опубликованного TASK-139. Документационный gate и точное evidence —
-в task record. Остальные Studio UI/UX improvements остаются Not Activated.
+в task record. Статусы последующих UX-задач указаны выше.
 
 [TASK-139](TASK-139-LISTENER-VALIDATION-UX.md) опубликована через PR #137,
 merge `aa5326353f0042956cbb313bff1dc60b093fef12`, P10/P10R PASS.
