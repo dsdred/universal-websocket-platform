@@ -58,11 +58,11 @@ changes opens a confirmation dialog. Cancel or Escape keeps the Draft open.
 Reloading, closing the tab, or leaving through an external link uses the
 browser’s leave-page warning when the Draft needs protection.
 
-Beside EN/RU, choose the sun for **Light**, moon for **Dark**, or monitor for
-**System**. The selected icon has a highlighted border.
-System is the default and follows OS appearance changes. The browser shares
-the saved preference between both pages on the same origin. Switching takes
-effect immediately and keeps unsaved Draft edits and validation feedback.
+Beside EN/RU, select the sun to switch to **Light** or the moon to switch to
+**Dark**. When no Light or Dark preference is saved, the theme follows OS
+appearance changes. The browser shares the saved palette across both pages
+of the same origin. Switching takes effect immediately and keeps unsaved
+Draft edits and validation feedback.
 
 ## Create and publish a configuration
 

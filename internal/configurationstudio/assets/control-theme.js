@@ -11,13 +11,18 @@
   }
 
   let preference = savedPreference() ?? "system";
-  let radios = [];
+  let button;
   let pageOnlyPreference = false;
 
+  function action() {
+    const dark = preference === "system" ? systemDark.matches : preference === "dark";
+    return dark ? "light" : "dark";
+  }
+
   function apply() {
-    const effective = preference === "system" ? (systemDark.matches ? "dark" : "light") : preference;
-    root.dataset.controlTheme = effective;
-    for (const radio of radios) radio.checked = radio.value === preference;
+    const next = action();
+    root.dataset.controlTheme = next === "light" ? "dark" : "light";
+    if (button) button.setAttribute("aria-labelledby", `theme-switch-${next}`);
   }
 
   function syncPreference() {
@@ -31,18 +36,16 @@
 
   apply();
   document.addEventListener("DOMContentLoaded", () => {
-    radios = document.getElementById("control-theme").querySelectorAll('input[type="radio"]');
+    button = document.getElementById("control-theme");
     apply();
-    for (const radio of radios) {
-      radio.addEventListener("change", () => {
-        preference = normalize(radio.value);
-        try {
-          window.localStorage.setItem(preferenceKey, preference);
-          pageOnlyPreference = false;
-        } catch (_) { pageOnlyPreference = true; }
-        apply();
-      });
-    }
+    button.addEventListener("click", () => {
+      preference = action();
+      try {
+        window.localStorage.setItem(preferenceKey, preference);
+        pageOnlyPreference = false;
+      } catch (_) { pageOnlyPreference = true; }
+      apply();
+    });
   }, { once: true });
   systemDark.addEventListener("change", () => {
     if (preference === "system") apply();

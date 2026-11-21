@@ -13,8 +13,9 @@ TASK-142 опубликована в PR #142, Owner PASS подтверждён.
 диалог EN/RU для внутренних переходов и сброса правок в Studio. При выходе
 через браузер действует native beforeunload. TASK-143 опубликована в PR #143,
 Owner Acceptance завершена, PASS 6/6 на 18144.
-[TASK-141](../docs/tasks/TASK-141-CONTROL-THEMES.md) добавляет общие темы
-Light, Dark и System в Studio и Dashboard. System по умолчанию следует ОС.
+[TASK-141](../docs/tasks/TASK-141-CONTROL-THEMES.md) добавляет общую кнопку
+Light/Dark в Studio и Dashboard. Тема следует настройке ОС, пока светлая
+или тёмная тема не сохранена.
 Переключение сохраняет правки Draft и не выполняет API-запросов. Статус
 `In Progress` и точные gates фиксируются в task record.
 
