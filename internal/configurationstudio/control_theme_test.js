@@ -9,7 +9,8 @@ const script = readFileSync(path.join(__dirname, "assets/control-theme.js"), "ut
 const preferenceKey = "uwp-control-theme";
 
 function boot({ saved = null, osDark = false, readBlocked = false, writeBlocked = false } = {}) {
-  const select = new EventTarget();
+  const radios = ["light", "dark", "system"].map((value) =>
+    Object.assign(new EventTarget(), { value, checked: value === "system" }));
   const document = new EventTarget();
   const window = new EventTarget();
   const media = new EventTarget();
@@ -32,7 +33,12 @@ function boot({ saved = null, osDark = false, readBlocked = false, writeBlocked 
   document.documentElement = { dataset };
   document.getElementById = (id) => {
     assert.equal(id, "control-theme");
-    return select;
+    return {
+      querySelectorAll(selector) {
+        assert.equal(selector, 'input[type="radio"]');
+        return radios;
+      },
+    };
   };
   media.matches = osDark;
   window.matchMedia = (query) => {
@@ -43,9 +49,14 @@ function boot({ saved = null, osDark = false, readBlocked = false, writeBlocked 
   vm.runInNewContext(script, { window, document });
 
   return {
-    select, dataset, writes,
+    dataset, writes,
+    checked() { return radios.filter((radio) => radio.checked).map((radio) => radio.value); },
     ready() { emit(document, "DOMContentLoaded"); },
-    choose(value) { select.value = value; emit(select, "change"); },
+    choose(value) {
+      const chosen = radios.find((radio) => radio.value === value);
+      for (const radio of radios) radio.checked = radio === chosen;
+      emit(chosen, "change");
+    },
     os(dark, notify = true) {
       media.matches = dark;
       if (notify) emit(media, "change");
@@ -71,9 +82,9 @@ test("boot applies saved or System colors before the control or styles initializ
   ]) {
     const app = boot({ saved, osDark });
     assert.equal(app.dataset.controlTheme, effective);
-    assert.equal(app.select.value, undefined);
+    assert.deepEqual(app.checked(), ["system"]);
     app.ready();
-    assert.equal(app.select.value, choice);
+    assert.deepEqual(app.checked(), [choice]);
     assert.deepEqual(app.writes, []);
   }
 });
@@ -84,14 +95,16 @@ test("selections persist immediately and only System follows OS changes", () => 
   app.os(true);
   assert.equal(app.dataset.controlTheme, "dark");
   app.choose("light");
+  assert.deepEqual(app.checked(), ["light"]);
   app.os(false);
   app.os(true);
   assert.equal(app.dataset.controlTheme, "light");
   app.choose("dark");
+  assert.deepEqual(app.checked(), ["dark"]);
   app.os(false);
   assert.equal(app.dataset.controlTheme, "dark");
   app.choose("system");
-  assert.equal(app.select.value, "system");
+  assert.deepEqual(app.checked(), ["system"]);
   assert.equal(app.dataset.controlTheme, "light");
   app.os(true);
   assert.equal(app.dataset.controlTheme, "dark");
@@ -102,12 +115,12 @@ test("cross-tab storage changes refresh the current choice without writing back"
   const app = boot({ osDark: true });
   app.external("light");
   app.ready();
-  assert.equal(app.select.value, "light");
+  assert.deepEqual(app.checked(), ["light"]);
   app.external("dark", "uwp-control-theme", {});
   app.external("dark", "uwp-control-language");
-  assert.equal(app.select.value, "light");
+  assert.deepEqual(app.checked(), ["light"]);
   app.external(null, null);
-  assert.equal(app.select.value, "system");
+  assert.deepEqual(app.checked(), ["system"]);
   assert.equal(app.dataset.controlTheme, "dark");
   assert.deepEqual(app.writes, []);
 });
@@ -116,12 +129,12 @@ test("BFCache restoration rechecks storage and System media state", () => {
   const app = boot({ saved: "light" });
   app.ready();
   app.restore("dark", false);
-  assert.equal(app.select.value, "light");
+  assert.deepEqual(app.checked(), ["light"]);
   app.restore("dark");
-  assert.equal(app.select.value, "dark");
+  assert.deepEqual(app.checked(), ["dark"]);
   app.os(true, false);
   app.restore("system");
-  assert.equal(app.select.value, "system");
+  assert.deepEqual(app.checked(), ["system"]);
   assert.equal(app.dataset.controlTheme, "dark");
   app.os(false);
   assert.equal(app.dataset.controlTheme, "light");
@@ -133,7 +146,7 @@ test("blocked storage preserves the page choice and leaves System usable", () =>
     app.ready();
     app.choose("dark");
     app.restore("system");
-    assert.equal(app.select.value, "dark");
+    assert.deepEqual(app.checked(), ["dark"]);
     assert.equal(app.dataset.controlTheme, "dark");
     app.choose("system");
     app.os(true);

@@ -40,11 +40,32 @@
     <header class="topbar">
       <span>UWP Control / <strong data-i18n>Dashboard</strong></span>
       <div class="control-preferences" id="control-preferences">
-        <select id="control-theme" aria-label="Theme" data-i18n-label>
-          <option value="system" data-i18n>System</option>
-          <option value="light" data-i18n>Light</option>
-          <option value="dark" data-i18n>Dark</option>
-        </select>
+        <fieldset id="control-theme" aria-label="Theme" data-i18n-label>
+          <label class="theme-option">
+            <input type="radio" name="control-theme" value="light" aria-label="Light" data-i18n-label>
+            <span class="theme-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/>
+              </svg>
+            </span>
+          </label>
+          <label class="theme-option">
+            <input type="radio" name="control-theme" value="dark" aria-label="Dark" data-i18n-label>
+            <span class="theme-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M21 13.3A9 9 0 0 1 10.7 3 9 9 0 1 0 21 13.3Z"/>
+              </svg>
+            </span>
+          </label>
+          <label class="theme-option">
+            <input type="radio" name="control-theme" value="system" aria-label="System" data-i18n-label checked>
+            <span class="theme-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <rect x="3" y="4" width="18" height="13" rx="2"/><path d="M12 17v4m-4 0h8"/>
+              </svg>
+            </span>
+          </label>
+        </fieldset>
         <button class="language-control" id="control-language" type="button" aria-label="EN (English). Switch to Russian.">
           <span id="control-language-code">EN</span>
         </button>
