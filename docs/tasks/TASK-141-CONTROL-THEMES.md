@@ -83,6 +83,37 @@ task contract, статусы и пользовательские инструк
   ранний скрипт и embedded delivery. Coverage Gap: состояние трёх радиокнопок,
   фокус на вложенной радиокнопке, реальная клавиатура, касание и размеры.
 
+## Owner UX refinement — single theme toggle
+
+- Task Mode `Implementation`. Owner одобрил одну кнопку выбора следующей
+  палитры вместо группы из трёх иконок. База
+  `5312192f919dfbd60a966d49945e5666f6fc0a26`, ветка
+  `feature/task-141-single-theme-toggle`.
+- Scope в `internal/configurationstudio` включает `assets/index.html`,
+  `assets/dashboard.html`, `assets/control.css`, `assets/control-theme.js`,
+  `assets/control-language.js`, `control_theme_test.js`,
+  `control_navigation_test.js` и `handler_test.go`. Документация включает
+  этот record, обе версии Quick Start и MASTER_PLAN, `spec/current-state.md`
+  и `CHANGELOG.md`. API, навигация, TASK-143, архитектура и существующие
+  Control Services на 18138–18147 вне scope.
+- Definition of Done — нативная кнопка рядом с EN/RU с солнцем в тёмной
+  палитре и луной в светлой, локализованным именем действия, фокусом и целью
+  44 × 44 px на 1280/390/320 px. Сохранённый `system` и пустое или неверное
+  значение следуют ОС без записи. Первый клик сохраняет явный Light/Dark под
+  прежним ключом. Вкладки, BFCache и отказ хранилища покрыты проверками.
+  Переключение сохраняет Draft и валидацию без сетевых запросов и навигации.
+- Архитектура сохраняет раннюю установку палитры, локальное предпочтение,
+  существующие маршруты embedded assets и CSP. Роли — Coordinator,
+  Developer/Tester и независимый Reviewer.
+- Existing Coverage включает раннюю установку, System, storage events,
+  BFCache, отказ хранилища, перенос фокуса, выдачу встроенных страниц
+  и защиту Draft. Coverage Gap — переключение на противоположную палитру,
+  динамическое имя действия, миграция старого `system` одним нажатием и
+  нативная активация кнопки на реальных страницах.
+- Verification Plan — Node, полный Go, изолированный Chrome, независимое
+  ревью, PROCESS-002 и точный манифест. STOP на Commit Gate. Stage, commit
+  и publication требуют отдельных команд Owner.
+
 ## Recovery Evidence Envelope
 
 ### Pre-Commit Report — 2026-11-21
@@ -228,4 +259,79 @@ internal/configurationstudio/assets/dashboard.html | full | present | 100644 | 1
 internal/configurationstudio/assets/index.html | full | present | 100644 | 09a177a7c5986e905ed5519fc02f65f736859a3d
 internal/configurationstudio/control_navigation_test.js | full | present | 100644 | b0337d81e7dd0ad07d2332702489df41cd27a279
 internal/configurationstudio/control_theme_test.js | full | present | 100644 | c84e51f9ccef29ec40bf86797dbc32d13b1743d1
+```
+
+### Single Toggle Pre-Commit Report — 2026-11-22
+
+- Coordinator Acceptance для Commit Gate — `Accepted`. Ветка
+  `feature/task-141-single-theme-toggle`, HEAD и опубликованная база
+  `5312192f919dfbd60a966d49945e5666f6fc0a26`. Canonical SHA-1
+  `8b622a5da5c4c81424daef9cc60816da3cc1c097`. Scope Audit
+  15 Required, 0 Questionable, 0 Removable. Index пуст. STOP на Commit Gate.
+- Одна нативная кнопка использует солнце в тёмной палитре и луну в светлой.
+  Локализованное имя описывает следующее действие. Внутренний System
+  сохраняет реакцию на ОС, пока под прежним ключом не записан явный выбор.
+  Отказ записи в хранилище сохраняет выбор на странице и при её возврате
+  из BFCache, что проверено Node.
+- Independent Review — `Approved` по указанному манифесту. Проверены
+  15 файлов, пробельные изменения, EN/RU parity, Node 160/160, Go-пакет Studio
+  и финальный Chrome log. Уточнена документация об уже сохранённом Light/Dark.
+  Открытых замечаний нет.
+- `node --test --test-reporter=spec internal/configurationstudio/studio_test.js internal/configurationstudio/dashboard_test.js internal/configurationstudio/control_navigation_test.js internal/configurationstudio/control_theme_test.js`
+  — 160/160, exit 0. `go test -mod=readonly -p 6 -count=1 ./...` с доступом
+  к loopback — exit 0, 40 пакетов с тестами. `gofmt -l` для
+  `handler_test.go` ничего не вывел. Журналы `node-test.log` и `go-test.log`
+  сохранены в `bin/task141-single-toggle-smoke/`.
+- `go build -mod=readonly -buildvcs=true -o bin/task141-single-toggle-smoke/control-service.exe ./cmd/control-service`
+  — exit 0. Go 1.26.5, `vcs.revision` равен базе, `vcs.modified=true`
+  отражает проверяемый рабочий diff. SHA-256 бинарника
+  `93af8742820e2f07483324f424b93ce0d14a64f7cb62cea76cf8098abd9dd767`.
+- `bin/task141-single-toggle-smoke/browser-run.ps1` прошёл в Chrome
+  158.0.8127.36 на 127.0.0.1:18148, exit 0. В 24 сочетаниях
+  Studio/Dashboard × EN/RU × 1280/390/320 px × Light/Dark подтверждены
+  одиночная кнопка рядом с EN/RU, иконка следующего действия, доступное имя,
+  цель 44 × 44 px и отсутствие переполнения. Проверены Tab, Enter, Space,
+  эмулированное касание, индикация и сохранение фокуса при смене ширины.
+- Chrome подтвердил отсутствие записи до клика для пустого предпочтения
+  и сохранённого `system`, переключение живой темы ОС, явный выбор после
+  клика, сохранение после reload, реальную синхронизацию вкладок и возврат
+  Dashboard из BFCache. Темы переключались без API- и document-запросов.
+  CSP совпал с опубликованным, Draft и ошибка валидации сохранились.
+  TASK-143 Cancel, Escape, возврат фокуса, native beforeunload и однократный
+  переход Confirm прошли. Другие браузеры и физические сенсорные устройства
+  не использовались. Журнал — `bin/task141-single-toggle-smoke/browser-proof.log`.
+- Изолированный PID `2016` остановлен. Порты 18138–18145 и 18147
+  сохранили PID `37772, 21044, 24148, 30028, 26932, 26260, 11184, 30708, 15720`
+  соответственно. 18146 был свободен до и после прогона.
+- PROCESS-002. Обновлены этот record, обе версии Quick Start и MASTER_PLAN,
+  current state и CHANGELOG. Индекс задач и `.ai/PROJECT_CONTEXT.md` уже
+  ссылаются на тот же TASK-141 и текущий статус. ADR/DP, решения и корневые
+  README проверены на применимость. Границы архитектуры и запуска сохраняются.
+  `git -c core.autocrlf=false -c core.whitespace=cr-at-eol diff --check -- <15 paths>`
+  прошла. Окончания строк унаследованы от базы. Сборка и доказательства в
+  игнорируемом `bin/` за пределами манифеста. Stage, commit и publication
+  не выполнялись. Следующая задача не активирована.
+
+#### Exact single toggle manifest
+
+Git object format SHA-1. Порядок строк по исходным UTF-8 байтам пути.
+Поля разделяются NUL, строка также заканчивается NUL.
+OID вычисляется `git hash-object --stdin` для полного потока.
+
+```text
+CHANGELOG.md | full | present | 100644 | 162b6cbe9636b4997be0aef79d97638853939c66
+docs/en/quick-start.md | full | present | 100644 | 738388b50192ffad492e45d8b971106dad8cb017
+docs/en/roadmap/MASTER_PLAN.md | full | present | 100644 | f23487f16bfd585e43011481762798df50d2d00d
+docs/ru/quick-start.md | full | present | 100644 | 2342c44af23423c1e5a793570e44e76491d76fc2
+docs/ru/roadmap/MASTER_PLAN.md | full | present | 100644 | 4e7de4227d44e7b59a0231a1397ffa7e72ea8f5e
+docs/tasks/TASK-141-CONTROL-THEMES.md | task-record-v1 | present | 100644 | 21031184af6cdeebb1b6f0ca8740a18b841e54eb
+internal/configurationstudio/assets/control-language.js | full | present | 100644 | c2f261cc5f40af91e2a9be0ebf18c9d3ec86b2f8
+internal/configurationstudio/assets/control-theme.js | full | present | 100644 | d1e3503a056a314b4360e53e5d9e8e40f0bd2c5f
+internal/configurationstudio/assets/control.css | full | present | 100644 | 4dfa532f51085906af24106686f51a4be0b8be17
+internal/configurationstudio/assets/dashboard.html | full | present | 100644 | 8e3420404cf55c007b1fedca68fd2a7372307d97
+internal/configurationstudio/assets/index.html | full | present | 100644 | b9590f64082e2cc81010bacc10935abe1e3c804a
+internal/configurationstudio/control_navigation_test.js | full | present | 100644 | 4c29210a6f1e893a95c2e979a9d23fa31d6cc781
+internal/configurationstudio/control_theme_test.js | full | present | 100644 | 9984feb28b31c622eb261f6b036488e291e70f75
+internal/configurationstudio/handler_test.go | full | present | 100644 | 79a4ccda00f4e8a8505f95961523352130bf04b0
+spec/current-state.md | full | present | 100644 | a505eec7f7fd02fc5934f171d8028ddbf4af4282
 ```

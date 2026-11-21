@@ -72,8 +72,9 @@ func TestThemeBootstrapsBeforePageStyles(t *testing.T) {
 			if script < 0 || stylesheet < script || strings.Count(html, bootstrap) != 1 {
 				t.Fatal("expected one synchronous theme script before the first stylesheet")
 			}
-			if strings.Count(html, `id="control-theme"`) != 1 {
-				t.Fatal("expected one theme control")
+			if strings.Count(html, `id="control-theme"`) != 1 ||
+				!strings.Contains(html, `<button id="control-theme" type="button"`) {
+				t.Fatal("expected one native theme button")
 			}
 		})
 	}

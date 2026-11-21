@@ -15,8 +15,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- Studio and Dashboard share Light, Dark, and System themes. The browser
-  remembers the selection. System follows live OS appearance changes.
+- Studio and Dashboard share a Light/Dark theme button. The theme follows OS
+  appearance changes when neither palette is saved. The browser remembers
+  the selected palette.
 
 - Studio uses a localized in-app confirmation when an internal link or
   editor action would discard Draft edits. Browser leave-page protection
