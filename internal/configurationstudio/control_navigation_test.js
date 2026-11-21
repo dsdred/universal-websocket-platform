@@ -41,10 +41,11 @@ function load(matches) {
   window.matchMedia = () => media;
   window.location = { href: "http://localhost/" };
   const menu = new Element(), nav = new Element(), language = new Element(),
-    theme = new Element(), preferences = new Element(),
+    theme = new Element(), radio = new Element(), preferences = new Element(),
     desktop = new Element(), slot = new Element(), link = new Element();
   preferences.append(language);
   preferences.append(theme);
+  theme.append(radio);
   desktop.append(preferences);
   nav.append(link);
   nav.querySelector = () => link;
@@ -61,7 +62,7 @@ function load(matches) {
   function clickLink(href, props = {}) {
     return nav.emit("click", { button: 0, target: { closest: () => ({ href }) }, ...props });
   }
-  return { document, window, menu, nav, language, theme, preferences, desktop, slot, link, resize, clickLink };
+  return { document, window, menu, nav, language, radio, preferences, desktop, slot, link, resize, clickLink };
 }
 
 test("mobile disclosure starts closed and Escape restores focus after opening", () => {
@@ -98,19 +99,19 @@ test("mobile activation closes, retaining ordinary navigation and suppressing ex
 });
 
 test("breakpoints move the original preferences and preserve focus on either control", () => {
-  const { document, window, menu, nav, language, theme, preferences, desktop, slot, link, resize } = load(false);
+  const { document, window, menu, nav, language, radio, preferences, desktop, slot, link, resize } = load(false);
   assert.equal(menu.hidden, true);
   assert.equal(nav.hidden, false);
   language.focus();
   resize(true);
   assert.equal(preferences.parentElement, slot);
   assert.equal(document.activeElement, language);
-  theme.focus();
+  radio.focus();
   resize(false);
   assert.equal(preferences.parentElement, desktop);
-  assert.equal(document.activeElement, theme);
+  assert.equal(document.activeElement, radio);
   resize(true);
-  assert.equal(document.activeElement, theme);
+  assert.equal(document.activeElement, radio);
   menu.focus();
   resize(false);
   assert.equal(preferences.parentElement, desktop);

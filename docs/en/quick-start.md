@@ -58,7 +58,8 @@ changes opens a confirmation dialog. Cancel or Escape keeps the Draft open.
 Reloading, closing the tab, or leaving through an external link uses the
 browser’s leave-page warning when the Draft needs protection.
 
-Use **Theme** beside EN/RU to choose **Light**, **Dark**, or **System**.
+Beside EN/RU, choose the sun for **Light**, moon for **Dark**, or monitor for
+**System**. The selected icon has a highlighted border.
 System is the default and follows OS appearance changes. The browser shares
 the saved preference between both pages on the same origin. Switching takes
 effect immediately and keeps unsaved Draft edits and validation feedback.

@@ -11,13 +11,13 @@
   }
 
   let preference = savedPreference() ?? "system";
-  let select;
+  let radios = [];
   let pageOnlyPreference = false;
 
   function apply() {
     const effective = preference === "system" ? (systemDark.matches ? "dark" : "light") : preference;
     root.dataset.controlTheme = effective;
-    if (select) select.value = preference;
+    for (const radio of radios) radio.checked = radio.value === preference;
   }
 
   function syncPreference() {
@@ -31,16 +31,18 @@
 
   apply();
   document.addEventListener("DOMContentLoaded", () => {
-    select = document.getElementById("control-theme");
+    radios = document.getElementById("control-theme").querySelectorAll('input[type="radio"]');
     apply();
-    select.addEventListener("change", () => {
-      preference = normalize(select.value);
-      try {
-        window.localStorage.setItem(preferenceKey, preference);
-        pageOnlyPreference = false;
-      } catch (_) { pageOnlyPreference = true; }
-      apply();
-    });
+    for (const radio of radios) {
+      radio.addEventListener("change", () => {
+        preference = normalize(radio.value);
+        try {
+          window.localStorage.setItem(preferenceKey, preference);
+          pageOnlyPreference = false;
+        } catch (_) { pageOnlyPreference = true; }
+        apply();
+      });
+    }
   }, { once: true });
   systemDark.addEventListener("change", () => {
     if (preference === "system") apply();
