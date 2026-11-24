@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- Dashboard uses a localized refresh icon button and clearer section headings
+  in its navigation.
+
 ### Fixed
 
 - Studio shows inline listener host and port errors before creating a

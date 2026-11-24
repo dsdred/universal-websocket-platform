@@ -76,8 +76,9 @@ Draft edits and validation feedback.
 5. Check the returned **Published** state, version and preliminary WebSocket URL.
    `Published` does not mean `Running`; the URL is not a reachability check.
 6. Open Dashboard, choose the Workspace and Configuration, and inspect Versions,
-   state, listener host/port and available timestamps. **Refresh** reloads the
-   lists and Control Service health; there is no automatic polling.
+   state, listener host/port and available timestamps. Use the circular-arrow
+   **Refresh** button to reload the lists and check Control Service health.
+   Dashboard refreshes only on demand.
 
 Dashboard is read-only. Studio uses the existing mutation API; the shared shell
 does not make the entire service read-only. The example names are illustrative

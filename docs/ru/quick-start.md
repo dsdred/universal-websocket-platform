@@ -76,8 +76,9 @@ Escape оставляет черновик открытым. При обновл
 5. Проверьте возвращённые **Published**, version и preliminary WebSocket URL.
    `Published` не означает `Running`; URL не проверяет reachability.
 6. Откройте Dashboard, выберите Workspace и Configuration, просмотрите Versions,
-   state, listener host/port и доступные timestamps. **Refresh** перезагружает
-   списки и Control Service health; автоматического polling нет.
+   state, listener host/port и доступные timestamps. Кнопка **Обновить** с
+   круговыми стрелками перечитывает списки и проверяет доступность Control
+   Service. Dashboard обновляется по запросу.
 
 Dashboard работает read-only. Studio использует существующий mutation API;
 общая оболочка не делает весь сервис read-only. Имена в примере — иллюстративные

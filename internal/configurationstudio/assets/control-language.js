@@ -253,7 +253,11 @@ const ControlLanguage = (() => {
     toggle.setAttribute("aria-label", text(language === "ru"
       ? "RU (Russian). Switch to English." : "EN (English). Switch to Russian."));
     for (const node of document.querySelectorAll("[data-i18n]")) render(node, messages.get(node));
-    for (const node of document.querySelectorAll("[data-i18n-label]")) node.setAttribute("aria-label", text(labels.get(node)));
+    for (const node of document.querySelectorAll("[data-i18n-label]")) {
+      const label = text(labels.get(node));
+      node.setAttribute("aria-label", label);
+      if (node.getAttribute("data-tooltip") !== null) node.setAttribute("data-tooltip", label);
+    }
   }
   toggle.addEventListener("click", () => {
     language = language === "en" ? "ru" : "en";

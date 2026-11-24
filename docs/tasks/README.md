@@ -11,6 +11,7 @@ merge `4fcbbacfdfacbd8a39b4ab2233136bb2cb546d29`.
 [TASK-143 — Диалоги подтверждения Studio](TASK-143-STYLED-CONFIRMATION-DIALOGS.md), пункт 4 [UX-плана TASK-138](TASK-138-STUDIO-OWNER-ACCEPTANCE.md), опубликована через PR #143.
 Merge `20d8cba810bbd5765480e4457a04942667e0b36b`. Owner Acceptance завершена, PASS 6/6 на 18144.
 [TASK-141 — Темы UWP Control](TASK-141-CONTROL-THEMES.md) — `In Progress`, пункт 2 UX-плана TASK-138. Актуальный gate определяется Recovery Evidence Envelope.
+[TASK-144 — Dashboard UX Polish](TASK-144-DASHBOARD-UX-POLISH.md) — `In Progress`. Актуальный gate определяется Recovery Evidence Envelope.
 
 [TASK-138 — Studio UI Owner Acceptance](TASK-138-STUDIO-OWNER-ACCEPTANCE.md) —
 Owner functional PASS: 12/12 ручных сценариев на Control Service 18139,
