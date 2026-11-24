@@ -170,6 +170,36 @@
   }
   workspace.addEventListener("change", () => run("configurations"));
   configuration.addEventListener("change", () => run("versions"));
-  $("refresh").addEventListener("click", () => run("all"));
+  const refresh = $("refresh");
+  refresh.addEventListener("click", async () => {
+    if (document.activeElement !== refresh) return run("all");
+
+    const focusTracking = new AbortController();
+    const options = { signal: focusTracking.signal };
+    let lostFocusOnDisable = false;
+    refresh.addEventListener("blur", ({ relatedTarget }) => {
+      if (refresh.disabled && (relatedTarget === null || relatedTarget === document.body)) lostFocusOnDisable = true;
+    }, options);
+    document.addEventListener("focusin", ({ target }) => {
+      if (target !== refresh && target !== document.body) focusTracking.abort();
+    }, options);
+    document.addEventListener("pointerdown", ({ target }) => {
+      if (!refresh.contains(target)) focusTracking.abort();
+    }, { ...options, capture: true });
+    window.addEventListener("blur", () => focusTracking.abort(), options);
+
+    try {
+      const pending = run("all");
+      const current = generation;
+      lostFocusOnDisable ||= document.activeElement === document.body;
+      await pending;
+      if (lostFocusOnDisable && !focusTracking.signal.aborted && current === generation &&
+          document.activeElement === document.body && document.hasFocus()) {
+        refresh.focus({ preventScroll: true });
+      }
+    } finally {
+      focusTracking.abort();
+    }
+  });
   run("all");
 })();

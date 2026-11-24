@@ -23,9 +23,15 @@ class Element {
   }
   append(child) { this.children.push(child); }
   replaceChildren(...children) { this.children = children; this._text = ""; this._value = ""; }
+  getAttribute(key) { return this.attributes[key] ?? null; }
   setAttribute(key, value) { this.attributes[key] = value; }
-  addEventListener(event, callback) { this.listeners[event] = callback; }
-  async fire(event) { await this.listeners[event](); }
+  addEventListener(event, callback, { signal } = {}) {
+    this.listeners[event] = callback;
+    signal?.addEventListener("abort", () => {
+      if (this.listeners[event] === callback) delete this.listeners[event];
+    }, { once: true });
+  }
+  async fire(event, details) { await this.listeners[event]?.(details); }
 }
 const response = (data, status = 200, type = "application/json") => ({
   ok: status >= 200 && status < 300, status,
@@ -39,18 +45,49 @@ const deferred = () => {
 async function settle() { for (let i = 0; i < 8; i++) await new Promise(setImmediate); }
 function start(routes = {}, storage = new Map()) {
   const nodes = Object.fromEntries(["control-language", "control-language-code", "workspace", "configuration", "versions", "version-count", "workspace-meta", "configuration-meta", "health-status", "health-time", "browser", "refresh", "data-status"].map((id) => [id, new Element(["workspace", "configuration"].includes(id) ? "select" : "div")]));
-  const requests = [], timers = new Map(), windowEvents = {}; let timerID = 0;
-  const environment = vm.createContext({
-    window: { addEventListener: (event, callback) => { windowEvents[event] = callback; } },
-    document: {
-      documentElement: {},
-      getElementById: (id) => nodes[id],
-      createElement: (tag) => new Element(tag),
-      querySelectorAll(selector) {
-        const visit = (node) => [node, ...node.children.flatMap(visit)];
-        return Object.values(nodes).flatMap(visit).filter((node) => Object.hasOwn(node.attributes, selector.slice(1, -1)));
-      },
+  nodes.refresh.setAttribute("aria-label", "Refresh");
+  nodes.refresh.setAttribute("data-i18n-label", "");
+  nodes.refresh.setAttribute("data-tooltip", "Refresh");
+  const body = new Element("body"), document = new EventTarget(), window = new EventTarget();
+  const documentEvent = (type, target) => {
+    const event = new Event(type);
+    Object.defineProperty(event, "target", { value: target });
+    document.dispatchEvent(event);
+  };
+  Object.assign(document, {
+    body, activeElement: body, documentElement: {},
+    hasFocus: () => true,
+    getElementById: (id) => nodes[id],
+    createElement: (tag) => new Element(tag),
+    querySelectorAll(selector) {
+      const visit = (node) => [node, ...node.children.flatMap(visit)];
+      return Object.values(nodes).flatMap(visit).filter((node) => Object.hasOwn(node.attributes, selector.slice(1, -1)));
     },
+  });
+  for (const node of Object.values(nodes)) {
+    node.focus = () => {
+      if (node.disabled) return;
+      document.activeElement = node;
+      documentEvent("focusin", node);
+    };
+  }
+  nodes.refresh.contains = (node) => node === nodes.refresh;
+  let disabled = false;
+  Object.defineProperty(nodes.refresh, "disabled", {
+    get: () => disabled,
+    set: (value) => {
+      disabled = value;
+      if (value && document.activeElement === nodes.refresh && !document.delayDisabledBlur) document.activeElement = body;
+    },
+  });
+  const requests = [], timers = new Map(), windowEvents = {}; let timerID = 0;
+  const addWindowListener = window.addEventListener.bind(window);
+  window.addEventListener = (event, callback, options) => {
+    if (event === "pageshow") windowEvents[event] = callback;
+    addWindowListener(event, callback, options);
+  };
+  const environment = vm.createContext({
+    window, document,
     localStorage: { getItem: (key) => storage.get(key), setItem: (key, value) => storage.set(key, value) },
     AbortController,
     setTimeout(callback) { const key = ++timerID; timers.set(key, callback); return key; },
@@ -66,10 +103,10 @@ function start(routes = {}, storage = new Map()) {
   vm.runInContext(languageScript, environment, { filename: "control-language.js" });
   vm.runInContext(script, environment, { filename: "dashboard.js" });
   return {
-    nodes, requests, routes, timers, windowEvents, document: environment.document,
+    nodes, requests, routes, timers, windowEvents, document, documentEvent,
     text: () => Object.values(nodes).map((n) => n.textContent).join("\n"),
     select: async (id, value) => { nodes[id].value = value; await nodes[id].fire("change"); },
-    refresh: () => nodes.refresh.fire("click"),
+    refresh: () => nodes.refresh.disabled ? Promise.resolve() : nodes.refresh.fire("click"),
   };
 }
 function populated(extra = {}) {
@@ -229,6 +266,80 @@ test("late response for old selection cannot replace new workspace data", async 
   assert.equal(app.nodes.refresh.disabled, false);
 });
 
+test("focused manual Refresh restores focus after disabling and ignores duplicate activation", async () => {
+  const app = start();
+  await settle();
+  const { document, nodes, requests } = app;
+  const response = deferred();
+  app.routes[base] = () => response.promise;
+  nodes.refresh.focus();
+  const before = requests.length;
+  const pending = app.refresh();
+  assert.equal(document.activeElement, document.body);
+  assert.equal(nodes.refresh.disabled, true);
+  await app.refresh();
+  assert.equal(requests.length - before, 2);
+  response.resolve([]);
+  await pending;
+  assert.equal(document.activeElement, nodes.refresh);
+  assert.equal(nodes.refresh.disabled, false);
+});
+
+test("Refresh restores after a browser defers the blur caused by disabling", async () => {
+  const app = start();
+  await settle();
+  const { document, nodes } = app;
+  const response = deferred();
+  document.delayDisabledBlur = true;
+  app.routes[base] = () => response.promise;
+  nodes.refresh.focus();
+  const pending = app.refresh();
+  assert.equal(document.activeElement, nodes.refresh);
+  document.activeElement = document.body;
+  await nodes.refresh.fire("blur", { relatedTarget: null });
+  response.resolve([]);
+  await pending;
+  assert.equal(document.activeElement, nodes.refresh);
+});
+
+test("Refresh keeps intervening focus and does not restore after a later blur or outside pointer", async () => {
+  for (const exit of ["focus", "focus-and-blur", "pointer"]) {
+    const app = start();
+    await settle();
+    const { document, nodes, documentEvent } = app;
+    const response = deferred();
+    app.routes[base] = () => response.promise;
+    nodes.refresh.focus();
+    const pending = app.refresh();
+    if (exit === "pointer") {
+      documentEvent("pointerdown", document.body);
+    } else {
+      nodes["control-language"].focus();
+      if (exit === "focus-and-blur") document.activeElement = document.body;
+    }
+    response.resolve([]);
+    await pending;
+    assert.equal(document.activeElement, exit === "focus" ? nodes["control-language"] : document.body, exit);
+  }
+});
+
+test("Refresh can restore after an error but a superseded request cannot reclaim focus", async () => {
+  const app = populated();
+  await settle();
+  const { document, nodes } = app;
+  app.routes[base] = new Error("offline");
+  nodes.refresh.focus();
+  await app.refresh();
+  assert.equal(document.activeElement, nodes.refresh);
+  const response = deferred();
+  app.routes[base] = () => response.promise;
+  const pending = app.refresh();
+  await app.select("configuration", "");
+  response.resolve([]);
+  await pending;
+  assert.equal(document.activeElement, document.body);
+});
+
 test("request deadline aborts pending fetch and offers manual retry without automatic requests", async () => {
   const app = start({ [base]: ({ signal }) => new Promise((_, reject) => signal.addEventListener("abort", () => reject(new Error("aborted")))) });
   await settle();
@@ -257,6 +368,8 @@ test("locale updates loaded Dashboard rows, selections and feedback without netw
   await app.select("configuration", "3");
   const { nodes, document, requests } = app;
   assert.equal(document.documentElement.lang, "ru");
+  assert.equal(nodes.refresh.getAttribute("aria-label"), "Обновить");
+  assert.equal(nodes.refresh.getAttribute("data-tooltip"), "Обновить");
   const row = nodes.versions.children[0];
   const option = nodes.workspace.options[1];
   const before = requests.length;

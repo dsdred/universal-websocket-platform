@@ -25,7 +25,7 @@
         </button>
       </div>
     </div>
-    <nav id="control-navigation" data-i18n-label aria-label="Main navigation">
+    <nav id="control-navigation" class="dashboard-navigation" data-i18n-label aria-label="Main navigation">
       <span class="nav-label" data-i18n>Workspace</span>
       <a href="/dashboard" aria-current="page" data-i18n>Dashboard</a>
       <a href="/" data-i18n>Configuration Studio</a>
@@ -56,7 +56,15 @@
       </div>
     </header>
     <div class="content">
-      <header class="page-heading"><div><p class="eyebrow" data-i18n>CONTROL OVERVIEW</p><h1 data-i18n>Dashboard</h1><p class="muted" data-i18n>Browse the configuration held by this Control Service.</p></div><button id="refresh" type="button" data-i18n>Refresh</button></header>
+      <header class="page-heading">
+        <div><p class="eyebrow" data-i18n>CONTROL OVERVIEW</p><h1 data-i18n>Dashboard</h1><p class="muted" data-i18n>Browse the configuration held by this Control Service.</p></div>
+        <button id="refresh" type="button" aria-label="Refresh" data-i18n-label data-tooltip="Refresh">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <path d="M20 7v5h-5M4 17v-5h5"/>
+            <path d="M5.3 9a7 7 0 0 1 11.6-2.1L20 10M4 14l3.1 3.1A7 7 0 0 0 18.7 15"/>
+          </svg>
+        </button>
+      </header>
       <p class="notice"><strong data-i18n>Published does not mean Running.</strong> <span data-i18n>Data is in memory and lost on restart. This view uses GET only; it does not manage Runtime.</span></p>
       <section id="availability" class="cards" data-i18n-label aria-label="API availability">
         <article class="card"><h2 data-i18n>Control Service</h2><p id="health-status" class="value" role="status" data-i18n>Loading…</p><p class="muted" data-i18n>/health · Control Service availability only</p><p id="health-time" class="muted" data-i18n>Not checked yet</p></article>
