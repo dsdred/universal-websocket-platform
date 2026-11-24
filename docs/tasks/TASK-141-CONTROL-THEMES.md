@@ -114,6 +114,29 @@ task contract, статусы и пользовательские инструк
   ревью, PROCESS-002 и точный манифест. STOP на Commit Gate. Stage, commit
   и publication требуют отдельных команд Owner.
 
+## Owner UX correction — matching preference buttons
+
+- Task Mode `Implementation`. Owner одобрил одинаковый видимый размер
+  кнопок темы и EN/RU. Опубликованная база
+  `7b0a1d3d193583dcbc606ca0ceecbc0692793e19`, рабочая ветка
+  `feature/task-141-match-preference-buttons`.
+- Scope — `internal/configurationstudio/assets/control.css` и этот record.
+  Обе страницы используют общие стили и существующие нативные кнопки.
+  Разметка, JavaScript, API и конфигурация действующих Control Services
+  остаются вне scope. Архитектура загрузки и применения палитры сохраняется.
+- Definition of Done — видимая поверхность 36 × 36 px, цель 44 × 44 px,
+  визуальный зазор 8 px, единое оформление и центрирование. Зоны касания
+  и фокус не перекрывают соседние элементы. Переключение сохраняет семантику
+  и не вызывает перезагрузки или API-запросов.
+- Existing Coverage — Node проверяет тему, локализацию и перенос фокуса,
+  Go проверяет выдачу встроенных страниц и стилей. Coverage Gap — пиксельная
+  геометрия, касания у границ и размещение обводки в реальном браузере.
+- Verification Plan — Node и Go, Chrome на изолированной сборке с матрицей
+  Studio/Dashboard × 320/390/1280 px × Light/Dark × EN/RU, независимый
+  Reviewer, PROCESS-002 и точный манифест. Роли — Coordinator,
+  Developer/Tester и независимый Reviewer. STOP на Commit Gate.
+  Stage, commit и publication требуют отдельных команд Owner.
+
 ## Recovery Evidence Envelope
 
 ### Pre-Commit Report — 2026-11-21
@@ -334,4 +357,54 @@ internal/configurationstudio/control_navigation_test.js | full | present | 10064
 internal/configurationstudio/control_theme_test.js | full | present | 100644 | 9984feb28b31c622eb261f6b036488e291e70f75
 internal/configurationstudio/handler_test.go | full | present | 100644 | 79a4ccda00f4e8a8505f95961523352130bf04b0
 spec/current-state.md | full | present | 100644 | a505eec7f7fd02fc5934f171d8028ddbf4af4282
+```
+
+### Preference Button Geometry Pre-Commit Report — 2026-11-22
+
+- Coordinator Acceptance для Commit Gate — `Accepted`. Ветка
+  `feature/task-141-match-preference-buttons`, HEAD и опубликованная база
+  `7b0a1d3d193583dcbc606ca0ceecbc0692793e19`. Canonical SHA-1
+  `7dd122377986e63bad4555499e606e73423192ff`. Scope Audit
+  2 Required, 0 Questionable, 0 Removable. Git-индекс пуст.
+- Обе нативные кнопки занимают по 44 × 44 px. Оформление и видимый фокус
+  отрисовываются на внутренних поверхностях 36 × 36 px с визуальным
+  зазором 8 px. Содержимое центрируется общей сеткой. Навигация, разметка,
+  обработчики и сохранение настроек используют прежнюю реализацию.
+- Независимый Reviewer — `Approved` по указанному манифесту, без открытых
+  замечаний. Независимо сверены оба файла, пустой Git-индекс, whitespace,
+  Node 160/160, пакет Go `internal/configurationstudio` и доказательства Chrome.
+- `node --test --test-reporter=spec internal/configurationstudio/studio_test.js internal/configurationstudio/dashboard_test.js internal/configurationstudio/control_navigation_test.js internal/configurationstudio/control_theme_test.js`
+  — 160/160, exit 0. `go test -mod=readonly -p 6 -count=1 ./...` с loopback
+  — exit 0, 40 пакетов с тестами.
+- `go build -mod=readonly -buildvcs=true -o bin/task141-preference-geometry-smoke/control-service.exe ./cmd/control-service`
+  прошла на Go 1.26.5. `vcs.revision` совпал с базой, `vcs.modified=true`
+  соответствует рабочему diff. SHA-256 бинарника
+  `67affc2ae6b17d985d3d994f0752a6bbb6414c39d391e1397f2307eaf57dcad6`.
+- Chrome 158.0.8127.36 на 127.0.0.1:18150, exit 0. Проверены 24 сочетания
+  Studio/Dashboard × 320/390/1280 px × Light/Dark × EN/RU. Совпали фон,
+  рамка, скругление и отступы. Зоны 44 × 44 px соприкасаются без перекрытия
+  друг с другом, меню и брендом. Переполнения по горизонтали нет.
+  192 эмулированных касания по целочисленным координатам внутри всех четырёх
+  краёв активировали нужную кнопку. Проверены Tab, Enter и Space.
+  На 48 снимках пиксели обводки видны по всем четырём сторонам.
+  Переключение темы и языка выполнилось без запросов API или документа и
+  без перезагрузки. Физическое сенсорное устройство не использовалось.
+- Изолированный PID `31776` остановлен, порт 18150 свободен. Инвентарь
+  PID действующих портов 18138–18149 совпал до и после. Скрипты и логи
+  сохранены в игнорируемом `bin/task141-preference-geometry-smoke/`.
+- PROCESS-002. Task record описывает согласованные размеры и доказательства.
+  Quick Start, текущая спецификация, MASTER_PLAN, changelog и контекст
+  проверены на применимость. Действующие описания сценариев и контрактов
+  точны для этой коррекции размеров. `git diff --check` по двум точным путям
+  прошла. Stage, commit, публикация и следующая задача не запускались.
+
+#### Exact preference geometry manifest
+
+Git object format SHA-1. Порядок строк по UTF-8 байтам пути. Поля разделяются
+NUL, строка также заканчивается NUL. OID вычисляется `git hash-object --stdin`
+для полного потока.
+
+```text
+docs/tasks/TASK-141-CONTROL-THEMES.md | task-record-v1 | present | 100644 | 1e83fb34852d9ed921f487fe937a6395a5bae412
+internal/configurationstudio/assets/control.css | full | present | 100644 | 5e6a8f9c56604c9465f19d0ce3b87411d78c577e
 ```
