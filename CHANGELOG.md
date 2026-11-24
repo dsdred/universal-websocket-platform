@@ -13,6 +13,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Dashboard and Configuration Studio share the same navigation spacing and
+  section dividers. Desktop header controls stay aligned when the native
+  scrollbar appears or disappears.
+
 - Studio shows inline listener host and port errors before creating a
   Configuration or saving a Draft address. Studio and the Listener API reject
   dotted numeric-only hosts that are not valid IPv4. Studio reports field
