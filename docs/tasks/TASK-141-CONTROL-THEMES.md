@@ -408,3 +408,114 @@ NUL, строка также заканчивается NUL. OID вычисля�
 docs/tasks/TASK-141-CONTROL-THEMES.md | task-record-v1 | present | 100644 | 1e83fb34852d9ed921f487fe937a6395a5bae412
 internal/configurationstudio/assets/control.css | full | present | 100644 | 5e6a8f9c56604c9465f19d0ce3b87411d78c577e
 ```
+
+### Owner Acceptance Closure
+
+24 ноября 2026 года Owner визуально принял опубликованный интерфейс
+TASK-141. Результат `APPROVED` относится к merge-коммиту
+`694ac794914da4d2b9c19f9787c353348ee965f7` в `main`.
+[PR #148](https://github.com/dsdred/universal-websocket-platform/pull/148).
+
+- Опубликованный коммит задачи `4b8e17a3cb3b7117cecee3c1d23c431da523ec04`.
+  Его дерево и дерево merge совпадают
+  (`4616bc78a7a00a8ba0196c5826c6190ff0d1b8ca`). Принятый манифест
+  корректировки `7dd122377986e63bad4555499e606e73423192ff`. GitHub
+  подтвердил `MERGED` и точные head/base/merge. Обязательный CI и CI на
+  `main` прошли.
+  [CI PR](https://github.com/dsdred/universal-websocket-platform/actions/runs/45450756831) ·
+  [CI main](https://github.com/dsdred/universal-websocket-platform/actions/runs/45451173345).
+- Для приёмки предоставлен адрес `127.0.0.1:18150`, PID `47084`.
+  Бинарник сообщил тот же merge SHA и `vcs.modified=false`, SHA-256
+  `76dbda690c40f722123bc5467883e0d364cc266ecc20379bf10b22422f707789`.
+  Автоматический Chrome smoke подтвердил HTTP 200 на Studio и Dashboard,
+  24 сочетания страниц, ширин 320/390/1280 px, Light/Dark и EN/RU,
+  поверхности 36 × 36 px, цели 44 × 44 px, зазор 8 px, видимый фокус
+  и отсутствие перекрытия, переполнения, перезагрузок и запросов при
+  переключении. Owner подтвердил визуальную приёмку версии в целом.
+- Owner Acceptance закрыта. Технические evidence и projected workflow
+  `In Progress` сохраняются по PROCESS-001. Эта запись фиксирует решение
+  Owner для опубликованной версии. Реализация, архитектура, API и
+  действующие Control Services не менялись.
+- PROCESS-002. Синхронизированы ссылки реестра задач, текущей спецификации,
+  проектного контекста и обоих MASTER_PLAN. Решения, ADR/DP, Quick Start,
+  корневые README и CHANGELOG проверены на применимость. Решение Owner
+  не меняет существующие контракты, инструкции запуска и состав релиза.
+- Следующий кандидат — `TASK-144 Dashboard UX Polish`, `Not Activated`.
+  Предложение охватывает иконку ручного обновления и оформление
+  существующих заголовков навигации Dashboard. Детальный scope ждёт
+  одобрения Owner. Stage, commit и публикация этой записи требуют
+  отдельных gates.
+
+#### Проверка документационной записи
+
+- Ветка `docs/task-141-owner-acceptance-closure`, HEAD
+  `694ac794914da4d2b9c19f9787c353348ee965f7`. Scope Audit — 6 Required,
+  0 Questionable, 0 Removable. Изменения только в документации.
+- Независимый Reviewer — `Approved`, открытых замечаний нет. Проверены
+  append-only envelope, пять ссылок на приёмку, зеркала EN/RU,
+  отсутствие staged/untracked файлов и whitespace. Опубликованный Git
+  subject независимо пересчитан. Coordinator подтвердил PR и удалённую
+  базу в режиме чтения. Тесты продукта не повторялись, поскольку его
+  файлы не менялись.
+- Документационная запись принята Coordinator. Canonical SHA-1
+  документационного subject `e8cd6f073b631c20339df955647faa9566537384`.
+  Этот subject относится к записи, указанное выше решение Owner — к
+  опубликованной реализации. STOP до одобрения следующего среза.
+  Git-индекс пуст, commit и публикация не выполнялись.
+
+```text
+.ai/PROJECT_CONTEXT.md | full | present | 100644 | b674cbe3bd1ac36d75944fb3d6b43ee2bd41e62b
+docs/en/roadmap/MASTER_PLAN.md | full | present | 100644 | 1d83c7d7230a7a051b534ff29bb59c341fee2d3e
+docs/ru/roadmap/MASTER_PLAN.md | full | present | 100644 | bcccd07b28b362fe2ceb7a7853747d84c3cd8b84
+docs/tasks/README.md | full | present | 100644 | 03a8cca69cb2f34bddb283219e201af65f46acf8
+docs/tasks/TASK-141-CONTROL-THEMES.md | task-record-v1 | present | 100644 | 1e83fb34852d9ed921f487fe937a6395a5bae412
+spec/current-state.md | full | present | 100644 | e0bc9be141977761cbe691b37e97f00d3a1b6879
+```
+
+### Final documentation reconciliation — 2026-11-25
+
+- Завершение документации TASK-141 перенесено с исходной базы
+  `694ac794914da4d2b9c19f9787c353348ee965f7` на опубликованный
+  `main@782175a508bd437e391c28b7089f51eaad4bac5c` в отдельном
+  worktree `docs/task-141-owner-acceptance-final`. Все байты прежней
+  записи Owner Acceptance и её evidence сохранены. Исходная локальная
+  ветка и её незакоммиченный diff сохранены.
+- Решение Owner `APPROVED` по TASK-141 относится к UI из PR #148.
+  GitHub подтвердил исходный merge, head и обе успешные проверки CI.
+  Исторический манифест `e8cd6f073b631c20339df955647faa9566537384`
+  относится к прежней документационной базе и сохранён в её отчёте.
+- Указание TASK-144 как следующего кандидата относится к моменту
+  первоначальной записи. На текущей базе TASK-144, TASK-145 и TASK-146
+  уже опубликованы, а решения Owner сохранены в их task records через
+  [PR #152](https://github.com/dsdred/universal-websocket-platform/pull/152).
+  Эти три записи и их строки в индексе сохранены. Новая задача не
+  активируется.
+- PROCESS-002. Сохранены исходные ссылки TASK-141 в индексе задач,
+  текущей спецификации, проектном контексте и зеркалах MASTER_PLAN.
+  Quick Start, CHANGELOG, корневые README, решения и ADR/DP не требуют
+  изменений, поскольку приёмка не меняет возможности, API, архитектуру,
+  границы релиза и пользовательские инструкции.
+- Объём ограничен исходными шестью документационными файлами.
+  Projected status `In Progress` и проектируемые байты TASK-141
+  сохранены. Проверки продукта не повторялись, поскольку реализация
+  уже опубликована, а в этом срезе меняются только документы.
+
+#### Проверка для Commit Gate
+
+- Independent Reviewer — `Approved`, открытых замечаний нет.
+  База `782175a508bd437e391c28b7089f51eaad4bac5c`, canonical
+  subject SHA-1 `951e90f9b5bfaee65737326d0f4fdf7360726827`.
+  Scope Audit — 6 Required, 0 Questionable, 0 Removable.
+- Независимо пересчитаны исходный и актуальный манифесты. Проверены
+  неизменность исторической записи и локального diff, точный merge
+  индекса с сохранением TASK-144/145/146, пять ссылок, смысловое
+  соответствие зеркал EN/RU, whitespace, обратная проверка patch
+  и пустой индекс. Файлы TASK-144/145/146 совпали с опубликованными.
+- SHA-256 исторического бинарника и embedded vcs.revision совпали
+  с записью Owner Acceptance, vcs.modified=false. Бинарник читался
+  без запуска. Применимость product tests проверена, повторный запуск
+  не требовался для этого документационного diff.
+- Coordinator Acceptance для Commit Gate — `Accepted` по тому же
+  canonical subject. Запись этой проверки дописана в terminal envelope
+  с сохранением проекции `task-record-v1`. Stage, commit и публикация
+  не выполнялись. STOP на Commit Gate.
