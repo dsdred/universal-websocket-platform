@@ -8,6 +8,25 @@
   const mobile = window.matchMedia("(max-width: 700px)");
   const expanded = () => menu.getAttribute("aria-expanded") === "true";
 
+  function alignDesktopHeader() {
+    const property = "--control-header-end-inset";
+    if (mobile.matches || document.documentElement.clientWidth < window.innerWidth) {
+      desktopHeader.style.removeProperty(property);
+      return;
+    }
+
+    // Reserve the native scrollbar's width in the header only when the page has no gutter.
+    const probe = document.createElement("div");
+    Object.assign(probe.style, {
+      position: "fixed", top: "0", left: "0", width: "100px", height: "100px",
+      overflow: "scroll", visibility: "hidden",
+    });
+    document.body.append(probe);
+    const scrollbarWidth = probe.offsetWidth - probe.clientWidth;
+    probe.remove();
+    desktopHeader.style.setProperty(property, `${scrollbarWidth}px`);
+  }
+
   function setExpanded(open) {
     menu.setAttribute("aria-expanded", String(open));
     nav.hidden = mobile.matches && !open;
@@ -33,6 +52,7 @@
       menu.hidden = true;
     }
     if (preferences.contains(focused) && document.activeElement !== focused) focused.focus();
+    alignDesktopHeader();
   }
 
   menu.addEventListener("click", () => {
@@ -59,4 +79,5 @@
     if (event.persisted) syncLayout();
   });
   syncLayout();
+  new ResizeObserver(alignDesktopHeader).observe(document.documentElement);
 })();
