@@ -8,9 +8,11 @@
 
 ## Текущее состояние
 
-Текущий срез [TASK-147 — Поэлементная валидация таймаутов Studio](../docs/tasks/TASK-147-STUDIO-PER-FIELD-TIMEOUT-VALIDATION.md)
-добавляет сообщения EN/RU у четырёх полей существующего Draft. Save сохраняет
-свой прежний API и проверяет все поля перед запросом.
+[TASK-147 — Поэлементная валидация таймаутов Studio](../docs/tasks/TASK-147-STUDIO-PER-FIELD-TIMEOUT-VALIDATION.md)
+опубликована через PR #154, merge `9ff3ea2f32e31cfa3030a2728ffd1699a03a615e`.
+Owner подтвердил отображение и очистку ошибок и сохранение таймаутов.
+[Owner Acceptance PASS](../docs/tasks/TASK-147-STUDIO-PER-FIELD-TIMEOUT-VALIDATION.md#owner-acceptance-closure).
+Следующий срез — планирование TASK-148 Publish Existing Draft, `Not Activated`.
 
 [TASK-140 — Локализация Studio и Dashboard](../docs/tasks/TASK-140-CONTROL-LOCALIZATION.md) опубликована через PR #139,
 merge `4fcbbacfdfacbd8a39b4ab2233136bb2cb546d29`.

@@ -2,8 +2,9 @@
 
 ## Status
 
-`In Progress`. Owner утвердил реализацию и проверку. Commit Gate требует
-отдельной команды.
+`In Progress` для документационного закрытия. Реализация опубликована,
+Owner Acceptance подтверждена. Точное состояние документационного gate
+определяется по Recovery Evidence Envelope.
 
 ## Task Contract
 
@@ -99,6 +100,62 @@ review → Coordinator decision. При прерывании сверить ре
 test evidence и content identity до продолжения. Изменения разрешены только
 в согласованных 12 путях. Точный subject фиксируется после проверки.
 
+## Owner Acceptance Closure
+
+26 ноября 2026 года Owner подтвердил ручную приёмку Studio на опубликованной
+версии `9ff3ea2f32e31cfa3030a2728ffd1699a03a615e`. Owner сообщил, что ошибки
+отображаются корректно, исправление поля очищает его ошибку и сохранение
+таймаутов работает. Результат — **Owner Acceptance PASS**. Источник —
+сообщение Owner `01a21448-af49-7381-875f-ed8dbd1e3f46` в turn
+`01a21448-aea6-7cf0-bf79-98de14a83ca3` чата
+`01a213e4-f648-78f1-916b-f951563e8778`. Результат фиксирует именно
+подтверждённые Owner наблюдения.
+
+- [PR #154](https://github.com/dsdred/universal-websocket-platform/pull/154)
+  слит в `main`. Исходный коммит
+  `affee889c46d20b35fa9f5c03194b994c90aa01a`, дерево исходного и merge-коммитов
+  `f40a51f2835a616055c7d9407b2ffd52b99071b0`. CI прошёл на
+  [PR](https://github.com/dsdred/universal-websocket-platform/actions/runs/45685781589)
+  и на [main](https://github.com/dsdred/universal-websocket-platform/actions/runs/45686136047).
+  P10 публикации реализации завершён.
+- Изолированный стенд `127.0.0.1:18158`, PID `23396`, был собран из указанного
+  merge-коммита с `vcs.modified=false`. Бинарник SHA-256
+  `4ae92afde85530aafe0bd9a84a66dba136a1b9b27c42d573db33f21665e35000`.
+  Стенд содержал `TASK-147 Owner Acceptance → Timeout Validation → Draft v1 (#1)`.
+  Подготовительная API-проверка Save/readback и возврат начальных значений
+  завершились перед ручной проверкой.
+- После подтверждения Owner проверены PID, путь и hash бинарника,
+  HTTP health и владение loopback listener. Остановлен PID `23396`, порт
+  `18158` свободен. Инвентарь всех остальных 14 слушателей диапазона
+  `18138–18169` совпал до и после остановки.
+
+### Документационный Task Contract
+
+- **Mode / Why Now** — Documentation-only. Зафиксировать подтверждённую
+  приёмку опубликованной реализации и закрытие её изолированного стенда.
+- **Branch / baseline** — `docs/task-147-owner-acceptance` в отдельном
+  worktree `bin/task147-owner-closure`, HEAD и базовый `main` на merge SHA
+  выше. Имеющиеся локальные правки сохранены в исходном worktree.
+- **Definition of Done** — отражены сообщение Owner, exact PR/merge, итог
+  остановки стенда и следующий шаг. PROCESS-002, exact scope и
+  независимый Review пройдены до документационного Commit Gate.
+- **Scope** — эта запись, `docs/tasks/README.md`, `.ai/PROJECT_CONTEXT.md`
+  и `spec/current-state.md`. Product/API changes, другие Control Services,
+  stage/commit/publish и активация TASK-148 вне scope.
+- **Verification Plan** — сверить Git/GitHub, источники Owner evidence,
+  host/PID и listener inventory, локальные ссылки, целостность исторического
+  envelope и достижимость exact manifest; затем независимый Review и решение
+  Coordinator. Product regression неприменим к документационному diff.
+- **PROCESS-002** — task record, index, current-state и project context
+  синхронизируются по факту приёмки. MASTER_PLAN EN/RU, ADR/DP, decisions,
+  Quick Start, корневые README и CHANGELOG проверяются на применимость.
+  Приёмка уже выпущенного поведения сохраняет milestone, API, руководство
+  пользователя и состав релиза, поэтому эти файлы за пределами diff.
+- **Roles / STOP** — Coordinator, Documentation Agent, независимый Reviewer.
+  Size Guard — четыре документационных пути и отдельный Commit Gate.
+  Следующее действие после закрытия TASK-147 — планирование
+  **TASK-148 — Publish Existing Draft**, `Not Activated`.
+
 ## Recovery Evidence Envelope
 
 ### V147-001 / R147-002 / CA147-001 — Commit Gate STOP
@@ -150,3 +207,36 @@ spec/current-state.md | full | present | 100644 | 526514920e030a96cf1c52d146ab6b
   `core.autocrlf=false` сохраняет exact raw bytes всех путей. При отдельном
   разрешении stage требует exact staged-tree сверки по принятому subject.
   Git config не менялся. Индекс пуст, commit/push/publication не выполнялись.
+
+### V147-OA-001 / R147-OA-001 / CA147-OA-001 — документационный Commit Gate
+
+Ветка `docs/task-147-owner-acceptance`, HEAD/base
+`9ff3ea2f32e31cfa3030a2728ffd1699a03a615e`. SHA-1 subject manifest
+`a8a4a0706c500e6648f577c2034dd3782e2a3b3c`.
+
+```text
+.ai/PROJECT_CONTEXT.md | full | present | 100644 | dd31a0d736d2bb3323b62a27a3b4f6d43d0c7bcb
+docs/tasks/README.md | full | present | 100644 | 1ae3cff1dee15180c83713b542a3e5539261f5d5
+docs/tasks/TASK-147-STUDIO-PER-FIELD-TIMEOUT-VALIDATION.md | task-record-v1 | present | 100644 | 4da521b352e0d04b455fb2288c4852caac1202ed
+spec/current-state.md | full | present | 100644 | 5e109b72d8791504aa2489022127bddfd77b2f82
+```
+
+- V147-OA-001 PASS. Git ancestry, source/merge tree и опубликованный PR #154
+  сверены. Подтверждены пять новых относительных ссылок и сохранение
+  исходного Recovery Evidence Envelope побайтно. `git -c
+  core.whitespace=cr-at-eol diff --check` PASS. Инвентарь diff содержит
+  четыре документационных пути. Product regression неприменим к этому diff.
+- PROCESS-002 PASS. Scope Audit — 4 Required / 0 Questionable / 0 Removable.
+  Task record фиксирует решение Owner и стенд, index обеспечивает навигацию,
+  current-state фиксирует принятую возможность, project context фиксирует
+  очередь следующего планирования.
+- R147-OA-001 **Approved**, 0 blocking / 0 nonblocking. Независимый Reviewer
+  пересчитал все четыре строки и canonical NUL manifest, подтвердил
+  источник и границы Owner Acceptance, сохранность исторического envelope
+  и отключение только подтверждённого экземпляра на 18158.
+- CA147-OA-001 Coordinator Acceptance — **Accepted** для документационного
+  subject выше. Предлагаемое сообщение коммита
+  `docs: record TASK-147 owner acceptance`. Индекс пуст. Для будущего stage
+  использовать command-scoped `core.autocrlf=false` и сверить staged tree с
+  принятыми bytes, включая итоговый envelope. Commit и публикация требуют
+  отдельных разрешений. TASK-148 остаётся `Not Activated`.

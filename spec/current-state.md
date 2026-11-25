@@ -5,6 +5,9 @@
 видны рядом со всеми неверными полями, фокус переходит к первому. Исправление
 очищает ошибку этого поля. Диапазоны, timeout PUT и защита от повтора после
 неизвестного результата сохранены.
+Реализация опубликована через PR #154. Owner подтвердил ручные проверки
+отображения и очистки ошибок и сохранения таймаутов.
+[Owner Acceptance PASS](../docs/tasks/TASK-147-STUDIO-PER-FIELD-TIMEOUT-VALIDATION.md#owner-acceptance-closure).
 
 [TASK-140](../docs/tasks/TASK-140-CONTROL-LOCALIZATION.md) добавила EN/RU в локальные Studio (`/`) и Dashboard (`/dashboard`), PR #139.
 [PR #140](../docs/tasks/TASK-140-OWNER-UX-CORRECTION.md) заменил выпадающий список кнопкой.
