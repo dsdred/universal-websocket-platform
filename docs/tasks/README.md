@@ -1,7 +1,8 @@
 # Task Records
 
-Текущий срез: [TASK-147 — Поэлементная валидация таймаутов Studio](TASK-147-STUDIO-PER-FIELD-TIMEOUT-VALIDATION.md).
-Решение и точное evidence фиксируются в записи задачи.
+[TASK-147 — Поэлементная валидация таймаутов Studio](TASK-147-STUDIO-PER-FIELD-TIMEOUT-VALIDATION.md)
+опубликована через PR #154. [Owner Acceptance PASS](TASK-147-STUDIO-PER-FIELD-TIMEOUT-VALIDATION.md#owner-acceptance-closure).
+Следующий срез — планирование TASK-148 Publish Existing Draft, `Not Activated`.
 
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
