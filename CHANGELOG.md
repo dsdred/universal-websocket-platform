@@ -13,6 +13,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Mobile menu, theme, and language buttons use the same visible size and
+  spacing on Dashboard and Configuration Studio.
+
 - Dashboard and Configuration Studio share the same navigation spacing and
   section dividers. Desktop header controls stay aligned when the native
   scrollbar appears or disappears.
