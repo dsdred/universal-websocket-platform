@@ -404,6 +404,8 @@ func newRouter() http.Handler {
 func TestStudioExistingDraftEditorSurface(t *testing.T) {
 	for _, required := range []string{
 		`value="existing-draft"`, `id="existing-draft"`, `id="reload-draft"`,
+		`id="publish-draft" type="button" aria-describedby="draft-status" disabled`,
+		`id="confirmation-cancel" type="button" data-i18n autofocus`,
 		`id="draft-status"`, `aria-live="polite"`,
 		`id="draft-section"`, `value="listener"`, `value="timeouts"`,
 		`id="timeout-handshake"`, `id="timeout-read"`, `id="timeout-write"`, `id="timeout-idle"`,

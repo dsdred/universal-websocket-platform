@@ -134,6 +134,22 @@ clients can overwrite the saved section: the existing API has no revision, ETag
 or CAS check. This editor does not provide TLS/authentication/routing controls,
 archive or Runtime management.
 
+### Publish a saved Draft
+
+1. Open the Draft in **Edit existing Draft**. Save or discard any local edits.
+   After an uncertain Save, use **Reload Draft** to check the stored version first.
+2. Select **Publish Draft** and check the Configuration and Draft in the confirmation.
+   Publishing archives any current Published version in that Configuration.
+3. Confirm **Publish Draft**. Studio checks the stored Draft again, publishes it,
+   and refreshes the versions. A detected change requires reloading the Draft.
+   Another client can still make changes between the check and publication.
+
+If the publish outcome is unknown, use **Refresh versions** to inspect current
+server state. A Published or Archived state alone cannot establish the outcome
+of the earlier request. Any new attempt requires a fresh Draft and a new
+confirmation. If publication succeeds and the refresh fails, **Refresh versions**
+only reads the list again. Publishing does not start Runtime.
+
 ### Listener address validation
 
 Use a bare IPv4 or IPv6 address, or a supported hostname such as `localhost`.

@@ -96,6 +96,7 @@
           <label for="existing-draft" data-i18n>Draft</label>
           <select id="existing-draft" disabled><option value="" data-i18n>Select a Draft</option></select>
           <button id="reload-draft" type="button" data-i18n>Reload Draft</button>
+          <button id="publish-draft" type="button" aria-describedby="draft-status" disabled data-i18n>Publish Draft</button>
           <p id="draft-status" class="status" role="status" aria-live="polite" data-i18n>Select a Configuration to discover Drafts.</p>
           <label for="draft-section" data-i18n>Editing section</label>
           <select id="draft-section" disabled>
@@ -170,7 +171,7 @@
           <dd id="result-url" class="url"></dd>
         </div>
       </dl>
-      <p class="result-warning" data-i18n>This preliminary URL is not a live endpoint check. Published does not mean Running.</p>
+      <p id="result-url-warning" class="result-warning" data-i18n>This preliminary URL is not a live endpoint check. Published does not mean Running.</p>
     </section>
   </main>
   </div>
@@ -180,7 +181,7 @@
     <p id="confirmation-warning" data-i18n hidden>The previous save outcome is unknown; stored values must be reloaded before another save.</p>
     <div class="confirmation-actions">
       <button id="confirmation-cancel" type="button" data-i18n autofocus>Cancel</button>
-      <button id="confirmation-discard" type="button" data-i18n>Discard edits</button>
+      <button id="confirmation-accept" type="button" data-i18n>Discard edits</button>
     </div>
   </dialog>
 </body>

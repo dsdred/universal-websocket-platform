@@ -31,7 +31,7 @@ const reply = (payload, status = 200) => ({ status, json: async () => payload })
 const deferred = () => { let resolve; const promise = new Promise((yes) => { resolve = yes; }); return { resolve, promise }; };
 async function settle() { for (let i = 0; i < 8; i++) await new Promise(setImmediate); }
 function start(route, storage = new Map()) {
-  const ids = ["studio-confirmation", "confirmation-cancel", "confirmation-discard", "confirmation-message", "confirmation-warning", "navigation-toggle", "control-language", "control-language-code", "configuration-form", "creation-mode", "existing-workspace", "existing-configuration", "submit-button", "flow-status", "result", "result-state", "result-version", "result-url", "reload-lists", "workspace-name", "configuration-name", "listener-host", "listener-host-error", "listener-port", "listener-port-error", "list-status", "existing-resources", "configuration-choice", "workspace-fields", "configuration-fields", "listener-fields", "result-url-row", "start-another", "existing-draft", "draft-fields", "draft-status", "reload-draft", "draft-section", "timeout-fields", "timeout-handshake", "timeout-read", "timeout-write", "timeout-idle"];
+  const ids = ["studio-confirmation", "confirmation-cancel", "confirmation-accept", "confirmation-title", "confirmation-message", "confirmation-warning", "navigation-toggle", "control-language", "control-language-code", "configuration-form", "creation-mode", "existing-workspace", "existing-configuration", "submit-button", "flow-status", "result", "result-heading", "result-url-warning", "result-state", "result-version", "result-url", "reload-lists", "workspace-name", "configuration-name", "listener-host", "listener-host-error", "listener-port", "listener-port-error", "list-status", "existing-resources", "configuration-choice", "workspace-fields", "configuration-fields", "listener-fields", "result-url-row", "start-another", "existing-draft", "draft-fields", "draft-status", "reload-draft", "publish-draft", "draft-section", "timeout-fields", "timeout-handshake", "timeout-read", "timeout-write", "timeout-idle"];
   ids.push(...timeoutIDs.map((id) => `${id}-error`));
   const nodes = Object.fromEntries(ids.map((id) => [id, Object.assign(new Element(), { id })]));
   Object.assign(nodes["creation-mode"], { value: "new-workspace" });
@@ -49,7 +49,7 @@ function start(route, storage = new Map()) {
     confirms.push(nodes["confirmation-message"].textContent);
     if (navigation.autoConfirm !== false) {
       const choice = decisions.length ? decisions.shift() : true;
-      queueMicrotask(() => nodes[choice ? "confirmation-discard" : "confirmation-cancel"].fire("click"));
+      queueMicrotask(() => nodes[choice ? "confirmation-accept" : "confirmation-cancel"].fire("click"));
     }
   };
   confirmation.close = () => { confirmation.open = false; };
@@ -99,7 +99,7 @@ function start(route, storage = new Map()) {
   };
 }
 function version(state = "Draft", extra = {}) {
-  return { id: 3, configurationId: 2, number: 1, state,
+  return { id: 3, configurationId: 2, number: 1, state, updatedAt: "2026-01-01T12:00:00Z",
     ...extra, listener: { host: "127.0.0.1", port: 8080, tls: { enabled: false },
       timeouts: { handshakeSeconds: 10, readSeconds: 0, writeSeconds: 10, idleSeconds: 0 }, ...extra.listener } };
 }
@@ -118,6 +118,253 @@ async function existing(app) {
   await app.select("existing-workspace", "1");
   await app.select("existing-configuration", "2");
 }
+
+function publicationServer() {
+  const versions = `${base}/1/configurations/2/versions`;
+  const server = {
+    items: [version("Draft", { listener: { tls: { enabled: true } } }), version("Published", { id: 4, number: 2 })],
+    attempts: 0,
+    refreshError: false,
+    route(url, options) {
+      if (options.method === "GET" && url === versions) {
+        if (server.refreshError) return reply({}, 503);
+        return reply(structuredClone(server.items));
+      }
+      if (options.method === "PUT" && url === `${versions}/3/listener`) {
+        const draft = server.items.find(({ id }) => id === 3);
+        Object.assign(draft.listener, JSON.parse(options.body));
+        draft.updatedAt = "2026-01-01T12:00:01.123456789Z";
+        return reply(structuredClone(draft));
+      }
+      if (options.method === "POST" && url === `${versions}/3/publish`) {
+        server.attempts++;
+        const draft = server.items.find(({ id }) => id === 3);
+        if (server.onPublish) return server.onPublish(draft);
+        if (draft.state !== "Draft") return reply({}, 409);
+        for (const item of server.items) if (item.state === "Published") item.state = "Archived";
+        draft.state = "Published";
+        return reply(structuredClone(draft));
+      }
+      assert.equal(options.method, "GET", `Unexpected mutation ${url}`);
+      assert.ok(url === base || url === `${base}/1/configurations`, `Unexpected read ${url}`);
+      return routes(url, options);
+    },
+  };
+  return server;
+}
+
+test("Publish Draft confirms scope, publishes a TLS-enabled Draft once and refreshes versions", async () => {
+  const server = publicationServer(), app = start(server.route);
+  await editor(app);
+  const { nodes } = app;
+  const button = nodes["publish-draft"];
+  assert.equal(button.disabled, false);
+  const before = app.requests.length;
+  app.navigation.autoConfirm = false;
+  button.fire("click"); button.fire("click");
+  assert.equal(app.confirms.length, 1);
+  assert.match(app.confirms[0], /Draft v1 \(#3\).*Configuration Configuration \(#2\).*archived/);
+  assert.equal(app.requests.length, before);
+  nodes["confirmation-accept"].fire("click");
+  nodes["confirmation-accept"].fire("click"); button.fire("click");
+  await settle();
+  assert.deepEqual(app.requests.slice(before).map(({ url, options }) => [options.method, url.split("/versions").at(-1)]),
+    [["GET", ""], ["POST", "/3/publish"], ["GET", ""]]);
+  assert.equal(app.requests[before + 1].options.body, "{}");
+  assert.equal(server.items[1].state, "Archived");
+  assert.equal(nodes["existing-draft"].value, "");
+  assert.equal(nodes["existing-draft"].children.length, 1);
+  assert.equal(nodes["result-state"].textContent, "Published");
+  assert.equal(nodes["result-url-row"].hidden, true);
+  assert.equal(nodes["flow-status"].focused, true);
+  assert.equal(button.disabled, true);
+});
+
+test("Publish Draft Cancel and Escape restore focus, and changed scope cancels the mutation", async () => {
+  const server = publicationServer(), app = start(server.route);
+  await editor(app);
+  const { nodes } = app, button = nodes["publish-draft"];
+  const before = app.requests.length;
+  app.navigation.autoConfirm = false;
+  button.fire("click"); nodes["confirmation-cancel"].fire("click");
+  assert.equal(button.focused, true);
+  button.focused = false;
+  button.fire("click"); nodes["studio-confirmation"].fire("cancel");
+  assert.equal(button.focused, true);
+  button.fire("click"); nodes["existing-draft"].value = "9";
+  nodes["confirmation-accept"].fire("click"); await settle();
+  assert.equal(app.requests.length, before);
+  assert.equal(server.attempts, 0);
+});
+
+test("Dirty listener, dirty timeouts and uncertain Save block Publish Draft", async () => {
+  const server = publicationServer();
+  const app = start((url, options) => options.method === "PUT" ? reply({}, 503) : server.route(url, options));
+  await editor(app);
+  const { nodes } = app, button = nodes["publish-draft"];
+  nodes["listener-port"].value = "9090"; nodes["listener-port"].fire("input");
+  assert.equal(button.disabled, true); button.fire("click");
+  await app.select("draft-section", "timeouts");
+  assert.equal(button.disabled, false);
+  nodes["timeout-read"].value = "17"; nodes["timeout-read"].fire("input");
+  assert.equal(button.disabled, true); button.fire("click");
+  await app.submit();
+  nodes["timeout-read"].value = "0"; nodes["timeout-read"].fire("input");
+  assert.equal(button.disabled, true); button.fire("click");
+  assert.match(nodes["draft-status"].textContent, /Save outcome unknown/);
+  assert.equal(server.attempts, 0);
+  await nodes["reload-draft"].fire("click");
+  assert.equal(button.disabled, false);
+});
+
+test("another Studio tab can change a Draft and stale content requires reload and reconfirmation", async () => {
+  const server = publicationServer(), first = start(server.route), second = start(server.route);
+  await editor(first); await editor(second);
+  first.navigation.autoConfirm = false;
+  first.nodes["publish-draft"].fire("click");
+  second.nodes["listener-port"].value = "9090";
+  await second.submit();
+  first.nodes["confirmation-accept"].fire("click"); await settle();
+  assert.equal(server.attempts, 0);
+  assert.match(first.nodes["draft-status"].textContent, /stored Draft changed/);
+  assert.equal(first.nodes["publish-draft"].disabled, true);
+  assert.equal(first.nodes["listener-port"].value, "8080");
+  await first.nodes["reload-draft"].fire("click");
+  assert.equal(first.nodes["listener-port"].value, "9090");
+  assert.equal(first.nodes["publish-draft"].disabled, false);
+  first.nodes["publish-draft"].fire("click");
+  first.nodes["confirmation-accept"].fire("click"); await settle();
+  assert.equal(server.attempts, 1);
+  assert.equal(server.items[0].listener.port, 9090);
+});
+
+test("timestamp-only change, terminal state and missing Draft all prevent a publish POST", async () => {
+  for (const change of [
+    ({ items }) => { items[0].updatedAt = "2026-01-01T12:00:00.000000001Z"; },
+    ({ items }) => { items[0].state = "Archived"; },
+    ({ items }) => { items.shift(); },
+  ]) {
+    const server = publicationServer(), app = start(server.route);
+    await editor(app); change(server);
+    await app.nodes["publish-draft"].fire("click");
+    assert.equal(server.attempts, 0);
+    assert.equal(app.nodes["publish-draft"].disabled, true);
+  }
+});
+
+test("reload of an archived Draft preserves local values and invalidates publish eligibility", async () => {
+  const server = publicationServer(), app = start(server.route);
+  await editor(app);
+  server.items[0].state = "Archived";
+  await app.nodes["reload-draft"].fire("click");
+  assert.equal(app.nodes["listener-port"].value, "8080");
+  assert.equal(app.nodes["publish-draft"].disabled, true);
+  app.nodes["publish-draft"].fire("click");
+  assert.equal(app.confirms.length, 0);
+});
+
+test("a successful section Save enables publication unless the other section changed on the server", async () => {
+  for (const remoteChange of [false, true]) {
+    const server = publicationServer(), app = start(server.route);
+    await editor(app);
+    if (remoteChange) server.items[0].listener.timeouts.readSeconds = 15;
+    app.nodes["listener-port"].value = "9090";
+    await app.submit();
+    assert.equal(app.nodes["timeout-read"].value, "0");
+    assert.equal(app.nodes["publish-draft"].disabled, remoteChange);
+    if (remoteChange) await app.nodes["reload-draft"].fire("click");
+    await app.nodes["publish-draft"].fire("click");
+    assert.equal(server.attempts, 1);
+    assert.equal(server.items[0].listener.port, 9090);
+  }
+});
+
+test("a publish conflict after the fresh read refreshes without repeating the POST", async () => {
+  const server = publicationServer(), app = start(server.route);
+  await editor(app);
+  server.onPublish = (draft) => { draft.state = "Archived"; return reply({}, 409); };
+  await app.nodes["publish-draft"].fire("click");
+  assert.equal(server.attempts, 1);
+  assert.equal(app.nodes["existing-draft"].children.length, 1);
+  assert.match(app.nodes["flow-status"].textContent, /Draft unavailable/);
+});
+
+test("an uncertain publish needs explicit reads, and observed lifecycle alone gives no success", async () => {
+  for (const state of ["Published", "Archived", "Draft"]) {
+    const server = publicationServer(), app = start(server.route);
+    await editor(app);
+    server.onPublish = (draft) => {
+      draft.state = state;
+      if (state === "Published") throw new Error("lost response");
+      if (state === "Archived") return reply({}, 503);
+      return reply(version("Published", { id: 99 }));
+    };
+    const before = app.requests.length;
+    await app.nodes["publish-draft"].fire("click");
+    assert.deepEqual(app.requests.slice(before).map(({ options }) => options.method), ["GET", "POST"]);
+    assert.match(app.nodes["flow-status"].textContent, /Publish outcome unknown/);
+    assert.equal(app.nodes["submit-button"].disabled, true);
+    assert.equal(app.nodes["publish-draft"].disabled, true);
+    server.refreshError = true;
+    await app.nodes["reload-draft"].fire("click");
+    assert.equal(app.nodes["publish-draft"].disabled, true);
+    server.refreshError = false;
+    await app.nodes["reload-draft"].fire("click");
+    assert.equal(server.attempts, 1);
+    assert.equal(app.nodes.result.hidden, true);
+    assert.match(app.nodes["flow-status"].textContent, new RegExp(`outcome unknown.*${state}`));
+    assert.equal(app.nodes["publish-draft"].disabled, state !== "Draft");
+    if (state === "Draft") {
+      delete server.onPublish;
+      app.navigation.autoConfirm = false;
+      app.nodes["publish-draft"].fire("click");
+      assert.equal(server.attempts, 1);
+      app.nodes["confirmation-accept"].fire("click"); await settle();
+      assert.equal(server.attempts, 2);
+    }
+  }
+});
+
+test("acknowledged publication stays successful when refresh fails and retry is read-only", async () => {
+  const server = publicationServer(), app = start(server.route);
+  server.items.pop();
+  await editor(app);
+  server.onPublish = (draft) => { server.refreshError = true; draft.state = "Published"; return reply(draft); };
+  await app.nodes["publish-draft"].fire("click");
+  assert.equal(app.nodes["result-state"].textContent, "Published");
+  assert.match(app.nodes["flow-status"].textContent, /Draft published.*refresh failed/);
+  assert.equal(app.nodes["publish-draft"].disabled, true);
+  server.refreshError = false;
+  await app.nodes["reload-draft"].fire("click");
+  assert.equal(server.attempts, 1);
+  assert.equal(app.nodes["existing-draft"].children.length, 1);
+});
+
+test("a confirmed publication shows Archived if another version supersedes it before refresh", async () => {
+  const server = publicationServer(), app = start(server.route);
+  await editor(app);
+  server.onPublish = (draft) => {
+    draft.state = "Archived";
+    return reply({ ...draft, state: "Published" });
+  };
+  await app.nodes["publish-draft"].fire("click");
+  assert.equal(app.nodes["result-state"].textContent, "Archived");
+  assert.match(app.nodes["flow-status"].textContent, /Draft published.*Archived/);
+  assert.equal(app.nodes["existing-draft"].children.length, 1);
+});
+
+test("Publish confirmation and outcome follow the active language", async () => {
+  const server = publicationServer(), app = start(server.route);
+  await editor(app);
+  app.nodes["control-language"].fire("click");
+  app.navigation.autoConfirm = false;
+  app.nodes["publish-draft"].fire("click");
+  assert.equal(app.nodes["confirmation-title"].textContent, "Опубликовать черновик?");
+  assert.match(app.nodes["confirmation-message"].textContent, /v1 \(#3\).*Configuration \(#2\).*архивирована/);
+  assert.equal(app.nodes["confirmation-accept"].textContent, "Опубликовать черновик");
+  app.nodes["confirmation-accept"].fire("click"); await settle();
+  assert.match(app.nodes["flow-status"].textContent, /опубликована/);
+});
 const mutations = (app) => app.requests.filter(({ options }) => options.method !== "GET");
 test("original new parent flow remains complete and same-origin", async () => {
   const app = start(routes); await app.submit();
@@ -1000,8 +1247,8 @@ test("confirmed departure attempts the captured route once and later edits still
   app.navigation.autoConfirm = false;
   app.navigation.fail = true;
   const leaving = app.follow("http://localhost/dashboard#workspaces");
-  await app.nodes["confirmation-discard"].fire("click");
-  await app.nodes["confirmation-discard"].fire("click");
+  await app.nodes["confirmation-accept"].fire("click");
+  await app.nodes["confirmation-accept"].fire("click");
   await leaving.result;
   assert.deepEqual(app.navigationAttempts, ["http://localhost/dashboard#workspaces"]);
   assert.equal(app.nodes["listener-host"].value, "127.0.0.1");
@@ -1039,7 +1286,7 @@ test("unknown save departure keeps its warning and requires a fresh read before 
   const pending = app.follow("http://localhost/dashboard");
   assert.equal(app.nodes["confirmation-warning"].hidden, false);
   assert.equal(app.nodes["studio-confirmation"].attributes["aria-describedby"], "confirmation-message confirmation-warning");
-  await app.nodes["confirmation-discard"].fire("click");
+  await app.nodes["confirmation-accept"].fire("click");
   await pending.result;
   assert.deepEqual(app.navigationAttempts, ["http://localhost/dashboard"]);
   assert.equal(app.nodes["existing-draft"].value, "");

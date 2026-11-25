@@ -12,7 +12,9 @@
 опубликована через PR #154, merge `9ff3ea2f32e31cfa3030a2728ffd1699a03a615e`.
 Owner подтвердил отображение и очистку ошибок и сохранение таймаутов.
 [Owner Acceptance PASS](../docs/tasks/TASK-147-STUDIO-PER-FIELD-TIMEOUT-VALIDATION.md#owner-acceptance-closure).
-Следующий срез — планирование TASK-148 Publish Existing Draft, `Not Activated`.
+[TASK-148 — Публикация существующего Draft](../docs/tasks/TASK-148-PUBLISH-EXISTING-DRAFT.md)
+в реализации по утверждённому Owner Studio-only scope. Актуальные проверки и
+Commit Gate указаны в task record.
 
 [TASK-140 — Локализация Studio и Dashboard](../docs/tasks/TASK-140-CONTROL-LOCALIZATION.md) опубликована через PR #139,
 merge `4fcbbacfdfacbd8a39b4ab2233136bb2cb546d29`.
@@ -20,7 +22,7 @@ merge `4fcbbacfdfacbd8a39b4ab2233136bb2cb546d29`.
 [Упрощение шапки](../docs/tasks/TASK-140-OWNER-HEADER-CLEANUP.md) опубликовано через PR #141.
 [TASK-142 — адаптивная навигация](../docs/tasks/TASK-142-RESPONSIVE-NAVIGATION.md) опубликована через PR #142. Owner PASS подтверждён.
 [TASK-143 — диалоги подтверждения](../docs/tasks/TASK-143-STYLED-CONFIRMATION-DIALOGS.md) опубликована через PR #143. Owner Acceptance PASS, 6/6 на 18144.
-Текущий срез: [TASK-141 — Темы UWP Control](../docs/tasks/TASK-141-CONTROL-THEMES.md), `In Progress`. Актуальный gate определяется Recovery Evidence Envelope.
+[TASK-141 — Темы UWP Control](../docs/tasks/TASK-141-CONTROL-THEMES.md), `In Progress`. Актуальный gate определяется Recovery Evidence Envelope.
 Решение Owner по опубликованной версии зафиксировано в [Owner Acceptance Closure](../docs/tasks/TASK-141-CONTROL-THEMES.md#owner-acceptance-closure).
 
 [TASK-138 — Studio UI Owner Acceptance](../docs/tasks/TASK-138-STUDIO-OWNER-ACCEPTANCE.md) —
