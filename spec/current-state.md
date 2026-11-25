@@ -18,6 +18,7 @@ Light/Dark в Studio и Dashboard. Тема следует настройке О
 или тёмная тема не сохранена.
 Переключение сохраняет правки Draft и не выполняет API-запросов. Статус
 `In Progress` и точные gates фиксируются в task record.
+Решение Owner по опубликованной версии см. в [Owner Acceptance Closure](../docs/tasks/TASK-141-CONTROL-THEMES.md#owner-acceptance-closure).
 
 [TASK-138 — Studio UI Owner Acceptance](../docs/tasks/TASK-138-STUDIO-OWNER-ACCEPTANCE.md) —
 Owner functional PASS: 12/12 ручных сценариев на Control Service 18139,

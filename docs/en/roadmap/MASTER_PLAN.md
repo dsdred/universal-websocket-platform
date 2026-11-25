@@ -21,7 +21,7 @@ The repository currently contains an Alpha foundation rather than a production-r
 ### Configuration
 
 - [TASK-143](../../tasks/TASK-143-STYLED-CONFIRMATION-DIALOGS.md) shipped EN/RU Studio confirmation dialogs for internal navigation and discarding Draft edits in PR #143. Native reload protection remains active. Owner Acceptance closed with 6/6 manual scenarios passing on port 18144.
-- [TASK-141](../../tasks/TASK-141-CONTROL-THEMES.md) adds a shared Light/Dark button to Studio and Dashboard. The theme follows the OS when no Light or Dark preference is saved. Theme changes preserve Draft edits and issue no API requests. The task record tracks verification and acceptance.
+- [TASK-141](../../tasks/TASK-141-CONTROL-THEMES.md) adds a shared Light/Dark button to Studio and Dashboard. The theme follows the OS when no Light or Dark preference is saved. Theme changes preserve Draft edits and issue no API requests. The [Owner Acceptance record](../../tasks/TASK-141-CONTROL-THEMES.md#owner-acceptance-closure) covers the published version.
 
 - TASK-137 extends the existing-Draft editor with four listener timeout values through the existing timeout API. Listener address and Timeouts are saved separately to the same version; no implicit create/publish, backend or Runtime change. Dirty, pending and unknown-outcome guards apply to section switches. Concurrent writers have no revision/ETag/CAS protection.
 

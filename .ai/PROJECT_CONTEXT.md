@@ -15,6 +15,7 @@ merge `4fcbbacfdfacbd8a39b4ab2233136bb2cb546d29`.
 [TASK-142 — адаптивная навигация](../docs/tasks/TASK-142-RESPONSIVE-NAVIGATION.md) опубликована через PR #142. Owner PASS подтверждён.
 [TASK-143 — диалоги подтверждения](../docs/tasks/TASK-143-STYLED-CONFIRMATION-DIALOGS.md) опубликована через PR #143. Owner Acceptance PASS, 6/6 на 18144.
 Текущий срез: [TASK-141 — Темы UWP Control](../docs/tasks/TASK-141-CONTROL-THEMES.md), `In Progress`. Актуальный gate определяется Recovery Evidence Envelope.
+Решение Owner по опубликованной версии зафиксировано в [Owner Acceptance Closure](../docs/tasks/TASK-141-CONTROL-THEMES.md#owner-acceptance-closure).
 
 [TASK-138 — Studio UI Owner Acceptance](../docs/tasks/TASK-138-STUDIO-OWNER-ACCEPTANCE.md) —
 Owner functional PASS: 12/12 ручных сценариев на Control Service 18139,
