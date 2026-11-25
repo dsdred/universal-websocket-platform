@@ -436,3 +436,20 @@ func TestStudioListenerFieldErrorAssociations(t *testing.T) {
 		}
 	}
 }
+
+func TestStudioTimeoutFieldErrorAssociations(t *testing.T) {
+	html := string(indexHTML)
+	for _, field := range []string{"handshake", "read", "write", "idle"} {
+		id := "timeout-" + field
+		input := regexp.MustCompile(`<input id="` + id + `"[^>]*>`).FindString(html)
+		if !strings.Contains(input, `type="text"`) ||
+			!strings.Contains(input, `inputmode="numeric"`) ||
+			!strings.Contains(input, `aria-describedby="`+id+`-error"`) {
+			t.Errorf("timeout input must preserve raw text, request the numeric keyboard, and associate its error: %q", input)
+		}
+		output := regexp.MustCompile(`<p id="` + id + `-error"[^>]*>`).FindString(html)
+		if !strings.Contains(output, `aria-live="polite"`) {
+			t.Errorf("timeout error must announce updates: %q", output)
+		}
+	}
+}

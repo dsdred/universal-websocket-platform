@@ -113,7 +113,9 @@ archive and Runtime management remain unavailable.
 3. Choose **Listener address** to edit host/port and **Save listener**, or choose
    **Timeouts** to edit all four second values and **Save timeouts**. Handshake
    and write accept whole numbers 1–300; read and idle accept 0–86400 (zero
-   disables that timeout). Every field is required. Each Save updates only the
+   disables that timeout). Every field is required. **Save timeouts** shows
+   errors beside all invalid fields and focuses the first one. Correct a field
+   to clear its error. Each Save updates only the
    selected section of the same Draft through one request; it never publishes.
    TLS, authentication, routing and the other editor section remain unchanged.
 4. Switching editor section, Action, Workspace, Configuration or Draft, or reloading dirty data,

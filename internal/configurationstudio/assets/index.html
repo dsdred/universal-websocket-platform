@@ -131,15 +131,19 @@
           <p data-i18n>Timeout settings in seconds. Read and idle may be zero to disable that timeout. Saving settings does not start or change a Runtime.</p>
           <div class="listener-fields">
             <div><label for="timeout-handshake" data-i18n>Handshake timeout (1–300 seconds)</label>
-              <input id="timeout-handshake" type="number" min="1" max="300" step="1" required disabled></div>
+              <input id="timeout-handshake" type="text" inputmode="numeric" aria-describedby="timeout-handshake-error" required disabled>
+              <p id="timeout-handshake-error" class="listener-field-error" aria-live="polite"></p></div>
             <div><label for="timeout-read" data-i18n>Read timeout (0–86400 seconds)</label>
-              <input id="timeout-read" type="number" min="0" max="86400" step="1" required disabled></div>
+              <input id="timeout-read" type="text" inputmode="numeric" aria-describedby="timeout-read-error" required disabled>
+              <p id="timeout-read-error" class="listener-field-error" aria-live="polite"></p></div>
           </div>
           <div class="listener-fields">
             <div><label for="timeout-write" data-i18n>Write timeout (1–300 seconds)</label>
-              <input id="timeout-write" type="number" min="1" max="300" step="1" required disabled></div>
+              <input id="timeout-write" type="text" inputmode="numeric" aria-describedby="timeout-write-error" required disabled>
+              <p id="timeout-write-error" class="listener-field-error" aria-live="polite"></p></div>
             <div><label for="timeout-idle" data-i18n>Idle timeout (0–86400 seconds)</label>
-              <input id="timeout-idle" type="number" min="0" max="86400" step="1" required disabled></div>
+              <input id="timeout-idle" type="text" inputmode="numeric" aria-describedby="timeout-idle-error" required disabled>
+              <p id="timeout-idle-error" class="listener-field-error" aria-live="polite"></p></div>
           </div>
         </div>
         <button id="submit-button" type="submit" data-i18n>Create and publish</button>

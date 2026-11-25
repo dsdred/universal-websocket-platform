@@ -8,6 +8,7 @@ const vm = require("node:vm");
 const script = fs.readFileSync(path.join(__dirname, "assets/studio.js"), "utf8");
 const languageScript = fs.readFileSync(path.join(__dirname, "assets/control-language.js"), "utf8");
 const base = "/api/v1/workspaces";
+const timeoutIDs = ["timeout-handshake", "timeout-read", "timeout-write", "timeout-idle"];
 class Element {
   constructor() {
     this.value = ""; this.textContent = ""; this.hidden = false; this.disabled = false;
@@ -31,7 +32,8 @@ const deferred = () => { let resolve; const promise = new Promise((yes) => { res
 async function settle() { for (let i = 0; i < 8; i++) await new Promise(setImmediate); }
 function start(route, storage = new Map()) {
   const ids = ["studio-confirmation", "confirmation-cancel", "confirmation-discard", "confirmation-message", "confirmation-warning", "navigation-toggle", "control-language", "control-language-code", "configuration-form", "creation-mode", "existing-workspace", "existing-configuration", "submit-button", "flow-status", "result", "result-state", "result-version", "result-url", "reload-lists", "workspace-name", "configuration-name", "listener-host", "listener-host-error", "listener-port", "listener-port-error", "list-status", "existing-resources", "configuration-choice", "workspace-fields", "configuration-fields", "listener-fields", "result-url-row", "start-another", "existing-draft", "draft-fields", "draft-status", "reload-draft", "draft-section", "timeout-fields", "timeout-handshake", "timeout-read", "timeout-write", "timeout-idle"];
-  const nodes = Object.fromEntries(ids.map((id) => [id, new Element()]));
+  ids.push(...timeoutIDs.map((id) => `${id}-error`));
+  const nodes = Object.fromEntries(ids.map((id) => [id, Object.assign(new Element(), { id })]));
   Object.assign(nodes["creation-mode"], { value: "new-workspace" });
   nodes["workspace-name"].value = "Workspace"; nodes["configuration-name"].value = "Configuration";
   nodes["listener-host"].value = "127.0.0.1"; nodes["listener-port"].value = "8080";
@@ -448,7 +450,6 @@ test("unknown timeout is not automatically retried and Save remains disabled", a
   assert.equal(app.nodes["listener-host"].value, "localhost");
 });
 
-const timeoutIDs = ["timeout-handshake", "timeout-read", "timeout-write", "timeout-idle"];
 const timeoutValues = { handshakeSeconds: 25, readSeconds: 40, writeSeconds: 30, idleSeconds: 90 };
 function timeoutVersion(timeouts = timeoutValues, extra = {}) {
   return version("Draft", { ...extra, listener: { ...extra.listener, timeouts } });
@@ -504,7 +505,60 @@ for (const [id, invalid] of [
 ]) test(`invalid ${id}=${JSON.stringify(invalid)} retains input without PUT`, async () => {
   const app = start(timeoutRoutes); await timeoutEditor(app); await editTimeout(app, invalid, id); await app.submit();
   assert.equal(mutations(app).length, 0); assert.equal(app.nodes[id].value, invalid);
-  assert.match(app.nodes["flow-status"].textContent, /timeout must be a whole number/);
+  assert.match(app.nodes[`${id}-error`].textContent, /timeout must be a whole number/);
+  assert.equal(app.nodes[id].attributes["aria-invalid"], "true");
+});
+
+test("Save validates every timeout, focuses the first invalid field and clears only corrected errors", async () => {
+  const app = start(timeoutRoutes);
+  await timeoutEditor(app);
+  await editTimeout(app, "301");
+  app.nodes["timeout-read"].value = "0x10";
+  app.nodes["timeout-write"].value = "0";
+  app.nodes["timeout-idle"].value = " 1 ";
+  await app.submit();
+  assert.equal(mutations(app).length, 0);
+  assert.deepEqual(timeoutIDs.map((id) => Boolean(app.nodes[id].focused)), [true, false, false, false]);
+  for (const [id, label] of timeoutIDs.map((id, index) => [id, ["Handshake", "Read", "Write", "Idle"][index]])) {
+    assert.match(app.nodes[`${id}-error`].textContent, new RegExp(`^${label} timeout`));
+    assert.equal(app.nodes[id].attributes["aria-invalid"], "true");
+  }
+  await editTimeout(app, "0", "timeout-read");
+  assert.equal(app.nodes["timeout-read-error"].textContent, "");
+  assert.equal(app.nodes["timeout-read"].attributes["aria-invalid"], undefined);
+  for (const id of ["timeout-handshake", "timeout-write", "timeout-idle"]) {
+    assert.notEqual(app.nodes[`${id}-error`].textContent, "");
+    assert.equal(app.nodes[id].attributes["aria-invalid"], "true");
+  }
+  await editTimeout(app, "300");
+  await editTimeout(app, "1", "timeout-write");
+  await editTimeout(app, "0", "timeout-idle");
+  assert.equal(app.nodes["flow-status"].textContent, "Ready.");
+  await app.submit();
+  assert.deepEqual(mutations(app).map(({ url, options }) => [url, options.method, JSON.parse(options.body)]), [
+    [`${versionsURL}/3/listener/timeouts`, "PUT", { handshakeSeconds: 300, readSeconds: 0, writeSeconds: 1, idleSeconds: 0 }],
+  ]);
+  assert.equal(app.nodes["existing-draft"].value, "3");
+});
+
+test("timeout errors survive cancelled Discard and clear when stored values are restored", async () => {
+  const app = start(timeoutRoutes);
+  await timeoutEditor(app);
+  await editTimeout(app, "301");
+  await editTimeout(app, "86401", "timeout-idle");
+  await app.submit();
+  const errors = () => timeoutIDs.map((id) => app.nodes[`${id}-error`].textContent);
+  const invalid = errors();
+  app.decisions.push(false);
+  await app.select("draft-section", "listener");
+  assert.equal(app.nodes["draft-section"].value, "timeouts");
+  assert.deepEqual(errors(), invalid);
+  assert.equal(app.nodes["timeout-idle"].value, "86401");
+  await app.nodes["reload-draft"].fire("click");
+  assert.deepEqual(errors(), ["", "", "", ""]);
+  assert.equal(app.nodes["timeout-idle"].value, String(timeoutValues.idleSeconds));
+  assert.ok(timeoutIDs.every((id) => app.nodes[id].attributes["aria-invalid"] === undefined));
+  assert.equal(mutations(app).length, 0);
 });
 
 for (const values of [
@@ -832,6 +886,7 @@ test("language changes preserve active Draft, local timeout validation and trans
   assert.equal(app.nodes["control-language"].attributes["aria-label"], "EN (English). Switch to Russian.");
   await timeoutEditor(app);
   await editTimeout(app, "301");
+  await editTimeout(app, "-1", "timeout-idle");
   await app.submit();
   const values = () => ["creation-mode", "existing-workspace", "existing-configuration", "existing-draft",
     "draft-section", "timeout-handshake"].map((id) => app.nodes[id].value);
@@ -843,11 +898,13 @@ test("language changes preserve active Draft, local timeout validation and trans
     assert.equal(app.nodes["control-language-code"].textContent, locale.toUpperCase());
     assert.equal(app.nodes["control-language"].attributes["aria-label"], locale === "ru"
       ? "RU (русский). Переключить на английский." : "EN (English). Switch to Russian.");
-    assert.match(app.nodes["flow-status"].textContent, locale === "ru" ? /Таймаут рукопожатия.*1.*300/ : /Handshake timeout.*1.*300/);
+    assert.match(app.nodes["timeout-handshake-error"].textContent, locale === "ru" ? /Таймаут рукопожатия.*1.*300/ : /Handshake timeout.*1.*300/);
+    assert.match(app.nodes["timeout-idle-error"].textContent, locale === "ru" ? /Таймаут простоя.*0.*86400/ : /Idle timeout.*0.*86400/);
     assert.deepEqual(values(), before);
     assert.equal(app.requests.length, reads);
   }
   await editTimeout(app, "35");
+  await editTimeout(app, String(timeoutValues.idleSeconds), "timeout-idle");
   await app.submit();
   assert.match(app.nodes["flow-status"].textContent, /Таймауты сохранены/);
   await app.nodes["control-language"].fire("click");

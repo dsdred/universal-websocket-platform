@@ -95,6 +95,7 @@ const ControlLanguage = (() => {
     "Write": "записи",
     "Idle": "простоя",
     "Check the highlighted Listener fields.": "Проверьте выделенные поля прослушивания.",
+    "Check the highlighted Timeout fields.": "Проверьте выделенные поля таймаутов.",
     "Enter a Listener host.": "Введите хост прослушивания.",
     "Listener host must not exceed 255 characters.": "Длина хоста прослушивания не должна превышать 255 символов.",
     "Enter a valid IPv4 address for a dotted numeric host.": "Хост из цифр и точек должен быть корректным адресом IPv4.",
