@@ -116,3 +116,14 @@ internal/configurationstudio/assets/dashboard.html | full | present | 100644 | 7
 internal/configurationstudio/assets/dashboard.js | full | present | 100644 | 04d0bdfcaccead325f7a205b8c5daf1205102c39
 internal/configurationstudio/dashboard_test.js | full | present | 100644 | 1ad4e09ae4457a6ac239b3a02726ebff2de11e2b
 ```
+
+### Owner Acceptance Closure — 2026-11-25
+
+Решение Owner по TASK-144 — `ACCEPTED`.
+Визуальная проверка пройдена. Замечаний Owner нет.
+
+Проверенный опубликованный baseline — `main@f89efa82c6416ffa0c6d28866e4acfc4a9a148d5`.
+Для совместной приёмки TASK-144, TASK-145 и TASK-146 предоставлена
+изолированная сборка Control Service на `127.0.0.1:18157`.
+Принят интерфейс Dashboard с кнопкой Refresh, локализованной подсказкой
+и оформлением разделов навигации.

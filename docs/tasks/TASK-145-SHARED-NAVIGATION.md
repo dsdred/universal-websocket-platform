@@ -136,3 +136,13 @@ internal/configurationstudio/control_navigation_test.js | full | present | 10064
 - Coordinator Acceptance для Commit Gate — `Accepted` по тому же
   манифесту. Следующая задача не активирована. Stage, commit, push и
   publication не выполнены. STOP на Commit Gate.
+
+### Owner Acceptance Closure — 2026-11-25
+
+Решение Owner по TASK-145 — `ACCEPTED`.
+Визуальная проверка пройдена. Замечаний Owner нет.
+
+Проверенный опубликованный baseline — `main@f89efa82c6416ffa0c6d28866e4acfc4a9a148d5`.
+Для совместной приёмки TASK-144, TASK-145 и TASK-146 предоставлена
+изолированная сборка Control Service на `127.0.0.1:18157`.
+Принята общая навигация Dashboard и Studio с выровненной desktop-шапкой.
