@@ -112,7 +112,9 @@ archive и Runtime management остаются недоступными.
 3. Выберите **Listener address** для host/port и **Save listener** или **Timeouts**
    для четырёх значений в секундах и **Save timeouts**. Handshake/write допускают
    целые 1–300, read/idle — целые 0–86400 (ноль отключает соответствующий timeout).
-   Все поля обязательны. Один Save одним запросом меняет только выбранную section
+   Все поля обязательны. **Save timeouts** показывает ошибки рядом со всеми
+   неверными полями и переводит фокус на первое. Исправление поля очищает его
+   ошибку. Один Save одним запросом меняет только выбранную section
    того же Draft, без публикации. TLS, authentication, routing и другая section
    редактора остаются неизменными.
 4. Смена section редактора, Action, Workspace, Configuration или Draft и обновление несохранённых

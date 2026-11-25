@@ -11,11 +11,11 @@ const configurationChoice = $("existing-configuration");
 const draftChoice = $("existing-draft");
 const sectionChoice = $("draft-section");
 const timeoutFields = [
-  ["handshakeSeconds", $("timeout-handshake"), 1, 300, "Handshake"],
-  ["readSeconds", $("timeout-read"), 0, 86400, "Read"],
-  ["writeSeconds", $("timeout-write"), 1, 300, "Write"],
-  ["idleSeconds", $("timeout-idle"), 0, 86400, "Idle"],
-];
+  ["handshakeSeconds", "timeout-handshake", 1, 300, "Handshake"],
+  ["readSeconds", "timeout-read", 0, 86400, "Read"],
+  ["writeSeconds", "timeout-write", 1, 300, "Write"],
+  ["idleSeconds", "timeout-idle", 0, 86400, "Idle"],
+].map(([key, id, min, max, label]) => ({ key, input: $(id), min, max, label, output: $(`${id}-error`) }));
 const submitButton = $("submit-button");
 const statusOutput = $("flow-status");
 const result = $("result");
@@ -24,7 +24,7 @@ const resultVersion = $("result-version");
 const resultURL = $("result-url");
 const controls = [mode, workspaceChoice, configurationChoice, $("reload-lists"),
   $("workspace-name"), $("configuration-name"), $("listener-host"), $("listener-port"), sectionChoice,
-  ...timeoutFields.map(([, input]) => input), submitButton];
+  ...timeoutFields.map(({ input }) => input), submitButton];
 let busy = false, locked = false, loading = false, listGeneration = 0, listController;
 let workspaces = new Map(), configurations = new Map(), drafts = new Map();
 let openedDraft = null, saveUnknown = false;
@@ -36,6 +36,7 @@ const listenerErrors = { host: $("listener-host-error"), port: $("listener-port-
 const listenerFields = { host: hostInput, port: portInput };
 const rejectedListenerValues = new Map();
 const listenerErrorSummary = "Check the highlighted Listener fields.";
+const timeoutErrorSummary = "Check the highlighted Timeout fields.";
 
 function validIPv4(host) {
   const octets = host.split(".");
@@ -83,11 +84,14 @@ function listenerPort(raw) {
   return { value: Number(digits) };
 }
 
-function setListenerError(field, message = "") {
-  const output = listenerErrors[field];
-  show(output, message);
-  if (message) listenerFields[field].setAttribute("aria-invalid", "true");
-  else listenerFields[field].removeAttribute("aria-invalid");
+function setFieldError(input, output, copy = "") {
+  show(output, copy);
+  if (copy) input.setAttribute("aria-invalid", "true");
+  else input.removeAttribute("aria-invalid");
+}
+
+function setListenerError(field, copy) {
+  setFieldError(listenerFields[field], listenerErrors[field], copy);
 }
 
 function clearListenerSummary() {
@@ -141,8 +145,48 @@ for (const [field, validate] of [["host", listenerHost], ["port", listenerPort]]
   input.addEventListener("blur", updateListenerError);
 }
 
+function validateTimeoutField({ input, min, max, label, output }) {
+  const value = Number(input.value);
+  if (!input.value || /[^0-9]/.test(input.value) || !Number.isInteger(value) || value < min || value > max) {
+    setFieldError(input, output, message("{0} timeout must be a whole number between {1} and {2} seconds.", message(label), min, max));
+    return undefined;
+  }
+  setFieldError(input, output);
+  return value;
+}
+
+function validateTimeoutFields() {
+  const body = {};
+  let firstInvalid;
+  for (const field of timeoutFields) {
+    const value = validateTimeoutField(field);
+    if (value === undefined) firstInvalid ??= field.input;
+    else body[field.key] = value;
+  }
+  if (firstInvalid) {
+    setStatus(timeoutErrorSummary, "error");
+    firstInvalid.focus();
+    return null;
+  }
+  return body;
+}
+
+function clearTimeoutErrors() {
+  for (const { input, output } of timeoutFields) setFieldError(input, output);
+  if (currentMessage(statusOutput) === timeoutErrorSummary) setStatus("Ready.");
+}
+
+for (const field of timeoutFields) {
+  field.input.addEventListener("input", () => {
+    if (!currentMessage(field.output)) return;
+    validateTimeoutField(field);
+    if (currentMessage(statusOutput) === timeoutErrorSummary &&
+        timeoutFields.every(({ output }) => !currentMessage(output))) setStatus("Ready.");
+  });
+}
+
 function dirty() {
-  if (openedDraft && editorSection === "timeouts") return timeoutFields.some(([key, input]) => input.value !== String(openedDraft.timeouts[key]));
+  if (openedDraft && editorSection === "timeouts") return timeoutFields.some(({ key, input }) => input.value !== String(openedDraft.timeouts[key]));
   return !!openedDraft && (hostInput.value !== openedDraft.host || portInput.value !== String(openedDraft.port));
 }
 function rememberChoices() {
@@ -251,6 +295,7 @@ function clearDrafts() {
   drafts = new Map(); openedDraft = null; saveUnknown = false;
   editorSection = "listener"; sectionChoice.value = editorSection;
   clearListenerErrors();
+  clearTimeoutErrors();
   placeholder(draftChoice, "Select a Draft");
   draftStatus("Select a Configuration to discover Drafts.");
 }
@@ -258,7 +303,7 @@ function updateDirty() {
   if (editing() && openedDraft && !saveUnknown) draftStatus(dirty() ? "Unsaved Draft changes." : "Draft section is unchanged.");
   syncControls();
 }
-for (const input of [hostInput, portInput, ...timeoutFields.map(([, input]) => input)]) input.addEventListener("input", updateDirty);
+for (const input of [hostInput, portInput, ...timeoutFields.map(({ input }) => input)]) input.addEventListener("input", updateDirty);
 window.addEventListener("beforeunload", (event) => {
   if (busy || dirty() || saveUnknown) { event.preventDefault(); event.returnValue = ""; }
 });
@@ -303,7 +348,7 @@ function syncControls() {
   sectionChoice.disabled ||= loading || !openedDraft;
   $("timeout-fields").hidden = !editing() || editorSection !== "timeouts";
   $("listener-fields").hidden = editing() ? editorSection !== "listener" : mode.value === "existing-configuration";
-  for (const [, input] of timeoutFields) input.disabled ||= !editing() || !openedDraft || loading;
+  for (const { input } of timeoutFields) input.disabled ||= !editing() || !openedDraft || loading;
   if (editing()) {
     show(submitButton, editorSection === "timeouts" ? "Save timeouts" : "Save listener");
     hostInput.disabled ||= !openedDraft || loading;
@@ -523,7 +568,7 @@ function draftProjection(version, configurationID) {
   if (!listener || typeof listener.host !== "string" || !listener.host.trim() || listener.host.length > 255 ||
       !Number.isInteger(listener.port) || listener.port < 1 || listener.port > 65535) throw new LocalError("Invalid listener response.");
   const timeouts = {};
-  for (const [key, , min, max] of timeoutFields) {
+  for (const { key, min, max } of timeoutFields) {
     const value = listener.timeouts && listener.timeouts[key];
     if (!Number.isInteger(value) || value < min || value > max) throw new LocalError("Invalid timeout response.");
     timeouts[key] = value;
@@ -533,8 +578,9 @@ function draftProjection(version, configurationID) {
 function restoreEditorInputs() {
   if (!openedDraft) return;
   clearListenerErrors();
+  clearTimeoutErrors();
   hostInput.value = openedDraft.host; portInput.value = String(openedDraft.port);
-  for (const [key, input] of timeoutFields) input.value = String(openedDraft.timeouts[key]);
+  for (const { key, input } of timeoutFields) input.value = String(openedDraft.timeouts[key]);
 }
 guardChoice(sectionChoice, () => {
   if (loading || !["listener", "timeouts"].includes(sectionChoice.value)) { restoreChoices(); return; }
@@ -607,17 +653,8 @@ async function saveDraft() {
   try {
     scope = editorScope();
     if (selectedID(draftChoice, drafts) !== openedDraft.id || scope.workspaceID !== openedDraft.workspaceID || scope.configurationID !== openedDraft.configurationID) throw new LocalError("Draft selection changed. Reload before saving.");
-    if (editorSection === "timeouts") {
-      body = {};
-      for (const [key, input, min, max, label] of timeoutFields) {
-        const value = Number(input.value);
-        if (!/^[0-9]+$/.test(input.value) || !Number.isInteger(value) || value < min || value > max) throw new LocalError(message("{0} timeout must be a whole number between {1} and {2} seconds.", message(label), min, max));
-        body[key] = value;
-      }
-    } else {
-      body = validateListenerFields();
-      if (!body) return;
-    }
+    body = editorSection === "timeouts" ? validateTimeoutFields() : validateListenerFields();
+    if (!body) return;
   } catch (error) { setStatus(error.copy, "error"); return; }
   const section = editorSection;
   invalidateLists(); busy = true; syncControls(); setStatus(section === "timeouts" ? "Saving Draft timeouts…" : "Saving Draft listener…");

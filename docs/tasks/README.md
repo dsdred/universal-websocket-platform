@@ -1,5 +1,8 @@
 # Task Records
 
+Текущий срез: [TASK-147 — Поэлементная валидация таймаутов Studio](TASK-147-STUDIO-PER-FIELD-TIMEOUT-VALIDATION.md).
+Решение и точное evidence фиксируются в записи задачи.
+
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.
 

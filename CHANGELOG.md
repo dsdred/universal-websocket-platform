@@ -13,6 +13,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Studio shows an inline error for each invalid timeout on Draft Save and
+  focuses the first field that needs correction.
+
 - Mobile menu, theme, and language buttons use the same visible size and
   spacing on Dashboard and Configuration Studio.
 

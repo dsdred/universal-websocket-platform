@@ -1,5 +1,11 @@
 # Текущее состояние
 
+[TASK-147](../docs/tasks/TASK-147-STUDIO-PER-FIELD-TIMEOUT-VALIDATION.md) добавляет
+поэлементную валидацию таймаутов Studio в существующем Draft. При Save ошибки
+видны рядом со всеми неверными полями, фокус переходит к первому. Исправление
+очищает ошибку этого поля. Диапазоны, timeout PUT и защита от повтора после
+неизвестного результата сохранены.
+
 [TASK-140](../docs/tasks/TASK-140-CONTROL-LOCALIZATION.md) добавила EN/RU в локальные Studio (`/`) и Dashboard (`/dashboard`), PR #139.
 [PR #140](../docs/tasks/TASK-140-OWNER-UX-CORRECTION.md) заменил выпадающий список кнопкой.
 [Упрощение шапки](../docs/tasks/TASK-140-OWNER-HEADER-CLEANUP.md) оставляет на кнопке
