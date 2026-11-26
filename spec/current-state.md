@@ -1,5 +1,10 @@
 # Текущее состояние
 
+[TASK-150](../docs/tasks/TASK-150-STUDIO-STALE-DRAFT-PROTECTION.md) —
+`In Progress`. В ветке задачи Studio блокирует Save и Publish после
+подтверждённой недоступности открытого Draft. Локальные значения и выбор
+Draft сохраняются. Неопределённый исход операции сверяется отдельно.
+
 [TASK-149](../docs/tasks/TASK-149-OPEN-CREATED-DRAFT.md) опубликована через
 [PR #158](https://github.com/dsdred/universal-websocket-platform/pull/158).
 Studio открывает созданный Draft прямо из результата. Свежий scoped GET

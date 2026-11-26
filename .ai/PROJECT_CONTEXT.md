@@ -8,6 +8,10 @@
 
 ## Текущее состояние
 
+[TASK-150 — Защита Studio при недоступности открытого Draft](../docs/tasks/TASK-150-STUDIO-STALE-DRAFT-PROTECTION.md)
+— `In Progress` в изолированной ветке. Актуальный gate определяется в
+Recovery Evidence Envelope задачи.
+
 [TASK-149 — Открытие созданного Draft](../docs/tasks/TASK-149-OPEN-CREATED-DRAFT.md)
 опубликована через [PR #158](https://github.com/dsdred/universal-websocket-platform/pull/158),
 merge `dcaa017eddc002de83c89af7c4f5e259ba871eab`.
