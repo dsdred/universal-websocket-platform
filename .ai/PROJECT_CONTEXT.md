@@ -8,6 +8,11 @@
 
 ## Текущее состояние
 
+[TASK-149 — Открытие созданного Draft](../docs/tasks/TASK-149-OPEN-CREATED-DRAFT.md)
+— `In Progress`. Owner выбрал переход из результата создания в существующий
+редактор Draft после свежего чтения точной версии. Актуальный gate определяется
+последней записью Recovery Evidence Envelope, совпадающей с manifest.
+
 [TASK-147 — Поэлементная валидация таймаутов Studio](../docs/tasks/TASK-147-STUDIO-PER-FIELD-TIMEOUT-VALIDATION.md)
 опубликована через PR #154, merge `9ff3ea2f32e31cfa3030a2728ffd1699a03a615e`.
 Owner подтвердил отображение и очистку ошибок и сохранение таймаутов.

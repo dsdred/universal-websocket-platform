@@ -1,5 +1,10 @@
 # Текущее состояние
 
+В рабочем срезе [TASK-149](../docs/tasks/TASK-149-OPEN-CREATED-DRAFT.md) Studio
+открывает созданный Draft прямо из результата. Свежий scoped GET подтверждает
+точный ID и состояние Draft. При ошибке открытия результат создания остаётся
+доступным для повторного чтения.
+
 [TASK-148](../docs/tasks/TASK-148-PUBLISH-EXISTING-DRAFT.md) опубликована через
 [PR #156](https://github.com/dsdred/universal-websocket-platform/pull/156).
 Studio публикует выбранный сохранённый Draft через существующий scoped API.
