@@ -2,8 +2,10 @@
 
 ## Status
 
-`In Progress`. Актуальные gate и verdict определяются по последней записи в
-Recovery Evidence Envelope, совпадающей с пересчитанным manifest.
+Реализация опубликована. Owner Acceptance — **Accepted** для опубликованной
+версии. Документационное закрытие — `In Progress`. Его актуальный gate
+определяется по последней записи в Recovery Evidence Envelope, совпадающей с
+пересчитанным manifest документационного subject.
 
 ## Task Contract
 
@@ -88,6 +90,59 @@ Tests: Published, Archived, deleted, повторное использовани
 `spec/current-state.md`. Это локальные версии в отдельном checkout, без
 изменений в их байтах в ходе TASK-149. Ни один следующий кандидат не активирован.
 
+## Owner Acceptance Closure
+
+26 ноября 2026 года Owner принял опубликованную реализацию TASK-149.
+Источник ручных наблюдений — сообщение `01a21784-6348-7be0-a898-ab56a9025ba2`,
+turn `01a21784-6229-7543-98a4-93c8d2128a6f`, чат
+`01a21714-1a24-7db0-8b81-23a965744e3b`.
+
+[PR #158](https://github.com/dsdred/universal-websocket-platform/pull/158)
+слит в `main`. Проверенная Owner версия `main` — merge
+`dcaa017eddc002de83c89af7c4f5e259ba871eab`. Коммит реализации
+`2539a4e32eb39e5b3bcd885fce7879a1e456787a` и merge имеют общее дерево
+`23d645c5fef9766b846ce1eb5048480a8152e9d4`. В ходе публикации `go-ci` прошёл
+на [PR](https://github.com/dsdred/universal-websocket-platform/actions/runs/45799769069)
+и на [main](https://github.com/dsdred/universal-websocket-platform/actions/runs/45800119832).
+
+| Ручная проверка | Результат Owner |
+| --- | --- |
+| Create Draft v2 (#2) | PASS |
+| Open created Draft | PASS |
+| Открытие именно Draft v2 (#2) | PASS |
+| Изменение Listener port на `19149` | PASS |
+| Save и Reload Draft | PASS |
+
+Owner вручную не проверял выбор среди нескольких Drafts, устаревший или
+отсутствующий Draft, ошибку GET и повтор чтения, а также screen reader.
+Эти сценарии не входят в ручной PASS. Для первых трёх сценариев отдельные
+автоматизированные доказательства сохранены в evidence реализации ниже.
+Headless-проверка клавиатуры и фокуса не включала screen reader.
+
+### Контракт документационного закрытия
+
+- **Task Mode** — Documentation-only. **Why Now** — Owner подтвердил
+  опубликованную версию. Branch `codex/docs/task-149-owner-acceptance`,
+  worktree `bin/task149-owner-closure`, baseline/HEAD перед изменениями
+  `dcaa017eddc002de83c89af7c4f5e259ba871eab`.
+- **Definition of Done** — записать решение Owner и ограничения, сверить
+  опубликованные Git identities, синхронизировать состояние и навигацию,
+  подтвердить exact subject независимым Review.
+- **Scope** — task record, `docs/tasks/README.md`, `.ai/PROJECT_CONTEXT.md`
+  и `spec/current-state.md`. Эти четыре пути Required. Product code, tests,
+  API, Runtime и следующая задача вне scope. Шесть посторонних локальных
+  правок остаются в исходном checkout.
+- **Verification Plan** — сверить запись с сообщением Owner, локальные Git
+  identities, исторический envelope, ссылки, четыре пути и whitespace.
+  Product tests остаются evidence опубликованной реализации.
+- **PROCESS-002** — task record, task index, project context и current state
+  применимы. MASTER_PLAN EN/RU, ADR, ARCH, DP, `spec/decisions.md`, Quick Start,
+  корневой README и CHANGELOG неприменимы: приёмка фиксирует состояние уже
+  опубликованной функции. Milestone, архитектура, руководство и релиз не меняются.
+- **Size Guard и роли** — четыре документационных пути, один срез. Coordinator
+  координирует приёмку, Documentation Agent синхронизирует записи, независимый
+  Reviewer проверяет итоговый subject. Следующий кандидат не активирован.
+
 ## Recovery Evidence Envelope
 
 ### Verification and exact subject
@@ -149,3 +204,38 @@ spec/current-state.md | full | present | 100644 | 9632d91d3dbaf12dc28693c067661d
   PROCESS-002 `Synchronized`. Следующий gate — Commit Gate, состояние STOP до
   отдельной команды Owner. Stage, commit, push, merge и следующая задача не
   выполнялись.
+
+### Documentation-only Owner Acceptance evidence
+
+- Branch `codex/docs/task-149-owner-acceptance`, baseline/HEAD
+  `dcaa017eddc002de83c89af7c4f5e259ba871eab`. Git object format SHA-1.
+- Verification PASS: exact five ручных PASS и четыре исключения сверены с
+  сообщением Owner. `git rev-parse` подтвердил точный merge, второго
+  родителя и совпадение деревьев реализации и merge. Исторический envelope
+  байт-в-байт сохранён, SHA-256
+  `4745683c6334b09ca4b767a6c7acfdb36f34b774465931f2f099d98daabe919c`.
+- `git -c core.whitespace=cr-at-eol diff --check` PASS. Пять локальных
+  ссылок в diff разрешаются. Scope Audit 4 Required / 0 Questionable /
+  0 Removable. Product code, tests и публичные EN/RU документы не изменялись.
+  SHA-256 шести исключённых локальных файлов совпали с исходными.
+
+Manifest документационного subject `fc2d244b734b346c2770ffbe26bb256e010b6cf1` вычислен
+через `git hash-object --stdin` из отсортированных NUL-separated rows
+PROCESS-001.
+
+```text
+.ai/PROJECT_CONTEXT.md | full | present | 100644 | 0e03b6cdd9fca5c7b0ce45ca5119df797827b4a0
+docs/tasks/README.md | full | present | 100644 | 69c65bf749d5182abf86f7cd7c62588a0d081545
+docs/tasks/TASK-149-OPEN-CREATED-DRAFT.md | task-record-v1 | present | 100644 | 2110ac32dbd0926154c83416a3a8e31324160b1b
+spec/current-state.md | full | present | 100644 | 59d79313a07e97a2fa9381e805317638834e3ca9
+```
+
+- Final Independent Review — `Approved`, 0 blocking / 0 nonblocking,
+  exact documentation manifest `fc2d244b734b346c2770ffbe26bb256e010b6cf1`. Reviewer независимо
+  пересчитал четыре rows, сверил native Owner evidence, Git-публикацию,
+  CI, исторические байты, scope и closure links.
+- Coordinator Acceptance документационного subject — `Accepted`,
+  2026-11-26, тот же manifest и baseline. PROCESS-002 `Synchronized`.
+  Следующий gate — Commit Gate. На момент этой записи stage, commit
+  и публикация документационного slice не выполнялись. Следующая задача
+  не активирована.
