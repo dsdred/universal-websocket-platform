@@ -9,9 +9,11 @@
 ## Текущее состояние
 
 [TASK-149 — Открытие созданного Draft](../docs/tasks/TASK-149-OPEN-CREATED-DRAFT.md)
-— `In Progress`. Owner выбрал переход из результата создания в существующий
-редактор Draft после свежего чтения точной версии. Актуальный gate определяется
-последней записью Recovery Evidence Envelope, совпадающей с manifest.
+опубликована через [PR #158](https://github.com/dsdred/universal-websocket-platform/pull/158),
+merge `dcaa017eddc002de83c89af7c4f5e259ba871eab`.
+[Owner Acceptance — Accepted](../docs/tasks/TASK-149-OPEN-CREATED-DRAFT.md#owner-acceptance-closure)
+подтверждает открытие именно Draft v2 (#2) из результата создания, изменение
+Listener port на `19149`, Save и Reload Draft.
 
 [TASK-147 — Поэлементная валидация таймаутов Studio](../docs/tasks/TASK-147-STUDIO-PER-FIELD-TIMEOUT-VALIDATION.md)
 опубликована через PR #154, merge `9ff3ea2f32e31cfa3030a2728ffd1699a03a615e`.

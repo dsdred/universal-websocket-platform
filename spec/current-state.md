@@ -1,9 +1,13 @@
 # Текущее состояние
 
-В рабочем срезе [TASK-149](../docs/tasks/TASK-149-OPEN-CREATED-DRAFT.md) Studio
-открывает созданный Draft прямо из результата. Свежий scoped GET подтверждает
-точный ID и состояние Draft. При ошибке открытия результат создания остаётся
-доступным для повторного чтения.
+[TASK-149](../docs/tasks/TASK-149-OPEN-CREATED-DRAFT.md) опубликована через
+[PR #158](https://github.com/dsdred/universal-websocket-platform/pull/158).
+Studio открывает созданный Draft прямо из результата. Свежий scoped GET
+подтверждает точный ID и состояние Draft. При ошибке открытия результат
+создания остаётся доступным для повторного чтения.
+[Owner Acceptance — Accepted](../docs/tasks/TASK-149-OPEN-CREATED-DRAFT.md#owner-acceptance-closure)
+подтверждает открытие именно Draft v2 (#2), изменение Listener port на `19149`,
+Save и Reload Draft на опубликованном `main`.
 
 [TASK-148](../docs/tasks/TASK-148-PUBLISH-EXISTING-DRAFT.md) опубликована через
 [PR #156](https://github.com/dsdred/universal-websocket-platform/pull/156).

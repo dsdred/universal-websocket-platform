@@ -1,7 +1,8 @@
 # Task Records
 
-[TASK-149 — Открытие созданного Draft из Studio](TASK-149-OPEN-CREATED-DRAFT.md) — `In Progress`.
-Актуальный gate определяется последней записью Recovery Evidence Envelope, совпадающей с manifest.
+[TASK-149 — Открытие созданного Draft из Studio](TASK-149-OPEN-CREATED-DRAFT.md)
+опубликована через [PR #158](https://github.com/dsdred/universal-websocket-platform/pull/158).
+[Owner Acceptance — Accepted](TASK-149-OPEN-CREATED-DRAFT.md#owner-acceptance-closure).
 
 [TASK-148 — Публикация существующего Draft](TASK-148-PUBLISH-EXISTING-DRAFT.md)
 опубликована через [PR #156](https://github.com/dsdred/universal-websocket-platform/pull/156).
