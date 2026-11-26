@@ -9,8 +9,12 @@
 ## Текущее состояние
 
 [TASK-150 — Защита Studio при недоступности открытого Draft](../docs/tasks/TASK-150-STUDIO-STALE-DRAFT-PROTECTION.md)
-— `In Progress` в изолированной ветке. Актуальный gate определяется в
-Recovery Evidence Envelope задачи.
+опубликована через [PR #160](https://github.com/dsdred/universal-websocket-platform/pull/160),
+merge `67b74d7760188a073d139a339fef38a7975069a5`.
+[Owner Acceptance — Accepted](../docs/tasks/TASK-150-STUDIO-STALE-DRAFT-PROTECTION.md#owner-acceptance-closure)
+подтверждает блокировку Save и Publish для версии, опубликованной в другой
+вкладке, после Save listener или Reload Draft. Документационное закрытие
+`In Progress`, актуальный gate определяется в Recovery Evidence Envelope.
 
 [TASK-149 — Открытие созданного Draft](../docs/tasks/TASK-149-OPEN-CREATED-DRAFT.md)
 опубликована через [PR #158](https://github.com/dsdred/universal-websocket-platform/pull/158),

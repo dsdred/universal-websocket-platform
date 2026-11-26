@@ -1,9 +1,14 @@
 # Текущее состояние
 
-[TASK-150](../docs/tasks/TASK-150-STUDIO-STALE-DRAFT-PROTECTION.md) —
-`In Progress`. В ветке задачи Studio блокирует Save и Publish после
-подтверждённой недоступности открытого Draft. Локальные значения и выбор
-Draft сохраняются. Неопределённый исход операции сверяется отдельно.
+[TASK-150](../docs/tasks/TASK-150-STUDIO-STALE-DRAFT-PROTECTION.md) опубликована через
+[PR #160](https://github.com/dsdred/universal-websocket-platform/pull/160).
+Studio блокирует Save и Publish после подтверждённой недоступности открытого
+Draft, сохраняя локальные значения и выбранную версию. Неопределённый исход
+операции сверяется отдельно.
+[Owner Acceptance — Accepted](../docs/tasks/TASK-150-STUDIO-STALE-DRAFT-PROTECTION.md#owner-acceptance-closure)
+подтверждает два ручных сценария на `main`. После публикации Draft в другой
+вкладке порт `19150` остался в форме после отказа Save listener, а Reload Draft
+сохранил выбранную версию.
 
 [TASK-149](../docs/tasks/TASK-149-OPEN-CREATED-DRAFT.md) опубликована через
 [PR #158](https://github.com/dsdred/universal-websocket-platform/pull/158).
