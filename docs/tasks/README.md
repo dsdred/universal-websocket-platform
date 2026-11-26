@@ -2,7 +2,7 @@
 
 [TASK-147 — Поэлементная валидация таймаутов Studio](TASK-147-STUDIO-PER-FIELD-TIMEOUT-VALIDATION.md)
 опубликована через PR #154. [Owner Acceptance PASS](TASK-147-STUDIO-PER-FIELD-TIMEOUT-VALIDATION.md#owner-acceptance-closure).
-Следующий срез — планирование TASK-148 Publish Existing Draft, `Not Activated`.
+[TASK-148 — Публикация существующего Draft](TASK-148-PUBLISH-EXISTING-DRAFT.md) — `In Progress`.
 
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.

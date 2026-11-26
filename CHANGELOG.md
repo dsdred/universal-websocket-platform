@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Configuration Studio can publish a saved Draft after confirmation. Publishing
+  archives any previous Published version in that Configuration and refreshes
+  the versions without starting Runtime.
+
 ### Changed
 
 - Dashboard uses a localized refresh icon button and clearer section headings

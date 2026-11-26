@@ -184,5 +184,5 @@ button:disabled {
 #confirmation-warning { color: var(--warning); }
 .confirmation-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .65rem; }
 .confirmation-actions button { margin: 0; min-height: 44px; }
-#confirmation-discard { color: var(--on-danger); background: var(--danger); }
-#confirmation-discard:hover { background: var(--danger-hover); }
+#confirmation-accept { color: var(--on-danger); background: var(--danger); }
+#confirmation-accept:hover { background: var(--danger-hover); }

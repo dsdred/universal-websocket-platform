@@ -17,6 +17,7 @@ const timeoutFields = [
   ["idleSeconds", "timeout-idle", 0, 86400, "Idle"],
 ].map(([key, id, min, max, label]) => ({ key, input: $(id), min, max, label, output: $(`${id}-error`) }));
 const submitButton = $("submit-button");
+const publishButton = $("publish-draft"), reloadDraftButton = $("reload-draft");
 const statusOutput = $("flow-status");
 const result = $("result");
 const resultState = $("result-state");
@@ -28,6 +29,7 @@ const controls = [mode, workspaceChoice, configurationChoice, $("reload-lists"),
 let busy = false, locked = false, loading = false, listGeneration = 0, listController;
 let workspaces = new Map(), configurations = new Map(), drafts = new Map();
 let openedDraft = null, saveUnknown = false;
+let publishNeedsReload = false, publicationRecovery = null;
 let editorSection = "listener";
 let choices = { mode: mode.value, workspace: "", configuration: "", draft: "" };
 const editing = () => mode.value === "existing-draft";
@@ -220,7 +222,7 @@ function finishConfirmation(confirmed) {
 }
 
 $("confirmation-cancel").addEventListener("click", () => finishConfirmation(false));
-$("confirmation-discard").addEventListener("click", () => finishConfirmation(true));
+$("confirmation-accept").addEventListener("click", () => finishConfirmation(true));
 confirmation.addEventListener("keydown", (event) => {
   if (event.key === "Escape") event.stopPropagation();
 });
@@ -231,11 +233,17 @@ confirmation.addEventListener("cancel", (event) => {
 window.addEventListener("pagehide", () => finishConfirmation(false));
 
 function requestAction(trigger, action, copy = "Discard local Draft edits and leave this Draft?", allowLocked = false) {
-  if (pendingConfirmation || busy || (locked && !allowLocked)) return;
+  if (pendingConfirmation || busy || publicationRecovery || (locked && !allowLocked)) return;
   if (!dirty() && !saveUnknown) return action();
+  return confirmAction(trigger, action, copy, "Discard Draft edits?", "Discard edits", saveUnknown, allowLocked);
+}
+
+function confirmAction(trigger, action, copy, title, accept, warning = false, allowLocked = false) {
+  show($("confirmation-title"), title);
+  show($("confirmation-accept"), accept);
   show($("confirmation-message"), copy);
-  $("confirmation-warning").hidden = !saveUnknown;
-  confirmation.setAttribute("aria-describedby", saveUnknown
+  $("confirmation-warning").hidden = !warning;
+  confirmation.setAttribute("aria-describedby", warning
     ? "confirmation-message confirmation-warning" : "confirmation-message");
   return new Promise((resolve, reject) => {
     pendingConfirmation = { trigger, action, allowLocked, resolve, reject };
@@ -293,6 +301,7 @@ document.addEventListener("click", (event) => {
 function draftStatus(copy) { show($("draft-status"), copy); }
 function clearDrafts() {
   drafts = new Map(); openedDraft = null; saveUnknown = false;
+  publishNeedsReload = false;
   editorSection = "listener"; sectionChoice.value = editorSection;
   clearListenerErrors();
   clearTimeoutErrors();
@@ -300,7 +309,7 @@ function clearDrafts() {
   draftStatus("Select a Configuration to discover Drafts.");
 }
 function updateDirty() {
-  if (editing() && openedDraft && !saveUnknown) draftStatus(dirty() ? "Unsaved Draft changes." : "Draft section is unchanged.");
+  if (editing() && openedDraft && !saveUnknown && !publishNeedsReload && !publicationRecovery) draftStatus(dirty() ? "Unsaved Draft changes." : "Draft section is unchanged.");
   syncControls();
 }
 for (const input of [hostInput, portInput, ...timeoutFields.map(({ input }) => input)]) input.addEventListener("input", updateDirty);
@@ -339,12 +348,14 @@ function clearConfigurations() {
   clearResult();
 }
 function syncControls() {
-  for (const control of controls) control.disabled = busy || locked;
+  for (const control of controls) control.disabled = busy || locked || !!publicationRecovery;
   workspaceChoice.disabled ||= loading || workspaces.size === 0;
   configurationChoice.disabled ||= loading || configurations.size === 0;
   submitButton.disabled ||= loading;
-  draftChoice.disabled = busy || locked || loading || drafts.size === 0;
-  $("reload-draft").disabled = busy || locked || loading || !openedDraft;
+  draftChoice.disabled = busy || locked || loading || !!publicationRecovery || drafts.size === 0;
+  reloadDraftButton.disabled = busy || locked || loading || (!openedDraft && !publicationRecovery);
+  show(reloadDraftButton, publicationRecovery ? "Refresh versions" : "Reload Draft");
+  publishButton.disabled = !!pendingConfirmation || !canPublish(openedDraft);
   sectionChoice.disabled ||= loading || !openedDraft;
   $("timeout-fields").hidden = !editing() || editorSection !== "timeouts";
   $("listener-fields").hidden = editing() ? editorSection !== "listener" : mode.value === "existing-configuration";
@@ -510,9 +521,11 @@ function preliminaryURL(host, port) {
   return `ws://${renderedHost}:${port}/ws`;
 }
 function showVersion(version, published) {
+  show($("result-heading"), "Created version");
   show(resultState, version.state);
   resultVersion.textContent = String(version.number);
   $("result-url-row").hidden = !published;
+  $("result-url-warning").hidden = false;
   if (published) {
     const listener = version.listener;
     if (!listener || typeof listener.host !== "string" || !listener.host || !Number.isInteger(listener.port) || listener.port < 1 || listener.port > 65535 || !listener.tls || listener.tls.enabled !== false) throw new LocalError("Unexpected listener response.");
@@ -573,7 +586,8 @@ function draftProjection(version, configurationID) {
     if (!Number.isInteger(value) || value < min || value > max) throw new LocalError("Invalid timeout response.");
     timeouts[key] = value;
   }
-  return { id: version.id, configurationID, number: version.number, state: version.state, host: listener.host, port: listener.port, timeouts };
+  const updatedAt = typeof version.updatedAt === "string" && Number.isFinite(Date.parse(version.updatedAt)) ? version.updatedAt : null;
+  return { id: version.id, configurationID, number: version.number, state: version.state, host: listener.host, port: listener.port, timeouts, updatedAt };
 }
 function restoreEditorInputs() {
   if (!openedDraft) return;
@@ -593,6 +607,37 @@ function editorScope() {
   return { workspaceID: selectedID(workspaceChoice, workspaces), configurationID: selectedID(configurationChoice, configurations) };
 }
 function versionsPath(scope) { return `/api/v1/workspaces/${scope.workspaceID}/configurations/${scope.configurationID}/versions`; }
+async function readVersions(scope, signal) {
+  const payload = await requestJSON(versionsPath(scope), "GET", 200, undefined, signal);
+  if (!Array.isArray(payload)) throw new LocalError("Invalid version list.");
+  const versions = new Map();
+  for (const version of payload) {
+    const item = draftProjection(version, scope.configurationID);
+    if (versions.has(item.id)) throw new LocalError("Duplicate version ID.");
+    versions.set(item.id, item);
+  }
+  return versions;
+}
+
+function applyDraftList(versions, scope, selected = null) {
+  drafts = new Map([...versions].filter(([, item]) => item.state === "Draft"));
+  placeholder(draftChoice, "Select a Draft");
+  for (const item of drafts.values()) {
+    const option = document.createElement("option");
+    option.value = String(item.id); show(option, message("Draft v{0} (#{1})", item.number, item.id)); draftChoice.append(option);
+  }
+  openedDraft = selected ? { ...selected, workspaceID: scope.workspaceID } : null;
+  if (openedDraft) {
+    draftChoice.value = String(openedDraft.id);
+    restoreEditorInputs();
+  }
+  saveUnknown = false;
+  publishNeedsReload = false;
+  draftStatus(openedDraft ? "Draft opened. Choose listener address or timeouts to edit."
+    : drafts.size ? "Select a Draft to open it." : "No Drafts in this Configuration.");
+  rememberChoices();
+}
+
 async function loadDrafts(versionID) {
   invalidateLists();
   const generation = listGeneration;
@@ -601,33 +646,18 @@ async function loadDrafts(versionID) {
   loading = true; syncControls(); draftStatus("Loading Drafts…");
   try {
     const scope = editorScope();
-    const payload = await requestJSON(versionsPath(scope), "GET", 200, undefined, listController.signal);
+    const versions = await readVersions(scope, listController.signal);
     if (generation !== listGeneration) return;
-    if (!Array.isArray(payload)) throw new LocalError("Invalid version list.");
-    const items = new Map(), seen = new Set();
-    for (const version of payload) {
-      const item = draftProjection(version, scope.configurationID);
-      if (seen.has(item.id)) throw new LocalError("Duplicate version ID.");
-      seen.add(item.id);
-      if (item.state === "Draft") items.set(item.id, item);
+    const selected = versions.get(versionID);
+    if (versionID !== undefined && selected?.state !== "Draft") {
+      if (openedDraft?.id === versionID) publishNeedsReload = true;
+      throw new LocalError("Selected Draft is no longer available. Local edits are retained.");
     }
-    const selected = versionID === undefined ? null : items.get(versionID);
-    if (versionID !== undefined && !selected) throw new LocalError("Selected Draft is no longer available. Local edits are retained.");
-    drafts = items;
-    placeholder(draftChoice, "Select a Draft");
-    for (const item of items.values()) {
-      const option = document.createElement("option");
-      option.value = String(item.id); show(option, message("Draft v{0} (#{1})", item.number, item.id)); draftChoice.append(option);
-    }
+    applyDraftList(versions, scope, selected);
     if (selected) {
-      openedDraft = { ...selected, workspaceID: scope.workspaceID };
-      draftChoice.value = String(selected.id);
-      restoreEditorInputs();
-      saveUnknown = false; clearResult();
-      draftStatus("Draft opened. Choose listener address or timeouts to edit.");
+      clearResult();
       setStatus("Draft opened without creating or publishing a version.");
-    } else draftStatus(items.size ? "Select a Draft to open it." : "No Drafts in this Configuration.");
-    rememberChoices();
+    }
   } catch (error) {
     if (generation !== listGeneration) return;
     restoreChoices();
@@ -642,7 +672,14 @@ guardChoice(draftChoice, () => {
   try { return loadDrafts(selectedID(draftChoice, drafts)); }
   catch (error) { restoreChoices(); setStatus(error.copy, "error"); }
 });
-$("reload-draft").addEventListener("click", (event) => {
+reloadDraftButton.addEventListener("click", async (event) => {
+  if (busy || locked || loading || pendingConfirmation) return;
+  if (publicationRecovery) {
+    busy = true; syncControls();
+    try { await refreshPublication(); }
+    finally { busy = false; syncControls(); statusOutput.focus(); }
+    return;
+  }
   if (!openedDraft) return;
   return requestAction(event.currentTarget, () => loadDrafts(openedDraft.id),
     "Discard local Draft edits and load the current stored values from Control Service?");
@@ -667,9 +704,14 @@ async function saveDraft() {
     if (saved.id !== openedDraft.id || saved.number !== openedDraft.number || saved.state !== "Draft" ||
         Object.keys(body).some((key) => savedSection[key] !== body[key])) throw new LocalError("Unexpected saved section response.");
     // A section Save acknowledges only that section; unrelated baselines require an explicit fresh read.
-    openedDraft = { ...openedDraft, ...(section === "timeouts" ? { timeouts: saved.timeouts } : { host: saved.host, port: saved.port }) };
+    publishNeedsReload ||= section === "timeouts"
+      ? saved.host !== openedDraft.host || saved.port !== openedDraft.port
+      : timeoutFields.some(({ key }) => saved.timeouts[key] !== openedDraft.timeouts[key]);
+    openedDraft = { ...openedDraft, updatedAt: saved.updatedAt,
+      ...(section === "timeouts" ? { timeouts: saved.timeouts } : { host: saved.host, port: saved.port }) };
     drafts.set(saved.id, openedDraft); restoreEditorInputs();
-    draftStatus("Draft section saved. No unsaved changes."); setStatus(section === "timeouts" ? "Timeouts saved to the existing Draft. It has not been published." : "Listener saved to the existing Draft. It has not been published.", "success");
+    draftStatus(publishNeedsReload ? "The stored Draft changed. Reload Draft before publishing." : "Draft section saved. No unsaved changes.");
+    setStatus(section === "timeouts" ? "Timeouts saved to the existing Draft. It has not been published." : "Listener saved to the existing Draft. It has not been published.", "success");
   } catch (error) {
     saveUnknown = !(error instanceof RequestError) || error.status >= 500;
     draftStatus(saveUnknown ? "Save outcome unknown. Edits retained; use Reload Draft to reconcile before saving again." : "Save failed. Unsaved Draft changes are retained.");
@@ -681,13 +723,125 @@ async function saveDraft() {
     rejectedInput?.focus();
   }
 }
+function sameDraftSelection(target) {
+  return editing() && target === openedDraft && workspaceChoice.value === String(target.workspaceID) &&
+    configurationChoice.value === String(target.configurationID) && draftChoice.value === String(target.id) &&
+    workspaces.has(target.workspaceID) && configurations.has(target.configurationID) && drafts.has(target.id);
+}
+
+function canPublish(target) {
+  return !!target?.updatedAt && target.state === "Draft" && !busy && !locked && !loading &&
+    !publicationRecovery && !publishNeedsReload && !saveUnknown && !dirty() && sameDraftSelection(target);
+}
+
+publishButton.addEventListener("click", (event) => {
+  const target = openedDraft;
+  if (pendingConfirmation || !canPublish(target)) return;
+  const name = configurations.get(target.configurationID).name;
+  return confirmAction(event.currentTarget, () => publishDraft(target), message(
+    "Publish Draft v{0} (#{1}) in Configuration {2} (#{3})? Any current Published version will be archived.",
+    target.number, target.id, name, target.configurationID), "Publish Draft?", "Publish Draft");
+});
+
+async function refreshPublication() {
+  const { target, outcome } = publicationRecovery;
+  let versions;
+  try { versions = await readVersions(target); }
+  catch (error) {
+    if (!(error instanceof RequestError) || error.status !== 404) {
+      setStatus(outcome === "published" ? "Draft published. Version refresh failed. Use Refresh versions."
+        : outcome === "unknown" ? "Publish outcome unknown. Use Refresh versions to check current server state."
+          : "Draft unavailable. Version refresh failed. Use Refresh versions.", "error");
+      return;
+    }
+    versions = new Map();
+  }
+  const current = versions.get(target.id);
+  const observed = current?.number === target.number ? current : null;
+  const selected = outcome !== "published" && observed?.state === "Draft" ? observed : null;
+  applyDraftList(versions, target, selected);
+  publicationRecovery = null;
+  if (outcome === "unknown") {
+    setStatus(message("Earlier publish outcome unknown. Current version state: {0}.", message(observed?.state || "Unavailable")));
+  } else if (outcome === "published") {
+    show(resultState, observed?.state || "Unavailable");
+    setStatus(observed?.state === "Published" ? "Configuration version published. Published does not mean Running."
+      : message("Draft published. Current version state: {0}. Published does not mean Running.", message(observed?.state || "Unavailable")), "success");
+  } else {
+    setStatus("Draft unavailable for publishing. Versions refreshed.", "error");
+  }
+}
+
+async function publishDraft(target) {
+  if (!canPublish(target)) return;
+  busy = true; syncControls(); setStatus("Checking stored Draft…");
+  try {
+    let versions;
+    try { versions = await readVersions(target); }
+    catch (error) {
+      if (error instanceof RequestError && error.status === 404 && sameDraftSelection(target) && !dirty()) {
+        applyDraftList(new Map(), target);
+        setStatus("Draft unavailable for publishing. Versions refreshed.", "error");
+      } else setStatus("Could not check the stored Draft. Try Publish Draft again.", "error");
+      return;
+    }
+    if (!sameDraftSelection(target) || dirty() || saveUnknown) {
+      setStatus("Draft selection or edits changed. Check the Draft before publishing.", "error");
+      return;
+    }
+    const current = versions.get(target.id);
+    if (current?.state !== "Draft" || current.number !== target.number) {
+      applyDraftList(versions, target);
+      setStatus("Draft unavailable for publishing. Versions refreshed.", "error");
+      return;
+    }
+    if (current.updatedAt !== target.updatedAt || current.host !== target.host || current.port !== target.port ||
+        timeoutFields.some(({ key }) => current.timeouts[key] !== target.timeouts[key])) {
+      publishNeedsReload = true;
+      draftStatus("The stored Draft changed. Reload Draft before publishing.");
+      setStatus("The stored Draft changed. Reload Draft before publishing.", "error");
+      return;
+    }
+    clearResult();
+    setStatus("Publishing draft…");
+    try {
+      const published = await requestJSON(`${versionsPath(target)}/${target.id}/publish`, "POST", 200, {});
+      versionResponse(published, target.configurationID, "Published", target.id);
+      if (published.number !== target.number) throw new LocalError("Unexpected version response or scope.");
+      show($("result-heading"), "Version after publication");
+      show(resultState, "Published");
+      resultVersion.textContent = String(target.number);
+      $("result-url-row").hidden = true;
+      $("result-url-warning").hidden = true;
+      result.hidden = false;
+      openedDraft = null;
+      publicationRecovery = { target, outcome: "published" };
+    } catch (error) {
+      if (error instanceof RequestError && error.status === 400) {
+        setStatus("Control Service rejected publication. Check the stored Draft.", "error");
+        return;
+      }
+      if (error instanceof RequestError && [404, 409].includes(error.status)) {
+        publicationRecovery = { target, outcome: "unavailable" };
+      } else {
+        publicationRecovery = { target, outcome: "unknown" };
+        setStatus("Publish outcome unknown. Use Refresh versions to check current server state.", "error");
+        return;
+      }
+    }
+    await refreshPublication();
+  } finally {
+    busy = false; restoreChoices(); syncControls(); statusOutput.focus();
+  }
+}
+
 form.addEventListener("reset", (event) => {
   event.preventDefault();
   return requestAction(document.activeElement || mode, updateMode);
 });
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (pendingConfirmation || busy || locked || loading) return;
+  if (pendingConfirmation || busy || locked || loading || publicationRecovery) return;
   if (editing()) return saveDraft();
   clearResult();
   const listener = mode.value === "existing-configuration" ? null : validateListenerFields();
