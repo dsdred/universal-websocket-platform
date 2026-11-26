@@ -33,7 +33,10 @@ async function settle() { for (let i = 0; i < 8; i++) await new Promise(setImmed
 function start(route, storage = new Map()) {
   const ids = ["studio-confirmation", "confirmation-cancel", "confirmation-accept", "confirmation-title", "confirmation-message", "confirmation-warning", "navigation-toggle", "control-language", "control-language-code", "configuration-form", "creation-mode", "existing-workspace", "existing-configuration", "submit-button", "flow-status", "result", "result-heading", "result-url-warning", "result-state", "result-version", "result-url", "reload-lists", "workspace-name", "configuration-name", "listener-host", "listener-host-error", "listener-port", "listener-port-error", "list-status", "existing-resources", "configuration-choice", "workspace-fields", "configuration-fields", "listener-fields", "result-url-row", "start-another", "existing-draft", "draft-fields", "draft-status", "reload-draft", "publish-draft", "draft-section", "timeout-fields", "timeout-handshake", "timeout-read", "timeout-write", "timeout-idle"];
   ids.push(...timeoutIDs.map((id) => `${id}-error`));
+  ids.push("open-created-draft");
   const nodes = Object.fromEntries(ids.map((id) => [id, Object.assign(new Element(), { id })]));
+  nodes["open-created-draft"].textContent = "Open created Draft";
+  nodes["open-created-draft"].setAttribute("data-i18n", "");
   Object.assign(nodes["creation-mode"], { value: "new-workspace" });
   nodes["workspace-name"].value = "Workspace"; nodes["configuration-name"].value = "Configuration";
   nodes["listener-host"].value = "127.0.0.1"; nodes["listener-port"].value = "8080";
@@ -99,7 +102,7 @@ function start(route, storage = new Map()) {
   };
 }
 function version(state = "Draft", extra = {}) {
-  return { id: 3, configurationId: 2, number: 1, state, updatedAt: "2026-01-01T12:00:00Z",
+  return { id: 3, configurationId: 2, number: 1, state, createdAt: "2026-01-01T12:00:00Z", updatedAt: "2026-01-01T12:00:00Z",
     ...extra, listener: { host: "127.0.0.1", port: 8080, tls: { enabled: false },
       timeouts: { handshakeSeconds: 10, readSeconds: 0, writeSeconds: 10, idleSeconds: 0 }, ...extra.listener } };
 }
@@ -370,6 +373,7 @@ test("original new parent flow remains complete and same-origin", async () => {
   const app = start(routes); await app.submit();
   assert.deepEqual(mutations(app).map(({ options }) => options.method), ["POST", "POST", "POST", "PUT", "POST"]);
   assert.equal(app.nodes["result-state"].textContent, "Published");
+  assert.equal(app.nodes["open-created-draft"].hidden, true);
   for (const { options } of app.requests) {
     assert.equal(options.mode, "same-origin"); assert.equal(options.redirect, "error"); assert.equal(options.cache, "no-store");
   }
@@ -379,6 +383,100 @@ test("existing Configuration creates only Draft without parent mutations or publ
   assert.deepEqual(mutations(app).map(({ url }) => url), [`${base}/1/configurations/2/versions`]);
   assert.equal(app.nodes["result-state"].textContent, "Draft");
   assert.equal(app.nodes["result-url-row"].hidden, true);
+  assert.equal(app.nodes["open-created-draft"].hidden, false);
+  assert.equal(app.nodes["open-created-draft"].focused, true);
+});
+
+test("Open created Draft uses one fresh scoped GET and opens the exact Draft with fresh values", async () => {
+  const pending = deferred();
+  const versionsPath = `${base}/4/configurations/2/versions`;
+  const created = version("Draft", { id: 15, number: 2 });
+  const app = start((url, options) => {
+    if (url === versionsPath) return options.method === "POST" ? reply(created, 201) : pending.promise;
+    if (url === `${versionsPath}/15/listener` && options.method === "PUT") {
+      return reply({ ...created, listener: { ...created.listener, ...JSON.parse(options.body) } });
+    }
+    return routes(url, options);
+  });
+  await app.select("creation-mode", "existing-configuration");
+  await app.select("existing-workspace", "4");
+  await app.select("existing-configuration", "2");
+  await app.submit();
+  const button = app.nodes["open-created-draft"];
+  const before = app.requests.length;
+  const opening = button.fire("click");
+  assert.equal(button.disabled, true);
+  assert.equal(app.nodes["start-another"].disabled, true);
+  await button.fire("click");
+  await app.again();
+  await app.submit();
+  await app.select("existing-workspace", "1");
+  pending.resolve(reply([version(), { ...created, listener: { ...created.listener, port: 9015 } }, version("Draft", { id: 17, number: 3 })]));
+  await opening;
+  assert.deepEqual(app.requests.slice(before).map(({ url, options }) => [options.method, url, options.cache]), [["GET", versionsPath, "no-store"]]);
+  assert.equal(app.nodes["creation-mode"].value, "existing-draft");
+  assert.equal(app.nodes["existing-workspace"].value, "4");
+  assert.equal(app.nodes["existing-configuration"].value, "2");
+  assert.equal(app.nodes["existing-draft"].value, "15");
+  assert.equal(app.nodes["existing-draft"].focused, true);
+  assert.equal(app.nodes["listener-port"].value, "9015");
+  assert.equal(app.nodes["listener-port"].disabled, false);
+  assert.equal(app.nodes["submit-button"].disabled, true);
+  assert.equal(app.nodes.result.hidden, true);
+  assert.equal(app.nodes["start-another"].hidden, true);
+  await button.fire("click");
+  assert.equal(app.requests.length, before + 1);
+  await editHost(app, "localhost");
+  await app.submit();
+  assert.deepEqual(mutations(app).map(({ url, options }) => [options.method, url]), [
+    ["POST", versionsPath], ["PUT", `${versionsPath}/15/listener`],
+  ]);
+  assert.equal(app.nodes["submit-button"].disabled, true);
+});
+
+for (const [scenario, replacement] of [
+  ["Published", version("Published")], ["Archived", version("Archived")], ["deleted", null],
+  ["replaced after ID reuse", version("Draft", { createdAt: "2026-01-01T12:00:00.000000001Z" })],
+]) {
+  test(`Open created Draft keeps the result when its exact target is ${scenario}`, async () => {
+    const versions = [version("Draft", { id: 5, number: 2 })];
+    if (replacement) versions.push(replacement);
+    const app = start((url, options) => url.endsWith("/versions") && options.method === "GET" ? reply(versions) : routes(url, options));
+    await existing(app);
+    await app.submit();
+    const button = app.nodes["open-created-draft"];
+    await button.fire("click");
+    assert.equal(app.nodes["creation-mode"].value, "existing-configuration");
+    assert.equal(app.nodes["existing-draft"].value, "");
+    assert.equal(app.nodes.result.hidden, false);
+    assert.equal(button.disabled, false);
+    assert.equal(app.nodes["flow-status"].textContent, "The created version is no longer available as a Draft.");
+    assert.equal(app.nodes["flow-status"].focused, true);
+    assert.equal(mutations(app).length, 1);
+  });
+}
+
+test("Open created Draft reports a localized read failure and can retry without creating again", async () => {
+  let failed = true;
+  const app = start((url, options) => {
+    if (options.method !== "GET" || !url.endsWith("/versions")) return routes(url, options);
+    if (failed) throw new TypeError("network error");
+    return reply([version()]);
+  });
+  await existing(app);
+  await app.submit();
+  app.nodes["control-language"].fire("click");
+  assert.equal(app.nodes["open-created-draft"].textContent, "Открыть созданный черновик");
+  await app.nodes["open-created-draft"].fire("click");
+  assert.equal(app.nodes["flow-status"].textContent, "Не удалось открыть созданный черновик. Попробуйте открыть его снова.");
+  assert.equal(app.nodes["existing-workspace"].value, "1");
+  assert.equal(app.nodes["existing-configuration"].value, "2");
+  assert.equal(app.nodes["result-version"].textContent, "1");
+  assert.equal(app.nodes.result.hidden, false);
+  failed = false;
+  await app.nodes["open-created-draft"].fire("click");
+  assert.equal(app.nodes["existing-draft"].value, "3");
+  assert.equal(mutations(app).length, 1);
 });
 test("new Configuration uses selected Workspace and original publish steps", async () => {
   const app = start(routes); await app.select("creation-mode", "new-configuration");
@@ -460,6 +558,8 @@ test("tampered selected IDs never reach mutation routes", async () => {
 test("double submit and selection during mutation cannot duplicate or redirect action", async () => {
   const pending = deferred(); const app = start((url, options) => options.method === "POST" ? pending.promise : routes(url, options));
   await existing(app); const first = app.submit();
+  assert.equal(app.nodes["open-created-draft"].hidden, true);
+  await app.nodes["open-created-draft"].fire("click");
   await app.submit(); await app.select("existing-workspace", "4");
   assert.equal(mutations(app).length, 1);
   assert.equal(app.nodes["creation-mode"].disabled, true);
@@ -477,6 +577,10 @@ test("unknown mutation outcome requires explicit acknowledgement and refreshed s
   const app = start((url, options) => options.method === "POST" ? Promise.reject(new TypeError("offline")) : routes(url, options));
   await existing(app); await app.submit(); await app.submit();
   assert.equal(mutations(app).length, 1);
+  assert.equal(app.nodes["open-created-draft"].hidden, true);
+  const before = app.requests.length;
+  await app.nodes["open-created-draft"].fire("click");
+  assert.equal(app.requests.length, before);
   assert.match(app.nodes["start-another"].textContent, /I checked Dashboard/);
   await app.again();
   assert.equal(app.nodes["existing-workspace"].value, "");
@@ -486,6 +590,7 @@ test("malformed Draft scope cannot become success", async () => {
   const app = start((url, options) => options.method === "POST" ? reply(version("Draft", { configurationId: 9 }), 201) : routes(url, options));
   await existing(app); await app.submit();
   assert.equal(app.nodes.result.hidden, true); assert.equal(mutations(app).length, 1);
+  assert.equal(app.nodes["open-created-draft"].hidden, true);
 });
 test("resource labels use text, never HTML", async () => {
   const app = start(() => reply([{ id: 1, name: "<img src=x onerror=alert(1)>" }]));

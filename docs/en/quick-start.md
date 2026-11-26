@@ -94,6 +94,9 @@ In Studio, choose an **Action**:
 - **New Draft in existing Configuration** lets you select a Workspace and its
   Configuration, then create a fresh **Draft** only. Existing settings are not
   cloned; this action does not update the listener or publish the Draft.
+  After confirmed creation, **Open created Draft** reads the current version
+  and opens it in **Edit existing Draft** if it is still a Draft. If Studio
+  cannot open it, the creation result stays visible and you can retry the read.
 
 Changing Workspace clears the Configuration choice; changing Action or
 Configuration clears the previous result. **Reload lists** refreshes available

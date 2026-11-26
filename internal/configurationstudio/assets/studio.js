@@ -20,6 +20,7 @@ const submitButton = $("submit-button");
 const publishButton = $("publish-draft"), reloadDraftButton = $("reload-draft");
 const statusOutput = $("flow-status");
 const result = $("result");
+const openCreatedDraftButton = $("open-created-draft"), startAnotherButton = $("start-another");
 const resultState = $("result-state");
 const resultVersion = $("result-version");
 const resultURL = $("result-url");
@@ -28,6 +29,7 @@ const controls = [mode, workspaceChoice, configurationChoice, $("reload-lists"),
   ...timeoutFields.map(({ input }) => input), submitButton];
 let busy = false, locked = false, loading = false, listGeneration = 0, listController;
 let workspaces = new Map(), configurations = new Map(), drafts = new Map();
+let createdDraft = null;
 let openedDraft = null, saveUnknown = false;
 let publishNeedsReload = false, publicationRecovery = null;
 let editorSection = "listener";
@@ -332,6 +334,8 @@ function selectedID(select, items) {
   return id;
 }
 function clearResult() {
+  createdDraft = null;
+  openCreatedDraftButton.hidden = true;
   result.hidden = true;
   show(resultState, "");
   resultVersion.textContent = resultURL.textContent = "";
@@ -349,6 +353,8 @@ function clearConfigurations() {
 }
 function syncControls() {
   for (const control of controls) control.disabled = busy || locked || !!publicationRecovery;
+  openCreatedDraftButton.disabled = busy;
+  startAnotherButton.disabled = busy;
   workspaceChoice.disabled ||= loading || workspaces.size === 0;
   configurationChoice.disabled ||= loading || configurations.size === 0;
   submitButton.disabled ||= loading;
@@ -458,11 +464,7 @@ async function loadLists(workspaceID) {
     if (generation === listGeneration) { loading = false; syncControls(); }
   }
 }
-function updateMode() {
-  invalidateLists();
-  workspaces = new Map();
-  placeholder(workspaceChoice, "Select a Workspace");
-  clearConfigurations();
+function showModeFields() {
   const existing = mode.value === "existing-configuration" || editing();
   $("existing-resources").hidden = mode.value === "new-workspace";
   $("configuration-choice").hidden = !existing;
@@ -471,6 +473,13 @@ function updateMode() {
   $("listener-fields").hidden = existing && !editing();
   $("draft-fields").hidden = !editing();
   show(submitButton, editing() ? "Save listener" : existing ? "Create Draft" : "Create and publish");
+}
+function updateMode() {
+  invalidateLists();
+  workspaces = new Map();
+  placeholder(workspaceChoice, "Select a Workspace");
+  clearConfigurations();
+  showModeFields();
   rememberChoices();
   setStatus("Ready.");
   syncControls();
@@ -552,7 +561,15 @@ async function runFlow(values) {
   setStatus("Creating draft version…");
   const draft = await requestJSON(`/api/v1/workspaces/${workspaceID}/configurations/${configurationID}/versions`, "POST", 201, {});
   versionResponse(draft, configurationID, "Draft");
-  if (values.mode === "existing-configuration") { showVersion(draft, false); return; }
+  if (values.mode === "existing-configuration") {
+    if (typeof draft.createdAt !== "string" || !Number.isFinite(Date.parse(draft.createdAt))) {
+      throw new LocalError("Unexpected version response or scope.");
+    }
+    createdDraft = { workspaceID, configurationID: draft.configurationId, versionID: draft.id, createdAt: draft.createdAt };
+    showVersion(draft, false);
+    openCreatedDraftButton.hidden = false;
+    return;
+  }
   const versionID = draft.id;
   setStatus("Updating listener…");
   let updated;
@@ -587,7 +604,8 @@ function draftProjection(version, configurationID) {
     timeouts[key] = value;
   }
   const updatedAt = typeof version.updatedAt === "string" && Number.isFinite(Date.parse(version.updatedAt)) ? version.updatedAt : null;
-  return { id: version.id, configurationID, number: version.number, state: version.state, host: listener.host, port: listener.port, timeouts, updatedAt };
+  return { id: version.id, configurationID, number: version.number, state: version.state, host: listener.host, port: listener.port,
+    timeouts, updatedAt, createdAt: typeof version.createdAt === "string" ? version.createdAt : null };
 }
 function restoreEditorInputs() {
   if (!openedDraft) return;
@@ -637,6 +655,38 @@ function applyDraftList(versions, scope, selected = null) {
     : drafts.size ? "Select a Draft to open it." : "No Drafts in this Configuration.");
   rememberChoices();
 }
+
+openCreatedDraftButton.addEventListener("click", async () => {
+  if (!createdDraft || !locked || busy || loading || pendingConfirmation) return;
+  const target = createdDraft;
+  busy = true;
+  syncControls();
+  setStatus("Opening created Draft…");
+  try {
+    const versions = await readVersions(target);
+    const selected = versions.get(target.versionID);
+    if (selected?.state !== "Draft" || selected.createdAt !== target.createdAt) {
+      setStatus("The created version is no longer available as a Draft.", "error");
+      return;
+    }
+
+    mode.value = "existing-draft";
+    workspaceChoice.value = String(target.workspaceID);
+    configurationChoice.value = String(target.configurationID);
+    showModeFields();
+    applyDraftList(versions, target, selected);
+    clearResult();
+    locked = false;
+    startAnotherButton.hidden = true;
+    setStatus("Draft opened without creating or publishing a version.");
+  } catch (_) {
+    setStatus("Could not open the created Draft. Try opening it again.", "error");
+  } finally {
+    busy = false;
+    syncControls();
+    (locked ? statusOutput : draftChoice).focus();
+  }
+});
 
 async function loadDrafts(versionID) {
   invalidateLists();
@@ -861,15 +911,16 @@ form.addEventListener("submit", async (event) => {
       : message("{0} Inspect Dashboard before another attempt; resources from earlier steps may remain in memory.", message(reason)), "error");
   } finally {
     busy = false; locked = true; syncControls();
-    show($("start-another"), success ? "Start another action" : "I checked Dashboard — start another action");
-    $("start-another").hidden = false;
+    show(startAnotherButton, success ? "Start another action" : "I checked Dashboard — start another action");
+    startAnotherButton.hidden = false;
     if (!success) statusOutput.focus();
+    else if (createdDraft) openCreatedDraftButton.focus();
   }
 });
-$("start-another").addEventListener("click", (event) => {
+startAnotherButton.addEventListener("click", (event) => {
   if (!locked) return;
   return requestAction(event.currentTarget, () => {
-    locked = false; $("start-another").hidden = true;
+    locked = false; startAnotherButton.hidden = true;
     return updateMode();
   }, "Discard local Draft edits?", true);
 });

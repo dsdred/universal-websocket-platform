@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Configuration Studio can open the exact Draft from a successful Create Draft
+  result after checking its current state.
 - Configuration Studio can publish a saved Draft after confirmation. Publishing
   archives any previous Published version in that Configuration and refreshes
   the versions without starting Runtime.
