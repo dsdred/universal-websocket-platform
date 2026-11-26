@@ -2,7 +2,10 @@
 
 ## Status
 
-In Progress. Актуальный gate определяется в Recovery Evidence Envelope.
+Реализация опубликована. Owner Acceptance — **Accepted** для опубликованной
+версии. Документационное закрытие — `In Progress`. Актуальный gate определяется
+по последней записи в Recovery Evidence Envelope, совпадающей с пересчитанным
+manifest документационного subject.
 
 ## Task Contract
 
@@ -78,6 +81,71 @@ discard.
 **Remaining Limitations** — Studio обнаруживает смену состояния при получении
 scoped evidence. Для изменений ещё активного Draft действует существующая
 конкурентная семантика без CAS.
+
+## Owner Acceptance Closure
+
+27 ноября 2026 года Owner принял опубликованную реализацию TASK-150.
+Ручные наблюдения зафиксированы в сообщении `01a21957-563e-7be0-acd8-82104e11fb35`,
+turn `01a21957-5378-7453-b4f0-c5544296ef50`, чат
+`01a218ba-778d-7c80-9b5a-7d467077f34f`.
+
+[PR #160](https://github.com/dsdred/universal-websocket-platform/pull/160)
+слит в `main`. Owner проверял опубликованный merge
+`67b74d7760188a073d139a339fef38a7975069a5`. Его второй родитель — коммит
+реализации `c1a5f98882730d5a2aac12b8138cc3a6b5d3d4aa`. Оба имеют дерево
+`946be9bedb4f6f06b1677645664e6376faf1903a`.
+
+### Ручная проверка Owner
+
+| Сценарий | Наблюдение | Результат |
+| --- | --- | --- |
+| Draft v2 (#2), Save listener | Draft опубликовали в другой вкладке. Save listener отклонил сохранение. Несохранённый порт `19150` и выбранный Draft сохранились. Save и Publish стали недоступны. | PASS |
+| Draft v3 (#3), Reload Draft | Draft опубликовали в другой вкладке. Reload Draft обнаружил недоступность версии. Save и Publish стали недоступны, выбранный Draft сохранился. | PASS |
+
+За пределами ручной проверки Owner остались следующие сценарии.
+
+- ошибка сети и восстановление после неё;
+- сохранение несохранённого ввода при Reload уже недоступного Draft;
+- Save в секции Timeouts после перехода версии из Draft;
+- полная проверка клавиатурой и проверка со screen reader.
+
+### Автоматизированная проверка реализации
+
+Опубликованный [набор Studio-тестов](../../internal/configurationstudio/studio_test.js)
+покрывает сетевые ошибки, повторное чтение и сверку после неопределённого
+исхода, сохранение несохранённого ввода при stale Reload и stale Save для
+обеих секций.
+Отдельная двухвкладочная проверка Edge покрывает клавиатурные действия и
+фокус в проверенных сценариях, включая stale Save в секции Timeouts на RU.
+Screen reader в эту проверку не входил. Результаты реализации зафиксированы
+в [Recovery Evidence Envelope](#recovery-evidence-envelope).
+
+### Контракт документационного закрытия
+
+- **Task Mode** — Documentation-only. **Why Now** — Owner принял версию
+  из опубликованного `main`. Ветка `codex/docs/task-150-owner-acceptance`,
+  worktree `bin/task150-owner-closure`, исходный HEAD
+  `67b74d7760188a073d139a339fef38a7975069a5`.
+- **Definition of Done** — зафиксировать решение Owner, оба ручных сценария
+  и пределы этой проверки, отдельно указать автоматизированное покрытие,
+  синхронизировать статус и навигацию, передать точный diff на независимый Review.
+- **Scope** — Required пути включают этот task record, `docs/tasks/README.md`,
+  `.ai/PROJECT_CONTEXT.md`, `spec/current-state.md`. Код, тесты, API, Runtime,
+  TASK-131 и следующие задачи вне scope. Шесть локальных правок остаются
+  в исходном checkout.
+- **Verification Plan** — сверить ручные наблюдения с сообщением Owner,
+  удостоверить Git-идентичность публикации, исторические bytes, локальные
+  ссылки, канонический manifest и чистоту diff. Повторить Node suite для
+  опубликованного кода как отдельное автоматизированное доказательство.
+- **PROCESS-002** — этот record, индекс задач, project context и current state
+  применимы. Границы milestone, зависимости и roadmap status сохраняются,
+  поэтому зеркальные MASTER_PLAN неприменимы. Приёмка опирается на существующий
+  архитектурный контракт, поэтому ADR, ARCH, DP и `spec/decisions.md` неприменимы.
+  Quick Start, корневой README и CHANGELOG неприменимы к записи о приёмке
+  опубликованной функции.
+- **Size Guard и роли** — четыре документационных файла, один срез.
+  Coordinator ведёт gate, Documentation Agent синхронизирует записи,
+  Reviewer независимо проверяет subject. STOP у Commit Gate.
 
 ## Recovery Evidence Envelope
 
@@ -165,3 +233,37 @@ spec/current-state.md | full | present | 100644 | aea3023e4ce2d1889b0fd86a1dd14e
 
 Повторное вычисление manifest локальным `node ../task150-proof/manifest.cjs`
 выполняется с raw bytes без staging и без `--normalize`.
+
+### TASK-150 — Documentation-only Owner Acceptance evidence
+
+- Branch `codex/docs/task-150-owner-acceptance`, baseline/HEAD
+  `67b74d7760188a073d139a339fef38a7975069a5`. Git object format `sha1`.
+- Verification PASS. Две ручные проверки и четыре исключения сверены с
+  сообщением Owner. Git подтвердил второй родитель merge и общее дерево с
+  коммитом реализации. Исторический envelope сохранён побайтово, SHA-256
+  `b25131c03a7d74dd39b93c75bf793018b33e9af87ba6da59652ee7e11e10ca09`.
+- Отдельная автоматизированная проверка на опубликованном коде —
+  `node --test` для четырёх Control UI `*_test.js`, PASS 199/199.
+- `git -c core.whitespace=cr-at-eol diff --check` PASS. Шесть локальных
+  ссылок проверены. Scope Audit — 4 Required / 0 Questionable / 0 Removable.
+  Fingerprint исходных шести правок `d247a12d68547c07e5cd15ea0dfed8ff2f42bc40`
+  подтверждён повторно.
+
+Канонический manifest документационного subject
+`2f414363495621a72b9f6a5072bd6390a9786c42` вычислен по NUL-separated rows PROCESS-001.
+
+```text
+.ai/PROJECT_CONTEXT.md | full | present | 100644 | 317b495758678b54d8a172e62f49bb34cfb40e86
+docs/tasks/README.md | full | present | 100644 | 9f8acd754319649c9857cdb3faaaef041c27dc0b
+docs/tasks/TASK-150-STUDIO-STALE-DRAFT-PROTECTION.md | task-record-v1 | present | 100644 | 8483b5296224182d57f55961d52440ef06789525
+spec/current-state.md | full | present | 100644 | 7b01e07a7f0ba93ae031e19ff2a5b8d5348b9d8b
+```
+
+- Independent Review — **Approved**, 0 blocking / 0 nonblocking findings.
+  Reviewer независимо подтвердил все четыре raw rows, сверил Owner evidence,
+  опубликованные Git identities, ссылки, PROCESS-002 и границы ручного PASS.
+- Coordinator Acceptance документационного subject — **Accepted**
+  27 ноября 2026 года для указанного manifest. PROCESS-002 — Synchronized.
+  Первый незавершённый checkpoint — Commit Gate после отдельной команды
+  Owner `Разрешаю коммит.`. Staging, commit, push и merge этого среза ещё не
+  выполнялись. Следующие задачи не активированы.
