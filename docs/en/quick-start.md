@@ -130,10 +130,10 @@ archive and Runtime management remain unavailable.
    reload replaces local values only after a successful read. Read values show
    current server state, not proof that an earlier uncertain request succeeded.
 
-If the version was published, archived, removed or its parent became unavailable,
-Save cannot silently create a replacement. Preserve your input and inspect the
-current resources. Empty Draft lists are normal. Concurrent saves from other
-clients can overwrite the saved section: the existing API has no revision, ETag
+When Studio confirms that the open version is no longer a Draft or is unavailable,
+it disables Save and Publish and keeps your input visible. To work on another
+Draft, select it explicitly and confirm any discard. Empty Draft lists are normal.
+Concurrent saves from other clients can overwrite the saved section. The existing API has no revision, ETag
 or CAS check. This editor does not provide TLS/authentication/routing controls,
 archive or Runtime management.
 
@@ -144,7 +144,8 @@ archive or Runtime management.
 2. Select **Publish Draft** and check the Configuration and Draft in the confirmation.
    Publishing archives any current Published version in that Configuration.
 3. Confirm **Publish Draft**. Studio checks the stored Draft again, publishes it,
-   and refreshes the versions. A detected change requires reloading the Draft.
+   and refreshes the versions. If a stored Draft's values changed, reload it
+   before publishing.
    Another client can still make changes between the check and publication.
 
 If the publish outcome is unknown, use **Refresh versions** to inspect current

@@ -1,5 +1,8 @@
 # Task Records
 
+[TASK-150 — Защита Studio при недоступности открытого Draft](TASK-150-STUDIO-STALE-DRAFT-PROTECTION.md)
+— `In Progress`. Актуальный gate определяется в Recovery Evidence Envelope.
+
 [TASK-149 — Открытие созданного Draft из Studio](TASK-149-OPEN-CREATED-DRAFT.md)
 опубликована через [PR #158](https://github.com/dsdred/universal-websocket-platform/pull/158).
 [Owner Acceptance — Accepted](TASK-149-OPEN-CREATED-DRAFT.md#owner-acceptance-closure).

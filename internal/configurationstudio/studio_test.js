@@ -143,7 +143,7 @@ function publicationServer() {
         server.attempts++;
         const draft = server.items.find(({ id }) => id === 3);
         if (server.onPublish) return server.onPublish(draft);
-        if (draft.state !== "Draft") return reply({}, 409);
+        if (draft.state !== "Draft") return apiError(409, "version_not_publishable");
         for (const item of server.items) if (item.state === "Published") item.state = "Archived";
         draft.state = "Published";
         return reply(structuredClone(draft));
@@ -282,14 +282,28 @@ test("a successful section Save enables publication unless the other section cha
   }
 });
 
-test("a publish conflict after the fresh read refreshes without repeating the POST", async () => {
+test("a typed publish conflict after the fresh read preserves the exact Draft, even when refresh fails", async () => {
   const server = publicationServer(), app = start(server.route);
   await editor(app);
-  server.onPublish = (draft) => { draft.state = "Archived"; return reply({}, 409); };
+  server.items.push(version("Draft", { id: 6, number: 3 }));
+  server.onPublish = (draft) => {
+    draft.state = "Archived";
+    server.refreshError = true;
+    return apiError(409, "version_not_publishable");
+  };
   await app.nodes["publish-draft"].fire("click");
-  assert.equal(server.attempts, 1);
-  assert.equal(app.nodes["existing-draft"].children.length, 1);
-  assert.match(app.nodes["flow-status"].textContent, /Draft unavailable/);
+  assert.match(app.nodes["flow-status"].textContent, /Version refresh failed/);
+  assert.match(app.nodes["draft-status"].textContent, /no longer a Draft/);
+  assert.equal(app.nodes["flow-status"].focused, true);
+  await assertStaleActionsBlocked(app, 1);
+  server.refreshError = false;
+  await app.nodes["reload-draft"].fire("click");
+  assert.equal(app.requests.at(-1).options.method, "GET");
+  assert.match(app.nodes["flow-status"].textContent, /no longer a Draft/);
+  assert.deepEqual(app.nodes["existing-draft"].children.map((option) => option.textContent),
+    ["Select a Draft", "Draft v3 (#6)", "Unavailable Draft v1 (#3)"]);
+  await editHost(app);
+  await assertStaleActionsBlocked(app, 1);
 });
 
 test("an uncertain publish needs explicit reads, and observed lifecycle alone gives no success", async () => {
@@ -1400,4 +1414,170 @@ test("unknown save departure keeps its warning and requires a fresh read before 
   await app.select("existing-draft", "3");
   assert.equal(app.requests.length, count + 1);
   assert.equal(app.requests.at(-1).options.method, "GET");
+});
+
+function apiError(status, code) {
+  return reply({ error: { code, message: "server detail" } }, status);
+}
+
+async function assertStaleActionsBlocked(app, mutationCount) {
+  assert.equal(app.nodes["existing-draft"].value, "3");
+  assert.equal(app.nodes["submit-button"].disabled, true);
+  assert.equal(app.nodes["publish-draft"].disabled, true);
+  await app.submit();
+  await app.submit();
+  await app.nodes["publish-draft"].fire("click");
+  assert.equal(mutations(app).length, mutationCount);
+}
+
+for (const [section, field, original, local] of [
+  ["listener", "listener-host", "127.0.0.1", "localhost"],
+  ["timeouts", "timeout-handshake", "10", "45"],
+]) test(`typed lifecycle rejection blocks ${section} Save and Publish with retained input and focus`, async () => {
+  const app = start((url, options) => options.method === "PUT"
+    ? apiError(409, "version_not_editable") : editorRoutes(url, options));
+  await editor(app);
+  await app.select("draft-section", section);
+  const input = app.nodes[field];
+  input.value = local;
+  await input.fire("input");
+  await app.submit();
+  assert.equal(input.value, local);
+  assert.match(app.nodes["flow-status"].textContent, /no longer a Draft.*still in the form/);
+  assert.equal(app.nodes["flow-status"].focused, true);
+  assert.equal(app.nodes["existing-draft"].children.some((option) => option.value === "6"), true);
+  await assertStaleActionsBlocked(app, 1);
+
+  input.value = original;
+  await input.fire("input");
+  await assertStaleActionsBlocked(app, 1);
+  input.value = local;
+  await input.fire("input");
+  await app.nodes["reload-draft"].fire("click"); // A contradictory read cannot unlock this editor.
+  assert.equal(input.value, local);
+  assert.equal(app.confirms.length, 0);
+  assert.match(app.nodes["draft-status"].textContent, /no longer a Draft/);
+  await assertStaleActionsBlocked(app, 1);
+
+  app.decisions.push(false);
+  const leave = app.follow("http://localhost/dashboard");
+  assert.equal(leave.event.defaultPrevented, true);
+  await leave.result;
+  assert.equal(input.value, local);
+  app.decisions.push(false);
+  await app.select("existing-draft", "6");
+  await assertStaleActionsBlocked(app, 1);
+  app.decisions.push(true);
+  await app.select("existing-draft", "6");
+  assert.equal(app.nodes["existing-draft"].value, "6");
+  assert.equal(app.nodes["publish-draft"].disabled, false);
+});
+
+for (const [name, result, expected] of [
+  ["Published", () => reply([version("Published"), version("Draft", { id: 6, number: 2 })]), /no longer a Draft/],
+  ["Archived", () => reply([version("Archived")]), /no longer a Draft/],
+  ["missing Draft", () => reply([version("Draft", { id: 6, number: 2 })]), /Draft is unavailable/],
+  ["reused ID", () => reply([version("Draft", { createdAt: "2026-01-02T12:00:00Z" })]), /Draft is unavailable/],
+  ["missing Configuration", () => apiError(404, "configuration_not_found"), /Draft is unavailable/],
+]) test(`Reload confirms ${name} and preserves dirty local values`, async () => {
+  let changed = false;
+  const app = start((url, options) => changed && url === versionsURL ? result() : editorRoutes(url, options));
+  await editor(app);
+  await editHost(app);
+  changed = true;
+  await app.nodes["reload-draft"].fire("click");
+  assert.equal(app.nodes["listener-host"].value, "localhost");
+  assert.match(app.nodes["draft-status"].textContent, expected);
+  await assertStaleActionsBlocked(app, 0);
+});
+
+for (const code of ["configuration_not_found", "version_not_found"]) test(`Save reports scoped ${code} in RU`, async () => {
+  const app = start((url, options) => options.method === "PUT" ? apiError(404, code) : editorRoutes(url, options),
+    new Map([["uwp-control-language", "ru"]]));
+  await editor(app);
+  await editHost(app);
+  await app.submit();
+  assert.equal(app.nodes["listener-host"].value, "localhost");
+  assert.match(app.nodes["draft-status"].textContent, /Этот черновик недоступен.*правки остались/);
+  assert.equal(app.nodes["flow-status"].focused, true);
+  await assertStaleActionsBlocked(app, 1);
+});
+
+test("ambiguous HTTP conflicts do not prove lifecycle state", async () => {
+  for (const response of [reply({}, 409), apiError(409, "version_not_publishable"), reply({}, 404),
+    { status: 409, json: async () => { throw new SyntaxError("malformed"); } }]) {
+    const app = start((url, options) => options.method === "PUT" ? response : editorRoutes(url, options));
+    await editor(app);
+    await editHost(app);
+    await app.submit();
+    assert.equal(app.nodes["listener-host"].value, "localhost");
+    assert.doesNotMatch(app.nodes["draft-status"].textContent, /no longer a Draft|Draft is unavailable/);
+    assert.equal(app.nodes["submit-button"].disabled, false);
+  }
+
+  const server = publicationServer(), app = start(server.route);
+  server.onPublish = () => apiError(409, "version_not_editable");
+  await editor(app);
+  await app.nodes["publish-draft"].fire("click");
+  assert.match(app.nodes["flow-status"].textContent, /Publish outcome unknown/);
+  await app.nodes["reload-draft"].fire("click");
+  assert.equal(app.nodes["publish-draft"].disabled, false);
+  assert.equal(server.attempts, 1);
+});
+
+test("Publish preflight distinguishes scoped absence from an untrusted status or failed read", async () => {
+  let failure;
+  const app = start((url, options) => {
+    if (url === versionsURL && failure) return failure();
+    return editorRoutes(url, options);
+  });
+  await editor(app);
+  for (const read of [() => { throw new TypeError("offline"); }, () => reply({}, 503),
+    () => reply({}, 404), () => apiError(404, "version_not_found"),
+    () => reply([version("Archived", { configurationId: 99 })]),
+    () => reply([version("Draft", { createdAt: "2026" })])]) {
+    failure = read;
+    await app.nodes["publish-draft"].fire("click");
+    assert.match(app.nodes["flow-status"].textContent, /Could not check the stored Draft/);
+    assert.equal(app.nodes["existing-draft"].value, "3");
+    assert.equal(app.nodes["publish-draft"].disabled, false);
+  }
+  failure = () => apiError(404, "configuration_not_found");
+  await app.nodes["publish-draft"].fire("click");
+  assert.match(app.nodes["draft-status"].textContent, /Draft is unavailable/);
+  await assertStaleActionsBlocked(app, 0);
+});
+
+test("malformed creation timestamp on Reload preserves the active editor without marking it stale", async () => {
+  let malformed = false;
+  const app = start((url, options) => malformed && url === versionsURL
+    ? reply([version("Draft", { createdAt: "not a timestamp" })]) : editorRoutes(url, options));
+  await editor(app);
+  await editHost(app);
+  malformed = true;
+  await app.nodes["reload-draft"].fire("click");
+  assert.equal(app.nodes["existing-draft"].value, "3");
+  assert.equal(app.nodes["listener-host"].value, "localhost");
+  assert.equal(app.nodes["submit-button"].disabled, false);
+  assert.match(app.nodes["flow-status"].textContent, /Could not open Drafts/);
+  assert.equal(mutations(app).length, 0);
+});
+
+test("late scoped 404 from Reload cannot invalidate a Draft in a newer editor selection", async () => {
+  const oldRead = deferred();
+  let delay = false;
+  const app = start((url, options) => delay && url === versionsURL ? oldRead.promise : editorRoutes(url, options));
+  await editor(app);
+  delay = true;
+  const pending = app.nodes["reload-draft"].fire("click");
+  await settle();
+  await app.select("creation-mode", "new-workspace");
+  delay = false;
+  await editor(app, false);
+  await app.select("existing-draft", "6");
+  oldRead.resolve(apiError(404, "configuration_not_found"));
+  await pending;
+  assert.equal(app.nodes["existing-draft"].value, "6");
+  assert.equal(app.nodes["publish-draft"].disabled, false);
+  assert.doesNotMatch(app.nodes["draft-status"].textContent, /unavailable/);
 });

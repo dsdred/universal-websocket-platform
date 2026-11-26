@@ -31,6 +31,7 @@ let busy = false, locked = false, loading = false, listGeneration = 0, listContr
 let workspaces = new Map(), configurations = new Map(), drafts = new Map();
 let createdDraft = null;
 let openedDraft = null, saveUnknown = false;
+let staleDraft = null;
 let publishNeedsReload = false, publicationRecovery = null;
 let editorSection = "listener";
 let choices = { mode: mode.value, workspace: "", configuration: "", draft: "" };
@@ -269,7 +270,7 @@ function discardAndLeave(url) {
   // Confirmation authorizes discarding local edits before attempting navigation.
   // Keep beforeunload armed for any subsequent edit, even if this navigation fails.
   restoreEditorInputs();
-  if (saveUnknown) {
+  if (saveUnknown && !staleDraft) {
     // Reopening from the existing list performs a fresh read before enabling Save.
     openedDraft = null;
     draftChoice.value = "";
@@ -303,6 +304,7 @@ document.addEventListener("click", (event) => {
 function draftStatus(copy) { show($("draft-status"), copy); }
 function clearDrafts() {
   drafts = new Map(); openedDraft = null; saveUnknown = false;
+  staleDraft = null;
   publishNeedsReload = false;
   editorSection = "listener"; sectionChoice.value = editorSection;
   clearListenerErrors();
@@ -311,7 +313,7 @@ function clearDrafts() {
   draftStatus("Select a Configuration to discover Drafts.");
 }
 function updateDirty() {
-  if (editing() && openedDraft && !saveUnknown && !publishNeedsReload && !publicationRecovery) draftStatus(dirty() ? "Unsaved Draft changes." : "Draft section is unchanged.");
+  if (editing() && openedDraft && !staleDraft && !saveUnknown && !publishNeedsReload && !publicationRecovery) draftStatus(dirty() ? "Unsaved Draft changes." : "Draft section is unchanged.");
   syncControls();
 }
 for (const input of [hostInput, portInput, ...timeoutFields.map(({ input }) => input)]) input.addEventListener("input", updateDirty);
@@ -370,7 +372,7 @@ function syncControls() {
     show(submitButton, editorSection === "timeouts" ? "Save timeouts" : "Save listener");
     hostInput.disabled ||= !openedDraft || loading;
     portInput.disabled ||= !openedDraft || loading;
-    submitButton.disabled ||= !openedDraft || saveUnknown || !dirty();
+    submitButton.disabled ||= !openedDraft || !!staleDraft || saveUnknown || !dirty();
   }
 }
 function invalidateLists() {
@@ -391,10 +393,12 @@ async function requestJSON(path, method, expectedStatus, body, signal) {
     const response = await fetch(path, options);
     if (response.status !== expectedStatus) {
       const failure = Object.assign(new RequestError(message("Control Service returned HTTP {0}.", response.status)), { status: response.status });
-      if (response.status === 400 && method === "PUT" && path.endsWith("/listener")) {
+      const listenerValidation = response.status === 400 && method === "PUT" && path.endsWith("/listener");
+      if (listenerValidation || response.status === 404 || response.status === 409) {
         const payload = await response.json().catch(() => null);
         const details = payload?.error;
-        const match = details?.code === "validation_failed" && typeof details.message === "string" &&
+        failure.code = details?.code;
+        const match = listenerValidation && details?.code === "validation_failed" && typeof details.message === "string" &&
           /^(host|port): (.+)$/.exec(details.message);
         if (match) {
           const [, field, reason] = match;
@@ -591,6 +595,14 @@ async function runFlow(values) {
   versionResponse(published, configurationID, "Published", versionID);
   showVersion(published, true);
 }
+function validCreationTime(value) {
+  if (typeof value !== "string" ||
+      !/^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/.test(value) ||
+      !Number.isFinite(Date.parse(value))) return false;
+  const date = value.slice(0, 10);
+  return new Date(date).toISOString().slice(0, 10) === date;
+}
+
 function draftProjection(version, configurationID) {
   versionResponse(version, configurationID, version.state);
   if (!["Draft", "Validated", "Published", "Archived"].includes(version.state)) throw new LocalError("Invalid version state.");
@@ -604,8 +616,12 @@ function draftProjection(version, configurationID) {
     timeouts[key] = value;
   }
   const updatedAt = typeof version.updatedAt === "string" && Number.isFinite(Date.parse(version.updatedAt)) ? version.updatedAt : null;
+  const createdAt = version.createdAt ?? null;
+  if (createdAt !== null && !validCreationTime(createdAt)) {
+    throw new LocalError("Unexpected Control Service response.");
+  }
   return { id: version.id, configurationID, number: version.number, state: version.state, host: listener.host, port: listener.port,
-    timeouts, updatedAt, createdAt: typeof version.createdAt === "string" ? version.createdAt : null };
+    timeouts, updatedAt, createdAt };
 }
 function restoreEditorInputs() {
   if (!openedDraft) return;
@@ -618,7 +634,7 @@ guardChoice(sectionChoice, () => {
   if (loading || !["listener", "timeouts"].includes(sectionChoice.value)) { restoreChoices(); return; }
   editorSection = sectionChoice.value;
   restoreEditorInputs();
-  if (!saveUnknown) draftStatus("Editing section changed. No unsaved changes.");
+  if (!staleDraft && !saveUnknown) draftStatus("Editing section changed. No unsaved changes.");
   syncControls();
 }, "Discard local Draft edits and change the editing section?");
 function editorScope() {
@@ -637,14 +653,23 @@ async function readVersions(scope, signal) {
   return versions;
 }
 
-function applyDraftList(versions, scope, selected = null) {
+function showDraftChoices(versions, retained = null) {
   drafts = new Map([...versions].filter(([, item]) => item.state === "Draft"));
+  if (retained) drafts.set(retained.id, retained);
   placeholder(draftChoice, "Select a Draft");
   for (const item of drafts.values()) {
     const option = document.createElement("option");
-    option.value = String(item.id); show(option, message("Draft v{0} (#{1})", item.number, item.id)); draftChoice.append(option);
+    option.value = String(item.id);
+    show(option, message(item === retained ? "Unavailable Draft v{0} (#{1})" : "Draft v{0} (#{1})", item.number, item.id));
+    draftChoice.append(option);
   }
+  if (retained) draftChoice.value = String(retained.id);
+}
+
+function applyDraftList(versions, scope, selected = null) {
+  showDraftChoices(versions);
   openedDraft = selected ? { ...selected, workspaceID: scope.workspaceID } : null;
+  staleDraft = null;
   if (openedDraft) {
     draftChoice.value = String(openedDraft.id);
     restoreEditorInputs();
@@ -689,18 +714,30 @@ openCreatedDraftButton.addEventListener("click", async () => {
 });
 
 async function loadDrafts(versionID) {
+  const target = openedDraft?.id === versionID ? openedDraft : null;
   invalidateLists();
   const generation = listGeneration;
   listController = new AbortController();
   const timer = setTimeout(() => generation === listGeneration && listController.abort(), 10000);
-  loading = true; syncControls(); draftStatus("Loading Drafts…");
+  loading = true; syncControls();
+  if (!staleDraft) draftStatus("Loading Drafts…");
   try {
     const scope = editorScope();
     const versions = await readVersions(scope, listController.signal);
     if (generation !== listGeneration) return;
     const selected = versions.get(versionID);
+    if (target) {
+      if (!sameDraftSelection(target)) return;
+      const unavailable = draftUnavailableReason(observedVersion(versions, target));
+      if (unavailable) markDraftStale(target, unavailable);
+      if (staleDraft) {
+        showDraftChoices(versions, target);
+        setStatus(staleDraft, "error");
+        statusOutput.focus();
+        return;
+      }
+    }
     if (versionID !== undefined && selected?.state !== "Draft") {
-      if (openedDraft?.id === versionID) publishNeedsReload = true;
       throw new LocalError("Selected Draft is no longer available. Local edits are retained.");
     }
     applyDraftList(versions, scope, selected);
@@ -711,7 +748,11 @@ async function loadDrafts(versionID) {
   } catch (error) {
     if (generation !== listGeneration) return;
     restoreChoices();
-    draftStatus("Drafts unavailable or invalid. Local edits are retained. Reload to try again.");
+    if (target && missingConfiguration(error) && markDraftStale(target, "unavailable")) {
+      statusOutput.focus();
+      return;
+    }
+    if (!staleDraft) draftStatus("Drafts unavailable or invalid. Local edits are retained. Reload to try again.");
     setStatus(error instanceof RequestError ? error.copy : "Could not open Drafts. Check the selection and reload.", "error");
   } finally {
     clearTimeout(timer);
@@ -731,11 +772,13 @@ reloadDraftButton.addEventListener("click", async (event) => {
     return;
   }
   if (!openedDraft) return;
+  if (staleDraft) return loadDrafts(openedDraft.id);
   return requestAction(event.currentTarget, () => loadDrafts(openedDraft.id),
     "Discard local Draft edits and load the current stored values from Control Service?");
 });
 async function saveDraft() {
-  if (!openedDraft || saveUnknown || !dirty()) return;
+  if (!openedDraft || staleDraft || saveUnknown || !dirty()) return;
+  const target = openedDraft;
   let scope, body;
   try {
     scope = editorScope();
@@ -745,10 +788,10 @@ async function saveDraft() {
   } catch (error) { setStatus(error.copy, "error"); return; }
   const section = editorSection;
   invalidateLists(); busy = true; syncControls(); setStatus(section === "timeouts" ? "Saving Draft timeouts…" : "Saving Draft listener…");
-  let rejectedInput;
+  let rejectedInput, focusStatus = false;
   try {
     const suffix = section === "timeouts" ? "/listener/timeouts" : "/listener";
-    const response = await requestJSON(`${versionsPath(scope)}/${openedDraft.id}${suffix}`, "PUT", 200, body);
+    const response = await requestJSON(`${versionsPath(scope)}/${target.id}${suffix}`, "PUT", 200, body);
     const saved = draftProjection(response, scope.configurationID);
     const savedSection = section === "timeouts" ? saved.timeouts : saved;
     if (saved.id !== openedDraft.id || saved.number !== openedDraft.number || saved.state !== "Draft" ||
@@ -763,6 +806,11 @@ async function saveDraft() {
     draftStatus(publishNeedsReload ? "The stored Draft changed. Reload Draft before publishing." : "Draft section saved. No unsaved changes.");
     setStatus(section === "timeouts" ? "Timeouts saved to the existing Draft. It has not been published." : "Listener saved to the existing Draft. It has not been published.", "success");
   } catch (error) {
+    const unavailable = rejectedDraft(error, "version_not_editable");
+    if (unavailable && markDraftStale(target, unavailable)) {
+      focusStatus = true;
+      return;
+    }
     saveUnknown = !(error instanceof RequestError) || error.status >= 500;
     draftStatus(saveUnknown ? "Save outcome unknown. Edits retained; use Reload Draft to reconcile before saving again." : "Save failed. Unsaved Draft changes are retained.");
     rejectedInput = showListenerRejection(error);
@@ -770,7 +818,7 @@ async function saveDraft() {
       (error instanceof RequestError ? error.copy : "The save outcome is unknown."), "error");
   } finally {
     busy = false; restoreChoices(); syncControls();
-    rejectedInput?.focus();
+    (focusStatus ? statusOutput : rejectedInput)?.focus();
   }
 }
 function sameDraftSelection(target) {
@@ -779,9 +827,41 @@ function sameDraftSelection(target) {
     workspaces.has(target.workspaceID) && configurations.has(target.configurationID) && drafts.has(target.id);
 }
 
+function hasRequestCode(error, status, code) {
+  return error instanceof RequestError && error.status === status && error.code === code;
+}
+
+function missingConfiguration(error) {
+  return hasRequestCode(error, 404, "configuration_not_found");
+}
+
+function rejectedDraft(error, lifecycleCode) {
+  if (missingConfiguration(error) || hasRequestCode(error, 404, "version_not_found")) return "unavailable";
+  return hasRequestCode(error, 409, lifecycleCode) ? "non-Draft" : null;
+}
+
+function observedVersion(versions, target) {
+  const current = versions.get(target.id);
+  return current?.number === target.number &&
+    (!current.createdAt || !target.createdAt || current.createdAt === target.createdAt) ? current : null;
+}
+
+function draftUnavailableReason(current) {
+  return !current ? "unavailable" : current.state === "Draft" ? null : "non-Draft";
+}
+
+function markDraftStale(target, reason) {
+  if (!sameDraftSelection(target)) return false;
+  staleDraft = reason === "non-Draft" ? "This version is no longer a Draft. Your edits are still in the form."
+    : "This Draft is unavailable. Your edits are still in the form.";
+  draftStatus(staleDraft);
+  setStatus(staleDraft, "error");
+  return true;
+}
+
 function canPublish(target) {
   return !!target?.updatedAt && target.state === "Draft" && !busy && !locked && !loading &&
-    !publicationRecovery && !publishNeedsReload && !saveUnknown && !dirty() && sameDraftSelection(target);
+    !staleDraft && !publicationRecovery && !publishNeedsReload && !saveUnknown && !dirty() && sameDraftSelection(target);
 }
 
 publishButton.addEventListener("click", (event) => {
@@ -798,7 +878,7 @@ async function refreshPublication() {
   let versions;
   try { versions = await readVersions(target); }
   catch (error) {
-    if (!(error instanceof RequestError) || error.status !== 404) {
+    if (!missingConfiguration(error)) {
       setStatus(outcome === "published" ? "Draft published. Version refresh failed. Use Refresh versions."
         : outcome === "unknown" ? "Publish outcome unknown. Use Refresh versions to check current server state."
           : "Draft unavailable. Version refresh failed. Use Refresh versions.", "error");
@@ -806,10 +886,16 @@ async function refreshPublication() {
     }
     versions = new Map();
   }
-  const current = versions.get(target.id);
-  const observed = current?.number === target.number ? current : null;
-  const selected = outcome !== "published" && observed?.state === "Draft" ? observed : null;
-  applyDraftList(versions, target, selected);
+  if (outcome !== "published" && !sameDraftSelection(target)) return;
+  const observed = observedVersion(versions, target);
+  if (outcome === "published") {
+    applyDraftList(versions, target);
+  } else if (observed?.state === "Draft") {
+    if (!staleDraft) applyDraftList(versions, target, observed);
+  } else {
+    markDraftStale(target, draftUnavailableReason(observed));
+  }
+  if (outcome !== "published" && staleDraft) showDraftChoices(versions, target);
   publicationRecovery = null;
   if (outcome === "unknown") {
     setStatus(message("Earlier publish outcome unknown. Current version state: {0}.", message(observed?.state || "Unavailable")));
@@ -818,7 +904,7 @@ async function refreshPublication() {
     setStatus(observed?.state === "Published" ? "Configuration version published. Published does not mean Running."
       : message("Draft published. Current version state: {0}. Published does not mean Running.", message(observed?.state || "Unavailable")), "success");
   } else {
-    setStatus("Draft unavailable for publishing. Versions refreshed.", "error");
+    setStatus(staleDraft, "error");
   }
 }
 
@@ -829,20 +915,19 @@ async function publishDraft(target) {
     let versions;
     try { versions = await readVersions(target); }
     catch (error) {
-      if (error instanceof RequestError && error.status === 404 && sameDraftSelection(target) && !dirty()) {
-        applyDraftList(new Map(), target);
-        setStatus("Draft unavailable for publishing. Versions refreshed.", "error");
-      } else setStatus("Could not check the stored Draft. Try Publish Draft again.", "error");
+      if (!missingConfiguration(error) || !markDraftStale(target, "unavailable")) {
+        setStatus("Could not check the stored Draft. Try Publish Draft again.", "error");
+      }
       return;
     }
     if (!sameDraftSelection(target) || dirty() || saveUnknown) {
       setStatus("Draft selection or edits changed. Check the Draft before publishing.", "error");
       return;
     }
-    const current = versions.get(target.id);
-    if (current?.state !== "Draft" || current.number !== target.number) {
-      applyDraftList(versions, target);
-      setStatus("Draft unavailable for publishing. Versions refreshed.", "error");
+    const current = observedVersion(versions, target);
+    if (current?.state !== "Draft") {
+      markDraftStale(target, draftUnavailableReason(current));
+      showDraftChoices(versions, target);
       return;
     }
     if (current.updatedAt !== target.updatedAt || current.host !== target.host || current.port !== target.port ||
@@ -871,7 +956,8 @@ async function publishDraft(target) {
         setStatus("Control Service rejected publication. Check the stored Draft.", "error");
         return;
       }
-      if (error instanceof RequestError && [404, 409].includes(error.status)) {
+      const unavailable = rejectedDraft(error, "version_not_publishable");
+      if (unavailable && markDraftStale(target, unavailable)) {
         publicationRecovery = { target, outcome: "unavailable" };
       } else {
         publicationRecovery = { target, outcome: "unknown" };
