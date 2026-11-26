@@ -13,8 +13,10 @@
 Owner подтвердил отображение и очистку ошибок и сохранение таймаутов.
 [Owner Acceptance PASS](../docs/tasks/TASK-147-STUDIO-PER-FIELD-TIMEOUT-VALIDATION.md#owner-acceptance-closure).
 [TASK-148 — Публикация существующего Draft](../docs/tasks/TASK-148-PUBLISH-EXISTING-DRAFT.md)
-в реализации по утверждённому Owner Studio-only scope. Актуальные проверки и
-Commit Gate указаны в task record.
+опубликована через [PR #156](https://github.com/dsdred/universal-websocket-platform/pull/156),
+merge `998eefb8dff8231b4eb0dff0bb98ed3e824d1597`.
+[Owner Acceptance PASS](../docs/tasks/TASK-148-PUBLISH-EXISTING-DRAFT.md#owner-acceptance-closure)
+подтверждает публикацию Draft и архивирование предыдущей версии.
 
 [TASK-140 — Локализация Studio и Dashboard](../docs/tasks/TASK-140-CONTROL-LOCALIZATION.md) опубликована через PR #139,
 merge `4fcbbacfdfacbd8a39b4ab2233136bb2cb546d29`.
