@@ -1,8 +1,11 @@
 # Task Records
 
+[TASK-148 — Публикация существующего Draft](TASK-148-PUBLISH-EXISTING-DRAFT.md)
+опубликована через [PR #156](https://github.com/dsdred/universal-websocket-platform/pull/156).
+[Owner Acceptance PASS](TASK-148-PUBLISH-EXISTING-DRAFT.md#owner-acceptance-closure).
+
 [TASK-147 — Поэлементная валидация таймаутов Studio](TASK-147-STUDIO-PER-FIELD-TIMEOUT-VALIDATION.md)
 опубликована через PR #154. [Owner Acceptance PASS](TASK-147-STUDIO-PER-FIELD-TIMEOUT-VALIDATION.md#owner-acceptance-closure).
-[TASK-148 — Публикация существующего Draft](TASK-148-PUBLISH-EXISTING-DRAFT.md) — `In Progress`.
 
 Каталог содержит внутренние task records, handoff и постоянные отчёты. Эти
 operational документы ведутся на русском языке и не требуют EN-зеркал.

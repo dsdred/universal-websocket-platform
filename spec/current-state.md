@@ -1,11 +1,14 @@
 # Текущее состояние
 
-В рабочем срезе [TASK-148](../docs/tasks/TASK-148-PUBLISH-EXISTING-DRAFT.md)
+[TASK-148](../docs/tasks/TASK-148-PUBLISH-EXISTING-DRAFT.md) опубликована через
+[PR #156](https://github.com/dsdred/universal-websocket-platform/pull/156).
 Studio публикует выбранный сохранённый Draft через существующий scoped API.
 Перед POST выполняется свежая проверка без атомарной гарантии против
 конкурентного изменения. Предыдущая Published Version архивируется
 сервером. Studio обновляет список, а при неизвестном исходе предлагает
 явное чтение состояния. Публикация не запускает Runtime.
+[Owner Acceptance PASS](../docs/tasks/TASK-148-PUBLISH-EXISTING-DRAFT.md#owner-acceptance-closure)
+подтверждает переходы `Draft → Published` и `Published → Archived` в Dashboard.
 
 [TASK-147](../docs/tasks/TASK-147-STUDIO-PER-FIELD-TIMEOUT-VALIDATION.md) добавляет
 поэлементную валидацию таймаутов Studio в существующем Draft. При Save ошибки

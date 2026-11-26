@@ -2,7 +2,9 @@
 
 ## Status
 
-In Progress — Owner утвердил реализацию. Commit и publication требуют отдельных команд.
+Реализация опубликована. **Owner Acceptance PASS** для опубликованной версии.
+Документационное закрытие — `In Progress`. Состояние Commit Gate определяется
+по актуальной записи в Recovery Evidence Envelope.
 
 ## Task Contract
 
@@ -35,6 +37,60 @@ Size Guard: 13 файлов, один independently deliverable slice, без н
 PROCESS-002: task record, current state, project context, task index, EN/RU quick-start и changelog применимы. MASTER_PLAN N/A: milestone boundary и engineering dependencies сохраняются. Design Proposals, ADR, `spec/decisions.md` и root README N/A: архитектурный и API contracts сохраняются, пользовательский сценарий документирован в quick-start.
 
 Ограничения: между preflight GET и POST нет CAS. Отображаемые поля и точная строка `updatedAt` обнаруживают наблюдаемые изменения. Успешный section Save обновляет `updatedAt`; переключение других редактируемых значений в Save response требует отдельного reload. Для изменений, которые предшествуют Save в неотображаемых полях, и для изменений после preflight автоматическая гарантия отсутствует. Unknown publication хранится в текущей странице; после нового открытия Draft выполняется новое явное чтение и подтверждение. Состояние из GET не атрибутирует прежний POST.
+
+## Owner Acceptance Closure
+
+26 ноября 2026 года Owner принял опубликованную реализацию TASK-148. Источник
+ручных наблюдений — сообщение Owner `01a216ab-850a-74d2-985b-389c23a00acf`
+в turn `01a216ab-8382-7c33-9cb0-79139a98af18` чата
+`01a21469-86e6-79e3-aff7-6520e76504e9`.
+
+[PR #156](https://github.com/dsdred/universal-websocket-platform/pull/156)
+слит в `main`. Исходный коммит `01e6c811afb19e7ee0b9770d565fc56d634c9c15`,
+merge SHA `998eefb8dff8231b4eb0dff0bb98ed3e824d1597`, общее дерево
+`98aa3829ad37c746cd1df77e414c9ef31ea82e08`. Обязательный `go-ci`, включая
+race-тесты, прошёл на [PR](https://github.com/dsdred/universal-websocket-platform/actions/runs/45764656019)
+и на [main](https://github.com/dsdred/universal-websocket-platform/actions/runs/45764851162).
+
+Ручная проверка выполнена на изолированном Control Service `127.0.0.1:18148`
+для Workspace `TASK-148 Acceptance` (#1) и Configuration
+`Publish Existing Draft` (#1). Начальное состояние — v1 (#1) `Published`
+на `127.0.0.1:19148`, v2 (#2) `Draft` на `127.0.0.1:19248`.
+
+| Ручной сценарий | Результат Owner |
+| --- | --- |
+| Идентичность перед публикацией | Publish Draft показывает выбранную Configuration и Draft v2 (#2). |
+| Публикация | После подтверждения Draft v2 (#2) стала `Published`. |
+| Предыдущая версия и Dashboard | v1 (#1) стала `Archived`. Dashboard показывает `Published` для v2 и `Archived` для v1. |
+| Runtime на проверяемых портах | Порты 19148 и 19248 не слушались. Публикация не запустила Runtime на этих портах. |
+| Cancel | Отдельного визуального подтверждения Owner нет. Сценарий не засчитан в ручную приёмку. |
+
+**Owner Acceptance PASS** основана на перечисленных наблюдениях. Покрытие
+Cancel в автоматических тестах записано отдельно в evidence реализации.
+Наблюдение о Runtime ограничено портами 19148 и 19248.
+
+### Документационный контракт
+
+- **Mode** — Documentation-only. Branch `docs/task-148-owner-acceptance`,
+  worktree `bin/task148-owner-closure`, baseline и HEAD перед изменениями
+  `998eefb8dff8231b4eb0dff0bb98ed3e824d1597`.
+- **Why Now** — Owner подтвердил вручную опубликованную реализацию.
+- **Definition of Done** — зафиксировать решение Owner и ограничения,
+  синхронизировать статус и навигацию, сверить ссылки и exact manifest,
+  завершить независимый Review документационного diff.
+- **Scope** — текущий task record, `docs/tasks/README.md`,
+  `.ai/PROJECT_CONTEXT.md` и `spec/current-state.md`. Product, API, Runtime и
+  Control Services вне scope. Следующая задача не активируется.
+- **Verification Plan** — проверить локальные Git objects и scope, сверить
+  наблюдения с сообщением Owner, сохранить исторический envelope, проверить
+  четыре документа и передать exact subject независимому Reviewer.
+- **PROCESS-002** — task record, index, project context и current state
+  применимы. MASTER_PLAN EN/RU, ADR/DP, `spec/decisions.md`, Quick Start,
+  корневой README и CHANGELOG неприменимы: приёмка фиксирует статус уже
+  опубликованной функции без изменения milestone, архитектуры, инструкций
+  пользователя или состава релиза.
+- **Size Guard / STOP** — четыре документационных пути. Coordinator,
+  Documentation Agent и независимый Reviewer. Остановка до stage и commit.
 
 ## Recovery Evidence Envelope
 
@@ -121,4 +177,34 @@ internal/configurationstudio/assets/studio.js | full | present | 100644 | a7d765
 internal/configurationstudio/handler_test.go | full | present | 100644 | 85dbf58806e830d769140aa9f37c4751e32d81c5
 internal/configurationstudio/studio_test.js | full | present | 100644 | 1fd6c21e0b70812a67a46a595d85cc52ce13f2fb
 spec/current-state.md | full | present | 100644 | 3f5e96731d1c2cfadc621edf5b31f2eccd91a231
+```
+
+### Owner Acceptance documentation — Review and Commit Gate
+
+- Branch `docs/task-148-owner-acceptance`, HEAD и base
+  `998eefb8dff8231b4eb0dff0bb98ed3e824d1597`. SHA-1 manifest
+  `2ab8b65ce085a190e057169fa706916b88f05e99`, UTF-8 NUL-separated rows,
+  `task-record-v1` для task record, raw blob OID для остальных файлов.
+- Проверены Git ancestry и дерево опубликованной реализации, состояние PR #156
+  и успешные hosted `go-ci` с race на PR и на main. Проверены локальные ссылки,
+  исходные окончания строк, четыре пути и пустой индекс.
+  CRLF-aware `git diff --check` прошёл. Product tests повторно не запускались
+  для документационного diff.
+- Неизменный исторический envelope реализации — 8667 bytes, SHA-256
+  `00424abcbe9b2dd12671fa93c141204d97e929e325dcc25d1cd55b74220d5601`.
+  Все шесть исходных локальных правок сохранены побайтово.
+- Независимый Reviewer **Approved**, 0 findings. Reviewer независимо
+  пересчитал manifest, сверил сообщение Owner, ограничения Cancel и Runtime,
+  опубликованную идентичность, статус, ссылки и scope. PROCESS-002
+  синхронизирован. Scope Audit — 4 Required, 0 Questionable, 0 Removable.
+- Coordinator **Accepted** для этого документационного subject.
+  **STOP на Commit Gate**. Stage, commit, push, PR и merge этого diff
+  не выполнялись. Состояние Control Services не изменялось. Следующая задача
+  не активирована.
+
+```text
+.ai/PROJECT_CONTEXT.md | full | present | 100644 | 4a259f890a0081b037b22d475f39c2bf2e4f64f7
+docs/tasks/README.md | full | present | 100644 | ac0eafff8587facb3a54f90f9e4679b22380a804
+docs/tasks/TASK-148-PUBLISH-EXISTING-DRAFT.md | task-record-v1 | present | 100644 | 45ee2a90530042c5c7d605885c6124b2b1c9315c
+spec/current-state.md | full | present | 100644 | 683639b115443e029ddfa49880572d6025a2e51b
 ```
